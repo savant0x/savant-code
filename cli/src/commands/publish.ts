@@ -155,7 +155,7 @@ export async function handlePublish(
     return {
       success: false,
       error: 'Not logged in',
-      hint: 'Please log in first using "login" command or web UI.',
+      hint: 'Publishing requires stored backend credentials; none were found.',
     }
   }
 

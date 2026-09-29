@@ -1,7 +1,7 @@
 import { getSelectedSlashCommand } from './slash-selection'
+import { WEBSITE_URL } from '../branding/constants'
 import { buildDriveControlMessage } from '../commands/auto-drive'
 import { areCreditsRestored } from '../components/out-of-credits-banner'
-import { WEBSITE_URL } from '../login/constants'
 import { getProjectRoot } from '../project-files'
 import { useChatStore } from '../state/chat-store'
 import { useFeedbackStore } from '../state/feedback-store'

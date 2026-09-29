@@ -153,7 +153,6 @@ describe('router-utils', () => {
 
   describe('slash commands only work with / prefix', () => {
     const slashCommands = [
-      'login',
       'logout',
       'usage',
       'credits',

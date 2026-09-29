@@ -11,7 +11,7 @@
  * Phase 2 timeline engine, and each toast is z-index layered (newest on top).
  *
  * Law 11 (follow discovered patterns): uses the established Zustand store
- * pattern (matches useChatStore, useLoginStore).
+ * pattern (matches useChatStore).
  *
  * Law 14 (error paths): if the queue is empty the container renders nothing;
  * variant → color falls back to 'info' for unknown variants.

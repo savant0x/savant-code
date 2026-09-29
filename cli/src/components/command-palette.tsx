@@ -35,8 +35,8 @@ interface CommandPaletteProps {
  * Law 7 (search before create): reuses the existing `SuggestionItem` type from
  * `suggestion-menu.tsx` — does NOT redefine a parallel command type.
  *
- * Law 11 (follow discovered patterns): mirrors the overlay pattern used by
- * `login-modal.tsx` (full-width box, theme surface background, centered).
+ * Law 11 (follow discovered patterns): mirrors the full-width box overlay
+ * pattern (theme surface background, centered) used by sibling modals.
  *
  * Law 14 (error paths): if `items` is empty, renders a muted "no matches"
  * message rather than crashing with an empty options array.

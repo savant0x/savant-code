@@ -4,7 +4,6 @@ import { useShallow } from 'zustand/react/shallow'
 
 import { AuthedSurface } from './components/app-authed-surface'
 import { AppShell } from './components/app-shell'
-import { LoginModal } from './components/login-modal'
 import { ProjectPickerScreen } from './components/project-picker-screen'
 import {
   EasterEggOverlays,
@@ -31,8 +30,6 @@ import type { FileTreeNode } from '@savant-code/common/util/file'
 interface AppProps {
   initialPrompt: string | null
   agentId?: string
-  requireAuth: boolean | null
-  hasInvalidCredentials: boolean
   fileTree: FileTreeNode[]
   continueChat: boolean
   continueChatId?: string
@@ -45,8 +42,6 @@ interface AppProps {
 export const App = ({
   initialPrompt,
   agentId,
-  requireAuth,
-  hasInvalidCredentials,
   fileTree,
   continueChat,
   continueChatId,
@@ -85,14 +80,7 @@ export const App = ({
   })
 
   const authQuery = useAuthQuery()
-  const {
-    isAuthenticated,
-    setIsAuthenticated,
-    setUser,
-    handleLoginSuccess,
-    logoutMutation,
-  } = useAuthState({
-    requireAuth,
+  const { setIsAuthenticated, setUser, logoutMutation } = useAuthState({
     inputRef,
     setInputFocused,
     resetChatStore,
@@ -187,21 +175,6 @@ export const App = ({
         <ProjectPickerScreen
           onSelectProject={onProjectChange}
           initialPath={projectRoot}
-        />
-      </AppShell>
-    )
-  }
-
-  if (
-    requireAuth !== null &&
-    isAuthenticated === false &&
-    authStatus === 'ok'
-  ) {
-    return (
-      <AppShell backgroundColor={theme.background}>
-        <LoginModal
-          onLoginSuccess={handleLoginSuccess}
-          hasInvalidCredentials={hasInvalidCredentials}
         />
       </AppShell>
     )

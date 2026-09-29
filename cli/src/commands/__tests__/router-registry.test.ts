@@ -10,9 +10,9 @@ import { findCommand, COMMAND_REGISTRY } from '../command-registry'
 describe('command-registry', () => {
   describe('findCommand', () => {
     test('finds command by name', () => {
-      const login = findCommand('login')
-      expect(login).toBeDefined()
-      expect(login?.name).toBe('login')
+      // FID-2026-0929-004: the login command was deleted with the dead
+      // backend login surface — its absence is now the pin.
+      expect(findCommand('login')).toBeUndefined()
 
       const usage = findCommand('usage')
       expect(usage).toBeDefined()
@@ -37,9 +37,8 @@ describe('command-registry', () => {
       expect(quit).toBeDefined()
       expect(quit?.name).toBe('exit')
 
-      const signin = findCommand('signin')
-      expect(signin).toBeDefined()
-      expect(signin?.name).toBe('login')
+      // FID-2026-0929-004: signin (login alias) is deleted too.
+      expect(findCommand('signin')).toBeUndefined()
     })
 
     test('returns undefined for unknown command', () => {
@@ -48,7 +47,7 @@ describe('command-registry', () => {
     })
 
     test('is case insensitive', () => {
-      expect(findCommand('LOGIN')?.name).toBe('login')
+      expect(findCommand('LOGIN')).toBeUndefined()
       expect(findCommand('UsAgE')?.name).toBe('usage')
       expect(findCommand('CREDITS')?.name).toBe('usage')
     })

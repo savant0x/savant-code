@@ -1,4 +1,4 @@
-import { WEBSITE_URL } from '../../login/constants'
+import { WEBSITE_URL } from '../../branding/constants'
 import { startNewChat } from '../../project-files'
 import { useChatStore } from '../../state/chat-store'
 import { abortActiveRun } from '../../utils/active-run'

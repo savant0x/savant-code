@@ -11,7 +11,7 @@
  * so the container can animate the exit instead of hard-unmounting.
  *
  * Law 11 (follow discovered patterns): uses the established Zustand `create`
- * pattern (matches `useChatStore`, `useLoginStore`).
+ * pattern (matches `useChatStore`).
  *
  * Usage:
  *   const { addToast, dismissToast } = useToast()

@@ -18,10 +18,10 @@ import {
   shouldStackSavantFreeReferralActions,
 } from './referral-copy-button'
 import { ReferralQuietLine } from './referral-quiet-line'
+import { LOGIN_WEBSITE_URL } from '../branding/constants'
 import { useNow } from '../hooks/use-now'
 import { startSavantFreeSession } from '../hooks/use-savant-free-session'
 import { useTheme } from '../hooks/use-theme'
-import { LOGIN_WEBSITE_URL } from '../login/constants'
 import { safeOpen } from '../utils/open-url'
 import { formatSavantFreePremiumResetCountdown } from '../utils/savant-free-premium-reset'
 import { BORDER_CHARS } from '../utils/ui-constants'

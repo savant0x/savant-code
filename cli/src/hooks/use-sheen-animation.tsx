@@ -1,8 +1,12 @@
 import React, { useCallback, useEffect, useState } from 'react'
 
 import { useAnimationTimeline } from './use-animation-timeline'
-import { SHADOW_CHARS, SHEEN_STEP, SHEEN_INTERVAL_MS } from '../login/constants'
-import { getSheenColor } from '../login/utils'
+import {
+  SHADOW_CHARS,
+  SHEEN_STEP,
+  SHEEN_INTERVAL_MS,
+} from '../branding/constants'
+import { getSheenColor } from '../branding/utils'
 
 interface UseSheenAnimationParams {
   enabled?: boolean

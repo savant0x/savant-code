@@ -46,14 +46,6 @@ export const FEATURE_SLASH_COMMANDS: SlashCommand[] = [
   // FID-2026-0901-006 P21 command audit: auth is a backend surface — in
   // direct-provider mode /login dead-ends with an error, so it is hidden.
   {
-    id: 'login',
-    label: 'login',
-    description: 'Open the login screen',
-    aliases: ['signin'],
-    implicitCommand: true,
-    requiresBackend: true,
-  },
-  {
     id: 'logout',
     label: 'logout',
     description: 'Sign out of your session',

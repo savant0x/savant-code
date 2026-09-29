@@ -220,39 +220,21 @@ describe('CLI Argument Parsing', () => {
 })
 
 describe('SavantFree CLI Argument Parsing', () => {
-  test('accepts login as a command, not an unexpected argument', () => {
+  // FID-2026-0929-004: the `[command]` argument (choices: ['login']) was
+  // removed from the savant-free branch. A stray positional is now rejected
+  // by commander's DEFAULT excess-argument handling — a clean stderr error +
+  // exit 1 at process level — which cannot be asserted in-process without
+  // production behavior changes (exitOverride). Absence is pinned by grep in
+  // FID-2026-0929-004; this suite pins the still-valid no-positional path.
+  test('savant-free accepts no positional command (login removed)', () => {
     const result = parseArgs({
-      argv: ['node', 'savant-free', 'login'],
+      argv: ['node', 'savant-free'],
       isSavantFree: true,
       version: '1.0.0',
     })
 
+    expect(result.command).toBeUndefined()
     expect(result.initialPrompt).toBeNull()
-    expect(result.command).toBe('login')
     expect(result.initialMode).toBe('HYBRID')
-  })
-
-  test('allows cwd before the login command', () => {
-    const result = parseArgs({
-      argv: ['node', 'savant-free', '--cwd', '/tmp', 'login'],
-      isSavantFree: true,
-      version: '1.0.0',
-    })
-
-    expect(result.cwd).toBe('/tmp')
-    expect(result.command).toBe('login')
-    expect(result.initialPrompt).toBeNull()
-  })
-
-  test('allows cwd after the login command', () => {
-    const result = parseArgs({
-      argv: ['node', 'savant-free', 'login', '--cwd', '/tmp'],
-      isSavantFree: true,
-      version: '1.0.0',
-    })
-
-    expect(result.cwd).toBe('/tmp')
-    expect(result.command).toBe('login')
-    expect(result.initialPrompt).toBeNull()
   })
 })

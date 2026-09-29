@@ -1,8 +1,8 @@
 import React, { useState } from 'react'
 
 import { Button } from './button'
+import { LOGIN_WEBSITE_URL } from '../branding/constants'
 import { useTheme } from '../hooks/use-theme'
-import { LOGIN_WEBSITE_URL } from '../login/constants'
 import { BORDER_CHARS } from '../utils/ui-constants'
 
 /** Build a friend's share link from the referral code. Points at the

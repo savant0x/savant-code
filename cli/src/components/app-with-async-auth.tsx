@@ -9,7 +9,6 @@ import React from 'react'
 import { App } from '../app'
 import { setProjectRoot } from '../project-files'
 import { trackEvent } from '../utils/analytics'
-import { getAuthTokenDetails } from '../utils/auth'
 import { saveRecentProject } from '../utils/recent-projects'
 import { resetSavantCodeClient } from '../utils/savant-code-client'
 
@@ -46,40 +45,11 @@ export const AppWithAsyncAuth = (props: AppWithAsyncAuthProps) => {
     projectRoot,
     showProjectPicker,
   } = props
-  const [requireAuth, setRequireAuth] = React.useState<boolean | null>(null)
-  const [hasInvalidCredentials, setHasInvalidCredentials] =
-    React.useState(false)
   const [fileTree, setFileTree] = React.useState<FileTreeNode[]>([])
   const [currentProjectRoot, setCurrentProjectRoot] =
     React.useState(projectRoot)
   const [showProjectPickerScreen, setShowProjectPickerScreen] =
     React.useState(showProjectPicker)
-
-  React.useEffect(() => {
-    // In direct-provider mode (DIRECT_PROVIDER set + gateway keys), the CLI
-    // does not use the SavantCode backend for inference, so backend auth
-    // validation is unnecessary and would fail with a stub/dev token.
-    // Inline the check to avoid importing the env helper before dotenv is
-    // loaded in this early boot module.
-    if (process.env.DIRECT_PROVIDER?.trim().length) {
-      setRequireAuth(false)
-      setHasInvalidCredentials(false)
-      return
-    }
-
-    const apiKey = getAuthTokenDetails().token ?? ''
-
-    if (!apiKey) {
-      setRequireAuth(true)
-      setHasInvalidCredentials(false)
-      return
-    }
-
-    // A token is present in backend mode; show the invalid-credentials
-    // banner optimistically. It will be cleared once useAuthQuery succeeds.
-    setHasInvalidCredentials(true)
-    setRequireAuth(false)
-  }, [])
 
   const loadFileTree = React.useCallback(async (root: string) => {
     try {
@@ -133,8 +103,6 @@ export const AppWithAsyncAuth = (props: AppWithAsyncAuthProps) => {
     <App
       initialPrompt={initialPrompt}
       agentId={agentId}
-      requireAuth={requireAuth}
-      hasInvalidCredentials={hasInvalidCredentials}
       fileTree={fileTree}
       continueChat={continueChat}
       continueChatId={continueChatId}

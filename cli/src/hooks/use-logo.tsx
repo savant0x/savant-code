@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react'
 
-import { LOGO, LOGO_SMALL, SHADOW_CHARS } from '../login/constants'
-import { parseLogoLines } from '../login/utils'
+import { LOGO, LOGO_SMALL, SHADOW_CHARS } from '../branding/constants'
+import { parseLogoLines } from '../branding/utils'
 import { IS_SAVANT_FREE } from '../utils/constants'
 
 interface UseLogoOptions {

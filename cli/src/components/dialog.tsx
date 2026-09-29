@@ -1,19 +1,20 @@
 /**
  * Dialog (FID-2026-0720-033d Phase D Step 2)
  *
- * Reusable overlay modal primitive. Designed to replace the 4 ad-hoc modal
+ * Reusable overlay modal primitive. Designed to replace the ad-hoc modal
  * patterns cataloged in FID-033d Step 2 (Law 7 — search before create):
- *   - login-modal.tsx (auth flow)
  *   - review-screen.tsx (publish review)
  *   - publish-confirmation.tsx (publish confirm)
  *   - ask-user/ (multi-choice form)
+ *   (the former login-modal.tsx entry was deleted with the login surface,
+ *   FID-2026-0929-004)
  *
  * This is the foundational primitive; migration of each ad-hoc pattern to use
  * `<Dialog>` is incremental and tracked separately.
  *
  * Law 11 (follow discovered patterns): the overlay container pattern (full-
  * width box, surface background, border, centered content) mirrors the
- * existing `login-modal.tsx` and `chat-input-bar.tsx` ask-user container.
+ * existing `chat-input-bar.tsx` ask-user container.
  *
  * Law 14 (error paths): Dialog is a pure layout container — it never crashes.
  * If children render nothing, Dialog renders an empty bordered box (not a

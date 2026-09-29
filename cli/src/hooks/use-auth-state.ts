@@ -1,13 +1,11 @@
 import { AnalyticsEvent } from '@savant-code/common/constants/analytics-events'
-import { useCallback, useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 
 import { useAuthQuery, useLogoutMutation } from './use-auth-query'
-import { useLoginStore } from '../state/login-store'
 import { identifyUser, trackEvent } from '../utils/analytics'
 import { getUserCredentials } from '../utils/auth'
 import { IS_SAVANT_FREE } from '../utils/constants'
 import { loggerContext } from '../utils/logger'
-import { resetSavantCodeClient } from '../utils/savant-code-client'
 
 import type { MultilineInputHandle } from '../components/multiline-input'
 import type { User } from '../utils/auth'
@@ -27,35 +25,21 @@ const clearAuthLoggerContext = () => {
 }
 
 interface UseAuthStateOptions {
-  requireAuth: boolean | null
   inputRef: React.MutableRefObject<MultilineInputHandle | null>
   setInputFocused: (focused: boolean) => void
   resetChatStore: () => void
 }
 
 export const useAuthState = ({
-  requireAuth,
   inputRef,
   setInputFocused,
   resetChatStore,
 }: UseAuthStateOptions) => {
   const authQuery = useAuthQuery()
   const logoutMutation = useLogoutMutation()
-  const { resetLoginState } = useLoginStore()
 
-  const initialAuthState = requireAuth === null ? null : !requireAuth
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(
-    initialAuthState,
-  )
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null)
   const [user, setUser] = useState<User | null>(null)
-
-  // Update authentication state when requireAuth changes
-  useEffect(() => {
-    if (requireAuth === null) {
-      return
-    }
-    setIsAuthenticated(!requireAuth)
-  }, [requireAuth])
 
   // Update authentication state based on query results
   useEffect(() => {
@@ -94,37 +78,6 @@ export const useAuthState = ({
     }
   }, [authQuery.isSuccess, authQuery.isError, authQuery.data, user])
 
-  // Handle successful login
-  const handleLoginSuccess = useCallback(
-    (loggedInUser: User) => {
-      // Identify first (aliases the pre-login anonymous history to the real
-      // user id) so the login event below is attributed to the user.
-      if (loggedInUser.id && typeof loggedInUser.email === 'string') {
-        setAuthLoggerContext({
-          userId: loggedInUser.id,
-          email: loggedInUser.email,
-        })
-      }
-
-      // Track successful login
-      trackEvent(AnalyticsEvent.LOGIN, {
-        userId: loggedInUser.id ?? '',
-        via: 'modal',
-        hasEmail: Boolean(loggedInUser.email),
-        hasName: Boolean(loggedInUser.name),
-      })
-
-      // Reset the SDK client to pick up new credentials
-      resetSavantCodeClient()
-      resetChatStore()
-      resetLoginState()
-      setInputFocused(true)
-      setUser(loggedInUser)
-      setIsAuthenticated(true)
-    },
-    [resetChatStore, resetLoginState, setInputFocused],
-  )
-
   // Auto-focus input after authentication
   useEffect(() => {
     if (isAuthenticated !== true) return
@@ -149,7 +102,6 @@ export const useAuthState = ({
     setIsAuthenticated,
     user,
     setUser,
-    handleLoginSuccess,
     logoutMutation,
   }
 }

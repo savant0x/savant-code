@@ -2,7 +2,7 @@ import fs from 'fs'
 import { createRequire } from 'module'
 import path from 'path'
 
-import { Argument, Command } from 'commander'
+import { Command } from 'commander'
 
 import { IS_SAVANT_FREE, type AgentMode } from './utils/constants'
 import { getCliEnv } from './utils/env'
@@ -104,9 +104,6 @@ export function parseArgs({
         '--cwd <directory>',
         'Set the working directory (default: current directory)',
       )
-      .addArgument(
-        new Argument('[command]', 'Command to run').choices(['login']),
-      )
       .helpOption('-h, --help', 'Show this help message')
   } else {
     // SavantCode: full CLI with all options
@@ -184,7 +181,7 @@ export function parseArgs({
       )
       .addHelpText(
         'after',
-        '\nCommands:\n  login                          Log in to your account\n  publish                        Publish agents to the registry\n  release <op>                    Run the public release flow (preview | diagnose | go | resume | status)\n  server                         Start the desktop session gateway (WebSocket JSON-RPC)',
+        '\nCommands:\n  publish                        Publish agents to the registry\n  release <op>                    Run the public release flow (preview | diagnose | go | resume | status)\n  server                         Start the desktop session gateway (WebSocket JSON-RPC)',
       )
       .helpOption('-h, --help', 'Show this help message')
       .argument('[prompt...]', 'Initial prompt to send to the agent')

@@ -5,7 +5,6 @@ import { runStandaloneRelease } from './commands/release/release-command'
 import { normalizeReleaseCommand } from './commands/release/release-runner'
 import { writeHeadlessOutcome } from './headless-outcome'
 import { runHeadlessPrint } from './headless-run'
-import { runPlainLogin } from './login/plain-login'
 import { getProjectRoot } from './project-files'
 import { runServerCommand } from './server-command'
 import { runHeadlessAutoDrive } from './utils/auto-drive-headless'
@@ -42,7 +41,6 @@ export async function dispatchCommandsAndHeadless(
     json,
   } = args
   const hasAgentOverride = Boolean(agent?.trim())
-  const isLoginCommand = command === 'login'
   const isReleaseCommand = command === 'release'
   const isServerCommand = command === 'server'
 
@@ -54,15 +52,6 @@ export async function dispatchCommandsAndHeadless(
   // watchdog (parent death) or a stop signal terminates it.
   if (isServerCommand) {
     await runServerCommand({ port: args.port })
-    return true
-  }
-
-  // Handle explicit command invocations before generic non-TTY routing.
-  // Login is a command, not a prompt: in smoke tests, CI, and scripted shells
-  // stdin is non-TTY, but that must not turn `savant-free login` into a
-  // headless `--print` invocation.
-  if (isLoginCommand && !print) {
-    await runPlainLogin()
     return true
   }
 

@@ -14,7 +14,6 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 
 import {
   getUserCredentials as defaultGetUserCredentials,
-  saveUserCredentials as defaultSaveUserCredentials,
   logoutUser as logoutUserUtil,
   type User,
 } from '../utils/auth'
@@ -174,56 +173,6 @@ export function useAuthQuery(deps: UseAuthQueryDeps = {}) {
       return Math.min(
         RETRY_BACKOFF_BASE_DELAY_MS * Math.pow(2, attemptIndex),
         8000, // Cap at 8 seconds
-      )
-    },
-  })
-}
-
-export interface UseLoginMutationDeps {
-  saveUserCredentials?: (user: User) => void
-  getUserInfoFromApiKey?: GetUserInfoFromApiKeyFn
-  logger?: Logger
-}
-
-/**
- * Hook for login mutation
- *
- * CHANGE: Now accepts optional dependencies for testing via dependency injection
- */
-export function useLoginMutation(deps: UseLoginMutationDeps = {}) {
-  const queryClient = useQueryClient()
-  const {
-    saveUserCredentials = defaultSaveUserCredentials,
-    getUserInfoFromApiKey = defaultGetUserInfoFromApiKey,
-    logger = defaultLogger,
-  } = deps
-
-  return useMutation({
-    mutationFn: async (user: User) => {
-      // Save credentials to file system
-      saveUserCredentials(user)
-
-      // Validate the new credentials
-      const authResult = await validateApiKey({
-        apiKey: user.authToken,
-        getUserInfoFromApiKey,
-        logger,
-      })
-
-      const mergedUser = { ...user, ...authResult }
-      return mergedUser
-    },
-    onSuccess: () => {
-      // Invalidate auth queries to trigger refetch with new credentials
-      queryClient.invalidateQueries({ queryKey: authQueryKeys.all })
-    },
-    onError: (error) => {
-      logger.error(
-        {
-          error: error instanceof Error ? error.message : String(error),
-          errorStack: error instanceof Error ? error.stack : undefined,
-        },
-        '❌ Login mutation failed',
       )
     },
   })

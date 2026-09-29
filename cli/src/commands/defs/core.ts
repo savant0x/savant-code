@@ -1,7 +1,6 @@
 import { useChatStore } from '../../state/chat-store'
 import { useFeedbackStore } from '../../state/feedback-store'
-import { useLoginStore } from '../../state/login-store'
-import { getSystemMessage, getUserMessage } from '../../utils/message-history'
+import { getSystemMessage } from '../../utils/message-history'
 import { handleAdsEnable, handleAdsDisable } from '../ads'
 import { handleAttestCommand } from '../attest'
 import {
@@ -208,27 +207,6 @@ export const CORE_COMMANDS = [
     },
   }),
   defineCommand({
-    name: 'login',
-    aliases: ['signin'],
-    handler: (params) => {
-      params.abortControllerRef.current?.abort()
-      params.stopStreaming()
-      params.setCanProcessQueue(false)
-
-      const { resetLoginState } = useLoginStore.getState()
-      resetLoginState()
-      params.setMessages((prev) => [
-        ...prev,
-        getUserMessage(params.inputValue.trim()),
-        getSystemMessage('Opening login screen...'),
-      ])
-      params.saveToHistory(params.inputValue.trim())
-      clearInput(params)
-      params.setUser(null)
-      params.setIsAuthenticated(false)
-    },
-  }),
-  defineCommand({
     name: 'logout',
     aliases: ['signout'],
     handler: (params) => {
@@ -236,10 +214,8 @@ export const CORE_COMMANDS = [
       params.stopStreaming()
       params.setCanProcessQueue(false)
 
-      const { resetLoginState } = useLoginStore.getState()
       params.logoutMutation.mutate(undefined, {
         onSettled: () => {
-          resetLoginState()
           params.setMessages((prev) => [
             ...prev,
             getSystemMessage('Logged out.'),
