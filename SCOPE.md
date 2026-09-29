@@ -62,10 +62,13 @@
 
 ## Open items
 
-**Fourteen** items are open. Each names its own specific blocker. Nothing here
+**Ten** items are open. Each names its own specific blocker. Nothing here
 may be dropped, trimmed, or reclassified without an operator ruling; a working
 tree state is not a disposition. When an item closes it leaves this file
 entirely — its evidence goes to `CHANGELOG.md`, not to a section here.
+(2026-09-29: T98–T101 completed and left the register on this rule; evidence
+in archived `FID-2026-0929-001`/-002/-003/-004, CHANGELOG
+`Unreleased — 2026-09-29`, and the 2026-09-29 session summary.)
 (2026-09-28: T96-followup, FID-2026-0927-006, T63, T67, T84-C, T61,
 FID-2026-0928-009, T90-F3 and T62-followup(1) all completed and left the
 register on this rule; evidence in archived `FID-2026-0928-006`/-007/-008/

@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-0929-001-provider-identity-leak-brand-guard.md`
 **ID:** FID-2026-0929-001
 **Severity:** medium
-**Status:** verified
+**Status:** closed
 **Created:** 2026-09-29
 **Automation level:** 3
 **YAGNI-Compliance:** Verified
@@ -228,11 +228,30 @@ directly about infrastructure.
 
 ## Resolution
 
-- **Closed Date:** —
-- **Fix Description:** —
-- **Tests Added:** —
-- **Verification Evidence:** —
-- **Archived:** —
+- **Closed Date:** 2026-09-29
+- **Fix Description:** Identity counter-clause in the shared base system
+  prompt (all 6 modes); bundle regenerated (13/13 savant chunks).
+- **Tests Added:** Yes — `agents/savant/__tests__/system-prompt-identity.test.ts`
+  (9 tests).
+- **Verification Evidence:** Receipt stamped by `fid:verify --write` (gates
+  re-run live: typecheck agents, identity suite, quality — all exit 0);
+  clause grep 13/13 chunks; full agents suite 145/0.
+- **Archived:** 2026-09-29
+
+## Implementation Evidence
+
+- [x] **Commit SHA:** `bc3b31d8`
+- [x] **File:line ranges:** `agents/savant/system-prompt.ts` (identity
+      paragraph of `buildDefaultSystemPrompt`);
+      `agents/savant/__tests__/system-prompt-identity.test.ts` (new).
+- [x] **Gate output:** `[PASS] typecheck agents (exit 0)` · `[PASS] test
+      agents/savant/__tests__/system-prompt-identity.test.ts (exit 0)` ·
+      `[PASS] quality (exit 0)` (stamped receipt above).
+- [x] **Reproducibility:** `grep -c "Your name is Savant"
+      cli/src/agents/bundled-agents.generated-data/*` after
+      `bun run --cwd=cli prebuild:agents`.
+- [x] **Step statuses:** All 4 Proposed Solution steps implemented (step 4's
+      live identity battery remains the operator-run NEEDS-REVIEW probe).
 
 ## Lessons Learned
 

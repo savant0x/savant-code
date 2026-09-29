@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-0929-002-direct-provider-402-out-of-credits-misfire.md`
 **ID:** FID-2026-0929-002
 **Severity:** high
-**Status:** verified
+**Status:** closed
 **Created:** 2026-09-29
 **Automation level:** 3
 **YAGNI-Compliance:** Verified
@@ -251,11 +251,30 @@ genuine backend-mode behavior is byte-identical):
 
 ## Resolution
 
-- **Closed Date:** —
-- **Fix Description:** —
-- **Tests Added:** —
-- **Verification Evidence:** —
-- **Archived:** —
+- **Closed Date:** 2026-09-29
+- **Fix Description:** Both 402 branches gated on `isDirectProviderMode()`,
+  direct mode renders the provider's own message via
+  `providerOutOfCreditsError` + widened `quotaHint`; backend mode unchanged.
+- **Tests Added:** Yes — `cli/src/utils/__tests__/error-handling-direct-402.test.ts`
+  (new, 7 tests) + direct-mode pins in `send-message-error-specialized.test.ts`.
+- **Verification Evidence:** Receipt stamped (typecheck cli, 2 test suites,
+  quality — all exit 0); full cli suite 3881/0; call-graph grep: exactly the
+  two declared production call sites.
+- **Archived:** 2026-09-29
+
+## Implementation Evidence
+
+- [x] **Commit SHA:** `c49d3887`
+- [x] **File:line ranges:** `cli/src/utils/error-handling.ts:61`
+      (`providerOutOfCreditsError`);
+      `cli/src/hooks/helpers/send-message/run-results.ts:97-114, 237-252`;
+      `cli/src/hooks/helpers/send-message/fallback-hints.ts`
+      (`isQuotaRefusal` 402 widening).
+- [x] **Gate output:** stamped receipt above; cli workspace 3881/0.
+- [x] **Reproducibility:** `grep -n providerOutOfCreditsError cli/src` → the
+      definition + the two mode-gated call sites.
+- [x] **Step statuses:** All 4 steps implemented; live 402 reproduction
+      remains operator-run NEEDS-REVIEW.
 
 ## Lessons Learned
 

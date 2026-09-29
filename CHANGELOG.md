@@ -1,5 +1,23 @@
 # Changelog
 
+## Unreleased — 2026-09-29
+
+### Provider identity leak brand guard — the harness asserts its own identity (FID-2026-0929-001) — **closed 2026-09-29** (commit bc3b31d8)
+
+On the APInex free lane (apinex/free/mimo-v2.6-pro), the agent greeted the operator as "I'm Savant V2.6 Pro, running via APInex (apinex.bond)" — a supplier-branded persona synthesized from the upstream identity instruction APInex documents for its free tier. Fix: an identity counter-clause in the shared base system prompt (agents/savant/system-prompt.ts) covering all 6 modes — the agent's name is Savant on every model and provider; never synthesize a persona from the model id; never adopt supplier/gateway branding; never volunteer infrastructure names; direct questions still get honest, brief answers. Regenerated bundle carries the clause in 13/13 savant chunks; 9-test pin (agents/savant/__tests__/system-prompt-identity.test.ts). Pulled from the shelved idea-shelf note at operator request; the gateway-edge response scrub remains a gateway-layer requirement for the day a free lane ships to users.
+
+### Direct-provider 402 honesty — no more phantom backend billing (FID-2026-0929-002) — **closed 2026-09-29** (commit c49d3887)
+
+In direct-provider mode, a provider 402 was rewritten by isOutOfCreditsError() into "Out of credits. Please add credits at https://savant-code.com/usage" plus outOfCredits input-mode lockout — backend-branded billing for a backend that does not exist (the transcript incident). Fix: both 402 branches (handleRunCompletion, handleRunError) now gate on isDirectProviderMode(); direct mode renders the provider's own message with provider label and a /health//provider pointer via providerOutOfCreditsError() + the quotaHint seam (widened to match bare 402s); no input-mode flip, no backend usage poll. Backend mode byte-identical (its regression pin untouched and green). Full cli suite 3881/0 at implementation.
+
+### Boot-mode precedence — only the explicit env backend key defers routing (FID-2026-0929-003) — **closed 2026-09-29** (commit 742f3612)
+
+A third-party diagnosis claimed the CLI booted in backend mode for lack of the DIRECT_PROVIDER pair — adjudicated claim-by-claim and largely refuted by a live names-only probe (authToken: false; activeProvider persisted; boot re-arms direct mode), but it surfaced a real unruled precedence: both boot re-arm gates were vetoed by getAuthToken(), never ruled for persisted interactive selections. Operator ruling: "we need to gut this whole 'backend' idea, we don't have a backend to fall back to." Implemented hasEnvBackendCredentials() as the one predicate boot routing may consult — true only for an explicit SAVANT_CODE_API_KEY; a stored login token is residue and defers to nothing; the stub bypass token never counts. All three boot gates re-keyed (provider-key-store.ts x2, ollama-onboarding.ts); 8 new pins. This machine's observable boot is unchanged.
+
+### Gut-the-backend stage 1 — the dead login surface deleted (FID-2026-0929-004) — **closed 2026-09-29** (commit 4b54e804)
+
+The backend login surface was dead code: the LoginModal render gate is unreachable (boot always arms DIRECT_PROVIDER, falling through to the openrouter default even on a virgin machine) and the savant-free login command dead-ended on a host with no backend. Deleted: LoginModal, LoginUrlSection, 4 login hooks, login-flow, plain-login, login-store, and 4 test suites. The misnamed cli/src/login/{constants,utils}.ts — actually the brand logo, sheen, and URL assets consumed by 8 live components — relocated to cli/src/branding/ with modal-only exports dropped. /login slash command and the login CLI argument removed; modal plumbing (requireAuth, hasInvalidCredentials, handleLoginSuccess, useLoginMutation) stripped from app.tsx, app-with-async-auth, use-auth-state, and use-auth-query. Logout and stored-token handling survive for later stages. cli workspace 3867/0 post-deletion.
+
 ## 0.0.34 — 2026-09-28
 
 ### Archived-FID closure guard — the ceremony's status flip can no longer fail silently (FID-2026-0928-013) — **`closed` 2026-09-28**

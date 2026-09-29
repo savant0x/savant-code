@@ -1,4 +1,4 @@
-# Session Summary — 2026-09-29 (provider leak + 402 misfire, FIDs verified)
+# Session Summary — 2026-09-29 (provider leak + 402 misfire + gut-the-backend stage 1, closed)
 
 ## Initial state assessment
 
@@ -113,6 +113,21 @@ objection arrived:
   reproduction (FID-002 Verification). Both FIDs stay open (`verified`) until
   the operator rules on closure — G2 requires a commit hash, and git execution
   is operator authorization (invariant G2/G1).
+
+## Addendum 5 — Closure ceremony (operator authorized local commits, no push)
+
+Six path-scoped commits (G3/G4/G8): `9ab1f7e1` (pre-session 0928 guard),
+`bc3b31d8` (FID-001), `c49d3887` (FID-002), `742f3612` (FID-003),
+`4b54e804` (FID-004), `171e63ad` (register/summary bookkeeping). All four
+FIDs flipped to `closed` with commit hashes + Implementation Evidence,
+moved to `dev/fids/archive/`, and entered in the CHANGELOG
+(`Unreleased — 2026-09-29`) via the >100k-char-safe anchor-insertion route
+with an idempotence guard. FID index updated; SCOPE register back to Ten
+open items (T98–T101 left on the completed-items rule). Active queue empty.
+Process note: the first closure attempt (soft-reset) briefly produced a
+mixed commit by taking the pre-staged index; caught immediately, undone
+with `git reset --soft`, and redone with explicit pathspecs. Nothing was
+pushed.
 
 ## Addendum 4 — Stage 1 executed and verified (FID-2026-0929-004)
 

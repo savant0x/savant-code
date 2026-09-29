@@ -798,6 +798,18 @@ cross-repo smoke (real Savant parent → built CLI) carries OPEN as the
 operator-assisted boundary — never claimed. See `archive/README.md` (2026-09-08
 closure section) and the CHANGELOG 0.0.30 entries.
 
+**2026-09-29 closure — four FIDs closed + archived (queue emptied same day):**
+[`FID-2026-0929-001`](archive/FID-2026-0929-001-provider-identity-leak-brand-guard.md),
+[`FID-2026-0929-002`](archive/FID-2026-0929-002-direct-provider-402-out-of-credits-misfire.md),
+[`FID-2026-0929-003`](archive/FID-2026-0929-003-boot-mode-precedence-token-vs-selection.md),
+and
+[`FID-2026-0929-004`](archive/FID-2026-0929-004-delete-dead-login-surface.md)
+**closed + archived 2026-09-29** — provider identity brand guard, direct-mode
+402 honesty, boot-mode precedence per the gut-the-backend ruling, and the
+dead login surface deletion (stage 1). Receipts at their archived paths;
+commits `bc3b31d8`/`c49d3887`/`742f3612`/`4b54e804`; CHANGELOG under
+`Unreleased — 2026-09-29`.
+
 **2026-09-08 (later) — FID-2026-0908-001 closed + archived; the active queue was
 empty until FID-2026-0908-003 opened the same day** (see `archive/README.md`
 and the CHANGELOG 0.0.30 entry).

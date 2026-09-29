@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-0929-004-delete-dead-login-surface.md`
 **ID:** FID-2026-0929-004
 **Severity:** medium
-**Status:** verified
+**Status:** closed
 **Created:** 2026-09-29
 **Automation level:** 3 (green-lit by operator directive: "Green-light deleting
 the dead login surface first (modal, hooks, cli/src/login, command dispatch)")
@@ -236,11 +236,34 @@ stage of the program — this stage does not creep into it).
 
 ## Resolution
 
-- **Closed Date:** —
-- **Fix Description:** —
-- **Tests Added:** —
-- **Verification Evidence:** —
-- **Archived:** —
+- **Closed Date:** 2026-09-29
+- **Fix Description:** 9 production files + 4 test suites deleted; branding
+  assets relocated to `cli/src/branding/`; `/login` command + `login` CLI
+  argument removed; modal plumbing stripped from the app/auth surfaces.
+- **Tests Added:** Yes — updated pins in `router-registry.test.ts`,
+  `router-input.test.ts`, `command-args.test.ts`, `cli-args.test.ts`
+  (login-absence pins).
+- **Verification Evidence:** Receipt stamped (typecheck cli, 2 suites,
+  quality — all exit 0); cli workspace 3867/0 post-deletion; symbol
+  absence-grep zero production matches.
+- **Archived:** 2026-09-29
+
+## Implementation Evidence
+
+- [x] **Commit SHA:** `4b54e804`
+- [x] **File:line ranges:** deletions per the Affected Components list;
+      `cli/src/branding/{constants,utils}.ts` (relocated);
+      `cli/src/app.tsx`, `components/app-with-async-auth.tsx`,
+      `hooks/use-auth-state.ts`, `hooks/use-auth-query.ts` (plumbing
+      stripped); `commands/defs/core.ts`, `data/slash-command-feature.ts`,
+      `cli-command-dispatch.ts`, `cli-args.ts` (command/argument removal).
+- [x] **Gate output:** stamped receipt above; cli workspace 3867/0.
+- [x] **Reproducibility:** `ls cli/src/login` → not found;
+      `grep -rn "useLoginMutation\|useLoginStore(\|runPlainLogin\|LoginModal"
+      cli/src` → zero matches.
+- [x] **Step statuses:** All 6 steps implemented; the mid-loop adversarial
+      correction (commander rejection vs ordinary-prompt parsing) is recorded
+      in the ADVERSARIAL entry above.
 
 ## Lessons Learned
 

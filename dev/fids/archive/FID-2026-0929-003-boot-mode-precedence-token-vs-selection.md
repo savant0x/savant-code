@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-0929-003-boot-mode-precedence-token-vs-selection.md`
 **ID:** FID-2026-0929-003
 **Severity:** medium
-**Status:** verified
+**Status:** closed
 **Created:** 2026-09-29
 **Automation level:** 1 (planning) → ruling received 2026-09-29; the ruled
 slice implemented the same day (see Proposed Solution + Implementation
@@ -245,11 +245,32 @@ branch.
 
 ## Resolution
 
-- **Closed Date:** —
-- **Fix Description:** —
-- **Tests Added:** —
-- **Verification Evidence:** —
-- **Archived:** —
+- **Closed Date:** 2026-09-29
+- **Fix Description:** `hasEnvBackendCredentials()` — the one predicate
+  boot-time routing may consult; all three boot gates re-keyed; stored
+  tokens and the stub demoted per the ruling.
+- **Tests Added:** Yes — `auth-env-backend-credentials.test.ts` (4),
+  coexistence pins in `provider-setup-gateway.test.ts` (3) and
+  `ollama-onboarding.test.ts` (1).
+- **Verification Evidence:** Receipt stamped (typecheck cli, 3 suites,
+  quality — all exit 0); cli workspace 3889/0.
+- **Archived:** 2026-09-29
+
+## Implementation Evidence
+
+- [x] **Commit SHA:** `742f3612`
+- [x] **File:line ranges:** `cli/src/utils/auth.ts`
+      (`hasEnvBackendCredentials`); `cli/src/utils/provider-key-store.ts`
+      (restore gate + arm gate); `cli/src/utils/ollama-onboarding.ts`
+      (restore gate + detection gate).
+- [x] **Gate output:** stamped receipt above; cli workspace 3889/0.
+- [x] **Reproducibility:** `grep -rn hasEnvBackendCredentials cli/src` → the
+      definition + three production call sites.
+- [x] **Step statuses:** All 4 steps implemented. The ruling's wider program
+      (login surface, `SAVANT_CODE_API_KEY` retirement, SDK backend surface,
+      backend-mode OUT_OF_CREDITS branch) proceeds as separately-scoped
+      stages — stage 1 is FID-2026-0929-004; the rest are registered in
+      SCOPE (T100/T101 remainders) pending the operator's pick.
 
 ## Lessons Learned
 
