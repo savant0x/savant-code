@@ -115,6 +115,36 @@ describe('ollama-onboarding', () => {
     },
   )
 
+  // FID-2026-0929-003: a stored login token is residue, not a routing command
+  // — it does NOT defer the persisted Ollama restore. Only the explicit
+  // SAVANT_CODE_API_KEY defers (pinned above); the stub bypass token never
+  // counts.
+  test.serial(
+    'applyPersistedDirectProviderSettings ignores a stored login token',
+    () => {
+      saveSettings({
+        directProvider: 'ollama',
+        directProviderBaseUrl: 'http://localhost:11434/v1',
+      })
+      fs.writeFileSync(
+        path.join(tempConfigDir, 'credentials.json'),
+        JSON.stringify({
+          default: {
+            name: 'Test User',
+            email: 'test@example.com',
+            authToken: 'stored-backend-token',
+          },
+        }),
+      )
+
+      applyPersistedDirectProviderSettings()
+
+      expect(process.env.DIRECT_PROVIDER).toBe('ollama')
+      expect(process.env.INFERENCE_BASE_URL).toBe('http://localhost:11434/v1')
+      expect(isOllamaAutoConfigured()).toBe(true)
+    },
+  )
+
   test.serial(
     'detectOllamaAndConfigureDirectProvider returns early when DIRECT_PROVIDER is already set',
     async () => {

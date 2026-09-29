@@ -83,6 +83,29 @@ describe('provider setup', () => {
     expect(process.env.INFERENCE_BASE_URL).toBe('https://tokenharbor.ai/v1')
   })
 
+  // FID-2026-0929-003 (operator ruling 2026-09-29): a stored login token does
+  // not defer the persisted-key restore — a saved provider key IS the
+  // operator's explicit routing command, and there is no deployable backend
+  // to fall back to.
+  test('a stored credentials token does not defer the persisted-key restore', () => {
+    fs.writeFileSync(
+      path.join(tempDir, 'credentials.json'),
+      JSON.stringify({
+        default: {
+          name: 'Test User',
+          email: 'test@example.com',
+          authToken: 'stored-backend-token',
+        },
+        providerApiKeys: { TOKENHARBOR_API_KEY: 'stored-key' },
+      }),
+    )
+
+    applyPersistedProviderApiKeys()
+
+    expect(process.env.DIRECT_PROVIDER).toBe('tokenharbor')
+    expect(process.env.INFERENCE_BASE_URL).toBe('https://tokenharbor.ai/v1')
+  })
+
   test('configures the default gateway without inventing a provider key', () => {
     configureDefaultDirectProvider()
 
@@ -99,6 +122,41 @@ describe('provider setup', () => {
 
     expect(process.env.DIRECT_PROVIDER).toBe('ollama')
     expect(process.env.INFERENCE_BASE_URL).toBe('http://localhost:11434/v1')
+  })
+
+  // FID-2026-0929-003 (operator ruling 2026-09-29): a persisted /provider
+  // selection outranks a stored login token — the token is residue, not a
+  // routing command, and there is no deployable backend to fall back to.
+  // Only the explicit SAVANT_CODE_API_KEY defers the auto-arm (pinned below).
+  test('a persisted selection outranks a stored login token', () => {
+    fs.writeFileSync(
+      path.join(tempDir, 'credentials.json'),
+      JSON.stringify({
+        default: {
+          name: 'Test User',
+          email: 'test@example.com',
+          authToken: 'stored-backend-token',
+        },
+      }),
+    )
+    saveSettings({ activeProvider: 'apinex' })
+
+    configureDefaultDirectProvider()
+
+    expect(process.env.DIRECT_PROVIDER).toBe('apinex')
+    expect(process.env.INFERENCE_BASE_URL).toBe('https://api.apinex.bond/v1')
+  })
+
+  // FID-2026-0929-003: SAVANT_CODE_API_KEY is the one deliberate backend-mode
+  // opt-in and still defers the auto-arm.
+  test('a real env backend token still defers the auto-arm', () => {
+    saveSettings({ activeProvider: 'apinex' })
+    process.env.SAVANT_CODE_API_KEY = 'env-backend-token'
+
+    configureDefaultDirectProvider()
+
+    expect(process.env.DIRECT_PROVIDER).toBeUndefined()
+    expect(process.env.INFERENCE_BASE_URL).toBeUndefined()
   })
 
   test('saved gateway key takes precedence over persisted Ollama mode', () => {

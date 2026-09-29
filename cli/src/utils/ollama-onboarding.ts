@@ -3,7 +3,7 @@ import {
   type OllamaDetectionResult,
 } from '@savant-code/llm-providers/ollama'
 
-import { getAuthToken, getAuthTokenDetails } from './auth'
+import { hasEnvBackendCredentials } from './auth'
 import { logger } from './logger'
 import {
   DEFAULT_SAVANT_CODE_MODEL_ID,
@@ -61,9 +61,12 @@ export function __resetOllamaAutoConfigured(): void {
  * logging in always takes precedence over a previous local-only setup.
  */
 export function applyPersistedDirectProviderSettings(): void {
-  // A real backend token means the user wants the SavantCode backend, not a
-  // previously persisted local provider.
-  if (getAuthToken()) {
+  // FID-2026-0929-003 (operator ruling 2026-09-29): only the EXPLICIT
+  // environment backend key defers the persisted Ollama restore — a stored
+  // login token is residue, not a routing command, and the direct-provider
+  // stub bypass token is a boot shim, not authentication. There is no
+  // deployable backend to fall back to.
+  if (hasEnvBackendCredentials()) {
     return
   }
 
@@ -107,13 +110,11 @@ export function applyPersistedDirectProviderSettings(): void {
 export async function detectOllamaAndConfigureDirectProvider(
   detect: () => Promise<OllamaDetectionResult> = detectOllama,
 ): Promise<void> {
-  // Respect explicit user configuration: if a real backend token or direct
-  // provider is already set, do not override it. Direct-provider mode returns
-  // a stub bypass token from auth.ts; that is not backend authentication and
-  // must not prevent stale Ollama re-probing.
-  const authSource = getAuthTokenDetails().source
-  const hasBackendToken =
-    authSource === 'credentials' || authSource === 'environment'
+  // Respect explicit user configuration: if an explicit backend key or a
+  // direct provider is already set, do not override it. FID-2026-0929-003:
+  // the check is hasEnvBackendCredentials() — a stored login token and the
+  // direct-provider stub bypass token must not block Ollama detection.
+  const hasBackendToken = hasEnvBackendCredentials()
   const hasDirectProviderEnv =
     (process.env.DIRECT_PROVIDER ?? '').trim().length > 0 ||
     (process.env.INFERENCE_BASE_URL ?? '').trim().length > 0

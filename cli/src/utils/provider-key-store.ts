@@ -8,7 +8,11 @@ import {
 import { PROVIDER_REGISTRY } from '@savant-code/common/providers/registry'
 import { resetOpenRouterApiKeyCache } from '@savant-code/sdk'
 
-import { getAuthToken, getConfigDir, getCredentialsPath } from './auth'
+import {
+  getConfigDir,
+  getCredentialsPath,
+  hasEnvBackendCredentials,
+} from './auth'
 import {
   readCredentialsRecord,
   readStoredProviderKeys,
@@ -100,13 +104,11 @@ export function applyPersistedProviderApiKeys(): void {
     }
   }
 
-  // A provider key saved by an earlier release may predate the persisted
-  // direct-provider settings. Restore direct mode from the key itself so an
-  // npm-installed CLI can use the saved credential without a shell env var.
+  // Restore direct mode from an earlier-saved provider key (env key defers).
   if (
     !process.env.DIRECT_PROVIDER?.trim() &&
     !process.env.INFERENCE_BASE_URL?.trim() &&
-    !getAuthToken()
+    !hasEnvBackendCredentials()
   ) {
     const configured = Object.entries(getEffectiveProviderSetupConfig()).find(
       ([, config]) => Boolean(storedKeys[config.envVar]),
@@ -126,10 +128,12 @@ export function applyPersistedProviderApiKeys(): void {
  * still reports the exact missing-key instruction when they submit a prompt.
  */
 export function configureDefaultDirectProvider(): void {
+  // FID-2026-0929-003: only the explicit env backend key (SAVANT_CODE_API_KEY)
+  // defers the auto-arm; stored tokens and stubs never outrank a selection.
   if (
     process.env.DIRECT_PROVIDER?.trim() ||
     process.env.INFERENCE_BASE_URL?.trim() ||
-    getAuthToken()
+    hasEnvBackendCredentials()
   ) {
     return
   }

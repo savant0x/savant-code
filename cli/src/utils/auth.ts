@@ -148,6 +148,23 @@ export const hasAuthCredentials = (): boolean => {
   return !!getAuthTokenDetails().token
 }
 
+/**
+ * FID-2026-0929-003 (operator ruling 2026-09-29: "we need to gut this whole
+ * 'backend' idea, we don't have a backend to fall back to"): the ONE predicate
+ * every boot-time routing decision must consult.
+ *
+ * True ONLY for the explicit environment backend key (SAVANT_CODE_API_KEY) —
+ * the one remaining deliberate backend-mode opt-in. Two things never count:
+ * - a stored login token: it is residue, not a routing command, and must
+ *   never outrank a persisted /provider selection or a saved provider key;
+ * - the direct-provider stub bypass token: that is a boot shim, not
+ *   authentication (getAuthTokenDetails() remains the full-detail surface
+ *   for UX that merely wants to know whether a login record exists).
+ */
+export const hasEnvBackendCredentials = (): boolean => {
+  return getAuthTokenDetails().source === 'environment'
+}
+
 export interface AuthValidationResult {
   authenticated: boolean
   hasInvalidCredentials: boolean
