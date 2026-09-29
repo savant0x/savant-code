@@ -5,7 +5,7 @@
 **Filename:** FID-2026-0917-006-compaction-signal-durable-retirement.md
 **ID:** FID-2026-0917-006
 **Severity:** high
-**Status:** fixed
+**Status:** closed
 **Created:** 2026-09-17
 
 ## Summary

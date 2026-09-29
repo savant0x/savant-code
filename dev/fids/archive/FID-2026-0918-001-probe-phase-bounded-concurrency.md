@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-0918-001-probe-phase-bounded-concurrency.md`
 **ID:** FID-2026-0918-001
 **Severity:** medium
-**Status:** verified
+**Status:** closed
 > (`converged` is the correct pre-implementation status per
 > FID-2026-0915-004; `fixed` is deprecated-but-accepted legacy language —
 > do not use it for new FIDs. The receipt contract still keys to

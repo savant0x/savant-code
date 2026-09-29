@@ -3,6 +3,16 @@
 This directory contains closed or historically completed FIDs. Files here are
 an audit record, not an active work queue.
 
+## 2026-09-28 closure — archived-FID closure guard (FID-2026-0928-013)
+
+- [`FID-2026-0928-013-archived-fid-closure-guard.md`](FID-2026-0928-013-archived-fid-closure-guard.md)
+  (medium) — new closure guard (`validateArchivedFidClosures` + probe): every
+  archived record created on/after 2026-09-15 must read `closed` or carry the
+  dated operator-decline marker; nine records repaired live (eight status
+  flips to their ledger-truth `closed`, one dated decline marker on
+  `FID-2026-0919-009`). The guard's first run caught all nine. Pre-cutoff
+  August batch remains T97's, blocked on the operator ruling.
+
 ## 2026-09-28 closure — level-3 register sweep (6 FIDs archived)
 
 Six records closed and archived today across the register sweep: -006, -007,

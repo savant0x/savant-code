@@ -18,7 +18,10 @@ import { auditGateEnvParity } from './audit-gate-env-parity.js'
 import { auditRebrandCorruption } from './audit-rebrand-corruption.js'
 import { auditVendoredTrees } from './audit-vendored-tree.js'
 import { collectChangelogCoverageIssues } from './changelog-coverage.js'
-import { validateFidVerificationGates } from './fid-gates.js'
+import {
+  validateArchivedFidClosures,
+  validateFidVerificationGates,
+} from './fid-gates.js'
 import { validateActiveFidLedger } from './fid-ledger.js'
 import { collectHygieneIssues } from './hygiene.js'
 import {
@@ -255,6 +258,7 @@ const issues: FidLedgerIssue[] = [
   ...validateGateContract(repositoryValidationGates(root), root),
   ...validateActiveFidLedger(root),
   ...validateFidVerificationGates(root),
+  ...validateArchivedFidClosures(root),
   ...validateLearningsContent(),
   // SAVANT_CODE_SKIP_QUALITY_RATCHET: temporarily exempt ratchet for releases
   // (operator-paused FID-2026-0819-005)

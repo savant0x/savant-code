@@ -8,7 +8,7 @@
 **Filename:** FID-2026-0918-003-automation-mode-preaudit-deadlock.md
 **ID:** FID-2026-0918-003
 **Severity:** medium
-**Status:** verified
+**Status:** closed
 **Created:** 2026-09-18
 
 ## Summary

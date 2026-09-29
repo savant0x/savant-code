@@ -2,6 +2,26 @@
 
 ## 0.0.34 — 2026-09-28
 
+### Archived-FID closure guard — the ceremony's status flip can no longer fail silently (FID-2026-0928-013) — **`closed` 2026-09-28**
+
+The archive held records whose own ledgers said closed while the record read
+`fixed`/`verified` — the closure ceremony's archive move + ledger entry
+succeeding while the in-record status flip silently failed to land (nine
+post-cutoff instances found live, including two from the 2026-09-28 session
+generation). New `validateArchivedFidClosures`
+(`scripts/fid-gates.ts:175-247`), wired into `validate:repository` and
+independently runnable as `scripts/audit-fid-archived-closures.ts`: every
+archived record created on/after 2026-09-15 (the FID-2026-0915-004 closure-
+vocabulary ruling) must read `closed` (decorated forms accepted) or carry
+`- **Archived-Declined:** operator-approved YYYY-MM-DD`. Nine records
+repaired — eight status flips aligned to each record's own `Closed Date`/
+ledger closure evidence, one dated decline marker on `FID-2026-0919-009`
+(its recorded 2026-09-19 operator decline). The pre-cutoff August batch
+(~30 records + 2 malformed) remains T97's, blocked on the operator ruling.
+8 new pins (RED leg proven); probe exit 1 → 9 catches → exit 0 after
+repairs; full battery green; receipt 3/3 LIVE at the archived path.
+Nothing committed (G2 withheld).
+
 ### `/provider free` — free-options discovery, agent-answerable (FID-2026-0928-012) — **`closed` 2026-09-28**
 
 Savant-Code is BYOK — there is no Savant backend or credit balance, so

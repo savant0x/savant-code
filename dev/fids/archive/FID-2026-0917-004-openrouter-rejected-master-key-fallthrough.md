@@ -5,7 +5,7 @@
 - **Filename:** `FID-2026-0917-004-openrouter-rejected-master-key-fallthrough.md`
 - **ID:** FID-2026-0917-004
 - **Severity:** high
-- **Status:** verified
+- **Status:** closed
 - **Created:** 2026-09-17
 
 ## Summary

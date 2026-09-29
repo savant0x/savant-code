@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-0918-004-compaction-signal-repin-retirement.md`
 **ID:** FID-2026-0918-004
 **Severity:** high
-**Status:** verified
+**Status:** closed
 **Created:** 2026-09-18 17:26
 **YAGNI-Compliance:** Compliant (fixes an existing broken feature; no speculative API)
 

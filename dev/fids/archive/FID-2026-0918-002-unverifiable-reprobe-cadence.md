@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-0918-002-unverifiable-reprobe-cadence.md`
 **ID:** FID-2026-0918-002
 **Severity:** low
-**Status:** verified
+**Status:** closed
 **Created:** 2026-09-18 12:05
 **YAGNI-Compliance:** Verified — one gate function + one pure stamp
 helper + an additive optional state field; no new network surface, no new

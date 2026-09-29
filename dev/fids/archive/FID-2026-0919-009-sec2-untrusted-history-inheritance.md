@@ -5,6 +5,9 @@
 **Severity:** high
 **Status:** analyzed
 **Created:** 2026-09-19
+- **Archived-Declined:** operator-approved 2026-09-19 — mitigation declined
+  after tradeoff presentation (see Operator Decision below); residual risk
+  accepted. Terminal state per FID-2026-0928-013.
 **YAGNI-Compliance:** Pending
 **Operator Decision (2026-09-19):** layer 3 (sanitization boundary —
 redacted/summarized inherited tool output for write-capable children)

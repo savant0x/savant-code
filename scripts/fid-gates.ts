@@ -209,3 +209,63 @@ export function validateFidVerificationGates(root: string): FidLedgerIssue[] {
   emitStructural(greenFids)
   return issues
 }
+
+// FID-2026-0928-013: the closure ceremony performs the archive move + ledger
+// entry while the in-record status flip can silently fail to land — two
+// September records were archived reading `fixed`/`verified` while their own
+// ledger entries said closed. Nothing walked the archive, so the defect was
+// unobservable. Every archived record created on/after 2026-09-15 (the
+// FID-2026-0915-004 ruling that made `closed` the only lawful closure
+// status) must read `closed`, or carry the operator-terminal decline marker
+// where the operator's recorded ruling was a decline. Pre-cutoff records are
+// history owned by the still-open T97 operator ruling, not absorbed here.
+const ARCHIVE_CUTOFF_YYYYMMDD = 20260915
+
+/**
+ * `- **Archived-Declined:** operator-approved YYYY-MM-DD` — the one lawful
+ * terminal state for a record whose operator ruling was a decline, mirroring
+ * the scope protocol's lawful-exit vocabulary. Undated markers are not
+ * lawful: the date is what makes the ruling auditable.
+ */
+const ARCHIVED_DECLINED_MARKER =
+  /^-\s+\*\*Archived-Declined:\*\*\s+operator-approved\s+\d{4}-\d{2}-\d{2}/m
+
+/** Parse `FID-YYYY-MMDD-...` into a comparable YYYYMMDD number, or undefined. */
+function archivedRecordDate(name: string): number | undefined {
+  const match = name.match(/^FID-(\d{4})-(\d{4})-/)
+  if (!match) return undefined
+  return Number(match[1] + match[2])
+}
+
+/**
+ * Validate that every archived FID created on/after the closure-vocabulary
+ * cutoff declares `closed` (decorated forms accepted) or the dated
+ * operator-decline marker. Wired into validate:repository and independently
+ * runnable via scripts/audit-fid-archived-closures.ts (the probe route —
+ * never re-enters FID verification, so it is a legal gate for FIDs).
+ */
+export function validateArchivedFidClosures(root: string): FidLedgerIssue[] {
+  const issues: FidLedgerIssue[] = []
+  const directory = path.join(root, 'dev', 'fids', 'archive')
+  if (!fs.existsSync(directory)) return issues
+  for (const entry of fs.readdirSync(directory, { withFileTypes: true })) {
+    if (!entry.isFile() || !/^FID-.*\.md$/.test(entry.name)) continue
+    const date = archivedRecordDate(entry.name)
+    if (date === undefined || date < ARCHIVE_CUTOFF_YYYYMMDD) continue
+    const content = fs.readFileSync(path.join(directory, entry.name), 'utf8')
+    const status = parseFidStatus(content)
+    if (status?.split(/[\s(]/)[0] === 'closed') continue
+    if (ARCHIVED_DECLINED_MARKER.test(content)) continue
+    const found = status ? `status "${status}"` : 'no **Status:** line'
+    issues.push({
+      code: 'fid.archive.not-closed',
+      message:
+        `${entry.name}: archived record is not closed (${found}) — the ` +
+        'closure ceremony status flip did not land; set the record status ' +
+        'to closed, or record the operator decline with ' +
+        '- **Archived-Declined:** operator-approved YYYY-MM-DD ' +
+        '(FID-2026-0928-013)',
+    })
+  }
+  return issues
+}

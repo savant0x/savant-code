@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-0928-005-scope-register-open-items-only.md`
 **ID:** FID-2026-0928-005
 **Severity:** medium
-**Status:** verified
+**Status:** closed
 **Created:** 2026-09-28 18:20
 **Automation level:** 3
 **YAGNI-Compliance:** Verified
