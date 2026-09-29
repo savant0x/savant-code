@@ -118,9 +118,15 @@ export function appendHint(errorMessage: string, hint: string): string {
 /**
  * FID-2026-0919-026: true when the error is a provider quota refusal — the
  * class that reads as an integration defect but is account state.
+ * FID-2026-0929-002: a bare HTTP 402 is that same class — every provider's
+ * payment-required response is provider account state.
  */
 function isQuotaRefusal(error: unknown): boolean {
   if (!error || typeof error !== 'object') return false
+  const status =
+    (error as { statusCode?: unknown }).statusCode ??
+    (error as { status?: unknown }).status
+  if (status === 402) return true
   const e = error as { code?: unknown; message?: unknown }
   const code = typeof e.code === 'string' ? e.code : ''
   if (/insufficient_(user_)?quota|insufficient_(balance|credits)/i.test(code)) {

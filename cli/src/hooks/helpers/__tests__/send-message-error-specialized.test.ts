@@ -202,4 +202,89 @@ describe('handleRunError specialized errors', () => {
     // Timer should still be stopped with error
     expect(timerController.stopCalls).toContain('error')
   })
+
+  // FID-2026-0929-002: in direct-provider mode a 402 is the provider's own
+  // account state — the backend-branded message, the outOfCredits input-mode
+  // lockout, and the backend usage poll must all stay out of the path.
+  describe('direct-provider 402 (FID-2026-0929-002)', () => {
+    const setDirectModeEnv = () => {
+      process.env.DIRECT_PROVIDER = 'apinex'
+    }
+
+    const clearDirectModeEnv = () => {
+      delete process.env.DIRECT_PROVIDER
+      delete process.env.INFERENCE_BASE_URL
+    }
+
+    beforeEach(() => {
+      clearDirectModeEnv()
+    })
+
+    afterEach(() => {
+      clearDirectModeEnv()
+    })
+
+    const runDirectMode402 = () => {
+      let messages: ChatMessage[] = [
+        {
+          id: 'ai-1',
+          variant: 'ai',
+          content: 'Partial streamed content',
+          blocks: [{ type: 'text', content: 'some block' }],
+          timestamp: 'now',
+        },
+      ]
+
+      const timerController = createMockTimerController()
+      const updater = createBatchedMessageUpdater('ai-1', (fn: any) => {
+        messages = fn(messages)
+      })
+
+      const setInputModeMock = mock(() => {})
+      useChatStore.getState = () => ({
+        ...originalGetState(),
+        setInputMode: setInputModeMock,
+      })
+
+      const paymentError = Object.assign(new Error('Insufficient balance'), {
+        statusCode: 402,
+      })
+
+      handleRunError({
+        error: paymentError,
+        timerController,
+        updater,
+        setIsRetrying: () => {},
+        setStreamStatus: () => {},
+        setCanProcessQueue: () => {},
+        updateChainInProgress: () => {},
+      })
+
+      const aiMessage = messages.find((m) => m.id === 'ai-1')
+      expect(aiMessage).toBeDefined()
+      return { aiMessage: aiMessage!, setInputModeMock, timerController }
+    }
+
+    test('uses the provider-honest message, not the backend billing message', () => {
+      setDirectModeEnv()
+      const { aiMessage } = runDirectMode402()
+      expect(aiMessage.userError).toContain('402 Payment Required')
+      expect(aiMessage.userError).toContain('Insufficient balance')
+      expect(aiMessage.userError).toContain('/health')
+      expect(aiMessage.userError).not.toContain('savant-code.com')
+      expect(aiMessage.userError).not.toContain('add credits at')
+    })
+
+    test('does not flip input mode to outOfCredits', () => {
+      setDirectModeEnv()
+      const { setInputModeMock } = runDirectMode402()
+      expect(setInputModeMock).not.toHaveBeenCalledWith('outOfCredits')
+    })
+
+    test('still stops the timer with the error outcome', () => {
+      setDirectModeEnv()
+      const { timerController } = runDirectMode402()
+      expect(timerController.stopCalls).toContain('error')
+    })
+  })
 })

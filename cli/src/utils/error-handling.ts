@@ -1,4 +1,5 @@
 import { env } from '@savant-code/common/env'
+import { getEffectiveProviderRegistry } from '@savant-code/common/providers/custom-providers'
 import { extractApiErrorDetails } from '@savant-code/common/util/error'
 import { formatSavantFreeHardBlockedPrivacySignals } from '@savant-code/common/util/savant-free-privacy'
 
@@ -44,6 +45,35 @@ export const isOutOfCreditsError = (error: unknown): boolean => {
     return true
   }
   return false
+}
+
+/**
+ * FID-2026-0929-002: build the direct-mode message for a provider 402.
+ *
+ * In direct-provider mode there is no Savant backend, so a 402 is the
+ * *provider's* account state — never our billing. The message quotes the
+ * provider's own payload first (it explains itself: which upstream, which
+ * account), names the provider, and points at /health for the live reading.
+ * Never mentions savant-code.com, never flips input mode. Fail-silent: an
+ * unparseable payload falls back to a neutral generic that still names the
+ * provider when its id is known.
+ */
+export const providerOutOfCreditsError = (
+  error: unknown,
+  providerId?: string | undefined,
+): string => {
+  const details = getCliApiErrorDetails(error)
+  const providerLabel =
+    (providerId && getEffectiveProviderRegistry()[providerId]?.label) ||
+    'The provider'
+  const bodyMessage =
+    details.message && !/^payment required\.?$/i.test(details.message)
+      ? details.message
+      : undefined
+  if (bodyMessage) {
+    return `${providerLabel} returned 402 Payment Required: ${bodyMessage} Run /health for the current reading, or /provider to switch.`
+  }
+  return `${providerLabel} returned 402 Payment Required. Run /health for the current reading, or /provider to switch.`
 }
 
 /**
