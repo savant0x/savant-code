@@ -55,14 +55,11 @@ describe('Agent Test', () => {
   })
 
   test('verifies startup', async () => {
-    const apiKey = process.env.SAVANT_API_KEY
-    if (!apiKey) return // Skip if no API key
-
     const binary = requireSavantFreeBinary()
     const tmuxTools = createSavantFreeTmuxTools(binary)
     cleanup = tmuxTools.cleanup
 
-    const client = new SavantCodeClient({ apiKey })
+    const client = new SavantCodeClient()
     const result = await client.run({
       agent: savant-free$1.id,
       prompt: 'Start SavantFree and verify the branding is correct.',
@@ -81,7 +78,8 @@ describe('Agent Test', () => {
 - **tmux** must be installed: `brew install tmux` (macOS) or `sudo apt-get install tmux` (Ubuntu)
 - **SavantFree binary** must be built: `bun savant-free/cli/build.ts 0.0.0-dev`
 - **SDK built** (for agent tests): `cd sdk && bun run build`
-- **SAVANT_API_KEY** (for agent tests only): Set this environment variable
+- Provider credentials in the environment for agent tests (the SDK client
+  takes no API key; inference is billed to your own provider account)
 
 ## Running Tests
 

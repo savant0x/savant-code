@@ -13,16 +13,10 @@ describe('run() event dispatch error handling (FID-2026-0802-008 E1)', () => {
   const originalFetch = globalThis.fetch
 
   beforeEach(() => {
-    // Stub the backend: /api/v1/me succeeds; any LLM endpoint fails fast with
-    // a non-retryable 400 (no backoff timers leak into the test).
-    globalThis.fetch = mock(async (input: RequestInfo | URL) => {
-      const url = String(input)
-      if (url.includes('/api/v1/me')) {
-        return new Response(JSON.stringify({ id: 'test-user' }), {
-          status: 200,
-          headers: { 'Content-Type': 'application/json' },
-        })
-      }
+    // Any LLM endpoint fails fast with a non-retryable 400 (no backoff
+    // timers leak into the test). There is no backend to stub (FID-2026-
+    // 0929-005 deleted the run registry and its /api/v1/me identity call).
+    globalThis.fetch = mock(async () => {
       return new Response('bad request', {
         status: 400,
         headers: { 'Content-Type': 'text/plain' },
@@ -42,7 +36,7 @@ describe('run() event dispatch error handling (FID-2026-0802-008 E1)', () => {
     }
     process.on('unhandledRejection', listener)
     try {
-      const client = new SavantCodeClient({ apiKey: 'test-key' })
+      const client = new SavantCodeClient({})
       await expect(
         client.run({ agent: invalidAgent, prompt: 'hi' }),
       ).rejects.toThrow(/Provide a handleEvent function/)
@@ -56,7 +50,6 @@ describe('run() event dispatch error handling (FID-2026-0802-008 E1)', () => {
 
   test('user handleEvent that throws rejects run() with the handler error', async () => {
     const client = new SavantCodeClient({
-      apiKey: 'test-key',
       handleEvent: () => {
         throw new Error('user handler failed')
       },
@@ -68,7 +61,6 @@ describe('run() event dispatch error handling (FID-2026-0802-008 E1)', () => {
 
   test('user handleEvent that does not throw: run() resolves with the error output', async () => {
     const client = new SavantCodeClient({
-      apiKey: 'test-key',
       handleEvent: () => {},
     })
     const result = await client.run({ agent: invalidAgent, prompt: 'hi' })

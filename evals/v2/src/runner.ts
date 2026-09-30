@@ -108,8 +108,6 @@ export interface TraceDocument {
 export interface RunnerConfig {
   task: TaskDefinition
   sandbox: Sandbox
-  /** API key for the Savant backend. Optional when using a mock runner. */
-  apiKey?: string
   /** Agent or agent ID to run. Defaults to 'savant'. */
   agentId?: string
   /**

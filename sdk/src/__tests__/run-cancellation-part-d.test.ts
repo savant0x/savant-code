@@ -6,25 +6,12 @@ import { RetryError } from 'ai'
 import { afterEach, describe, expect, it, mock, spyOn } from 'bun:test'
 
 import { SavantCodeClient } from '../client'
-import * as databaseModule from '../impl/database'
 
 describe('Run Cancellation Handling', () => {
   afterEach(() => {
     mock.restore()
   })
   it('extracts error code and message from AI SDK responseBody on 403', async () => {
-    spyOn(databaseModule, 'getUserInfoFromApiKey').mockResolvedValue({
-      id: 'user-123',
-      email: 'test@example.com',
-      discord_id: null,
-      stripe_customer_id: null,
-      banned: false,
-      created_at: new Date('2024-01-01T00:00:00Z'),
-    })
-    spyOn(databaseModule, 'fetchAgentFromDatabase').mockResolvedValue(null)
-    spyOn(databaseModule, 'startAgentRun').mockResolvedValue('run-1')
-    spyOn(databaseModule, 'finishAgentRun').mockResolvedValue(undefined)
-    spyOn(databaseModule, 'addAgentStep').mockResolvedValue('step-1')
 
     // Simulate AI SDK's AI_APICallError with responseBody (what the server returns for free_mode_unavailable)
     const apiError = new Error('Forbidden') as Error & {
@@ -43,7 +30,6 @@ describe('Run Cancellation Handling', () => {
     spyOn(mainPromptModule, 'callMainPrompt').mockRejectedValue(apiError)
 
     const client = new SavantCodeClient({
-      apiKey: 'test-key',
     })
 
     const result = await client.run({
@@ -72,18 +58,6 @@ describe('Run Cancellation Handling', () => {
   })
 
   it('extracts error code and message from nested AI SDK retry errors', async () => {
-    spyOn(databaseModule, 'getUserInfoFromApiKey').mockResolvedValue({
-      id: 'user-123',
-      email: 'test@example.com',
-      discord_id: null,
-      stripe_customer_id: null,
-      banned: false,
-      created_at: new Date('2024-01-01T00:00:00Z'),
-    })
-    spyOn(databaseModule, 'fetchAgentFromDatabase').mockResolvedValue(null)
-    spyOn(databaseModule, 'startAgentRun').mockResolvedValue('run-1')
-    spyOn(databaseModule, 'finishAgentRun').mockResolvedValue(undefined)
-    spyOn(databaseModule, 'addAgentStep').mockResolvedValue('step-1')
 
     const apiError = new Error('Conflict') as Error & {
       statusCode: number
@@ -105,7 +79,6 @@ describe('Run Cancellation Handling', () => {
     )
 
     const client = new SavantCodeClient({
-      apiKey: 'test-key',
     })
 
     const result = await client.run({
@@ -127,18 +100,6 @@ describe('Run Cancellation Handling', () => {
   })
 
   it('extracts error code from responseBody for account_suspended 403', async () => {
-    spyOn(databaseModule, 'getUserInfoFromApiKey').mockResolvedValue({
-      id: 'user-123',
-      email: 'test@example.com',
-      discord_id: null,
-      stripe_customer_id: null,
-      banned: false,
-      created_at: new Date('2024-01-01T00:00:00Z'),
-    })
-    spyOn(databaseModule, 'fetchAgentFromDatabase').mockResolvedValue(null)
-    spyOn(databaseModule, 'startAgentRun').mockResolvedValue('run-1')
-    spyOn(databaseModule, 'finishAgentRun').mockResolvedValue(undefined)
-    spyOn(databaseModule, 'addAgentStep').mockResolvedValue('step-1')
 
     const apiError = new Error('Forbidden') as Error & {
       statusCode: number
@@ -153,7 +114,6 @@ describe('Run Cancellation Handling', () => {
     spyOn(mainPromptModule, 'callMainPrompt').mockRejectedValue(apiError)
 
     const client = new SavantCodeClient({
-      apiKey: 'test-key',
     })
 
     const result = await client.run({
@@ -175,18 +135,6 @@ describe('Run Cancellation Handling', () => {
   })
 
   it('falls back to error.message when responseBody is not valid JSON', async () => {
-    spyOn(databaseModule, 'getUserInfoFromApiKey').mockResolvedValue({
-      id: 'user-123',
-      email: 'test@example.com',
-      discord_id: null,
-      stripe_customer_id: null,
-      banned: false,
-      created_at: new Date('2024-01-01T00:00:00Z'),
-    })
-    spyOn(databaseModule, 'fetchAgentFromDatabase').mockResolvedValue(null)
-    spyOn(databaseModule, 'startAgentRun').mockResolvedValue('run-1')
-    spyOn(databaseModule, 'finishAgentRun').mockResolvedValue(undefined)
-    spyOn(databaseModule, 'addAgentStep').mockResolvedValue('step-1')
 
     const apiError = new Error('Forbidden') as Error & {
       statusCode: number
@@ -198,7 +146,6 @@ describe('Run Cancellation Handling', () => {
     spyOn(mainPromptModule, 'callMainPrompt').mockRejectedValue(apiError)
 
     const client = new SavantCodeClient({
-      apiKey: 'test-key',
     })
 
     const result = await client.run({

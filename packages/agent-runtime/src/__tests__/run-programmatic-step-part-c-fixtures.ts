@@ -35,7 +35,6 @@ export type RunProgrammaticStepFixture = {
 export function createRunProgrammaticStepFixture(): RunProgrammaticStepFixture {
   const agentRuntimeImpl: AgentRuntimeDeps & AgentRuntimeScopedDeps = {
     ...TEST_AGENT_RUNTIME_IMPL,
-    addAgentStep: async () => 'test-agent-step-id',
     sendAction: () => {},
   }
 

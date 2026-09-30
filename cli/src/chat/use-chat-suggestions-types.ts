@@ -21,7 +21,6 @@ export interface UseChatSuggestionsArgs {
   fileTree: FileTreeNode[]
   localAgents: LocalAgentInfo[]
   adsEnabled: boolean
-  hasSubscription: boolean
   setInputValue: (
     value: InputValue | ((prev: InputValue) => InputValue),
   ) => void

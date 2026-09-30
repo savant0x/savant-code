@@ -6,7 +6,6 @@ import {
 
 import { fetchWithRetryableNetworkErrors } from './fetch-with-retry'
 import { NOUS_REQUIRED_REQUEST_TAGS } from './model-factories'
-import { getWebsiteUrl } from '../../constants'
 import {
   getByokOpenrouterApiKeyFromEnv,
   getInferenceApiKeyFromEnv,
@@ -24,9 +23,11 @@ import type { LanguageModel } from 'ai'
  * the name previously implied a nonexistent backend).
  *
  * This is the fallback for model ids that match no registry provider prefix
- * (e.g. bare slugs like `anthropic/claude-sonnet-4.5`). When `INFERENCE_BASE_URL`
- * is set, routes directly to that base URL; otherwise targets the SavantCode
- * website URL. The passed apiKey authorizes the request (Phase 4, decision 10:
+ * (e.g. bare slugs like `anthropic/claude-sonnet-4.5`). `INFERENCE_BASE_URL`
+ * is REQUIRED: FID-2026-0929-005 (gut the backend) deleted the old
+ * getWebsiteUrl() fallback — there is no SavantCode backend to target when
+ * the env var is unset, so construction fails fast naming the env var. The
+ * passed apiKey authorizes the request (Phase 4, decision 10:
  * getModelForRequest supplies the ACTIVE provider's own key for bare slugs);
  * `INFERENCE_API_KEY` and the resolved OpenRouter key remain fallbacks for
  * callers that pass no key — unless `preferApiKey` is set, which makes the
@@ -39,6 +40,12 @@ export async function createDefaultInferenceModel(
   model: string,
   options?: { preferApiKey?: boolean; providerId?: string },
 ): Promise<LanguageModel> {
+  const inferenceBaseUrl = getInferenceBaseUrlFromEnv()
+  if (!inferenceBaseUrl) {
+    throw new Error(
+      `INFERENCE_BASE_URL is required for model "${model}": it matches no provider registry prefix, and with no SavantCode backend there is no fallback target (FID-2026-0929-005). Set INFERENCE_BASE_URL to your inference gateway's base URL.`,
+    )
+  }
   const openrouterUsage: OpenRouterUsageAccounting = {
     cost: null,
     costDetails: {
@@ -47,7 +54,6 @@ export async function createDefaultInferenceModel(
   }
 
   const openrouterApiKey = getByokOpenrouterApiKeyFromEnv()
-  const inferenceBaseUrl = getInferenceBaseUrlFromEnv()
   const resolvedOpenRouterKey = await resolveOpenRouterApiKey() // Decision 10: the ACTIVE provider's own key is authoritative when
   // resolved; otherwise legacy env fallbacks win over a caller key.
   const authorizationKey = options?.preferApiKey
@@ -60,7 +66,7 @@ export async function createDefaultInferenceModel(
   return new OpenAICompatibleChatLanguageModel(model, {
     provider: options?.providerId ?? 'savant-code',
     url: ({ path: endpoint }) => {
-      const baseUrl = inferenceBaseUrl ?? getWebsiteUrl()
+      const baseUrl = inferenceBaseUrl
       // Ensure the base URL path is preserved: /api/v1 + /chat/completions
       // becomes /api/v1/chat/completions (not /chat/completions).
       const baseHref = baseUrl.endsWith('/') ? baseUrl : baseUrl + '/'
@@ -72,7 +78,9 @@ export async function createDefaultInferenceModel(
       'user-agent': `ai-sdk/openai-compatible/${VERSION}/savant-code`,
       ...(isOpenRouterCompatible
         ? {
-            'HTTP-Referer': getWebsiteUrl(),
+            // FID-2026-0929-005: the HTTP-Referer header (getWebsiteUrl()) is
+            // deleted with the backend origin it pointed at. App-identity
+            // headers stay: they describe the CLI, not a backend.
             'X-OpenRouter-Title': 'SavantCode',
             'X-OpenRouter-Categories': 'cli-agent,cloud-agent,programming-app',
             ...(openrouterApiKey && {

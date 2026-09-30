@@ -2,23 +2,12 @@
 // Sibling of the Loop 350 decomposition.
 import { describe, test, expect } from 'bun:test'
 
-import { createErrorMessage, OUT_OF_CREDITS_MESSAGE } from '../error-handling'
+import { createErrorMessage } from '../error-handling'
+
+// FID-2026-0929-005: the OUT_OF_CREDITS_MESSAGE pins are deleted with the
+// constant — provider 402s surface the provider's own message now.
 
 describe('error-handling', () => {
-  describe('OUT_OF_CREDITS_MESSAGE', () => {
-    test('contains usage URL', () => {
-      expect(OUT_OF_CREDITS_MESSAGE).toContain('/usage')
-    })
-
-    test('contains out of credits message', () => {
-      expect(OUT_OF_CREDITS_MESSAGE.toLowerCase()).toContain('out of credits')
-    })
-
-    test('contains add credits instruction', () => {
-      expect(OUT_OF_CREDITS_MESSAGE.toLowerCase()).toContain('add credits')
-    })
-  })
-
   describe('createErrorMessage', () => {
     test('creates message from Error object', () => {
       const error = new Error('Something went wrong')

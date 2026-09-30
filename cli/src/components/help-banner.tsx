@@ -1,7 +1,6 @@
 import React from 'react'
 
 import { BottomBanner } from './bottom-banner'
-import { useSubscriptionQuery } from '../hooks/use-subscription-query'
 import { useTheme } from '../hooks/use-theme'
 import { useChatStore } from '../state/chat-store'
 import { IS_SAVANT_FREE } from '../utils/constants'
@@ -29,8 +28,6 @@ const Shortcut = ({ keys, action }: { keys: string; action: string }) => {
 export const HelpBanner = () => {
   const setInputMode = useChatStore((state) => state.setInputMode)
   const theme = useTheme()
-  const { data: subscriptionData } = useSubscriptionQuery()
-  const hasSubscription = subscriptionData?.hasSubscription ?? false
 
   // Auto-hide after timeout
   React.useEffect(() => {
@@ -130,29 +127,20 @@ export const HelpBanner = () => {
           </box>
         </box>
 
-        {/* Credits Section — hidden in SavantFree */}
+        {/* Session stats Section — hidden in SavantFree. FID-2026-0929-005:
+            the /usage + /subscribe entries died with the backend billing
+            surface; what remains is local session accounting. */}
         {!IS_SAVANT_FREE && (
           <box style={{ flexDirection: 'column', gap: 0 }}>
-            <SectionHeader>Credits</SectionHeader>
+            <SectionHeader>Session</SectionHeader>
             <box style={{ flexDirection: 'column', paddingLeft: 2 }}>
               <box
                 style={{ flexDirection: 'row', flexWrap: 'wrap', columnGap: 1 }}
               >
-                <text style={{ fg: theme.foreground }}>1 credit = 1 cent</text>
+                <text style={{ fg: theme.foreground }}>/ads:enable</text>
                 <text style={{ fg: theme.muted }}>·</text>
-                <text style={{ fg: theme.foreground }}>/subscribe</text>
-                <text style={{ fg: theme.muted }}>·</text>
-                <text style={{ fg: theme.foreground }}>/usage</text>
-                {!hasSubscription && (
-                  <>
-                    <text style={{ fg: theme.muted }}>·</text>
-                    <text style={{ fg: theme.foreground }}>/ads:enable</text>
-                  </>
-                )}
+                <text style={{ fg: theme.foreground }}>/health</text>
               </box>
-              <text style={{ fg: theme.muted }}>
-                Subscribe for the best credit rates — /subscribe
-              </text>
               <text style={{ fg: theme.muted }}>
                 Manage remote analytics — /telemetry status|enable|disable
               </text>

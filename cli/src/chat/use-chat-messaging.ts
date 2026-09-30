@@ -50,7 +50,6 @@ export function useChatMessaging({
   saveToHistory,
   continueChat,
   continueChatId,
-  subscriptionData,
   setIsAuthenticated,
   setUser,
   logoutMutation,
@@ -124,7 +123,6 @@ export function useChatMessaging({
     requeueMessageAtFront: addToQueueFront,
     continueChat,
     continueChatId,
-    subscriptionData,
   })
 
   sendMessageRef.current = sendMessage

@@ -1,28 +1,22 @@
 import { useChatStore } from '../../state/chat-store'
-import { isCoveredBySubscription } from '../../utils/subscription'
-
-import type { SubscriptionResponse } from '../use-subscription-query'
 
 /**
  * Builds the sidebar-wiring callbacks passed into createEventHandlerState:
  * session cost, tool usage, and the subagent stack. `onCost` receives every
  * reported cost (used by the caller to capture actualCredits for completion
- * metadata) before subscription-aware credit accounting.
+ * metadata). FID-2026-0929-005 (gut the backend): the subscription-aware
+ * credit accounting is deleted — there is no backend subscription to be
+ * covered by, so every run's cost accrues to the local session counter.
  */
 export const createSidebarEventCallbacks = (params: {
-  subscriptionData?: SubscriptionResponse | null
   addSessionCredits: (credits: number) => void
   onCost: (cost: number) => void
 }) => {
-  const { subscriptionData, addSessionCredits, onCost } = params
+  const { addSessionCredits, onCost } = params
   return {
     onTotalCost: (cost: number) => {
       onCost(cost)
-      // Only add to session credits if not covered by subscription
-      // (subscription credits are shown separately in the UI)
-      if (!isCoveredBySubscription(subscriptionData)) {
-        addSessionCredits(cost)
-      }
+      addSessionCredits(cost)
       // Wire sidebar: update session cost
       useChatStore.getState().updateSessionCost(cost)
     },

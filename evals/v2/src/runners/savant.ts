@@ -15,7 +15,8 @@ import type { RunState } from '@savant-code/sdk'
 export interface SavantAgentRunnerConfig extends RunnerConfig {
   /**
    * Optional injected SavantCodeClient for testing. If omitted, a real client
-   * is constructed from RunnerConfig.apiKey.
+   * is constructed with no credential (FID-2026-0929-005: the SDK client has
+   * no apiKey surface — inference keys come from the environment).
    */
   savantClient?: Pick<SavantCodeClient, 'run'>
 }
@@ -37,11 +38,7 @@ export class SavantAgentRunner implements AgentRunner {
   async initialize(config: SavantAgentRunnerConfig): Promise<void> {
     this.config = config
     this.sandbox = config.sandbox
-    this.client =
-      config.savantClient ??
-      new SavantCodeClient({
-        apiKey: config.apiKey ?? process.env.SAVANT_CODE_API_KEY,
-      })
+    this.client = config.savantClient ?? new SavantCodeClient({})
     this.finalState = undefined
 
     await this.sandbox.prepare()

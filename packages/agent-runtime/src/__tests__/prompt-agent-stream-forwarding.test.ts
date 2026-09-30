@@ -49,7 +49,6 @@ function makeCapturingStream(): {
 
 function makeBaseParams(stream: PromptAiSdkStreamFn) {
   return {
-    apiKey: 'test-key',
     clientSessionId: 'test-session',
     fingerprintId: 'test-fingerprint',
     localAgentTemplates: {},

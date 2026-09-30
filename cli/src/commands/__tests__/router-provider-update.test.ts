@@ -17,7 +17,6 @@ import type { RouterParams } from '../command-registry'
  */
 const MANAGED_ENV = [
   'SAVANT_CODE_CONFIG_DIR',
-  'SAVANT_CODE_API_KEY',
   'DIRECT_PROVIDER',
   'INFERENCE_BASE_URL',
   'NOUS_API_KEY',

@@ -21,7 +21,7 @@ describe('getModelForRequest ChatGPT OAuth fallback behavior', () => {
     const { getModelForRequest } = await importFresh()
 
     await expect(
-      getModelForRequest({ apiKey: 'test-key', model: COMMAND_CODE_MODEL }),
+      getModelForRequest({ model: COMMAND_CODE_MODEL }),
     ).rejects.toThrow(
       'CommandCode API key not set. Set COMMAND_CODE_API_KEY environment variable.',
     )
@@ -42,7 +42,6 @@ describe('getModelForRequest ChatGPT OAuth fallback behavior', () => {
 
     const { getModelForRequest } = await importFresh()
     const result = await getModelForRequest({
-      apiKey: 'test-key',
       model: COMMAND_CODE_MODEL,
     })
     await (result.model as LanguageModelV2).doStream({
@@ -79,7 +78,6 @@ describe('getModelForRequest ChatGPT OAuth fallback behavior', () => {
 
     const { getModelForRequest } = await importFresh()
     const result = await getModelForRequest({
-      apiKey: 'test-key',
       model: COMMAND_CODE_CLAUDE_MODEL,
     })
     await (result.model as LanguageModelV2).doStream({

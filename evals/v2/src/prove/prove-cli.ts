@@ -48,7 +48,6 @@ export interface ProveCliOptions {
   /** Reliability exponent; defaults to trialsPerArm upstream when omitted. */
   k?: number
   ztapMode: ZtapMode
-  apiKey?: string
   agentId: string
   maxAgentSteps?: number
 }
@@ -76,7 +75,6 @@ export function parseProveArgs(argv: string[]): ProveCliOptions {
   let trialsPerArm = 3
   let k: number | undefined
   let ztapMode: ZtapMode = 'record'
-  let apiKey: string | undefined
   let agentId = 'savant'
   let maxAgentSteps: number | undefined
 
@@ -109,7 +107,7 @@ export function parseProveArgs(argv: string[]): ProveCliOptions {
         break
       }
       case '--api-key':
-        apiKey = argv[++i]
+        // FID-2026-0929-005: accepted-and-ignored — no backend key exists.
         break
       case '--agent-id':
         agentId = argv[++i]
@@ -146,7 +144,6 @@ export function parseProveArgs(argv: string[]): ProveCliOptions {
     trialsPerArm,
     ...(k !== undefined ? { k } : {}),
     ztapMode,
-    ...(apiKey !== undefined ? { apiKey } : {}),
     agentId,
     ...(maxAgentSteps !== undefined ? { maxAgentSteps } : {}),
   }
@@ -160,7 +157,6 @@ export function parseProveArgs(argv: string[]): ProveCliOptions {
 function buildProductionTrialRunner(
   task: TaskDefinition,
   opts: ProveCliOptions,
-  apiKey: string,
   agentDefinitions: AgentDefinition[],
 ): (trial: {
   arm: 'baseline' | 'active'
@@ -174,7 +170,6 @@ function buildProductionTrialRunner(
       await runner.initialize({
         task,
         sandbox,
-        apiKey,
         agentId: opts.agentId,
         agentDefinitions,
         maxAgentSteps: opts.maxAgentSteps,
@@ -241,10 +236,6 @@ export async function runProveCommand(
   },
 ): Promise<{ artifactPath: string; exitCode: number }> {
   const opts = parseProveArgs(argv)
-  const apiKey = opts.apiKey ?? process.env.SAVANT_CODE_API_KEY
-  if (!apiKey) {
-    throw new Error('prove requires --api-key or SAVANT_CODE_API_KEY')
-  }
 
   const registry = await deps.loadRegistry(opts.tasksDir)
   const task: TaskDefinition | undefined = registry[opts.taskId]
@@ -270,7 +261,7 @@ export async function runProveCommand(
     ...(opts.maxAgentSteps !== undefined
       ? { maxAgentSteps: opts.maxAgentSteps }
       : {}),
-    runTrial: buildProductionTrialRunner(task, opts, apiKey, agentDefinitions),
+    runTrial: buildProductionTrialRunner(task, opts, agentDefinitions),
   })
 
   printSummary(artifact, artifactPath)

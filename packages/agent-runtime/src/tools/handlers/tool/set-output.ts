@@ -10,7 +10,6 @@ import type {
   SavantCodeToolOutput,
 } from '@savant-code/common/tools/list'
 import type { AgentTemplate } from '@savant-code/common/types/agent-template'
-import type { FetchAgentFromDatabaseFn } from '@savant-code/common/types/contracts/database'
 import type { Logger } from '@savant-code/common/types/contracts/logger'
 import type { JSONValue } from '@savant-code/common/types/json'
 import type { AgentState } from '@savant-code/common/types/session-state'
@@ -21,11 +20,8 @@ export const handleSetOutput = (async (params: {
   toolCall: SavantCodeToolCall<ToolName>
 
   agentState: AgentState
-  apiKey: string
-  databaseAgentCache: Map<string, AgentTemplate | null>
   localAgentTemplates: Record<string, AgentTemplate>
   logger: Logger
-  fetchAgentFromDatabase: FetchAgentFromDatabaseFn
 }): Promise<{ output: SavantCodeToolOutput<ToolName> }> => {
   const { previousToolCallFinished, toolCall, agentState, logger } = params
   const output = toolCall.input

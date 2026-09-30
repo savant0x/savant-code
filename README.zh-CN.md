@@ -627,7 +627,6 @@ bun run --cwd=cli build:binary
 import { SavantCodeClient } from '@savant-code/sdk'
 
 const client = new SavantCodeClient({
-  apiKey: process.env.SAVANT_CODE_API_KEY,
   cwd: '/path/to/your/project',
   onError: (err) => console.error('Savant-Code error:', err.message),
 })

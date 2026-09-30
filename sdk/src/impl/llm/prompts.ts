@@ -44,7 +44,6 @@ export async function promptAiSdk(
   }
 
   const modelParams: ModelRequestParams = {
-    apiKey: params.apiKey,
     model: params.model,
     skipChatGptOAuth: true, // Always use SavantCode backend for non-streaming
   }
@@ -101,7 +100,6 @@ export async function promptAiSdkStructured<T>(
     return promptAborted('User cancelled input')
   }
   const modelParams: ModelRequestParams = {
-    apiKey: params.apiKey,
     model: params.model,
     skipChatGptOAuth: true, // Always use SavantCode backend for non-streaming
   }

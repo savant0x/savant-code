@@ -29,7 +29,6 @@ export type NParameterFixture = {
 export function createNParameterFixture(): NParameterFixture {
   const agentRuntimeImpl: any = {
     ...createTestAgentRuntimeParams(),
-    addAgentStep: async () => 'test-agent-step-id',
     sendAction: () => {},
   }
 

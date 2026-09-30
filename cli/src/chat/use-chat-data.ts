@@ -1,14 +1,14 @@
 /**
  * Data selectors for the chat screen (FID-2026-0805-003). Extracted from
- * chat.tsx verbatim: sidebar store slices, clipboard status, subscription
- * data, and the ad pool with its stable event handlers.
+ * chat.tsx verbatim: sidebar store slices, clipboard status, and the ad pool
+ * with its stable event handlers. (FID-2026-0929-005: the subscription query
+ * is deleted with the backend it polled; ads are always enabled by config.)
  */
 
 import { getAdsEnabled } from '../commands/ads'
 import { useClipboard } from '../hooks/use-clipboard'
 import { useEvent } from '../hooks/use-event'
 import { useGravityAd } from '../hooks/use-gravity-ad'
-import { useSubscriptionQuery } from '../hooks/use-subscription-query'
 import { useChatStore } from '../state/chat-store'
 import { useSavantFreeModelStore } from '../state/savant-free-model-store'
 import { IS_SAVANT_FREE } from '../utils/constants'
@@ -37,8 +37,6 @@ export interface UseChatDataReturn {
   contextWindowSource: 'catalog' | 'fallback-table' | 'default'
   sidebarModel: string | null | undefined
   statusMessage: string | null
-  subscriptionData: ReturnType<typeof useSubscriptionQuery>['data']
-  hasSubscription: boolean
   ads: AdResponse[] | null
   responseAds: Record<string, AdResponse[]>
   showInlineAds: boolean
@@ -70,12 +68,6 @@ export function useChatData(): UseChatDataReturn {
 
   const { statusMessage } = useClipboard()
 
-  // Fetch subscription data early - needed for session credits tracking and ad gating
-  const { data: subscriptionData } = useSubscriptionQuery({
-    refetchInterval: 60 * 1000,
-  })
-  const hasSubscription = subscriptionData?.hasSubscription ?? false
-
   const {
     ads,
     responseAds,
@@ -83,7 +75,6 @@ export function useChatData(): UseChatDataReturn {
     recordClick,
     recordImpression,
   } = useGravityAd({
-    enabled: IS_SAVANT_FREE || !hasSubscription,
     provider: 'gravity',
     inline: true,
     surface: 'cli_chat',
@@ -114,8 +105,6 @@ export function useChatData(): UseChatDataReturn {
     updateContextWindowSource,
     sidebarModel,
     statusMessage,
-    subscriptionData,
-    hasSubscription,
     ads,
     responseAds,
     showInlineAds,

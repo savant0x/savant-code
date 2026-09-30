@@ -66,11 +66,11 @@ const MODE_COMMANDS: SlashCommand[] = IS_SAVANT_FREE
 // undiscoverable command. Aligned to the registry: `/init` is available in
 // free builds, so it stays in the menu.
 // FID-007 V4: exported for the gating-parity test.
+// FID-2026-0929-005: 'usage' and 'subscribe' are removed — the commands are
+// deleted with the backend, so there is nothing left to gate.
 export const SAVANT_FREE_REMOVED_COMMAND_IDS = new Set([
   'ads:enable',
   'ads:disable',
-  'usage',
-  'subscribe',
   'image',
   'publish',
   'release',

@@ -48,7 +48,6 @@ export async function prepareLlmStreamRequest(
   }
 
   const modelParams: ModelRequestParams = {
-    apiKey: params.apiKey,
     model: params.model,
     skipChatGptOAuth: params.skipChatGptOAuth,
   }

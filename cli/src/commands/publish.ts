@@ -1,5 +1,4 @@
-import { WEBSITE_URL } from '@savant-code/sdk'
-
+import { WEBSITE_URL } from '../branding/constants'
 import { getUserCredentials } from '../utils/auth'
 import { isDirectProviderMode } from '../utils/env'
 import {

@@ -4,7 +4,8 @@
  * Starts SavantFree in tmux, sends a prompt asking it to run a shell command,
  * and verifies the command was executed by checking its side effects.
  *
- * Requires SAVANT_CODE_API_KEY — skipped if not set.
+ * FID-2026-0929-005: the SAVANT_CODE_API_KEY opt-in gate is deleted with the
+ * variable it read — provider credentials come from the environment instead.
  */
 
 import { afterEach, describe, expect, test } from 'bun:test'
@@ -12,10 +13,6 @@ import { afterEach, describe, expect, test } from 'bun:test'
 import { SavantFreeModel, requireSavantFreeBinary } from '../utils'
 
 const TEST_TIMEOUT = 1_000_000
-
-function getApiKey(): string | null {
-  return process.env.SAVANT_CODE_API_KEY ?? null
-}
 
 describe.skip('SavantFree: Terminal Command', () => {
   let session: SavantFreeModel | null = null
@@ -30,14 +27,6 @@ describe.skip('SavantFree: Terminal Command', () => {
   test(
     'runs a terminal command that creates a file',
     async () => {
-      if (!getApiKey()) {
-        console.log(
-          'Skipping terminal-command test: SAVANT_CODE_API_KEY not set. ' +
-            'Set it to run terminal-command e2e tests.',
-        )
-        return
-      }
-
       const binary = requireSavantFreeBinary()
       session = await SavantFreeModel.start(binary, { waitSeconds: 5 })
 

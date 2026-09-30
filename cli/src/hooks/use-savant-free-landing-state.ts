@@ -15,7 +15,6 @@ import { useLogo } from './use-logo'
 import { useNow } from './use-now'
 import { useSavantFreeCtrlCExit } from './use-savant-free-ctrl-c-exit'
 import { refreshSavantFreeLandingMetadata } from './use-savant-free-session'
-import { useSavantFreeStreakQuery } from './use-savant-free-streak-query'
 import { useTerminalDimensions } from './use-terminal-dimensions'
 import { useTheme } from './use-theme'
 import { getLimitedModeNotice } from '../components/savant-free-landing-screen/format'
@@ -101,10 +100,12 @@ export function useSavantFreeLandingState(params: {
   // state: show the picker with a prompt. Picking a model triggers
   // startSavantFreeSession, which POSTs and transitions straight to 'active' (chat).
   const isLanding = session?.status === 'none'
-  const streakQuery = useSavantFreeStreakQuery({
-    enabled: SAVANT_FREE_ENABLE_STREAK_IN_UI && isLanding,
-  })
-  const streak = streakQuery.data?.streak ?? 0
+  // FID-2026-0929-005 (gut the backend): the streak query is deleted — it
+  // fetched /api/v1/savant-free/streak from the dead website origin, so
+  // there is no streak data source anymore. Pin 0: the streak row renders
+  // blank exactly as direct mode already rendered it (getSavantFreeStreakLine
+  // returns null for 0, and the bonus note requires a 7-day streak).
+  const streak = 0
   // Reserve the streak row whenever the feature could appear so the picker
   // doesn't jump when the query resolves or the user crosses from 0 → 1.
   // The component itself renders blank space when streak === 0.

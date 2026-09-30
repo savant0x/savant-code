@@ -10,7 +10,6 @@ import {
   getTemplate,
   incrLlmCallCount,
   loopAgentSteps,
-  mock,
   promptSuccess,
   registerLoopAgentStepsPartFLifecycle,
 } from './loop-agent-steps-part-f-test-harness'
@@ -24,8 +23,6 @@ describe('loopAgentSteps - runAgentStep vs runProgrammaticStep behavior', () => 
         ...getTemplate(),
         handleSteps: undefined,
       }
-      let finishStatus: string | undefined
-
       getBaseParams().promptAiSdkStream = async function* () {
         incrLlmCallCount()
         yield {
@@ -41,11 +38,6 @@ describe('loopAgentSteps - runAgentStep vs runProgrammaticStep behavior', () => 
         ...getBaseParams(),
         agentTemplate: llmOnlyTemplate,
         localAgentTemplates: { 'test-agent': llmOnlyTemplate },
-        finishAgentRun: mock(
-          async (params: { status: string; errorMessage?: string }) => {
-            finishStatus = params.status
-          },
-        ),
       })
 
       // FID-2026-0819-004: run_terminal_command gets 5 strikes, not 3
@@ -57,8 +49,6 @@ describe('loopAgentSteps - runAgentStep vs runProgrammaticStep behavior', () => 
         )
         expect(result.output.message).toContain('(tool: run_terminal_command)')
       }
-      expect(finishStatus).toBe('failed')
-
       // Verify escalating steering messages were appended (strikes 2-4)
       const toolCallErrors = result.agentState.messageHistory.filter(
         (message) =>
@@ -101,8 +91,6 @@ describe('loopAgentSteps - runAgentStep vs runProgrammaticStep behavior', () => 
         ...getTemplate(),
         handleSteps: undefined,
       }
-      let finishStatus: string | undefined
-
       getBaseParams().promptAiSdkStream = async function* () {
         incrLlmCallCount()
         if (getLlmCallCount() === 2) {
@@ -125,9 +113,6 @@ describe('loopAgentSteps - runAgentStep vs runProgrammaticStep behavior', () => 
         ...getBaseParams(),
         agentTemplate: llmOnlyTemplate,
         localAgentTemplates: { 'test-agent': llmOnlyTemplate },
-        finishAgentRun: mock(async (params: { status: string }) => {
-          finishStatus = params.status
-        }),
       })
 
       // FID-2026-0816-012: with the 3-strike cap, the reset streak needs 3
@@ -135,7 +120,6 @@ describe('loopAgentSteps - runAgentStep vs runProgrammaticStep behavior', () => 
       // call 1's streak.
       expect(getLlmCallCount()).toBe(5)
       expect(result.output.type).toBe('error')
-      expect(finishStatus).toBe('failed')
     })
   })
 })

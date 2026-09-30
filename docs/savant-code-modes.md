@@ -33,7 +33,7 @@ There is a frequent source of confusion because the word "mode" appears in three
 | Concept | Where defined | What it controls |
 |---|---|---|
 | `AgentMode` (`'DEFAULT' \| 'LITE' \| 'MAX' \| 'PLAN'`) | `cli/src/utils/constants.ts` | Which `AgentDefinition` loads + the `costMode` label forwarded to the SDK |
-| `InputMode` (`'default' \| 'bash' \| 'homeDir' \| 'plan' \| 'review' \| 'interview' \| 'usage' \| 'image' \| 'help' \| 'connect:chatgpt' \| 'outOfCredits' \| 'subscriptionLimit'`) | `cli/src/utils/input-modes.ts` | Input-box prefix/slash-command context. Determines whether the AgentMode toggle is visible. |
+| `InputMode` (`'default' \| 'bash' \| 'homeDir' \| 'plan' \| 'review' \| 'interview' \| 'usage' \| 'image' \| 'help' \| 'connect:chatgpt'`) | `cli/src/utils/input-modes.ts` | Input-box prefix/slash-command context. Determines whether the AgentMode toggle is visible. (FID-2026-0929-005 removed `'outOfCredits'` and `'subscriptionLimit'` with the backend billing surface.) |
 | `costMode` (`'free' \| 'lite' \| 'normal' \| 'max' \| 'experimental' \| 'ask'`) | `common/src/constants/model-config.ts` | Legacy billing tag, passed to SDK. Same names as AgentMode labels but a separate string union. |
 
 The input-box toggle the user sees in `DEFAULT/LITE/MAX` is the **AgentMode toggle** from the first table. The
@@ -164,13 +164,12 @@ From `cli/src/utils/input-modes.ts`, each `InputModeConfig` has `showAgentModeTo
 | InputMode | Toggle visible? |
 |---|---|
 | `default`, `homeDir`, `usage`, `help` | ✅ |
-| `bash`, `plan`, `review`, `interview`, `image`, `connect:chatgpt`, `outOfCredits`, `subscriptionLimit` | ❌ |
+| `bash`, `plan`, `review`, `interview`, `image`, `connect:chatgpt` | ❌ |
 
 Plus an unconditional override: in free builds (IS_SAVANT_FREE=true), all toggle visibility is forced off.
 
 Practical consequence: when the user types `/plan`, `/review`, or `/interview`, the agent-mode toggle disappears.
-When the user is back in the default chat, it reappears. `subscriptionLimit` and `outOfCredits` also hide it
-because there's no interactive mode toggle to display.
+When the user is back in the default chat, it reappears.
 
 ---
 

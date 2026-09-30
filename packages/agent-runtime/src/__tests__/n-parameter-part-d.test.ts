@@ -46,7 +46,6 @@ describe('n parameter and GENERATE_N functionality', () => {
   beforeEach(() => {
     agentRuntimeImpl = {
       ...createTestAgentRuntimeParams(),
-      addAgentStep: async () => 'test-agent-step-id',
 
       sendAction: () => {},
     }

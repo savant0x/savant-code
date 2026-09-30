@@ -6,7 +6,6 @@ import { getStubProjectFileContext } from '@savant-code/common/util/file'
 import { afterEach, describe, expect, it, mock, spyOn } from 'bun:test'
 
 import { SavantCodeClient } from '../client'
-import * as databaseModule from '../impl/database'
 
 import type { FileFilter } from '../tools/read-files'
 import type { SavantCodeFileSystem } from '@savant-code/common/types/filesystem'
@@ -66,18 +65,6 @@ describe('SavantCodeClientOptions fileFilter', () => {
   })
 
   it('should invoke fileFilter callback and block files when filter returns blocked', async () => {
-    spyOn(databaseModule, 'getUserInfoFromApiKey').mockResolvedValue({
-      id: 'user-123',
-      email: 'test@example.com',
-      discord_id: null,
-      stripe_customer_id: null,
-      banned: false,
-      created_at: new Date('2024-01-01T00:00:00Z'),
-    })
-    spyOn(databaseModule, 'fetchAgentFromDatabase').mockResolvedValue(null)
-    spyOn(databaseModule, 'startAgentRun').mockResolvedValue('run-1')
-    spyOn(databaseModule, 'finishAgentRun').mockResolvedValue(undefined)
-    spyOn(databaseModule, 'addAgentStep').mockResolvedValue('step-1')
     spyOn(projectFileTree, 'isFileIgnored').mockResolvedValue(false)
 
     const mockFs = createMockFs({
@@ -131,7 +118,6 @@ describe('SavantCodeClientOptions fileFilter', () => {
     }
 
     const client = new SavantCodeClient({
-      apiKey: 'test-key',
       cwd: '/project',
       fsSource: mockFs,
       fileFilter,
@@ -150,18 +136,6 @@ describe('SavantCodeClientOptions fileFilter', () => {
   })
 
   it('should mark files as templates when filter returns allow-example', async () => {
-    spyOn(databaseModule, 'getUserInfoFromApiKey').mockResolvedValue({
-      id: 'user-123',
-      email: 'test@example.com',
-      discord_id: null,
-      stripe_customer_id: null,
-      banned: false,
-      created_at: new Date('2024-01-01T00:00:00Z'),
-    })
-    spyOn(databaseModule, 'fetchAgentFromDatabase').mockResolvedValue(null)
-    spyOn(databaseModule, 'startAgentRun').mockResolvedValue('run-1')
-    spyOn(databaseModule, 'finishAgentRun').mockResolvedValue(undefined)
-    spyOn(databaseModule, 'addAgentStep').mockResolvedValue('step-1')
     // Even though isFileIgnored returns true, template files should bypass this
     spyOn(projectFileTree, 'isFileIgnored').mockResolvedValue(true)
 
@@ -212,7 +186,6 @@ describe('SavantCodeClientOptions fileFilter', () => {
     }
 
     const client = new SavantCodeClient({
-      apiKey: 'test-key',
       cwd: '/project',
       fsSource: mockFs,
       fileFilter,

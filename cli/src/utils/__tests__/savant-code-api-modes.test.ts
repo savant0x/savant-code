@@ -46,7 +46,7 @@ describe('createSavantCodeApiClient', () => {
     test('endpoint methods return 503 error without calling fetch', async () => {
       const client = createSavantCodeApiClient({
         baseUrl: 'https://test.api',
-        authToken: 'stub_bypass_dev_local',
+        authToken: 'test-token',
         fetch: mockFetch as unknown as typeof fetch,
       })
 

@@ -79,7 +79,6 @@ export { ToolHelpers } from './tools'
 export * from './constants'
 export type { OnFileWrittenCallback } from './tools/change-file'
 
-export { getUserInfoFromApiKey } from './impl/database'
 export * from './credentials'
 export { loadLocalAgents } from './agents/load-agents'
 export { loadMCPConfig, loadMCPConfigSync } from './agents/load-mcp-config'

@@ -4,8 +4,6 @@ import type { LanguageModel } from 'ai'
  * Parameters for requesting a model.
  */
 export interface ModelRequestParams {
-  /** SavantCode API key for backend authentication */
-  apiKey: string
   /** Model ID (OpenRouter format, e.g., "anthropic/claude-sonnet-4") */
   model: string
   /** If true, skip ChatGPT OAuth and use SavantCode backend (for fallback after rate limit) */

@@ -4,7 +4,9 @@
  * Starts SavantFree in tmux, sends a prompt asking it to add a console.log
  * to a file, and verifies the file was modified correctly.
  *
- * Requires SAVANT_CODE_API_KEY — skipped if not set.
+ * FID-2026-0929-005: the SAVANT_CODE_API_KEY opt-in gate is deleted with the
+ * variable it read — nothing in the harness consumes a backend key anymore.
+ * Provider credentials must be present in the environment instead.
  */
 
 import { afterEach, describe, expect, test } from 'bun:test'
@@ -12,10 +14,6 @@ import { afterEach, describe, expect, test } from 'bun:test'
 import { SavantFreeModel, requireSavantFreeBinary } from '../utils'
 
 const TEST_TIMEOUT = 1_000_000
-
-function getApiKey(): string | null {
-  return process.env.SAVANT_CODE_API_KEY ?? null
-}
 
 describe.skip('SavantFree: Code Edit', () => {
   let session: SavantFreeModel | null = null
@@ -30,14 +28,6 @@ describe.skip('SavantFree: Code Edit', () => {
   test(
     'adds a console.log to a file',
     async () => {
-      if (!getApiKey()) {
-        console.log(
-          'Skipping code-edit test: SAVANT_CODE_API_KEY not set. ' +
-            'Set it to run code-edit e2e tests.',
-        )
-        return
-      }
-
       const binary = requireSavantFreeBinary()
       const initialContent = [
         'function greet(name) {',

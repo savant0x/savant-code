@@ -173,14 +173,5 @@ describe('resolveChatKeyboardAction', () => {
       })
     })
 
-    test('Ctrl+T blocked in outOfCredits mode', () => {
-      const state: ChatKeyboardState = {
-        ...defaultState,
-        inputMode: 'outOfCredits',
-      }
-      expect(resolveChatKeyboardAction(ctrlT, state)).toEqual({
-        type: 'none',
-      })
-    })
   })
 })

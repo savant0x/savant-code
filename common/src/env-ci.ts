@@ -18,7 +18,6 @@ export const getCiEnv = (): CiEnv => ({
   RENDER: process.env.RENDER,
   IS_PULL_REQUEST: process.env.IS_PULL_REQUEST,
   SAVANT_CODE_GITHUB_TOKEN: process.env.SAVANT_CODE_GITHUB_TOKEN,
-  SAVANT_CODE_API_KEY: process.env.SAVANT_CODE_API_KEY,
 })
 
 /**

@@ -10,7 +10,6 @@ import { ChatInputDriveConfirmation } from './chat-input-bar-drive-confirm'
 import { ChatInputNormal } from './chat-input-bar-normal'
 import { FeedbackContainer } from './feedback-container'
 import { InputModeBanner } from './input-mode-banner'
-import { OutOfCreditsBanner } from './out-of-credits-banner'
 import { PublishContainer } from './publish-container'
 import { parseDrivePlanForConfirmation } from '../commands/auto-drive'
 import { useEvent } from '../hooks/use-event'
@@ -162,15 +161,7 @@ export const ChatInputBar = ({
     })
   }
 
-  // Out of credits mode: replace entire input with out-of-credits banner
-  if (inputMode === 'outOfCredits') {
-    return <OutOfCreditsBanner />
-  }
-
   // Subscription limit mode: show only the limit banner (no input box)
-  if (inputMode === 'subscriptionLimit') {
-    return <InputModeBanner />
-  }
 
   // ChatGPT connect mode: show only the connect panel (no input box)
   if (inputMode === 'connect:chatgpt') {

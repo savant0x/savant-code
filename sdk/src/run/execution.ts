@@ -2,7 +2,6 @@ import { callMainPrompt } from '@savant-code/agent-runtime/main-prompt'
 import { MAX_AGENT_STEPS_DEFAULT } from '@savant-code/common/constants/agents'
 import { registerCustomProviders } from '@savant-code/common/providers/custom-providers'
 
-import { getUserInfoFromApiKey } from '../impl/database'
 import { deserializeRunState } from '../run-state'
 import {
   buildPreAbortRunState,
@@ -41,7 +40,6 @@ export async function run(options: RunExecutionOptions): Promise<RunState> {
 }
 
 async function runOnce({
-  apiKey,
   fingerprintId,
 
   cwd,
@@ -188,7 +186,6 @@ async function runOnce({
     runtimeBase: {
       logger,
       traceWriter,
-      apiKey,
       signal,
       fs,
       cwd,
@@ -212,23 +209,10 @@ async function runOnce({
   // FID-2026-0802-008 D3: crypto-grade id (was Math.random()).
   const promptId = crypto.randomUUID()
 
-  // Send input
-  // FID-2026-0802-008 E2: auth failures (401/5xx from getUserInfoFromApiKey)
-  // resolve an error RunState rather than rejecting the run() promise.
-  let userId: string
-  try {
-    const userInfo = await getUserInfoFromApiKey({
-      ...agentRuntimeImpl,
-      apiKey,
-      fields: ['id'],
-    })
-    if (!userInfo) {
-      return getCancelledRunState('Invalid API key or user not found')
-    }
-    userId = userInfo.id
-  } catch (error) {
-    return errorRunStateFrom(error)
-  }
+  // FID-2026-0929-005 (gut the backend): there is no backend user directory
+  // to resolve and no run-tracking payload to address. The identifier slots
+  // the runtime contract still carries are pinned to the local constant.
+  const userId: string | undefined = 'local'
 
   if (signal?.aborted) {
     // Align with the pre-abort message in run() (FID-2026-0802-008 E2).

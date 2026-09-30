@@ -33,7 +33,6 @@ export function useChatSuggestions({
   fileTree,
   localAgents,
   adsEnabled,
-  hasSubscription,
   setInputValue,
   slashSelectedIndex,
   setSlashSelectedIndex,
@@ -48,19 +47,20 @@ export function useChatSuggestions({
   const loadedSkills = useMemo(() => getLoadedSkills(), [])
 
   // Filter slash commands based on current ads state - only show the option that changes state
-  // Hide both ads commands entirely for subscribers
   // Also merge in skill commands
   const filteredSlashCommands = useMemo(() => {
     const allCommands = getSlashCommandsWithSkills(loadedSkills)
     return allCommands.filter((cmd) => {
-      if (cmd.id === 'ads:enable') return !hasSubscription && !adsEnabled
-      if (cmd.id === 'ads:disable') return !hasSubscription && adsEnabled
+      if (cmd.id === 'ads:enable') return !adsEnabled
+      if (cmd.id === 'ads:disable') return adsEnabled
       return true
     })
     // FID-007 P1: deps are the reactive ads store slice (updated by the ads
     // commands) — NOT inputValue, whose only effect was to rebuild the command
     // list and clear the suggestion-engine cache on every keystroke.
-  }, [loadedSkills, hasSubscription, adsEnabled])
+    // FID-2026-0929-005: hasSubscription filter deleted with the subscription
+    // query; ads toggles filter on adsEnabled alone.
+  }, [loadedSkills, adsEnabled])
 
   const {
     slashContext,

@@ -29,12 +29,6 @@ describe('env-ci', () => {
       expect(env.GITHUB_ACTIONS).toBe('true')
     })
 
-    test('returns current process.env values for SAVANT_CODE_API_KEY', () => {
-      process.env.SAVANT_CODE_API_KEY = 'test-key-123'
-      const env = getCiEnv()
-      expect(env.SAVANT_CODE_API_KEY).toBe('test-key-123')
-    })
-
     test('returns current process.env values for SAVANT_CODE_GITHUB_TOKEN', () => {
       process.env.SAVANT_CODE_GITHUB_TOKEN = 'ghp_test_token'
       const env = getCiEnv()
@@ -65,7 +59,6 @@ describe('env-ci', () => {
     test('contains expected keys', () => {
       expect('CI' in ciEnv).toBe(true)
       expect('GITHUB_ACTIONS' in ciEnv).toBe(true)
-      expect('SAVANT_CODE_API_KEY' in ciEnv).toBe(true)
       expect('SAVANT_CODE_GITHUB_TOKEN' in ciEnv).toBe(true)
     })
   })
@@ -115,9 +108,10 @@ describe('env-ci', () => {
   })
 
   describe('createTestCiEnv', () => {
-    test('returns a CiEnv with default test values', () => {
+    test('returns a CiEnv with undefined defaults', () => {
       const env = createTestCiEnv()
-      expect(env.SAVANT_CODE_API_KEY).toBe('test-api-key')
+      expect(env.CI).toBeUndefined()
+      expect(env.SAVANT_CODE_GITHUB_TOKEN).toBeUndefined()
     })
 
     test('returns undefined for most vars by default', () => {
@@ -137,14 +131,14 @@ describe('env-ci', () => {
       expect(env.CI).toBe('true')
       expect(env.GITHUB_ACTIONS).toBe('true')
       // Other values should still have defaults
-      expect(env.SAVANT_CODE_API_KEY).toBe('test-api-key')
+      expect(env.SAVANT_CODE_GITHUB_TOKEN).toBeUndefined()
     })
 
     test('allows overriding default values', () => {
       const env = createTestCiEnv({
-        SAVANT_CODE_API_KEY: 'custom-api-key',
+        SAVANT_CODE_GITHUB_TOKEN: 'custom-gh-token',
       })
-      expect(env.SAVANT_CODE_API_KEY).toBe('custom-api-key')
+      expect(env.SAVANT_CODE_GITHUB_TOKEN).toBe('custom-gh-token')
     })
 
     test('allows setting all CI-related vars for CI simulation', () => {
@@ -154,14 +148,12 @@ describe('env-ci', () => {
         RENDER: 'true',
         IS_PULL_REQUEST: 'true',
         SAVANT_CODE_GITHUB_TOKEN: 'ghp_simulated_token',
-        SAVANT_CODE_API_KEY: 'test-api-key-override',
       })
       expect(env.CI).toBe('true')
       expect(env.GITHUB_ACTIONS).toBe('true')
       expect(env.RENDER).toBe('true')
       expect(env.IS_PULL_REQUEST).toBe('true')
       expect(env.SAVANT_CODE_GITHUB_TOKEN).toBe('ghp_simulated_token')
-      expect(env.SAVANT_CODE_API_KEY).toBe('test-api-key-override')
     })
   })
 })

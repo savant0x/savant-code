@@ -64,19 +64,12 @@ export interface TestAgentRuntimeParams {
   promptAiSdk: ReturnType<typeof mock>
   promptAiSdkStructured: ReturnType<typeof mock>
   requestMcpToolData: ReturnType<typeof mock>
-  startAgentRun: ReturnType<typeof mock>
-  finishAgentRun: ReturnType<typeof mock>
-  addAgentStep: ReturnType<typeof mock>
   logger: typeof testLogger
   trackEvent: ReturnType<typeof mock>
   clientEnv: typeof testClientEnv
   ciEnv: typeof testCiEnv
-  apiKey: string
   fetch: typeof testFetch
-  fetchAgentFromDatabase: ReturnType<typeof mock>
-  databaseAgentCache: Map<string, null>
   consumeCreditsWithFallback: ReturnType<typeof mock>
-  getUserInfoFromApiKey: ReturnType<typeof mock>
   handleStepsLogChunk: ReturnType<typeof mock>
   requestOptionalFile: ReturnType<typeof mock>
   sendSubagentChunk: ReturnType<typeof mock>
@@ -132,26 +125,13 @@ export function createTestAgentRuntimeParams(
     promptAiSdkStructured:
       overrides.promptAiSdkStructured ?? mock(async () => promptSuccess({})),
     requestMcpToolData: overrides.requestMcpToolData ?? mock(async () => ({})),
-    startAgentRun: overrides.startAgentRun ?? mock(async () => 'test-run-id'),
-    finishAgentRun: overrides.finishAgentRun ?? mock(async () => {}),
-    addAgentStep: overrides.addAgentStep ?? mock(async () => 'test-step-id'),
     logger: overrides.logger ?? testLogger,
     trackEvent: overrides.trackEvent ?? mock(() => {}),
     clientEnv: overrides.clientEnv ?? testClientEnv,
     ciEnv: overrides.ciEnv ?? testCiEnv,
-    apiKey: overrides.apiKey ?? 'test-api-key',
     fetch: overrides.fetch ?? testFetch,
-    fetchAgentFromDatabase:
-      overrides.fetchAgentFromDatabase ?? mock(async () => null),
-    databaseAgentCache: overrides.databaseAgentCache ?? new Map<string, null>(),
     consumeCreditsWithFallback:
       overrides.consumeCreditsWithFallback ?? mock(async () => {}),
-    getUserInfoFromApiKey:
-      overrides.getUserInfoFromApiKey ??
-      mock(async () => ({
-        id: 'test-user-id',
-        email: 'test@example.com',
-      })),
     handleStepsLogChunk: overrides.handleStepsLogChunk ?? mock(() => {}),
     requestOptionalFile:
       overrides.requestOptionalFile ?? mock(async () => null),

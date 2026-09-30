@@ -28,7 +28,6 @@ interface TextContentBlock {
 }
 
 import { SavantCodeClient } from '../client'
-import * as databaseModule from '../impl/database'
 
 import type { JSONValue } from '@savant-code/common/types/json'
 
@@ -38,18 +37,6 @@ describe('Run Cancellation Handling', () => {
   })
 
   it('preserves session state from server when aborted and appends interruption message', async () => {
-    spyOn(databaseModule, 'getUserInfoFromApiKey').mockResolvedValue({
-      id: 'user-123',
-      email: 'test@example.com',
-      discord_id: null,
-      stripe_customer_id: null,
-      banned: false,
-      created_at: new Date('2024-01-01T00:00:00Z'),
-    })
-    spyOn(databaseModule, 'fetchAgentFromDatabase').mockResolvedValue(null)
-    spyOn(databaseModule, 'startAgentRun').mockResolvedValue('run-1')
-    spyOn(databaseModule, 'finishAgentRun').mockResolvedValue(undefined)
-    spyOn(databaseModule, 'addAgentStep').mockResolvedValue('step-1')
 
     const abortController = new AbortController()
 
@@ -136,7 +123,6 @@ describe('Run Cancellation Handling', () => {
     )
 
     const client = new SavantCodeClient({
-      apiKey: 'test-key',
     })
 
     const result = await client.run({
@@ -178,18 +164,6 @@ describe('Run Cancellation Handling', () => {
   })
 
   it('interruption message uses withSystemTags format', async () => {
-    spyOn(databaseModule, 'getUserInfoFromApiKey').mockResolvedValue({
-      id: 'user-123',
-      email: 'test@example.com',
-      discord_id: null,
-      stripe_customer_id: null,
-      banned: false,
-      created_at: new Date('2024-01-01T00:00:00Z'),
-    })
-    spyOn(databaseModule, 'fetchAgentFromDatabase').mockResolvedValue(null)
-    spyOn(databaseModule, 'startAgentRun').mockResolvedValue('run-1')
-    spyOn(databaseModule, 'finishAgentRun').mockResolvedValue(undefined)
-    spyOn(databaseModule, 'addAgentStep').mockResolvedValue('step-1')
 
     const abortController = new AbortController()
     const serverSessionState = getInitialSessionState(
@@ -235,7 +209,6 @@ describe('Run Cancellation Handling', () => {
     )
 
     const client = new SavantCodeClient({
-      apiKey: 'test-key',
     })
 
     const result = await client.run({

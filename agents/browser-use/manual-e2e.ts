@@ -199,7 +199,6 @@ async function main() {
   console.log(`Loaded browser-use agent (model: ${browserAgent.model})`)
 
   const client = new SavantCodeClient({
-    apiKey: process.env.SAVANT_CODE_API_KEY,
     cwd: process.cwd(),
   })
 

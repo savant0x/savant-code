@@ -54,20 +54,12 @@ export function extractSubagentContextParams(
     // AgentRuntimeDeps - Environment
     clientEnv: params.clientEnv,
     ciEnv: params.ciEnv,
-    // AgentRuntimeDeps - Database
-    getUserInfoFromApiKey: params.getUserInfoFromApiKey,
-    fetchAgentFromDatabase: params.fetchAgentFromDatabase,
-    startAgentRun: params.startAgentRun,
-    finishAgentRun: params.finishAgentRun,
-    addAgentStep: params.addAgentStep,
     // AgentRuntimeDeps - Billing
     consumeCreditsWithFallback: params.consumeCreditsWithFallback,
     // AgentRuntimeDeps - LLM
     promptAiSdkStream: params.promptAiSdkStream,
     promptAiSdk: params.promptAiSdk,
     promptAiSdkStructured: params.promptAiSdkStructured,
-    // AgentRuntimeDeps - Mutable State
-    databaseAgentCache: params.databaseAgentCache,
     // AgentRuntimeDeps - Analytics
     trackEvent: params.trackEvent,
     // AgentRuntimeDeps - Other
@@ -83,7 +75,6 @@ export function extractSubagentContextParams(
     requestOptionalFile: params.requestOptionalFile,
     sendAction: params.sendAction,
     sendSubagentChunk: params.sendSubagentChunk,
-    apiKey: params.apiKey,
 
     // Checkpointing (FID-2026-0803-004) — subagent writes land in the parent
     // turn's checkpoint so a rewind restores everything the turn touched.

@@ -47,7 +47,6 @@ export async function runProgrammaticStep(
     localAgentTemplates: _localAgentTemplates,
     stepsComplete,
     handleStepsLogChunk,
-    addAgentStep,
     logger,
   } = params
   let { stepNumber } = params
@@ -107,17 +106,9 @@ export async function runProgrammaticStep(
   let endTurn = false
   let generateN: number | undefined = undefined
 
-  let startTime = new Date()
-  let creditsBefore = agentState.directCreditsUsed
-  let childrenBefore = agentState.childRunIds.length
-
   try {
     // Execute tools synchronously as the generator yields them
     do {
-      startTime = new Date()
-      creditsBefore = agentState.directCreditsUsed
-      childrenBefore = agentState.childRunIds.length
-
       const result = generator.next({
         agentState: getPublicAgentState(
           agentState as AgentState & Required<Pick<AgentState, 'runId'>>,
@@ -205,20 +196,9 @@ export async function runProgrammaticStep(
         onResponseChunk,
       })
 
-      if (agentState.runId) {
-        await addAgentStep({
-          ...params,
-          agentRunId: agentState.runId,
-          stepNumber,
-          credits: agentState.directCreditsUsed - creditsBefore,
-          childRunIds: agentState.childRunIds.slice(childrenBefore),
-          status: 'completed',
-          startTime,
-          messageId: null,
-        })
-      } else {
-        logger.error('No runId found for agent state after finishing agent run')
-      }
+      // FID-2026-0929-005: the backend step-record call is deleted. The
+      // credit/child-run deltas above stay (they feed analytics + the parent
+      // state); bookkeeping continues via the local stepNumber counter.
       stepNumber++
 
       if (toolCall.toolName === 'end_turn') {
@@ -252,22 +232,7 @@ export async function runProgrammaticStep(
       error: errorMessage,
     }
 
-    if (agentState.runId) {
-      await addAgentStep({
-        ...params,
-        agentRunId: agentState.runId,
-        stepNumber,
-        credits: agentState.directCreditsUsed - creditsBefore,
-        childRunIds: agentState.childRunIds.slice(childrenBefore),
-        status: 'skipped',
-        startTime,
-        errorMessage,
-        messageId: null,
-        logger,
-      })
-    } else {
-      logger.error('No runId found for agent state after failed agent run')
-    }
+    // FID-2026-0929-005: backend step-record call deleted (failed path).
     stepNumber++
 
     return {

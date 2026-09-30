@@ -160,7 +160,8 @@ describe('command factory pattern', () => {
     })
 
     test('expected commands ignore args', () => {
-      const expectedNoArgs = ['logout', 'exit', 'usage', 'init']
+      // FID-2026-0929-005: 'usage' is deleted with the backend billing surface.
+      const expectedNoArgs = ['logout', 'exit', 'init']
       for (const name of expectedNoArgs) {
         const cmd = COMMAND_REGISTRY.find((c) => c.name === name)
         expect(cmd, `Command ${name} should exist`).toBeDefined()

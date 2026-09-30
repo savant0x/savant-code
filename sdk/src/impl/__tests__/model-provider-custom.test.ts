@@ -58,7 +58,6 @@ describe('model-provider custom providers (FID-2026-0910-004 Step 4)', () => {
 
     const { getModelForRequest } = await importFresh()
     const result = await getModelForRequest({
-      apiKey: 'caller-key',
       model: 'my-gateway/model-x',
     })
     await (result.model as LanguageModelV2).doStream({ prompt: PROMPT })
@@ -83,7 +82,7 @@ describe('model-provider custom providers (FID-2026-0910-004 Step 4)', () => {
 
     const { getModelForRequest } = await importFresh()
     await expect(
-      getModelForRequest({ apiKey: 'caller-key', model: 'some-bare-model' }),
+      getModelForRequest({ model: 'some-bare-model' }),
     ).rejects.toThrow('MY_GW_KEY')
   })
 
@@ -106,7 +105,6 @@ describe('model-provider custom providers (FID-2026-0910-004 Step 4)', () => {
 
     const { getModelForRequest } = await importFresh()
     const result = await getModelForRequest({
-      apiKey: 'caller-key',
       model: 'some-bare-model',
     })
     await (result.model as LanguageModelV2).doStream({ prompt: PROMPT })
@@ -142,7 +140,6 @@ describe('model-provider custom providers (FID-2026-0910-004 Step 4)', () => {
 
     const { getModelForRequest } = await importFresh()
     const result = await getModelForRequest({
-      apiKey: 'caller-key',
       model: 'my-gateway/claude-ish-model',
     })
     await (result.model as LanguageModelV2).doStream({ prompt: PROMPT })

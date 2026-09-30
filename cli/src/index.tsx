@@ -122,7 +122,8 @@ async function main(): Promise<void> {
   applyPersistedDirectProviderSettings()
 
   // Auto-detect Ollama on first run and route inference to the local daemon
-  // when no backend token or explicit direct provider is configured.
+  // when no explicit direct provider is configured (FID-2026-0929-005: the
+  // backend-token deferral term is deleted with the backend).
   await detectOllamaAndConfigureDirectProvider()
 
   // Keep the first-run default model usable without forcing a backend login.
@@ -133,7 +134,7 @@ async function main(): Promise<void> {
   // Set the auth token for the API client
   setApiClientAuthToken(getAuthToken())
 
-  // Command + headless dispatch (login, release, --auto, --print/piped/CI).
+  // Command + headless dispatch (release, --auto, --print/piped/CI).
   // Handled invocations terminate or return; false falls through to the
   // interactive path below.
   if (await dispatchCommandsAndHeadless(args)) {

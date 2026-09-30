@@ -54,7 +54,11 @@ export async function getModelForRequest(
   params: ModelRequestParams,
 ): Promise<ModelResult> {
   void resetChatGptOAuthRateLimit
-  const { apiKey, model, skipChatGptOAuth } = params
+  // FID-2026-0929-005: the caller-supplied `apiKey` (the deleted backend
+  // identity) is no longer read. Authorization comes from the registry / the
+  // active provider's own credential chain.
+  void params
+  const { model, skipChatGptOAuth } = params
 
   // Check if we should use ChatGPT OAuth direct
   // Only attempt for allowlisted models; non-allowlisted models silently fall through.
@@ -127,7 +131,7 @@ export async function getModelForRequest(
   }
   return {
     model: await createDefaultInferenceModel(
-      activeProviderKey ?? apiKey,
+      activeProviderKey ?? '',
       model,
       {
         // Only a key resolved from the active provider is authoritative; the

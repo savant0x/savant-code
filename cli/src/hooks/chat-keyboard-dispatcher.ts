@@ -79,9 +79,6 @@ export type ChatKeyboardHandlers = {
 
   // Toggle all handler
   onToggleAll: () => void
-
-  // Out of credits handler
-  onOpenBuyCredits: () => void
 }
 
 /**
@@ -242,9 +239,6 @@ export function dispatchAction(
       return true
     case 'toggle-all':
       handlers.onToggleAll()
-      return true
-    case 'open-buy-credits':
-      handlers.onOpenBuyCredits()
       return true
     case 'none':
       return false

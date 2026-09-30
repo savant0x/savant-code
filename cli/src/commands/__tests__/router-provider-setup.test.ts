@@ -20,7 +20,6 @@ describe('routeUserPrompt providerSetup mode', () => {
   let originalNousApiKey: string | undefined
   let originalDirectProvider: string | undefined
   let originalInferenceBaseUrl: string | undefined
-  let originalBackendApiKey: string | undefined
   let tempDir: string
 
   beforeEach(() => {
@@ -30,7 +29,6 @@ describe('routeUserPrompt providerSetup mode', () => {
     originalNousApiKey = process.env.NOUS_API_KEY
     originalDirectProvider = process.env.DIRECT_PROVIDER
     originalInferenceBaseUrl = process.env.INFERENCE_BASE_URL
-    originalBackendApiKey = process.env.SAVANT_CODE_API_KEY
     tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'savant-provider-route-'))
     process.env.SAVANT_CODE_CONFIG_DIR = tempDir
     delete process.env.TOKENHARBOR_API_KEY
@@ -38,7 +36,6 @@ describe('routeUserPrompt providerSetup mode', () => {
     delete process.env.NOUS_API_KEY
     delete process.env.DIRECT_PROVIDER
     delete process.env.INFERENCE_BASE_URL
-    delete process.env.SAVANT_CODE_API_KEY
     useChatStore.getState().reset()
     beginProviderSetup('tokenharbor')
     useChatStore.getState().setInputMode('providerSetup')
@@ -61,9 +58,6 @@ describe('routeUserPrompt providerSetup mode', () => {
     if (originalInferenceBaseUrl === undefined)
       delete process.env.INFERENCE_BASE_URL
     else process.env.INFERENCE_BASE_URL = originalInferenceBaseUrl
-    if (originalBackendApiKey === undefined)
-      delete process.env.SAVANT_CODE_API_KEY
-    else process.env.SAVANT_CODE_API_KEY = originalBackendApiKey
     fs.rmSync(tempDir, { recursive: true, force: true })
   })
 

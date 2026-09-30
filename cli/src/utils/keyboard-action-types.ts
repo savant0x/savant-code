@@ -110,8 +110,5 @@ export type ChatKeyboardAction =
   // Paste action (dispatcher checks clipboard content to route to image or text handler)
   | { type: 'paste' }
 
-  // Out of credits action
-  | { type: 'open-buy-credits' }
-
   // No action needed
   | { type: 'none' }

@@ -1,4 +1,3 @@
-import { createPaymentRequiredError } from '@savant-code/sdk'
 import { describe, expect, test, mock, beforeEach, afterEach } from 'bun:test'
 
 import type { ChatMessage } from '../../../types/chat'
@@ -148,60 +147,10 @@ describe('handleRunError specialized errors', () => {
     expect(timerController.stopCalls).toContain('error')
   })
 
-  test('Payment required error (402) uses setError, invalidates queries, and switches input mode', () => {
-    let messages: ChatMessage[] = [
-      {
-        id: 'ai-1',
-        variant: 'ai',
-        content: 'Partial streamed content',
-        blocks: [{ type: 'text', content: 'some block' }],
-        timestamp: 'now',
-      },
-    ]
-
-    const timerController = createMockTimerController()
-    const updater = createBatchedMessageUpdater('ai-1', (fn: any) => {
-      messages = fn(messages)
-    })
-
-    const setInputModeMock = mock(() => {})
-    useChatStore.getState = () => ({
-      ...originalGetState(),
-      setInputMode: setInputModeMock,
-    })
-
-    const paymentError = createPaymentRequiredError('Out of credits')
-
-    handleRunError({
-      error: paymentError,
-      timerController,
-      updater,
-      setIsRetrying: () => {},
-      setStreamStatus: () => {},
-      setCanProcessQueue: () => {},
-      updateChainInProgress: () => {},
-    })
-
-    const aiMessage = messages.find((m) => m.id === 'ai-1')
-    expect(aiMessage).toBeDefined()
-
-    // For PaymentRequiredError, setError sets userError (not content)
-    // Content is preserved, error is stored in userError field
-    expect(aiMessage!.content).toBe('Partial streamed content')
-    expect(aiMessage!.userError).toContain('Out of credits')
-
-    // Blocks should be preserved for debugging context
-    expect(aiMessage!.blocks).toEqual([{ type: 'text', content: 'some block' }])
-
-    // Message should be marked complete
-    expect(aiMessage!.isComplete).toBe(true)
-
-    // Input mode should switch to outOfCredits
-    expect(setInputModeMock).toHaveBeenCalledWith('outOfCredits')
-
-    // Timer should still be stopped with error
-    expect(timerController.stopCalls).toContain('error')
-  })
+  // FID-2026-0929-005: the backend-mode 402 pin (setError + usage-poll
+  // invalidation + outOfCredits input-mode lockout) is deleted with the
+  // backend branch it pinned — a 402 is always the provider's own error via
+  // the direct lane, and no input-mode switch happens anywhere.
 
   // FID-2026-0929-002: in direct-provider mode a 402 is the provider's own
   // account state — the backend-branded message, the outOfCredits input-mode

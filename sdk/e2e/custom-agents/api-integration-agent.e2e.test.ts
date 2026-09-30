@@ -7,15 +7,15 @@
 import { describe, test, expect, beforeAll } from 'bun:test'
 import { z } from 'zod/v4'
 
-import { SavantCodeClient, getCustomToolDefinition } from '../../src'
+import { getCustomToolDefinition } from '../../src'
 import {
   EventCollector,
-  getApiKey,
+  setupMockClient,
   skipIfNoApiKey,
   DEFAULT_TIMEOUT,
 } from '../utils'
 
-import type { AgentDefinition } from '../../src'
+import type { AgentDefinition , SavantCodeClient} from '../../src'
 
 describe('Custom Agents: API Integration Agent', () => {
   let client: SavantCodeClient
@@ -93,7 +93,7 @@ Summarize the response data clearly.`,
 
   beforeAll(() => {
     if (skipIfNoApiKey()) return
-    client = new SavantCodeClient({ apiKey: getApiKey() })
+    client = setupMockClient()
   })
 
   test(

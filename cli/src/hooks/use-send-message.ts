@@ -35,7 +35,6 @@ export const useSendMessage = ({
   requeueMessageAtFront,
   continueChat,
   continueChatId,
-  subscriptionData,
 }: UseSendMessageOptions): {
   sendMessage: SendMessageFn
   clearMessages: () => void
@@ -168,7 +167,6 @@ export const useSendMessage = ({
       onTimerEvent,
       resumeQueue,
       requeueMessageAtFront,
-      subscriptionData,
     }),
     [
       addActiveSubagent,

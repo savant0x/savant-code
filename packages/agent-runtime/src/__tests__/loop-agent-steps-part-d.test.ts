@@ -168,12 +168,6 @@ describe('loopAgentSteps - runAgentStep vs runProgrammaticStep behavior', () => 
         'test-agent': llmOnlyTemplate,
       }
 
-      // Track finishAgentRun calls
-      let finishAgentRunStatus: string | undefined
-      const mockFinishAgentRun = mock(async (params: { status: string }) => {
-        finishAgentRunStatus = params.status
-      })
-
       // Mock promptAiSdkStream to throw an AbortError (simulating user cancellation mid-stream)
       loopAgentStepsBaseParams.promptAiSdkStream = async function* () {
         // Yield some content first
@@ -186,7 +180,6 @@ describe('loopAgentSteps - runAgentStep vs runProgrammaticStep behavior', () => 
         ...loopAgentStepsBaseParams,
         agentType: 'test-agent',
         localAgentTemplates,
-        finishAgentRun: mockFinishAgentRun,
       })
 
       // Verify the output indicates cancellation
@@ -195,9 +188,6 @@ describe('loopAgentSteps - runAgentStep vs runProgrammaticStep behavior', () => 
         expect(result.output.message).toBe('Run cancelled by user')
       }
 
-      // Verify finishAgentRun was called with 'cancelled' status
-      expect(mockFinishAgentRun).toHaveBeenCalled()
-      expect(finishAgentRunStatus).toBe('cancelled')
     })
 
     it('should distinguish AbortError from other errors', async () => {
@@ -212,12 +202,6 @@ describe('loopAgentSteps - runAgentStep vs runProgrammaticStep behavior', () => 
         'test-agent': llmOnlyTemplate,
       }
 
-      // Track finishAgentRun calls
-      let finishAgentRunStatus: string | undefined
-      const mockFinishAgentRun = mock(async (params: { status: string }) => {
-        finishAgentRunStatus = params.status
-      })
-
       // Mock promptAiSdkStream to throw a regular error (not AbortError)
       loopAgentStepsBaseParams.promptAiSdkStream = async function* () {
         yield { type: 'text' as const, text: 'Starting...\n' }
@@ -228,7 +212,6 @@ describe('loopAgentSteps - runAgentStep vs runProgrammaticStep behavior', () => 
         ...loopAgentStepsBaseParams,
         agentType: 'test-agent',
         localAgentTemplates,
-        finishAgentRun: mockFinishAgentRun,
       })
 
       // Verify the output indicates an error (not cancellation)
@@ -238,9 +221,6 @@ describe('loopAgentSteps - runAgentStep vs runProgrammaticStep behavior', () => 
         expect(result.output.message).not.toBe('Run cancelled by user')
       }
 
-      // Verify finishAgentRun was called with 'failed' status (not 'cancelled')
-      expect(mockFinishAgentRun).toHaveBeenCalled()
-      expect(finishAgentRunStatus).toBe('failed')
     })
 
     it('should handle signal.aborted before loop starts', async () => {

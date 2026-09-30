@@ -8,11 +8,7 @@ import {
 import { PROVIDER_REGISTRY } from '@savant-code/common/providers/registry'
 import { resetOpenRouterApiKeyCache } from '@savant-code/sdk'
 
-import {
-  getConfigDir,
-  getCredentialsPath,
-  hasEnvBackendCredentials,
-} from './auth'
+import { getConfigDir, getCredentialsPath } from './auth'
 import {
   readCredentialsRecord,
   readStoredProviderKeys,
@@ -104,11 +100,13 @@ export function applyPersistedProviderApiKeys(): void {
     }
   }
 
-  // Restore direct mode from an earlier-saved provider key (env key defers).
+  // Restore direct mode from an earlier-saved provider key.
+  // FID-2026-0929-005: the hasEnvBackendCredentials() deferral term is
+  // deleted with the backend it deferred to — there is no key source left
+  // that could outrank a stored provider selection.
   if (
     !process.env.DIRECT_PROVIDER?.trim() &&
-    !process.env.INFERENCE_BASE_URL?.trim() &&
-    !hasEnvBackendCredentials()
+    !process.env.INFERENCE_BASE_URL?.trim()
   ) {
     const configured = Object.entries(getEffectiveProviderSetupConfig()).find(
       ([, config]) => Boolean(storedKeys[config.envVar]),
@@ -128,12 +126,12 @@ export function applyPersistedProviderApiKeys(): void {
  * still reports the exact missing-key instruction when they submit a prompt.
  */
 export function configureDefaultDirectProvider(): void {
-  // FID-2026-0929-003: only the explicit env backend key (SAVANT_CODE_API_KEY)
-  // defers the auto-arm; stored tokens and stubs never outrank a selection.
+  // FID-2026-0929-005: the hasEnvBackendCredentials() deferral term is
+  // deleted with the backend credential it keyed on (FID-2026-0929-003's
+  // single-source rule keeps only the mode flags).
   if (
     process.env.DIRECT_PROVIDER?.trim() ||
-    process.env.INFERENCE_BASE_URL?.trim() ||
-    hasEnvBackendCredentials()
+    process.env.INFERENCE_BASE_URL?.trim()
   ) {
     return
   }

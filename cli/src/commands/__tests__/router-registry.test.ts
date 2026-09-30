@@ -13,16 +13,19 @@ describe('command-registry', () => {
       // FID-2026-0929-004: the login command was deleted with the dead
       // backend login surface — its absence is now the pin.
       expect(findCommand('login')).toBeUndefined()
-
-      const usage = findCommand('usage')
-      expect(usage).toBeDefined()
-      expect(usage?.name).toBe('usage')
+      // FID-2026-0929-005: /usage and /subscribe are deleted with the
+      // backend billing surface — their absence is now the pin.
+      expect(findCommand('usage')).toBeUndefined()
+      expect(findCommand('subscribe')).toBeUndefined()
+      expect(findCommand('strong')).toBeUndefined()
     })
 
     test('finds command by alias', () => {
-      const credits = findCommand('credits')
-      expect(credits).toBeDefined()
-      expect(credits?.name).toBe('usage')
+      // FID-2026-0929-005: the usage aliases (credits, sub, buy-credits) are
+      // deleted with the backend billing surface.
+      expect(findCommand('credits')).toBeUndefined()
+      expect(findCommand('sub')).toBeUndefined()
+      expect(findCommand('buy-credits')).toBeUndefined()
 
       // Legacy pre-rename aliases (model:edit / mode:edit) resolve to HYBRID
       // (FID-2026-0805-001 renamed EDIT → HYBRID).
@@ -48,8 +51,10 @@ describe('command-registry', () => {
 
     test('is case insensitive', () => {
       expect(findCommand('LOGIN')).toBeUndefined()
-      expect(findCommand('UsAgE')?.name).toBe('usage')
-      expect(findCommand('CREDITS')?.name).toBe('usage')
+      // FID-2026-0929-005: deleted billing commands resolve to nothing in
+      // any casing.
+      expect(findCommand('UsAgE')).toBeUndefined()
+      expect(findCommand('CREDITS')).toBeUndefined()
     })
   })
 

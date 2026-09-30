@@ -147,7 +147,7 @@ export async function runHeadlessPrint(
   if (!client) {
     return failWith(
       HEADLESS_EXIT_ERROR,
-      'Failed to initialize the SDK client. Set a provider key (e.g. OPENROUTER_API_KEY) or run the login flow first.',
+      'Failed to initialize the SDK client. Set a provider key (e.g. OPENROUTER_API_KEY) or run /provider to choose a provider.',
     )
   }
 

@@ -24,7 +24,6 @@ import type { SavantCodeFileSystem } from '@savant-code/common/types/filesystem'
 export function buildAgentRuntimeImpl(params: {
   logger?: Logger
   traceWriter?: TraceWriter
-  apiKey: string
   signal?: AbortSignal
   fs: SavantCodeFileSystem
   cwd?: string
@@ -47,7 +46,6 @@ export function buildAgentRuntimeImpl(params: {
   const {
     logger,
     traceWriter,
-    apiKey,
     signal,
     fs,
     cwd,
@@ -67,7 +65,6 @@ export function buildAgentRuntimeImpl(params: {
   return getAgentRuntimeImpl({
     logger,
     traceWriter,
-    apiKey,
     handleStepsLogChunk: () => {
       // Does nothing for now
     },
@@ -91,7 +88,6 @@ export function buildAgentRuntimeImpl(params: {
         cwd,
         fs,
         env,
-        apiKey,
         signal,
         onFileWritten,
       })

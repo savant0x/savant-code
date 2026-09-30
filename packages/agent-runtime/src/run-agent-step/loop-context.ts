@@ -86,14 +86,11 @@ export async function createLoopContext(params: {
     }
   }
 
-  const runId = await loopParams.startAgentRun({
-    ...loopParams,
-    agentId: agentTemplate.id,
-    ancestorRunIds: initialAgentState.ancestorRunIds,
-  })
-  if (!runId) {
-    throw new Error('Failed to start agent run')
-  }
+  // FID-2026-0929-005 (gut the backend): the runId is minted locally. The
+  // former startAgentRun hook POSTed to the backend's run registry — a
+  // backend that does not exist — and its only surviving purpose is log/trace
+  // correlation, which a crypto-grade id serves identically.
+  const runId = crypto.randomUUID()
   initialAgentState.runId = runId
 
   let cachedAdditionalToolDefinitions: CustomToolDefinitions | undefined

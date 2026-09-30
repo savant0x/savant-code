@@ -89,12 +89,14 @@ export function clearPendingExtraCredentials(): void {
 
 /**
  * Return setup metadata only when the active runtime needs a gateway key.
- * Backend credentials and local Ollama are intentionally not gateway setup
- * cases; direct-provider mode uses a stub backend token for bootstrapping.
+ * Local Ollama is intentionally not a gateway setup case.
+ * FID-2026-0929-005: the backend-credential bypass ('environment' source) is
+ * deleted with the credential it keyed on — a stored credentials.json token
+ * is inert residue and no longer suppresses setup guidance.
  */
 export function getMissingProviderSetup(): MissingProviderSetup | undefined {
   const authSource = getAuthTokenDetails().source
-  if (authSource === 'credentials' || authSource === 'environment') {
+  if (authSource === 'credentials') {
     return undefined
   }
 

@@ -2,7 +2,6 @@
 import type { StreamController } from './stream-state'
 import type { ElapsedTimeTracker } from './use-elapsed-time'
 import type { StreamStatus } from './use-message-queue'
-import type { SubscriptionResponse } from './use-subscription-query'
 import type { ChatMessage } from '../types/chat'
 import type { PendingAttachment } from '../types/store'
 import type { AgentMode } from '../utils/constants'
@@ -39,7 +38,6 @@ export interface UseSendMessageOptions {
   }) => void
   continueChat: boolean
   continueChatId?: string
-  subscriptionData?: SubscriptionResponse | null
 }
 
 /**
@@ -94,5 +92,4 @@ export type CreateSendMessageBodyParams = {
     content: string
     attachments: PendingAttachment[]
   }) => void
-  subscriptionData?: SubscriptionResponse | null
 }

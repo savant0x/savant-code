@@ -22,30 +22,6 @@ export const TEST_AGENT_RUNTIME_IMPL = Object.freeze({
   trackEvent: () => {},
   logger: testLogger,
   fetch: testFetch,
-  getUserInfoFromApiKey: async <T extends string>({
-    fields,
-  }: {
-    apiKey: string
-    fields: readonly T[]
-  }) => {
-    const user = {
-      id: 'test-user-id',
-      email: 'test@example.com',
-      discord_id: 'test-discord-id',
-      stripe_customer_id: null,
-      banned: false,
-      created_at: new Date('2024-01-01T00:00:00Z'),
-    } as const
-    return Object.fromEntries(
-      fields.map((field) => [field, user[field as keyof typeof user]]),
-    ) as {
-      [K in T]: (typeof user)[K & keyof typeof user]
-    }
-  },
-  fetchAgentFromDatabase: async () => null,
-  startAgentRun: async () => 'test-agent-run-id',
-  finishAgentRun: async () => {},
-  addAgentStep: async () => 'test-agent-step-id',
   consumeCreditsWithFallback: async () => {
     throw new Error(
       'consumeCreditsWithFallback not implemented in test runtime',
@@ -60,7 +36,6 @@ export const TEST_AGENT_RUNTIME_IMPL = Object.freeze({
   promptAiSdkStructured: async function () {
     throw new Error('promptAiSdkStructured not implemented in test runtime')
   },
-  databaseAgentCache: new Map(),
   handleStepsLogChunk: () => {
     throw new Error('handleStepsLogChunk not implemented in test runtime')
   },
@@ -82,7 +57,6 @@ export const TEST_AGENT_RUNTIME_IMPL = Object.freeze({
   sendAction: () => {
     throw new Error('sendAction not implemented in test runtime')
   },
-  apiKey: 'test-api-key',
 })
 
 export function createTestAgentRuntimeDeps(): Omit<
@@ -111,22 +85,12 @@ export function createTestAgentRuntimeDeps(): Omit<
     promptAiSdk: mock(async () => promptSuccess('Mock response')),
     promptAiSdkStructured: mock(async () => promptSuccess({})),
     requestMcpToolData: mock(async () => ({})),
-    startAgentRun: mock(async () => 'test-run-id'),
-    finishAgentRun: mock(async () => {}),
-    addAgentStep: mock(async () => 'test-step-id'),
     logger: testLogger,
     trackEvent: mock(() => {}),
     clientEnv: testClientEnv,
     ciEnv: testCiEnv,
-    apiKey: 'test-api-key',
     fetch: testFetch,
-    fetchAgentFromDatabase: mock(async () => null),
-    databaseAgentCache: new Map<string, null>(),
     consumeCreditsWithFallback: mock(async () => {}),
-    getUserInfoFromApiKey: mock(async () => ({
-      id: 'test-user-id',
-      email: 'test@example.com',
-    })),
     handleStepsLogChunk: mock(() => {}),
     requestOptionalFile: mock(async () => null),
     sendSubagentChunk: mock(() => {}),

@@ -11,7 +11,6 @@ import type {
   SavantCodeToolOutput,
 } from '@savant-code/common/tools/list'
 import type { AgentTemplate } from '@savant-code/common/types/agent-template'
-import type { FetchAgentFromDatabaseFn } from '@savant-code/common/types/contracts/database'
 import type { Logger } from '@savant-code/common/types/contracts/logger'
 import type { JSONObject } from '@savant-code/common/types/json'
 
@@ -19,11 +18,8 @@ export const handleLookupAgentInfo = (async (params: {
   toolCall: SavantCodeToolCall<'lookup_agent_info'>
   previousToolCallFinished: Promise<void>
 
-  apiKey: string
-  databaseAgentCache: Map<string, AgentTemplate | null>
   localAgentTemplates: Record<string, AgentTemplate>
   logger: Logger
-  fetchAgentFromDatabase: FetchAgentFromDatabaseFn
 }): Promise<{ output: SavantCodeToolOutput<'lookup_agent_info'> }> => {
   const { toolCall, previousToolCallFinished } = params
   const { agentId } = toolCall.input

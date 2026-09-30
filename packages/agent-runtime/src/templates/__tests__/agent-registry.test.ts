@@ -1,4 +1,4 @@
-// Agent Registry test family — agent-ID parsing and database fetch.
+// Agent Registry test family — agent-ID parsing and unknown-agent lookups.
 // Sibling of the Loop-341 decomposition (shared lifecycle in
 // ./agent-registry-test-harness).
 import { emptyMcpServers } from '@savant-code/common/testing/fixtures/agent-runtime'
@@ -8,7 +8,6 @@ import { getAgentTemplate } from '../agent-registry'
 import {
   getImpl,
   registerAgentRegistryLifecycle,
-  setImpl,
 } from './agent-registry-test-harness'
 
 import type { AgentTemplate } from '../types'
@@ -74,46 +73,14 @@ describe('Agent Registry', () => {
     })
   })
 
-  describe('fetchAgentFromDatabase', () => {
-    it('should return null when agent not found in database', async () => {
+  describe('unknown agents', () => {
+    it('should return null when agent is not in local templates', async () => {
       const result = await getAgentTemplate({
         ...getImpl(),
         agentId: 'nonexistent/agent@1.0.0',
         localAgentTemplates: {},
       })
       expect(result).toBeNull()
-    })
-
-    it('should handle database query for specific version', async () => {
-      const mockAgentData: AgentTemplate = {
-        id: 'test-publisher/test-agent@1.0.0',
-        displayName: 'Test Agent',
-        systemPrompt: 'Test system prompt',
-        instructionsPrompt: 'Test instructions',
-        stepPrompt: 'Test step prompt',
-        toolNames: ['end_turn'],
-        mcpServers: emptyMcpServers,
-        inputSchema: {},
-        spawnableAgents: [],
-        outputMode: 'last_message',
-        includeMessageHistory: true,
-        inheritParentSystemPrompt: false,
-        model: 'anthropic/claude-4-sonnet-20250522',
-        spawnerPrompt: 'Test',
-      }
-
-      setImpl({
-        ...getImpl(),
-        fetchAgentFromDatabase: async () => mockAgentData,
-      })
-
-      const result = await getAgentTemplate({
-        ...getImpl(),
-        agentId: 'test-publisher/test-agent@1.0.0',
-        localAgentTemplates: {},
-      })
-      expect(result).toBeTruthy()
-      expect(result?.id).toBe('test-publisher/test-agent@1.0.0')
     })
   })
 })

@@ -52,7 +52,6 @@ export const createSendMessageBody = (
     onTimerEvent = () => {},
     resumeQueue,
     requeueMessageAtFront,
-    subscriptionData,
   } = params
 
   return async ({
@@ -143,7 +142,6 @@ export const createSendMessageBody = (
     try {
       const agentDefinitions = loadAgentDefinitions()
       const sidebarCallbacks = createSidebarEventCallbacks({
-        subscriptionData,
         addSessionCredits,
         onCost: (cost: number) => {
           actualCredits = cost

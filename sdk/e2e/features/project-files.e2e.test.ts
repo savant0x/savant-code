@@ -6,22 +6,23 @@
 
 import { describe, test, expect, beforeAll } from 'bun:test'
 
-import { SavantCodeClient } from '../../src/client'
 import {
   EventCollector,
-  getApiKey,
+  setupMockClient,
   skipIfNoApiKey,
   SAMPLE_PROJECT_FILES,
   DEFAULT_AGENT,
   DEFAULT_TIMEOUT,
 } from '../utils'
 
+import type { SavantCodeClient } from '../../src/client'
+
 describe('Features: Project Files', () => {
   let client: SavantCodeClient
 
   beforeAll(() => {
     if (skipIfNoApiKey()) return
-    client = new SavantCodeClient({ apiKey: getApiKey() })
+    client = setupMockClient()
   })
 
   test(

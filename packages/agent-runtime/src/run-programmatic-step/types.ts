@@ -7,15 +7,12 @@ import type {
   HandleStepsLogChunkFn,
   SendActionFn,
 } from '@savant-code/common/types/contracts/client'
-import type { AddAgentStepFn } from '@savant-code/common/types/contracts/database'
 import type { Logger } from '@savant-code/common/types/contracts/logger'
-import type { ParamsExcluding } from '@savant-code/common/types/function-params'
 import type { PrintModeEvent } from '@savant-code/common/types/print-mode'
 import type { AgentState } from '@savant-code/common/types/session-state'
 
 /** Parameters for runProgrammaticStep. */
 export type RunProgrammaticStepParams = {
-  addAgentStep: AddAgentStepFn
   agentState: AgentState
   clientSessionId: string
   fingerprintId: string
@@ -53,17 +50,7 @@ export type RunProgrammaticStepParams = {
   | 'toolCallsToAddToMessageHistory'
   | 'toolResults'
   | 'toolResultsToAddToMessageHistory'
-> &
-  ParamsExcluding<
-    AddAgentStepFn,
-    | 'agentRunId'
-    | 'stepNumber'
-    | 'credits'
-    | 'childRunIds'
-    | 'status'
-    | 'startTime'
-    | 'messageId'
-  >
+>
 
 /** Result from runProgrammaticStep. */
 export type RunProgrammaticStepResult = {

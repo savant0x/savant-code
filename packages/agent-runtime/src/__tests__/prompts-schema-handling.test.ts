@@ -1,5 +1,4 @@
 import { emptyMcpServers } from '@savant-code/common/testing/fixtures/agent-runtime'
-import { TEST_AGENT_RUNTIME_IMPL } from '@savant-code/common/testing/impl/agent-runtime'
 import { describe, test, expect, mock } from 'bun:test'
 import { z } from 'zod/v4'
 
@@ -56,9 +55,6 @@ describe('Schema handling error recovery', () => {
         spawnableAgents: ['test-agent'],
         agentTemplates: { 'test-agent': agentTemplate },
         logger: createMockLogger(),
-        apiKey: TEST_AGENT_RUNTIME_IMPL.apiKey,
-        databaseAgentCache: TEST_AGENT_RUNTIME_IMPL.databaseAgentCache,
-        fetchAgentFromDatabase: TEST_AGENT_RUNTIME_IMPL.fetchAgentFromDatabase,
       })
 
       // Should have created a tool without throwing

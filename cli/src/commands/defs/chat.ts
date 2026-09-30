@@ -1,8 +1,6 @@
-import { WEBSITE_URL } from '../../branding/constants'
 import { startNewChat } from '../../project-files'
 import { useChatStore } from '../../state/chat-store'
 import { abortActiveRun } from '../../utils/active-run'
-import { safeOpen } from '../../utils/open-url'
 import { capturePendingAttachments } from '../../utils/pending-attachments'
 import {
   clearInput,
@@ -14,10 +12,10 @@ import { handleVerifyCommand } from './chat-verify'
 import { handleImageCommand } from '../image'
 import { handleInitializationFlowLocally } from '../init'
 import { handleRewindCommand } from '../rewind'
-import { handleUsageCommand } from '../usage'
 
-// Session/chat commands: permissions, rewind, verify, new, init, usage,
-// subscribe, image. Split out of command-registry.ts (FID-2026-0805-003).
+// Session/chat commands: permissions, rewind, verify, new, init, image.
+// (usage + subscribe deleted with the backend — FID-2026-0929-005.)
+// Split out of command-registry.ts (FID-2026-0805-003).
 export const CHAT_COMMANDS = [
   defineCommandWithArgs({
     name: 'permissions',
@@ -144,24 +142,6 @@ export const CHAT_COMMANDS = [
       setTimeout(() => {
         params.scrollToLatest()
       }, 0)
-    },
-  }),
-  defineCommand({
-    name: 'usage',
-    aliases: ['credits'],
-    handler: async (params) => {
-      const { postUserMessage } = await handleUsageCommand()
-      params.setMessages((prev) => postUserMessage(prev))
-      params.saveToHistory(params.inputValue.trim())
-      clearInput(params)
-    },
-  }),
-  defineCommand({
-    name: 'subscribe',
-    aliases: ['strong', 'sub', 'buy-credits'],
-    handler: (params) => {
-      safeOpen(WEBSITE_URL + '/subscribe')
-      clearInput(params)
     },
   }),
   defineCommandWithArgs({

@@ -21,7 +21,6 @@ import {
 const originalEnvDirectProvider = process.env.DIRECT_PROVIDER
 const originalEnvBaseUrl = process.env.INFERENCE_BASE_URL
 const originalEnvApiKey = process.env.OPENCODE_GO_API_KEY
-const originalEnvBackendToken = process.env.SAVANT_CODE_API_KEY
 const originalConfigDir = process.env.SAVANT_CODE_CONFIG_DIR
 let tempConfigDir: string
 
@@ -32,7 +31,6 @@ describe('ollama-onboarding', () => {
     delete process.env.DIRECT_PROVIDER
     delete process.env.INFERENCE_BASE_URL
     delete process.env.OPENCODE_GO_API_KEY
-    delete process.env.SAVANT_CODE_API_KEY
     __resetOllamaAutoConfigured()
     saveSettings({
       directProvider: undefined,
@@ -44,7 +42,6 @@ describe('ollama-onboarding', () => {
     process.env.DIRECT_PROVIDER = originalEnvDirectProvider
     process.env.INFERENCE_BASE_URL = originalEnvBaseUrl
     process.env.OPENCODE_GO_API_KEY = originalEnvApiKey
-    process.env.SAVANT_CODE_API_KEY = originalEnvBackendToken
     if (originalConfigDir === undefined)
       delete process.env.SAVANT_CODE_CONFIG_DIR
     else process.env.SAVANT_CODE_CONFIG_DIR = originalConfigDir
@@ -96,29 +93,9 @@ describe('ollama-onboarding', () => {
     },
   )
 
-  test.serial(
-    'applyPersistedDirectProviderSettings does nothing when a backend token is present',
-    () => {
-      saveSettings({
-        directProvider: 'ollama',
-        directProviderBaseUrl: 'http://localhost:11434/v1',
-      })
-      process.env.SAVANT_CODE_API_KEY = 'test-backend-token'
-
-      applyPersistedDirectProviderSettings()
-
-      expect(process.env.DIRECT_PROVIDER).toBeUndefined()
-      expect(process.env.INFERENCE_BASE_URL).toBeUndefined()
-      expect(isOllamaAutoConfigured()).toBe(false)
-
-      delete process.env.SAVANT_CODE_API_KEY
-    },
-  )
-
-  // FID-2026-0929-003: a stored login token is residue, not a routing command
-  // — it does NOT defer the persisted Ollama restore. Only the explicit
-  // SAVANT_CODE_API_KEY defers (pinned above); the stub bypass token never
-  // counts.
+  // FID-2026-0929-005: the "defers when a backend token is present" pin and
+  // its FID-2026-0929-003 successor are deleted — the env-key credential
+  // source no longer exists, so nothing can defer the persisted restore.
   test.serial(
     'applyPersistedDirectProviderSettings ignores a stored login token',
     () => {

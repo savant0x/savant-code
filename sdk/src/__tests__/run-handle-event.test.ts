@@ -4,7 +4,6 @@ import { getStubProjectFileContext } from '@savant-code/common/util/file'
 import { afterEach, describe, expect, it, mock, spyOn } from 'bun:test'
 
 import { SavantCodeClient } from '../client'
-import * as databaseModule from '../impl/database'
 
 import type { SavantCodeClientOptions } from '../run'
 import type { PrintModeEvent } from '@savant-code/common/types/print-mode'
@@ -15,18 +14,6 @@ describe('SavantCodeClient handleEvent / handleStreamChunk', () => {
   })
 
   it('streams subagent start/finish once and forwards subagent chunks to handleStreamChunk', async () => {
-    spyOn(databaseModule, 'getUserInfoFromApiKey').mockResolvedValue({
-      id: 'user-123',
-      email: 'test@example.com',
-      discord_id: null,
-      stripe_customer_id: null,
-      banned: false,
-      created_at: new Date('2024-01-01T00:00:00Z'),
-    })
-    spyOn(databaseModule, 'fetchAgentFromDatabase').mockResolvedValue(null)
-    spyOn(databaseModule, 'startAgentRun').mockResolvedValue('run-1')
-    spyOn(databaseModule, 'finishAgentRun').mockResolvedValue(undefined)
-    spyOn(databaseModule, 'addAgentStep').mockResolvedValue('step-1')
 
     spyOn(mainPromptModule, 'callMainPrompt').mockImplementation(
       async (params: Parameters<typeof mainPromptModule.callMainPrompt>[0]) => {
@@ -107,7 +94,6 @@ describe('SavantCodeClient handleEvent / handleStreamChunk', () => {
     const streamChunks: StreamChunk[] = []
 
     const client = new SavantCodeClient({
-      apiKey: 'test-key',
     })
 
     const result = await client.run({

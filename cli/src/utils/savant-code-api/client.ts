@@ -1,8 +1,9 @@
 import { safeToJSONValue } from '@savant-code/common/util/type-narrowing'
-import { WEBSITE_URL } from '@savant-code/sdk'
 
 import { createApiRequestCore } from './request-core'
 import { buildRequestBody, DEFAULT_RETRY_CONFIG } from './retry'
+import { WEBSITE_URL } from '../../branding/constants'
+
 
 import type {
   ApiResponse,

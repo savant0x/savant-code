@@ -1,14 +1,11 @@
 import { getSelectedSlashCommand } from './slash-selection'
-import { WEBSITE_URL } from '../branding/constants'
 import { buildDriveControlMessage } from '../commands/auto-drive'
-import { areCreditsRestored } from '../components/out-of-credits-banner'
 import { getProjectRoot } from '../project-files'
 import { useChatStore } from '../state/chat-store'
 import { useFeedbackStore } from '../state/feedback-store'
 import { showClipboardMessage } from '../utils/clipboard'
 import { readClipboardImage } from '../utils/clipboard-image'
 import { logger } from '../utils/logger'
-import { safeOpen } from '../utils/open-url'
 import {
   addClipboardPlaceholder,
   addPendingFileFromPath,
@@ -278,14 +275,5 @@ export function buildChatKeyboardHandlers(
     onScrollUp: scrollUp,
     onScrollDown: scrollDown,
     onToggleAll: handleToggleAll,
-    onOpenBuyCredits: () => {
-      // If credits have been restored, just return to default mode
-      if (areCreditsRestored()) {
-        setInputMode('default')
-        return
-      }
-      // Otherwise open the buy credits page
-      safeOpen(WEBSITE_URL + '/usage')
-    },
   }
 }

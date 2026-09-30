@@ -1,4 +1,3 @@
-import { isRetryableStatusCode, getErrorStatusCode } from '@savant-code/sdk'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useShallow } from 'zustand/react/shallow'
 
@@ -10,7 +9,6 @@ import {
   EasterEggProvider,
 } from './components/savant-ui/easter-egg-logo'
 import { ToastContainer } from './components/toast'
-import { useAuthQuery } from './hooks/use-auth-query'
 import { useAuthState } from './hooks/use-auth-state'
 import { useTerminalFocus } from './hooks/use-terminal-focus'
 import { useTheme } from './hooks/use-theme'
@@ -79,7 +77,6 @@ export const App = ({
     onSupportDetected: handleSupportDetected,
   })
 
-  const authQuery = useAuthQuery()
   const { setIsAuthenticated, setUser, logoutMutation } = useAuthState({
     inputRef,
     setInputFocused,
@@ -155,19 +152,10 @@ export const App = ({
   const effectiveContinueChat = continueChat || resumeChatId !== null
   const effectiveContinueChatId = resumeChatId ?? continueChatId
 
-  const authError = authQuery.error
-  const authErrorStatusCode = authError
-    ? getErrorStatusCode(authError)
-    : undefined
-
-  let authStatus: AuthStatus = 'ok'
-  if (authQuery.isError && authErrorStatusCode !== undefined) {
-    if (isRetryableStatusCode(authErrorStatusCode)) {
-      authStatus = 'retrying'
-    } else if (authErrorStatusCode >= 500) {
-      authStatus = 'unreachable'
-    }
-  }
+  // FID-2026-0929-005 (gut the backend): the auth query and its error-driven
+  // retrying/unreachable status are deleted with the backend they pinged.
+  // There is no auth round-trip to degrade, so the indicator is always 'ok'.
+  const authStatus: AuthStatus = 'ok'
 
   if (showProjectPicker) {
     return (

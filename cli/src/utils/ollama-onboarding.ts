@@ -3,7 +3,6 @@ import {
   type OllamaDetectionResult,
 } from '@savant-code/llm-providers/ollama'
 
-import { hasEnvBackendCredentials } from './auth'
 import { logger } from './logger'
 import {
   DEFAULT_SAVANT_CODE_MODEL_ID,
@@ -56,19 +55,11 @@ export function __resetOllamaAutoConfigured(): void {
  * Apply persisted direct-provider settings to the current process. This lets
  * users who previously chose local Ollama keep using it across launches
  * without re-detection.
- *
- * Intentionally skips when a real SavantCode backend token is present so that
- * logging in always takes precedence over a previous local-only setup.
  */
 export function applyPersistedDirectProviderSettings(): void {
-  // FID-2026-0929-003 (operator ruling 2026-09-29): only the EXPLICIT
-  // environment backend key defers the persisted Ollama restore — a stored
-  // login token is residue, not a routing command, and the direct-provider
-  // stub bypass token is a boot shim, not authentication. There is no
-  // deployable backend to fall back to.
-  if (hasEnvBackendCredentials()) {
-    return
-  }
+  // FID-2026-0929-005 (gut the backend): the hasEnvBackendCredentials()
+  // deferral term is deleted — the credential source it reported no longer
+  // exists, so nothing can defer the persisted Ollama restore.
 
   // A direct provider already present in the environment was selected by the
   // shell or restored from a saved provider key; it takes precedence over an
@@ -104,17 +95,15 @@ export function applyPersistedDirectProviderSettings(): void {
  * automatically route inference to it.
  *
  * This makes the "single-command install" path frictionless: users with
- * `ollama serve` running can start coding immediately without creating an
- * account or entering an API key.
+ * `ollama serve` running can start coding immediately without entering an
+ * API key.
  */
 export async function detectOllamaAndConfigureDirectProvider(
   detect: () => Promise<OllamaDetectionResult> = detectOllama,
 ): Promise<void> {
-  // Respect explicit user configuration: if an explicit backend key or a
-  // direct provider is already set, do not override it. FID-2026-0929-003:
-  // the check is hasEnvBackendCredentials() — a stored login token and the
-  // direct-provider stub bypass token must not block Ollama detection.
-  const hasBackendToken = hasEnvBackendCredentials()
+  // Respect explicit user configuration: if a direct provider is already set,
+  // do not override it. FID-2026-0929-005: the backend-key deferral term is
+  // deleted with the credential it keyed on.
   const hasDirectProviderEnv =
     (process.env.DIRECT_PROVIDER ?? '').trim().length > 0 ||
     (process.env.INFERENCE_BASE_URL ?? '').trim().length > 0
@@ -132,7 +121,6 @@ export async function detectOllamaAndConfigureDirectProvider(
     settings.savantCodeModelProviderPreference !== 'ollama'
 
   if (
-    hasBackendToken ||
     (hasDirectProviderEnv && !ollamaAutoConfigured) ||
     (!hasDirectProviderEnv && hasExplicitNonOllamaModelChoice)
   ) {

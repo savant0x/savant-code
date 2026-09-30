@@ -10,7 +10,6 @@ import { useCallback, useEffect, useMemo, useRef } from 'react'
 
 import { DEFAULT_SUGGESTED_PROMPTS } from '../components/suggested-prompts'
 import { getProjectRoot } from '../project-files'
-import { useChatStore } from '../state/chat-store'
 import { reportActivity } from '../utils/activity-tracker'
 import { trackEvent } from '../utils/analytics'
 import { IS_SAVANT_FREE } from '../utils/constants'
@@ -60,11 +59,6 @@ export interface UseChatDerivedArgs {
   shouldShowQueuePreview: boolean
   isAtBottom: boolean
   savantFreeSession: SavantFreeSession | null
-  subscriptionData?: {
-    hasSubscription?: boolean
-    rateLimit?: { limited?: boolean } | null
-    fallbackToALaCarte?: boolean
-  }
   inputWidth: number
   terminalHeight: number
   terminalWidth: number
@@ -115,7 +109,6 @@ export function useChatDerived({
   shouldShowQueuePreview,
   isAtBottom,
   savantFreeSession,
-  subscriptionData,
   inputWidth,
   terminalHeight,
   terminalWidth,
@@ -196,28 +189,6 @@ export function useChatDerived({
     isAskUserActive: askUserState !== null,
   })
   const hasStatusIndicatorContent = statusIndicatorState.kind !== 'idle'
-
-  // Auto-show subscription limit banner when rate limit becomes active
-  const subscriptionLimitShownRef = useRef(false)
-  const subscriptionRateLimit = subscriptionData?.hasSubscription
-    ? subscriptionData.rateLimit
-    : undefined
-  const fallbackToALaCarte = subscriptionData?.fallbackToALaCarte ?? false
-  useEffect(() => {
-    const isLimited = subscriptionRateLimit?.limited === true
-    if (isLimited && !subscriptionLimitShownRef.current) {
-      subscriptionLimitShownRef.current = true
-      // Skip showing the banner if user prefers to always fall back to a-la-carte
-      if (!fallbackToALaCarte) {
-        useChatStore.getState().setInputMode('subscriptionLimit')
-      }
-    } else if (!isLimited) {
-      subscriptionLimitShownRef.current = false
-      if (useChatStore.getState().inputMode === 'subscriptionLimit') {
-        useChatStore.getState().setInputMode('default')
-      }
-    }
-  }, [subscriptionRateLimit?.limited, fallbackToALaCarte])
 
   const inputBoxTitle = useMemo(() => {
     const segments: string[] = []

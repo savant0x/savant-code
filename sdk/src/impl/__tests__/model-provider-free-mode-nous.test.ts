@@ -21,7 +21,7 @@ describe('getModelForRequest ChatGPT OAuth fallback behavior', () => {
     const { getModelForRequest } = await importFresh()
 
     await expect(
-      getModelForRequest({ apiKey: 'test-key', model: NOUS_MODEL }),
+      getModelForRequest({ model: NOUS_MODEL }),
     ).rejects.toThrow(
       'Nous Research API key not set. Set NOUS_API_KEY environment variable or run /provider nous.',
     )
@@ -42,7 +42,6 @@ describe('getModelForRequest ChatGPT OAuth fallback behavior', () => {
 
     const { getModelForRequest } = await importFresh()
     const result = await getModelForRequest({
-      apiKey: 'test-key',
       model: NOUS_MODEL,
     })
     await (result.model as LanguageModelV2).doStream({
@@ -76,7 +75,6 @@ describe('getModelForRequest ChatGPT OAuth fallback behavior', () => {
 
     await expect(
       getModelForRequest({
-        apiKey: 'caller-stub-key',
         model: 'anthropic/claude-sonnet-4.6',
       }),
     ).rejects.toThrow(
@@ -96,7 +94,6 @@ describe('getModelForRequest ChatGPT OAuth fallback behavior', () => {
     globalThis.fetch = fetchMock
 
     const result = await getModelForRequest({
-      apiKey: 'caller-stub-key',
       model: 'anthropic/claude-sonnet-4.6',
     })
     await (result.model as LanguageModelV2).doStream({
@@ -136,7 +133,6 @@ describe('getModelForRequest ChatGPT OAuth fallback behavior', () => {
 
     const { getModelForRequest } = await importFresh()
     const result = await getModelForRequest({
-      apiKey: 'test-key',
       model: TOKEN_HARBOR_MODEL,
     })
     await (result.model as LanguageModelV2).doStream({

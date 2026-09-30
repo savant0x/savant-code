@@ -1,9 +1,7 @@
-import { API_KEY_ENV_VAR } from '@savant-code/common/old-constants'
 import { askUserParams } from '@savant-code/common/tools/params/tool/ask-user'
 import { AskUserBridge } from '@savant-code/common/utils/ask-user-bridge'
 import { SavantCodeClient } from '@savant-code/sdk'
 
-import { getAuthTokenDetails } from './auth'
 import { getCliEnv, getSystemProcessEnv } from './env'
 import { loadAgentDefinitions } from './local-agent-registry'
 import { logger } from './logger'
@@ -50,16 +48,6 @@ export async function getSavantCodeClient(options?: {
   headless?: boolean
 }): Promise<SavantCodeClient | null> {
   if (!clientInstance) {
-    const { token: apiKey } = getAuthTokenDetails()
-
-    if (!apiKey) {
-      logger.warn(
-        {},
-        `No authentication token found. Please run the login flow or set ${API_KEY_ENV_VAR}.`,
-      )
-      return null
-    }
-
     const projectRoot = getProjectRoot()
 
     // Set up ripgrep path for SDK to use
@@ -76,8 +64,11 @@ export async function getSavantCodeClient(options?: {
 
     try {
       const agentDefinitions = loadAgentDefinitions()
+      // FID-2026-0929-005 (gut the backend): the client takes no credential.
+      // The old gate (no token → null + a "run the login flow or set
+      // SAVANT_CODE_API_KEY" warning) gated a backend identity that no longer
+      // exists; direct mode is the only mode.
       clientInstance = new SavantCodeClient({
-        apiKey,
         cwd: projectRoot,
         agentDefinitions,
         logger,

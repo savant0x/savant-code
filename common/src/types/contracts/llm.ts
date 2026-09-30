@@ -84,7 +84,6 @@ export type CacheDebugUsageData = {
 
 export type PromptAiSdkStreamFn = (
   params: {
-    apiKey: string
     runId: string
     messages: Message[]
     clientSessionId: string
@@ -123,7 +122,6 @@ export type PromptAiSdkStreamFn = (
 
 export type PromptAiSdkFn = (
   params: {
-    apiKey: string
     runId: string
     messages: Message[]
     clientSessionId: string
@@ -153,7 +151,6 @@ export type PromptAiSdkFn = (
 ) => Promise<PromptResult<string>>
 
 export type PromptAiSdkStructuredInput<T> = {
-  apiKey: string
   runId: string
   messages: Message[]
   schema: z.ZodType<T>

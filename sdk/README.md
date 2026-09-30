@@ -16,16 +16,19 @@ npm install @savant-code/sdk
 
 ## Prerequisites
 
-The SDK client uses the Savant-Code backend contract and requires the API key supplied to `SavantCodeClient`.
-Set `SAVANT_CODE_API_KEY` in the environment or pass the key through your application's secret management.
-The CLI's interactive `/provider` credentials are a separate local CLI onboarding flow and are not implicitly loaded by
-SDK clients.
+The SDK client takes **no API key** — there is no hosted backend (FID-2026-0929-005). Inference
+runs through your own provider credentials resolved from the environment (`OPENROUTER_API_KEY`,
+`TOKENROUTER_API_KEY`, `NVIDIA_API_KEY`, and the rest of the provider registry). `INFERENCE_BASE_URL`
+must be set (directly or via a provider config) or the client throws a configuration error naming it.
 
 For direct provider routing, configure the provider-specific environment variables documented by the runtime, including
 `OPENCODE_API_KEY` (shared by OpenCode Go and OpenCode Zen), `TOKENROUTER_API_KEY`, `TOKENHARBOR_API_KEY`,
 `NVIDIA_API_KEY`, `COMMAND_CODE_API_KEY`, and `NOUS_API_KEY`. Nous Research uses
 its direct OpenAI-compatible API; Nous Portal OAuth is a separate integration and
 is not implicitly implemented by this SDK.
+
+The CLI's interactive `/provider` credentials are a separate local CLI onboarding flow and are not implicitly loaded by
+SDK clients.
 
 ## Usage
 
@@ -36,8 +39,6 @@ import { SavantCodeClient } from '@savant-code/sdk'
 
 async function main() {
   const client = new SavantCodeClient({
-    // Supply your backend API key through your application's secret manager.
-    apiKey: process.env.SAVANT_CODE_API_KEY,
     cwd: process.cwd(),
   })
 
@@ -79,8 +80,6 @@ import type { AgentDefinition } from '@savant-code/sdk'
 
 async function main() {
   const client = new SavantCodeClient({
-    // Supply your backend API key through your application's secret manager.
-    apiKey: process.env.SAVANT_CODE_API_KEY,
     // Optional directory agent runs from (if applicable).
     cwd: process.cwd(),
   })
@@ -173,7 +172,6 @@ The `fileFilter` option controls which files the agent can read:
 
 ```typescript
 const client = new SavantCodeClient({
-  apiKey: process.env.SAVANT_CODE_API_KEY,
   fileFilter: (filePath) => {
     if (filePath === '.env') return { status: 'blocked' }
     if (filePath.endsWith('.env.example')) return { status: 'allow-example' }
@@ -237,7 +235,7 @@ for (const agent of Object.values(agents)) {
 }
 
 // Use the loaded agents with client.run()
-const client = new SavantCodeClient({ apiKey: process.env.SAVANT_CODE_API_KEY })
+const client = new SavantCodeClient()
 const result = await client.run({
   agent: 'my-custom-agent',
   agentDefinitions: Object.values(agents),

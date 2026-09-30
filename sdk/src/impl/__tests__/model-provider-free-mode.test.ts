@@ -20,31 +20,41 @@ describe('getModelForRequest ChatGPT OAuth fallback behavior', () => {
   const { mockGetValidChatGptOAuthCredentials, importFresh } =
     setupModelProviderTestHarness()
 
-  test('falls through to backend when rate-limited', async () => {
+  test('falls through to the direct lane when rate-limited (FID-2026-0929-005: needs INFERENCE_BASE_URL)', async () => {
     const { getModelForRequest, markChatGptOAuthRateLimited } =
       await importFresh()
 
     markChatGptOAuthRateLimited()
+    // No backend fallback exists anymore — the fall-through target is the
+    // direct OpenAI-compatible lane, so give it its required base URL.
+    process.env.INFERENCE_BASE_URL = 'https://inference.test/v1'
 
-    const result = await getModelForRequest({
-      apiKey: 'test-key',
-      model: 'openai/gpt-5.3',
-    })
+    try {
+      const result = await getModelForRequest({
+        model: 'openai/gpt-5.3',
+      })
 
-    expect(result.isChatGptOAuth).toBe(false)
+      expect(result.isChatGptOAuth).toBe(false)
+    } finally {
+      delete process.env.INFERENCE_BASE_URL
+    }
   })
 
-  test('falls through to backend when credentials unavailable', async () => {
+  test('falls through to the direct lane when credentials unavailable (FID-2026-0929-005)', async () => {
     const { getModelForRequest } = await importFresh()
 
     mockGetValidChatGptOAuthCredentials.mockResolvedValue(null)
+    process.env.INFERENCE_BASE_URL = 'https://inference.test/v1'
 
-    const result = await getModelForRequest({
-      apiKey: 'test-key',
-      model: 'openai/gpt-5.3',
-    })
+    try {
+      const result = await getModelForRequest({
+        model: 'openai/gpt-5.3',
+      })
 
-    expect(result.isChatGptOAuth).toBe(false)
+      expect(result.isChatGptOAuth).toBe(false)
+    } finally {
+      delete process.env.INFERENCE_BASE_URL
+    }
   })
 
   test('requires the TokenHarbor API key', async () => {
@@ -52,7 +62,6 @@ describe('getModelForRequest ChatGPT OAuth fallback behavior', () => {
 
     await expect(
       getModelForRequest({
-        apiKey: 'test-key',
         model: 'tokenharbor/th-orchestra',
       }),
     ).rejects.toThrow(
@@ -75,7 +84,6 @@ describe('getModelForRequest ChatGPT OAuth fallback behavior', () => {
 
     const { getModelForRequest } = await importFresh()
     const result = await getModelForRequest({
-      apiKey: 'test-key',
       model: TOKEN_HARBOR_MODEL,
     })
     await (result.model as LanguageModelV2).doStream({
@@ -98,7 +106,6 @@ describe('getModelForRequest ChatGPT OAuth fallback behavior', () => {
 
     await expect(
       getModelForRequest({
-        apiKey: 'test-key',
         model: ORCAROUTER_MODEL,
       }),
     ).rejects.toThrow(
@@ -121,7 +128,6 @@ describe('getModelForRequest ChatGPT OAuth fallback behavior', () => {
 
     const { getModelForRequest } = await importFresh()
     const result = await getModelForRequest({
-      apiKey: 'test-key',
       model: ORCAROUTER_MODEL,
     })
     await (result.model as LanguageModelV2).doStream({
@@ -147,7 +153,6 @@ describe('getModelForRequest ChatGPT OAuth fallback behavior', () => {
 
     await expect(
       getModelForRequest({
-        apiKey: 'test-key',
         model: BAI_MODEL,
       }),
     ).rejects.toThrow(
@@ -170,7 +175,6 @@ describe('getModelForRequest ChatGPT OAuth fallback behavior', () => {
 
     const { getModelForRequest } = await importFresh()
     const result = await getModelForRequest({
-      apiKey: 'test-key',
       model: BAI_MODEL,
     })
     await (result.model as LanguageModelV2).doStream({
@@ -198,7 +202,6 @@ describe('getModelForRequest ChatGPT OAuth fallback behavior', () => {
 
     await expect(
       getModelForRequest({
-        apiKey: 'test-key',
         model: VERCEL_MODEL,
       }),
     ).rejects.toThrow(
@@ -221,7 +224,6 @@ describe('getModelForRequest ChatGPT OAuth fallback behavior', () => {
 
     const { getModelForRequest } = await importFresh()
     const result = await getModelForRequest({
-      apiKey: 'test-key',
       model: VERCEL_MODEL,
     })
     await (result.model as LanguageModelV2).doStream({

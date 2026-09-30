@@ -1,5 +1,3 @@
-import { WEBSITE_URL } from '@savant-code/sdk'
-
 import {
   claimAdImpression,
   convertToAdMessages,
@@ -8,6 +6,7 @@ import {
   getDeviceInfo,
 } from './helpers'
 import { AD_CONSTANTS } from './types'
+import { WEBSITE_URL } from '../../branding/constants'
 import { getAdsEnabled } from '../../commands/ads'
 import { useChatStore } from '../../state/chat-store'
 import { getAuthToken } from '../../utils/auth'

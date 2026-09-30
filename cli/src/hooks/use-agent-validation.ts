@@ -1,7 +1,6 @@
 import { validateAgents } from '@savant-code/sdk'
 import { useCallback, useState } from 'react'
 
-import { isDirectProviderMode } from '../utils/env'
 import { loadAgentDefinitions } from '../utils/local-agent-registry'
 import { logger } from '../utils/logger'
 import { filterNetworkErrors } from '../utils/validation-error-helpers'
@@ -25,6 +24,12 @@ type UseAgentValidationResult = {
 /**
  * Hook that provides agent validation functionality.
  * Call validate() manually to trigger validation (e.g., on message send).
+ *
+ * FID-2026-0929-005 (gut the backend): the direct-provider early return and
+ * the SDK's `remote: true` branch are deleted — there is no backend to POST
+ * `/api/agents/validate` to. Validation is local-schema-only; the SDK call
+ * now has no `remote` option at all (hard API break, per the operator
+ * ruling on Q1).
  */
 export const useAgentValidation = (): UseAgentValidationResult => {
   const [validationErrors, setValidationErrors] = useState<ValidationError[]>(
@@ -40,17 +45,7 @@ export const useAgentValidation = (): UseAgentValidationResult => {
     try {
       const agentDefinitions = loadAgentDefinitions()
 
-      // Direct-provider mode: no SavantCode backend to validate against. Agents
-      // are bundled locally, so skip the remote validate call and pass through.
-      // The backend integration path is preserved for when this flag is off.
-      if (isDirectProviderMode()) {
-        setValidationErrors([])
-        return { success: true, errors: [] }
-      }
-
-      const validationResult = await validateAgents(agentDefinitions, {
-        remote: true,
-      })
+      const validationResult = await validateAgents(agentDefinitions)
 
       if (validationResult.success) {
         setValidationErrors([])

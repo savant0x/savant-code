@@ -53,7 +53,6 @@ describe('SavantAgentRunner', () => {
     config = {
       task: makeTask(),
       sandbox,
-      apiKey: 'test-key',
       agentId: 'savant',
       maxAgentSteps: 10,
     }

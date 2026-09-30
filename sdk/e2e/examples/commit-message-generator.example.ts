@@ -23,13 +23,9 @@ index 1234567..abcdefg 100644
 `.trim()
 
 async function main() {
-  const apiKey = process.env.SAVANT_CODE_API_KEY
-  if (!apiKey) {
-    console.error('SAVANT_CODE_API_KEY environment variable is required')
-    process.exit(1)
-  }
-
-  const client = new SavantCodeClient({ apiKey })
+  // FID-2026-0929-005: the SDK is BYOK — the client takes no credential;
+  // inference runs through the provider env you wire (e.g. INFERENCE_BASE_URL).
+  const client = new SavantCodeClient()
 
   console.log('📝 Generating commit message...\n')
   console.log('Diff:')

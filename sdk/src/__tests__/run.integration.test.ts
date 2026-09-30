@@ -8,16 +8,11 @@ import { SavantCodeClient } from '../client'
 
 import type { AgentOutput } from '@savant-code/common/types/session-state'
 
-const apiKey = process.env.SAVANT_CODE_API_KEY
 const RUN_LIVE_INTEGRATION = process.env.RUN_SAVANT_CODE_E2E === 'true'
 
-function getLiveApiKey(): string | null {
-  if (!RUN_LIVE_INTEGRATION || !apiKey) {
-    return null
-  }
-
-  return apiKey
-}
+// FID-2026-0929-005: the SAVANT_CODE_API_KEY gate is deleted with the
+// variable it read; the live-integration flag alone decides whether these
+// run.
 
 function extractOutputText(output: AgentOutput): string {
   if (output.type !== 'lastMessage' && output.type !== 'allMessages') return ''
@@ -46,12 +41,11 @@ describe('Prompt Caching', () => {
   it(
     'should be cheaper on second request',
     async () => {
-      const liveApiKey = getLiveApiKey()
-      if (!liveApiKey) {
+      if (!RUN_LIVE_INTEGRATION) {
         return
       }
 
-      const client = new SavantCodeClient({ apiKey: liveApiKey })
+      const client = new SavantCodeClient({})
 
       const filler =
         `Run UUID: ${crypto.randomUUID()} ` +
@@ -94,8 +88,7 @@ describe('Prompt Caching', () => {
   it(
     'should not invalidate cache when git status changes between requests',
     async () => {
-      const liveApiKey = getLiveApiKey()
-      if (!liveApiKey) {
+      if (!RUN_LIVE_INTEGRATION) {
         return
       }
 
@@ -108,7 +101,6 @@ describe('Prompt Caching', () => {
         fs.writeFileSync(tempFile1, `MAGIC_NUMBER=${magic1}`)
 
         const client = new SavantCodeClient({
-          apiKey: liveApiKey,
           cwd: process.cwd(),
         })
 

@@ -2,7 +2,6 @@ import * as mainPromptModule from '@savant-code/agent-runtime/main-prompt'
 import { afterEach, describe, expect, it, mock, spyOn } from 'bun:test'
 
 import { SavantCodeClient } from '../client'
-import * as databaseModule from '../impl/database'
 
 import type { JSONValue } from '@savant-code/common/types/json'
 
@@ -14,18 +13,6 @@ interface ToolCallContentBlock {
 }
 
 const setupDatabaseMocks = () => {
-  spyOn(databaseModule, 'getUserInfoFromApiKey').mockResolvedValue({
-    id: 'user-123',
-    email: 'test@example.com',
-    discord_id: null,
-    stripe_customer_id: null,
-    banned: false,
-    created_at: new Date('2024-01-01T00:00:00Z'),
-  })
-  spyOn(databaseModule, 'fetchAgentFromDatabase').mockResolvedValue(null)
-  spyOn(databaseModule, 'startAgentRun').mockResolvedValue('run-1')
-  spyOn(databaseModule, 'finishAgentRun').mockResolvedValue(undefined)
-  spyOn(databaseModule, 'addAgentStep').mockResolvedValue('step-1')
 }
 
 describe('Error preserves in-progress message history', () => {
@@ -115,7 +102,7 @@ describe('Error preserves in-progress message history', () => {
       },
     )
 
-    const client = new SavantCodeClient({ apiKey: 'test-key' })
+    const client = new SavantCodeClient({})
     const result = await client.run({
       agent: 'savant',
       prompt: 'Fix the bug in auth.ts',

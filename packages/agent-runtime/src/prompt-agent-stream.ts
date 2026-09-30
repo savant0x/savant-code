@@ -14,7 +14,6 @@ import type { ToolSet } from 'ai'
 
 export const getAgentStreamFromTemplate = (params: {
   agentId?: string
-  apiKey: string
   clientSessionId: string
   extraSavantCodeMetadata?: Record<string, string>
   fingerprintId: string
@@ -50,7 +49,6 @@ export const getAgentStreamFromTemplate = (params: {
 }): ReturnType<PromptAiSdkStreamFn> => {
   const {
     agentId,
-    apiKey,
     clientSessionId,
     extraSavantCodeMetadata,
     fingerprintId,
@@ -68,7 +66,9 @@ export const getAgentStreamFromTemplate = (params: {
     onCacheDebugUsageReceived,
 
     sendAction,
+
     onCostCalculated,
+
     promptAiSdkStream,
     trackEvent,
   } = params
@@ -81,7 +81,6 @@ export const getAgentStreamFromTemplate = (params: {
 
   const aiSdkStreamParams: ParamsOf<PromptAiSdkStreamFn> = {
     agentId,
-    apiKey,
     clientSessionId,
     extraSavantCodeMetadata,
     fingerprintId,

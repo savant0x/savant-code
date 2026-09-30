@@ -26,7 +26,6 @@ describe('getModelForRequest gateway routing (FID-2026-0914-001)', () => {
 
     await expect(
       getModelForRequest({
-        apiKey: 'test-key',
         model: INFRON_MODEL,
       }),
     ).rejects.toThrow(
@@ -49,7 +48,6 @@ describe('getModelForRequest gateway routing (FID-2026-0914-001)', () => {
 
     const { getModelForRequest } = await importFresh()
     const result = await getModelForRequest({
-      apiKey: 'test-key',
       model: INFRON_MODEL,
     })
     await (result.model as LanguageModelV2).doStream({
@@ -77,7 +75,6 @@ describe('getModelForRequest gateway routing (FID-2026-0914-001)', () => {
 
     await expect(
       getModelForRequest({
-        apiKey: 'test-key',
         model: UNOROUTER_MODEL,
       }),
     ).rejects.toThrow(
@@ -100,7 +97,6 @@ describe('getModelForRequest gateway routing (FID-2026-0914-001)', () => {
 
     const { getModelForRequest } = await importFresh()
     const result = await getModelForRequest({
-      apiKey: 'test-key',
       model: UNOROUTER_MODEL,
     })
     await (result.model as LanguageModelV2).doStream({
@@ -126,7 +122,6 @@ describe('getModelForRequest gateway routing (FID-2026-0914-001)', () => {
 
     await expect(
       getModelForRequest({
-        apiKey: 'test-key',
         model: HCNSEC_MODEL,
       }),
     ).rejects.toThrow(
@@ -149,7 +144,6 @@ describe('getModelForRequest gateway routing (FID-2026-0914-001)', () => {
 
     const { getModelForRequest } = await importFresh()
     const result = await getModelForRequest({
-      apiKey: 'test-key',
       model: HCNSEC_MODEL,
     })
     await (result.model as LanguageModelV2).doStream({
@@ -175,7 +169,6 @@ describe('getModelForRequest gateway routing (FID-2026-0914-001)', () => {
 
     await expect(
       getModelForRequest({
-        apiKey: 'test-key',
         model: TOKENBOM_MODEL,
       }),
     ).rejects.toThrow(
@@ -198,7 +191,6 @@ describe('getModelForRequest gateway routing (FID-2026-0914-001)', () => {
 
     const { getModelForRequest } = await importFresh()
     const result = await getModelForRequest({
-      apiKey: 'test-key',
       model: TOKENBOM_MODEL,
     })
     await (result.model as LanguageModelV2).doStream({

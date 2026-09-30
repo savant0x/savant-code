@@ -104,8 +104,6 @@ describe('parseProveArgs (production prove caller)', () => {
       '2',
       '--ztap',
       'enforce',
-      '--api-key',
-      'key-123',
       '--agent-id',
       'savant-free',
       '--max-steps',
@@ -115,7 +113,6 @@ describe('parseProveArgs (production prove caller)', () => {
     expect(opts.trialsPerArm).toBe(2)
     expect(opts.k).toBe(2)
     expect(opts.ztapMode).toBe('enforce')
-    expect(opts.apiKey).toBe('key-123')
     expect(opts.agentId).toBe('savant-free')
     expect(opts.maxAgentSteps).toBe(25)
   })
@@ -174,8 +171,7 @@ describe('runProveCommand (production prove caller)', () => {
   }
 
   it('resolves the task and forwards parsed options to runSkillProve', async () => {
-    process.env.SAVANT_CODE_API_KEY = 'test-key'
-    try {
+    {
       const captured: { params?: Record<string, unknown> } = {}
       const result = await runProveCommand(
         argv,
@@ -188,39 +184,16 @@ describe('runProveCommand (production prove caller)', () => {
       expect(params['taskId']).toBe('proof-demo')
       expect(params['trialsPerArm']).toBe(3)
       expect(params['ztapMode']).toBe('record')
-      // The API key rides the trial-runner closure, not prove params.
-      expect(params['apiKey']).toBeUndefined()
       expect(typeof params['runTrial']).toBe('function')
-    } finally {
-      delete process.env.SAVANT_CODE_API_KEY
     }
   })
 
   it('fails fast on an unknown proof task', async () => {
-    process.env.SAVANT_CODE_API_KEY = 'test-key'
-    try {
-      await expect(runProveCommand(argv, stubDeps({}, {}))).rejects.toThrow(
-        "Unknown proof task 'proof-demo'",
-      )
-    } finally {
-      delete process.env.SAVANT_CODE_API_KEY
-    }
+    await expect(runProveCommand(argv, stubDeps({}, {}))).rejects.toThrow(
+      "Unknown proof task 'proof-demo'",
+    )
   })
 
-  it('fails fast without any API key source', async () => {
-    const previous = process.env.SAVANT_CODE_API_KEY
-    delete process.env.SAVANT_CODE_API_KEY
-    try {
-      await expect(
-        runProveCommand(
-          ['skill', '--task', 't', '--tasks-dir', 'd'],
-          stubDeps({}, {}),
-        ),
-      ).rejects.toThrow('SAVANT_CODE_API_KEY')
-    } finally {
-      if (previous !== undefined) {
-        process.env.SAVANT_CODE_API_KEY = previous
-      }
-    }
-  })
+  // FID-2026-0929-005: the "fails fast without any API key source" pin is
+  // deleted with the gate — there is no key source to require anymore.
 })

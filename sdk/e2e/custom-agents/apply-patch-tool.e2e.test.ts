@@ -4,15 +4,15 @@ import path from 'path'
 
 import { beforeAll, describe, expect, test } from 'bun:test'
 
-import { SavantCodeClient } from '../../src'
 import {
   DEFAULT_TIMEOUT,
   EventCollector,
-  getApiKey,
+  setupMockClient,
   skipIfNoApiKey,
 } from '../utils'
 
-import type { AgentDefinition } from '../../src'
+import type { SavantCodeClient , AgentDefinition } from '../../src'
+
 
 describe('Custom Agents: apply_patch tool', () => {
   let client: SavantCodeClient
@@ -27,7 +27,7 @@ describe('Custom Agents: apply_patch tool', () => {
 
   beforeAll(() => {
     if (skipIfNoApiKey()) return
-    client = new SavantCodeClient({ apiKey: getApiKey() })
+    client = setupMockClient()
   })
 
   test(

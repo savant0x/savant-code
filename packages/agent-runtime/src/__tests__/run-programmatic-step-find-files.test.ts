@@ -55,7 +55,6 @@ describe('runProgrammaticStep', () => {
   beforeEach(() => {
     agentRuntimeImpl = {
       ...TEST_AGENT_RUNTIME_IMPL,
-      addAgentStep: async () => 'test-agent-step-id',
 
       sendAction: () => {},
     }

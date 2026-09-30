@@ -128,9 +128,6 @@ export async function executeToolCall<T extends ToolName>(
         effectiveInput: ctx.effectiveInput,
         agentTemplate,
         localAgentTemplates: params.localAgentTemplates,
-        fetchAgentFromDatabase: params.fetchAgentFromDatabase,
-        databaseAgentCache: params.databaseAgentCache,
-        apiKey: params.apiKey,
         logger,
         onResponseChunk,
       })

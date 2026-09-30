@@ -7,7 +7,6 @@
 
 import { BYOK_OPENROUTER_ENV_VAR } from '@savant-code/common/constants/byok'
 import { CHATGPT_OAUTH_TOKEN_ENV_VAR } from '@savant-code/common/constants/chatgpt-oauth'
-import { API_KEY_ENV_VAR } from '@savant-code/common/constants/paths'
 import { getBaseEnv } from '@savant-code/common/env-process'
 
 import type { SdkEnv } from './types/env'
@@ -29,23 +28,6 @@ export const getSdkEnv = (): SdkEnv => ({
   OVERRIDE_PLATFORM: process.env.OVERRIDE_PLATFORM,
   OVERRIDE_ARCH: process.env.OVERRIDE_ARCH,
 })
-
-export const getSavantCodeApiKeyFromEnv = (): string | undefined => {
-  return process.env[API_KEY_ENV_VAR]
-}
-
-/**
- * Runtime override for the SavantCode backend base URL. Remote hosts that bundle
- * the SDK (Convex Node actions, Next server routes) set this at deploy time;
- * the bundle-time value can inline a dev-machine localhost URL the remote
- * runtime cannot reach.
- */
-export const getRuntimeAppUrlFromEnv = (): string | undefined => {
-  return (
-    process.env['NEXT_PUBLIC_SAVANT_CODE_APP_URL'] ??
-    process.env['SAVANT_CODE_APP_URL']
-  )
-}
 
 export const getSystemProcessEnv = (): NodeJS.ProcessEnv => {
   return process.env
@@ -85,8 +67,6 @@ const CHILD_ENV_ALLOWLIST = [
   'TMPDIR',
   'TEMP',
   'TMP',
-  // Non-secret SDK knobs a command shell may legitimately need
-  'SAVANT_CODE_APP_URL',
 ] as const
 
 /**
@@ -114,27 +94,11 @@ export const getByokOpenrouterApiKeyFromEnv = (): string | undefined => {
 
 /**
  * Get the inference base URL from environment.
- * Returns undefined when not set, falling back to SavantCode backend.
+ * Returns undefined when not set; construction then fails fast naming the
+ * variable (FID-2026-0929-005: there is no backend fallback target).
  */
 export const getInferenceBaseUrlFromEnv = (): string | undefined => {
   return process.env['INFERENCE_BASE_URL']
-}
-
-/**
- * True when the SDK runs in direct/BYOK mode with no SavantCode backend:
- * either `DIRECT_PROVIDER` or `INFERENCE_BASE_URL` is set. Mirrors the CLI's
- * `isDirectProviderMode()` (cli/src/utils/env.ts) so backend-bound SDK calls
- * (agent runs, steps, composio, healthz) can be gated consistently. The
- * backend is intentionally not deployed yet (FID-2026-0806-009) — in direct
- * mode every backend call must short-circuit.
- */
-export const isDirectProviderMode = (): boolean => {
-  const directProvider = process.env['DIRECT_PROVIDER']
-  const inferenceBaseUrl = getInferenceBaseUrlFromEnv()
-  return (
-    (directProvider ?? '').trim().length > 0 ||
-    (inferenceBaseUrl ?? '').trim().length > 0
-  )
 }
 
 /**

@@ -55,7 +55,6 @@ async function collectChunks(parts: Part[]): Promise<{
   const { promptAiSdkStream } = await import('../llm')
 
   const gen = promptAiSdkStream({
-    apiKey: 'test-key',
     runId: 'run-1',
     clientSessionId: 'client-1',
     fingerprintId: 'fp-1',
@@ -92,6 +91,9 @@ describe('FID-2026-0912-005: invalid vendor tool-call classification', () => {
   >(() => Promise.resolve(null))
 
   beforeEach(async () => {
+    // FID-2026-0929-005: no backend fallback exists, so the direct lane must
+    // fully resolve — give the test an inference base URL.
+    process.env.INFERENCE_BASE_URL = 'https://inference.test/v1'
     // Non-OAuth path: no special error classification, no fallback re-streams.
     await mockModule('@savant-code/common/constants/chatgpt-oauth', () => ({
       CHATGPT_OAUTH_ENABLED: false,
@@ -106,6 +108,7 @@ describe('FID-2026-0912-005: invalid vendor tool-call classification', () => {
     mock.restore()
     globalThis.fetch = REAL_FETCH
     clearMockedModules()
+    delete process.env.INFERENCE_BASE_URL
   })
 
   test('classifies an invalid (truncated-args) tool-call as native-incomplete', async () => {

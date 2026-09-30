@@ -1,39 +1,32 @@
-import { E2E_MOCK_API_KEY, setupE2eMocks } from './e2e-mocks'
+import { setupE2eMocks } from './e2e-mocks'
+import { SavantCodeClient } from '../../src/client'
 
 const shouldRunLiveE2e = process.env.RUN_SAVANT_CODE_E2E === 'true'
 
 /**
- * Utility to load SavantCode API key from environment or user credentials.
- * Defaults to a mock key for deterministic local runs.
+ * Build the SavantCodeClient the e2e suites run against.
+ *
+ * FID-2026-0929-005 (gut the backend): the client takes no credential —
+ * there is no backend to authenticate against. Mock mode installs the LLM
+ * spies and returns a keyless client; live mode returns the same keyless
+ * client and the caller's own provider env (DIRECT_PROVIDER /
+ * INFERENCE_BASE_URL / provider keys) supplies the inference lane.
  */
-export function getApiKey(): string {
-  if (shouldRunLiveE2e) {
-    const apiKey = process.env.SAVANT_CODE_API_KEY
-    if (!apiKey) {
-      throw new Error(
-        'SAVANT_CODE_API_KEY environment variable is required for live e2e tests. ' +
-          'Get your API key at https://www.savant-code.com/api-keys',
-      )
-    }
-    return apiKey
+export function setupMockClient(options?: {
+  cwd?: string
+}): SavantCodeClient {
+  if (!shouldRunLiveE2e) {
+    setupE2eMocks()
   }
-
-  setupE2eMocks()
-  process.env.SAVANT_CODE_API_KEY = E2E_MOCK_API_KEY
-  return E2E_MOCK_API_KEY
+  return new SavantCodeClient({ cwd: options?.cwd })
 }
 
 /**
- * FID-016 Fix G: The placeholder skipIfNoApiKey() always returns false,
- * causing E2E tests (apply-patch, database-query, weather, etc.) to run
- * against the in-memory mock backend. The mock never executes real agent
- * tools, so file-creation/tool-execution tests fail with ENOENT. The
- * honest contract is: E2E tests that require actual tool execution should
- * only run in LIVE mode (RUN_SAVANT_CODE_E2E=true). Mock mode tests can verify
- * transport/auth, but not real side-effects.
+ * Legacy alias kept for the suites that only consult the skip gate.
  *
- * This now returns true when not in live mode, skipping E2E tests that
- * depend on real LLM tool execution.
+ * FID-016 Fix G: E2E tests that require actual tool execution should only
+ * run in LIVE mode (RUN_SAVANT_CODE_E2E=true). Mock mode tests can verify
+ * transport behavior, but not real side-effects.
  */
 export function skipIfNoApiKey(): boolean {
   return !shouldRunLiveE2e
@@ -56,7 +49,7 @@ export function isAuthError(output: {
 }
 
 /**
- * Check if output indicates a network error (e.g., backend unreachable, timeout, rate limit).
+ * Check if output indicates a network error (e.g., endpoint unreachable, timeout, rate limit).
  */
 export function isNetworkError(output: {
   type: string

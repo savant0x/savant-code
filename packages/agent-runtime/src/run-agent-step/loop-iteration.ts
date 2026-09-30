@@ -15,7 +15,6 @@ import {
 } from './loop/native-strikes'
 import { applyOutputSchemaRestart } from './loop/output-schema'
 import { runProgrammaticPhase } from './loop/programmatic-phase'
-import { recordAgentStep } from './loop/step-record'
 import { applyThinkerConvergenceGate } from './loop/thinker-gate'
 
 import type { ContextCompactor } from '../context-compactor'
@@ -99,7 +98,6 @@ export async function runLoopIteration(params: {
   }
 
   totalSteps++
-  const startTime = new Date()
   let n: number | undefined = undefined
 
   // FID-2026-0802-005 L15/H8: compute the step prompt and refresh the context
@@ -162,8 +160,6 @@ export async function runLoopIteration(params: {
     writeBack()
     return { shouldContinue }
   }
-  const creditsBefore = currentAgentState.directCreditsUsed
-  const childrenBefore = currentAgentState.childRunIds.length
 
   const llm = await runLlmStepPhase({
     loopParams,
@@ -182,7 +178,6 @@ export async function runLoopIteration(params: {
     llmShouldEndTurn,
     hasNativeIncompleteToolCall,
     lastIncompleteToolName,
-    messageId,
   } = llm
   nResponses = llm.nResponses
 
@@ -193,7 +188,6 @@ export async function runLoopIteration(params: {
   Object.assign(initialAgentState, newAgentState)
   currentAgentState = initialAgentState
 
-  let stepStatus: 'completed' | 'failed' = 'completed'
   let stepErrorMessage: string | undefined
   if (hasNativeIncompleteToolCall) {
     consecutiveNativeIncompleteSteps += 1
@@ -203,7 +197,6 @@ export async function runLoopIteration(params: {
       lastIncompleteToolName,
     })
     if (strike.exhausted) {
-      stepStatus = 'failed'
       stepErrorMessage = buildStepExhaustedError(lastIncompleteToolName)
     }
     shouldEndTurn = false
@@ -241,20 +234,10 @@ export async function runLoopIteration(params: {
     runId,
   }))
 
-  await recordAgentStep({
-    addAgentStep: loopParams.addAgentStep,
-    loopParams,
-    agentState: newAgentState,
-    stepNumber: totalSteps,
-    credits: newAgentState.directCreditsUsed - creditsBefore,
-    childrenBefore,
-    messageId,
-    status: stepStatus,
-    errorMessage: stepErrorMessage,
-    startTime,
-    logger,
-  })
-
+  // FID-2026-0929-005 (gut the backend): the per-step backend record hook
+  // (addAgentStep) is deleted with the run registry it posted to. Step
+  // bookkeeping survives as the runtime trace events + credit accounting
+  // above; the step-failure throw below is unchanged.
   if (stepErrorMessage !== undefined) {
     throw new Error(stepErrorMessage)
   }

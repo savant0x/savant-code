@@ -4,10 +4,7 @@ import React from 'react'
 import { ChatGptConnectBanner } from './chatgpt-connect-banner'
 import { HelpBanner } from './help-banner'
 import { PendingAttachmentsBanner } from './pending-attachments-banner'
-import { SubscriptionLimitBanner } from './subscription-limit-banner'
-import { UsageBanner } from './usage-banner'
 import { useChatStore } from '../state/chat-store'
-import { IS_SAVANT_FREE } from '../utils/constants'
 
 /**
  * Registry mapping input modes to their banner components.
@@ -17,6 +14,10 @@ import { IS_SAVANT_FREE } from '../utils/constants'
  * 2. Add an entry here mapping the input mode to a render function
  *
  * Render functions receive context (like showTime) and return the component.
+ *
+ * FID-2026-0929-005 (gut the backend): the `usage` and `subscriptionLimit`
+ * banner entries are deleted with the usage/subscription query family that
+ * fed them; the modes no longer exist.
  */
 const BANNER_REGISTRY: Record<
   string,
@@ -24,17 +25,7 @@ const BANNER_REGISTRY: Record<
 > = {
   default: () => <PendingAttachmentsBanner />,
   image: () => <PendingAttachmentsBanner />,
-  ...(IS_SAVANT_FREE
-    ? {}
-    : {
-        usage: ({ showTime }: { showTime: number }) => (
-          <UsageBanner showTime={showTime} />
-        ),
-      }),
   help: () => <HelpBanner />,
-  ...(IS_SAVANT_FREE
-    ? {}
-    : { subscriptionLimit: () => <SubscriptionLimitBanner /> }),
   ...(CHATGPT_OAUTH_ENABLED
     ? { 'connect:chatgpt': () => <ChatGptConnectBanner /> }
     : {}),
@@ -50,21 +41,11 @@ const BANNER_REGISTRY: Record<
 export const InputModeBanner = () => {
   const inputMode = useChatStore((state) => state.inputMode)
 
-  const [usageBannerShowTime, setUsageBannerShowTime] = React.useState(() =>
-    Date.now(),
-  )
-
-  React.useEffect(() => {
-    if (inputMode === 'usage') {
-      setUsageBannerShowTime(Date.now())
-    }
-  }, [inputMode])
-
   const renderBanner = BANNER_REGISTRY[inputMode]
 
   if (!renderBanner) {
     return null
   }
 
-  return <>{renderBanner({ showTime: usageBannerShowTime })}</>
+  return <>{renderBanner({ showTime: 0 })}</>
 }

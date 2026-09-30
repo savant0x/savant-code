@@ -7,16 +7,16 @@
 import { describe, test, expect, beforeAll } from 'bun:test'
 import { z } from 'zod/v4'
 
-import { SavantCodeClient, getCustomToolDefinition } from '../../src'
+import { getCustomToolDefinition } from '../../src'
 import {
   EventCollector,
-  getApiKey,
+  setupMockClient,
   skipIfNoApiKey,
   MOCK_WEATHER_DATA,
   DEFAULT_TIMEOUT,
 } from '../utils'
 
-import type { AgentDefinition } from '../../src'
+import type { AgentDefinition , SavantCodeClient} from '../../src'
 
 describe('Custom Agents: Weather Agent', () => {
   let client: SavantCodeClient
@@ -59,7 +59,7 @@ Always report the temperature and conditions clearly.`,
 
   beforeAll(() => {
     if (skipIfNoApiKey()) return
-    client = new SavantCodeClient({ apiKey: getApiKey() })
+    client = setupMockClient()
   })
 
   test(

@@ -80,8 +80,6 @@ export function registerAgentRegistryLifecycle(): void {
       ...TEST_AGENT_RUNTIME_IMPL,
     }
 
-    state.impl.databaseAgentCache.clear()
-
     state.fileContext = getStubProjectFileContext()
 
     // Spy on validation functions

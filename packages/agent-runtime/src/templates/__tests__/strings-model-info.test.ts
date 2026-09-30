@@ -1,6 +1,5 @@
 // getAgentPrompt test family — MODEL_INFO placeholder substitution. Sibling
 // of the Loop-339 decomposition (shared fixtures in ./strings-test-harness).
-import { TEST_AGENT_RUNTIME_IMPL } from '@savant-code/common/testing/impl/agent-runtime'
 import { describe, test, expect } from 'bun:test'
 
 import { getAgentPrompt } from '../strings'
@@ -34,9 +33,6 @@ describe('getAgentPrompt', () => {
         modelInfoText: 'You are running on Test Model.',
         additionalToolDefinitions: async () => ({}),
         logger: createMockLogger(),
-        apiKey: TEST_AGENT_RUNTIME_IMPL.apiKey,
-        databaseAgentCache: TEST_AGENT_RUNTIME_IMPL.databaseAgentCache,
-        fetchAgentFromDatabase: TEST_AGENT_RUNTIME_IMPL.fetchAgentFromDatabase,
       })
 
       expect(result).toBe('Model info: You are running on Test Model.')
@@ -61,9 +57,6 @@ describe('getAgentPrompt', () => {
         agentTemplates,
         additionalToolDefinitions: async () => ({}),
         logger: createMockLogger(),
-        apiKey: TEST_AGENT_RUNTIME_IMPL.apiKey,
-        databaseAgentCache: TEST_AGENT_RUNTIME_IMPL.databaseAgentCache,
-        fetchAgentFromDatabase: TEST_AGENT_RUNTIME_IMPL.fetchAgentFromDatabase,
       })
 
       expect(result).toContain('Model info:')

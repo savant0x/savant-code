@@ -1,15 +1,11 @@
 import fs from 'fs'
 import path from 'path'
 
-import { getCiEnv } from '@savant-code/common/env-ci'
 import { z } from 'zod'
 
 import { getConfigDir as getConfigDirBase } from './config-dir'
-import { isDirectProviderMode } from './env'
 import { logger } from './logger'
-import { getApiClient, setApiClientAuthToken } from './savant-code-api'
 
-import type { CiEnv } from '@savant-code/common/types/contracts/env'
 import type { JSONValue } from '@savant-code/common/types/json'
 
 // User schema
@@ -94,8 +90,7 @@ export const getUserCredentials = (): User | null => {
   }
 }
 
-export type AuthTokenSource =
-  'credentials' | 'environment' | 'direct-provider-bypass' | null
+export type AuthTokenSource = 'credentials' | null
 
 export interface AuthTokenDetails {
   token?: string
@@ -104,38 +99,23 @@ export interface AuthTokenDetails {
 
 /**
  * Resolve the auth token and track where it came from.
+ *
+ * FID-2026-0929-005 (gut the backend): the SAVANT_CODE_API_KEY environment
+ * branch and the direct-provider stub bypass token (`stub_bypass_dev_local`)
+ * are deleted. A stored credentials.json token is inert residue — no code
+ * path treats it as a mode; logout still clears it.
  */
-export const getAuthTokenDetails = (
-  ciEnv: CiEnv = getCiEnv(),
-): AuthTokenDetails => {
+export const getAuthTokenDetails = (): AuthTokenDetails => {
   const userCredentials = getUserCredentials()
   if (userCredentials?.authToken) {
     return { token: userCredentials.authToken, source: 'credentials' }
-  }
-
-  const envToken = ciEnv.SAVANT_CODE_API_KEY
-  if (envToken) {
-    return { token: envToken, source: 'environment' }
-  }
-
-  // Dev-mode bypass: when running against a direct provider (gateway or
-  // INFERENCE_BASE_URL), no SavantCode backend auth is required. Return a stub
-  // token so the CLI can boot and the SDK client can be initialized.
-  if (isDirectProviderMode()) {
-    logger.warn(
-      'No auth credentials found; running in direct-provider mode with stub token',
-    )
-    return {
-      token: 'stub_bypass_dev_local',
-      source: 'direct-provider-bypass',
-    }
   }
 
   return { source: null }
 }
 
 /**
- * Get the auth token from user credentials or environment variable
+ * Get the auth token from user credentials
  */
 export const getAuthToken = (): string | undefined => {
   return getAuthTokenDetails().token
@@ -146,23 +126,6 @@ export const getAuthToken = (): string | undefined => {
  */
 export const hasAuthCredentials = (): boolean => {
   return !!getAuthTokenDetails().token
-}
-
-/**
- * FID-2026-0929-003 (operator ruling 2026-09-29: "we need to gut this whole
- * 'backend' idea, we don't have a backend to fall back to"): the ONE predicate
- * every boot-time routing decision must consult.
- *
- * True ONLY for the explicit environment backend key (SAVANT_CODE_API_KEY) —
- * the one remaining deliberate backend-mode opt-in. Two things never count:
- * - a stored login token: it is residue, not a routing command, and must
- *   never outrank a persisted /provider selection or a saved provider key;
- * - the direct-provider stub bypass token: that is a boot shim, not
- *   authentication (getAuthTokenDetails() remains the full-detail surface
- *   for UX that merely wants to know whether a login record exists).
- */
-export const hasEnvBackendCredentials = (): boolean => {
-  return getAuthTokenDetails().source === 'environment'
 }
 
 export interface AuthValidationResult {
@@ -235,41 +198,9 @@ export const clearUserCredentials = (): void => {
 }
 
 export async function logoutUser(): Promise<boolean> {
-  // In direct-provider mode there is no backend session to terminate.
-  if (isDirectProviderMode()) {
-    clearUserCredentials()
-    return true
-  }
-
-  try {
-    const user = getUserCredentials()
-    if (user?.authToken) {
-      setApiClientAuthToken(user.authToken)
-      const apiClient = getApiClient()
-      try {
-        const response = await apiClient.logout({
-          userId: user.id,
-          fingerprintId: user.fingerprintId,
-          fingerprintHash: user.fingerprintHash,
-        })
-        if (!response.ok) {
-          logger.error(
-            { status: response.status, error: response.error },
-            'Logout request failed',
-          )
-        }
-      } catch (err) {
-        logger.error(err, 'Logout request error')
-      }
-    }
-  } catch (error) {
-    logger.error(error, 'Unexpected error preparing logout')
-  }
-
-  try {
-    clearUserCredentials()
-  } catch (error) {
-    logger.debug({ error }, 'Failed to clear credentials during logout')
-  }
+  // FID-2026-0929-005: there is no backend session to terminate — logout is
+  // purely local credential clearing now (the apiClient.logout() POST is
+  // deleted with the backend).
+  clearUserCredentials()
   return true
 }

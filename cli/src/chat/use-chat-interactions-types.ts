@@ -1,6 +1,5 @@
 import type { MultilineInputHandle } from '../components/multiline-input'
 import type { useAgentValidation } from '../hooks/use-agent-validation'
-import type { useSendMessage } from '../hooks/use-send-message'
 import type { ChatMessage } from '../types/chat'
 import type { SendMessageFn } from '../types/contracts/send-message'
 import type { InputValue, PendingBashMessage } from '../types/store'
@@ -53,14 +52,12 @@ export interface UseChatInteractionsArgs {
   validateAgents: ReturnType<typeof useAgentValidation>['validate']
   continueChat: boolean
   continueChatId?: string
-  subscriptionData: Parameters<typeof useSendMessage>[0]['subscriptionData']
   setIsAuthenticated: Dispatch<SetStateAction<boolean | null>>
   setUser: Dispatch<SetStateAction<User | null>>
   logoutMutation: UseMutationResult<boolean, Error, void, unknown>
   showSuggestedPrompts: boolean
   setShowSuggestedPrompts: Dispatch<SetStateAction<boolean>>
   fileTree: FileTreeNode[]
-  hasSubscription: boolean
   modelPickerOpen: boolean
   providerPickerOpen: boolean
   rewindPickerOpen: boolean

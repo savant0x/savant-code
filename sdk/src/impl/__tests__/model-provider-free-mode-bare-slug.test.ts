@@ -19,7 +19,7 @@ describe('getModelForRequest ChatGPT OAuth fallback behavior', () => {
     const { getModelForRequest } = await importFresh()
 
     await expect(
-      getModelForRequest({ apiKey: 'test-key', model: 'openrouter/free' }),
+      getModelForRequest({ model: 'openrouter/free' }),
     ).rejects.toThrow(
       'OpenRouter API key not set. Set OPENROUTER_API_KEY or OR_MASTER_KEY environment variable.',
     )
@@ -40,7 +40,6 @@ describe('getModelForRequest ChatGPT OAuth fallback behavior', () => {
 
     const { getModelForRequest } = await importFresh()
     const result = await getModelForRequest({
-      apiKey: 'test-key',
       model: 'openrouter/free',
     })
     await (result.model as LanguageModelV2).doStream({
@@ -78,7 +77,6 @@ describe('getModelForRequest ChatGPT OAuth fallback behavior', () => {
 
     const { getModelForRequest } = await importFresh()
     const result = await getModelForRequest({
-      apiKey: 'caller-stub-key',
       model: 'anthropic/claude-sonnet-4.5',
     })
     await (result.model as LanguageModelV2).doStream({
@@ -96,8 +94,12 @@ describe('getModelForRequest ChatGPT OAuth fallback behavior', () => {
     )
   })
 
-  test('bare-slug models fall back to the caller key without an active provider', async () => {
+  test('bare-slug models authorize from INFERENCE_API_KEY with no active provider (FID-2026-0929-005: no caller key)', async () => {
     process.env.INFERENCE_BASE_URL = 'https://example.test/v1'
+    // FID-2026-0929-005: the caller-supplied apiKey is deleted — the
+    // custom-endpoint INFERENCE_API_KEY escape hatch is the remaining source
+    // when no active provider key resolves.
+    process.env.INFERENCE_API_KEY = 'inference-stub-key'
     const fetchMock = mock(() =>
       Promise.resolve(
         new Response('data: [DONE]\n\n', {
@@ -109,22 +111,25 @@ describe('getModelForRequest ChatGPT OAuth fallback behavior', () => {
     // @ts-expect-error - test fetch has the same runtime contract
     globalThis.fetch = fetchMock
 
-    const { getModelForRequest } = await importFresh()
-    const result = await getModelForRequest({
-      apiKey: 'caller-stub-key',
-      model: 'anthropic/claude-sonnet-4.5',
-    })
-    await (result.model as LanguageModelV2).doStream({
-      prompt: COMMAND_CODE_PROMPT,
-    })
+    try {
+      const { getModelForRequest } = await importFresh()
+      const result = await getModelForRequest({
+        model: 'anthropic/claude-sonnet-4.5',
+      })
+      await (result.model as LanguageModelV2).doStream({
+        prompt: COMMAND_CODE_PROMPT,
+      })
 
-    const [input, init] = fetchMock.mock.calls[0] as unknown as [
-      RequestInfo | URL,
-      RequestInit | undefined,
-    ]
-    expect(String(input)).toBe('https://example.test/v1/chat/completions')
-    expect(new Headers(init?.headers).get('authorization')).toBe(
-      'Bearer caller-stub-key',
-    )
+      const [input, init] = fetchMock.mock.calls[0] as unknown as [
+        RequestInfo | URL,
+        RequestInit | undefined,
+      ]
+      expect(String(input)).toBe('https://example.test/v1/chat/completions')
+      expect(new Headers(init?.headers).get('authorization')).toBe(
+        'Bearer inference-stub-key',
+      )
+    } finally {
+      delete process.env.INFERENCE_API_KEY
+    }
   })
 })

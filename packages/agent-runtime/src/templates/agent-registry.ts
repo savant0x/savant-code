@@ -1,44 +1,28 @@
 import { validateAgents } from '@savant-code/common/templates/agent-validation'
-import {
-  normalizeAgentIdForLookup,
-  parsePublishedAgentId,
-} from '@savant-code/common/util/agent-id-parsing'
-import { DEFAULT_ORG_PREFIX } from '@savant-code/common/util/agent-name-normalization'
-
-import { clampDatabaseTemplateCapabilities } from './database-template-clamp'
+import { normalizeAgentIdForLookup } from '@savant-code/common/util/agent-id-parsing'
 
 import type { DynamicAgentValidationError } from '@savant-code/common/templates/agent-validation'
 import type { AgentTemplate } from '@savant-code/common/types/agent-template'
-import type { FetchAgentFromDatabaseFn } from '@savant-code/common/types/contracts/database'
 import type { Logger } from '@savant-code/common/types/contracts/logger'
-import type { ParamsExcluding } from '@savant-code/common/types/function-params'
 import type { ProjectFileContext } from '@savant-code/common/util/file'
 
 /**
- * Single function to look up an agent template with clear priority order:
- * 1. localAgentTemplates (dynamic agents + static templates)
- * 2. Database cache
- * 3. Database query
+ * Single function to look up an agent template.
+ *
+ * FID-2026-0929-005 (gut the backend): local templates only. The former
+ * tiers 2/3 (database cache + database query) fetched published agents from
+ * the SavantCode backend, which does not exist; the SEC-6 capability clamp
+ * they fed (database-template-clamp.ts) is deleted with them. Priority is
+ * now: exact id, then the normalized id.
  */
-export async function getAgentTemplate(
-  params: {
-    agentId: string
-    localAgentTemplates: Record<string, AgentTemplate>
-    fetchAgentFromDatabase: FetchAgentFromDatabaseFn
-    databaseAgentCache: Map<string, AgentTemplate | null>
-    logger: Logger
-  } & ParamsExcluding<FetchAgentFromDatabaseFn, 'parsedAgentId'>,
-): Promise<AgentTemplate | null> {
-  const {
-    agentId,
-    localAgentTemplates,
-    fetchAgentFromDatabase,
-    databaseAgentCache,
-    logger,
-  } = params
+export async function getAgentTemplate(params: {
+  agentId: string
+  localAgentTemplates: Record<string, AgentTemplate>
+  logger: Logger
+}): Promise<AgentTemplate | null> {
+  const { agentId, localAgentTemplates, logger } = params
   const normalizedAgentId = normalizeAgentIdForLookup(agentId)
 
-  // 1. Check localAgentTemplates first (dynamic agents + static templates)
   if (localAgentTemplates[agentId]) {
     return localAgentTemplates[agentId]
   }
@@ -46,58 +30,15 @@ export async function getAgentTemplate(
     return localAgentTemplates[normalizedAgentId]
   }
 
-  // 2. Check database cache
-  if (databaseAgentCache.has(agentId)) {
-    return databaseAgentCache.get(agentId) || null
-  }
-  if (
-    normalizedAgentId !== agentId &&
-    databaseAgentCache.has(normalizedAgentId)
-  ) {
-    return databaseAgentCache.get(normalizedAgentId) || null
-  }
-
-  const parsed = parsePublishedAgentId(normalizedAgentId)
-  if (!parsed) {
-    // If agentId doesn't parse as publisher/agent format, try as savant-code/agentId
-    const savantCodeParsed = parsePublishedAgentId(
-      `${DEFAULT_ORG_PREFIX}${normalizedAgentId}`,
-    )
-    if (savantCodeParsed) {
-      const dbAgent = await fetchAgentFromDatabase({
-        ...params,
-        parsedAgentId: savantCodeParsed,
-      })
-      if (dbAgent) {
-        const clamped = clampDatabaseTemplateCapabilities(dbAgent, logger)
-        databaseAgentCache.set(dbAgent.id, clamped)
-        return clamped
-      }
-    }
-    logger.debug({ agentId }, 'getAgentTemplate: Failed to parse agent ID')
-    return null
-  }
-
-  // 3. Query database (only for publisher/agent-id format)
-  const dbAgent = await fetchAgentFromDatabase({
-    ...params,
-    parsedAgentId: parsed,
-  })
-  if (!dbAgent) return null
-  // FID-2026-0919-013 (SEC-6): database-sourced templates are clamped to
-  // the grantable tool subset BEFORE caching/returning — the capability
-  // gate reads this template's toolNames, so the clamp must happen here,
-  // at the single load point (both versioned and unversioned lookups).
-  const clamped = clampDatabaseTemplateCapabilities(dbAgent, logger)
-  if (parsed.version && parsed.version !== 'latest') {
-    // Cache only specific versions to avoid stale 'latest' results
-    databaseAgentCache.set(dbAgent.id, clamped)
-  }
-  return clamped
+  logger.debug(
+    { agentId },
+    'getAgentTemplate: agent not found in local templates',
+  )
+  return null
 }
 
 /**
- * Assemble local agent templates from fileContext + static templates
+ * Assemble local agent templates from fileContext
  */
 export function assembleLocalAgentTemplates(params: {
   fileContext: ProjectFileContext
@@ -117,15 +58,4 @@ export function assembleLocalAgentTemplates(params: {
 
   const agentTemplates = { ...dynamicTemplates }
   return { agentTemplates, validationErrors }
-}
-
-/**
- * Clear the database agent cache (useful for testing)
- */
-export function clearDatabaseCache(params: {
-  databaseAgentCache: Map<string, AgentTemplate | null>
-}): void {
-  const { databaseAgentCache } = params
-
-  databaseAgentCache.clear()
 }

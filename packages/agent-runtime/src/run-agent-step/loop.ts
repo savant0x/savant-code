@@ -38,7 +38,6 @@ export async function loopAgentSteps(
     agentState: initialAgentState,
     agentType,
     clearUserPromptMessagesAfterResponse = true,
-    finishAgentRun,
     localAgentTemplates,
     logger,
     parentSystemPrompt,
@@ -246,14 +245,6 @@ export async function loopAgentSteps(
         getOrCreateEnforcement(initialAgentState).recordLogicalUserTurn()
       appendGroundingRefresh(initialAgentState, completionRefresh.refreshText)
     }
-    await finishAgentRun({
-      ...params,
-      runId,
-      status: 'completed',
-      totalSteps: state.totalSteps,
-      directCredits: initialAgentState.directCreditsUsed,
-      totalCredits: initialAgentState.creditsUsed,
-    })
     recordRuntimeEvent(
       {
         event: 'terminal',

@@ -9,14 +9,6 @@ import type {
   SendActionFn,
   SendSubagentChunkFn,
 } from './client'
-import type {
-  AddAgentStepFn,
-  DatabaseAgentCache,
-  FetchAgentFromDatabaseFn,
-  FinishAgentRunFn,
-  GetUserInfoFromApiKeyFn,
-  StartAgentRunFn,
-} from './database'
 import type { ClientEnv, CiEnv } from './env'
 import type {
   PromptAiSdkFn,
@@ -32,13 +24,6 @@ export type AgentRuntimeDeps = {
   clientEnv: ClientEnv
   ciEnv: CiEnv
 
-  // Database
-  getUserInfoFromApiKey: GetUserInfoFromApiKeyFn
-  fetchAgentFromDatabase: FetchAgentFromDatabaseFn
-  startAgentRun: StartAgentRunFn
-  finishAgentRun: FinishAgentRunFn
-  addAgentStep: AddAgentStepFn
-
   // Billing
   consumeCreditsWithFallback: ConsumeCreditsWithFallbackFn
 
@@ -46,9 +31,6 @@ export type AgentRuntimeDeps = {
   promptAiSdkStream: PromptAiSdkStreamFn
   promptAiSdk: PromptAiSdkFn
   promptAiSdkStructured: PromptAiSdkStructuredFn
-
-  // Mutable State
-  databaseAgentCache: DatabaseAgentCache
 
   // Analytics
   trackEvent: TrackEventFn
@@ -70,8 +52,6 @@ export type AgentRuntimeScopedDeps = {
   requestOptionalFile: RequestOptionalFileFn
   sendAction: SendActionFn
   sendSubagentChunk: SendSubagentChunkFn
-
-  apiKey: string
 
   /** FID-2026-0803-004: directory for persistent per-turn file checkpoints
    *  (rewind). When unset, checkpoint capture is disabled. Hosts that enable

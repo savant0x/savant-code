@@ -57,7 +57,6 @@ export interface CliArgs {
   mode: 'evaluate' | 'baseline'
   concurrency: number
   globalTimeoutMs?: number
-  apiKey?: string
   agentId?: string
   maxAgentSteps?: number
   category?: TaskCategory
@@ -79,7 +78,6 @@ Options:
   --mode <mode>           "evaluate" (default) or "baseline"
   --concurrency <n>       Number of tasks to run in parallel (default: 1)
   --global-timeout <ms>   Optional global timeout for the whole harness run
-  --api-key <key>         Savant API key (evaluate mode; falls back to SAVANT_CODE_API_KEY)
   --agent-id <id>         Agent ID to run in evaluate mode (default: savant)
   --max-steps <n>         Maximum agent steps per task (default: 100)
   --category <cat>        Only run tasks in this category (e.g. pure_coding)
@@ -90,7 +88,7 @@ Skill proof (paired trials via runSkillProve):
 
   bun run cli prove <skillName> --task <taskId> --tasks-dir <path>
     [--project-root <p>] [--trials <n>] [--k <n>]
-    [--ztap off|record|enforce] [--api-key <key>] [--agent-id <id>]
+    [--ztap off|record|enforce] [--agent-id <id>]
     [--max-steps <n>]
 
 Exits 0 only when the artifact proves immutable eligibility.
@@ -136,9 +134,6 @@ function parseArgs(argv: string[]): Partial<CliArgs> {
       case '--global-timeout':
         args.globalTimeoutMs = Number.parseInt(argv[++i], 10)
         break
-      case '--api-key':
-        args.apiKey = argv[++i]
-        break
       case '--agent-id':
         args.agentId = argv[++i]
         break
@@ -167,13 +162,8 @@ function validateArgs(args: Partial<CliArgs>): CliArgs {
   if (!args.outputDir) {
     throw new Error('--output-dir is required')
   }
-  if (
-    args.mode === 'evaluate' &&
-    !args.apiKey &&
-    !process.env.SAVANT_CODE_API_KEY
-  ) {
-    throw new Error('evaluate mode requires --api-key or SAVANT_CODE_API_KEY')
-  }
+  // FID-2026-0929-005: the SAVANT_CODE_API_KEY gate is deleted with the
+  // backend it authenticated to; evaluate mode needs no credential.
   if (args.category) {
     taskCategorySchema.parse(args.category)
   }
@@ -187,7 +177,6 @@ function validateArgs(args: Partial<CliArgs>): CliArgs {
     mode: args.mode ?? 'baseline',
     concurrency: args.concurrency ?? 1,
     globalTimeoutMs: args.globalTimeoutMs,
-    apiKey: args.apiKey ?? process.env.SAVANT_CODE_API_KEY,
     agentId: args.agentId ?? 'savant',
     maxAgentSteps: args.maxAgentSteps,
     category: args.category,
@@ -246,7 +235,6 @@ export async function main(
             await runner.initialize({
               task,
               sandbox,
-              apiKey: args.apiKey,
               agentId: args.agentId,
               agentDefinitions,
               maxAgentSteps: args.maxAgentSteps,

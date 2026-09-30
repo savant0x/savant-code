@@ -1,4 +1,3 @@
-import { env } from '@savant-code/common/env'
 import { getEffectiveProviderRegistry } from '@savant-code/common/providers/custom-providers'
 import { extractApiErrorDetails } from '@savant-code/common/util/error'
 import { formatSavantFreeHardBlockedPrivacySignals } from '@savant-code/common/util/savant-free-privacy'
@@ -10,9 +9,6 @@ import type {
   SavantFreeBlockReason,
   SavantFreeIpPrivacySignal,
 } from '@savant-code/common/types/savant-free-session'
-
-const defaultAppUrl =
-  env.NEXT_PUBLIC_SAVANT_FREE_APP_URL || 'https://savant-code.com'
 
 // Normalize unknown errors to a user-facing string.
 const extractErrorMessage = (error: unknown, fallback: string): string => {
@@ -251,8 +247,6 @@ export const getSavantFreeGateErrorKind = (
   if (expected === undefined || statusCode !== expected) return null
   return errorCode as SavantFreeGateErrorCode
 }
-
-export const OUT_OF_CREDITS_MESSAGE = `Out of credits. Please add credits at ${defaultAppUrl}/usage`
 
 export const SAVANT_FREE_RATE_LIMIT_MESSAGE =
   'SavantFree is temporarily busy. Please try again in a moment.'

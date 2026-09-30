@@ -55,7 +55,6 @@ describe('programmatic tool authorization (ECHO-1)', () => {
   beforeEach(() => {
     agentRuntimeImpl = {
       ...TEST_AGENT_RUNTIME_IMPL,
-      addAgentStep: async () => 'test-agent-step-id',
       sendAction: () => {},
     }
 

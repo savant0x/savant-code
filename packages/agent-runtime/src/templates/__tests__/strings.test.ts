@@ -1,7 +1,6 @@
 // getAgentPrompt test family — placeholder replacement (CURRENT_DATE,
 // MODEL_INFO) and the per-step reminder. Sibling of the Loop-339
 // decomposition (shared fixtures in ./strings-test-harness).
-import { TEST_AGENT_RUNTIME_IMPL } from '@savant-code/common/testing/impl/agent-runtime'
 import { describe, test, expect } from 'bun:test'
 
 import { getAgentPrompt } from '../strings'
@@ -33,9 +32,6 @@ describe('getAgentPrompt', () => {
       agentTemplates,
       additionalToolDefinitions: async () => ({}),
       logger: createMockLogger(),
-      apiKey: TEST_AGENT_RUNTIME_IMPL.apiKey,
-      databaseAgentCache: TEST_AGENT_RUNTIME_IMPL.databaseAgentCache,
-      fetchAgentFromDatabase: TEST_AGENT_RUNTIME_IMPL.fetchAgentFromDatabase,
     })
 
     // Structural, not exact-equality: the injected value includes the current
@@ -64,9 +60,6 @@ describe('getAgentPrompt', () => {
       agentTemplates,
       additionalToolDefinitions: async () => ({}),
       logger: createMockLogger(),
-      apiKey: TEST_AGENT_RUNTIME_IMPL.apiKey,
-      databaseAgentCache: TEST_AGENT_RUNTIME_IMPL.databaseAgentCache,
-      fetchAgentFromDatabase: TEST_AGENT_RUNTIME_IMPL.fetchAgentFromDatabase,
     })
 
     // The step reminder carries a fresh timestamp each step (FID-2026-0815-010).

@@ -2,7 +2,6 @@
 // Sibling of the Loop-339 decomposition (shared fixtures in
 // ./strings-test-harness). The nested describe titles mirror the original
 // monolith's structure verbatim.
-import { TEST_AGENT_RUNTIME_IMPL } from '@savant-code/common/testing/impl/agent-runtime'
 import { describe, test, expect } from 'bun:test'
 
 import { getAgentPrompt } from '../strings'
@@ -51,9 +50,6 @@ describe('getAgentPrompt', () => {
         agentTemplates,
         additionalToolDefinitions: async () => ({}),
         logger: createMockLogger(),
-        apiKey: TEST_AGENT_RUNTIME_IMPL.apiKey,
-        databaseAgentCache: TEST_AGENT_RUNTIME_IMPL.databaseAgentCache,
-        fetchAgentFromDatabase: TEST_AGENT_RUNTIME_IMPL.fetchAgentFromDatabase,
       })
 
       expect(result).toBeDefined()
@@ -93,9 +89,6 @@ describe('getAgentPrompt', () => {
         agentTemplates,
         additionalToolDefinitions: async () => ({}),
         logger: createMockLogger(),
-        apiKey: TEST_AGENT_RUNTIME_IMPL.apiKey,
-        databaseAgentCache: TEST_AGENT_RUNTIME_IMPL.databaseAgentCache,
-        fetchAgentFromDatabase: TEST_AGENT_RUNTIME_IMPL.fetchAgentFromDatabase,
       })
 
       expect(result).toBeDefined()
@@ -139,9 +132,6 @@ describe('getAgentPrompt', () => {
         agentTemplates,
         additionalToolDefinitions: async () => ({}),
         logger: createMockLogger(),
-        apiKey: TEST_AGENT_RUNTIME_IMPL.apiKey,
-        databaseAgentCache: TEST_AGENT_RUNTIME_IMPL.databaseAgentCache,
-        fetchAgentFromDatabase: TEST_AGENT_RUNTIME_IMPL.fetchAgentFromDatabase,
       })
 
       expect(result).toBeDefined()
@@ -170,9 +160,6 @@ describe('getAgentPrompt', () => {
         agentTemplates,
         additionalToolDefinitions: async () => ({}),
         logger: createMockLogger(),
-        apiKey: TEST_AGENT_RUNTIME_IMPL.apiKey,
-        databaseAgentCache: TEST_AGENT_RUNTIME_IMPL.databaseAgentCache,
-        fetchAgentFromDatabase: TEST_AGENT_RUNTIME_IMPL.fetchAgentFromDatabase,
       })
 
       expect(result).toBeDefined()
@@ -208,9 +195,6 @@ describe('getAgentPrompt', () => {
         agentTemplates,
         additionalToolDefinitions: async () => ({}),
         logger: createMockLogger(),
-        apiKey: TEST_AGENT_RUNTIME_IMPL.apiKey,
-        databaseAgentCache: TEST_AGENT_RUNTIME_IMPL.databaseAgentCache,
-        fetchAgentFromDatabase: TEST_AGENT_RUNTIME_IMPL.fetchAgentFromDatabase,
       })
 
       expect(systemResult).toBeDefined()
@@ -225,9 +209,6 @@ describe('getAgentPrompt', () => {
         agentTemplates,
         additionalToolDefinitions: async () => ({}),
         logger: createMockLogger(),
-        apiKey: TEST_AGENT_RUNTIME_IMPL.apiKey,
-        databaseAgentCache: TEST_AGENT_RUNTIME_IMPL.databaseAgentCache,
-        fetchAgentFromDatabase: TEST_AGENT_RUNTIME_IMPL.fetchAgentFromDatabase,
       })
 
       expect(stepResult).toBeDefined()

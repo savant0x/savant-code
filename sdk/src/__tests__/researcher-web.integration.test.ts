@@ -1,5 +1,3 @@
-import { existsSync, readFileSync } from 'fs'
-import { homedir } from 'os'
 import path from 'path'
 
 import { describe, expect, it } from 'bun:test'
@@ -14,26 +12,6 @@ const DEFAULT_TIMEOUT_MS = 120_000
 const EXPECTED_KEYWORD = 'useActionState'
 const RESEARCHER_WEB_MAX_AGENT_STEPS = 10
 const RUN_LIVE_INTEGRATION = process.env.RUN_SAVANT_CODE_E2E === 'true'
-
-function loadEnvValue(name: string): string | undefined {
-  if (process.env[name] && process.env[name] !== 'test') {
-    return process.env[name]
-  }
-
-  for (const envPath of [
-    path.join(homedir(), 'savant-code', '.env.local'),
-    path.join(process.cwd(), '.env.local'),
-  ]) {
-    if (!existsSync(envPath)) continue
-
-    const contents = readFileSync(envPath, 'utf8')
-    const match = contents.match(new RegExp(`^${name}=(.*)$`, 'm'))
-    const value = match?.[1]?.trim().replace(/^['"]|['"]$/g, '')
-    if (value && value !== 'test') return value
-  }
-
-  return undefined
-}
 
 function extractOutputText(output: AgentOutput): string {
   if (output.type === 'error') return output.message
@@ -73,11 +51,6 @@ describe('researcher-web SDK integration', () => {
         return
       }
 
-      const apiKey = loadEnvValue('SAVANT_CODE_API_KEY')
-      if (!apiKey) {
-        return
-      }
-
       const agentsPath = path.resolve(
         import.meta.dir,
         '../../../agents/researcher',
@@ -88,7 +61,6 @@ describe('researcher-web SDK integration', () => {
 
       const events: PrintModeEvent[] = []
       const client = new SavantCodeClient({
-        apiKey,
         cwd: process.cwd(),
       })
 

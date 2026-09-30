@@ -28,7 +28,6 @@ type ReactiveCompactDeps = {
   logger: Logger
   signal: AbortSignal
   traceWriter?: TraceWriter
-  finishAgentRun: LoopAgentStepsParams['finishAgentRun']
   agentTemplate: NonNullable<LoopAgentStepsParams['agentTemplate']>
   system: string
   tools: ToolSet
@@ -72,7 +71,6 @@ export async function retryAfterReactiveCompact(params: {
     logger,
     signal,
     traceWriter,
-    finishAgentRun,
     agentTemplate,
     system,
     tools,
@@ -191,14 +189,6 @@ export async function retryAfterReactiveCompact(params: {
       true,
       initialAgentState.contextTokenCount,
     )
-    await finishAgentRun({
-      ...loopParams,
-      runId,
-      status: 'completed',
-      totalSteps,
-      directCredits: initialAgentState.directCreditsUsed,
-      totalCredits: initialAgentState.creditsUsed,
-    })
     recordRuntimeEvent(
       {
         event: 'terminal',

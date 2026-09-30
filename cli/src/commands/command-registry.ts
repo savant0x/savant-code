@@ -25,11 +25,12 @@ import { getSystemMessage, getUserMessage } from '../utils/message-history'
 import { capturePendingAttachments } from '../utils/pending-attachments'
 import { getSkillByName } from '../utils/skill-registry'
 
+// FID-2026-0929-005: 'usage' and 'subscribe' are removed from this set —
+// the commands themselves are deleted with the backend, so there is nothing
+// left to gate.
 const SAVANT_FREE_REMOVED_COMMANDS = new Set([
   'ads:enable',
   'ads:disable',
-  'usage',
-  'subscribe',
   'image',
   'publish',
   'release',

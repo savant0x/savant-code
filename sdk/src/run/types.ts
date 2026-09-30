@@ -57,8 +57,6 @@ export function isRunPauseError<T>(error: T): error is T & { name?: string } {
 }
 
 export type SavantCodeClientOptions = {
-  apiKey?: string
-
   cwd?: string
   /** Optional directory path to load skills from. Skills found here will be available to the `skill` tool. */
   skillsDir?: string
@@ -285,7 +283,6 @@ export const createAbortError = (signal?: AbortSignal) => {
 
 export type RunExecutionOptions = RunOptions &
   SavantCodeClientOptions & {
-    apiKey: string
     fingerprintId: string
   }
 export type RunReturnType = RunState

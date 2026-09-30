@@ -16,7 +16,6 @@ const ENV_KEYS = [
   'OPENCODE_API_KEY',
   'OPENCODE_GO_API_KEY',
   'NOUS_API_KEY',
-  'SAVANT_CODE_API_KEY',
 ] as const
 
 describe('handleHealthCommand provider reporting', () => {

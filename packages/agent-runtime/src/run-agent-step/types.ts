@@ -8,11 +8,6 @@ import type { getAgentPrompt } from '../templates/strings'
 import type { processStream } from '../tools/stream-parser'
 import type { AgentTemplate } from '@savant-code/common/types/agent-template'
 import type { TrackEventFn } from '@savant-code/common/types/contracts/analytics'
-import type {
-  AddAgentStepFn,
-  FinishAgentRunFn,
-  StartAgentRunFn,
-} from '@savant-code/common/types/contracts/database'
 import type { PromptAiSdkFn } from '@savant-code/common/types/contracts/llm'
 import type { Logger } from '@savant-code/common/types/contracts/logger'
 import type { TraceWriter } from '@savant-code/common/types/contracts/trace'
@@ -33,6 +28,12 @@ import type {
   ProjectFileContext,
 } from '@savant-code/common/util/file'
 import type { ToolSet } from 'ai'
+
+// FID-2026-0929-005 (gut the backend): the run-lifecycle hooks
+// (startAgentRun / finishAgentRun / addAgentStep) are deleted — they were
+// the transport for backend run/step reporting on a backend that does not
+// exist. The loop now carries a locally-minted runId (crypto.randomUUID(),
+// minted at the former startAgentRun site) purely for log/trace correlation.
 
 export type RunAgentStepParams = {
   userId: string | undefined
@@ -114,14 +115,12 @@ export type RunAgentStepResult = {
 }
 
 export type LoopAgentStepsParams = {
-  addAgentStep: AddAgentStepFn
   agentState: AgentState
   agentType: string
   clearUserPromptMessagesAfterResponse?: boolean
   clientSessionId: string
   content?: Array<TextPart | ImagePart>
   fileContext: ProjectFileContext
-  finishAgentRun: FinishAgentRunFn
   localAgentTemplates: Record<string, AgentTemplate>
   logger: Logger
   parentSystemPrompt?: string
@@ -134,7 +133,6 @@ export type LoopAgentStepsParams = {
    * host "steer" a running agent without aborting or losing the current step. */
   drainSteeringMessages?: () => string[]
   spawnParams: Record<string, JSONValue> | undefined
-  startAgentRun: StartAgentRunFn
   userId: string | undefined
   userInputId: string
   agentTemplate?: AgentTemplate
@@ -186,11 +184,6 @@ export type LoopAgentStepsParams = {
     typeof getMCPToolData,
     'toolNames' | 'mcpServers' | 'writeTo'
   > &
-  ParamsExcluding<StartAgentRunFn, 'agentId' | 'ancestorRunIds'> &
-  ParamsExcluding<
-    FinishAgentRunFn,
-    'runId' | 'status' | 'totalSteps' | 'directCredits' | 'totalCredits'
-  > &
   ParamsExcluding<
     RunAgentStepFn,
     | 'additionalToolDefinitions'
@@ -201,16 +194,6 @@ export type LoopAgentStepsParams = {
     | 'spawnParams'
     | 'system'
     | 'tools'
-  > &
-  ParamsExcluding<
-    AddAgentStepFn,
-    | 'agentRunId'
-    | 'stepNumber'
-    | 'credits'
-    | 'childRunIds'
-    | 'messageId'
-    | 'status'
-    | 'startTime'
   >
 
 export type LoopAgentStepsResult = {

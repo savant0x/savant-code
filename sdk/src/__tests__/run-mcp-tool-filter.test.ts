@@ -5,7 +5,6 @@ import { getStubProjectFileContext } from '@savant-code/common/util/file'
 import { afterEach, describe, expect, it, mock, spyOn } from 'bun:test'
 
 import { SavantCodeClient } from '../client'
-import * as databaseModule from '../impl/database'
 
 import type { AgentDefinition } from '@savant-code/common/templates/initial-agents-dir/types/agent-definition'
 import type { MCPConfig } from '@savant-code/common/types/mcp'
@@ -35,18 +34,6 @@ describe('MCP tool filtering', () => {
   })
 
   it('returns only allowlisted MCP tools when an agent restricts toolNames', async () => {
-    spyOn(databaseModule, 'getUserInfoFromApiKey').mockResolvedValue({
-      id: 'user-123',
-      email: 'test@example.com',
-      discord_id: null,
-      stripe_customer_id: null,
-      banned: false,
-      created_at: new Date('2024-01-01T00:00:00Z'),
-    })
-    spyOn(databaseModule, 'fetchAgentFromDatabase').mockResolvedValue(null)
-    spyOn(databaseModule, 'startAgentRun').mockResolvedValue('run-1')
-    spyOn(databaseModule, 'finishAgentRun').mockResolvedValue(undefined)
-    spyOn(databaseModule, 'addAgentStep').mockResolvedValue('step-1')
 
     spyOn(mcpClientModule, 'getMCPClient').mockResolvedValue('mcp-client-id')
     spyOn(mcpClientModule, 'listMCPTools').mockResolvedValue({
@@ -106,7 +93,6 @@ describe('MCP tool filtering', () => {
     )
 
     const client = new SavantCodeClient({
-      apiKey: 'test-key',
       agentDefinitions: [TEST_AGENT],
     })
 

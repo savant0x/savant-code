@@ -240,7 +240,6 @@ async function main() {
   console.log(`Loaded librarian agent (model: ${librarianAgent.model})`)
 
   const client = new SavantCodeClient({
-    apiKey: process.env.SAVANT_CODE_API_KEY,
     cwd: process.cwd(),
   })
 

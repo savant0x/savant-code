@@ -40,7 +40,7 @@ export async function handleLoopAbort(
   error: unknown,
 ): Promise<LoopAgentStepsResult> {
   const { params, state, ctx, initialAgentState } = deps
-  const { agentType, logger, finishAgentRun } = params
+  const { agentType, logger } = params
   // loop.ts destructures this with a default; replicate it exactly.
   const clearUserPromptMessagesAfterResponse =
     params.clearUserPromptMessagesAfterResponse ?? true
@@ -74,14 +74,6 @@ export async function handleLoopAbort(
     'Agent run cancelled by user (abort error)',
   )
 
-  await finishAgentRun({
-    ...params,
-    runId,
-    status: 'cancelled',
-    totalSteps: state.totalSteps,
-    directCredits: initialAgentState.directCreditsUsed,
-    totalCredits: initialAgentState.creditsUsed,
-  })
   recordRuntimeEvent(
     {
       event: 'terminal',
@@ -122,7 +114,7 @@ export async function handleLoopError(
   error: unknown,
 ): Promise<LoopAgentStepsResult> {
   const { params, state, ctx, initialAgentState } = deps
-  const { agentType, logger, signal, finishAgentRun } = params
+  const { agentType, logger, signal } = params
   const { runId, agentTemplate, system, tools, contextCompactor } = ctx
   const {
     additionalToolDefinitionsWithCache,
@@ -141,7 +133,6 @@ export async function handleLoopError(
       logger,
       signal,
       traceWriter: params.traceWriter,
-      finishAgentRun,
       agentTemplate,
       system,
       tools,
@@ -181,15 +172,6 @@ export async function handleLoopError(
       getOrCreateEnforcement(initialAgentState).recordLogicalUserTurn()
     appendGroundingRefresh(initialAgentState, completionRefresh.refreshText)
   }
-  await finishAgentRun({
-    ...params,
-    runId,
-    status,
-    totalSteps: state.totalSteps,
-    directCredits: initialAgentState.directCreditsUsed,
-    totalCredits: initialAgentState.creditsUsed,
-    errorMessage,
-  })
   recordRuntimeEvent(
     {
       event: 'terminal',

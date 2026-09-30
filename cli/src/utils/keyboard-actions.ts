@@ -45,19 +45,6 @@ export function resolveChatKeyboardAction(
     return { type: 'none' }
   }
 
-  // Priority 0.5: Out of credits mode - Enter opens buy credits page
-  if (state.inputMode === 'outOfCredits') {
-    if (isEnter) {
-      return { type: 'open-buy-credits' }
-    }
-    // Allow Escape or Ctrl+C to exit out-of-credits mode (return to normal input)
-    if (isEscape || isCtrlC) {
-      return { type: 'exit-input-mode' }
-    }
-    // Block most other inputs in this mode
-    return { type: 'none' }
-  }
-
   // Priority 1: Feedback mode - block global keys except Escape/Ctrl-C/Ctrl-V
   if (state.feedbackMode) {
     if (isEscape) {

@@ -29,14 +29,13 @@ describe('SavantCodeClient customProviders (FID-2026-0910-004 Step 4)', () => {
 
   test('constructor without customProviders preserves an existing registration', () => {
     registerCustomProviders([VALID])
-    new SavantCodeClient({ apiKey: 'test-key' })
+    new SavantCodeClient({})
     expect(getEffectiveProviderRegistry()['my-gateway']).toBeDefined()
   })
 
   test('constructor with a valid set registers it (D4 replace semantics)', () => {
     registerCustomProviders([VALID])
     new SavantCodeClient({
-      apiKey: 'test-key',
       customProviders: [
         {
           id: 'second-gw',
@@ -56,8 +55,7 @@ describe('SavantCodeClient customProviders (FID-2026-0910-004 Step 4)', () => {
     expect(
       () =>
         new SavantCodeClient({
-          apiKey: 'test-key',
-          customProviders: [
+              customProviders: [
             {
               id: 'openrouter', // built-in shadow — rejected fail-closed
               label: 'Impostor',

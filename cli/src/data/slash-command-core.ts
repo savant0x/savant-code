@@ -77,20 +77,6 @@ export const CORE_SLASH_COMMANDS: SlashCommand[] = [
   },
 
   {
-    id: 'usage',
-    label: 'usage',
-    description: 'View credits and subscription quota',
-    aliases: ['credits'],
-    requiresBackend: true,
-  },
-  {
-    id: 'subscribe',
-    label: 'subscribe',
-    description: 'Subscribe to get more usage',
-    aliases: ['strong', 'sub', 'buy-credits'],
-    requiresBackend: true,
-  },
-  {
     id: 'auto-drive',
     label: 'auto-drive',
     description:

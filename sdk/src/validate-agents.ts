@@ -3,8 +3,6 @@ import {
   type DynamicAgentValidationError,
 } from '@savant-code/common/templates/agent-validation'
 
-import { getWebsiteUrl } from './constants'
-
 import type { AgentDefinition } from '@savant-code/common/templates/initial-agents-dir/types/agent-definition'
 
 export interface ValidationResult {
@@ -18,24 +16,23 @@ export interface ValidationResult {
 
 export interface ValidateAgentsOptions {
   /**
-   * Whether to perform remote validation via the web API.
-   * Remote validation checks spawnable agents against the database.
-   */
-  remote?: boolean
-
-  /**
    * The base URL of the SavantCode website API.
-   * Optional - defaults to NEXT_PUBLIC_SAVANT_CODE_APP_URL or environment-based URL.
-   * Example: 'https://savant-code.com'
+   *
+   * @deprecated FID-2026-0929-005 (gut the backend): remote validation POSTed
+   * to `${websiteUrl}/api/agents/validate`, a backend that does not exist.
+   * The option is retained for one type-compat cycle but is ignored — local
+   * Zod validation always runs.
    */
   websiteUrl?: string
 }
 
 /**
- * Validates an array of agent definitions.
+ * Validates an array of agent definitions using local Zod schema validation.
  *
- * By default, performs local Zod schema validation.
- * When `options.remote` is true, additionally validates spawnable agents via the web API.
+ * FID-2026-0929-005 (gut the backend): the `remote` option (web-API
+ * validation against `${websiteUrl}/api/agents/validate`) is deleted — the
+ * backend it targeted does not exist. `options.remote` is accepted and
+ * ignored for source compatibility.
  *
  * @param definitions - Array of agent definitions to validate
  * @param options - Optional configuration for validation
@@ -43,20 +40,14 @@ export interface ValidateAgentsOptions {
  *
  * @example
  * ```typescript
- * // Local validation only
  * const result = await validateAgents(definitions)
- *
- * // Remote validation
- * const result = await validateAgents(definitions, {
- *   remote: true,
- *   websiteUrl: 'https://savant-code.com'
- * })
  * ```
  */
 export async function validateAgents(
   definitions: AgentDefinition[],
-  options?: ValidateAgentsOptions,
+  options?: ValidateAgentsOptions & { remote?: boolean },
 ): Promise<ValidationResult> {
+  void options
   // Convert array of definitions to Record<string, AgentDefinition> format
   // that the common validation functions expect
   // Use index as key to preserve all entries (including duplicates)
@@ -78,70 +69,15 @@ export async function validateAgents(
     error: () => {},
   }
 
-  let validationErrors: DynamicAgentValidationError[] = []
+  // FID-2026-0929-005: local Zod validation is the only validation. The
+  // remote web-API branch (POST ${websiteUrl}/api/agents/validate) is
+  // deleted with the backend it targeted.
+  const result = validateAgentsCommon({
+    agentTemplates,
+    logger,
+  })
 
-  if (options?.remote) {
-    // Remote validation: call the web API
-    // Use provided websiteUrl or fall back to the default from environment
-    const websiteUrl = options.websiteUrl || getWebsiteUrl()
-
-    try {
-      const response = await fetch(`${websiteUrl}/api/agents/validate`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ agentDefinitions: definitions }),
-      })
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}))
-        const errorMessage =
-          (typeof errorData === 'object' &&
-            errorData !== null &&
-            'error' in errorData &&
-            typeof (errorData as { error: unknown }).error === 'string' &&
-            (errorData as { error: string }).error) ||
-          `HTTP ${response.status}: ${response.statusText}`
-
-        return {
-          success: false,
-          validationErrors: [
-            {
-              id: 'network_error',
-              message: `Failed to validate via API: ${errorMessage}`,
-            },
-          ],
-          errorCount: 1,
-        }
-      }
-
-      const data = await response.json()
-      validationErrors = data.validationErrors || []
-    } catch (error) {
-      const errorMessage =
-        error instanceof Error ? error.message : String(error)
-
-      return {
-        success: false,
-        validationErrors: [
-          {
-            id: 'network_error',
-            message: `Failed to connect to validation API: ${errorMessage}`,
-          },
-        ],
-        errorCount: 1,
-      }
-    }
-  } else {
-    // Local validation: use common package validation logic
-    const result = validateAgentsCommon({
-      agentTemplates,
-      logger,
-    })
-
-    validationErrors = result.validationErrors
-  }
+  const validationErrors: DynamicAgentValidationError[] = result.validationErrors
 
   // Transform validation errors to the SDK format
   const transformedErrors = validationErrors.map((error) => ({

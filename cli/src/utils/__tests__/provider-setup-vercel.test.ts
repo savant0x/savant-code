@@ -23,7 +23,6 @@ const PROVIDER_ENV_VARS = [
   ...Object.values(RESEARCH_KEY_SERVICES).map((service) => service.envVar),
   'DIRECT_PROVIDER',
   'INFERENCE_BASE_URL',
-  'SAVANT_CODE_API_KEY',
 ] as const
 
 describe('provider setup — Vercel AI Gateway (FID-2026-0927-001)', () => {

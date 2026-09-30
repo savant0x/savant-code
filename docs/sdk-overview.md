@@ -54,12 +54,12 @@ Source root: `sdk/src/`. Organization by area (all exports listed are public unl
 
 | Module | Responsibility |
 |--------|----------------|
-| `client.ts` | `SavantCodeClient` — the public entry point (`run`, `checkConnection`) |
+| `client.ts` | `SavantCodeClient` — the public entry point (`run`) |
 | `run.ts` | Re-export shim → `run/execution.ts`; `RunOptions`, `SavantCodeClientOptions` types |
 | `run-state.ts` + `run-state/` | `RunState` shape, session-state mutations, file-tree builder, knowledge-file selection, child-process helpers, project index |
 | `custom-tool.ts` | `getCustomToolDefinition` — Zod-schema'd custom tools with `execute` handlers |
-| `env.ts` | All env getters (providers, inference, direct-mode gate, OAuth token) |
-| `constants.ts` | `getWebsiteUrl()` — runtime backend base URL resolution (env > bundle-time) |
+| `env.ts` | All env getters (providers, inference, OAuth token) |
+| `constants.ts` | Build-mode flags (`IS_DEV` / `IS_TEST` / `IS_PROD`, binary flag) |
 | `credentials.ts` | Config dir / credentials.json, ChatGPT OAuth token storage + refresh |
 | `error-utils.ts` | Typed HTTP errors, retryable-status classification, message sanitization |
 | `retry-config.ts` | Retry/backoff and reconnection constants for streaming |
@@ -70,8 +70,8 @@ Source root: `sdk/src/`. Organization by area (all exports listed are public unl
 | `impl/model-provider/` | The provider routing + factories (see `docs/archive/design/Adding New Providers.md`) |
 | `impl/openrouter-key-resolver.ts` | OpenRouter credential chain: `OR_MASTER_KEY` exchange → `OPENROUTER_API_KEY` → `INFERENCE_API_KEY`; process-lifetime cache + reset hook |
 | `impl/llm/` + `impl/llm.ts` | `promptAiSdk(Stream/Structured)` — the LLM invocation layer, stream chunk handlers, tool-call repair, ChatGPT OAuth request transform |
-| `impl/agent-runtime.ts` | `getAgentRuntimeImpl` — wires LLM, database, analytics, and scoped deps into the agent runtime; bounded agent-template cache (200-entry FIFO) |
-| `impl/database.ts` | Backend contract: `getUserInfoFromApiKey`, `startAgentRun`, `finishAgentRun`, `addAgentStep`, `fetchAgentFromDatabase` (all short-circuited in direct mode) |
+| `impl/agent-runtime.ts` | `getAgentRuntimeImpl` — wires LLM, analytics, and scoped deps into the agent runtime; bounded agent-template cache (200-entry FIFO) |
+| `impl/database/state.ts` | `agentsResponseSchema` — the persisted local agent-cache schema (FID-2026-0929-005 deleted the backend database contract) |
 | `impl/chatgpt-backend-fetch/` | ChatGPT OAuth / Codex backend adapter: JWT account extraction, request transform, SSE stream transform |
 | `native/ripgrep.ts` | `getBundledRgPath` — vendored ripgrep binary resolution |
 | `validate-agents.ts` | `validateAgents` — agent-definition validation |
@@ -86,13 +86,14 @@ Source root: `sdk/src/`. Organization by area (all exports listed are public unl
 
 ```ts
 const client = new SavantCodeClient({
-  apiKey: process.env.SAVANT_CODE_API_KEY, // or via SAVANT_CODE_API_KEY env var
   cwd: process.cwd(),
   // ...SavantCodeClientOptions
 })
 ```
 
-**Constructor:** requires `apiKey` (or `SAVANT_CODE_API_KEY` env). Generates a `fingerprintId`
+**Constructor:** takes no credential (FID-2026-0929-005: the backend and its
+API-key identity are deleted; inference credentials are resolved from the
+environment per provider). Generates a `fingerprintId`
 (`savant-code-sdk-<random>`) used for analytics. Sets a default `handleEvent` that throws on
 `error` events — provide your own to handle errors gracefully.
 
@@ -101,7 +102,6 @@ const client = new SavantCodeClient({
 | Method | Purpose |
 |--------|---------|
 | `run(options)` | Executes one agent turn (or continues a session with `previousRun`). Returns a `RunState`. |
-| `checkConnection()` | Pings the backend `/api/healthz` (5s timeout). **Always returns `true` in direct-provider mode** — there is no backend to ping (FID-2026-0806-009). |
 
 ### `run()` options
 
@@ -109,7 +109,6 @@ Client-level options (`SavantCodeClientOptions`) and per-run options (`RunOption
 
 | Option | Applies at | Purpose |
 |--------|-----------|---------|
-| `apiKey` | client | Backend auth (required) |
 | `cwd` | client | Working directory |
 | `skillsDir` | client | Directory to load `SKILL.md` skills from instead of defaults |
 | `projectFiles` | client | `{ path: content }` map of project files the agent can read |
@@ -278,23 +277,19 @@ this package.
 
 **Credential chain (OpenRouter):** `OR_MASTER_KEY` (exchanged via `/api/v1/keys`, one fresh key per
 process) → `OPENROUTER_API_KEY` → `INFERENCE_API_KEY`; cached per process with negative caching and
-an explicit `resetOpenRouterApiKeyCache()` hook. Direct/BYOK mode is gated by
-`isDirectProviderMode()` (`DIRECT_PROVIDER` OR `INFERENCE_BASE_URL`) — in that mode every backend
-call short-circuits (FID-2026-0806-009).
+an explicit `resetOpenRouterApiKeyCache()` hook.
 
 ## Environment variable reference
 
 | Variable | Purpose |
 |----------|---------|
-| `SAVANT_CODE_API_KEY` | Backend API key (constructor fallback) |
-| `DIRECT_PROVIDER` | Direct-mode provider name (e.g. `openrouter`) |
-| `INFERENCE_BASE_URL` | Direct-mode OpenAI-compatible base URL |
+| `DIRECT_PROVIDER` | Direct provider name (e.g. `openrouter`) |
+| `INFERENCE_BASE_URL` | OpenAI-compatible inference base URL (required — no backend fallback; FID-2026-0929-005) |
 | `INFERENCE_API_KEY` | SDK-specific inference key |
 | `OR_MASTER_KEY`, `OPENROUTER_API_KEY` | OpenRouter credentials (master-key exchange / regular key) |
 | `TOKENROUTER_API_KEY`, `TOKENHARBOR_API_KEY`, `NVIDIA_API_KEY`, `COMMAND_CODE_API_KEY`, `KIOSAPI_API_KEY`, `APINEX_API_KEY`, `ORCAROUTER_API_KEY`, `BAI_API_KEY`, `HCNSEC_API_KEY`, `TOKENBOM_API_KEY`, `ATRIA_API_KEY`, `INFRON_API_KEY`, `UNOROUTER_API_KEY`, `BAZAARLINK_API_KEY`, `NOUS_API_KEY`, `AI_GATEWAY_API_KEY`, `CLEANAPIS_API_KEY` | Gateway provider keys; registry-resolved (`credentials.envVar` → `process.env` in `sdk/src/impl/model-provider.ts`); Nous uses the direct OpenAI-compatible API and does not imply Portal OAuth |
 | `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID` | Cloudflare Workers AI |
 | `SAVANT_CODE_BYOK_OPENROUTER` | BYOK OpenRouter header override (`x-openrouter-api-key`) |
-| `NEXT_PUBLIC_SAVANT_CODE_APP_URL` / `SAVANT_CODE_APP_URL` | Runtime backend URL override (deploy-time; Convex/Next hosts) |
 | `SAVANT_CODE_RG_PATH`, `SAVANT_CODE_WASM_DIR` | Native asset paths |
 | `SAVANT_CODE_CONFIG_DIR` | Config dir override (non-prod) |
 
@@ -323,8 +318,8 @@ subprojects (CJS/ESM load, ripgrep path, tree-sitter queries) — this is the ga
 | Suite | Command | Coverage |
 |-------|---------|----------|
 | Unit | `bun test` | ~30 modules across `src/__tests__` (provider routing, credentials, knowledge files, run-state, tools, agents, MCP, skills, cancellation, file filter, events...) |
-| E2E | `bun run test:e2e` | `streaming/`, `workflows/`, `custom-agents/`, `features/` (needs `SAVANT_CODE_API_KEY`; opt-in via `RUN_SAVANT_CODE_E2E=true`, skips gracefully) |
-| Integration | `bun run test:integration` | `event-types`, `event-ordering`, `stream-chunks`, `connection-check` |
+| E2E | `bun run test:e2e` | `streaming/`, `workflows/`, `custom-agents/`, `features/` (opt-in via `RUN_SAVANT_CODE_E2E=true`, skips gracefully) |
+| Integration | `bun run test:integration` | `event-types`, `event-ordering`, `stream-chunks` |
 | Examples | `sdk/e2e/examples/*` | Runnable: code-reviewer, code-explainer, commit-message-generator, sdk-lint, sdk-refactor, sdk-test-gen |
 | Dist smoke | `bun run smoke-test:dist` | Node CJS load of the compiled artifact |
 | Verify | `bun run verify` | Build + typecheck + smoke + Node compat subprojects |
@@ -353,9 +348,6 @@ subprojects (CJS/ESM load, ripgrep path, tree-sitter queries) — this is the ga
 - **`createSavantCodeBackendModel` is misnamed** — it is the generic OpenAI-compatible fallback
   (routes to `INFERENCE_BASE_URL`), not a backend-specific adapter. Renaming it is a low-risk
   cleanup that removes a recurring source of confusion.
-- Backend-bound functions (`startAgentRun`, `addAgentStep`, `getUserInfoFromApiKey`, composio,
-  healthz) are stubbed or short-circuited in direct mode — the "backend" contract is dormant until
-  the gateway exists.
 
 ## Expanding the SDK — roadmap considerations
 
@@ -365,9 +357,9 @@ value directions, roughly in dependency order:
 1. **Provider registry refactor** (in `common`): collapse the provider metadata duplication so every
    future provider is a one-entry add. This is engine work that benefits the CLI and any public SDK
    equally — and it must land before adding "a lot" of providers.
-2. **Gateway/client split**: the SDK's README's flagship flow (`SAVANT_CODE_API_KEY` → hosted agent
-   store at `savant-code.com/store`) is downstream of the backend gateway. Decide whether the SDK
-   should gain a first-class gateway client (the `Enterprise AI Gateway Research` doc is the
+2. **Gateway/client split**: the SDK's README's flagship flow (hosted agent store) was downstream
+   of a backend that no longer exists (FID-2026-0929-005). Decide whether the SDK should gain a
+   first-class gateway client (the `Enterprise AI Gateway Research` doc is the
    groundwork) — this is the moment the SDK becomes a sellable surface.
 3. **Streaming refinement**: `handleStreamChunk` exists; token-by-token streaming callbacks and
    richer event payloads are explicitly called out in the README as future work.
@@ -379,11 +371,11 @@ value directions, roughly in dependency order:
 ## Strategic context (why the SDK exists)
 
 The SDK is how Savant-Code escapes the terminal. The CLI is the demo; the SDK is the product surface
-that other tools, servers, and eventually a marketplace plug into. The business research
-(`docs/research/Savant-Code Business And Backend Research.md`) describes the intended backend — a
-stateful inference gateway where API keys are centralized and inference is monetized; the SDK's
-arbitrary-model routing is what makes the product an "agnostic aggregator" rather than a
-single-vendor lock-in. Publishing timing is a go-to-market decision, not an engineering one: the
+that other tools, servers, and eventually a marketplace plug into. The SDK's arbitrary-model
+routing is what makes the product an "agnostic aggregator" rather than a single-vendor lock-in.
+(A hosted-gateway design exists in `docs/research/Savant-Code Business And Backend Research.md`;
+FID-2026-0929-005 deleted the dormant backend code paths — any future gateway returns with its
+own design.) Publishing timing is a go-to-market decision, not an engineering one: the
 engineering (Node compat, dual bundles, docs, examples, verification) is already done.
 
 **Rule of thumb:** keep the engine boundary clean regardless of publish status — the CLI, the evals,

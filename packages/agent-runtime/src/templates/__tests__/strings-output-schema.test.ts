@@ -1,7 +1,6 @@
 // getAgentPrompt test family — structured-output schema addendum gating
 // (FID-2026-0802-005 H6). Sibling of the Loop-339 decomposition (shared
 // fixtures in ./strings-test-harness).
-import { TEST_AGENT_RUNTIME_IMPL } from '@savant-code/common/testing/impl/agent-runtime'
 import { describe, test, expect } from 'bun:test'
 import { z } from 'zod/v4'
 
@@ -45,10 +44,6 @@ describe('getAgentPrompt', () => {
           agentTemplates,
           additionalToolDefinitions: async () => ({}),
           logger: createMockLogger(),
-          apiKey: TEST_AGENT_RUNTIME_IMPL.apiKey,
-          databaseAgentCache: TEST_AGENT_RUNTIME_IMPL.databaseAgentCache,
-          fetchAgentFromDatabase:
-            TEST_AGENT_RUNTIME_IMPL.fetchAgentFromDatabase,
         })
 
         expect(result).toBeDefined()
@@ -80,10 +75,6 @@ describe('getAgentPrompt', () => {
           agentTemplates,
           additionalToolDefinitions: async () => ({}),
           logger: createMockLogger(),
-          apiKey: TEST_AGENT_RUNTIME_IMPL.apiKey,
-          databaseAgentCache: TEST_AGENT_RUNTIME_IMPL.databaseAgentCache,
-          fetchAgentFromDatabase:
-            TEST_AGENT_RUNTIME_IMPL.fetchAgentFromDatabase,
         })
 
         expect(result).toBeDefined()

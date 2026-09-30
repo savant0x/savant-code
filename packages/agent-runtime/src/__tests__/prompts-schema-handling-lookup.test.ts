@@ -1,5 +1,4 @@
 import { emptyMcpServers } from '@savant-code/common/testing/fixtures/agent-runtime'
-import { TEST_AGENT_RUNTIME_IMPL } from '@savant-code/common/testing/impl/agent-runtime'
 import { describe, test, expect, mock } from 'bun:test'
 import { z } from 'zod/v4'
 
@@ -51,11 +50,8 @@ describe('Schema handling error recovery', () => {
           input: { agentId: 'problematic-output-agent' },
         },
         previousToolCallFinished: Promise.resolve(),
-        apiKey: TEST_AGENT_RUNTIME_IMPL.apiKey,
-        databaseAgentCache: TEST_AGENT_RUNTIME_IMPL.databaseAgentCache,
         localAgentTemplates,
         logger: createMockLogger(),
-        fetchAgentFromDatabase: TEST_AGENT_RUNTIME_IMPL.fetchAgentFromDatabase,
       })
 
       // Should return a result without throwing
@@ -116,11 +112,8 @@ describe('Schema handling error recovery', () => {
           input: { agentId: 'valid-output-agent' },
         },
         previousToolCallFinished: Promise.resolve(),
-        apiKey: TEST_AGENT_RUNTIME_IMPL.apiKey,
-        databaseAgentCache: TEST_AGENT_RUNTIME_IMPL.databaseAgentCache,
         localAgentTemplates,
         logger: createMockLogger(),
-        fetchAgentFromDatabase: TEST_AGENT_RUNTIME_IMPL.fetchAgentFromDatabase,
       })
 
       const outputValue = result.output[0]
@@ -155,11 +148,8 @@ describe('Schema handling error recovery', () => {
           input: { agentId: 'non-existent-agent' },
         },
         previousToolCallFinished: Promise.resolve(),
-        apiKey: TEST_AGENT_RUNTIME_IMPL.apiKey,
-        databaseAgentCache: TEST_AGENT_RUNTIME_IMPL.databaseAgentCache,
         localAgentTemplates: {},
         logger: createMockLogger(),
-        fetchAgentFromDatabase: TEST_AGENT_RUNTIME_IMPL.fetchAgentFromDatabase,
       })
 
       const outputValue = result.output[0]

@@ -41,7 +41,6 @@ export function useChatLayout(
   } = ui
   const {
     statusMessage,
-    subscriptionData,
     responseAds,
     showInlineAds,
     handleAdClick,
@@ -125,7 +124,6 @@ export function useChatLayout(
     shouldShowQueuePreview,
     isAtBottom,
     savantFreeSession,
-    subscriptionData,
     inputWidth,
     terminalHeight,
     terminalWidth,

@@ -1,12 +1,10 @@
 import { TextAttributes } from '@opentui/core'
-import { SUBSCRIPTION_DISPLAY_NAME } from '@savant-code/common/constants/subscription-plans'
 import { pluralize } from '@savant-code/common/util/string'
 import React, { useCallback, useMemo } from 'react'
 
 import { CopyButton } from './copy-button'
 import { ElapsedTimer } from './elapsed-timer'
 import { FeedbackIconButton } from './feedback-icon-button'
-import { useSubscriptionQuery } from '../hooks/use-subscription-query'
 import { useTheme } from '../hooks/use-theme'
 import {
   useFeedbackStore,
@@ -15,10 +13,6 @@ import {
   selectMessageFeedbackCategory,
 } from '../state/feedback-store'
 import { IS_SAVANT_FREE } from '../utils/constants'
-import {
-  getBlockPercentRemaining,
-  isCoveredBySubscription,
-} from '../utils/subscription'
 
 import type { ContentBlock, TextContentBlock } from '../types/chat'
 
@@ -216,42 +210,13 @@ export const MessageFooter: React.FC<MessageFooterProps> = ({
   )
 }
 
+// FID-2026-0929-005 (gut the backend): the subscription indicator branch is
+// deleted — there is no backend subscription to be covered by, so the footer
+// always shows the local session-credit counter.
 const CreditsOrSubscriptionIndicator: React.FC<{ credits: number }> = ({
   credits,
 }) => {
   const theme = useTheme()
-  const { data: subscriptionData } = useSubscriptionQuery({
-    refetchInterval: false,
-    refetchOnActivity: false,
-    pauseWhenIdle: false,
-  })
-
-  const blockPercentRemaining = useMemo(
-    () => getBlockPercentRemaining(subscriptionData),
-    [subscriptionData],
-  )
-
-  const showSubscriptionIndicator = isCoveredBySubscription(subscriptionData)
-
-  if (showSubscriptionIndicator) {
-    const label =
-      (blockPercentRemaining ?? 0) < 20
-        ? `✓ ${SUBSCRIPTION_DISPLAY_NAME} (${blockPercentRemaining}% left)`
-        : `✓ ${SUBSCRIPTION_DISPLAY_NAME}`
-    return (
-      <text
-        attributes={TextAttributes.DIM}
-        style={{
-          wrapMode: 'none',
-          fg: theme.success,
-          marginTop: 0,
-          marginBottom: 0,
-        }}
-      >
-        {label}
-      </text>
-    )
-  }
 
   return (
     <text

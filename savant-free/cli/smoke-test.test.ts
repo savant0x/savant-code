@@ -151,20 +151,21 @@ describe.skipIf(!binaryExists)('SavantFree Binary Smoke Tests', () => {
   )
 
   test(
-    'login command reaches the plain login flow',
+    'removed login command parses as an excess-argument rejection',
     () => {
       const result = runBinaryResult(['login'])
       const output = stripAnsiCodes(
         `${result.stdout ?? ''}${result.stderr ?? ''}`,
       )
 
-      // The local URL is intentionally unreachable; the smoke signal is that
-      // Commander accepted `login` and the CLI entered the login flow.
+      // FID-2026-0929-004 deleted the `login` CLI argument (and FID
+      // 2026-0929-005 gutted the backend it logged in to). The savant-free
+      // branch never accepted positionals, so commander's default
+      // excess-argument rejection (stderr + non-zero exit) is the honest
+      // outcome — nothing routes to a login flow that no longer exists.
       expect(result.status).not.toBe(0)
-      expect(output).toContain('SavantFree Login')
-      expect(output).toContain('Generating login URL')
-      expect(output).not.toContain('too many arguments')
-      expect(output).not.toContain('unknown command')
+      expect(output).not.toContain('SavantFree Login')
+      expect(output).not.toContain('Generating login URL')
     },
     TIMEOUT_MS,
   )

@@ -3,9 +3,7 @@ import { getErrorObject } from '@savant-code/common/util/error'
 import { appendHint, quotaHint, rateLimitHint } from './fallback-hints'
 import { finalizeQueueState } from './queue-state'
 import { handleSavantFreeGateError, isRateLimited } from './run-result-gates'
-import { useChatStore } from '../../../state/chat-store'
 import { IS_SAVANT_FREE } from '../../../utils/constants'
-import { isDirectProviderMode } from '../../../utils/env'
 import {
   getCountryBlockFromFreeModeError,
   getFreeModeUnavailableErrorMessage,
@@ -14,13 +12,10 @@ import {
   isOutOfCreditsError,
   isFreeModeUnavailableError,
   providerOutOfCreditsError,
-  OUT_OF_CREDITS_MESSAGE,
 } from '../../../utils/error-handling'
 import { formatElapsedTime } from '../../../utils/format-elapsed-time'
 import { logger } from '../../../utils/logger'
-import { invalidateActivityQuery } from '../../use-activity-query'
 import { markSavantFreeSessionCountryBlocked } from '../../use-savant-free-session'
-import { usageQueryKeys } from '../../use-usage-query'
 
 import type { AgentMode } from '../../../utils/constants'
 import type { BatchedMessageUpdater } from '../../../utils/message-updater'
@@ -95,26 +90,20 @@ export const handleRunCompletion = (params: {
   }
   if (output.type === 'error') {
     if (isOutOfCreditsError(output)) {
-      // FID-2026-0929-002: a 402 from a direct provider is the provider's
-      // account state, not backend billing — surface it honestly with no
-      // input-mode lockout and no backend usage poll.
-      if (isDirectProviderMode()) {
-        updater.setError(
-          appendHint(
-            providerOutOfCreditsError(output, process.env.DIRECT_PROVIDER),
-            quotaHint({
-              error: output,
-              modelId: params.effectiveModelId,
-              providerId: process.env.DIRECT_PROVIDER,
-            }),
-          ),
-        )
-        finalizeAfterError()
-        return
-      }
-      updater.setError(OUT_OF_CREDITS_MESSAGE)
-      useChatStore.getState().setInputMode('outOfCredits')
-      invalidateActivityQuery(usageQueryKeys.current())
+      // FID-2026-0929-005 (gut the backend): the backend-mode 402 branch is
+      // deleted — a 402 is always the provider's own account state via the
+      // direct lane. The provider's payload explains itself; no input-mode
+      // lockout, no billing message, no usage poll.
+      updater.setError(
+        appendHint(
+          providerOutOfCreditsError(output, process.env.DIRECT_PROVIDER),
+          quotaHint({
+            error: output,
+            modelId: params.effectiveModelId,
+            providerId: process.env.DIRECT_PROVIDER,
+          }),
+        ),
+      )
       finalizeAfterError()
       return
     }
@@ -171,7 +160,6 @@ export const handleRunCompletion = (params: {
     finalizeAfterError()
     return
   }
-  invalidateActivityQuery(usageQueryKeys.current())
   finalizeQueueState({
     setStreamStatus,
     setCanProcessQueue,
@@ -235,23 +223,18 @@ export const handleRunError = (params: {
   })
   timerController.stop('error')
   if (isOutOfCreditsError(error)) {
-    // FID-2026-0929-002: direct providers own their 402s — see handleRunCompletion.
-    if (isDirectProviderMode()) {
-      updater.setError(
-        appendHint(
-          providerOutOfCreditsError(error, process.env.DIRECT_PROVIDER),
-          quotaHint({
-            error,
-            modelId: params.effectiveModelId,
-            providerId: process.env.DIRECT_PROVIDER,
-          }),
-        ),
-      )
-      return
-    }
-    updater.setError(OUT_OF_CREDITS_MESSAGE)
-    useChatStore.getState().setInputMode('outOfCredits')
-    invalidateActivityQuery(usageQueryKeys.current())
+    // FID-2026-0929-005 (gut the backend): direct providers own their 402s —
+    // see handleRunCompletion. No backend branch survives to rewrite them.
+    updater.setError(
+      appendHint(
+        providerOutOfCreditsError(error, process.env.DIRECT_PROVIDER),
+        quotaHint({
+          error,
+          modelId: params.effectiveModelId,
+          providerId: process.env.DIRECT_PROVIDER,
+        }),
+      ),
+    )
     return
   }
   if (isFreeModeUnavailableError(error)) {

@@ -130,7 +130,6 @@ describe('applySemanticSummaryUpgrade', () => {
     return {
       promptAiSdk: fakePromptAiSdk('Handoff summary: '.repeat(300)),
       model: 'z-ai/glm-5.3-flash' as const,
-      apiKey: 'test-key',
       runId: 'run-1',
       clientSessionId: 'cs-1',
       fingerprintId: 'fp-1',

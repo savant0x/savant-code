@@ -1,46 +1,17 @@
 import { useEffect, useRef, useState } from 'react'
 
-import { isDirectProviderMode } from '../utils/env'
-import { logger } from '../utils/logger'
-import { getSavantCodeClient } from '../utils/savant-code-client'
-
-// Adaptive health check interval configuration
-// Progressively increases polling interval based on consecutive successful checks
-export const HEALTH_CHECK_CONFIG = {
-  // Initial interval after startup or failure (ms)
-  INITIAL_INTERVAL: 10_000, // 10 seconds
-  // Interval thresholds based on consecutive successful checks
-  INTERVALS: [
-    { successCount: 3, interval: 30_000 }, // 30 seconds after 3 successes
-    { successCount: 6, interval: 60_000 }, // 1 minute after 6 successes
-    { successCount: 10, interval: 120_000 }, // 2 minutes after 10 successes
-    { successCount: 15, interval: 300_000 }, // 5 minutes after 15 successes
-    { successCount: 20, interval: 600_000 }, // 10 minutes after 20 successes
-  ],
-} as const
+// FID-2026-0929-005 (gut the backend): the adaptive health-check loop is
+// deleted. Its only job was pinging the backend /api/healthz via
+// client.checkConnection(), and there is no backend. The hook now reports
+// connected once on mount and never polls; the config + interval math below
+// were its polling machinery.
 
 /**
- * Calculates the next health check interval based on consecutive successful checks
- * Exported for testing purposes
- */
-export function getNextInterval(consecutiveSuccesses: number): number {
-  // Find the highest threshold that we've passed
-  for (let i = HEALTH_CHECK_CONFIG.INTERVALS.length - 1; i >= 0; i--) {
-    const { successCount, interval } = HEALTH_CHECK_CONFIG.INTERVALS[i]
-    if (consecutiveSuccesses >= successCount) {
-      return interval
-    }
-  }
-  return HEALTH_CHECK_CONFIG.INITIAL_INTERVAL
-}
-
-/**
- * Hook to monitor connection status to the SavantCode backend.
- * Uses adaptive exponential backoff to reduce polling frequency when connection is stable.
- *
- * When the connection transitions from disconnected to connected, the optional
- * onReconnect callback is invoked with a boolean indicating whether this was
- * the initial connection (true) or a subsequent reconnection (false).
+ * Hook that reports connection status. There is no SavantCode backend to
+ * ping (FID-2026-0929-005), so the CLI is always "connected" — the status
+ * bar shows a steady Ready. The onReconnect callback fires once on mount
+ * (isInitialConnection=true) so consumers that armed work on the first
+ * connection keep working.
  */
 export const useConnectionStatus = (
   onReconnect?: (isInitialConnection: boolean) => void,
@@ -50,106 +21,11 @@ export const useConnectionStatus = (
   const previousConnectedRef = useRef<boolean | null>(null)
 
   useEffect(() => {
-    // Direct-provider mode: there is no SavantCode backend to ping. Report
-    // connected immediately so the status bar shows a steady "Ready" instead
-    // of a perpetual "connecting" spinner, and skip the health-check loop.
-    if (isDirectProviderMode()) {
-      setIsConnected(true)
-      previousConnectedRef.current = null
-      if (typeof onReconnect === 'function') {
-        onReconnect(true)
-      }
-      return
+    previousConnectedRef.current = null
+    if (typeof onReconnect === 'function') {
+      onReconnect(true)
     }
-
-    let isMounted = true
-    let timeoutId: NodeJS.Timeout | null = null
-    let consecutiveSuccesses = 0
-    let currentInterval: number = HEALTH_CHECK_CONFIG.INITIAL_INTERVAL
-
-    const scheduleNextCheck = (interval: number) => {
-      if (!isMounted) return
-      timeoutId = setTimeout(() => checkConnection(), interval)
-    }
-
-    const checkConnection = async () => {
-      const client = await getSavantCodeClient()
-      if (!client) {
-        if (isMounted) {
-          setIsConnected(false)
-          previousConnectedRef.current = false
-          consecutiveSuccesses = 0
-          currentInterval = HEALTH_CHECK_CONFIG.INITIAL_INTERVAL
-          logger.debug(
-            { interval: currentInterval },
-            'Health check: No client, reset to initial interval',
-          )
-          scheduleNextCheck(currentInterval)
-        }
-        return
-      }
-
-      try {
-        const connected = await client.checkConnection()
-        if (!isMounted) return
-
-        const prevConnected = previousConnectedRef.current
-        setIsConnected(connected)
-        previousConnectedRef.current = connected
-
-        if (connected) {
-          // Determine if this is the initial connection (null) or a reconnection (false)
-          const isInitialConnection = prevConnected === null
-          const shouldFireReconnectCallback =
-            typeof onReconnect === 'function' && prevConnected !== true
-
-          if (shouldFireReconnectCallback) {
-            logger.info(
-              { isInitialConnection },
-              'Reconnection detected, firing onReconnect callback',
-            )
-            onReconnect(isInitialConnection)
-          }
-          consecutiveSuccesses++
-          const newInterval = getNextInterval(consecutiveSuccesses)
-
-          if (newInterval !== currentInterval) {
-            currentInterval = newInterval
-          }
-
-          scheduleNextCheck(currentInterval)
-        } else {
-          // Reset to fast polling on connection failure
-          previousConnectedRef.current = false
-          consecutiveSuccesses = 0
-          currentInterval = HEALTH_CHECK_CONFIG.INITIAL_INTERVAL
-          logger.debug(
-            { interval: currentInterval },
-            'Health check failed, reset to initial interval',
-          )
-          scheduleNextCheck(currentInterval)
-        }
-      } catch (error) {
-        logger.debug({ error }, 'Connection check failed')
-        if (isMounted) {
-          setIsConnected(false)
-          previousConnectedRef.current = false
-          consecutiveSuccesses = 0
-          currentInterval = HEALTH_CHECK_CONFIG.INITIAL_INTERVAL
-          scheduleNextCheck(currentInterval)
-        }
-      }
-    }
-
-    // Start first check immediately
-    checkConnection()
-
-    return () => {
-      isMounted = false
-      if (timeoutId) {
-        clearTimeout(timeoutId)
-      }
-    }
+    void setIsConnected
   }, [])
 
   return isConnected

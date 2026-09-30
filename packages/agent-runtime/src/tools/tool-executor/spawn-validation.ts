@@ -5,7 +5,6 @@ import { resolveSpawnableAgent } from '../handlers/tool/spawn-agent-utils'
 import { batchSpawnRejectionMessage } from '../handlers/tool/spawn-inline-only'
 import { isJSONObject } from '../tool-call-parse'
 
-import type { ExecuteToolCallParams } from './types'
 import type { AgentTemplate } from '../../templates/types'
 import type { ToolName } from '@savant-code/common/tools/constants'
 import type { Logger } from '@savant-code/common/types/contracts/logger'
@@ -24,9 +23,6 @@ export async function validateSpawnAgentsInput(params: {
   effectiveInput: Record<string, JSONValue>
   agentTemplate: AgentTemplate
   localAgentTemplates: Record<string, AgentTemplate>
-  fetchAgentFromDatabase: ExecuteToolCallParams['fetchAgentFromDatabase']
-  databaseAgentCache: ExecuteToolCallParams['databaseAgentCache']
-  apiKey: string
   logger: Logger
   onResponseChunk: (chunk: string | PrintModeEvent) => void
 }): Promise<{ rejected: boolean; input: Record<string, JSONValue> }> {
@@ -35,9 +31,6 @@ export async function validateSpawnAgentsInput(params: {
     effectiveInput: effectiveInputParam,
     agentTemplate,
     localAgentTemplates,
-    fetchAgentFromDatabase,
-    databaseAgentCache,
-    apiKey,
     logger,
     onResponseChunk,
   } = params
@@ -95,10 +88,7 @@ export async function validateSpawnAgentsInput(params: {
           agentTypeStr,
           parentAgentTemplate: agentTemplate,
           localAgentTemplates,
-          fetchAgentFromDatabase,
-          databaseAgentCache,
           logger,
-          apiKey,
         })
         if (!resolved.ok) {
           if (toolNames.includes(agentTypeStr as ToolName)) {

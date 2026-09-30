@@ -96,9 +96,6 @@ export const handleSpawnAgentInline = (async (
       parentAgentTemplate,
       localAgentTemplates: params.localAgentTemplates,
       logger,
-      fetchAgentFromDatabase: params.fetchAgentFromDatabase,
-      databaseAgentCache: params.databaseAgentCache,
-      apiKey: params.apiKey,
     })
 
   // Inherit the parent's model so inline subagents respect the user's selected model.
@@ -268,7 +265,6 @@ export const handleSpawnAgentInline = (async (
     upgrade: {
       promptAiSdk: params.promptAiSdk,
       model: parentAgentTemplate.model,
-      apiKey: params.apiKey,
       runId: parentAgentState.runId ?? 'NULL',
       clientSessionId: params.clientSessionId,
       fingerprintId: params.fingerprintId,

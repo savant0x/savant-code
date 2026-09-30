@@ -85,7 +85,6 @@ export type BaseEnv = {
  */
 export type CiEnv = BaseCiEnv & {
   SAVANT_CODE_GITHUB_TOKEN?: string
-  SAVANT_CODE_API_KEY?: string
   EVAL_RESULTS_EMAIL?: string
 }
 

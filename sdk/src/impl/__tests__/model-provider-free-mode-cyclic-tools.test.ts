@@ -81,7 +81,6 @@ describe('getModelForRequest cyclic tool schemas across wire protocols', () => {
 
     const { getModelForRequest } = await importFresh()
     const result = await getModelForRequest({
-      apiKey: 'test-key',
       model: TR_RESPONSES_MODEL,
     })
     // doStream returns PromiseLike (no .catch) — lift to Promise.
@@ -121,7 +120,6 @@ describe('getModelForRequest cyclic tool schemas across wire protocols', () => {
 
     const { getModelForRequest } = await importFresh()
     const result = await getModelForRequest({
-      apiKey: 'test-key',
       model: TR_ANTHROPIC_MODEL,
     })
     // doStream returns PromiseLike (no .catch) — lift to Promise.
@@ -160,7 +158,6 @@ describe('getModelForRequest cyclic tool schemas across wire protocols', () => {
 
     const { getModelForRequest } = await importFresh()
     const result = await getModelForRequest({
-      apiKey: 'test-key',
       model: TR_GEMINI_MODEL,
     })
     // doStream returns PromiseLike (no .catch) — lift to Promise.
@@ -201,7 +198,6 @@ describe('getModelForRequest cyclic tool schemas across wire protocols', () => {
 
     const { getModelForRequest } = await importFresh()
     const result = await getModelForRequest({
-      apiKey: 'test-key',
       model: TR_CHAT_MODEL,
     })
     await (result.model as LanguageModelV2).doStream({

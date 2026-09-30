@@ -107,7 +107,6 @@ export function validateSemanticSummary({
 export async function applySemanticSummaryUpgrade({
   promptAiSdk,
   model,
-  apiKey,
   runId,
   clientSessionId,
   fingerprintId,
@@ -123,7 +122,6 @@ export async function applySemanticSummaryUpgrade({
   promptAiSdk: PromptAiSdkFn
   /** The session model (operator ruling MQ1: main model only — no override). */
   model: string
-  apiKey: string
   runId: string
   clientSessionId: string
   fingerprintId: string
@@ -153,7 +151,6 @@ export async function applySemanticSummaryUpgrade({
       { role: 'user', content: [{ type: 'text', text: user }] },
     ]
     const result = await promptAiSdk({
-      apiKey,
       runId,
       messages,
       clientSessionId,

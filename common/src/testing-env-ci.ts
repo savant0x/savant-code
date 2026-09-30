@@ -10,6 +10,5 @@ export const createTestCiEnv = (overrides: Partial<CiEnv> = {}): CiEnv => ({
   RENDER: undefined,
   IS_PULL_REQUEST: undefined,
   SAVANT_CODE_GITHUB_TOKEN: undefined,
-  SAVANT_CODE_API_KEY: 'test-api-key',
   ...overrides,
 })

@@ -19,7 +19,6 @@ import { useChatMessages } from '../hooks/use-chat-messages'
 import { useChatState } from '../hooks/use-chat-state'
 import { useChatUI } from '../hooks/use-chat-ui'
 import { useScaffoldRevertSubscriber } from '../hooks/use-scaffold-revert-subscriber'
-import { useUsageMonitor } from '../hooks/use-usage-monitor'
 import { useChatStore } from '../state/chat-store'
 import { IS_SAVANT_FREE } from '../utils/constants'
 import { hasSubmittedFirstPrompt } from '../utils/settings'
@@ -56,9 +55,6 @@ export function useChatController(props: ChatProps): ChatControllerCore {
   // Auto-revert from SCAFFOLD to HYBRID when the orchestrator declares the
   // scaffold complete via the set_scaffold_complete tool.
   useScaffoldRevertSubscriber()
-
-  // Monitor usage data and auto-show banner when thresholds are crossed
-  useUsageMonitor()
 
   // Get chat state from extracted hook
   const {
@@ -179,14 +175,12 @@ export function useChatController(props: ChatProps): ChatControllerCore {
     validateAgents,
     continueChat,
     continueChatId,
-    subscriptionData: data.subscriptionData,
     setIsAuthenticated,
     setUser,
     logoutMutation,
     showSuggestedPrompts,
     setShowSuggestedPrompts,
     fileTree,
-    hasSubscription: data.hasSubscription,
     modelPickerOpen: pickers.modelPickerOpen,
     providerPickerOpen: pickers.providerPickerOpen,
     rewindPickerOpen: pickers.rewindPickerOpen,

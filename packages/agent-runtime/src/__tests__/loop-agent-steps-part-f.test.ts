@@ -11,7 +11,6 @@ import {
   getTemplate,
   incrLlmCallCount,
   loopAgentSteps,
-  mock,
   promptSuccess,
   registerLoopAgentStepsPartFLifecycle,
   spyOn,
@@ -29,9 +28,6 @@ describe('loopAgentSteps - runAgentStep vs runProgrammaticStep behavior', () => 
         ...getTemplate(),
         handleSteps: undefined,
       }
-      let finishStatus: string | undefined
-      let finishError: string | undefined
-
       getBaseParams().promptAiSdkStream = async function* () {
         incrLlmCallCount()
         yield {
@@ -47,12 +43,6 @@ describe('loopAgentSteps - runAgentStep vs runProgrammaticStep behavior', () => 
         ...getBaseParams(),
         agentTemplate: llmOnlyTemplate,
         localAgentTemplates: { 'test-agent': llmOnlyTemplate },
-        finishAgentRun: mock(
-          async (params: { status: string; errorMessage?: string }) => {
-            finishStatus = params.status
-            finishError = params.errorMessage
-          },
-        ),
       })
 
       expect(getLlmCallCount()).toBe(3)
@@ -64,12 +54,6 @@ describe('loopAgentSteps - runAgentStep vs runProgrammaticStep behavior', () => 
         expect(result.output.message).toContain('(tool: sequentialthinking)')
         expect(result.output.message).toContain('Re-spawn with the work split')
       }
-      expect(finishStatus).toBe('failed')
-      expect(finishError).toContain(
-        'Native tool-call recovery failed repeatedly',
-      )
-      expect(finishError).toContain('(tool: sequentialthinking)')
-
       const history = result.agentState.messageHistory
       expect(
         history.some(

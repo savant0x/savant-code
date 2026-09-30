@@ -30,7 +30,6 @@ const PROVIDER_ENV_VARS = [
   ...Object.values(RESEARCH_KEY_SERVICES).map((service) => service.envVar),
   'DIRECT_PROVIDER',
   'INFERENCE_BASE_URL',
-  'SAVANT_CODE_API_KEY',
 ] as const
 
 describe('provider setup', () => {
@@ -127,7 +126,8 @@ describe('provider setup', () => {
   // FID-2026-0929-003 (operator ruling 2026-09-29): a persisted /provider
   // selection outranks a stored login token — the token is residue, not a
   // routing command, and there is no deployable backend to fall back to.
-  // Only the explicit SAVANT_CODE_API_KEY defers the auto-arm (pinned below).
+  // Nothing defers the auto-arm anymore (FID-2026-0929-005 deleted
+  // SAVANT_CODE_API_KEY, the last deferral term).
   test('a persisted selection outranks a stored login token', () => {
     fs.writeFileSync(
       path.join(tempDir, 'credentials.json'),
@@ -147,17 +147,8 @@ describe('provider setup', () => {
     expect(process.env.INFERENCE_BASE_URL).toBe('https://api.apinex.bond/v1')
   })
 
-  // FID-2026-0929-003: SAVANT_CODE_API_KEY is the one deliberate backend-mode
-  // opt-in and still defers the auto-arm.
-  test('a real env backend token still defers the auto-arm', () => {
-    saveSettings({ activeProvider: 'apinex' })
-    process.env.SAVANT_CODE_API_KEY = 'env-backend-token'
-
-    configureDefaultDirectProvider()
-
-    expect(process.env.DIRECT_PROVIDER).toBeUndefined()
-    expect(process.env.INFERENCE_BASE_URL).toBeUndefined()
-  })
+  // FID-2026-0929-005: the "env backend token defers the auto-arm" pin is
+  // deleted with SAVANT_CODE_API_KEY — no credential source can defer it.
 
   test('saved gateway key takes precedence over persisted Ollama mode', () => {
     saveSettings({
@@ -196,13 +187,14 @@ describe('provider setup', () => {
     expect(getMissingProviderSetup()).toBeUndefined()
   })
 
-  test('bypasses gateway guidance for Ollama and backend auth', () => {
+  test('bypasses gateway guidance for Ollama (FID-2026-0929-005: no backend-auth bypass)', () => {
     process.env.DIRECT_PROVIDER = 'ollama'
     expect(getMissingProviderSetup()).toBeUndefined()
 
     delete process.env.DIRECT_PROVIDER
-    process.env.SAVANT_CODE_API_KEY = 'backend-key'
-    expect(getMissingProviderSetup()).toBeUndefined()
+    // A stored credentials.json token is inert residue — it must NOT
+    // suppress setup guidance for a keyless active provider.
+    expect(getMissingProviderSetup()).toBeDefined()
   })
 
   test('returns setup metadata for supported providers only', () => {

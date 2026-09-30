@@ -12,7 +12,6 @@ import {
   getString,
 } from '@savant-code/common/util/param-helpers'
 
-import { executeComposioToolViaServer } from '../composio'
 import { isRunPauseError } from './types'
 import { applyPatchTool } from '../tools/apply-patch'
 import { FileChangeSchema, changeFile } from '../tools/change-file'
@@ -75,7 +74,6 @@ export async function handleToolCall({
   cwd,
   fs,
   env,
-  apiKey,
   signal,
   onFileWritten,
 }: {
@@ -85,7 +83,6 @@ export async function handleToolCall({
   cwd?: string
   fs: SavantCodeFileSystem
   env?: Record<string, string>
-  apiKey: string
   signal?: AbortSignal
   onFileWritten?: OnFileWrittenCallback
 }): Promise<{ output: ToolResultOutput[] }> {
@@ -234,12 +231,20 @@ export async function handleToolCall({
         },
       ]
     } else if (isComposioMetaToolName(toolName)) {
+      // FID-2026-0929-005 (gut the backend): composio executed exclusively
+      // via the SavantCode backend relay, which no longer exists. The meta
+      // tool names survive (they are part of the agent tool vocabulary), so
+      // the branch stays and answers honestly instead of pretending.
       jsonObjectSchema.parse(input)
-      result = await executeComposioToolViaServer({
-        apiKey,
-        toolName,
-        input,
-      })
+      result = [
+        {
+          type: 'json',
+          value: {
+            errorMessage:
+              'Composio is unavailable: it executed exclusively via the SavantCode backend, which does not exist.',
+          },
+        },
+      ]
     } else {
       throw new Error(
         `Tool not implemented in SDK. Please provide an override or modify your agent to not use this tool: ${toolName}`,

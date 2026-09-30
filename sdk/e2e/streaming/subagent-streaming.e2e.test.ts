@@ -7,20 +7,21 @@
 
 import { describe, test, expect, beforeAll } from 'bun:test'
 
-import { SavantCodeClient } from '../../src/client'
 import {
   EventCollector,
-  getApiKey,
+  setupMockClient,
   skipIfNoApiKey,
   DEFAULT_TIMEOUT,
 } from '../utils'
+
+import type { SavantCodeClient } from '../../src/client'
 
 describe('Streaming: Subagent Streaming', () => {
   let client: SavantCodeClient
 
   beforeAll(() => {
     if (skipIfNoApiKey()) return
-    client = new SavantCodeClient({ apiKey: getApiKey() })
+    client = setupMockClient()
   })
 
   test(
