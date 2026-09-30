@@ -3,11 +3,11 @@
 > Auto-refreshed at session end from dev/experiences/raw-traces.jsonl.
 > 1-3 active high-leverage capabilities/anti-patterns; ≤ 50 lines.
 
-- [ ] **read_url** — No readable text found at URL
-      recurrences: 15 (total 15) — promote via FID when resolved+verified
+- [ ] **str_replace** — Incomplete arguments for tool str_replace; retry the tool call with a complete arguments object.
+      recurrences: 21 (total 21) — promote via FID when resolved+verified
 
-- [ ] **code_search** — Failed to execute ripgrep: ENOENT: no such file or directory, uv_spawn 'C:/Users/spenc/dev/savant-co
+- [ ] **spawn_agents** — Incomplete arguments for tool spawn_agents; retry the tool call with a complete arguments object.
       recurrences: 13 (total 13) — promote via FID when resolved+verified
 
-- [ ] **str_replace** — tool result contains an error
-      recurrences: 12 (total 14) — promote via FID when resolved+verified
+- [ ] **write_file** — Incomplete arguments for tool write_file; retry the tool call with a complete arguments object.
+      recurrences: 12 (total 12) — promote via FID when resolved+verified

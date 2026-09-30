@@ -62,13 +62,24 @@
 
 ## Open items
 
-**Ten** items are open. Each names its own specific blocker. Nothing here
+**Nine** items are open. Each names its own specific blocker. Nothing here
 may be dropped, trimmed, or reclassified without an operator ruling; a working
 tree state is not a disposition. When an item closes it leaves this file
 entirely — its evidence goes to `CHANGELOG.md`, not to a section here.
 (2026-09-29: T98–T101 completed and left the register on this rule; evidence
 in archived `FID-2026-0929-001`/-002/-003/-004, CHANGELOG
-`Unreleased — 2026-09-29`, and the 2026-09-29 session summary.)
+`Unreleased — 2026-09-29`, and the 2026-09-29 session summary. 2026-09-30:
+T102 implemented + verified. 2026-09-30: T102 closed, archived, and entered
+in the CHANGELOG (commit `06220bc6`; archived `FID-2026-0929-005`, receipt
+stamped, all 6 declared gates exit 0) and left the register on this rule.
+Same day: T103 (the no-scripted-edits ECHO standard) completed and left the
+register — the operator named the surface (`dev/echo-v0.1.2-single-agent.md`),
+ordered the edit verbatim ("now we need to update SINGLE AGENT ECHO,
+completely forbid editing files via python scripts. It needs to be added to
+this file"), and its evidence lives in that file (Law 1 row + Additional
+Rule + invariant + anti-pattern), the 2026-09-30 session summary, and the
+diagnosis behind it: a scripted edit is Law 1 bypassed at scale — one blind
+transform rewrites N unread files.)
 (2026-09-28: T96-followup, FID-2026-0927-006, T63, T67, T84-C, T61,
 FID-2026-0928-009, T90-F3 and T62-followup(1) all completed and left the
 register on this rule; evidence in archived `FID-2026-0928-006`/-007/-008/
@@ -119,8 +130,7 @@ T90-F3 was resolved by the operator ruling "T90-F3 residual needs no code"
       the coverage gate. Both are local to this machine and their retention
       condition is met (the v0.0.33 tag is pushed and the release verified
       complete). **Blocker:** git execution is the operator's. Delete both, then
-      optionally `git reflog expire --expire=now --all && git gc --prune=now`.
-      **Automation level: 1.**
+      optionally `git reflog expire --expire=now --all && git gc --prune=now`.      **Automation level: 1.**
 
 ### Skills governance
 
@@ -173,8 +183,7 @@ T90-F3 was resolved by the operator ruling "T90-F3 residual needs no code"
       them to `closed` would be exactly the Ground-Truth violation this
       protocol exists to prevent, and the alternative — moving them back to
       the active queue — would put ~30 unverifiable items in front of the
-      operator at once. This needs an operator ruling on the disposition.
-      **Automation level: 1.**
+      operator at once. This needs an operator ruling on the disposition.      **Automation level: 1.**
 
 ### Code Universe rulings (FID-2026-0928-003 / -004)
 
@@ -188,8 +197,7 @@ T90-F3 was resolved by the operator ruling "T90-F3 residual needs no code"
       `.shooting-star` with a `9s linear` travel animation, and the
       `CHARACTER_WATERMARK_DATA_URI` `::after` layer. Genuinely dual: the
       windows carry real panel state (that arithmetic is not decorative) while
-      the atmosphere is. **Blocker:** product identity is the operator's.
-      **Automation level: 1.**
+      the atmosphere is. **Blocker:** product identity is the operator's.      **Automation level: 1.**
 
 - [ ] **R2. `body{overflow:hidden}` + `height:100vh` may clip short viewports**,
       and the D3 type lift makes tight one-line headers more likely to wrap.
@@ -322,5 +330,4 @@ T90-F3 was resolved by the operator ruling "T90-F3 residual needs no code"
       type sources travel inline via `COMMON_TYPE_FILES`, with no
       `zod/v4/core` import and no `node_modules` dependency. **Blocker:** the fix
       shape — a refresh/`--force` path (weakens never-clobber), a parity check
-      that fails a gate, or accepted-by-design plus documentation.
-      **Automation level: 1.**
+      that fails a gate, or accepted-by-design plus documentation.      **Automation level: 1.**

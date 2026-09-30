@@ -70,7 +70,7 @@ Laws 1-4 are the Immutable Process Laws governing workflow. Laws 5-15 are the Ex
 
 | #     | Law                                | Directive                                                                                                                         | Enforcement                                                                              |
 | ----- | ---------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
-| **1** | **Read 0-EOF Before Touch**        | Every file read completely before any edit. No exceptions. No skimming. No assumptions.                                           | Zero tolerance. Violation is a critical error.                                           |
+| **1** | **Read 0-EOF Before Touch**        | Every file read completely before any edit. No exceptions. No skimming. No assumptions. **Never edit through a script — every change is a direct file-edit operation on a file you have read.** | Zero tolerance. Violation is a critical error. A scripted bulk edit is the canonical violation (see the Additional Rule below). |
 | **2** | **Present Before Act**             | Every change presented with full impact analysis BEFORE implementation. Scope reduction requires same approval as implementation. | User approval mandatory before any code is written or any approved work item is dropped. |
 | **3** | **Verify Before Proceed**          | Every change verified with build and test commands (from `protocol.config.yaml`) before moving on.                                | No broken builds ever. Zero errors, zero warnings.                                       |
 | **4** | **Verify Call-Graph Reachability** | After wiring any feature, grep production entry points to confirm it is actually called. Compilation is NOT verification.         | Zero grep results = NOT wired. Do not mark complete.                                     |
@@ -85,6 +85,32 @@ The terms `[OUT-OF-SCOPE]`, `[DEFERRED]` and `[OPEN-OUT-OF-SCOPE]` **do not exis
 reduction without approval, i.e. a Law 2 violation, and is blocked mechanically (FID-2026-0919-024). A work item has
 exactly two states — **completed**, or **blocked pending an operator ruling** — and only an explicit operator ruling
 recorded verbatim with its date can end this session's obligation to it.
+
+**Additional Rule — NO SCRIPTED EDITS (Law 1, absolute):** Project files are never edited by running
+a script that performs the edit. No Python, Node, Bash, sed/awk/perl, PowerShell, or any other
+executable transform may write to, move, rename, or delete a project file as the means of
+accomplishing a code or documentation change. Every edit is a direct file-edit operation — read the
+file 0-EOF, then edit it — no matter how many files the change touches. (Operator ruling
+2026-09-30, verbatim: *"it is forbidden to use python scripts to edit the project because it
+violates current echo standards"* — issued for single-agent harness sessions after repeated
+destroyed-work incidents.)
+
+- **Why.** A scripted edit is Read-0-EOF bypassed at scale. The agent that writes an edit script
+  has usually decided the work is "too much" — but the script then rewrites files nobody read:
+  anchors were never verified against real content, sibling constructs were never seen, and
+  duplicate or case-variant occurrences the pattern cannot distinguish are all transformed
+  together. One script run = N unread files rewritten — the domino effect: broken imports,
+  mismatched shapes, drifted conventions, discovered late and expensive to unwind. In a
+  single-agent session no second agent catches what the script did; the only reader the files
+  will ever get is the one the script skipped.
+- **What is allowed.** Scripts that read and analyze (grep, search, census), scripts that run
+  gates (`bun run typecheck`, `bun test`), the project's own tooling (`bun run scripts/…`), and
+  package-manager operations. Forbidden is authoring or executing a transform that modifies
+  project files so you do not have to open and edit them yourself.
+- **The tell.** "This is too repetitive to do by hand" is the warning, not the justification: it
+  is either a signal to stop and re-present the scope with the operator (Law 2), or proof the
+  change should not exist in that shape. Volume is never a lawful basis to skip reading what you
+  change.
 
 ### Laws 5-15: The Extended Code Laws
 
@@ -177,6 +203,8 @@ level, including 3:
   never write outside the project directory.
 - **Destructive operations.** Level 3 authorizes fixing work, not destroying it: no recursive delete
   outside scratch areas, no dropped databases, no wiping untracked operator work.
+- **No scripted edits.** No automation level authorizes editing project files through a script —
+  the Law 1 prohibition above holds at every level, including 3.
 - **Law 3 — Verify Before Proceed.** Levels change *when you may proceed*, never *whether you verify*.
 - **Law 11 — One Truth.** Autonomy is not licence to invent a parallel rule; extend the authority
   that already exists.
@@ -450,6 +478,7 @@ presenting design choices.
 | "The simplest approach"                               | Enterprise-grade implementations, not simple ones          | —    |
 | "Let me just quickly fix this"                        | Every change is surgical                                   | —    |
 | Reading only the affected line                        | MUST read full file 0-EOF                                  | 1    |
+| Editing files via a Python/Node/Bash/sed script (any scripted transform) | Law 1 bypassed at scale — every file the script touches is an unread file rewritten; the domino effect | 1 |
 | Making changes without presenting                     | Partner, not rubber stamp                                  | 2    |
 | Skipping verification                                 | Broken builds cascade                                      | 3/15 |
 | Choosing speed over quality                           | Never in a rush                                            | —    |

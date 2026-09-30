@@ -1,5 +1,25 @@
 # Changelog
 
+## Unreleased — 2026-09-30
+
+### Gut the backend stage 2 — the backend-mode surface retired across CLI and SDK (FID-2026-0929-005) — **closed 2026-09-30** (commit 06220bc6)
+
+Stage 2 of the gut-the-backend program (operator ruling 2026-09-29: "we need to gut this whole 'backend' idea, we
+don't have a backend to fall back to"). Direct mode stops being a mode and becomes the product. Deleted across four
+stages: the `SAVANT_CODE_API_KEY` opt-in (cli env branch + stub bypass token; common CiEnv snapshot, type, and test
+fixtures); the sdk backend client surface (apiKey constructor requirement, healthz `checkConnection`,
+`impl/database/*` agent-run + user-info reporting + `fetch-with-retry`, the composio relay, the `remote:true`
+validation branch, `getWebsiteUrl`, and the backend-as-inference fallback — `INFERENCE_BASE_URL` now fails fast
+naming the var; end-to-end apiKey/userId threading removed, `userId` pinned `'local'`); and the cli backend-billing
+UI (backend-mode 402 branch, `OUT_OF_CREDITS_MESSAGE`, the `'outOfCredits'` input mode + open-buy-credits keyboard
+chain, out-of-credits/usage/subscription-limit banners, the usage/subscription/streak query family, and `/subscribe`
+with all aliases including the vestigial `strong`). Fourteen e2e suites rewired onto a keyless `setupMockClient()`
+seam; four example scripts de-credentialed; a four-pin receipt suite (FID-id path, T67-guarded against vendored
+stale copies) pins the deletions. The loop-2 audit caught the residue the bulk stages left (common env reads, sdk
+env orphans + the child-shell allowlist entry, the e2e credential seam, 29 dead-local lint warnings) and closed it
+with direct file edits. Gates: typecheck 13 legs 0 errors; sdk 529/0; cli 3746/0; agent-runtime 1551/0; common
+723/0; eslint `--max-warnings 0`; lint:md; quality; scope-register; all five absence-greps clean.
+
 ## Unreleased — 2026-09-29
 
 ### Provider identity leak brand guard — the harness asserts its own identity (FID-2026-0929-001) — **closed 2026-09-29** (commit bc3b31d8)
