@@ -3,14 +3,12 @@ import {
   resetCustomProviders,
 } from '@savant-code/common/providers/custom-providers'
 
+import { handleProviderList } from './provider-list'
 import { replyAndClear } from './provider-subcommands-replies'
 import { tryGetProjectRoot } from '../project-files'
 import { useChatStore } from '../state/chat-store'
 import { readStoredProviderKeys } from '../utils/provider-credentials'
-import {
-  getConfiguredProviderNames,
-  PROVIDER_SETUP_CONFIG,
-} from '../utils/provider-setup'
+import { PROVIDER_SETUP_CONFIG } from '../utils/provider-setup'
 import {
   getStepInstructions,
   beginProviderWizard,
@@ -160,38 +158,6 @@ function handleEdit(params: ProviderParams, rest: string): void {
   )
 }
 
-/** `/provider list` — built-ins + customs with custom/configured markers. */
-function handleList(params: ProviderParams): void {
-  // Read the custom set FIRST: loadSettings is the registration seam, and the
-  // configured-name check below must see customs in the effective view.
-  const customs = customProviders()
-  const configuredNames = new Set(getConfiguredProviderNames())
-
-  const builtinLines = Object.entries(PROVIDER_SETUP_CONFIG).map(
-    ([name, config]) =>
-      `- ${config.label} (${name})${configuredNames.has(name) ? ' — configured' : ''}`,
-  )
-  const customLines = customs.map((config) => {
-    const configured = configuredNames.has(config.id)
-    return `- ${config.label} (${config.id}) — custom${configured ? ', configured' : ''}${
-      config.catalog.source === 'inline'
-        ? `, ${Object.keys(config.catalog.models).length} model(s)`
-        : config.catalog.source === 'live'
-          ? ', live catalog'
-          : ', no catalog'
-    }`
-  })
-
-  replyAndClear(
-    params,
-    [
-      'Providers (use /provider <name> to select, /provider add to add your own):',
-      ...builtinLines,
-      ...customLines,
-    ].join('\n'),
-  )
-}
-
 /** `/provider remove <id>` — delete a custom definition (custom-only). */
 function handleRemove(params: ProviderParams, rest: string): void {
   const id = rest.trim().toLowerCase()
@@ -285,7 +251,7 @@ export async function handleProviderSubcommand(
       await handleFree(params)
       return
     case 'list':
-      handleList(params)
+      handleProviderList(params)
       return
     case 'remove':
       handleRemove(params, rest)

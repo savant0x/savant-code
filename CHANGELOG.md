@@ -28,7 +28,7 @@ for map-dispatch, and the bare-slug default-inference path dispatches on the act
 instead of hard-coding chat/completions (map-dispatched active providers keep their legacy construction via a
 `protocolMap === undefined` guard — api.openai.com 400s on chat/completions for reasoning+tools). The `/provider`
 picker sorts by label within the built-ins and customs segments (add-row sentinel last) via a testable
-`buildProviderPickerEntries` helper; the live `/v1/models` roster joins the gateway catalog fan-out
+`buildProviderPickerEntries` helper, and `/provider list` renders under the same label-sort contract via the extracted `provider-list.ts` module); the live `/v1/models` roster joins the gateway catalog fan-out
 (`openai.ts` wrapper on the shared fetcher, positional-contract ladder extracted to `gateway-live-results.ts` under
 the 300-line cap, test reset, provider-audit manifest exception). Generated provider docs plus nine hand-maintained
 doc surfaces and the provider runbook are updated. New suites: registry validation for the openai entry (3), the
