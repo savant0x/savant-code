@@ -1,3 +1,7 @@
+
+import { EngineError, EngineErrorCode } from './errors.ts'
+import { fnUtils } from './fn-utils.ts'
+import { resolveFn } from './resolve.ts'
 import {
   type AuthData,
   AuthInjectContract,
@@ -25,11 +29,7 @@ import {
   type UsageEstimateFn,
   UsageEvidenceContract,
   type UsageEvidenceFn,
-} from '@shared/core'
-
-import { EngineError, EngineErrorCode } from './errors.ts'
-import { fnUtils } from './fn-utils.ts'
-import { resolveFn } from './resolve.ts'
+} from '../core/mod.ts'
 
 /**
  * Linked hook fns — each wrapped with its hook's contract

@@ -1,6 +1,7 @@
 import path from 'path'
 
 import { isComposioMetaToolName } from '@savant-code/common/constants/composio'
+import { isConnectorMetaToolName } from '@savant-code/common/constants/connectors'
 import { callMCPTool, getMCPClient } from '@savant-code/common/mcp/client'
 import { toolNames } from '@savant-code/common/tools/constants'
 import { clientToolCallSchema } from '@savant-code/common/tools/list'
@@ -242,6 +243,23 @@ export async function handleToolCall({
           value: {
             errorMessage:
               'Composio is unavailable: it executed exclusively via the SavantCode backend, which does not exist.',
+          },
+        },
+      ]
+    } else if (isConnectorMetaToolName(toolName)) {
+      // FID-2026-0930-003: the connector meta-tools execute through the
+      // agent-runtime handler record (which loads the checked-in connectors
+      // bundle). The SDK has no local engine executor yet — answer honestly
+      // (composio precedent) instead of failing opaque. No silent partial
+      // service: every connector_* name takes the same honest branch until
+      // an SDK-side executor is justified.
+      jsonObjectSchema.parse(input)
+      result = [
+        {
+          type: 'json',
+          value: {
+            errorMessage:
+              'Connector tools are not available in SDK mode: no local executor is wired. Use the Savant CLI runtime, which executes the connectors catalog.',
           },
         },
       ]

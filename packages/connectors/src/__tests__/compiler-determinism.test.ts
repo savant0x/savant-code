@@ -2,15 +2,15 @@ import { join } from 'node:path'
 
 
 
-import { compileBundle } from '@shared/compiler'
+import { describe, expect, test } from 'bun:test'
+
+import { compileBundle } from '../compiler/mod.ts'
+import { COMPILER_VERSION } from '../compiler/version.ts'
 import {
   loadCategoryRegistry,
   loadConnectorDefs,
   stableStringify,
-} from '@shared/core'
-import { describe, expect, test } from 'bun:test'
-
-import { COMPILER_VERSION } from '../compiler/version.ts'
+} from '../core/mod.ts'
 import { ENGINE_VERSION } from '../engine/mod.ts'
 
 /**

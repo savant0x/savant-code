@@ -1,4 +1,4 @@
-import { defineLeafCategories } from '@shared/core'
+import { defineLeafCategories } from '../core/mod.ts'
 
 /**
  * LEAF category registry — the CLOSED vocabulary for `meta.categories`.

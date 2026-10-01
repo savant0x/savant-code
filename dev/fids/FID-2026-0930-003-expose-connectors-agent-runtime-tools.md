@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-0930-003-expose-connectors-agent-runtime-tools.md`
 **ID:** FID-2026-0930-003
 **Severity:** medium
-**Status:** converged
+**Status:** verified
 > (`converged` is the correct pre-implementation status per
 > FID-2026-0915-004; `fixed` is deprecated-but-accepted legacy language —
 > do not use it for new FIDs. The receipt contract still keys to
@@ -16,7 +16,10 @@
 > approval only when its level is ≤ the session level. No level lifts the G-laws,
 > credential handling, Law 3, or the project-directory boundary — see
 > "Automation Levels" in the governing protocol.)
-**YAGNI-Compliance:** Pending
+**YAGNI-Compliance:** Resolved at implementation — the 4-tool meta-family
+covers the 9-endpoint launch catalog with a fixed-size surface (Law 13: the
+shape generalizes to any future provider without new tool names); per-endpoint
+tools remain rejected.
 
 ---
 
@@ -267,6 +270,18 @@ handler record import-light and testable offline (replay fixtures exist —
 - gate: test packages/agent-runtime/src/__tests__/connector-handlers.test.ts
 - gate: quality
 
+### Verification Receipt
+
+- fingerprint: sha256:5f50e69cc80e67bdfc3c30b5fbf807572ca21d5d727d7200935e399b8a09ad44
+- verified: 2026-10-01T14:06:42.075Z
+- typecheck common: exit 0
+- typecheck packages/agent-runtime: exit 0
+- typecheck packages/connectors: exit 0
+- test common/src/tools/__tests__/connector-tool-params.test.ts: exit 0
+- test packages/connectors/src/__tests__/catalog-tools-surface.test.ts: exit 0
+- test packages/agent-runtime/src/__tests__/connector-handlers.test.ts: exit 0
+- quality: exit 0
+
 ## Perfection Loop
 
 ### Loop 1 — RED
@@ -318,6 +333,81 @@ handler record import-light and testable offline (replay fixtures exist —
   exactly what the `network`/`prompt` safety entry encodes.
 - **CHANGE DELTA:** 0% (initial authoring pass).
 
+### Loop 2 — RED (implementation session, 2026-09-30)
+
+- **RED:** Implementation began (registration surfaces all landed: union,
+  params, client schema, safety, handler record, SDK branch) and the root
+  typecheck gate failed with **49 errors** at the `packages/agent-runtime`
+  leg (common leg alone: 0). Mechanism, measured: the vendored engine uses a
+  package-private tsconfig path alias `@shared/core` → `./src/core/mod.ts`
+  (declared only in `packages/connectors/tsconfig.json`; 49 real import
+  statements across compiler/, engine/, connectors/, testing/, runtime.ts,
+  __tests__ — plus `@shared/compiler` ×2 and `@shared/testing` ×1, all in
+  connectors' own test files; `@shared/*` appears NOWHERE else in the repo).
+  tsc with `moduleResolution: bundler` resolves `@savant-code/connectors/runtime`
+  through the workspace symlink's exports map and compiles the connectors
+  SOURCE into the consumer's program — where the alias is undefined: 11 ×
+  TS2307, cascading into TS7006 implicit-any and TS18046 in transport.ts.
+  The FID's compiler-stays-out rule is confirmed intact: `@shared/compiler`
+  is imported only by connectors' own test files; the runtime entry imports
+  none of it.
+- **GREEN:** Two decisions, recorded here as the presentation before the
+  change (level 3):
+  1. **De-alias the vendored import specifiers (Option A).** Rewrite the
+     52 `@shared/core` / 2 `@shared/compiler` / 1 `@shared/testing` import
+     specifiers to intra-package relative paths. Rejected Option B — mapping
+     `@shared/core` into each consumer's tsconfig — because it repeats a
+     ritual for every future consumer (Five Questions Q1) and points the
+     dependency direction the wrong way (Q4): a vendored package's private
+     alias is not a public surface. Every other workspace in this repo uses
+     plain relative imports; the package becomes self-contained and resolves
+     under ANY consumer program. Substitution recorded in PORT-NOTES.md.
+     Prose comments that reference `@shared/*` as historical upstream names
+     stay (they cite the port's origin, not a live module).
+  2. **Create `src/index.ts` as a barrel.** `package.json` declares
+     `"." → ./src/index.ts` but the file does not exist — a dangling export
+     declaration (a consumer importing the package root fails at runtime).
+     PORT-NOTES had deferred the index "until a consumer needs it", but the
+     declaration itself already promises it; a two-line barrel re-exporting
+     the runtime entry closes the gap honestly. PORT-NOTES row updated.
+- **CHANGE DELTA:** Loop-2 GREEN adds the two decisions above; no plan
+  section rewritten.
+
+### Loop 2 continuation — the SDK leg (same session)
+
+- **RED (second mechanism, measured):** after the de-alias, the full root
+  chain failed at the **sdk** leg with **281 × TS5097** (`import path can
+  only end with a '.ts' extension when 'allowImportingTsExtensions' is
+  enabled`) on connectors sources. `sdk/tsconfig.json` path-maps
+  `@savant-code/agent-runtime/*` to SOURCE, so the SDK program transitively
+  compiles the connectors files (through the handler imports), and the SDK
+  sets `allowImportingTsExtensions: false` while every connectors file uses
+  Deno-style `.ts` import extensions (452 specifiers — the vendored
+  convention; stripping them is a 452-site rewrite, exactly the
+  "too repetitive by hand" signal the protocol says to stop at).
+- **GREEN (decision 3):** fix at the consumer's config, following the SDK's
+  own established posture: (a) `sdk/tsconfig.json` → `true` (typecheck-only,
+  `tsc --noEmit`); (b) `sdk/tsconfig.build.json` → `true` (declaration emit
+  with `emitDeclarationOnly: true` — TS permits the flag in exactly this
+  mode); (c) `sdk/scripts/build.ts` adds `@savant-code/connectors` to the
+  dts-bundle-generator `importedLibraries` list beside
+  `@savant-code/agent-runtime`, keeping workspace types external in the
+  bundled d.ts (the existing design for every other workspace package —
+  Law 11). Runtime bundles are unaffected: Bun.build resolves `.ts`
+  extensions natively, and the SDK's honest-error branch means the inlined
+  connectors code is never executed in SDK mode. Verified by the sdk
+  typecheck + suite + `bun run build` (d.ts generation) after the change.
+  (d) `eslint.config.js` tooling override extended to `packages/*/scripts/**`:
+  the de-alias moved `@shared/core` imports from the eslint `internal` group
+  to `parent`, re-triggering `import/order` across 42 files; resolved with
+  the project's own `eslint --fix` (T106 practice: fixer + hand-verified
+  output), and the one remaining `no-console` in
+  `packages/connectors/scripts/build-catalog.ts` is exactly the
+  "dedicated CLI script" class the tooling override's own rationale names —
+  the override list predates the 13th workspace. `packages/*/src` stays
+  governed.
+- **CHANGE DELTA:** adds decision 3 only; no plan section rewritten.
+
 ### Missed Questions
 
 > Surface every question that should have been asked when this FID was
@@ -357,40 +447,111 @@ handler record import-light and testable offline (replay fixtures exist —
 
 ### Implementation Evidence (REQUIRED for `closed`)
 
-> Not yet fillable — status is `converged`. This section fills at closure.
-
-- [ ] **Commit SHA:** pending implementation
-- [ ] **File:line ranges:** pending implementation
-- [ ] **Gate output:** pending implementation
-- [ ] **Reproducibility:** pending implementation
-- [ ] **Step statuses:** Steps 1–6 `blocked pending session-2 execution`
-      (sequenced after T106); none started; no step is deferred and none
-      is dropped.
+- [x] **Commit SHA:** pending the operator-authorized commit of this tree
+      (G2); filled at the closure ceremony — the implementation tree is
+      gate-green and frozen pending that commit.
+- [x] **File:line ranges:**
+      - `common/src/constants/connectors.ts:11-16` (CONNECTOR_TOOL_NAMES,
+        4 names) + `:20-24` (`isConnectorMetaToolName` guard)
+      - `common/src/tools/constants.ts:3` (import), `:95`
+        (`...CONNECTOR_TOOL_NAMES` in toolNames), `:3` publishedTools
+        untouched (meta-tools ride clientToolCallSchema — composio
+        precedent)
+      - `common/src/tools/list.ts:11` (import), `:119`
+        (`...connectorMetaToolParams` in toolParams), `:212-226`
+        (4 clientToolCallSchema options)
+      - `common/src/tools/safety-registry-orchestration.ts:181-202`
+        (4 safety entries: search/describe network+allow, invoke
+        network+prompt, credentials read+allow)
+      - `packages/agent-runtime/src/tools/handlers/list.ts:86-89`
+        (4 handler-record entries — the exhaustive Record makes this
+        the compile-enforced Law-4 half)
+      - `packages/agent-runtime/src/tools/handlers/tool/connector-{bundle,
+        search,describe,invoke,credentials}.ts` (15/39/37/83/82 lines,
+        all under the 300 ceiling; DI via `BundleProvider`, env-seam
+        credentials, no direct fetch in any handler)
+      - `sdk/src/run/tool-call.ts:4` (import), `:249-266` (honest-error
+        branch beside the composio one)
+      - `packages/connectors/src/runtime.ts` (tool-facing runtime entry,
+        253 lines) + `src/index.ts` (root barrel) + `src/runtime-replay.ts`
+        (structural replay, 88 lines)
+      - De-alias: 54 files' `@shared/*` specifiers → intra-package
+        relative (`packages/connectors/src/**`, `scripts/build-catalog.ts`);
+        tsconfig `paths` removed (`packages/connectors/tsconfig.json`);
+        ledgered in PORT-NOTES.md substitution table
+      - SDK leg: `sdk/tsconfig.json` + `sdk/tsconfig.build.json`
+        (`allowImportingTsExtensions: true` in no-emit/declaration-only
+        contexts), `sdk/scripts/build.ts` (+connectors in
+        `importedLibraries`), `eslint.config.js` (+`packages/*/scripts/**`
+        tooling override)
+- [x] **Gate output:** all 7 declared gates exit 0 on the final tree
+      (2026-10-01): root typecheck chain (14 legs incl. connectors) 0
+      errors; `common` connector-tool-params 8 pass / 0 fail;
+      `packages/connectors` catalog-tools-surface 17 pass / 0 fail
+      (workspace 27/27 incl. the pre-existing 10);
+      `packages/agent-runtime` connector-handlers 10 pass / 0 fail;
+      `quality: PASS (1498 baselined files)`; root `bun run test` 0 fail
+      (all 13 workspace suites); sdk suite 600 tests / 0 fail incl. the
+      2-test SDK honest-error pin (`sdk/src/__tests__/connector-tool-call.test.ts`);
+      eslint `--max-warnings 0` exit 0; `lint:md` exit 0;
+      `validate:repository` PASS; `build:catalog` regenerates the artifact
+      (3 providers, 9 endpoints).
+- [x] **Reproducibility:** from a clean checkout of the committed tree:
+      `bun install && bun run typecheck && bun run test && bun x eslint .
+      --max-warnings 0 && bun run lint:md && bun run quality:report` —
+      offline (replay fixtures; the only env dependency is the
+      credentials-presence test, which sets and restores its own var).
+      `bun run build:catalog` from `packages/connectors` regenerates
+      catalog.json byte-identically (compiler-determinism gate).
+- [x] **Step statuses:** Step 1 (common names/params/safety)
+      `implemented`; Step 2 (bundle read path — `loadLaunchBundle`,
+      runtime entry, committed-artifact decision in PORT-NOTES, index
+      barrel) `implemented`; Step 3 (4 handlers + registration + env-seam
+      credentials) `implemented`; Step 4 (SDK honest-error parity —
+      uniform branch for all four names, the FID's "otherwise same
+      honest-error" arm) `implemented`; Step 5 (three suites, exact
+      declared paths) `implemented`; Step 6 (README tool-surface section,
+      PORT-NOTES decisions, session summary at close) `implemented`.
+      Loop-2 additions (de-alias, SDK config leg, eslint override) are
+      `implemented` per the Loop-2 GREEN record. No step is deferred and
+      none is dropped.
 
 ### Code Verification Evidence
 
-> Pre-implementation state: referenced code is existing repo infrastructure
-> and the session-1 package. Verified this session (reads captured above):
-> `packages/agent-runtime/src/tools/tool-executor/native.ts:22` (executor
-> entry), `packages/agent-runtime/src/tools/handlers/list.ts` (exhaustive
-> handler record), `common/src/tools/constants.ts:69` (toolNames),
-> `common/src/tools/list.ts:119` (toolParams) and `:186`
-> (clientToolCallSchema options), `common/src/tools/safety-registry.ts:17`
-> (completeness check), `common/src/tools/safety-registry-orchestration.ts:160-179`
-> (composio precedent), `sdk/src/run/tool-call.ts:281` (honest-error
-> branch), `packages/connectors/src/core/catalog.ts:63` (doc-as-contract),
-> `packages/connectors/package.json` (exports map; `.` → missing
-> `src/index.ts`), `packages/agent-runtime/package.json` (no connectors
-> dependency — path-mapping route confirmed from tsconfig extends).
-> Status `converged` reflects reality: no wiring code exists yet.
+> Post-implementation state (ground-truthed 2026-10-01): every cited file
+> exists and carries the described implementation — registration verified
+> by grep (`handlers/list.ts:86-89`, `safety-registry-orchestration.ts:181-202`,
+> `constants.ts:95`, `list.ts:119+212-226`, `sdk/src/run/tool-call.ts:249`),
+> behavior verified by the three new offline suites plus the SDK
+> honest-error pin, and Law-4 by the exhaustive handler Record (a missing
+> entry fails the agent-runtime typecheck) together with the
+> `toolSafetyRegistry` module-load completeness check. The connectors
+> package is self-contained: zero `@shared/*` specifiers remain
+> (`grep -rn "from '@shared/'" packages/connectors → 0`), the alias is
+> removed from its tsconfig, and `src/index.ts` exists so the `.` export
+> declaration is no longer dangling.
 
 ## Resolution
 
-- **Closed Date:** — (open)
-- **Fix Description:** —
-- **Tests Added:** —
-- **Verification Evidence:** —
-- **Archived:** —
+- **Closed Date:** pending closure ceremony (status `verified`; closure
+  after the operator-authorized commit per G2)
+- **Fix Description:** the connectors catalog is reachable from the agent
+  tool vocabulary as a 4-tool meta-family (composio precedent) — names,
+  params, client schema, safety entries, DI-shaped handlers, checked-in
+  bundle consumption (never the compiler), env-seam credentials (names
+  only across the tool boundary), SDK honest-error parity — plus the
+  cross-workspace import repairs the implementation surfaced (de-alias of
+  the vendored `@shared/*` specifiers, `src/index.ts` barrel, SDK
+  `.ts`-extension acceptance in no-emit contexts, d.ts external, eslint
+  tooling override).
+- **Tests Added:** `common/src/tools/__tests__/connector-tool-params.test.ts`
+  (8), `packages/connectors/src/__tests__/catalog-tools-surface.test.ts`
+  (17), `packages/agent-runtime/src/__tests__/connector-handlers.test.ts`
+  (10), `sdk/src/__tests__/connector-tool-call.test.ts` (2) — all
+  declared gates or declared-Verification artifacts, all offline.
+- **Verification Evidence:** see Implementation Evidence above (gate
+  outputs, file:line citations, reproducibility recipe).
+- **Archived:** — (moves to `dev/fids/archive/` at closure)
 
 ## Lessons Learned
 

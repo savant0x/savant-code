@@ -1,3 +1,8 @@
+
+import { EngineError, EngineErrorCode } from './errors.ts'
+import { fnUtils } from './fn-utils.ts'
+import { resolveFn } from './resolve.ts'
+import { validateAgainst } from './validate.ts'
 import {
   type AuthData,
   AuthInjectContract,
@@ -5,12 +10,7 @@ import {
   type HookLogger,
   type HttpRequestParts,
   type JsonSchemaDoc,
-} from '@shared/core'
-
-import { EngineError, EngineErrorCode } from './errors.ts'
-import { fnUtils } from './fn-utils.ts'
-import { resolveFn } from './resolve.ts'
-import { validateAgainst } from './validate.ts'
+} from '../core/mod.ts'
 
 import type { PreparedRequest } from './interfaces/mod.ts'
 

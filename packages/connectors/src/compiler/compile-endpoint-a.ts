@@ -1,11 +1,4 @@
 import {
-  type Json,
-  pruneUndefined,
-  zDefaultCredentials,
-  zEndpointPath,
-} from '@shared/core'
-
-import {
   resolve,
   SC,
   CC,
@@ -15,6 +8,13 @@ import {
   parseDoc,
   toJsonSchema,
 } from './compile-shared.ts'
+import {
+  type Json,
+  pruneUndefined,
+  zDefaultCredentials,
+  zEndpointPath,
+} from '../core/mod.ts'
+
 
 import type {
   EndpointPhaseAArgs,

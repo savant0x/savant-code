@@ -1,4 +1,3 @@
-import type { Logger } from '../../shared/logging.ts' // port: was @shared/logging (PORT-NOTES.md)
 import type {
   EndpointDoc,
   Json,
@@ -9,7 +8,8 @@ import type {
   RunCompleted,
   RunInput,
   Usage,
-} from '@shared/core'
+} from '../../core/mod.ts'
+import type { Logger } from '../../shared/logging.ts' // port: was @shared/logging (PORT-NOTES.md)
 
 
 /**
@@ -81,7 +81,7 @@ export interface EngineCtx {
 /** Result shapes live in @shared/core (schema/run/result.ts — zod-first,
  *  flat, kind-discriminated; they cross process boundaries by value).
  *  Re-exported here so hosts import the engine interface in one place. */
-export type { RunCompleted, RunResult } from '@shared/core'
+export type { RunCompleted, RunResult } from '../../core/mod.ts'
 
 /** Load side: sealed unit in, runnable endpoint out (fail-closed gates).
  *  (The async/resource load surface was stripped in T106 — an async doc

@@ -1,3 +1,11 @@
+
+import { EngineError, EngineErrorCode } from './errors.ts'
+import { toHookLogger } from './fn-utils.ts'
+import { type LinkedFns, linkFns } from './link.ts'
+import { buildRequest, validateInput } from './request.ts'
+import { settle } from './settle.ts'
+import { sniffDecode } from './transport.ts'
+import { ENGINE_VERSION as denoJsonVersion } from './version.ts' // port: was deno.json import (PORT-NOTES.md)
 import {
   assembleUsage,
   type EndpointDoc,
@@ -8,15 +16,7 @@ import {
   type RunInput,
   type Usage,
   zSealedUnit,
-} from '@shared/core'
-
-import { EngineError, EngineErrorCode } from './errors.ts'
-import { toHookLogger } from './fn-utils.ts'
-import { type LinkedFns, linkFns } from './link.ts'
-import { buildRequest, validateInput } from './request.ts'
-import { settle } from './settle.ts'
-import { sniffDecode } from './transport.ts'
-import { ENGINE_VERSION as denoJsonVersion } from './version.ts' // port: was deno.json import (PORT-NOTES.md)
+} from '../core/mod.ts'
 import { greaterThan, parse as parseSemver } from '../shared/semver.ts' // port: was @std/semver (PORT-NOTES.md)
 
 import type {

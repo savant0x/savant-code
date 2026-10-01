@@ -2,11 +2,11 @@ import { join } from 'node:path'
 
 
 
-import { compileBundle } from '@shared/compiler'
-import { loadCategoryRegistry, loadConnectorDefs } from '@shared/core'
 import { describe, expect, test } from 'bun:test'
 
+import { compileBundle } from '../compiler/mod.ts'
 import { COMPILER_VERSION } from '../compiler/version.ts'
+import { loadCategoryRegistry, loadConnectorDefs } from '../core/mod.ts'
 import { ENGINE_VERSION } from '../engine/mod.ts'
 
 /**
@@ -69,7 +69,7 @@ describe('contract schemas', () => {
 
   test('sealed unit carries exactly the fns its doc references', async () => {
     const bundle = await compileLaunchCatalog()
-    const { sealUnit } = await import('@shared/core')
+    const { sealUnit } = await import('../core/mod.ts')
     const unit = sealUnit(bundle, 'tinyfish#search')
     expect(unit.doc.id).toBe('tinyfish#search')
     // the sealed unit's fn entries (keyed by content hash) must all

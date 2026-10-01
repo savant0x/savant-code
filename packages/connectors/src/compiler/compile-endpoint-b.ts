@@ -1,5 +1,4 @@
 
-import { hasMeteredLines } from '@shared/core'
 
 import { resolveCredits } from './compile-endpoint-credits.ts'
 import {
@@ -10,6 +9,7 @@ import {
   SYNTHESIZED_EMPTY_USAGE,
   toJsonSchema,
 } from './compile-shared.ts'
+import { hasMeteredLines } from '../core/mod.ts'
 
 import type { FnInterner } from './fns.ts'
 import type { zEndpointDef, zProviderDef ,
@@ -17,7 +17,7 @@ import type { zEndpointDef, zProviderDef ,
   FnRef,
   Json,
   UsageModel,
-} from '@shared/core'
+} from '../core/mod.ts'
 import type z from 'zod'
 
 // T106 file split: endpoint usage/credits/schema sections, verbatim

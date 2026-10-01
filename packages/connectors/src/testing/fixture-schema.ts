@@ -1,7 +1,8 @@
 import { readFile } from 'node:fs/promises' // port: was Deno.readTextFile (PORT-NOTES.md)
 
-import { zJson } from '@shared/core'
 import { z } from 'zod'
+
+import { zJson } from '../core/mod.ts'
 
 
 

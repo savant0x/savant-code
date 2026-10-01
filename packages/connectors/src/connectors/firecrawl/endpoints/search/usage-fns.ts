@@ -1,5 +1,5 @@
 import type { SearchBody } from './usage-types.ts'
-import type { EnvelopeData } from '@shared/core'
+import type { EnvelopeData } from '../../../../core/mod.ts'
 
 // T106 file split (300-line ceiling): the search endpoint's estimate +
 // evidence fns, moved VERBATIM from endpoint.ts via usage.ts. Typed at the

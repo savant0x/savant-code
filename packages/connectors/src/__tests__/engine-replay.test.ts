@@ -1,7 +1,12 @@
 import { fileURLToPath } from 'node:url'
 
-import { loadFixture, runEndpoint, testSealedUnit } from '@shared/testing'
 import { describe, expect, test } from 'bun:test'
+
+import {
+  loadFixture,
+  runEndpoint,
+  testSealedUnit,
+} from '../testing/mod.ts'
 
 
 

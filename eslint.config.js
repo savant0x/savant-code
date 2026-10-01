@@ -274,6 +274,10 @@ export default tseslint.config(
       'sdk/scripts/**',
       'sdk/test/**',
       'sdk/smoke-test-dist.ts',
+      // Package-level build/tooling scripts (FID-2026-0930-003): the
+      // connectors workspace's scripts dir is a dedicated CLI script —
+      // console is its output mechanism. packages/*/src stays governed.
+      'packages/*/scripts/**',
       'cli/scripts/**',
       'cli/release*/**',
       'savant-free/cli/**',

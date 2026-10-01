@@ -1,9 +1,9 @@
-import { defineEndpoint, UsageModelKind } from '@shared/core'
-
 import {
   zBatchScrapeStatusPathParams,
   zBatchScrapeStatusQueryParams,
 } from './schema/inputs.ts'
+import { defineEndpoint, UsageModelKind } from '../../../../core/mod.ts'
+
 
 /**
  * `GET /v2/batch/scrape/{id}` — read a batch scrape job: its status, counts,

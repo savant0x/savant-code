@@ -5,7 +5,7 @@ import type {
   UsageModel,
   zEndpointDef,
   zProviderDef,
-} from '@shared/core'
+} from '../core/mod.ts'
 import type z from 'zod'
 
 

@@ -2,7 +2,7 @@
 // leaves (generative, resource-backed, crypto, research) moved VERBATIM
 // from categories.ts. The closed vocabulary is the CONCATENATION of
 // categories-core.ts + this file — order preserved, ids unchanged.
-import { defineLeafCategories } from '@shared/core'
+import { defineLeafCategories } from '../core/mod.ts'
 
 export const EXTENDED_LEAF_CATEGORY_ENTRIES = defineLeafCategories([
   {

@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any -- tool constants: Tool type parameter any constraint */
 import { COMPOSIO_META_TOOL_NAMES } from '../constants/composio'
+import { CONNECTOR_TOOL_NAMES } from '../constants/connectors'
 
 import type { ToolResultOutput } from '../types/messages/content-part'
 import type { Tool } from 'ai'
@@ -91,6 +92,7 @@ export const toolNames = [
   'write_file',
   'write_todos',
   ...COMPOSIO_META_TOOL_NAMES,
+  ...CONNECTOR_TOOL_NAMES,
 ] as const
 
 export const publishedTools = [

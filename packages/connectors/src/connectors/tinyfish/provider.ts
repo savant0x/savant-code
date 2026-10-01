@@ -1,4 +1,4 @@
-import { defineProvider, presets, UsageModelKind } from '@shared/core'
+import { defineProvider, presets, UsageModelKind } from '../../core/mod.ts'
 
 /**
  * TinyFish (tinyfish.ai) — both integrated endpoints are FREE (0 credits on

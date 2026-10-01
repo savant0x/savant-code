@@ -1,4 +1,13 @@
 import {
+  CC,
+  CompileError,
+  CompileErrorCode,
+  SC,
+  parseDoc,
+  semverMax,
+  toJsonSchema,
+} from './compile-shared.ts'
+import {
   assertPureJson,
   docHash,
   isEstimatedLine,
@@ -10,18 +19,9 @@ import {
   zResourceDef,
   zResourceDoc,
   zResourceName,
-} from '@shared/core'
+} from '../core/mod.ts'
 
 
-import {
-  CC,
-  CompileError,
-  CompileErrorCode,
-  SC,
-  parseDoc,
-  semverMax,
-  toJsonSchema,
-} from './compile-shared.ts'
 
 import type { FnInterner } from './fns.ts'
 import type z from 'zod'

@@ -1,3 +1,6 @@
+
+import { EngineError, EngineErrorCode } from './errors.ts'
+import { validateInputAgainst } from './validate.ts'
 import {
   type EndpointDoc,
   type FnEntry,
@@ -5,10 +8,7 @@ import {
   type JsonSchemaDoc,
   type RunInput,
   zRunInput,
-} from '@shared/core'
-
-import { EngineError, EngineErrorCode } from './errors.ts'
-import { validateInputAgainst } from './validate.ts'
+} from '../core/mod.ts'
 
 import type { PreparedRequest } from './interfaces/mod.ts'
 

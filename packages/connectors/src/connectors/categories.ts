@@ -1,4 +1,3 @@
-import { defineLeafCategories } from '@shared/core'
 
 import {
   CORE_LEAF_CATEGORY_ENTRIES,
@@ -6,6 +5,7 @@ import {
 import {
   EXTENDED_LEAF_CATEGORY_ENTRIES,
 } from './categories-extended.ts'
+import { defineLeafCategories } from '../core/mod.ts'
 
 /**
  * LEAF category registry — the CLOSED vocabulary for `meta.categories`.

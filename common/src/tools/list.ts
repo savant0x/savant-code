@@ -8,6 +8,7 @@ import { askUserParams } from './params/tool/ask-user'
 import { browserLogsParams } from './params/tool/browser-logs'
 import { codeSearchParams } from './params/tool/code-search'
 import { composioMetaToolParams } from './params/tool/composio'
+import { connectorMetaToolParams } from './params/tool/connectors'
 import { createPlanParams } from './params/tool/create-plan'
 import {
   analyzeQueryParams,
@@ -115,6 +116,7 @@ export const toolParams = {
   write_todos: writeTodosParams,
   ponytail_debt: ponytailDebtParams,
   ...composioMetaToolParams,
+  ...connectorMetaToolParams,
 } satisfies {
   [K in ToolName]: $ToolParams<K>
 }
@@ -205,6 +207,22 @@ export const clientToolCallSchema = z.discriminatedUnion('toolName', [
   z.object({
     toolName: z.literal('composio_get_tool_schemas'),
     input: toolParams.composio_get_tool_schemas.inputSchema,
+  }),
+  z.object({
+    toolName: z.literal('connector_search'),
+    input: toolParams.connector_search.inputSchema,
+  }),
+  z.object({
+    toolName: z.literal('connector_describe'),
+    input: toolParams.connector_describe.inputSchema,
+  }),
+  z.object({
+    toolName: z.literal('connector_invoke'),
+    input: toolParams.connector_invoke.inputSchema,
+  }),
+  z.object({
+    toolName: z.literal('connector_credentials'),
+    input: toolParams.connector_credentials.inputSchema,
   }),
 ])
 export const clientToolNames = clientToolCallSchema.def.options.map(

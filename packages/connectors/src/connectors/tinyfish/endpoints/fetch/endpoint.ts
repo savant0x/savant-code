@@ -1,6 +1,6 @@
-import { defineEndpoint } from '@shared/core'
-
 import { zTinyfishFetchBody } from './schema/inputs.ts'
+import { defineEndpoint } from '../../../../core/mod.ts'
+
 
 /**
  * TinyFish Fetch — `POST https://api.fetch.tinyfish.ai/`.

@@ -1,19 +1,19 @@
 import {
-  docHash,
-  type Json,
-  type ProviderDef,
-  type ProviderDoc,
-  pruneUndefined,
-  zProviderDoc,
-} from '@shared/core'
-
-import {
   SC,
   parseDoc,
   semverMax,
   CompileErrorCode,
   CompileError,
 } from './compile-shared.ts'
+import {
+  docHash,
+  type Json,
+  type ProviderDef,
+  type ProviderDoc,
+  pruneUndefined,
+  zProviderDoc,
+} from '../core/mod.ts'
+
 
 import type { FnInterner } from './fns.ts'
 

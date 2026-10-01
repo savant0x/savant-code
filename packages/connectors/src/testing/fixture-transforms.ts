@@ -1,7 +1,7 @@
 import type {
   RecordedCall,
 } from './fixture-schema.ts'
-import type { Json } from '@shared/core'
+import type { Json } from '../core/mod.ts'
 
 
 /** Trim bounds — tunable beside the pass, mirrored by the size lint. */

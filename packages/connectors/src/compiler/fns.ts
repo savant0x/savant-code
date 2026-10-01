@@ -1,3 +1,6 @@
+
+import { lintClosedTerm } from './lint.ts'
+import { normalizeFnSource } from './normalize.ts'
 import {
   type FnEntry,
   FnEntryKind,
@@ -8,10 +11,7 @@ import {
   PRESET_MARKER,
   type PresetMeta,
   zFnEntry,
-} from '@shared/core'
-
-import { lintClosedTerm } from './lint.ts'
-import { normalizeFnSource } from './normalize.ts'
+} from '../core/mod.ts'
 
 export interface ExtractedFn {
   key: string

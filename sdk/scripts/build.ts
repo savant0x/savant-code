@@ -118,6 +118,7 @@ async function build() {
             importedLibraries: [
               '@savant-code/common',
               '@savant-code/agent-runtime',
+              '@savant-code/connectors',
               '@savant-code/code-map',
               '@savant-code/llm-providers',
             ],

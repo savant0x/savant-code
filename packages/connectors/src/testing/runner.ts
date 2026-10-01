@@ -1,16 +1,6 @@
 import { join } from 'node:path' // port: was @std/path (PORT-NOTES.md)
 import { fileURLToPath } from 'node:url' // port: was @std/path fromFileUrl (PORT-NOTES.md)
 
-import {
-  type Bundle,
-  type Json,
-  loadCategoryRegistry,
-  loadConnectorDefs,
-  type RunInput,
-  type SealedUnit,
-  sealUnit,
-  type Usage,
-} from '@shared/core'
 
 import {
   type Fixture,
@@ -20,6 +10,16 @@ import {
 } from './fixtures.ts'
 import { compileBundle } from '../compiler/mod.ts'
 import { COMPILER_VERSION } from '../compiler/version.ts' // port: was deno.json read (PORT-NOTES.md)
+import {
+  type Bundle,
+  type Json,
+  loadCategoryRegistry,
+  loadConnectorDefs,
+  type RunInput,
+  type SealedUnit,
+  sealUnit,
+  type Usage,
+} from '../core/mod.ts'
 import {
   credentialFieldsOf,
   directTransport,

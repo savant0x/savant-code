@@ -1,12 +1,11 @@
+import { EngineError, EngineErrorCode } from './errors.ts'
 import {
   type FnEntry,
   FnEntryKind,
   fnKey,
   type FnRef,
   type Json,
-} from '@shared/core'
-
-import { EngineError, EngineErrorCode } from './errors.ts'
+} from '../core/mod.ts'
 import { greaterThan, parse as parseSemver } from '../shared/semver.ts' // port: was @std/semver (PORT-NOTES.md)
 
 // T106 file split: `instantiate` + `resolveFn` moved here VERBATIM from

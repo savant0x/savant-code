@@ -1,7 +1,7 @@
-import { defineEndpoint } from '@shared/core'
 
 import { zSearchBody } from './schema/inputs.ts'
 import { buildUsage } from './usage.ts'
+import { defineEndpoint } from '../../../../core/mod.ts'
 
 /**
  * `POST /v2/search` — search the web, optionally scraping every result.

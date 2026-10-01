@@ -7,11 +7,13 @@
     "./engine": "./src/engine/mod.ts",
     "./core": "./src/core/mod.ts",
     "./compiler": "./src/compiler/mod.ts",
-    "./testing": "./src/testing/mod.ts"
+    "./testing": "./src/testing/mod.ts",
+    "./runtime": "./src/runtime.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit",
-    "test": "bun test src/"
+    "test": "bun test src/",
+    "build:catalog": "bun scripts/build-catalog.ts"
   },
   "dependencies": {
     "canonicalize": "^2.1.0",

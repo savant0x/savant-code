@@ -1,14 +1,4 @@
 import {
-  docHash,
-  type EndpointDoc,
-  type FnRef,
-  type Json,
-  pruneUndefined,
-  stableStringify,
-  zEndpointDoc,
-} from '@shared/core'
-
-import {
   CC,
   CompileError,
   CompileErrorCode,
@@ -16,6 +6,16 @@ import {
   SC,
   semverMax,
 } from './compile-shared.ts'
+import {
+  docHash,
+  type EndpointDoc,
+  type FnRef,
+  type Json,
+  pruneUndefined,
+  stableStringify,
+  zEndpointDoc,
+} from '../core/mod.ts'
+
 
 import type {
   EndpointPhaseAResult,

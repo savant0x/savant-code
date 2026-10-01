@@ -4,7 +4,10 @@
     "lib": ["ESNext", "DOM"],
     "module": "ES2022",
     "moduleResolution": "bundler",
-    "allowImportingTsExtensions": false,
+    // FID-2026-0930-003: connectors sources (reached through the
+    // agent-runtime path-mapping) use `.ts` import extensions; emit is
+    // declaration-only, so the flag is TS-legal here.
+    "allowImportingTsExtensions": true,
 
     "outDir": "dist",
     "strict": true,

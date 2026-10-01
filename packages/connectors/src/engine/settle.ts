@@ -1,3 +1,6 @@
+
+import { EngineError, EngineErrorCode } from './errors.ts'
+import { validateAgainst } from './validate.ts'
 import {
   assembleUsage,
   countsMismatch,
@@ -12,10 +15,7 @@ import {
   RunKind,
   type RunTiming,
   zeroUsage,
-} from '@shared/core'
-
-import { EngineError, EngineErrorCode } from './errors.ts'
-import { validateAgainst } from './validate.ts'
+} from '../core/mod.ts'
 
 import type { LinkedFns } from './link.ts'
 import type { Logger } from '../shared/logging.ts'

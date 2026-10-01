@@ -1,18 +1,4 @@
 
-import {
-  assertPureJson,
-  type Bundle,
-  type ConnectorSource,
-  type EndpointDoc,
-  type FnRef,
-  type Json,
-  type LeafCategory,
-  type ProviderDoc,
-  type ResourceDoc,
-  zEndpointDef,
-  zEndpointName,
-  zProviderDef,
-} from '@shared/core'
 import { z } from 'zod'
 
 
@@ -35,6 +21,20 @@ import {
   parseDoc,
 } from './compile-shared.ts'
 import { FnInterner } from './fns.ts'
+import {
+  assertPureJson,
+  type Bundle,
+  type ConnectorSource,
+  type EndpointDoc,
+  type FnRef,
+  type Json,
+  type LeafCategory,
+  type ProviderDoc,
+  type ResourceDoc,
+  zEndpointDef,
+  zEndpointName,
+  zProviderDef,
+} from '../core/mod.ts'
 
 import type { Logger } from '../shared/logging.ts'
 

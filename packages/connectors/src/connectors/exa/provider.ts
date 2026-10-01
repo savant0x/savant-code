@@ -1,4 +1,4 @@
-import { defineProvider, presets } from '@shared/core'
+import { defineProvider, presets } from '../../core/mod.ts'
 
 export default defineProvider({
   name: 'exa',

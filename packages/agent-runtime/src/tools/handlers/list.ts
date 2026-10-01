@@ -10,6 +10,10 @@ import {
   handleComposioMultiExecute,
   handleComposioSearchTools,
 } from './tool/composio'
+import { handleConnectorCredentials } from './tool/connector-credentials'
+import { handleConnectorDescribe } from './tool/connector-describe'
+import { handleConnectorInvoke } from './tool/connector-invoke'
+import { handleConnectorSearch } from './tool/connector-search'
 import { handleCreatePlan } from './tool/create-plan'
 import { handleAnalyzeQuery } from './tool/database/analyze-query'
 import { handleDescribeTable } from './tool/database/describe-table'
@@ -79,6 +83,10 @@ export const savantCodeToolHandlers: {
   browser_logs: handleBrowserLogs,
   code_search: handleCodeSearch,
   composio_manage_connections: handleComposioManageConnections,
+  connector_search: handleConnectorSearch,
+  connector_describe: handleConnectorDescribe,
+  connector_invoke: handleConnectorInvoke,
+  connector_credentials: handleConnectorCredentials,
   composio_multi_execute_tool: handleComposioMultiExecute,
   composio_search_tools: handleComposioSearchTools,
   composio_get_tool_schemas: handleComposioGetToolSchemas,

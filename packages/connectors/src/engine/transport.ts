@@ -1,10 +1,10 @@
-import { zJsonSchemaDoc, type Json, type JsonSchemaDoc } from '@shared/core'
 import { z } from 'zod'
 
 
 
 import { applyAuth, credentialEnvVarsFor, credentialFieldsOf } from './auth.ts'
 import { EngineError, EngineErrorCode } from './errors.ts'
+import { zJsonSchemaDoc, type Json, type JsonSchemaDoc } from '../core/mod.ts'
 
 import type {
   ParamsResolver,
@@ -57,6 +57,18 @@ export const envParamsResolver: ParamsResolver = (provider, fields) => {
     if (value !== undefined) params[field] = value
   }
   return Promise.resolve(params)
+}
+
+/** Fetch-spec Headers → plain record, keys lowercased (multi-values
+ *  comma-joined). Iteration is done through `forEach` — a consumer compiled
+ *  against a restricted lib set may type `Headers` without the iterable
+ *  symbol, so `Object.fromEntries(headers)` is not portable. */
+function headersToRecord(headers: Headers): Record<string, string> {
+  const out: Record<string, string> = {}
+  headers.forEach((value, key) => {
+    out[key] = out[key] === undefined ? value : `${out[key]}, ${value}`
+  })
+  return out
 }
 
 /**
@@ -196,8 +208,9 @@ export function directTransport(
           // Location intact and an empty body — the header IS the
           // payload for presigned-URL endpoints. Header keys are
           // lowercased (multi-values comma-joined) by the Fetch
-          // spec's Headers iterator.
-          headers: Object.fromEntries(response.headers),
+          // spec's iteration — done explicitly here because a lib-restricted
+          // consumer's `Headers` type may not carry the iterable symbol.
+          headers: headersToRecord(response.headers),
           contentType: response.headers.get('content-type') ?? undefined,
         }
       } catch (error) {

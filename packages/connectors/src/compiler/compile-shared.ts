@@ -1,14 +1,12 @@
+import { z } from 'zod'
+
 import {
   contractConfig,
   type Json,
   parseSchema,
   pruneUndefined,
   ValidationError,
-} from '@shared/core'
-import { z } from 'zod'
-
-
-
+} from '../core/mod.ts'
 import { format, greaterThan, parse as parseSemver } from '../shared/semver.ts' // port: was @std/semver (PORT-NOTES.md)
 
 // T106 file split: shared compiler foundations extracted VERBATIM from

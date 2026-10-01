@@ -2,7 +2,7 @@
 import { pickRecordedHeaders } from './fixture-schema.ts'
 
 import type { Fixture, RecordedCall } from './fixture-schema.ts'
-import type { Json } from '@shared/core'
+import type { Json } from '../core/mod.ts'
 
 /** port: fetch-like shape — Bun's global fetch type carries `preconnect`,
  *  which these fns never exercise (PORT-NOTES.md). */

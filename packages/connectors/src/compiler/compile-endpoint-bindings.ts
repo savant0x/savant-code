@@ -1,18 +1,18 @@
 
 import {
+  SC,
+  CompileError,
+  CompileErrorCode,
+} from './compile-shared.ts'
+import {
   type FnRef,
   type Json,
   pruneUndefined,
   RESOURCE_GATE_ORDER,
   type ResourceDoc,
   type zEndpointDef,
-} from '@shared/core'
+} from '../core/mod.ts'
 
-import {
-  SC,
-  CompileError,
-  CompileErrorCode,
-} from './compile-shared.ts'
 
 import type { FnInterner } from './fns.ts'
 import type z from 'zod'

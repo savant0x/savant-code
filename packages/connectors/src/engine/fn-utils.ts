@@ -7,7 +7,7 @@ import {
   type MoneyUtil,
   PATH_PATTERN,
   getPath,
-} from '@shared/core'
+} from '../core/mod.ts'
 
 import type { Logger } from '../shared/logging.ts' // port: was @shared/logging (PORT-NOTES.md)
 

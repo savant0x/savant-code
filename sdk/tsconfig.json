@@ -11,7 +11,11 @@
     "forceConsistentCasingInFileNames": true,
     "declaration": true,
     "outDir": "./dist",
-    "allowImportingTsExtensions": false,
+    // FID-2026-0930-003: the program path-maps @savant-code/agent-runtime/*
+    // to source, which transitively compiles the connectors package — and
+    // connectors uses Deno-style `.ts` import extensions (vendored
+    // convention). noEmit typecheck only, so the flag is TS-legal here.
+    "allowImportingTsExtensions": true,
     "types": ["node", "bun-types"],
     "rootDir": "..",
     "paths": {

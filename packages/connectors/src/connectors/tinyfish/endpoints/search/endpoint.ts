@@ -1,6 +1,6 @@
-import { defineEndpoint } from '@shared/core'
-
 import { zTinyfishSearchQueryParams } from './schema/inputs.ts'
+import { defineEndpoint } from '../../../../core/mod.ts'
+
 
 /**
  * TinyFish Search — `GET https://api.search.tinyfish.ai/`.

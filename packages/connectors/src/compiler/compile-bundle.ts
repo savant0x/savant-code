@@ -1,3 +1,4 @@
+import { parseDoc, semverMax } from './compile-shared.ts'
 import {
   type Bundle,
   type EndpointDoc,
@@ -5,9 +6,8 @@ import {
   type ProviderDoc,
   type ResourceDoc,
   zBundle,
-} from '@shared/core'
+} from '../core/mod.ts'
 
-import { parseDoc, semverMax } from './compile-shared.ts'
 
 // T106 file split: the bundle-assembly tail extracted VERBATIM from
 // compile.ts (300-line ceiling; zero behavior change).

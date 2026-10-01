@@ -1,4 +1,4 @@
-import type { ConnectorSource, EndpointDoc, ProviderDef } from '@shared/core'
+import type { ConnectorSource, EndpointDoc, ProviderDef } from '../core/mod.ts'
 
 // T106 file split: intake validation + deterministic ordering + taxonomy
 // membership, extracted VERBATIM from compile.ts (300-line ceiling; zero

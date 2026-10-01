@@ -1,4 +1,4 @@
-import { defineProvider, presets } from '@shared/core'
+import { defineProvider, presets } from '../../core/mod.ts'
 
 /**
  * Firecrawl — web data for agents. JSON-over-HTTP against

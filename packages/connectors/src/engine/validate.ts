@@ -1,7 +1,7 @@
 import Ajv2020 from 'ajv/dist/2020.js'
 import addFormats from 'ajv-formats'
 
-import type { Json } from '@shared/core'
+import type { Json } from '../core/mod.ts'
 
 type ValidateFn = (data: unknown) => boolean
 type AjvInstance = {

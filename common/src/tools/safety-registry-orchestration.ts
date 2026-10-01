@@ -178,4 +178,29 @@ export const orchestrationToolSafetyEntries: Partial<
     permission: allow,
     reason: 'Fetches external tool schemas.',
   },
+
+  // Connector meta tools (FID-2026-0930-003) — the in-repo catalog over
+  // `@savant-code/connectors`. Only `connector_invoke` egresses; the
+  // others read the checked-in bundle (no network) or report env key
+  // NAMES (never values).
+  connector_search: {
+    effect: network,
+    permission: allow,
+    reason: 'Reads the built-in connector catalog (in-repo bundle, no egress).',
+  },
+  connector_describe: {
+    effect: network,
+    permission: allow,
+    reason: 'Reads one endpoint contract from the built-in catalog (no egress).',
+  },
+  connector_invoke: {
+    effect: network,
+    permission: prompt,
+    reason: 'Executes a vendor API endpoint — network egress, may consume credits.',
+  },
+  connector_credentials: {
+    effect: read,
+    permission: allow,
+    reason: 'Reports provider env key names and presence (never values).',
+  },
 }

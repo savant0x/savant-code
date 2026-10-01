@@ -1,6 +1,6 @@
-import { Unit, UsageModelKind } from '@shared/core'
-
 import { buildFns } from './usage-fns.ts'
+import { Unit, UsageModelKind } from '../../../../core/mod.ts'
+
 
 /** T106 file split (300-line ceiling): the search endpoint's usage model +
  *  estimate + evidence fns, moved VERBATIM from endpoint.ts. One provider
