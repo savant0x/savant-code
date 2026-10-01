@@ -31,6 +31,12 @@ export {
   hasKiosapiCatalog,
   parseKiosapiModelsForTest,
 } from './openrouter-models/kiosapi'
+export {
+  fetchOpenAiModels,
+  getCachedOpenAiModels,
+  hasOpenAiCatalog,
+  parseOpenAiModelsForTest,
+} from './openrouter-models/openai'
 export { fetchNvidiaModels } from './openrouter-models/nvidia'
 export {
   __resetCustomCatalogsForTest,

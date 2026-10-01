@@ -118,6 +118,16 @@ export const PROVIDER_EXCEPTION_MANIFEST: readonly ProviderExceptionManifestEntr
       ],
     },
     {
+      // FID-2026-1001-001: platform /v1/models wrapper (Nous/apinex pattern).
+      providerId: 'openai',
+      kinds: ['live-catalog'],
+      owner: 'cli/src/utils/openrouter-models/openai.ts',
+      evidence: [
+        'cli/src/utils/openrouter-models/openai.ts',
+        'cli/src/utils/openrouter-models/gateway.ts',
+      ],
+    },
+    {
       providerId: 'tokenrouter',
       kinds: ['multi-protocol'],
       owner: 'common/src/constants/model-config/provider-protocols.ts',

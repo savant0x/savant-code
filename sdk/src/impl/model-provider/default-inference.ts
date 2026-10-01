@@ -1,3 +1,4 @@
+import { createOpenAI } from '@ai-sdk/openai'
 import { BYOK_OPENROUTER_HEADER } from '@savant-code/common/constants/byok'
 import {
   OpenAICompatibleChatLanguageModel,
@@ -38,7 +39,19 @@ import type { LanguageModel } from 'ai'
 export async function createDefaultInferenceModel(
   apiKey: string,
   model: string,
-  options?: { preferApiKey?: boolean; providerId?: string },
+  options?: {
+    preferApiKey?: boolean
+    providerId?: string
+    /**
+     * FID-2026-1001-001: the ACTIVE provider's resolved wire protocol.
+     * 'responses' constructs an OpenAI Responses model against
+     * INFERENCE_BASE_URL (api.openai.com 400s on chat/completions for
+     * reasoning models with tools). Absent/undefined → the historical
+     * chat-completions construction, byte-identical for every existing
+     * provider.
+     */
+    protocol?: 'openai' | 'anthropic' | 'responses'
+  },
 ): Promise<LanguageModel> {
   const inferenceBaseUrl = getInferenceBaseUrlFromEnv()
   if (!inferenceBaseUrl) {
@@ -62,6 +75,23 @@ export async function createDefaultInferenceModel(
 
   const isOpenRouterCompatible =
     options?.providerId === undefined || options.providerId === 'openrouter'
+
+  // FID-2026-1001-001: a single-protocol Responses provider (api.openai.com)
+  // must not receive chat/completions wire format — reasoning models with
+  // tools 400 on that path. The bare-slug path mirrors createProviderModel's
+  // existing responses branch (same factory, same credential, base URL from
+  // INFERENCE_BASE_URL, which activateProviderRouting derives from the
+  // registry entry). No retry/sanitizing composition here: this branch matches
+  // the plain fetch shape the OAuth-lane responses model uses, and the
+  // chat branch below keeps its existing composition untouched.
+  if (options?.protocol === 'responses') {
+    const openai = createOpenAI({
+      baseURL: inferenceBaseUrl,
+      apiKey: authorizationKey,
+      fetch: fetchWithRetryableNetworkErrors as typeof globalThis.fetch,
+    })
+    return openai.responses(model)
+  }
 
   return new OpenAICompatibleChatLanguageModel(model, {
     provider: options?.providerId ?? 'savant-code',

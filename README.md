@@ -206,6 +206,7 @@ history. The supported hosted providers are:
 <!-- GENERATED:provider-table-start -->
 | Provider | Selection | Environment variable | Notes |
 | --- | --- | --- | --- |
+| OpenAI | `/provider openai` or `DIRECT_PROVIDER=openai` | `OPENAI_API_KEY` | Hosted gateway |
 | OpenRouter | `/provider openrouter` or `DIRECT_PROVIDER=openrouter` | `OR_MASTER_KEY`, `OPENROUTER_API_KEY`, or `INFERENCE_API_KEY` | Default provider; free tier (`openrouter/free`) is the boot default; direct mode without the Savant backend |
 | TokenRouter | `/provider tokenrouter` or `DIRECT_PROVIDER=tokenrouter` | `TOKENROUTER_API_KEY` | Multi-provider gateway |
 | NVIDIA NIM | `/provider nvidia` or `DIRECT_PROVIDER=nvidia` | `NVIDIA_API_KEY` | NVIDIA-hosted inference |
@@ -982,6 +983,7 @@ model. The boot default is OpenRouter's free tier (`openrouter/free`), so
 picker or choose one directly:
 
 ```text
+/provider openai
 /provider openrouter
 /provider tokenrouter
 /provider tokenharbor
@@ -1003,7 +1005,7 @@ picker or choose one directly:
 /provider cloudflare
 ```
 
-The supported environment variables are `OPENROUTER_API_KEY`,
+The supported environment variables are `OPENAI_API_KEY`, `OPENROUTER_API_KEY`,
 `TOKENROUTER_API_KEY`,
 `TOKENHARBOR_API_KEY`, `NVIDIA_API_KEY`, `COMMAND_CODE_API_KEY`,
 `NOUS_API_KEY`, `KIOSAPI_API_KEY`, `APINEX_API_KEY`,

@@ -22,6 +22,7 @@ import type { FetchFunction } from '@ai-sdk/provider-utils'
 import type {
   ProviderConfig,
   ProviderModelProtocol,
+  ProviderProtocol,
 } from '@savant-code/common/providers/types'
 import type { JSONValue } from '@savant-code/common/types/json'
 import type { LanguageModel } from 'ai'
@@ -183,8 +184,53 @@ function resolveBaseUrl(
 }
 
 /**
+ * Wire protocols served directly by the generic factory's single-protocol
+ * branches (chat/completions, /messages, /responses). Map-dispatched
+ * protocols (`openai-anthropic` dual, `multi`) are NOT in this set — they
+ * require a `protocolMap` (FID-2026-0911-003 fail-closed rule).
+ */
+type SingleProtocol = Extract<
+  ProviderProtocol,
+  'openai' | 'anthropic' | 'responses'
+>
+
+/**
+ * Resolve the wire protocol for a SINGLE-PROTOCOL registry entry — the
+ * `protocolMap === undefined` case. Total: every such entry returns its own
+ * protocol ('openai', 'anthropic', or 'responses'), or fails closed for a
+ * map-dispatched protocol configured without a map.
+ *
+ * Exported for `getModelForRequest`'s bare-slug path (FID-2026-1001-001):
+ * the default-inference construction must dispatch on the ACTIVE provider's
+ * resolved protocol, not hard-code chat/completions. Bare ids have no map
+ * entry, so callers MUST gate on `protocolMap === undefined` — map-dispatched
+ * providers resolve by FULL prefixed id and would throw for a bare slug.
+ */
+export function resolveEntryProtocol(config: ProviderConfig): SingleProtocol {
+  if (
+    config.protocol !== 'openai' &&
+    config.protocol !== 'anthropic' &&
+    config.protocol !== 'responses'
+  ) {
+    // Fail closed: a map-dispatched provider without a protocol map would
+    // silently dispatch with the wrong request schema (review finding, Loop 5).
+    // 'responses' (FID-2026-1001-001) is single-protocol by definition —
+    // the no-map path IS its dispatch (createOpenAI().responses below).
+    throw new Error(
+      `No protocol map configured for ${config.label} (protocol: ${config.protocol}).`,
+    )
+  }
+  // FID-2026-0911-003: return the entry's OWN protocol. The previous
+  // unconditional `return 'openai'` silently misdispatched an
+  // anthropic-protocol entry (e.g. a custom /v1/messages gateway) with
+  // OpenAI-shaped requests.
+  return config.protocol
+}
+
+/**
  * Resolve the wire protocol for a model. Single-protocol providers are
- * 'openai'. Map-dispatched providers (`openai-anthropic` dual, `multi`)
+ * 'openai' (or 'responses' — FID-2026-1001-001), via `resolveEntryProtocol`.
+ * Map-dispatched providers (`openai-anthropic` dual, `multi`)
  * look up the shared `PROVIDER_PROTOCOL_MAPS` record by the FULL prefixed
  * model id (matching the map keys in model-config.ts), and fail closed for
  * unknown models instead of silently using the wrong schema.
@@ -194,18 +240,7 @@ function resolveProtocol(
   model: string,
 ): ProviderModelProtocol {
   if (config.protocolMap === undefined) {
-    if (config.protocol !== 'openai' && config.protocol !== 'anthropic') {
-      // Fail closed: a map-dispatched provider without a protocol map would
-      // silently dispatch with the wrong request schema (review finding, Loop 5).
-      throw new Error(
-        `No protocol map configured for ${config.label} (protocol: ${config.protocol}).`,
-      )
-    }
-    // FID-2026-0911-003: return the entry's OWN protocol. The previous
-    // unconditional `return 'openai'` silently misdispatched an
-    // anthropic-protocol entry (e.g. a custom /v1/messages gateway) with
-    // OpenAI-shaped requests.
-    return config.protocol
+    return resolveEntryProtocol(config)
   }
   const map = PROVIDER_PROTOCOL_MAPS[config.protocolMap]
   if (map === undefined) {

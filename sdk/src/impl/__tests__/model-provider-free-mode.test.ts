@@ -28,6 +28,10 @@ describe('getModelForRequest ChatGPT OAuth fallback behavior', () => {
     // No backend fallback exists anymore — the fall-through target is the
     // direct OpenAI-compatible lane, so give it its required base URL.
     process.env.INFERENCE_BASE_URL = 'https://inference.test/v1'
+    // FID-2026-1001-001: the openai registry entry now claims the `openai/`
+    // prefix (Responses API, two-lane contract), so the fall-through needs
+    // the platform key to proceed past the registry loop.
+    process.env.OPENAI_API_KEY = 'sk-openai-fallback-key'
 
     try {
       const result = await getModelForRequest({
@@ -37,6 +41,7 @@ describe('getModelForRequest ChatGPT OAuth fallback behavior', () => {
       expect(result.isChatGptOAuth).toBe(false)
     } finally {
       delete process.env.INFERENCE_BASE_URL
+      delete process.env.OPENAI_API_KEY
     }
   })
 
@@ -45,6 +50,9 @@ describe('getModelForRequest ChatGPT OAuth fallback behavior', () => {
 
     mockGetValidChatGptOAuthCredentials.mockResolvedValue(null)
     process.env.INFERENCE_BASE_URL = 'https://inference.test/v1'
+    // FID-2026-1001-001: see the rate-limited leg — the platform key arms
+    // the registry lane that now owns the `openai/` prefix.
+    process.env.OPENAI_API_KEY = 'sk-openai-fallback-key'
 
     try {
       const result = await getModelForRequest({
@@ -54,6 +62,7 @@ describe('getModelForRequest ChatGPT OAuth fallback behavior', () => {
       expect(result.isChatGptOAuth).toBe(false)
     } finally {
       delete process.env.INFERENCE_BASE_URL
+      delete process.env.OPENAI_API_KEY
     }
   })
 

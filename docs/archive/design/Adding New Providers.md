@@ -55,7 +55,9 @@ is the canonical template:
     // optional: missingKeyMessage        // only when the canonical message differs
   },
   baseUrl: 'https://tokenharbor.ai/v1',    // API root; protocol layer appends the path
-  protocol: 'openai',                      // 'openai' | 'anthropic' | 'openai-anthropic'
+  protocol: 'openai',                      // 'openai' | 'anthropic' | 'responses' | 'openai-anthropic'
+                                           // ('responses' = single-protocol OpenAI Responses API — FID-2026-1001-001;
+                                           //  `openai` in registry-partitioned-2.ts is the template)
   idTransform: 'strip',                    // 'strip' | 'keep' | 'cf-rewrite'
   catalog: { source: 'static', modelsRef: 'tokenharbor' },  // see Step 2
   setupAvailable: true,                    // appears in /provider picker
@@ -70,7 +72,8 @@ Field semantics:
   request; `keep` sends the id unchanged (only `openrouter/` — it is part of the
   real slug); `cf-rewrite` strips `cloudflare/` and prepends `@cf/`.
 - `baseUrl` is the API **root**, not the endpoint — the factory appends
-  `/chat/completions` (openai) or `/messages` (anthropic). It may contain
+  `/chat/completions` (openai), `/messages` (anthropic), or `/responses`
+  (responses). It may contain
   `{ENV_VAR}` placeholders (Cloudflare's account id is mid-path), resolved from
   `credentials.extra`.
 - `kind: 'local'` — no `envVar` (Ollama is the template; base URL is detected at
@@ -140,6 +143,13 @@ If some models speak `/v1/chat/completions` and others `/v1/messages`
 
 The validator enforces that every catalog model appears in the protocol map —
 routing fails closed otherwise.
+
+A **single-protocol `responses` entry** (OpenAI platform,
+FID-2026-1001-001) needs no map: `resolveEntryProtocol` returns the entry's
+own protocol and the generic factory serves it via `createOpenAI().responses()`.
+Map-dispatch remains mandatory for MIXED rosters — do not use a bare
+`responses` protocol on a provider that also speaks chat/completions or
+Gemini per model.
 
 ### Step 4 — Regenerate the docs
 

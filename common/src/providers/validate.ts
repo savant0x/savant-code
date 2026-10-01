@@ -25,6 +25,7 @@ const PROTOCOLS = new Set<ProviderConfig['protocol']>([
   'anthropic',
   'openai-anthropic',
   'multi',
+  'responses',
 ])
 const ID_TRANSFORMS = new Set<ProviderConfig['idTransform']>([
   'strip',

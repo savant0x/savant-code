@@ -22,6 +22,7 @@ import { createDefaultInferenceModel } from './model-provider/default-inference'
 import {
   createOpenAIOAuthModel,
   createProviderModel,
+  resolveEntryProtocol,
 } from './model-provider/model-factories'
 import {
   isChatGptOAuthRateLimited,
@@ -142,6 +143,18 @@ export async function getModelForRequest(
         // extensions. Direct non-OpenRouter providers, including Nous, must
         // not receive OpenRouter attribution or structured-output assumptions.
         providerId: activeProviderId,
+        // FID-2026-1001-001: dispatch on the ACTIVE provider's resolved wire
+        // protocol — a single-protocol Responses entry (api.openai.com) must
+        // not receive chat/completions on the bare-slug path. Undefined when
+        // no active registry gateway is resolved (legacy env flow untouched).
+        // Gated on protocolMap === undefined: bare ids have no map entry, so
+        // a map-dispatched active provider (resolveProtocol throws for them)
+        // keeps its legacy chat-format bare-slug construction byte-identical
+        // (FID Loop-2 promise; guard discovered during verification).
+        ...(activeProviderConfig !== undefined &&
+        activeProviderConfig.protocolMap === undefined
+          ? { protocol: resolveEntryProtocol(activeProviderConfig) }
+          : {}),
       },
     ),
     isChatGptOAuth: false,

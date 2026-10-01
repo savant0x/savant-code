@@ -1,3 +1,4 @@
+import { buildProviderPickerEntries } from './provider-picker-entries'
 import { useChatStore } from '../../state/chat-store'
 import { useModelPickerStore } from '../../state/model-picker-store'
 import { useProviderPickerStore } from '../../state/provider-picker-store'
@@ -14,7 +15,6 @@ import {
   PROVIDER_SETUP_CONFIG,
   RESEARCH_KEY_SERVICES,
 } from '../../utils/provider-setup'
-import { PROVIDER_PICKER_ADD_SENTINEL } from '../../utils/provider-wizard'
 import {
   loadSavantCodeModelPreference,
   loadSettings,
@@ -72,39 +72,17 @@ export const MODEL_PROVIDER_COMMANDS = [
       // No args: open dropdown picker — built-ins from the built-in config,
       // customs appended from the effective setup view (Step 8: customs are
       // first-class picker entries with a configured badge, ordered after
-      // built-ins per D9).
+      // built-ins per D9; FID-2026-1001-001: sorted by label within each
+      // segment, add-row sentinel last).
       if (!trimmedArgs) {
         // Registration first: loadSettings is the customs registration seam;
         // the configured checks below must see customs in the effective view.
         const customProviders = loadSettings().customProviders ?? []
         const configured = getConfiguredProviderNames()
-        const configuredSet = new Set(configured)
-        const builtinProviders = (
-          Object.entries(PROVIDER_SETUP_CONFIG) as Array<
-            [
-              string,
-              (typeof PROVIDER_SETUP_CONFIG)[keyof typeof PROVIDER_SETUP_CONFIG],
-            ]
-          >
-        ).map(([name, config]) => ({
-          name: name as (typeof configured)[number],
-          label: config.label,
-          configured: configuredSet.has(name),
-        }))
-        const customEntries = customProviders.map((config) => ({
-          name: config.id,
-          label: `${config.label} (custom)`,
-          configured: configuredSet.has(config.id),
-        }))
-        // FID-2026-0911-001: the add-new ACTION row — selecting it opens the
-        // same wizard as /provider add (single entry seam). The sentinel is
-        // a grammar word, so no custom id can shadow it.
-        const addNewEntry = {
-          name: PROVIDER_PICKER_ADD_SENTINEL as (typeof configured)[number],
-          label: 'Add a custom provider…',
-          configured: false,
-        }
-        const providers = [...builtinProviders, ...customEntries, addNewEntry]
+        const providers = buildProviderPickerEntries({
+          configured,
+          customProviders,
+        })
 
         useProviderPickerStore.getState().open(providers)
         params.saveToHistory(params.inputValue.trim())

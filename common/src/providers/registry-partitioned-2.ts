@@ -12,6 +12,41 @@
 import type { ProviderConfig } from './types'
 
 export const PROVIDER_REGISTRY_PARTITION_2 = {
+  openai: {
+    id: 'openai',
+    label: 'OpenAI',
+    kind: 'gateway',
+    credentials: {
+      envVar: 'OPENAI_API_KEY',
+      // Platform key (api.openai.com) — a SEPARATE credential class from the
+      // ChatGPT-subscription OAuth lane (common/src/constants/chatgpt-oauth.ts,
+      // /connect chatgpt → chatgpt.com/backend-api/codex). Both lanes coexist:
+      // the OAuth gate precedes the registry loop for its allowlisted models.
+      missingKeyMessage:
+        'OpenAI API key not set. Set OPENAI_API_KEY environment variable or run /provider openai.',
+    },
+    // api.openai.com serves the Responses API for reasoning models with
+    // tools (chat/completions returns HTTP 400 there for that shape —
+    // contract documented by the vendored hermes regression suite,
+    // test_model_switch_openai_api_mode.py:5-9). Single protocol, no
+    // protocolMap: resolveProtocol's no-map path returns it and the
+    // factory's existing createOpenAI().responses() branch dispatches.
+    baseUrl: 'https://api.openai.com/v1',
+    protocol: 'responses',
+    // Upstream ids are BARE (`gpt-5.3-codex`); `strip` removes only the
+    // internal `openai/` routing prefix — the vercel/apinex/cleanapis
+    // precedent. (`openrouter/openai/…` gateway slugs are untouched: they
+    // route by the openrouter prefix, never reaching this entry.)
+    idTransform: 'strip',
+    // Live catalog: the roster moves weekly; a checked-in static map would
+    // drift (FID-2026-1001-001 decision). Served keyless too, but Bearer
+    // returns the account-visible roster — the resolveKey seam (Nous/
+    // apinex pattern) wires OPENAI_API_KEY in the cli wrapper.
+    catalog: { source: 'live', url: 'https://api.openai.com/v1/models' },
+    setupAvailable: true,
+    domain: 'openai.com',
+    order: 0,
+  },
   vercel: {
     id: 'vercel',
     label: 'Vercel AI Gateway',

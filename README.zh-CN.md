@@ -144,6 +144,7 @@ ollama serve
 | 提供商 | 命令 | 环境变量 | 说明 |
 | --- | --- | --- | --- |
 | Ollama | 自动检测 | — | 本地推理；无需 API 密钥 |
+| OpenAI | `/provider openai` | `OPENAI_API_KEY` | OpenAI 平台直连（Responses API）|
 | OpenRouter | `/provider openrouter` 或 `DIRECT_PROVIDER=openrouter` | `OR_MASTER_KEY`、`OPENROUTER_API_KEY` 或 `INFERENCE_API_KEY` | **默认提供商**；免费层（`openrouter/free`）为启动默认；主密钥、普通密钥，再推理密钥的优先级 |
 | TokenRouter | `/provider tokenrouter` | `TOKENROUTER_API_KEY` | 多提供商网关 |
 | TokenHarbor | `/provider tokenharbor` | `TOKENHARBOR_API_KEY` | `https://tokenharbor.ai/v1` 的 OpenAI 兼容网关 |
@@ -665,6 +666,7 @@ savant-code
 
 ```text
 /provider openrouter
+/provider openai
 /provider tokenrouter
 /provider tokenharbor
 /provider nvidia
@@ -686,7 +688,7 @@ savant-code
 ```
 
 支持的环境变量是 `OPENROUTER_API_KEY`、`TOKENROUTER_API_KEY`、`TOKENHARBOR_API_KEY`、`NVIDIA_API_KEY`、
-`COMMAND_CODE_API_KEY`、`NOUS_API_KEY`、`KIOSAPI_API_KEY`、`APINEX_API_KEY`、`ORCAROUTER_API_KEY`、
+`COMMAND_CODE_API_KEY`、`OPENAI_API_KEY`、`NOUS_API_KEY`、`KIOSAPI_API_KEY`、`APINEX_API_KEY`、`ORCAROUTER_API_KEY`、
 `BAI_API_KEY`、`HCNSEC_API_KEY`、`TOKENBOM_API_KEY`、`ATRIA_API_KEY`、`INFRON_API_KEY`、`UNOROUTER_API_KEY`、
 `BAZAARLINK_API_KEY`、`AI_GATEWAY_API_KEY`、`CLEANAPIS_API_KEY` 与 `CLOUDFLARE_API_TOKEN`。密钥提示为遮罩输入，并将密钥全局存储在
 Savant-Code 配置的 `credentials.json` 中；不会加入

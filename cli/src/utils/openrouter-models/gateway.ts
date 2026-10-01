@@ -2,7 +2,7 @@
  * Combined gateway catalog — OpenRouter + TokenRouter + TokenHarbor + NVIDIA NIM
  * + CommandCode + Nous Research + KiosAPI + APInex + OrcaRouter + B.AI +
  * HCNSec + TokenBom + Infron + UnoRouter + BazaarLink + Atria AI +
- * Vercel AI Gateway — plus subscription plumbing.
+ * Vercel AI Gateway + OpenAI (FID-2026-1001-001) — plus subscription plumbing.
  */
 import fs from 'node:fs'
 
@@ -10,17 +10,14 @@ import { logger } from '../logger'
 import {
   __resetApinexCacheForTest,
   fetchApinexModels,
-  getCachedApinexModels,
 } from './apinex'
 import {
   __resetBaiCacheForTest,
   fetchBaiModels,
-  getCachedBaiModels,
 } from './bai'
 import {
   __resetCleanApisCacheForTest,
   fetchCleanApisModels,
-  getCachedCleanApisModels,
 } from './cleanapis'
 import {
   __resetCustomCatalogsForTest,
@@ -31,30 +28,30 @@ import {
   loadGatewayCatalogFromDisk,
   writeGatewayCatalogToDisk,
 } from './gateway-disk-cache'
+import { resolveGatewayLiveCatalogs } from './gateway-live-results'
 import {
   __resetKiosapiCacheForTest,
   fetchKiosapiModels,
-  getCachedKiosapiModels,
 } from './kiosapi'
 import {
   __resetNousCacheForTest,
   fetchNousModels,
-  getCachedNousModels,
 } from './nous'
 import {
   __resetNvidiaCacheForTest,
   fetchNvidiaModels,
-  getCachedNvidiaModels,
 } from './nvidia'
+import {
+  __resetOpenAiCacheForTest,
+  fetchOpenAiModels,
+} from './openai'
 import {
   __resetOpenRouterCacheForTest,
   fetchOpenRouterModels,
-  getCachedOpenRouterModels,
 } from './openrouter'
 import {
   __resetOrcarouterCacheForTest,
   fetchOrcarouterModels,
-  getCachedOrcarouterModels,
 } from './orcarouter'
 import {
   fetchCommandCodeModels,
@@ -73,7 +70,6 @@ import { CATALOG_TTL_MS } from './types'
 import {
   __resetVercelCacheForTest,
   fetchVercelModels,
-  getCachedVercelModels,
 } from './vercel'
 
 import type { OpenRouterModel } from './types'
@@ -126,6 +122,7 @@ function notifyGatewayCatalogListeners(catalog: OpenRouterModel[]): void {
  * - Nous Research (live API, authenticated)
  * - KiosAPI (live API, authenticated)
  * - APInex (live API, authenticated)
+ * - OpenAI (live API, authenticated — FID-2026-1001-001)
  * - OrcaRouter (live API, public)
  * - B.AI (live API, authenticated)
  * - HCNSec / TokenBom / Infron / UnoRouter / BazaarLink / Atria AI
@@ -167,6 +164,7 @@ export async function fetchGatewayModels(
       fetchNousModels(forceRefresh),
       fetchKiosapiModels(forceRefresh),
       fetchApinexModels(forceRefresh),
+      fetchOpenAiModels(forceRefresh),
       fetchOrcarouterModels(forceRefresh),
       fetchBaiModels(forceRefresh),
       fetchVercelModels(forceRefresh),
@@ -175,55 +173,22 @@ export async function fetchGatewayModels(
       // merge here; per-provider failures degrade to [] (D10 ladder).
       fetchAllCustomModels(forceRefresh),
     ])
-    const [
-      nousResult,
-      kiosapiResult,
-      apinexResult,
-      orcarouterResult,
-      baiResult,
-      vercelResult,
-      customResult,
-      cleanApisResult,
-    ] = restResults
-
-    const orModels =
-      orResult.status === 'fulfilled'
-        ? orResult.value
-        : getCachedOpenRouterModels()
-    const nvidiaModels =
-      nvidiaResult.status === 'fulfilled'
-        ? nvidiaResult.value
-        : getCachedNvidiaModels()
-    const nousModels =
-      nousResult.status === 'fulfilled'
-        ? nousResult.value
-        : getCachedNousModels()
-    const kiosapiModels =
-      kiosapiResult.status === 'fulfilled'
-        ? kiosapiResult.value
-        : getCachedKiosapiModels()
-    const apinexModels =
-      apinexResult.status === 'fulfilled'
-        ? apinexResult.value
-        : getCachedApinexModels()
-    const orcarouterModels =
-      orcarouterResult.status === 'fulfilled'
-        ? orcarouterResult.value
-        : getCachedOrcarouterModels()
-    const baiModels =
-      baiResult.status === 'fulfilled' ? baiResult.value : getCachedBaiModels()
-    const vercelModels =
-      vercelResult && vercelResult.status === 'fulfilled'
-        ? vercelResult.value
-        : getCachedVercelModels()
-    const cleanApisModels =
-      cleanApisResult && cleanApisResult.status === 'fulfilled'
-        ? cleanApisResult.value
-        : getCachedCleanApisModels()
-    const customModels =
-      customResult && customResult.status === 'fulfilled'
-        ? customResult.value
-        : []
+    // FID-2026-1001-001: the fulfilled/cache ladder is shared with the
+    // 300-line-cap split (gateway-live-results.ts); the positional contract
+    // of restResults is documented there.
+    const {
+      orModels,
+      nvidiaModels,
+      nousModels,
+      kiosapiModels,
+      apinexModels,
+      openAiModels,
+      orcarouterModels,
+      baiModels,
+      vercelModels,
+      cleanApisModels,
+      customModels,
+    } = resolveGatewayLiveCatalogs(orResult, nvidiaResult, restResults)
     const tokenrouterModels = fetchTokenRouterModels()
     const tokenharborModels = getTokenHarborModels()
     const commandCodeModels = fetchCommandCodeModels()
@@ -242,6 +207,7 @@ export async function fetchGatewayModels(
       ...nousModels,
       ...kiosapiModels,
       ...apinexModels,
+      ...openAiModels,
       ...orcarouterModels,
       ...baiModels,
       ...vercelModels,
@@ -277,6 +243,7 @@ export function __resetOpenRouterModelsCacheForTest(): void {
   __resetNousCacheForTest()
   __resetKiosapiCacheForTest()
   __resetApinexCacheForTest()
+  __resetOpenAiCacheForTest()
   __resetOrcarouterCacheForTest()
   __resetBaiCacheForTest()
   __resetVercelCacheForTest()

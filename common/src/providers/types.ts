@@ -16,9 +16,18 @@ import type { MODEL_CATALOGS } from './model-catalogs'
 /** Provider categories: cloud gateways, local runtimes (ollama), env-only. */
 export type ProviderKind = 'gateway' | 'local' | 'env-only'
 
-/** Wire protocol(s) the provider endpoint speaks. */
+/**
+ * Wire protocol(s) the provider endpoint speaks. `responses` (FID-2026-1001-001)
+ * is a single-protocol OpenAI Responses API endpoint (api.openai.com) — the
+ * generic factory's `createOpenAI().responses()` branch serves it directly;
+ * map-dispatch stays mandatory for MIXED rosters.
+ */
 export type ProviderProtocol =
-  'openai' | 'anthropic' | 'openai-anthropic' | 'multi'
+  | 'openai'
+  | 'anthropic'
+  | 'openai-anthropic'
+  | 'multi'
+  | 'responses'
 
 /**
  * Per-model wire protocol for protocol-mapped providers. `responses` is the

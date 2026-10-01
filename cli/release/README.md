@@ -46,6 +46,7 @@ Or select one of the supported gateway providers directly:
 <!-- GENERATED:provider-table-start -->
 | Provider | Selection | Environment variable | Notes |
 | --- | --- | --- | --- |
+| OpenAI | `/provider openai` or `DIRECT_PROVIDER=openai` | `OPENAI_API_KEY` | Hosted gateway |
 | OpenRouter | `/provider openrouter` or `DIRECT_PROVIDER=openrouter` | `OR_MASTER_KEY`, `OPENROUTER_API_KEY`, or `INFERENCE_API_KEY` | Default provider; free tier (`openrouter/free`) is the boot default; direct mode without the Savant backend |
 | TokenRouter | `/provider tokenrouter` or `DIRECT_PROVIDER=tokenrouter` | `TOKENROUTER_API_KEY` | Multi-provider gateway |
 | NVIDIA NIM | `/provider nvidia` or `DIRECT_PROVIDER=nvidia` | `NVIDIA_API_KEY` | NVIDIA-hosted inference |
@@ -138,6 +139,7 @@ OR_MASTER_KEY=dummy-or-master-key-replace-me
 
 # Supported hosted gateways (choose one at a time)
 # OPENROUTER_API_KEY=dummy-openrouter-key-replace-me
+OPENAI_API_KEY=dummy-openai-key-replace-me
 TOKENHARBOR_API_KEY=dummy-tokenharbor-key-replace-me
 TOKENROUTER_API_KEY=dummy-tokenrouter-key-replace-me
 NVIDIA_API_KEY=dummy-nvidia-key-replace-me
