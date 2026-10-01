@@ -2,6 +2,28 @@
 
 ## Unreleased — 2026-10-01
 
+### First-class OpenAI platform provider + /provider picker ordering (FID-2026-1001-001) — **closed 2026-10-01** (commit f099ded8)
+
+OpenAI's platform becomes a first-class registry provider on a second credential lane: a platform `sk-` key
+(`OPENAI_API_KEY`, `/provider openai`) routes `openai/<id>` — and bare slugs while OpenAI is active — to
+api.openai.com over the Responses API, while the ChatGPT-subscription Codex OAuth lane keeps precedence for its
+allowlisted models (the OAuth gate at `sdk/src/impl/model-provider.ts` is untouched; `skipChatGptOAuth` still forces
+the platform lane). The single-protocol `responses` protocol is now legal without a `protocolMap` — the new total
+`resolveEntryProtocol` (no-map path) returns the entry protocol with a narrow union, `resolveProtocol` stays internal
+for map-dispatch, and the bare-slug default-inference path dispatches on the active provider's resolved protocol
+instead of hard-coding chat/completions (map-dispatched active providers keep their legacy construction via a
+`protocolMap === undefined` guard — api.openai.com 400s on chat/completions for reasoning+tools). The `/provider`
+picker sorts by label within the built-ins and customs segments (add-row sentinel last) via a testable
+`buildProviderPickerEntries` helper; the live `/v1/models` roster joins the gateway catalog fan-out
+(`openai.ts` wrapper on the shared fetcher, positional-contract ladder extracted to `gateway-live-results.ts` under
+the 300-line cap, test reset, provider-audit manifest exception). Generated provider docs plus nine hand-maintained
+doc surfaces and the provider runbook are updated. New suites: registry validation for the openai entry (3), the
+SDK OpenAI lane (6 — key gating, Responses URL/Bearer/body, OAuth precedence, bare-slug dispatch, byte-identical
+non-OpenAI leg), provider setup + picker sort (4), and the live-catalog fan-out (4); two pre-existing OAuth
+fallback legs re-armed with the platform key. Gates: fid:verify 8/8 (typecheck common/sdk/cli, the four suites,
+quality); root typecheck 13 legs 0 errors; sdk 536/0; cli 3772/0; eslint `--max-warnings 0`; lint:md;
+validate:repository PASS; generate:provider-docs:check up to date. Commit pending operator authorization.
+
 ### Connector tool surface — the catalog reaches the agent vocabulary (FID-2026-0930-003) — **closed 2026-10-01** (commit 7187d1ec)
 
 The connectors catalog is no longer dead code from the runtime's perspective: it is exposed as a fixed-size 4-tool

@@ -62,7 +62,26 @@
 
 ## Open items
 
-**Ten** items are open. Each names its own specific blocker. Nothing here
+**Ten** items are open.
+(2026-10-01: T108 completed and left the register on the standing rule —
+evidence in archived `FID-2026-1001-001-openai-platform-provider.md`,
+CHANGELOG `Unreleased — 2026-10-01`, and the 2026-10-01 session summary.
+2026-10-01: T108 registered — operator request, verbatim: "i have a
+subscription to chat gpt pro, when i load the api key, it does not work. We
+need to review the provider system for openai. However, i also have multiple
+agents in resources such as openclaw/hermes you can review to look at how
+they implemented the provider, see if we did something wrong." Interpreted
+scope: (a) map Savant's OpenAI provider path — key loading, registry,
+endpoint/auth wiring, failure surface; (b) review the vendored
+`resources/openclaw` and `resources/hermes-agent`/`hermes-desktop` provider
+implementations for a comparison baseline; (c) diagnose why a ChatGPT Pro
+subscription credential fails and present findings + fix options. RED phase
+is investigation-only — no code changes without a presented plan. Working
+hypothesis to verify, not assume: ChatGPT Pro is consumer ChatGPT billing
+and does not include platform-API credits; if our provider only accepts
+platform `sk-` keys, the credential class itself is the failure, and the
+interesting question is whether openclaw/hermes solve it via ChatGPT
+OAuth/Codex-style auth instead.) Each names its own specific blocker. Nothing here
 may be dropped, trimmed, or reclassified without an operator ruling; a working
 tree state is not a disposition. When an item closes it leaves this file
 entirely — its evidence goes to `CHANGELOG.md`, not to a section here.
