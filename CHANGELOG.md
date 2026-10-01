@@ -1,5 +1,31 @@
 # Changelog
 
+## Unreleased — 2026-10-01
+
+### Connector tool surface — the catalog reaches the agent vocabulary (FID-2026-0930-003) — **closed 2026-10-01** (commit 7187d1ec)
+
+The connectors catalog is no longer dead code from the runtime's perspective: it is exposed as a fixed-size 4-tool
+meta-family (`connector_search` / `connector_describe` / `connector_invoke` / `connector_credentials`) following the
+composio precedent. `common` carries the names union, params (zod, with `mode: live|replay` on invoke), the
+`clientToolCallSchema` options, and per-tool safety metadata (catalog reads `allow`, invoke `network`/`prompt` — the
+sole vendor-egress entry, credentials `read` reporting env NAMES + presence only, values never crossing the tool
+boundary). `packages/agent-runtime` gains five DI-shaped handlers (`BundleProvider` injection; handlers do no fetch of
+their own) consuming the checked-in compiled bundle via a tool-facing runtime entry (`loadLaunchBundle`/
+`catalogSearch`/`describeEndpoint`/`executeEndpoint`) — the `typescript`-importing compiler stays out of the runtime
+graph by construction, and the package root gains the previously dangling `src/index.ts` barrel. The SDK answers
+`connector_*` calls honestly (no local executor) beside the composio branch. Implementation surfaced and repaired two
+cross-workspace import mechanisms: the vendored `@shared/*` tsconfig alias (connectors-private; unresolvable in any
+consumer program — 49 errors at the agent-runtime leg) de-aliased to intra-package relative imports across 54 files
+with the alias mappings removed and the substitution ledgered in PORT-NOTES.md, and the SDK's rejection of `.ts`
+import extensions (281 × TS5097 — the SDK path-maps agent-runtime to source, transitively compiling connectors)
+resolved by accepting the flag in the SDK's no-emit/declaration-only configs plus externalizing
+`@savant-code/connectors` in the bundled d.ts. Four offline test suites (26 tests): tool-params registration,
+catalog-tools-surface (bundle load, doc-as-contract, replay invoke settling `{credits:{}, evidence:{}}`), handler
+DI dispatch with a no-value-leak credentials pin, and the SDK honest-error branch. Gates: repo typecheck 14 legs
+0 errors; repo test 13 suites 0 fail (sdk 600 incl. the new pin); quality PASS (1498 baselined files); eslint
+`--max-warnings 0` (tooling override extended to `packages/*/scripts/**`); lint:md; validate:repository PASS;
+`build:catalog` regenerates the committed artifact (3 providers, 9 endpoints); receipt stamped 7/7 gates.
+
 ## Unreleased — 2026-09-30
 
 ### Connector layer — the monid port lands as `packages/connectors` (FID-2026-0930-001, FID-2026-0930-002) — **closed 2026-09-30** (commit 9816bbdf)

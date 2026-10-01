@@ -62,7 +62,7 @@
 
 ## Open items
 
-**Nine** items are open. Each names its own specific blocker. Nothing here
+**Ten** items are open. Each names its own specific blocker. Nothing here
 may be dropped, trimmed, or reclassified without an operator ruling; a working
 tree state is not a disposition. When an item closes it leaves this file
 entirely — its evidence goes to `CHANGELOG.md`, not to a section here.
@@ -80,6 +80,19 @@ this file"), and its evidence lives in that file (Law 1 row + Additional
 Rule + invariant + anti-pattern), the 2026-09-30 session summary, and the
 diagnosis behind it: a scripted edit is Law 1 bypassed at scale — one blind
 transform rewrites N unread files.)
+(2026-10-01: T107 completed and left the register on this rule —
+FID-2026-0930-003 implemented + verified + receipt stamped (7/7 gates),
+closed and archived, CHANGELOG `Unreleased — 2026-10-01`, commit `7187d1ec`:
+the connectors catalog is exposed as the 4-tool meta-family
+(`connector_search`/`connector_describe`/`connector_invoke`/
+`connector_credentials`, composio precedent) with 4 offline suites. The
+same ceremony applied the standing 2026-09-28 rule to the other
+ground-truthed-completed entries: T98–T101 (archived
+`FID-2026-0929-001`..`-005`, CHANGELOG `Unreleased — 2026-09-29/30`,
+commits `bc3b31d8`/`c49d3887`/`742f3612`/`4b54e804`/`06220bc6` — verified
+against archive + CHANGELOG in the 2026-10-01 status report) and the
+checked T104–T106 boxes (commit `9816bbdf`); the connector-layer section
+is gone entirely. Register recount: Ten open.)
 (2026-09-28: T96-followup, FID-2026-0927-006, T63, T67, T84-C, T61,
 FID-2026-0928-009, T90-F3 and T62-followup(1) all completed and left the
 register on this rule; evidence in archived `FID-2026-0928-006`/-007/-008/
@@ -233,73 +246,6 @@ T90-F3 was resolved by the operator ruling "T90-F3 residual needs no code"
 
 ### Providers and routing
 
-- [ ] **T98. Provider identity leak — the free lane's supplier persona wins
-      the agent's self-description.** IMPLEMENTED + VERIFIED 2026-09-29
-      (`dev/fids/FID-2026-0929-001-provider-identity-leak-brand-guard.md`,
-      status `verified`, receipt stamped): harness identity counter-clause in
-      `agents/savant/system-prompt.ts` (shared base → all 6 modes), 9-test pin
-      at `agents/savant/__tests__/system-prompt-identity.test.ts`, bundle
-      regenerated (13/13 savant chunks carry the clause). Remaining:
-      closure ceremony (commit + archive + CHANGELOG) awaits operator git
-      authorization, and the live APInex identity probe is operator-run
-      (NEEDS-REVIEW in the FID). **Automation level: 3.**
-
-- [ ] **T99. In direct-provider mode, a provider 402 is misreported as a
-      SavantCode-backend out-of-credits error.** IMPLEMENTED + VERIFIED
-      2026-09-29
-      (`dev/fids/FID-2026-0929-002-direct-provider-402-out-of-credits-misfire.md`,
-      status `verified`, receipt stamped): both 402 branches in
-      `run-results.ts` gated on `isDirectProviderMode()` — direct mode now
-      renders the provider's own message + `/health` pointer via
-      `providerOutOfCreditsError` (new selector) and the widened `quotaHint`
-      (bare 402s now match); no input-mode flip, no backend usage poll in
-      direct mode; backend mode byte-identical (regression pin green). Full
-      cli suite 3881/0. Remaining: closure ceremony (commit + archive +
-      CHANGELOG) awaits operator git authorization, and the live direct-lane
-      402 reproduction is operator-run (NEEDS-REVIEW in the FID).
-      **Automation level: 3.**
-
-- [ ] **T100. Boot-mode precedence was unruled; ruling received and the
-      routing slice implemented.** Third-party diagnosis (Nova, Discord
-      2026-09-29) claimed the CLI booted in backend mode because `.env.local`
-      lacked `DIRECT_PROVIDER`/`INFERENCE_BASE_URL` — adjudicated
-      claim-by-claim in
-      `dev/fids/FID-2026-0929-003-boot-mode-precedence-token-vs-selection.md`
-      (backend-mode claim REFUTED by live probe, names only; `.env.local`
-      append claim REFUTED, 0 matches). Operator ruling 2026-09-29, verbatim:
-      *"we need to gut this whole 'backend' idea, we don't have a backend to
-      fall back to."* **Implemented + verified** (receipt stamped): one
-      predicate `hasEnvBackendCredentials()` (`auth.ts`) — only the explicit
-      `SAVANT_CODE_API_KEY` defers boot routing; a stored login token defers
-      to nothing (residue, not a routing command); the stub bypass token
-      never counts. All three boot gates re-keyed (`provider-key-store.ts`
-      ×2, `ollama-onboarding.ts` ×2 → 3 sites); 8 new pins across 3 suites;
-      cli workspace 3889/0; `quality` PASS. **Remaining, blocked on operator
-      direction:** (a) closure ceremony for all three 0929 FIDs — commit +
-      archive + CHANGELOG needs git authorization; (b) the remaining
-      gut-the-backend stages named in the ruling (login flow,
-      `SAVANT_CODE_API_KEY` retirement, SDK backend-call surface,
-      backend-mode `OUT_OF_CREDITS` branch) — each is a destructive-facing
-      change needing its own presented plan; **blocker:** the operator names
-      the next stage. **Automation level: 1** for both remainders.
-
-- [ ] **T101. Gut-the-backend stage 1 — delete the dead login surface.**
-      IMPLEMENTED + VERIFIED 2026-09-29
-      (`dev/fids/FID-2026-0929-004-delete-dead-login-surface.md`, receipt
-      stamped; green-lit by operator directive "Green-light deleting the dead
-      login surface first"): 9 production files + 4 test suites deleted;
-      `cli/src/login/{constants,utils}.ts` RELOCATED to `cli/src/branding/`
-      (logo/sheen/URL assets consumed by 8 live components); modal plumbing
-      stripped; `/login` slash command + `login` CLI argument removed.
-      Evidence: cli workspace 3867/0 (453 files), absence-greps zero
-      production matches, `cli/src/login/` gone. Honest correction recorded:
-      `savant-free login` now hits commander's default excess-argument
-      rejection (the branch never accepted prompts) — documented, not
-      unit-pinnable. **Remaining: closure ceremony awaits operator git
-      authorization. Next stage (operator's pick): `SAVANT_CODE_API_KEY`
-      retirement, SDK backend-call surface, or the backend-mode
-      `OUT_OF_CREDITS` branch. Automation level: 3.**
-
 - [ ] **T62-followups (remaining items routed, not blocking Task 62
       closure):** (1) is **completed 2026-09-28** — commandcode catalog
       case-drift re-keyed to the live roster casing (`zai-org/GLM-5.2/5.3`),
@@ -313,47 +259,6 @@ T90-F3 was resolved by the operator ruling "T90-F3 residual needs no code"
       `deepseek-v4.1-flash:free` catalog add + free-cell identity re-run
       after 2026-09-19T04:32 allowance reset; (3) tokenrouter self-ID
       completion on operator top-up (`bun dev/scratchpad/active/t62-round3.ts`).
-
-### Connector layer (monid port)
-
-- [x] **T104. FID-2026-0930-001 — Connector layer: vendored port of monid
-      (MIT) into `packages/connectors`.** Converged 2026-09-30 (sync-endpoints-only
-      copy-and-strip; substitution table for the 11 Deno call sites + JSR deps;
-      300-line split plan; replay-fixture gates; MIT attribution preserved;
-      PORT-NOTES.md deviation ledger). **DONE 2026-09-30** — session 1 ported
-      and proved green; session 2 (T106) stripped + split; receipt stamped,
-      closed, archived (`9816bbdf`). **Automation level: 3.**
-
-- [x] **T105. FID-2026-0930-002 — Register `packages/connectors` in root
-      manifests, chains, and validation policy** (root `package.json`
-      workspaces + typecheck/test chains, `scripts/validation-gates.ts`
-      policy entry, `protocol.config.yaml` command mirror, AGENTS.md
-      workspace-count note). **DONE 2026-09-30** — landed as port-FID step 7;
-      receipt stamped, closed, archived (`9816bbdf`).
-      **Automation level: 3.**
-
-- [x] **T106. FID-2026-0930-001 remainder — engine strip + 300-line splits +
-      receipt stamping.** **DONE 2026-09-30** — engine stripped to the
-      sync-only surface (async docs fail closed at load with
-      `ASYNC_UNSUPPORTED`; `RETRIABLE` = `EXECUTION_FAILED` only), all 11
-      over-ceiling files split (quality: PASS, 1498 baselined files), all
-      gates green (tsc, 10/10 offline suites, eslint 0 warnings, repo
-      typecheck 13 legs, repo test 13 suites 0 fail, lint:md), receipts
-      stamped, both FIDs closed + archived (`9816bbdf`).
-      **Automation level: 3.**
-
-- [ ] **T107. FID-2026-0930-003 — Expose the connectors catalog as
-      agent-runtime tools** (`connector_search` / `connector_describe` /
-      `connector_invoke` / `connector_credentials`, the composio meta-tool
-      precedent). Converged 2026-09-30: every registration seam read this
-      session (toolNames union, toolParams + clientToolCallSchema, safety
-      registry + completeness check, exhaustive handler record, SDK
-      honest-error branch); compiler-never-in-runtime rule → checked-in
-      compiled bundle; credentials env-seam names-only; 3 new offline
-      suites declared as gates; reachability evidence = handler record +
-      safety-registry completeness (Law 4). Sequenced AFTER T106 (engine
-      sync-only strip) — **T106 is done; T107 is next (session 3).**
-      **Automation level: 3.**
 
 ### Harness and process
 

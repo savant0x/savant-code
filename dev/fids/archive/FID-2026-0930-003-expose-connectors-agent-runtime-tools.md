@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-0930-003-expose-connectors-agent-runtime-tools.md`
 **ID:** FID-2026-0930-003
 **Severity:** medium
-**Status:** verified
+**Status:** closed
 > (`converged` is the correct pre-implementation status per
 > FID-2026-0915-004; `fixed` is deprecated-but-accepted legacy language —
 > do not use it for new FIDs. The receipt contract still keys to
@@ -447,9 +447,9 @@ handler record import-light and testable offline (replay fixtures exist —
 
 ### Implementation Evidence (REQUIRED for `closed`)
 
-- [x] **Commit SHA:** pending the operator-authorized commit of this tree
-      (G2); filled at the closure ceremony — the implementation tree is
-      gate-green and frozen pending that commit.
+- [x] **Commit SHA:** `7187d1ec` — `feat(tools): expose the connectors
+      catalog as agent-runtime tools (FID-2026-0930-003)` (78 files,
+      +5980/−197), operator-authorized 2026-10-01.
 - [x] **File:line ranges:**
       - `common/src/constants/connectors.ts:11-16` (CONNECTOR_TOOL_NAMES,
         4 names) + `:20-24` (`isConnectorMetaToolName` guard)
@@ -533,8 +533,7 @@ handler record import-light and testable offline (replay fixtures exist —
 
 ## Resolution
 
-- **Closed Date:** pending closure ceremony (status `verified`; closure
-  after the operator-authorized commit per G2)
+- **Closed Date:** 2026-10-01 (commit `7187d1ec`)
 - **Fix Description:** the connectors catalog is reachable from the agent
   tool vocabulary as a 4-tool meta-family (composio precedent) — names,
   params, client schema, safety entries, DI-shaped handlers, checked-in
@@ -551,7 +550,10 @@ handler record import-light and testable offline (replay fixtures exist —
   declared gates or declared-Verification artifacts, all offline.
 - **Verification Evidence:** see Implementation Evidence above (gate
   outputs, file:line citations, reproducibility recipe).
-- **Archived:** — (moves to `dev/fids/archive/` at closure)
+- **Archived:** `dev/fids/archive/FID-2026-0930-003-expose-connectors-agent-runtime-tools.md`
+  (2026-10-01; closure edits follow the receipt stamp, so the stored
+  fingerprint reflects the verification that earned `verified` — the
+  documented by-design drift at closure)
 
 ## Lessons Learned
 

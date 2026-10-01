@@ -123,3 +123,28 @@ authorization (G2).
      SHA; SCOPE.md T107 checked off (completed items leave the register);
   4. docs commit (`docs(fids): close and archive FID-2026-0930-003 ...`),
      mirroring the 9816bbdf/831f33aa pattern.
+
+## Closure (same day — ceremony executed)
+
+Operator authorization received 2026-10-01 ("push it locally to clear the
+block" — local main only; no remote push). Executed:
+
+1. Commit `7187d1ec` — `feat(tools): expose the connectors catalog as
+   agent-runtime tools (FID-2026-0930-003)` (78 files, +5980/−197),
+   including this summary and the `verified` FID; commit-msg guard accepted
+   (no attribution trailers).
+2. Implementation Evidence filled with the SHA; status → `closed`;
+   `- **Archived:**` line added (documented by-design fingerprint drift at
+   closure); moved to `dev/fids/archive/`. Active queue now empty.
+3. CHANGELOG `Unreleased — 2026-10-01` entry added (FID, description,
+   resolution summary, gate evidence, SHA).
+4. SCOPE.md: T107 left the register on the standing rule, and the ceremony
+   applied the same 2026-09-28 operator rule to the other
+   ground-truthed-completed entries (T98–T101, verified against archived
+   FIDs + CHANGELOG + SHAs in the morning status report; the checked
+   T104–T106 boxes; the connector-layer section removed entirely).
+   Register recount: Ten open, zero checked — the internal contradiction
+   the status report found (header said Nine; 15 unchecked boxes) is
+   resolved. `scope-register-check` PASS; `validate:repository` PASS.
+5. This postscript logs the archival (Auto-Archive rule step 3) and rides
+   the docs commit.
