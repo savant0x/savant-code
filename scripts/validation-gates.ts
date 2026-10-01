@@ -44,6 +44,11 @@ export const VALIDATION_WORKSPACE_POLICY: readonly WorkspacePolicy[] = [
     requiredTest: true,
   },
   {
+    workspace: 'packages/connectors',
+    requiredTypecheck: true,
+    requiredTest: true,
+  },
+  {
     workspace: 'packages/database',
     requiredTypecheck: true,
     requiredTest: true,

@@ -56,7 +56,7 @@ filesystem entries in `agents/`.
 - Prefer dependency injection over module mocking.
 - Run interactive CLI tests in tmux.
 - Do not force-push `main`.
-- The full typecheck gate must pass before any merge: `bun run typecheck` (chains all 12 workspaces).
+- The full typecheck gate must pass before any merge: `bun run typecheck` (chains all 13 workspaces).
 - New FIDs follow the format `dev/fids/FID-YYYY-MMDD-NNN-{title}.md`.
 
 ## Docs
@@ -115,7 +115,7 @@ key facts:
 ## Validation
 
 ```bash
-# Typecheck (HARD GATE) — chains all 12 workspaces
+# Typecheck (HARD GATE) — chains all 13 workspaces
 bun run typecheck
 
 # SDK test suite (HARD GATE)

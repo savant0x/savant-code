@@ -1,0 +1,19 @@
+{
+  "name": "synthetic-provider-error",
+  "description": "recorded chain for tinyfish#search, scenario 'synthetic-provider-error' (per-endpoint recording; predates the shared-chain strategy)",
+  "calls": [
+    {
+      "req": {
+        "method": "GET",
+        "url": "https://api.search.tinyfish.ai/?query=anything"
+      },
+      "res": {
+        "status": 429,
+        "body": {
+          "error": "rate limit exceeded",
+          "retry_after_seconds": 12
+        }
+      }
+    }
+  ]
+}

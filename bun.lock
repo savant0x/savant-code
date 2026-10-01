@@ -180,6 +180,18 @@
         "web-tree-sitter": "0.25.10",
       },
     },
+    "packages/connectors": {
+      "name": "@savant-code/connectors",
+      "version": "0.0.34",
+      "dependencies": {
+        "canonicalize": "^2.1.0",
+        "zod": "^4.2.1",
+      },
+      "devDependencies": {
+        "@types/bun": "1.3.11",
+        "typescript": "5.5.4",
+      },
+    },
     "packages/database": {
       "name": "@savant-code/database",
       "version": "0.0.34",
@@ -682,6 +694,8 @@
 
     "@savant-code/common": ["@savant-code/common@workspace:common"],
 
+    "@savant-code/connectors": ["@savant-code/connectors@workspace:packages/connectors"],
+
     "@savant-code/database": ["@savant-code/database@workspace:packages/database"],
 
     "@savant-code/design-systems": ["@savant-code/design-systems@workspace:packages/design-systems"],
@@ -1005,6 +1019,8 @@
     "camera-controls": ["camera-controls@3.1.2", "", { "peerDependencies": { "three": ">=0.126.1" } }, "sha512-xkxfpG2ECZ6Ww5/9+kf4mfg1VEYAoe9aDSY+IwF0UEs7qEzwy0aVRfs2grImIECs/PoBtWFrh7RXsQkwG922JA=="],
 
     "caniuse-lite": ["caniuse-lite@1.0.30001809", "", {}, "sha512-xxWVywk6a6Arlk+hymeycyn/VgqEfLDxupvhH/xiY5SJ/18kmi9o6MiO320DCUzypORHLtvh0I4i04tUhCNHNQ=="],
+
+    "canonicalize": ["canonicalize@2.1.0", "", { "bin": { "canonicalize": "bin/canonicalize.js" } }, "sha512-F705O3xrsUtgt98j7leetNhTWPe+5S72rlL5O4jA1pKqBVQ/dT1O1D6PFxmSXvc0SUOinWS57DKx0I3CHrXJHQ=="],
 
     "canvas": ["canvas@3.2.3", "", { "dependencies": { "node-addon-api": "^7.0.0", "prebuild-install": "^7.1.3" } }, "sha512-PzE5nJZPz72YUAfo8oTp0u3fqqY7IzlTubneAihqDYAUcBk7ryeCmBbdJBEdaH0bptSOe2VT2Zwcb3UaFyaSWw=="],
 

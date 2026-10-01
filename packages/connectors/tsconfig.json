@@ -1,0 +1,23 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "lib": ["ES2022"],
+    "types": ["bun"],
+    "strict": true,
+    "noImplicitReturns": true,
+    "noUncheckedIndexedAccess": false,
+    "skipLibCheck": true,
+    "allowImportingTsExtensions": true,
+    "verbatimModuleSyntax": false,
+    "isolatedModules": true,
+    "noEmit": true,
+    "paths": {
+      "@shared/core": ["./src/core/mod.ts"],
+      "@shared/compiler": ["./src/compiler/mod.ts"],
+      "@shared/testing": ["./src/testing/mod.ts"]
+    }
+  },
+  "include": ["src/**/*.ts"]
+}
