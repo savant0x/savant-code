@@ -2,6 +2,25 @@
 
 ## Unreleased — 2026-09-30
 
+### Connector layer — the monid port lands as `packages/connectors` (FID-2026-0930-001, FID-2026-0930-002) — **closed 2026-09-30** (commit 9816bbdf)
+
+Savant gains a declarative tool-connection layer: a sync-only copy-and-strip port of the MIT monid connector layer
+(vendored at `resources/monid-main/`) into a new `packages/connectors` workspace (192 files, +15,248). Connector defs
+compile to a deterministic content-addressed bundle; the engine executes sync endpoints end-to-end (validate input →
+`input.toRequest` → transport with credentials injected at the boundary, never visible to fn code → usage settle →
+map + validate output) and replays recorded vendor fixtures offline. Launch catalog: tinyfish, exa, firecrawl
+(scrape/search/map + the sync `-status` endpoints), with recorded fixtures. The hosted async/resource/billing
+surfaces are stripped — resource lifecycle, webhooks, relay transport, credit-pool settlement, KV store, catalog
+publish — and async endpoint DOCS now fail closed at LOAD (`ASYNC_UNSUPPORTED`) instead of failing open mid-run
+(deviation ledgered in `packages/connectors/PORT-NOTES.md`); MIT attribution preserved
+(`packages/connectors/LICENSE-monid`). Every file meets the 300-line ceiling: compiler split into 12 modules,
+engine into engine/settle/resolve/link, testing into 4, categories into facade+core+extended, lifecycle into 2,
+firecrawl schema/search into 4 each. Registered across all four gate surfaces (root workspaces + typecheck/test
+gains, `VALIDATION_WORKSPACE_POLICY`, `protocol.config.yaml` mirror; AGENTS.md count corrected to 13 workspaces).
+Gates: workspace tsc 0 errors; 3 FID-declared suites 10/10 offline; eslint `--max-warnings 0`; repo typecheck 13
+legs 0 errors; repo test 13 suites 0 fail (connectors 10/0); lint:md; quality PASS (1498 baselined files);
+receipts stamped for both FIDs (8/8 gate executions exit 0); validate:repository PASS.
+
 ### Gut the backend stage 2 — the backend-mode surface retired across CLI and SDK (FID-2026-0929-005) — **closed 2026-09-30** (commit 06220bc6)
 
 Stage 2 of the gut-the-backend program (operator ruling 2026-09-29: "we need to gut this whole 'backend' idea, we

@@ -3,11 +3,7 @@
 **Filename:** `FID-2026-0930-001-connector-layer-vendored-port.md`
 **ID:** FID-2026-0930-001
 **Severity:** medium
-**Status:** converged
-> (`converged` is the correct pre-implementation status per
-> FID-2026-0915-004; `fixed` is deprecated-but-accepted legacy language —
-> do not use it for new FIDs. The receipt contract still keys to
-> `fixed | verified` so archived records remain valid.)
+**Status:** closed
 **Created:** 2026-09-30 11:23
 **Automation level:** 3
 > (Authority this FID needs to be actioned **without asking**: `1` approval-gated,
@@ -16,7 +12,10 @@
 > approval only when its level is ≤ the session level. No level lifts the G-laws,
 > credential handling, Law 3, or the project-directory boundary — see
 > "Automation Levels" in the governing protocol.)
-**YAGNI-Compliance:** Pending
+**YAGNI-Compliance:** Verified — the strip list executed exactly as scoped
+(launch catalog sync-only; no speculative surface kept "just in case");
+the resource/compiler sections stay contract-complete because upstream
+defs must keep VALIDATING, not because a hosted feature might return.
 
 ---
 
@@ -257,6 +256,16 @@ template's own rule (repo history: `Task 58`).
 - gate: test packages/connectors/src/__tests__/contract-schemas.test.ts
 - gate: quality
 
+### Verification Receipt
+
+- fingerprint: sha256:f324fe9d6fe0da12a364e793bb36cbc8799863c0cbca1a5b779d9725a91df5ad
+- verified: 2026-10-01T02:40:37.066Z
+- typecheck packages/connectors: exit 0
+- test packages/connectors/src/__tests__/engine-replay.test.ts: exit 0
+- test packages/connectors/src/__tests__/compiler-determinism.test.ts: exit 0
+- test packages/connectors/src/__tests__/contract-schemas.test.ts: exit 0
+- quality: exit 0
+
 ## Perfection Loop
 
 ### Loop 1 — RED
@@ -340,17 +349,50 @@ three declared suites pass 10/10 offline. Implementation reality vs plan:
    engine.ts 1231, link.ts 828, fn-utils.ts 579, categories.ts 368,
    lifecycle.ts 368, fixtures.ts 364, firecrawl endpoints 431/462/363,
    firecrawl schema/common.ts 346). `quality: FAIL` accordingly, which
-   also blocks receipt stamping (`quality` is a mandatory receipt gate).
-
-**Recorded decision (operator constraint cited):** the operator capped this
+   also blocks receipt stamping (`quality` is a mandatory receipt gate).**Recorded decision (operator constraint cited):** the operator capped this
 work at 1–2 sessions ("If we can't finish the entire port in 1-2 sessions i
 need to stop coding entirely"). Splitting 11 green files mid-session-1
 risked the green state; the strip+split is therefore scheduled as session-2
 work item **T106** (SCOPE.md, automation level 3), BEFORE receipt stamping
 and closure — closure legally requires the `quality` gate exit 0, so this
 is sequencing, not escape: no receipt, no verified status, no closure until
-T106 lands. Nothing is deferred out of scope; the item stays on the
-register.
+T106 lands. Nothing is deferred out of scope; the item stays on the register.
+
+### Session-2 execution amendment (T106, recorded 2026-09-30)
+
+The strip + split landed and all gates went green (`quality: PASS, 1498
+baselined files`):
+
+1. **Engine strip (sync-only surface):** the async/resource machinery is
+   gone — `LoadedResource`/`RunnableResource`/`IResourceStore`/
+   `linkResourceFns`, the lifecycle utils, and `relayTransport` deleted;
+   `LoadedEndpoint` carries `estimate/accrued/start/run` (`run` an alias
+   of `start`). Async endpoint DOCS now fail closed at LOAD
+   (`ASYNC_UNSUPPORTED`, `engine/errors.ts:30`, raised in `engine/link.ts:124`)
+   instead of failing open mid-run — an intentional deviation from upstream
+   behavior, recorded in `packages/connectors/PORT-NOTES.md`. The
+   `RETRIABLE` set is now only `EXECUTION_FAILED`.
+2. **Firecrawl async endpoints deleted** (`endpoints/agent/`,
+   `endpoints/crawl/`, `endpoints/batch-scrape/`); the sync `-status` GET
+   endpoints remain.
+3. **Splits (300-line ceiling met repo-wide):** `compile.ts` 1459 → 12
+   modules (`compile.ts` 241 orchestrator + compile-shared/endpoint-a/b/
+   credits/bindings/doc/types/resource/provider/bundle/intake); `engine.ts`
+   1231 → 211 + `settle.ts` 156 + `resolve.ts` 84; `link.ts` 828 → 235;
+   `fn-utils.ts` → 255; `testing/fixtures.ts` → barrel + 3 modules;
+   `categories.ts` 368 → facade 29 + core 216 + extended 151;
+   `lifecycle.ts` → 187 + `lifecycle-data.ts` 194; firecrawl
+   `schema/common.ts` 458 → 4 files; search `endpoint.ts` 363 → 4 files
+   (usage.ts/usage-fns.ts/usage-types.ts). Split fn bodies are verbatim;
+   the extracted estimate/evidence fns gained explicit parameter type
+   annotations (they lost contextual typing in the move) — behavior
+   re-verified by the replay + determinism suites.
+4. **eslint:** 0 warnings (`--max-warnings 0` exit 0) after the import
+   repair; `bun x tsc --noEmit` exit 0; `bun test src/` 10 pass / 0 fail.
+
+**Commit:** `9816bbdf` — the whole port (192 files, +15,248/−19), committed
+2026-09-30 with operator authorization (operator selected "Commit first,
+then continue" when asked how closure evidence should be anchored).
 
 ### Missed Questions
 
@@ -395,14 +437,56 @@ register.
 
 ### Implementation Evidence (REQUIRED for `closed`)
 
-> Not yet fillable — status is `converged`. This section fills at closure.
-
-- [ ] **Commit SHA:** pending implementation
-- [ ] **File:line ranges:** pending implementation
-- [ ] **Gate output:** pending implementation
-- [ ] **Reproducibility:** pending implementation
-- [ ] **Step statuses:** Steps 1–7 `blocked pending session-1 execution` —
-      none started; no step is deferred and none is dropped.
+- [x] **Commit SHA:** `9816bbdf` — `feat(connectors): port monid connector
+      layer into packages/connectors (FID-2026-0930-001/-002)` (192 files,
+      +15,248/−19), 2026-09-30, with operator authorization to commit.
+- [x] **File:line ranges:** workspace `packages/connectors/src/` —
+      engine strip: `engine/engine.ts:29` (strip note; 211 lines total,
+      `start` at :154), `engine/settle.ts:31` (`export function settle`,
+      verbatim pipeline), `engine/resolve.ts:20` (`instantiate`),
+      `engine/link.ts:117-124` (sync-only guard raising
+      `ASYNC_UNSUPPORTED`), `engine/errors.ts:30` (code),
+      `engine/transport.ts` (relay removed, 215); compiler split:
+      `compiler/compile.ts` (241, orchestrator) + `compile-shared.ts` (153)
+      + `compile-endpoint-a.ts:24` + `compile-endpoint-b.ts` +
+      `compile-endpoint-credits.ts` + `compile-endpoint-bindings.ts` +
+      `compile-endpoint-doc.ts` + `compile-endpoint-types.ts` +
+      `compile-resource.ts` + `compile-provider.ts` + `compile-bundle.ts` +
+      `compile-intake.ts`; testing split: `testing/runner.ts:62,157`
+      (`testSealedUnit`, `runEndpoint`), `testing/fixtures.ts` barrel +
+      `fixture-schema.ts`/`fixture-transforms.ts`/`fixture-fetch.ts`;
+      categories split: `connectors/categories.ts` (29 facade) +
+      `categories-core.ts` (216) + `categories-extended.ts` (151);
+      firecrawl splits: `schema/common.ts:14` + `common-options.ts` +
+      `common-formats.ts` + `common-scrape.ts`,
+      `endpoints/search/usage.ts:5` + `usage-fns.ts` + `usage-types.ts`;
+      registration (co-FID -002): root `package.json` workspaces +
+      typecheck/test chains, `scripts/validation-gates.ts:46-50` (policy
+      entry), `protocol.config.yaml` `commands.type_check`/`commands.test`,
+      `AGENTS.md:59,118` (13-workspace count).
+- [x] **Gate output:** `bun x tsc --noEmit` (workspace) exit 0;
+      `bun test src/` → `10 pass, 0 fail, 23 expect() calls, Ran 10 tests
+      across 3 files`; `bun x eslint packages/connectors --max-warnings 0`
+      exit 0; repo `bun run typecheck` exit 0 (13 workspace legs +
+      typecheck:scripts); `bun run test` exit 0 — all 13 workspace suites
+      0 fail (sdk 599/0, cli 3746/0, common 723/0, agents 145/0, evals
+      171/0, agent-runtime 1551/0, design-systems 19/0, code-map 51/0,
+      database 18/0, knowledge-graph 50/0, llm-providers 89/0, connectors
+      10/0, desktop 421/0); `bun run lint:md` exit 0;
+      `bun run quality:report` → `quality: PASS (1498 baselined files)`;
+      `bun scripts/scope-register-check.ts` → `scope-register PASS
+      (0 issues)`.
+- [x] **Reproducibility:** `grep -rn "ASYNC_UNSUPPORTED"
+      packages/connectors/src/engine/` → errors.ts:30 + link.ts:124;
+      `grep -rn "T106 file split" packages/connectors/src/compiler/` →
+      compile-endpoint-a.ts:24 and the split-module headers;
+      `wc -l packages/connectors/src/compiler/*.ts` → every file ≤ 300;
+      `bun run quality:report` → PASS (the ceiling gate itself).
+- [x] **Step statuses:** Steps 1–6 `implemented` (scaffold, core copy,
+      compiler copy+split, engine copy+strip+split, testing copy+split,
+      launch connectors + fixtures replay offline); Step 7 `implemented`
+      via FID-2026-0930-002 (root chains + policy green). Nothing blocked,
+      nothing deferred, nothing dropped.
 
 ### Code Verification Evidence
 
@@ -412,22 +496,51 @@ register.
 > import and :139 `new Function`; shared/core/config.ts:46
 > `Deno.readTextFileSync`; engine/link.ts:1 `@std/semver` import (first line
 > of the file — Loop 2 corrected an earlier `:5` cite);
-> scripts/validation-gates.ts:22 `VALIDATION_WORKSPACE_POLICY` (no
-> `packages/connectors` entry — the -002 gap, real today). Status `converged` reflects reality: no Savant-side code
-> exists yet.
+> scripts/validation-gates.ts:22 `VALIDATION_WORKSPACE_POLICY` (the -002 gap
+> at authoring time — closed by `9816bbdf`, which adds the
+> `packages/connectors` entry at `scripts/validation-gates.ts:46-50`).
+> Status now `verified`: the implemented code is the ground truth cited in
+> Implementation Evidence below.
 
 ## Resolution
 
-- **Closed Date:** — (open)
-- **Fix Description:** —
-- **Tests Added:** —
-- **Verification Evidence:** —
-- **Archived:** —
+- **Closed Date:** 2026-09-30
+- **Commit:** `9816bbdf` — feat(connectors): port monid connector layer
+  into packages/connectors (192 files, +15,248/−19), committed 2026-09-30
+  with operator authorization (operator selected commit-first when asked
+  how closure evidence should be anchored).
+- **Fix Description:** the capability gap is closed. `packages/connectors`
+  compiles connector defs into a deterministic content-addressed bundle,
+  executes sync endpoints (validate → toRequest → transport with
+  credential injection at the boundary → settle → map/validate output),
+  and replays recorded fixtures offline. Hosted async/resource/billing
+  surfaces stripped; async docs fail closed at load (`ASYNC_UNSUPPORTED`);
+  every file under the 300-line ceiling; MIT attribution preserved
+  (`packages/connectors/LICENSE-monid`); deviations ledgered in
+  `packages/connectors/PORT-NOTES.md`. Registered in root chains + policy
+  (co-FID -002); AGENTS.md count corrected to 13 workspaces.
+- **Tests Added:** Yes — three suites (`engine-replay.test.ts`,
+  `compiler-determinism.test.ts`, `contract-schemas.test.ts`) — 10 tests
+  total, offline; plus the workspace itself gates typecheck/test in all
+  four registration surfaces.
+- **Verification Evidence:** receipt stamped 2026-09-30 — all 5 declared
+  gates exit 0 (typecheck packages/connectors; the three test suites;
+  quality). Full battery live: repo typecheck 13 legs 0 errors; repo test
+  13 suites 0 fail; eslint `--max-warnings 0`; `lint:md`; quality PASS
+  (1498 files); scope-register PASS.
+- **Archived:** 2026-09-30
 
 ## Lessons Learned
 
-(At convergence, provisional:) The expensive part of adopting an external
-design is discovering which surfaces are product and which are plumbing; the
-monid repo's own `openspec/changes/*/design.md` decision record made that
-split legible in an afternoon. Port decisions should cite it by D-number
-rather than re-derive.
+The expensive part of adopting an external design is discovering which
+surfaces are product and which are plumbing; the monid repo's own
+`openspec/changes/*/design.md` decision record made that split legible in
+an afternoon — port decisions should cite it by D-number rather than
+re-derive. Two more from execution: (1) port-then-strip beats
+strip-then-port — proving the unmodified copy green first gave a known-good
+baseline, and the strip became a surgical, testable diff instead of an
+authored rewrite (the intermediate `quality: FAIL` was recorded in the FID,
+not hidden); (2) eslint's `import/order` + `import/no-duplicates` interact
+badly with file splits — splitting type-only imports from value imports can
+retrigger no-duplicates on the same module, so every split needs a lint
+re-run as part of the move, not after the batch.

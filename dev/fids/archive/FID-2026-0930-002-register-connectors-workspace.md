@@ -3,11 +3,7 @@
 **Filename:** `FID-2026-0930-002-register-connectors-workspace.md`
 **ID:** FID-2026-0930-002
 **Severity:** low
-**Status:** converged
-> (`converged` is the correct pre-implementation status per
-> FID-2026-0915-004; `fixed` is deprecated-but-accepted legacy language —
-> do not use it for new FIDs. The receipt contract still keys to
-> `fixed | verified` so archived records remain valid.)
+**Status:** closed
 **Created:** 2026-09-30 11:23
 **Automation level:** 3
 > (Authority this FID needs to be actioned **without asking**: `1` approval-gated,
@@ -16,7 +12,9 @@
 > approval only when its level is ≤ the session level. No level lifts the G-laws,
 > credential handling, Law 3, or the project-directory boundary — see
 > "Automation Levels" in the governing protocol.)
-**YAGNI-Compliance:** Pending
+**YAGNI-Compliance:** Verified — exactly the five registration edits the
+plan named, no more; the parity probe is a standalone script, not new
+gate infrastructure.
 
 ---
 
@@ -180,6 +178,14 @@ must NOT re-enter FID verification (no `validate:repository` invocation).
 - gate: probe scripts/__tests__/validation-manifest.parity-probe.ts
 - gate: quality
 
+### Verification Receipt
+
+- fingerprint: sha256:1776823a660dbacdc19e131fdddf4d3cda6add9f22f4bd17f0a5aadfa3fc33ac
+- verified: 2026-10-01T02:40:46.220Z
+- typecheck packages/connectors: exit 0
+- probe scripts/__tests__/validation-manifest.parity-probe.ts: exit 0
+- quality: exit 0
+
 ## Perfection Loop
 
 ### Loop 1 — RED
@@ -278,32 +284,72 @@ must NOT re-enter FID verification (no `validate:repository` invocation).
 
 ### Implementation Evidence (REQUIRED for `closed`)
 
-- [ ] **Commit SHA:** pending implementation
-- [ ] **File:line ranges:** pending implementation
-- [ ] **Gate output:** pending implementation
-- [ ] **Reproducibility:** pending implementation
-- [ ] **Step statuses:** Steps 1–5 `blocked pending port-FID step 7` —
-      none started; nothing deferred, nothing dropped.
+- [x] **Commit SHA:** `9816bbdf` — `feat(connectors): port monid connector
+      layer into packages/connectors (FID-2026-0930-001/-002)` (the
+      registration edits landed in the same operator-authorized commit as
+      the port, as sequenced by port-FID step 7).
+- [x] **File:line ranges:** root `package.json` — `workspaces` entry after
+      `packages/code-map`, `typecheck` leg after the
+      `packages/knowledge-graph` leg and before `packages/llm-providers`,
+      `test` leg at the same anchor; `scripts/validation-gates.ts:46-50` —
+      `{ workspace: 'packages/connectors', requiredTypecheck: true,
+      requiredTest: true }` after the knowledge-graph entry;
+      `protocol.config.yaml` — `commands.type_check` and `commands.test`
+      mirror the root chains verbatim with the connectors leg in the
+      packages group; `AGENTS.md:59` and `AGENTS.md:118` — "chains all 13
+      workspaces" (Missed Question 5 resolved: 13, not 12).
+- [x] **Gate output:** `bun run typecheck` exit 0 — 14 segments, the new
+      leg `bun run --cwd=packages/connectors typecheck` green;
+      `bun run test` exit 0 — connectors leg `10 pass, 0 fail`;
+      `bun scripts/validate-repository.ts` — command-parity and
+      workspace-policy checks green with the new entry (run after receipt
+      stamping, see Resolution).
+- [x] **Reproducibility:** `grep -n "packages/connectors" package.json
+      protocol.config.yaml scripts/validation-gates.ts` → one match per
+      edited surface (workspaces + two chains in package.json, both
+      commands in the config, the policy entry);
+      `scripts/__tests__/validation-manifest.parity-probe.ts` exits 0.
+- [x] **Step statuses:** Steps 1–5 all `implemented` (precondition
+      verified; edits 1–5 applied; `bun install` link; root chains green;
+      validator parity green). Nothing blocked, nothing deferred, nothing
+      dropped.
 
 ### Code Verification Evidence
 
-> Pre-implementation state verified 2026-09-30: policy array read 0-EOF at
-> `scripts/validation-gates.ts:22-55` (no connectors entry); root chains
-> read 0-EOF in `package.json` (no connectors leg); `protocol.config.yaml`
-> commands mirror confirmed. Status `converged` reflects reality: no edits
-> applied yet.
+> Post-implementation state verified 2026-09-30 against `9816bbdf`: policy
+> entry present at `scripts/validation-gates.ts:46-50`; both root chains
+> carry the `packages/connectors` leg inside the packages group (anchored
+> exactly as this document specified — after knowledge-graph, before
+> llm-providers); `protocol.config.yaml` commands mirror the root scripts;
+> `scripts/fid-verify.ts:94`'s "unsafe typecheck workspace" rejection now
+> ACCEPTS `typecheck packages/connectors` (the workspace is in the policy
+> set, proven by the stamped receipt on FID-2026-0930-001). Status now
+> `verified`: the registration edits are ground truth.
 
 ## Resolution
 
-- **Closed Date:** — (open)
-- **Fix Description:** —
-- **Tests Added:** —
-- **Verification Evidence:** —
-- **Archived:** —
+- **Closed Date:** 2026-09-30
+- **Commit:** `9816bbdf` — registration edits landed with the port commit
+  (operator-authorized), 2026-09-30.
+- **Fix Description:** `packages/connectors` is registered in all four
+  surfaces (root workspaces + both chains, `VALIDATION_WORKSPACE_POLICY`,
+  `protocol.config.yaml` command mirror) and the AGENTS.md workspace count
+  corrected to 13. `fid:verify` accepts gate declarations naming the
+  workspace; the root-gate promise now covers it in both directions.
+- **Tests Added:** Yes — `scripts/__tests__/validation-manifest.parity-probe.ts`
+  (standalone parity probe; declared as this FID's probe gate).
+- **Verification Evidence:** receipt stamped 2026-09-30 — all 3 declared
+  gates exit 0 (typecheck packages/connectors; parity probe; quality).
+  Root chains green live (typecheck 14 segments, test 13 suites 0 fail);
+  `validate:repository` parity green post-stamp.
+- **Archived:** 2026-09-30
 
 ## Lessons Learned
 
-(Provisional:) Gate infrastructure and feature code want separate FIDs — the
-ordering edge between them (a feature gate that is illegal to declare until
-the infrastructure lands) is exactly the kind of dependency that gets lost
-inside a multi-concern record.
+Gate infrastructure and feature code want separate FIDs — the ordering edge
+between them (a feature gate that is illegal to declare until the
+infrastructure lands) is exactly the kind of dependency that gets lost
+inside a multi-concern record. Confirmed in practice: the port's receipt
+could not have been stamped before this FID's policy entry existed, and
+keeping the two change sets apart made the operator-authorized commit
+reviewable as two logical units in one changeset.

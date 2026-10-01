@@ -316,33 +316,31 @@ T90-F3 was resolved by the operator ruling "T90-F3 residual needs no code"
 
 ### Connector layer (monid port)
 
-- [ ] **T104. FID-2026-0930-001 — Connector layer: vendored port of monid
+- [x] **T104. FID-2026-0930-001 — Connector layer: vendored port of monid
       (MIT) into `packages/connectors`.** Converged 2026-09-30 (sync-endpoints-only
       copy-and-strip; substitution table for the 11 Deno call sites + JSR deps;
       300-line split plan; replay-fixture gates; MIT attribution preserved;
-      PORT-NOTES.md deviation ledger). Execution opens the port session;
-      nothing deferred, nothing dropped. **Automation level: 3.**
+      PORT-NOTES.md deviation ledger). **DONE 2026-09-30** — session 1 ported
+      and proved green; session 2 (T106) stripped + split; receipt stamped,
+      closed, archived (`9816bbdf`). **Automation level: 3.**
 
-- [ ] **T105. FID-2026-0930-002 — Register `packages/connectors` in root
+- [x] **T105. FID-2026-0930-002 — Register `packages/connectors` in root
       manifests, chains, and validation policy** (root `package.json`
       workspaces + typecheck/test chains, `scripts/validation-gates.ts`
       policy entry, `protocol.config.yaml` command mirror, AGENTS.md
-      workspace-count note). Converged 2026-09-30; five edit sites with
-      verified anchors; sequenced as step 7 of T104 — after the new package
-      typechecks — so the root chains never go red mid-port.
+      workspace-count note). **DONE 2026-09-30** — landed as port-FID step 7;
+      receipt stamped, closed, archived (`9816bbdf`).
       **Automation level: 3.**
 
-- [ ] **T106. FID-2026-0930-001 remainder — engine strip + 300-line splits +
-      receipt stamping.** Session-2 first item, recorded in the FID's
-      session-1 amendment: strip the unused async/resource engine internals
-      (launch connectors are sync-only), split the 11 over-ceiling files
-      (quality: FAIL today — compile.ts 1484, engine.ts 1231, link.ts 828,
-      fn-utils.ts 579, categories.ts 368, lifecycle.ts 368, fixtures.ts 364,
-      firecrawl endpoints 431/462/363, firecrawl schema/common.ts 346),
-      then stamp both FIDs' receipts (`quality` is a mandatory receipt gate,
-      so no verified status before this lands). Session 1 delivered: workspace
-      green (`tsc --noEmit` exit 0), 3 FID-declared suites 10/10 offline,
-      workspace registered (T105). **Automation level: 3.**
+- [x] **T106. FID-2026-0930-001 remainder — engine strip + 300-line splits +
+      receipt stamping.** **DONE 2026-09-30** — engine stripped to the
+      sync-only surface (async docs fail closed at load with
+      `ASYNC_UNSUPPORTED`; `RETRIABLE` = `EXECUTION_FAILED` only), all 11
+      over-ceiling files split (quality: PASS, 1498 baselined files), all
+      gates green (tsc, 10/10 offline suites, eslint 0 warnings, repo
+      typecheck 13 legs, repo test 13 suites 0 fail, lint:md), receipts
+      stamped, both FIDs closed + archived (`9816bbdf`).
+      **Automation level: 3.**
 
 - [ ] **T107. FID-2026-0930-003 — Expose the connectors catalog as
       agent-runtime tools** (`connector_search` / `connector_describe` /
@@ -354,7 +352,8 @@ T90-F3 was resolved by the operator ruling "T90-F3 residual needs no code"
       compiled bundle; credentials env-seam names-only; 3 new offline
       suites declared as gates; reachability evidence = handler record +
       safety-registry completeness (Law 4). Sequenced AFTER T106 (engine
-      sync-only strip) — both are session-2 work. **Automation level: 3.**
+      sync-only strip) — **T106 is done; T107 is next (session 3).**
+      **Automation level: 3.**
 
 ### Harness and process
 
