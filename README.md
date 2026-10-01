@@ -10,11 +10,27 @@ touches your repo.**
 Built with TypeScript/Bun, governed by the ECHO Protocol, and designed for
 local-first use with Ollama.
 
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.5-%23000000?style=flat-square&logo=typescript&logoColor=%2300fbff)](https://www.typescriptlang.org/)[![Bun](https://img.shields.io/badge/Bun-1.3.14-%23000000?style=flat-square&logo=bun&logoColor=%2300fbff)](https://bun.sh/)[![React](https://img.shields.io/badge/React-19-%23000000?style=flat-square&logo=react&logoColor=%2300fbff)](https://react.dev/)[![OpenTUI](https://img.shields.io/badge/OpenTUI-0.5.3-%23000000?style=flat-square&logo=github&logoColor=%2300fbff)](https://github.com/anomalyco/opentui)[![ECHO](https://img.shields.io/badge/ECHO-v0.2.0-%23000000?style=flat-square&logo=github&logoColor=%2300fbff)](ECHO.md)[![License](https://img.shields.io/badge/License-Apache_2.0-%23000000?style=flat-square&logo=apache&logoColor=%2300fbff)](LICENSE)[![Release](https://img.shields.io/badge/Release-v0.0.34-%2300fbff?style=flat-square&logo=semver&logoColor=%2300fbff)](CHANGELOG.md)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.5-%23000000?style=flat-square&logo=typescript&logoColor=%2300fbff)](https://www.typescriptlang.org/)[![Bun](https://img.shields.io/badge/Bun-1.3.14-%23000000?style=flat-square&logo=bun&logoColor=%2300fbff)](https://bun.sh/)[![React](https://img.shields.io/badge/React-19-%23000000?style=flat-square&logo=react&logoColor=%2300fbff)](https://react.dev/)[![OpenTUI](https://img.shields.io/badge/OpenTUI-0.5.3-%23000000?style=flat-square&logo=github&logoColor=%2300fbff)](https://github.com/anomalyco/opentui)[![ECHO](https://img.shields.io/badge/ECHO-v0.2.0-%23000000?style=flat-square&logo=github&logoColor=%2300fbff)](ECHO.md)[![License](https://img.shields.io/badge/License-Apache_2.0-%23000000?style=flat-square&logo=apache&logoColor=%2300fbff)](LICENSE)[![Release](https://img.shields.io/badge/Release-v0.0.35-%2300fbff?style=flat-square&logo=semver&logoColor=%2300fbff)](CHANGELOG.md)
 
 </div>
 
-> **v0.0.34** — two built-in gateway providers, both live-verified end to end:
+> **v0.0.35** — **OpenAI is a first-class platform provider**: a platform `sk-` key
+> (`/provider openai`, `OPENAI_API_KEY`) routes `openai/<id>` — and bare slugs while
+> OpenAI is active — over the **Responses API** at api.openai.com, while the
+> ChatGPT-subscription OAuth lane keeps precedence for its allowlisted models
+> (`skipChatGptOAuth` still forces the platform lane); the `/provider` picker now
+> sorts alphabetically and the live `/v1/models` roster joins the model catalog.
+> The **connector layer lands**: the monid port ships as `packages/connectors` and
+> its catalog reaches the agent vocabulary as a four-tool meta-family
+> (`connector_search` / `connector_describe` / `connector_invoke` /
+> `connector_credentials` — credentials report env names and presence, never
+> values). **Direct mode is the product**: the backend-mode surface is retired
+> across CLI and SDK (stage 2 of gut-the-backend — the backend login UI, the
+> backend billing branches, the backend-as-inference fallback), only an explicit
+> env backend key defers boot routing, direct-mode 402s render the provider's own
+> message instead of phantom backend billing, and the harness asserts its own
+> identity against supplier-branded personas on gateway free lanes.
+> Previously shipped in v0.0.34: two built-in gateway providers, both live-verified end to end:
 > **Vercel AI Gateway** (keyless live catalog, slash-bearing upstream ids
 > stripped exactly one segment) and **Clean APIs** (authenticated live catalog,
 > catalog **200 / 33 models** and a real `chat/completions` round-trip

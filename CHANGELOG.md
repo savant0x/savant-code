@@ -1,6 +1,20 @@
 # Changelog
 
-## Unreleased — 2026-10-01
+## 0.0.35 — 2026-10-01
+
+> **v0.0.35** — **OpenAI as a first-class platform provider**: a platform `sk-` key
+> (`/provider openai`) routes `openai/<id>` — and bare slugs while OpenAI is active —
+> over the **Responses API** at api.openai.com, while the ChatGPT-subscription OAuth
+> lane keeps precedence for its allowlisted models, and the `/provider` picker finally
+> sorts alphabetically. The **connector layer lands**: the monid port ships as
+> `packages/connectors` and its catalog reaches the agent vocabulary as a four-tool
+> meta-family (`connector_search` / `describe` / `invoke` / `credentials`). **Direct
+> mode is the product** — the backend-mode surface is retired across CLI and SDK
+> (stage 2), only an explicit env backend key defers boot routing, direct-mode 402s
+> render the provider's own message, and the dead login surface is deleted. Also:
+> the harness asserts its own identity against supplier-branded personas. Previously
+> shipped in v0.0.34: live-verified **Vercel AI Gateway** + **Clean APIs**, the
+> Cloudflare dual-credential wizard, and the Law 3 verification-gate soundness fix.
 
 ### First-class OpenAI platform provider + /provider picker ordering (FID-2026-1001-001) — **closed 2026-10-01** (commit f099ded8)
 
@@ -22,7 +36,7 @@ SDK OpenAI lane (6 — key gating, Responses URL/Bearer/body, OAuth precedence, 
 non-OpenAI leg), provider setup + picker sort (4), and the live-catalog fan-out (4); two pre-existing OAuth
 fallback legs re-armed with the platform key. Gates: fid:verify 8/8 (typecheck common/sdk/cli, the four suites,
 quality); root typecheck 13 legs 0 errors; sdk 536/0; cli 3772/0; eslint `--max-warnings 0`; lint:md;
-validate:repository PASS; generate:provider-docs:check up to date. Commit pending operator authorization.
+validate:repository PASS; generate:provider-docs:check up to date.
 
 ### Connector tool surface — the catalog reaches the agent vocabulary (FID-2026-0930-003) — **closed 2026-10-01** (commit 7187d1ec)
 
@@ -48,7 +62,7 @@ DI dispatch with a no-value-leak credentials pin, and the SDK honest-error branc
 `--max-warnings 0` (tooling override extended to `packages/*/scripts/**`); lint:md; validate:repository PASS;
 `build:catalog` regenerates the committed artifact (3 providers, 9 endpoints); receipt stamped 7/7 gates.
 
-## Unreleased — 2026-09-30
+
 
 ### Connector layer — the monid port lands as `packages/connectors` (FID-2026-0930-001, FID-2026-0930-002) — **closed 2026-09-30** (commit 9816bbdf)
 
@@ -87,7 +101,7 @@ env orphans + the child-shell allowlist entry, the e2e credential seam, 29 dead-
 with direct file edits. Gates: typecheck 13 legs 0 errors; sdk 529/0; cli 3746/0; agent-runtime 1551/0; common
 723/0; eslint `--max-warnings 0`; lint:md; quality; scope-register; all five absence-greps clean.
 
-## Unreleased — 2026-09-29
+
 
 ### Provider identity leak brand guard — the harness asserts its own identity (FID-2026-0929-001) — **closed 2026-09-29** (commit bc3b31d8)
 

@@ -17,15 +17,17 @@ This directory contains reusable validation prompts and live harnesses.
   desktop design docs exist — verify overlap before re-running the chat
   prompt).
 - The current comprehensive A–Z harness prompt is
-  [`az-v0.0.24-harness-live-test.md`](az-v0.0.24-harness-live-test.md). It
-  covers the full 0.0.24 delta — ZTAP provenance (FID-2026-0813-001..010), the
-  Agent-Steering Teacher (`011..020` + live sidebar `022`), the canonical
-  version-bump tool (`021`), the harness observability/integrity remediation
-  (`023`), and the goal-engine/hook-system/model-unification/compaction
-  remediation (`FID-2026-0814-002..007`) — with a deterministic trigger path
-  per row and a mandatory **Agent View** report section (§7) for out-of-band
-  findings. It writes its report to
-  `dev/scratchpad/az-v0.0.24-harness-live-test-report.md`.
+  [`az-v0.0.35-harness-live-test.md`](az-v0.0.35-harness-live-test.md). It
+  covers the full 0.0.35 delta — the OpenAI platform provider
+  (FID-2026-1001-001), the connector layer (FID-2026-0930-001/-002/-003),
+  gut-the-backend stages 1–2 (FID-2026-0929-004/-005), and the 09-29
+  hardening batch (FID-2026-0929-001/-002/-003) — with the full static +
+  executable gate matrix, a deterministic trigger path per feature row, and
+  the mandatory **Agent View** report section (§7) for out-of-band findings.
+  It writes its report to
+  `dev/scratchpad/az-v0.0.35-harness-live-test-report.md`. The older
+  per-release harnesses remain runnable for regression archaeology
+  (`az-v0.0.24-…`, `az-v0.0.25-…`, `az-v0.0.26-…`).
 - The Agent-Steering Teacher A–Z prompt is
   [`az-teacher-live-test.md`](az-teacher-live-test.md). It covers the `/learn`
   lifecycle (Forge → sandbox → graders → critique), the read-only `Teacher`
