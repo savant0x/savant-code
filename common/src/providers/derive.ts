@@ -29,12 +29,17 @@ export type SetupAvailableIds<R extends Record<string, ProviderConfig>> = {
   [K in keyof R]: R[K] extends { setupAvailable: true } ? K : never
 }[keyof R]
 
-/** Allowed routing prefixes = org slugs + registry ids. */
+/**
+ * Allowed routing prefixes = org slugs ∪ registry ids (set union — FID
+ * 2026-1001-001 A-Z audit: `openai` is BOTH an org slug (logo/domain
+ * lookups) and a registry id, so the concatenation must dedup to keep the
+ * derived list duplicate-free).
+ */
 export function deriveAllowedModelPrefixes(
   registry: Record<string, ProviderConfig>,
   orgPrefixes: readonly string[],
 ): string[] {
-  return [...orgPrefixes, ...Object.keys(registry)]
+  return [...new Set([...orgPrefixes, ...Object.keys(registry)])]
 }
 
 /** Favicon/logo domains = org-slug domains + registry domains (id-keyed). */

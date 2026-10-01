@@ -1,6 +1,6 @@
 {
-  "catalogVersion": "0.0.34",
-  "generatedAt": "2026-10-01T13:37:53.241Z",
+  "catalogVersion": "0.0.35",
+  "generatedAt": "2026-10-01T19:53:15.971Z",
   "minEngineVersion": "0.3.0",
   "toolchain": {
     "compilerVersion": "0.1.0",

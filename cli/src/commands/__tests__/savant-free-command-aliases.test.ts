@@ -1,7 +1,12 @@
 import { describe, expect, test } from 'bun:test'
 
 describe('savant-free command aliases', () => {
-  test('/model aliases /end-session in savant-free', () => {
+  // A–Z v0.0.35 audit finding: cold `bun --eval` subprocess importing the
+  // command-registry graph — under load that exceeds bun's default 5s test
+  // timeout (flake, not regression). Explicit generous bound.
+  test(
+    '/model aliases /end-session in savant-free',
+    () => {
     const slashCommandsUrl = new URL(
       '../../data/slash-commands.ts',
       import.meta.url,
@@ -52,5 +57,7 @@ describe('savant-free command aliases', () => {
 
     const stderr = new TextDecoder().decode(result.stderr)
     expect(result.exitCode, stderr).toBe(0)
-  })
+    },
+    60000,
+  )
 })

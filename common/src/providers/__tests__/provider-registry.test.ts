@@ -23,7 +23,7 @@ import type { ProviderConfig } from '../types'
  * as its first argument so tests inject a fixture instead of the singleton).
  */
 describe('PROVIDER_REGISTRY (FID-2026-0809-001 Phase 1)', () => {
-  test('covers all twenty current providers', () => {
+  test('covers all twenty-one current providers', () => {
     expect(Object.keys(PROVIDER_REGISTRY).sort()).toEqual([
       'apinex',
       'atria',
@@ -38,6 +38,7 @@ describe('PROVIDER_REGISTRY (FID-2026-0809-001 Phase 1)', () => {
       'nous',
       'nvidia',
       'ollama',
+      'openai',
       'openrouter',
       'orcarouter',
       'tokenbom',
@@ -104,7 +105,7 @@ describe('PROVIDER_REGISTRY (FID-2026-0809-001 Phase 1)', () => {
     expect(deriveProviderOrder(PROVIDER_REGISTRY, 'unknown')).toBe(4)
   })
 
-  test('setup config derives exactly the nineteen current setup providers', () => {
+  test('setup config derives exactly the twenty current setup providers', () => {
     const setup = deriveSetupConfig(PROVIDER_REGISTRY)
     expect(Object.keys(setup).sort()).toEqual([
       'apinex',
@@ -119,6 +120,7 @@ describe('PROVIDER_REGISTRY (FID-2026-0809-001 Phase 1)', () => {
       'kiosapi',
       'nous',
       'nvidia',
+      'openai',
       'openrouter',
       'orcarouter',
       'tokenbom',
@@ -127,6 +129,11 @@ describe('PROVIDER_REGISTRY (FID-2026-0809-001 Phase 1)', () => {
       'unorouter',
       'vercel',
     ])
+    expect(setup.openai).toEqual({
+      label: 'OpenAI',
+      envVar: 'OPENAI_API_KEY',
+      baseUrl: 'https://api.openai.com/v1',
+    })
     expect(setup.openrouter).toEqual({
       label: 'OpenRouter',
       envVar: 'OPENROUTER_API_KEY',

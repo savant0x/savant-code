@@ -132,8 +132,11 @@ T67). Expected: every row exit 0; capture the tail counts.
 ### 5b. FID-2026-0930-001/-002 — the connectors layer
 
 - 5b.1 Workspace suite green (gate 1.5 tail counts). EXECUTABLE.
-- 5b.2 Async endpoints fail closed at LOAD (`ASYNC_UNSUPPORTED` in the
-  catalog bundle; PORT-NOTES ledger entry exists). STATIC + EXECUTABLE.
+- 5b.2 Async endpoints fail closed at LOAD: `ASYNC_UNSUPPORTED` is the
+  engine error class (`packages/connectors/src/engine/errors.ts`) raised
+  when an async-declaring doc is loaded — the launch catalog carries no
+  async docs post-port, and the PORT-NOTES ledger records the deviation.
+  STATIC + EXECUTABLE (engine suite).
 - 5b.3 MIT attribution file present (`packages/connectors/LICENSE-monid`).
   STATIC.
 

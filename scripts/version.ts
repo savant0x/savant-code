@@ -22,6 +22,10 @@ export const SYNCHRONIZED_PACKAGE_PATHS: readonly string[] = [
   'packages/agent-runtime/package.json',
   'packages/design-systems/package.json',
   'packages/code-map/package.json',
+  // A–Z v0.0.35 audit: the 13th workspace was registered everywhere else
+  // (typecheck/test/quality/protocol mirror) at FID-2026-0930-002 but missed
+  // this list — its manifest drifted at the 0.0.35 bump.
+  'packages/connectors/package.json',
   'packages/database/package.json',
   'packages/knowledge-graph/package.json',
   'packages/llm-providers/package.json',

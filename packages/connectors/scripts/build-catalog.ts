@@ -13,7 +13,7 @@
  * (upstream invariant, compiler-determinism.test.ts) — the committed
  * artifact is reproducible from the tree.
  */
-import { mkdir, writeFile } from 'node:fs/promises'
+import { mkdir, readFile, writeFile } from 'node:fs/promises'
 import { fileURLToPath } from 'node:url'
 
 
@@ -25,19 +25,30 @@ import {
 } from '../src/core/mod.ts'
 import { ENGINE_VERSION } from '../src/engine/mod.ts'
 
-const REPO_ROOT = fileURLToPath(new URL('../', import.meta.url))
-const connectorsDir = `${REPO_ROOT}src/connectors`
-const outPath = `${REPO_ROOT}src/catalog/catalog.json`
+const PACKAGE_ROOT = fileURLToPath(new URL('../', import.meta.url))
+const REPO_ROOT = fileURLToPath(new URL('../../../', import.meta.url))
+const connectorsDir = `${PACKAGE_ROOT}src/connectors`
+const outPath = `${PACKAGE_ROOT}src/catalog/catalog.json`
 
 const [connectors, leafCategories] = await Promise.all([
   loadConnectorDefs(connectorsDir),
   loadCategoryRegistry(connectorsDir),
 ])
 
+// A–Z v0.0.35 audit finding: the catalog version mirrors the product version
+// but was a hand-maintained literal the bump script cannot reach — it went
+// stale at the 0.0.35 bump. Read it from the root manifest so the artifact
+// always carries the tree's version.
+const rootManifest = JSON.parse(
+  await readFile(`${REPO_ROOT}package.json`, 'utf8'),
+) as { version: string }
+// (The connectors package manifest version itself is owned by the bump
+// script's synchronized list — it joined during the 0.0.35 audit.)
+
 const bundle = await compileBundle(connectors, {
   compilerVersion: COMPILER_VERSION,
   builtWithEngineVersion: ENGINE_VERSION,
-  catalogVersion: '0.0.34',
+  catalogVersion: rootManifest.version,
   generatedAt: new Date().toISOString(),
   leafCategories,
 })
