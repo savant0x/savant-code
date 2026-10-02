@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-1001-002-free-options-notify-surfaces.md`
 **ID:** FID-2026-1001-002
 **Severity:** medium
-**Status:** verified
+**Status:** closed
 **Created:** 2026-10-01 18:13
 **Automation level:** 3
 **YAGNI-Compliance:** Verified
@@ -28,7 +28,7 @@ message announcing the cached free-lane split.
 - **OS:** Windows (Git Bash)
 - **Language/Runtime:** TypeScript, Bun 1.3.14 (pinned)
 - **Tool Versions:** bun 1.3.14, tsc 5.x
-- **Commit/State:** `main` @ 35819c0e, working tree clean
+- **Commit/State:** `main` @ `5ea0e0a5` (implementation, 15 paths); closure commit follows
 
 ## Detailed Description
 
@@ -340,7 +340,8 @@ boot critical path:
 
 ### Implementation Evidence (REQUIRED for `closed`)
 
-- [x] **Commit SHA:** pending (G2 — closure lands with the commit)
+- [x] **Commit SHA:** `5ea0e0a5` (implementation; this record's closure and
+      archive move land in the immediately following commit)
 - [x] **File:line ranges:**
       `cli/src/cli-boot-steps.ts` (discloseFreeOptionsNoticeOnce + import),
       `cli/src/index.tsx` (import + wiring beside the analytics notice),
@@ -378,7 +379,14 @@ boot critical path:
 
 ## Resolution
 
-- **Closed Date:** pending (closure + archive land with the closure commit, G2)
+- **Closed Date:** 2026-10-01 21:26 (implementation committed as `5ea0e0a5`;
+      status flip, CHANGELOG entry, and archive move land in the closure
+      commit)
+- **Receipt note:** the receipt below was stamped at 01:21:22Z, BEFORE this
+  closure edit. Per FID-2026-0823-009 a `closed` record is outside the
+  live contract by design (the status flip edits the document, so the
+  fingerprint is expected to drift); re-stamping at closure is optional and
+  the receipt documents the verification that earned the status.
 - **Fix Description:** two proactive user-facing surfaces — the one-time
   free-options boot notice (pre-TUI stderr, settings-flag retirement,
   non-free builds) and the boot system message announcing the cached
@@ -390,7 +398,8 @@ boot critical path:
   Loop 2 `liftCatalog` split; prettier --check clean; markdownlint exit 0;
   FID line-length audit 0 lines over MD013; Adversary re-verified every
   citation against the tree (Loop 3)
-- **Archived:** pending (with the closure commit)
+- **Archived:** 2026-10-01 21:26 (moved to `dev/fids/archive/` in the
+      closure commit)
 
 ## Lessons Learned
 
