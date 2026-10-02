@@ -16,6 +16,39 @@
 > shipped in v0.0.34: live-verified **Vercel AI Gateway** + **Clean APIs**, the
 > Cloudflare dual-credential wizard, and the Law 3 verification-gate soundness fix.
 
+### Free-provider discovery reaches users (FID-2026-1001-002) — **closed 2026-10-01** (commit 5ea0e0a5)
+
+The free-compute discovery pipeline (FID-2026-0914-003 + 0928-011/012) shipped healthy but reached
+nobody: the MQ4 boot harvest is repo-gated (its own comment says ordinary users outside the repo never
+fetch), the MQ5 announce reads a gitignored dev-side ledger shipped users never have, and
+/provider free was on-demand with zero proactive discoverability — the operator ran the CLI for four
+months without ever seeing a notification.
+
+Two surfaces, both pattern-copies of existing ones. `discloseFreeOptionsNoticeOnce()`
+(`cli/src/cli-boot-steps.ts`) prints a stderr-only one-time pointer to `/provider free`, retires on a
+persisted `freeOptionsNoticeShown` flag, is wired ahead of the headless dispatch so `--print` /
+`--auto` / piped / CI runs see it too, and is skipped in SavantFree where `/provider` is not
+registered. `announceFreeOptionsSplit()` (`cli/src/chat/use-chat-bootstrap.ts`) joins the existing
+deferred discovery effect and announces the cached wired/not-wired free-lane split once per
+content-set via a sidecar key, kicking a fail-silent background refresh when the cache is absent or
+stale while the announce path itself never fetches.
+
+Supporting work: `readCachedFreeOptionsReport()` reads the local cache only; `buildMachineContext`
+is shared by the refresh and the reader (one truth); `liftCatalog` was extracted to
+`free-options-catalog.ts` to keep every module under the 300-line ceiling with one import surface
+preserved. `docs/features.md` gains a Free AI Options Discovery section stating that the boot summary
+is interactive-TUI-only, so headless runs get the notice and the command.
+
+The record ran four loops: a Verifier audit and self-correct (the quality ceiling rejected the first
+receipt stamp; the `fetchedAt` guard was then fixed in both the announce renderer and its
+command-output sibling), an operator-requested Adversary meta-verification that overturned the
+Verifier's verdict on five evidence points and raised a new FAIL-class omission — both surfaces were
+TUI-only, so headless users got neither — and the record's own unauthorized `n/a` deferral of the
+Adversary phase; then a delta-scoped Verifier pass that closed with no FAILs and two doc-accuracy
+corrections. Gates: `typecheck cli` 0; 19/19 pins (2 boot-notice + 6 cached-reader/renderer + 11
+pre-existing); eslint `--max-warnings 0`; prettier --check clean; `quality:report` PASS;
+markdownlint 0; Law 4 grep on both call sites; `fid:verify` receipt stamped and re-checked.
+
 ### First-class OpenAI platform provider + /provider picker ordering (FID-2026-1001-001) — **closed 2026-10-01** (commit f099ded8)
 
 OpenAI's platform becomes a first-class registry provider on a second credential lane: a platform `sk-` key
