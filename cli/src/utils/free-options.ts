@@ -9,8 +9,12 @@
  * Data source (operator ruling: live fetch + local cache): the keyless
  * custats free-models catalog — agent-facing by design (robots Policy A
  * allows retrieval; LIVE probe 2026-09-28: HTTP 200, OpenRouter schema,
- * `fetchedAt` field). Fetch happens on `/provider free` invocation only
- * (never at boot), at most once per 24h; any failure serves the last-good
+ * `fetchedAt` field). Fetch runs on `/provider free` invocation and,
+ * since FID-2026-1001-002, on a fail-silent BACKGROUND boot refresh when the
+ * cache is absent or stale — fired from `announceFreeOptionsSplit` in
+ * `cli/src/chat/use-chat-bootstrap.ts`. The announce path itself reads the
+ * cache only and never fetches (see `readCachedFreeOptionsReport`); the
+ * boot critical path stays network-free. Any failure serves the last-good
  * cache with a staleness note and never hard-fails the command.
  *
  * The same refresh writes `~/.savant-code/free-options.md` — the
@@ -23,13 +27,13 @@ import path from 'node:path'
 
 import { PROVIDER_REGISTRY } from '@savant-code/common/providers/registry'
 
+import { liftCatalog } from './free-options-catalog'
 import { freeOptionsPaths } from './free-options-paths'
 import { renderFreeOptionsMarkdown } from './free-options-render'
 import { readStoredProviderKeys } from './provider-credentials'
 
 import type {
   FreeCatalogEnvelope,
-  FreeCatalogModel,
   FreeLane,
   FreeOptionsContext,
   FreeOptionsReport,
@@ -38,8 +42,10 @@ import type {
 
 // Re-export the surface the command handler and tests consume, so callers
 // keep ONE import module while the ceiling keeps the file split (Law 13).
+export { liftCatalog } from './free-options-catalog'
 export {
   renderCommandOutput,
+  renderFreeOptionsAnnounce,
   renderFreeOptionsMarkdown,
 } from './free-options-render'
 export { freeOptionsPaths } from './free-options-paths'
@@ -78,55 +84,6 @@ export async function fetchFreeCatalog(): Promise<FreeCatalogEnvelope | null> {
     return liftCatalog(await r.json())
   } catch {
     return null
-  }
-}
-
-/** Defensive lift; null on structural mismatch (untrusted input). */
-export function liftCatalog(raw: unknown): FreeCatalogEnvelope | null {
-  if (typeof raw !== 'object' || raw === null) return null
-  const j = raw as Record<string, unknown>
-  const fetchedAt = typeof j['fetchedAt'] === 'string' ? j['fetchedAt'] : null
-  if (!fetchedAt || !Array.isArray(j['models'])) return null
-  const models: FreeCatalogModel[] = []
-  for (const entry of j['models']) {
-    if (typeof entry !== 'object' || entry === null) continue
-    const e = entry as Record<string, unknown>
-    const id = typeof e['id'] === 'string' ? e['id'] : null
-    const providerId =
-      typeof e['providerId'] === 'string' ? e['providerId'] : null
-    if (!id || !providerId) continue
-    const contextLength =
-      typeof e['context_length'] === 'number' ? e['context_length'] : null
-    models.push({ id, providerId, context_length: contextLength })
-  }
-  const newModelIds = Array.isArray(j['newModelIds'])
-    ? j['newModelIds'].filter((v): v is string => typeof v === 'string')
-    : []
-  const archivedModels: FreeCatalogEnvelope['archivedModels'] = []
-  if (Array.isArray(j['archivedModels'])) {
-    for (const entry of j['archivedModels']) {
-      if (typeof entry !== 'object' || entry === null) continue
-      const a = entry as Record<string, unknown>
-      const id = typeof a['id'] === 'string' ? a['id'] : null
-      const removedAt =
-        typeof a['removedAt'] === 'string' ? a['removedAt'] : null
-      if (id && removedAt) {
-        archivedModels.push({
-          id,
-          providerId:
-            typeof a['providerId'] === 'string' ? a['providerId'] : null,
-          removedAt,
-        })
-      }
-    }
-  }
-  return {
-    fetchedAt,
-    totalModels:
-      typeof j['totalModels'] === 'number' ? j['totalModels'] : models.length,
-    models,
-    newModelIds,
-    archivedModels,
   }
 }
 
@@ -195,13 +152,7 @@ export async function refreshFreeOptions(): Promise<FreeOptionsReport> {
     if (catalog) fetchedAt = catalog.fetchedAt
   }
 
-  const context: FreeOptionsContext = {
-    nowMs,
-    wiredEnvVars: collectWiredEnvVars(),
-    registryByProviderId: buildRegistryAttribution(),
-    localProviders: collectLocalProviders(),
-  }
-  const report = buildFreeOptionsReport(catalog, context)
+  const report = buildFreeOptionsReport(catalog, buildMachineContext(nowMs))
   report.fetchedAt = fetchedAt
 
   if (catalog !== null) {
@@ -215,6 +166,40 @@ export async function refreshFreeOptions(): Promise<FreeOptionsReport> {
     }
   }
   return report
+}
+
+/**
+ * Assemble the machine context (wired ∪ env, registry attribution, local).
+ * One truth for the refresh cycle and the boot announce's cached reader
+ * (Law 13).
+ */
+function buildMachineContext(nowMs: number): FreeOptionsContext {
+  return {
+    nowMs,
+    wiredEnvVars: collectWiredEnvVars(),
+    registryByProviderId: buildRegistryAttribution(),
+    localProviders: collectLocalProviders(),
+  }
+}
+
+/**
+ * FID-2026-1001-002 — read the LOCAL cache (never fetches) and build the
+ * BYOK split with the live machine context. Null when no cache exists or
+ * the cached JSON is corrupt (fail-silent). Used by the boot announce;
+ * `/provider free`'s refresh remains the fetch path.
+ */
+export function readCachedFreeOptionsReport(): FreeOptionsReport | null {
+  let catalog: FreeCatalogEnvelope | null = null
+  try {
+    const paths = freeOptionsPaths()
+    if (fs.existsSync(paths.cache)) {
+      catalog = liftCatalog(JSON.parse(fs.readFileSync(paths.cache, 'utf8')))
+    }
+  } catch {
+    catalog = null
+  }
+  if (!catalog) return null
+  return buildFreeOptionsReport(catalog, buildMachineContext(Date.now()))
 }
 
 /** Env vars with non-empty values (persisted store ∪ environment). */

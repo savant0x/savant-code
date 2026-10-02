@@ -63,6 +63,10 @@ export interface Settings {
   /** Set once the analytics disclosure notice has been shown (FID-2026-0806-015).
    *  The one-line first-run notice only prints to brand-new users, then retires. */
   analyticsNoticeShown?: boolean
+  /** Set once the free-options discovery notice has been shown
+   *  (FID-2026-1001-002). The one-line first-run notice only prints to users
+   *  who have never seen it, then retires. */
+  freeOptionsNoticeShown?: boolean
   /** Active design-system IDs by scope; invalid values fail closed at resolution. */
   designSystemProject?: string
   designSystemUser?: string

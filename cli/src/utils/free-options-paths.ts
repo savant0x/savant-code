@@ -6,10 +6,15 @@
 import { getConfigDir } from './config-dir'
 
 /** Config dir paths; test-overridable via SAVANT_CODE_CONFIG_DIR. */
-export function freeOptionsPaths(): { cache: string; markdown: string } {
+export function freeOptionsPaths(): {
+  cache: string
+  markdown: string
+  announced: string
+} {
   const dir = getConfigDir()
   return {
     cache: `${dir}/free-options.json`,
     markdown: `${dir}/free-options.md`,
+    announced: `${dir}/free-options-announced.txt`,
   }
 }

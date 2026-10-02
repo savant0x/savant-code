@@ -64,6 +64,14 @@ export const hasAnalyticsNoticeBeenShown = (): boolean => {
 }
 
 /**
+ * Whether the one-line free-options discovery notice has been shown yet
+ * (FID-2026-1001-002). False only for users who have never seen it.
+ */
+export const hasFreeOptionsNoticeBeenShown = (): boolean => {
+  return loadSettings().freeOptionsNoticeShown === true
+}
+
+/**
  * Discord Rich Presence enable/disable (FID-2026-0818-009). Defaults to
  * enabled; `/presence disable` persists false to settings.json.
  */
@@ -90,6 +98,12 @@ export const SAVANT_DISCORD_CLIENT_ID = '1539431002089328710'
 export const markAnalyticsNoticeShown = (): void => {
   if (loadSettings().analyticsNoticeShown === true) return
   saveSettings({ analyticsNoticeShown: true })
+}
+
+/** Mark the free-options discovery notice as shown. Idempotent. */
+export const markFreeOptionsNoticeShown = (): void => {
+  if (loadSettings().freeOptionsNoticeShown === true) return
+  saveSettings({ freeOptionsNoticeShown: true })
 }
 
 /**

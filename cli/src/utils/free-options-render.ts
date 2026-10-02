@@ -53,7 +53,11 @@ export function renderFreeOptionsMarkdown(report: FreeOptionsReport): string {
 /** Render the `/provider free` chat output lines. */
 export function renderCommandOutput(report: FreeOptionsReport): string[] {
   const lines: string[] = []
-  if (report.fetchedAt === null) {
+  // Truthy guard, matching renderFreeOptionsAnnounce: `liftCatalog` rejects a
+  // non-string `fetchedAt`, but `''` passes its typeof check, so `=== null`
+  // would render "fetchedAt :" from a hand-corrupted cache (FID-2026-1001-002
+  // Loop 3).
+  if (!report.fetchedAt) {
     lines.push(
       "Couldn't fetch the free-model catalog and no cached copy exists.",
     )
@@ -84,5 +88,50 @@ export function renderCommandOutput(report: FreeOptionsReport): string[] {
   lines.push(
     'The full reference (with model ids) is saved to free-options.md in your Savant config directory — ask the agent "what free options do I have?" and it can read it for you.',
   )
+  return lines
+}
+
+/** Bounded label list: first 5, then an ellipsis. */
+function boundedLabels(labels: string[]): string {
+  const shown = labels.slice(0, 5).join(', ')
+  return labels.length > 5 ? `${shown}, …` : shown
+}
+
+/**
+ * Render the boot system-message lines announcing the cached free-lane
+ * split (FID-2026-1001-002). Empty when there is nothing to say (no cache
+ * timestamp, or every lane list empty) so a nothing message never posts.
+ */
+export function renderFreeOptionsAnnounce(report: FreeOptionsReport): string[] {
+  // Truthy guard, not `=== null`: a hand-corrupted cache JSON can leave
+  // `fetchedAt` runtime-undefined (the type says `string | null`, so the
+  // `=== null` form would let "catalog fetchedAt undefined" reach the user).
+  if (!report.fetchedAt) return []
+  const total =
+    report.wiredFree.length + report.notWired.length + report.localFree.length
+  if (total === 0) return []
+  const age = report.stale ? ' (cached copy is older than a day)' : ''
+  const lines: string[] = [
+    `Free AI lanes available${age} — catalog fetchedAt ${report.fetchedAt}:`,
+  ]
+  if (report.wiredFree.length > 0) {
+    const labels = boundedLabels(report.wiredFree.map((lane) => lane.label))
+    lines.push(
+      `- Wired & free: ${report.wiredFree.length} — ${labels} — free models ready with your keys`,
+    )
+  }
+  if (report.notWired.length > 0) {
+    const labels = boundedLabels(report.notWired.map((lane) => lane.label))
+    lines.push(
+      `- Not wired: ${report.notWired.length} — ${labels} — each starts with /provider <name>`,
+    )
+  }
+  if (report.localFree.length > 0) {
+    const labels = boundedLabels(report.localFree.map((lane) => lane.label))
+    lines.push(
+      `- Local & free: ${report.localFree.length} — ${labels} — no key needed`,
+    )
+  }
+  lines.push('Run /provider free for the full split with model ids.')
   return lines
 }

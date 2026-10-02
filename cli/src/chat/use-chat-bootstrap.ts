@@ -3,7 +3,8 @@
  * Extracted from chat.tsx verbatim: provider-setup guidance, sidebar
  * context-token cap sync, and the CLI-flag initial mode/permission wiring.
  * FID-2026-0914-003 (Loop 5): discovery boot-check (MQ4) + the sanitized
- * agent-context announce block (MQ5/Layer 2).
+ * agent-context announce block (MQ5/Layer 2). FID-2026-1001-002: the
+ * free-options boot announce joins the same deferred effect.
  */
 
 import { existsSync, readFileSync, statSync, writeFileSync } from 'node:fs'
@@ -19,6 +20,12 @@ import { tryGetProjectRoot } from '../project-files'
 import { useChatStore } from '../state/chat-store'
 import { useGatewayCatalogStore } from '../state/gateway-catalog-store'
 import { IS_SAVANT_FREE } from '../utils/constants'
+import {
+  freeOptionsPaths,
+  readCachedFreeOptionsReport,
+  refreshFreeOptions,
+  renderFreeOptionsAnnounce,
+} from '../utils/free-options'
 import { getSystemMessage } from '../utils/message-history'
 import {
   resolveContextWindowForModel,
@@ -115,6 +122,45 @@ function announceDiscoveryBlock(
   }
 }
 
+/**
+ * FID-2026-1001-002: announce the cached free-lane split as a system
+ * message, once per content-set (sidecar key — the MQ5 `.announced-key`
+ * semantics). The announce path reads the LOCAL cache only — never
+ * fetches; when the cache is absent or older than a day, a fail-silent
+ * fire-and-forget refresh warms it so the next boot has a fresh split.
+ */
+function announceFreeOptionsSplit(
+  setMessages: UseChatBootstrapArgs['setMessages'],
+): void {
+  try {
+    if (IS_SAVANT_FREE) return
+    const report = readCachedFreeOptionsReport()
+    if (!report || report.stale) {
+      // Cache absent or older than a day: refresh in the background so the
+      // next boot has a fresh split. Fail-silent by design (MQ4/MQ5
+      // doctrine: announce failures never break the TUI).
+      void refreshFreeOptions().catch(() => {})
+    }
+    if (!report) return
+    const lines = renderFreeOptionsAnnounce(report)
+    if (lines.length === 0) return
+    const setKey = JSON.stringify([
+      report.wiredFree.map((lane) => lane.providerId),
+      report.notWired.map((lane) => lane.providerId),
+      report.localFree.map((lane) => lane.id),
+    ])
+    const { announced } = freeOptionsPaths()
+    const lastAnnounced = existsSync(announced)
+      ? readFileSync(announced, 'utf8').trim()
+      : ''
+    if (lastAnnounced === setKey) return
+    setMessages((prev) => [...prev, getSystemMessage(lines.join('\n'))])
+    writeFileSync(announced, setKey, 'utf8')
+  } catch {
+    // Fail-silent (FID-2026-1001-002): announce failures never break the TUI.
+  }
+}
+
 export interface UseChatBootstrapArgs {
   messages: ChatMessage[]
   setMessages: (
@@ -176,8 +222,9 @@ export function useChatBootstrap({
   }, [sidebarModel, updateContextTokensMax, gatewayCatalogLoadedAt])
 
   // FID-2026-0914-003 (Loop 5): background daily harvest (MQ4) + the
-  // sanitized agent-context announce (MQ5). One deferred effect, so neither
-  // contends with TUI init; both bodies are fail-silent and repo-gated.
+  // sanitized agent-context announce (MQ5). FID-2026-1001-002: the
+  // free-options announce joins the same deferred effect, so none contends
+  // with TUI init; all bodies are fail-silent (repo-gated where marked).
   const discoveryAnnouncedRef = useRef(false)
   useEffect(() => {
     if (messages.length !== 0) return
@@ -186,6 +233,7 @@ export function useChatBootstrap({
     const timer = setTimeout(() => {
       maybeSpawnDailyHarvest()
       announceDiscoveryBlock(setMessages)
+      announceFreeOptionsSplit(setMessages)
     }, 1_500)
     return () => clearTimeout(timer)
   }, [messages.length])

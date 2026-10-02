@@ -97,6 +97,11 @@ export const validateSettings = (parsed: JSONValue): Settings => {
     settings.analyticsNoticeShown = obj.analyticsNoticeShown
   }
 
+  // Validate freeOptionsNoticeShown (FID-2026-1001-002)
+  if (typeof obj.freeOptionsNoticeShown === 'boolean') {
+    settings.freeOptionsNoticeShown = obj.freeOptionsNoticeShown
+  }
+
   // Design-system selections are stable IDs only; paths are handled by the
   // design service after canonicalization, never trusted from settings JSON.
   if (

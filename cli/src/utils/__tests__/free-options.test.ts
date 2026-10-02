@@ -8,11 +8,18 @@
  * (keyless, agent-facing, LIVE-probed 2026-09-28) supplies which models are
  * free right now, partitioned by providerId.
  */
-import { describe, expect, test } from 'bun:test'
+import fs from 'node:fs'
+import os from 'node:os'
+import path from 'node:path'
+
+import { afterEach, beforeEach, describe, expect, test } from 'bun:test'
 
 import {
   isCacheFresh,
   buildFreeOptionsReport,
+  freeOptionsPaths,
+  readCachedFreeOptionsReport,
+  renderFreeOptionsAnnounce,
   renderFreeOptionsMarkdown,
   renderCommandOutput,
   type FreeCatalogEnvelope,
@@ -166,5 +173,86 @@ describe('FID-2026-0928-012: /provider free command output', () => {
     const joined = lines.join('\n')
     expect(joined).toMatch(/couldn't fetch|no cached/i)
     expect(joined).toContain('Ollama')
+  })
+})
+
+describe('FID-2026-1001-002: boot announce (cached reader + renderer)', () => {
+  // The cached reader resolves the config dir via SAVANT_CODE_CONFIG_DIR —
+  // the same isolation the command-grammar harness uses.
+  let tempDir = ''
+  let originalConfigDir: string | undefined
+
+  beforeEach(() => {
+    originalConfigDir = process.env.SAVANT_CODE_CONFIG_DIR
+    tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'savant-free-announce-'))
+    process.env.SAVANT_CODE_CONFIG_DIR = tempDir
+  })
+
+  afterEach(() => {
+    if (originalConfigDir === undefined)
+      delete process.env.SAVANT_CODE_CONFIG_DIR
+    else process.env.SAVANT_CODE_CONFIG_DIR = originalConfigDir
+    fs.rmSync(tempDir, { recursive: true, force: true })
+  })
+
+  test('null when no cache exists (never fetches)', () => {
+    expect(readCachedFreeOptionsReport()).toBeNull()
+  })
+
+  test('builds the BYOK split from a fresh seeded cache', () => {
+    const fresh = { ...CATALOG, fetchedAt: new Date().toISOString() }
+    fs.writeFileSync(freeOptionsPaths().cache, JSON.stringify(fresh))
+    const report = readCachedFreeOptionsReport()
+    expect(report?.stale).toBe(false)
+    // Local lanes are registry-deterministic; the wired/not-wired split
+    // reflects the LIVE machine context (host env), so only the shape and
+    // the local lane are pinned here.
+    expect(report?.localFree.map((lane) => lane.id)).toContain('ollama')
+    expect(report?.fetchedAt).toBe(fresh.fetchedAt)
+  })
+
+  test('a cached copy older than 24h is flagged stale', () => {
+    const staleCopy = {
+      ...CATALOG,
+      fetchedAt: new Date(Date.now() - 25 * 3600_000).toISOString(),
+    }
+    fs.writeFileSync(freeOptionsPaths().cache, JSON.stringify(staleCopy))
+    expect(readCachedFreeOptionsReport()?.stale).toBe(true)
+  })
+
+  test('corrupt cache JSON is fail-silent (null)', () => {
+    fs.writeFileSync(freeOptionsPaths().cache, '{not-json')
+    expect(readCachedFreeOptionsReport()).toBeNull()
+  })
+
+  test('announce renderer: bounded message with the /provider free pointer', () => {
+    const lines = renderFreeOptionsAnnounce(
+      buildFreeOptionsReport(CATALOG, CTX),
+    )
+    const joined = lines.join('\n')
+    expect(joined).toContain('Free AI lanes available')
+    expect(joined).toContain('Wired & free')
+    expect(joined).toContain('Not wired')
+    expect(joined).toContain('Local & free')
+    expect(joined).toContain('/provider free')
+  })
+
+  test('announce renderer: nothing to say renders no lines', () => {
+    // No catalog at all.
+    expect(
+      renderFreeOptionsAnnounce(buildFreeOptionsReport(null, CTX)),
+    ).toEqual([])
+    // Catalog with no actionable lanes (every list empty).
+    const empty = buildFreeOptionsReport(
+      {
+        fetchedAt: CATALOG.fetchedAt,
+        totalModels: 0,
+        models: [],
+        newModelIds: [],
+        archivedModels: [],
+      },
+      { ...CTX, localProviders: [] },
+    )
+    expect(renderFreeOptionsAnnounce(empty)).toEqual([])
   })
 })

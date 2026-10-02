@@ -1,4 +1,5 @@
 <!-- markdownlint-disable MD013 -->
+
 # Features
 
 **Everything you need for AI-assisted coding with structural quality guarantees.**
@@ -79,7 +80,7 @@ distinction.
   (first press) and stops (second press); the sidebar shows a live drive
   panel (goal, active FID, phase, open count, Run Log count).
 - **Headless** — `savant-code --auto "<goal>" [--spec <path>] [--plan-file
-  <path>] [--approve] [--plan-only] [--continue]` runs the full cycle without
+<path>] [--approve] [--plan-only] [--continue]` runs the full cycle without
   the TUI; exit code `0` only when zero FIDs remain open.
 
 ---
@@ -205,7 +206,7 @@ Works with multiple inference providers:
 - **CommandCode** — OpenAI-compatible hosted inference
 - **Nous Research** — OpenAI-compatible direct inference via `NOUS_API_KEY`; Portal OAuth is a separate integration
 - **Cloudflare** — Env-only gateway (Workers AI); requires `CLOUDFLARE_API_TOKEN`
-  + `CLOUDFLARE_ACCOUNT_ID`, not in the `/provider` picker
+  - `CLOUDFLARE_ACCOUNT_ID`, not in the `/provider` picker
 - **Custom providers** — Define your own OpenAI-compatible providers with
   `/provider add` (guided wizard: id, label, base URL, wire protocol,
   key env var, inline model list, API key). Customs live in the same
@@ -217,6 +218,35 @@ Gateway model context lengths can be resolved from the live catalog. In
 BYOK/direct mode (`DIRECT_PROVIDER` or `INFERENCE_BASE_URL` set) every backend
 call is short-circuited — inference routes straight to the configured endpoint
 (FID-2026-0806-009/010).
+
+---
+
+## Free AI Options Discovery
+
+Savant is BYOK — you wire your own keys, so "free" means the free tiers and
+`:free` models of the gateways themselves. A discovery pipeline tracks which
+tiers are free right now and surfaces it three ways (FID-2026-0928-011/012,
+FID-2026-1001-002):
+
+- **`/provider free`** — live-fetches the keyless free-models catalog (24h
+  cache, soft-degrading), then splits the result by YOUR wiring: free models
+  available on providers you already keyed, free tiers you have NOT wired
+  (each with the exact `/provider <name>` command), and keyless local lanes
+  (Ollama). Writes `free-options.md` in your config directory so you and the
+  agent read one truth — ask "what free options do I have?" and it reads it.
+- **First-launch notice** — a one-time pre-TUI line points you at
+  `/provider free`, then retires (persisted flag). Non-free builds only:
+  `/provider` is not registered in SavantFree, so the notice is skipped
+  there rather than pointing at an unknown command.
+- **Boot summary** — on an empty chat, once per content-set, a system message
+  announces your wired/not-wired free-lane counts from the local cache, so
+  never typing the command is never the only way to find out. The catalog
+  refresh is a fail-silent background task; boot never blocks on the network.
+
+The first-launch notice reaches every non-free-build invocation (interactive,
+`--print`, `--auto`, piped, CI) because it is stderr-only and retires after
+one show. The boot summary is interactive-TUI-only (it needs a chat to post
+into), so headless runs get the notice and the `/provider free` command.
 
 One model project-wide: the model selected in the UI panel is the only model
 used — main chat agent, teacher-forge, headless runs, and spawned subagents all
@@ -290,14 +320,14 @@ Set any of these to promote a paid source to primary (keyless stays the
 fallback). Enter them via `/research-keys <service>` (masked, saved to
 `credentials.json`) or as shell environment variables (shell wins):
 
-| Service | Command | Environment variable |
-|---|---|---|
-| Serper (web search) | `/research-keys serper` | `SERPER_API_KEY` |
-| Context7 (indexed docs) | `/research-keys context7` | `CONTEXT7_API_KEY` |
-| Parallel (web search) | `/research-keys parallel` | `PARALLEL_API_KEY` |
-| Tavily (web search) | `/research-keys tavily` | `TAVILY_API_KEY` |
-| Exa (web search) | `/research-keys exa` | `EXA_API_KEY` |
-| Firecrawl (web search) | `/research-keys firecrawl` | `FIRECRAWL_API_KEY` |
+| Service                 | Command                    | Environment variable |
+| ----------------------- | -------------------------- | -------------------- |
+| Serper (web search)     | `/research-keys serper`    | `SERPER_API_KEY`     |
+| Context7 (indexed docs) | `/research-keys context7`  | `CONTEXT7_API_KEY`   |
+| Parallel (web search)   | `/research-keys parallel`  | `PARALLEL_API_KEY`   |
+| Tavily (web search)     | `/research-keys tavily`    | `TAVILY_API_KEY`     |
+| Exa (web search)        | `/research-keys exa`       | `EXA_API_KEY`        |
+| Firecrawl (web search)  | `/research-keys firecrawl` | `FIRECRAWL_API_KEY`  |
 
 Every source normalizes to one Serper-compatible `organic[]` shape, so
 `deep_research` (URL dedup, domain scoring, source budgets) works identically
@@ -390,29 +420,29 @@ A deterministic, incremental, SQLite-backed codebase knowledge graph:
 Structural cost controls layered onto the ECHO runtime (FID-2026-0806-003):
 
 - **Four-layer context compaction** — per-role token budgets, verbatim recent
-tail pinning, tool-result snip pre-pass with byte/line caps, and
-`<compaction-summary>`/`<structured_state>` tags that preserve exact
-identifiers and decisions instead of collapsing them into prose.
+  tail pinning, tool-result snip pre-pass with byte/line caps, and
+  `<compaction-summary>`/`<structured_state>` tags that preserve exact
+  identifiers and decisions instead of collapsing them into prose.
 - **LLM-semantic summaries (FID-2026-0914-002)** — the deterministic
-transcription is upgraded into a first-person handoff by the session model
-at the spawn boundary (settled-vs-open decisions, exact commands/paths,
-named unknowns, forward plan; validated, redacted, deterministic fallback
-on any failure). The deterministic writer stays as the guardrail:
-streamed fragments and repeated user messages coalesce, compaction
-placeholders are never re-digested, and preserved-state paths are
-repo-relative and recency-capped.
+  transcription is upgraded into a first-person handoff by the session model
+  at the spawn boundary (settled-vs-open decisions, exact commands/paths,
+  named unknowns, forward plan; validated, redacted, deterministic fallback
+  on any failure). The deterministic writer stays as the guardrail:
+  streamed fragments and repeated user messages coalesce, compaction
+  placeholders are never re-digested, and preserved-state paths are
+  repo-relative and recency-capped.
 - **Amortization** — optional per-turn fold mode (one oldest exchange folded
-per step), idle-compaction and force-ratio triggers, and anti-thrash scoring.
+  per step), idle-compaction and force-ratio triggers, and anti-thrash scoring.
 - **Token telemetry** — per-agent prompt/completion/cached token events, a
-cache-hit monitor, and a live context meter in the CLI sidebar (green/amber/
-red thresholds).
+  cache-hit monitor, and a live context meter in the CLI sidebar (green/amber/
+  red thresholds).
 - **YAGNI ladder** — the Forge must clear a six-rung decision ladder (need →
-codebase reuse → stdlib → platform → installed dependency → one-liner) and
-emit a `yagni_check` before writing code; deliberate shortcuts are tagged
-`ponytail:` and harvested into `dev/YAGNI-LEDGER.md`.
+  codebase reuse → stdlib → platform → installed dependency → one-liner) and
+  emit a `yagni_check` before writing code; deliberate shortcuts are tagged
+  `ponytail:` and harvested into `dev/YAGNI-LEDGER.md`.
 - **Opt-in Caveman mode** — telegraphic output rules for Orchestrator /
-Detective / Scribe with Auto-Clarity byte-exact bypasses for code, security
-warnings, and error paths.
+  Detective / Scribe with Auto-Clarity byte-exact bypasses for code, security
+  warnings, and error paths.
 
 Tunable via `compression` / `yagni` / `caveman` / `telemetry` sections in
 `protocol.config.yaml`.
@@ -487,50 +517,51 @@ for the full design.
 
 ## Slash Commands
 
-| Command | Purpose |
-|---------|---------|
-| `/help` | Show command help and tips |
-| `/new` | Start a fresh conversation |
-| `/history` | Browse and resume previous sessions |
-| `/copy` | Copy the complete conversation to the clipboard |
-| `/export` | Write a self-contained branded HTML report |
-| `/graph refresh` | Re-index the code knowledge graph and show summary stats |
-| `/graph-export` | Write a branded, interactive HTML report of the code knowledge graph |
-| `/attest` | Export and verify the current project's signed ZTAP trust receipt |
-| `/interview` | Create a structured specification |
-| `/learn` | Practice directing and reviewing an AI coding agent through guided exercises |
-| `/plan` | Create an implementation plan |
-| `/review` | Review code changes |
-| `/auto-drive` (`/auto`, `/drive`, `/autodrive`) | Start or manage an Auto Drive run — clarify, plan, approve, then run to completion |
-| `/compact` | Force an immediate context compaction (compact-and-stop) |
-| `/goal` | Start or manage a durable, budgeted goal run |
-| `/loop` | Schedule recurring checks |
-| `/verify` | Run typechecks |
-| `/permissions` | View or set the tool permission mode |
-| `/presence` (`/discord`) | Show or change Discord Rich Presence: `status`, `enable`, `disable` |
-| `/rewind` | Restore code and/or conversation from a prior turn |
-| `/health` | Check provider, Ollama, model, and permission status |
-| `/mode` | List the four modes and their contracts |
-| `/model` | Select or switch the active model |
-| `/provider` | Configure a hosted provider key |
-| `/bash` | Run a shell command |
-| `/image` | Attach an image for multimodal models |
-| `/init` | Create starter agent types and knowledge.md |
-| `/login` / `/logout` | Authenticate or end the current session |
-| `/contribute` | Add yourself to CONTRIBUTORS.md and open a PR |
-| `/telemetry` | Show or change remote analytics consent |
-| `/diagnostics` | Show local CLI resource usage |
-| `/ads:enable` / `/ads:disable` | Toggle contextual ads |
-| `/theme:toggle` | Toggle between light and dark mode |
-| `/design` | List, select, create, edit, or reset the active design system |
-| `/release` | Run the public release flow: `/release preview \| diagnose \| go \| resume \| status` |
-| `/feedback` | Share general feedback about SavantCode |
-| `/publish` | Publish an agent to the registry |
-| `/usage` | View credits and subscription quota |
-| `/subscribe` | Subscribe to get more usage |
-| `/connect` | Connect a ChatGPT account (OAuth) |
-| `/end-session` | End a free session (lets you switch model) |
-| `/exit` | Quit the CLI |
+| Command                                         | Purpose                                                                               |
+| ----------------------------------------------- | ------------------------------------------------------------------------------------- |
+| `/help`                                         | Show command help and tips                                                            |
+| `/new`                                          | Start a fresh conversation                                                            |
+| `/history`                                      | Browse and resume previous sessions                                                   |
+| `/copy`                                         | Copy the complete conversation to the clipboard                                       |
+| `/export`                                       | Write a self-contained branded HTML report                                            |
+| `/graph refresh`                                | Re-index the code knowledge graph and show summary stats                              |
+| `/graph-export`                                 | Write a branded, interactive HTML report of the code knowledge graph                  |
+| `/attest`                                       | Export and verify the current project's signed ZTAP trust receipt                     |
+| `/interview`                                    | Create a structured specification                                                     |
+| `/learn`                                        | Practice directing and reviewing an AI coding agent through guided exercises          |
+| `/plan`                                         | Create an implementation plan                                                         |
+| `/review`                                       | Review code changes                                                                   |
+| `/auto-drive` (`/auto`, `/drive`, `/autodrive`) | Start or manage an Auto Drive run — clarify, plan, approve, then run to completion    |
+| `/compact`                                      | Force an immediate context compaction (compact-and-stop)                              |
+| `/goal`                                         | Start or manage a durable, budgeted goal run                                          |
+| `/loop`                                         | Schedule recurring checks                                                             |
+| `/verify`                                       | Run typechecks                                                                        |
+| `/permissions`                                  | View or set the tool permission mode                                                  |
+| `/presence` (`/discord`)                        | Show or change Discord Rich Presence: `status`, `enable`, `disable`                   |
+| `/rewind`                                       | Restore code and/or conversation from a prior turn                                    |
+| `/health`                                       | Check provider, Ollama, model, and permission status                                  |
+| `/mode`                                         | List the four modes and their contracts                                               |
+| `/model`                                        | Select or switch the active model                                                     |
+| `/provider`                                     | Configure a hosted provider key                                                       |
+| `/provider free`                                | List free-model lanes you have (and haven't) wired                                    |
+| `/bash`                                         | Run a shell command                                                                   |
+| `/image`                                        | Attach an image for multimodal models                                                 |
+| `/init`                                         | Create starter agent types and knowledge.md                                           |
+| `/login` / `/logout`                            | Authenticate or end the current session                                               |
+| `/contribute`                                   | Add yourself to CONTRIBUTORS.md and open a PR                                         |
+| `/telemetry`                                    | Show or change remote analytics consent                                               |
+| `/diagnostics`                                  | Show local CLI resource usage                                                         |
+| `/ads:enable` / `/ads:disable`                  | Toggle contextual ads                                                                 |
+| `/theme:toggle`                                 | Toggle between light and dark mode                                                    |
+| `/design`                                       | List, select, create, edit, or reset the active design system                         |
+| `/release`                                      | Run the public release flow: `/release preview \| diagnose \| go \| resume \| status` |
+| `/feedback`                                     | Share general feedback about SavantCode                                               |
+| `/publish`                                      | Publish an agent to the registry                                                      |
+| `/usage`                                        | View credits and subscription quota                                                   |
+| `/subscribe`                                    | Subscribe to get more usage                                                           |
+| `/connect`                                      | Connect a ChatGPT account (OAuth)                                                     |
+| `/end-session`                                  | End a free session (lets you switch model)                                            |
+| `/exit`                                         | Quit the CLI                                                                          |
 
 **Availability:** SavantFree exposes `/connect`, `/plan`, and `/end-session`; the full build
 adds `/mode`, `/model`, `/provider`, `/usage`, `/subscribe`, `/publish`, `/release`, `/image`,
@@ -556,7 +587,7 @@ agent applies to any visual output it produces (markdown, HTML exports, terminal
 Built-in systems are immutable. Persistence is atomic: a failed commit leaves the prior valid
 version active, and restart persistence preserves the active system across sessions.
 A natural-language imperative grammar lets the agent apply design changes conversationally;
-ordinary design *discussion* never writes. The headless file/stdin schema routes through the
+ordinary design _discussion_ never writes. The headless file/stdin schema routes through the
 same service with bounded machine-readable errors. See
 [`docs/design/design-system-library.md`](design/design-system-library.md) for the full spec.
 

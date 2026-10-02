@@ -24,6 +24,7 @@ import { loadPackageVersion, parseArgs } from './cli-args'
 import {
   detectAndApplyOscTheme,
   discloseAnalyticsNoticeOnce,
+  discloseFreeOptionsNoticeOnce,
 } from './cli-boot-steps'
 import { dispatchCommandsAndHeadless } from './cli-command-dispatch'
 import { handleDesignInput } from './cli-design-input'
@@ -133,6 +134,12 @@ async function main(): Promise<void> {
 
   // Set the auth token for the API client
   setApiClientAuthToken(getAuthToken())
+
+  // Free-options discoverability notice (FID-2026-1001-002 Loop 3). BEFORE
+  // the headless dispatch so `--print` / `--auto` / piped / CI runs also see
+  // it — the Adversary found headless users got neither surface. Stderr-only
+  // and flag-retired, so it never corrupts piped stdout and never repeats.
+  discloseFreeOptionsNoticeOnce()
 
   // Command + headless dispatch (release, --auto, --print/piped/CI).
   // Handled invocations terminate or return; false falls through to the
