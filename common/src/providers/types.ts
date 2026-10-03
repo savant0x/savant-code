@@ -23,11 +23,7 @@ export type ProviderKind = 'gateway' | 'local' | 'env-only'
  * map-dispatch stays mandatory for MIXED rosters.
  */
 export type ProviderProtocol =
-  | 'openai'
-  | 'anthropic'
-  | 'openai-anthropic'
-  | 'multi'
-  | 'responses'
+  'openai' | 'anthropic' | 'openai-anthropic' | 'multi' | 'responses'
 
 /**
  * Per-model wire protocol for protocol-mapped providers. `responses` is the
@@ -46,7 +42,7 @@ export type ProviderIdTransform = 'strip' | 'keep' | 'cf-rewrite'
 
 /** Shared multi-protocol maps (see common/src/constants/model-config.ts). */
 export type ProviderProtocolMap =
-  'COMMANDCODE_PROTOCOLS' | 'TOKENROUTER_PROTOCOLS'
+  'COMMANDCODE_PROTOCOLS' | 'TOKENROUTER_PROTOCOLS' | 'XKIRO_PROTOCOLS'
 
 /**
  * Key resolution strategy. `openrouter` = master-key exchange chain.

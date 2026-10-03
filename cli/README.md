@@ -88,6 +88,11 @@ savant-code-tui
 
 ## Features
 
+- Live provider catalogs include CodeCraft API, xKiro, and CleanAPIs through
+  `/provider` and `/model`; keyboard, wheel, and scrollbar movement share
+  fixed one-line row geometry, while selection preserves full model IDs.
+- Agent model information uses reported catalog limits, prices, capabilities,
+  access tiers, and reasoning efforts. See the [provider/model reference](../docs/providers.md).
 - Built with OpenTUI for modern terminal interfaces
 - Uses React for declarative component-based UI
 - TypeScript support out of the box

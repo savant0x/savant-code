@@ -112,10 +112,40 @@ export const TOKENROUTER_PROTOCOLS: Record<string, ProviderModelProtocol> = {
  * one function, one truth (Law 13). Adding a map means one entry here plus
  * one member on `ProviderProtocolMap`; no call-site switch grows.
  */
+// xKiro documents both protocols for every chat model. These are explicit
+// routing preferences, not inferred endpoint restrictions. Prefix rules keep
+// new live IDs routable without freezing a catalog snapshot into source.
+export const XKIRO_PROTOCOLS: Record<string, ProviderModelProtocol> = {
+  'xkiro/anthropic/*': 'anthropic',
+  'xkiro/*': 'openai',
+}
+
+/** Exact ids win; otherwise use the longest declared terminal-* prefix. */
+export function resolveMappedModelProtocol(
+  map: Readonly<Record<string, ProviderModelProtocol>>,
+  modelId: string,
+): ProviderModelProtocol | undefined {
+  if (map[modelId] !== undefined) return map[modelId]
+  let matched: ProviderModelProtocol | undefined
+  let longestPrefix = 0
+  for (const [pattern, protocol] of Object.entries(map)) {
+    if (!pattern.endsWith('/*')) continue
+    const prefix = pattern.slice(0, -1)
+    if (modelId.length > prefix.length && modelId.startsWith(prefix)) {
+      if (prefix.length > longestPrefix) {
+        matched = protocol
+        longestPrefix = prefix.length
+      }
+    }
+  }
+  return matched
+}
+
 export const PROVIDER_PROTOCOL_MAPS: Record<
   ProviderProtocolMap,
   Record<string, ProviderModelProtocol>
 > = {
   COMMANDCODE_PROTOCOLS,
   TOKENROUTER_PROTOCOLS,
+  XKIRO_PROTOCOLS,
 }

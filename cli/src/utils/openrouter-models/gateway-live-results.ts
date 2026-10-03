@@ -6,13 +6,14 @@
  * POSITIONAL CONTRACT: `restResults` is the tail of the Promise.allSettled()
  * array after [openrouter, nvidia], in exactly this order:
  * Nous, KiosAPI, APInex, OpenAI, OrcaRouter, B.AI, Vercel, CleanApis,
- * custom catalogs. Fulfilled values win; rejected sources degrade to their
+ * CodeCraft, xKiro, custom catalogs. Fulfilled values win; rejected sources degrade to their
  * per-provider cache — custom catalogs degrade to [] (lazily-built custom
  * fetchers have no cache, FID-2026-0910-004 D10).
  */
 import { getCachedApinexModels } from './apinex'
 import { getCachedBaiModels } from './bai'
 import { getCachedCleanApisModels } from './cleanapis'
+import { getCachedCodecraftModels } from './codecraft'
 import { getCachedKiosapiModels } from './kiosapi'
 import { getCachedNousModels } from './nous'
 import { getCachedNvidiaModels } from './nvidia'
@@ -20,6 +21,7 @@ import { getCachedOpenAiModels } from './openai'
 import { getCachedOpenRouterModels } from './openrouter'
 import { getCachedOrcarouterModels } from './orcarouter'
 import { getCachedVercelModels } from './vercel'
+import { getCachedXkiroModels } from './xkiro'
 
 import type { OpenRouterModel } from './types'
 
@@ -40,6 +42,8 @@ export function resolveGatewayLiveCatalogs(
   baiModels: OpenRouterModel[]
   vercelModels: OpenRouterModel[]
   cleanApisModels: OpenRouterModel[]
+  codecraftModels: OpenRouterModel[]
+  xkiroModels: OpenRouterModel[]
   customModels: OpenRouterModel[]
 } {
   const [
@@ -51,6 +55,8 @@ export function resolveGatewayLiveCatalogs(
     baiResult,
     vercelResult,
     cleanApisResult,
+    codecraftResult,
+    xkiroResult,
     customResult,
   ] = restResults
 
@@ -97,5 +103,13 @@ export function resolveGatewayLiveCatalogs(
       customResult && customResult.status === 'fulfilled'
         ? customResult.value
         : [],
+    codecraftModels:
+      codecraftResult?.status === 'fulfilled'
+        ? codecraftResult.value
+        : getCachedCodecraftModels(),
+    xkiroModels:
+      xkiroResult?.status === 'fulfilled'
+        ? xkiroResult.value
+        : getCachedXkiroModels(),
   }
 }

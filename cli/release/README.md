@@ -56,6 +56,7 @@ Or select one of the supported gateway providers directly:
 | BazaarLink | `/provider bazaarlink` or `DIRECT_PROVIDER=bazaarlink` | `BAZAARLINK_API_KEY` | Hosted gateway |
 | Clean APIs | `/provider cleanapis` or `DIRECT_PROVIDER=cleanapis` | `CLEANAPIS_API_KEY` | Hosted gateway |
 | Cloudflare | `/provider cloudflare` or `DIRECT_PROVIDER=cloudflare` | `CLOUDFLARE_API_TOKEN` + `CLOUDFLARE_ACCOUNT_ID` | Workers AI gateway; the `/provider` flow prompts for the token, then the account id (env vars take precedence) |
+| CodeCraft API | `/provider codecraft` or `DIRECT_PROVIDER=codecraft` | `CODECRAFT_API_KEY` | Hosted gateway |
 | CommandCode | `/provider commandcode` or `DIRECT_PROVIDER=commandcode` | `COMMAND_CODE_API_KEY` | OpenAI-compatible hosted inference (dual-protocol) |
 | HCNSec | `/provider hcnsec` or `DIRECT_PROVIDER=hcnsec` | `HCNSEC_API_KEY` | OpenAI-compatible gateway on an audited static 7-model allowlist |
 | Infron | `/provider infron` or `DIRECT_PROVIDER=infron` | `INFRON_API_KEY` | Hosted gateway |
@@ -67,8 +68,18 @@ Or select one of the supported gateway providers directly:
 | TokenHarbor | `/provider tokenharbor` or `DIRECT_PROVIDER=tokenharbor` | `TOKENHARBOR_API_KEY` | OpenAI-compatible hosted gateway |
 | UnoRouter | `/provider unorouter` or `DIRECT_PROVIDER=unorouter` | `UNOROUTER_API_KEY` | Hosted gateway |
 | Vercel AI Gateway | `/provider vercel` or `DIRECT_PROVIDER=vercel` | `AI_GATEWAY_API_KEY` | Hosted gateway |
+| xKiro | `/provider xkiro` or `DIRECT_PROVIDER=xkiro` | `XKIRO_API_KEY` | Hosted gateway |
 | Custom endpoint | Environment configuration | `INFERENCE_BASE_URL`, `INFERENCE_API_KEY` | Advanced OpenAI-compatible endpoint |
 <!-- GENERATED:provider-table-end -->
+
+CodeCraft API and CleanAPIs use authenticated live model catalogs; xKiro has
+a public chat catalog. In `/model`, xKiro Anthropic-prefixed IDs use Messages
+and other xKiro IDs use chat. Full vendor/model IDs survive routing. The
+filterable picker keeps rows one terminal line tall for stable scrolling.
+Model information includes reported limits, prices, capabilities, tiers, and
+reasoning efforts. Unknown fields remain absent, and catalog tiers do not
+guarantee paid-model access for your key. See the
+[provider/model reference](https://github.com/savant0x/savant-code/blob/main/docs/providers.md).
 
 The interactive key prompt is masked. Saved provider credentials are stored in the user configuration directory and are not added to chat history:
 
@@ -157,6 +168,8 @@ UNOROUTER_API_KEY=dummy-unorouter-key-replace-me
 BAZAARLINK_API_KEY=dummy-bazaarlink_api_key-replace-me
 AI_GATEWAY_API_KEY=dummy-ai-gateway-key-replace-me
 CLEANAPIS_API_KEY=dummy-cleanapis-api-key-replace-me
+CODECRAFT_API_KEY=dummy-codecraft-api-key-replace-me
+XKIRO_API_KEY=dummy-xkiro-api-key-replace-me
 # Cloudflare needs TWO credentials (token + account id):
 CLOUDFLARE_API_TOKEN=cloudflare-dummy-replace-me
 CLOUDFLARE_ACCOUNT_ID=cloudflare-account-dummy-replace-me

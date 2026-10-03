@@ -23,7 +23,7 @@ import type { ProviderConfig } from '../types'
  * as its first argument so tests inject a fixture instead of the singleton).
  */
 describe('PROVIDER_REGISTRY (FID-2026-0809-001 Phase 1)', () => {
-  test('covers all twenty-one current providers', () => {
+  test('covers all twenty-three current providers', () => {
     expect(Object.keys(PROVIDER_REGISTRY).sort()).toEqual([
       'apinex',
       'atria',
@@ -31,6 +31,7 @@ describe('PROVIDER_REGISTRY (FID-2026-0809-001 Phase 1)', () => {
       'bazaarlink',
       'cleanapis',
       'cloudflare',
+      'codecraft',
       'commandcode',
       'hcnsec',
       'infron',
@@ -46,6 +47,7 @@ describe('PROVIDER_REGISTRY (FID-2026-0809-001 Phase 1)', () => {
       'tokenrouter',
       'unorouter',
       'vercel',
+      'xkiro',
     ])
   })
 
@@ -105,7 +107,7 @@ describe('PROVIDER_REGISTRY (FID-2026-0809-001 Phase 1)', () => {
     expect(deriveProviderOrder(PROVIDER_REGISTRY, 'unknown')).toBe(4)
   })
 
-  test('setup config derives exactly the twenty current setup providers', () => {
+  test('setup config derives exactly the twenty-two current setup providers', () => {
     const setup = deriveSetupConfig(PROVIDER_REGISTRY)
     expect(Object.keys(setup).sort()).toEqual([
       'apinex',
@@ -114,6 +116,7 @@ describe('PROVIDER_REGISTRY (FID-2026-0809-001 Phase 1)', () => {
       'bazaarlink',
       'cleanapis',
       'cloudflare',
+      'codecraft',
       'commandcode',
       'hcnsec',
       'infron',
@@ -128,6 +131,7 @@ describe('PROVIDER_REGISTRY (FID-2026-0809-001 Phase 1)', () => {
       'tokenrouter',
       'unorouter',
       'vercel',
+      'xkiro',
     ])
     expect(setup.openai).toEqual({
       label: 'OpenAI',

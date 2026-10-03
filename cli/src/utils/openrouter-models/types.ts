@@ -44,6 +44,12 @@ export type OpenRouterModel = {
   knowledgeCutoff?: string
   /** Creation date (ISO string), if reported. */
   created?: string
+  /** Vendor-reported capabilities; unknown values stay absent. */
+  capabilities?: string[]
+  /** Catalog access tier, not a promise of access for the current account. */
+  accessTier?: string
+  /** Reported reasoning controls; does not automatically alter request options. */
+  reasoningEfforts?: { levels?: string[]; default?: string }
   /** Reasoning configuration, if reported. */
   reasoning?: {
     mandatory?: boolean

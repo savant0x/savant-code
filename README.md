@@ -14,6 +14,11 @@ local-first use with Ollama.
 
 </div>
 
+> **Unreleased — 2026-10-03:** CodeCraft API and xKiro join `/provider` and
+> the live model picker; CleanAPIs catalog metadata is completed. `/model`
+> scrolling now keeps model and header rows one terminal line tall. See the
+> [provider/model reference](docs/providers.md) and [CHANGELOG](CHANGELOG.md).
+
 > **v0.0.35** — **OpenAI is a first-class platform provider**: a platform `sk-` key
 > (`/provider openai`, `OPENAI_API_KEY`) routes `openai/<id>` — and bare slugs while
 > OpenAI is active — over the **Responses API** at api.openai.com, while the
@@ -232,6 +237,7 @@ history. The supported hosted providers are:
 | BazaarLink | `/provider bazaarlink` or `DIRECT_PROVIDER=bazaarlink` | `BAZAARLINK_API_KEY` | Hosted gateway |
 | Clean APIs | `/provider cleanapis` or `DIRECT_PROVIDER=cleanapis` | `CLEANAPIS_API_KEY` | Hosted gateway |
 | Cloudflare | `/provider cloudflare` or `DIRECT_PROVIDER=cloudflare` | `CLOUDFLARE_API_TOKEN` + `CLOUDFLARE_ACCOUNT_ID` | Workers AI gateway; the `/provider` flow prompts for the token, then the account id (env vars take precedence) |
+| CodeCraft API | `/provider codecraft` or `DIRECT_PROVIDER=codecraft` | `CODECRAFT_API_KEY` | Hosted gateway |
 | CommandCode | `/provider commandcode` or `DIRECT_PROVIDER=commandcode` | `COMMAND_CODE_API_KEY` | OpenAI-compatible hosted inference (dual-protocol) |
 | HCNSec | `/provider hcnsec` or `DIRECT_PROVIDER=hcnsec` | `HCNSEC_API_KEY` | OpenAI-compatible gateway on an audited static 7-model allowlist |
 | Infron | `/provider infron` or `DIRECT_PROVIDER=infron` | `INFRON_API_KEY` | Hosted gateway |
@@ -243,8 +249,21 @@ history. The supported hosted providers are:
 | TokenHarbor | `/provider tokenharbor` or `DIRECT_PROVIDER=tokenharbor` | `TOKENHARBOR_API_KEY` | OpenAI-compatible hosted gateway |
 | UnoRouter | `/provider unorouter` or `DIRECT_PROVIDER=unorouter` | `UNOROUTER_API_KEY` | Hosted gateway |
 | Vercel AI Gateway | `/provider vercel` or `DIRECT_PROVIDER=vercel` | `AI_GATEWAY_API_KEY` | Hosted gateway |
+| xKiro | `/provider xkiro` or `DIRECT_PROVIDER=xkiro` | `XKIRO_API_KEY` | Hosted gateway |
 | Custom endpoint | Environment configuration | `INFERENCE_BASE_URL`, `INFERENCE_API_KEY` | Advanced OpenAI-compatible endpoint |
 <!-- GENERATED:provider-table-end -->
+
+CodeCraft and CleanAPIs use authenticated live catalogs. xKiro publishes a
+live chat catalog; its Anthropic-prefixed IDs use Messages and other IDs use
+chat. Select the full prefixed ID from `/model` so vendor namespaces survive
+routing. The picker supports filtering, keyboard, wheel, and scrollbar
+navigation; clipped display text does not alter the selected ID.
+
+Agent model information includes reported limits, USD prices, capabilities,
+catalog tiers, and reasoning efforts. Missing values stay unknown. Catalog
+membership and tiers do not establish access for your key; xKiro paid models
+can return an account-access error. See [models and metadata](docs/providers.md)
+for exact IDs, protocol rules, and SDK `modelInfoText` usage.
 
 The key is persisted at
 `C:\\Users\\<username>\\.savant-code\\credentials.json` on Windows or
@@ -577,7 +596,7 @@ code 2 blocks a tool.
 - **Gateway providers** — OpenRouter, TokenRouter, TokenHarbor, NVIDIA NIM,
   CommandCode, Nous Research, KiosAPI, APInex,
 OrcaRouter, B.AI, HCNSec, TokenBom, Infron, UnoRouter, BazaarLink, Atria AI,
-  Vercel AI Gateway, Clean APIs, and Cloudflare Workers AI via
+  OpenAI, Vercel AI Gateway, Clean APIs, CodeCraft API, xKiro, and Cloudflare Workers AI via
   `@savant-code/llm-providers`. Nous Research uses the direct OpenAI-compatible API; Portal OAuth
   is a separate integration.
 - **Default model** — `openrouter/free` via OpenRouter (configurable via
@@ -1018,6 +1037,8 @@ picker or choose one directly:
 /provider bazaarlink
 /provider vercel
 /provider cleanapis
+/provider codecraft
+/provider xkiro
 /provider cloudflare
 ```
 
@@ -1027,7 +1048,7 @@ The supported environment variables are `OPENAI_API_KEY`, `OPENROUTER_API_KEY`,
 `NOUS_API_KEY`, `KIOSAPI_API_KEY`, `APINEX_API_KEY`,
 `ORCAROUTER_API_KEY`, `BAI_API_KEY`, `HCNSEC_API_KEY`, `TOKENBOM_API_KEY`,
 `ATRIA_API_KEY`, `INFRON_API_KEY`, `UNOROUTER_API_KEY`, `BAZAARLINK_API_KEY`,
-`AI_GATEWAY_API_KEY`, `CLEANAPIS_API_KEY`,
+`AI_GATEWAY_API_KEY`, `CLEANAPIS_API_KEY`, `CODECRAFT_API_KEY`, `XKIRO_API_KEY`,
 `CLOUDFLARE_API_TOKEN`. The key
 prompt is masked and stores the key globally in the Savant-Code config
 `credentials.json`; it is not added to chat history. Shell environment variables

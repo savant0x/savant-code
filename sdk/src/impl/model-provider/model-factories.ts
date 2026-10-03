@@ -5,7 +5,10 @@ import {
   CHATGPT_BACKEND_BASE_URL,
   toOpenAIModelId,
 } from '@savant-code/common/constants/chatgpt-oauth'
-import { PROVIDER_PROTOCOL_MAPS } from '@savant-code/common/constants/model-config'
+import {
+  PROVIDER_PROTOCOL_MAPS,
+  resolveMappedModelProtocol,
+} from '@savant-code/common/constants/model-config'
 import {
   OpenAICompatibleChatLanguageModel,
   VERSION,
@@ -248,7 +251,7 @@ function resolveProtocol(
       `Unknown protocol map configured for ${config.label}: ${config.protocolMap}.`,
     )
   }
-  const protocol = map[model]
+  const protocol = resolveMappedModelProtocol(map, model)
   if (protocol === undefined) {
     throw new Error(
       `Unknown protocol for ${config.label} model: ${model}. ` +

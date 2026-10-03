@@ -89,6 +89,8 @@ Or configure one directly:
 | Atria AI | `/provider atria` | `ATRIA_API_KEY` (audited static one-model allowlist: `Atria-Dawn-Preview`, 256K context window) |
 | Vercel AI Gateway | `/provider vercel` | `AI_GATEWAY_API_KEY` (keyless live model catalog; the key may also come from `.env.local`/shell — shell takes precedence) |
 | Clean APIs | `/provider cleanapis` | `CLEANAPIS_API_KEY` (authenticated live model catalog; OpenAI-compatible at `https://cleanapis.com/v1`) |
+| CodeCraft API | `/provider codecraft` | `CODECRAFT_API_KEY` (authenticated live model catalog; OpenAI chat at `https://codecraftapi.com/v1`) |
+| xKiro | `/provider xkiro` | `XKIRO_API_KEY` (public live chat catalog; explicit Messages/chat routing at `https://api.xkiro.com/v1`; paid models require account entitlement) |
 | Cloudflare Workers AI | `/provider cloudflare` | `CLOUDFLARE_API_TOKEN` + `CLOUDFLARE_ACCOUNT_ID` (two credentials — the `/provider` flow prompts for the token, then the account id; env vars take precedence; switch via `/model cloudflare/...`, e.g. `/model cloudflare/meta/llama-3.3-70b-instruct-fp8-fast`) |
 
 You can also define **your own custom providers**: `/provider add` starts a

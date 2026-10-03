@@ -182,6 +182,11 @@ A single error degrades instead of killing the session (FID-2026-0815-015):
 
 ## Provider Flexibility
 
+The [provider/model reference](providers.md) explains live catalogs, exact
+model IDs, protocol routing, and the model-information block supplied to
+agents. `/model` supports keyboard, wheel, scrollbar, and filter navigation
+with one terminal line per model/header row; clipped text retains its full ID.
+
 Works with multiple inference providers:
 
 - **Ollama** — Local-first, free, no API key required
@@ -202,11 +207,14 @@ Works with multiple inference providers:
 - **APInex** — Hosted gateway with an authenticated live model catalog (`APINEX_API_KEY`)
 - **Vercel AI Gateway** — Managed multi-provider gateway with a keyless live model catalog (`AI_GATEWAY_API_KEY`; OpenAI Chat Completions at `https://ai-gateway.vercel.sh/v1`)
 - **Clean APIs** — OpenAI-compatible hosted gateway with an authenticated live model catalog (`CLEANAPIS_API_KEY`; OpenAI Chat Completions at `https://cleanapis.com/v1`)
+- **CodeCraft API** — Authenticated live model catalog and OpenAI chat (`CODECRAFT_API_KEY`; `https://codecraftapi.com/v1`)
+- **xKiro** — Public live chat catalog (`XKIRO_API_KEY`; `https://api.xkiro.com/v1`). Anthropic model IDs use Messages; other IDs use OpenAI chat. Vendor namespaces remain intact. Catalog tiers describe requirements; paid-model access depends on the account.
+- **OpenAI** — Platform API keys via `/provider openai` or `OPENAI_API_KEY`; Responses API at `https://api.openai.com/v1`, with an authenticated live catalog
 - **NVIDIA NIM** — NVIDIA-hosted inference
 - **CommandCode** — OpenAI-compatible hosted inference
 - **Nous Research** — OpenAI-compatible direct inference via `NOUS_API_KEY`; Portal OAuth is a separate integration
-- **Cloudflare** — Env-only gateway (Workers AI); requires `CLOUDFLARE_API_TOKEN`
-  - `CLOUDFLARE_ACCOUNT_ID`, not in the `/provider` picker
+- **Cloudflare** — Workers AI; `/provider cloudflare` prompts for both
+  `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID`
 - **Custom providers** — Define your own OpenAI-compatible providers with
   `/provider add` (guided wizard: id, label, base URL, wire protocol,
   key env var, inline model list, API key). Customs live in the same

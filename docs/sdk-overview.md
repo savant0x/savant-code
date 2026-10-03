@@ -268,12 +268,27 @@ write-gated with LIMIT injection and SQL redaction.
 The SDK is where inference happens. `getModelForRequest()` dispatches on model-id prefix
 (`openai/`, `openrouter/`, `tokenrouter/`, `tokenharbor/`, `nvidia/`,
 `commandcode/`, `nous/`, `kiosapi/`, `apinex/`, `orcarouter/`, `bai/`, `hcnsec/`, `tokenbom/`,
-`infron/`, `unorouter/`, `bazaarlink/`, `atria/`, `vercel/`, `cleanapis/`,
+`infron/`, `unorouter/`, `bazaarlink/`, `atria/`, `vercel/`, `cleanapis/`, `codecraft/`, `xkiro/`,
 `cloudflare/`, bare slugs). The default path is the
 generic OpenAI-compatible adapter targeting
 `INFERENCE_BASE_URL`. Full detail and the provider-adding runbook live in
 `docs/archive/design/Adding New Providers.md` — that refactor is engine work inside
 this package.
+
+CodeCraft API and CleanAPIs use authenticated live catalogs and OpenAI chat
+at `https://codecraftapi.com/v1` and `https://cleanapis.com/v1`. xKiro uses
+`https://api.xkiro.com/v1` with an explicit multi-protocol map:
+`xkiro/anthropic/*` selects Messages, other `xkiro/*` IDs select chat.
+Only the internal provider prefix is stripped; the upstream vendor namespace
+is retained. Catalog access tiers describe vendor requirements and do not
+guarantee entitlement for the current key.
+
+The CLI normalizes the live catalogs and supplies `modelInfoText` through
+the SDK to `{SAVANT_CODE_MODEL_INFO}` in agent prompts. This includes reported
+context/output limits, USD prices, capabilities, catalog tiers, and reasoning
+efforts. SDK-only hosts can provide that block themselves; omitting it produces
+a model-ID fallback, without loading the CLI cache. `contextWindow` and
+`maxOutputTokens` remain separate run options. See [provider/model reference](providers.md).
 
 **Credential chain (OpenRouter):** `OR_MASTER_KEY` (exchanged via `/api/v1/keys`, one fresh key per
 process) → `OPENROUTER_API_KEY` → `INFERENCE_API_KEY`; cached per process with negative caching and
@@ -287,7 +302,7 @@ an explicit `resetOpenRouterApiKeyCache()` hook.
 | `INFERENCE_BASE_URL` | OpenAI-compatible inference base URL (required — no backend fallback; FID-2026-0929-005) |
 | `INFERENCE_API_KEY` | SDK-specific inference key |
 | `OR_MASTER_KEY`, `OPENROUTER_API_KEY` | OpenRouter credentials (master-key exchange / regular key) |
-| `TOKENROUTER_API_KEY`, `TOKENHARBOR_API_KEY`, `NVIDIA_API_KEY`, `COMMAND_CODE_API_KEY`, `KIOSAPI_API_KEY`, `APINEX_API_KEY`, `OPENAI_API_KEY`, `ORCAROUTER_API_KEY`, `BAI_API_KEY`, `HCNSEC_API_KEY`, `TOKENBOM_API_KEY`, `ATRIA_API_KEY`, `INFRON_API_KEY`, `UNOROUTER_API_KEY`, `BAZAARLINK_API_KEY`, `NOUS_API_KEY`, `AI_GATEWAY_API_KEY`, `CLEANAPIS_API_KEY` | Gateway provider keys; registry-resolved (`credentials.envVar` → `process.env` in `sdk/src/impl/model-provider.ts`); Nous uses the direct OpenAI-compatible API and does not imply Portal OAuth |
+| `TOKENROUTER_API_KEY`, `TOKENHARBOR_API_KEY`, `NVIDIA_API_KEY`, `COMMAND_CODE_API_KEY`, `KIOSAPI_API_KEY`, `APINEX_API_KEY`, `OPENAI_API_KEY`, `ORCAROUTER_API_KEY`, `BAI_API_KEY`, `HCNSEC_API_KEY`, `TOKENBOM_API_KEY`, `ATRIA_API_KEY`, `INFRON_API_KEY`, `UNOROUTER_API_KEY`, `BAZAARLINK_API_KEY`, `NOUS_API_KEY`, `AI_GATEWAY_API_KEY`, `CLEANAPIS_API_KEY`, `CODECRAFT_API_KEY`, `XKIRO_API_KEY` | Gateway provider keys; registry-resolved (`credentials.envVar` → `process.env` in `sdk/src/impl/model-provider.ts`); Nous uses the direct OpenAI-compatible API and does not imply Portal OAuth |
 | `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID` | Cloudflare Workers AI |
 | `SAVANT_CODE_BYOK_OPENROUTER` | BYOK OpenRouter header override (`x-openrouter-api-key`) |
 | `SAVANT_CODE_RG_PATH`, `SAVANT_CODE_WASM_DIR` | Native asset paths |
@@ -338,9 +353,10 @@ subprojects (CJS/ESM load, ripgrep path, tree-sitter queries) — this is the ga
 
 - **The SDK is unpublished** yet `private: false` with a full publish toolchain and README marketing
   — the public API surface has never been exercised by external consumers.
-- **The provider metadata duplication** (base URLs/env vars in both `sdk` factories and `cli`
-  setup) is a real drift risk — see `docs/archive/design/Adding New Providers.md` for the single-registry
-  fix.
+- **Provider catalog wiring remains explicit:** the shared registry already
+  owns setup and routing metadata, but a live catalog still needs its parser,
+  fanout/reset wiring, exception owner, and tests. The
+  [provider runbook](archive/design/Adding%20New%20Providers.md) covers these seams.
 - **Undeclared workspace dependency**: `sdk/src/index.ts` imports
   `@savant-code/agent-runtime` but `sdk/package.json` does not list it as a dependency — it works
   via workspace resolution today; a declared dependency would make the published package
@@ -354,9 +370,9 @@ subprojects (CJS/ESM load, ripgrep path, tree-sitter queries) — this is the ga
 The original owner deferred publishing until "the ecosystem grows." When you expand it, the highest-
 value directions, roughly in dependency order:
 
-1. **Provider registry refactor** (in `common`): collapse the provider metadata duplication so every
-   future provider is a one-entry add. This is engine work that benefits the CLI and any public SDK
-   equally — and it must land before adding "a lot" of providers.
+1. **Provider catalog coverage:** extend the existing shared registry and
+   provider runbook when adding services; verify live schemas, exact IDs,
+   protocol coverage, and request serialization for CLI and SDK consumers.
 2. **Gateway/client split**: the SDK's README's flagship flow (hosted agent store) was downstream
    of a backend that no longer exists (FID-2026-0929-005). Decide whether the SDK should gain a
    first-class gateway client (the `Enterprise AI Gateway Research` doc is the

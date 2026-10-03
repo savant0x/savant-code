@@ -1,13 +1,14 @@
 # Adding a New LLM Provider
 
-**One registry entry + a catalog reference. Everything else derives.**
+**Registry-led routing and setup; explicit live catalogs and exception owners.**
 
 This is the entire runbook. Since FID-2026-0809-001, every provider surface
 (routing, credentials, `/provider` setup, picker sections, logos, ordering,
 key-readiness guidance, env reference, release README) derives from one typed,
 data-only registry in `common`. Adding a provider is no longer a 23-step
-checklist across six files — it is one entry plus (for cataloged providers) one
-model map, then regenerate the docs.
+checklist across six files. Static catalogs derive from their registered model
+maps. Live catalogs require a wrapper, fanout/reset wiring, and exception
+ownership as described below; then regenerate and check the references.
 
 ## How the system is organized
 
@@ -39,12 +40,14 @@ model map, then regenerate the docs.
 
 ### Step 1 — Add the registry entry
 
-Edit `common/src/providers/registry.ts`. Every field is required and the object
+Edit `common/src/providers/registry.ts` or its `registry-partitioned*.ts`
+modules, keeping each file within 300 lines. Required fields are checked and the object
 is `satisfies Record<string, ProviderConfig>`, so a typo or missing field is a
 compile error. The **OpenAI-compatible gateway** is the common case — TokenHarbor
 is the canonical template:
 
-```ts  tokenharbor: {
+```ts
+tokenharbor: {
   id: 'tokenharbor',                       // routing prefix — must match the key
   label: 'TokenHarbor',                    // display label
   kind: 'gateway',                         // 'gateway' | 'local' | 'env-only'
@@ -55,7 +58,7 @@ is the canonical template:
     // optional: missingKeyMessage        // only when the canonical message differs
   },
   baseUrl: 'https://tokenharbor.ai/v1',    // API root; protocol layer appends the path
-  protocol: 'openai',                      // 'openai' | 'anthropic' | 'responses' | 'openai-anthropic'
+  protocol: 'openai',                      // 'openai' | 'anthropic' | 'responses' | 'openai-anthropic' | 'multi'
                                            // ('responses' = single-protocol OpenAI Responses API — FID-2026-1001-001;
                                            //  `openai` in registry-partitioned-2.ts is the template)
   idTransform: 'strip',                    // 'strip' | 'keep' | 'cf-rewrite'
@@ -78,8 +81,8 @@ Field semantics:
   `credentials.extra`.
 - `kind: 'local'` — no `envVar` (Ollama is the template; base URL is detected at
   startup, the registry holds the canonical default).
-- `setupAvailable: false` — env-only provider: routed + keyed but absent from
-  the `/provider` picker (Cloudflare is this today, by design).
+- `setupAvailable: false` — routed but absent from the `/provider` picker.
+  Cloudflare now appears in setup: its token and account ID are both prompted.
 
 ### Step 2 — Add the model catalog
 
@@ -100,6 +103,14 @@ Pick the catalog source in the registry entry:
   If the catalog endpoint is authenticated, wire a provider-specific resolver
   such as Nous's `resolveKey: () => process.env.NOUS_API_KEY`; never read
   `.env.local` directly from a catalog wrapper.
+
+  Create the provider wrapper with `createLiveCatalogFetcher`, obtaining its
+  URL through `deriveLiveCatalogUrl`. Wire it into `gateway.ts` fetch, merge,
+  and reset paths and the same position in `gateway-live-results.ts`; keep
+  custom catalogs last. Register a `live-catalog` owner and file evidence in
+  `common/src/providers/provider-exception-manifest.ts`. These are explicit
+  seams, not automatic registry derivations. Reuse parsers only for measured
+  compatible schemas. Preserve exact IDs, unknown limits and price units.
 
 ### Nous Research direct-provider example
 
@@ -131,18 +142,25 @@ not silently substituted here.
 
 - **`source: 'none'`** — no catalog section in the picker (Ollama).
 
-### Step 3 — Dual-protocol only: protocol map
+### Step 3 — Mixed protocols: protocol map
 
 If some models speak `/v1/chat/completions` and others `/v1/messages`
-(OpenCode Go, CommandCode):
+(CommandCode, TokenRouter, xKiro):
 
-1. Add an `X_PROTOCOLS: Record<string, 'openai' | 'anthropic'>` in
-   `common/src/constants/model-config.ts` — keyed by the **full prefixed id**.
-2. Set `protocol: 'openai-anthropic'` and `protocolMap: 'X_PROTOCOLS'` on the
-   registry entry.
+1. Add a `Record<string, ProviderModelProtocol>` in
+   `common/src/constants/model-config/provider-protocols.ts`, register it in
+   `PROVIDER_PROTOCOL_MAPS`, extend `ProviderProtocolMap`, and re-export it
+   through the model-config barrels. Keys carry the **full provider prefix**.
+2. Set `protocol: 'openai-anthropic'` or `'multi'` and the named `protocolMap`
+   on the registry entry. Add the corresponding exception-manifest owner.
 
 The validator enforces that every catalog model appears in the protocol map —
-routing fails closed otherwise.
+routing fails closed otherwise. A live roster needs an explicit growth policy.
+`resolveMappedModelProtocol` first checks an exact ID, then the longest declared
+terminal `/*` prefix. xKiro declares `xkiro/anthropic/*` → Messages and
+`xkiro/*` → chat because its docs support both dialects for every chat model.
+Providers without prefix rules retain exact-map unknown-ID rejection. Never
+add a default protocol implicitly or derive endpoint restrictions from names.
 
 A **single-protocol `responses` entry** (OpenAI platform,
 FID-2026-1001-001) needs no map: `resolveEntryProtocol` returns the entry's
@@ -157,8 +175,11 @@ Gemini per model.
 bun run generate:provider-docs
 ```
 
-This regenerates the `.env.example` gateway section and the release README
-provider table from the registry. Run `bun run generate:provider-docs:check` in
+This regenerates the `.env.example` gateway section and the root/release README
+provider tables from the registry. Update hand-maintained provider mentions
+in README files, the release dotenv template, and docs index/features/setup/SDK
+references; the drift checker names each missing token.
+Run `bun run generate:provider-docs:check` in
 CI — it fails when the docs drift from the registry.
 
 ### Step 5 — Add tests (additive, three small files)
@@ -192,8 +213,8 @@ drift this FID exists to kill:
 - **OpenRouter attribution headers + structured outputs** are still gated on
   `config.id === 'openrouter'` in the generic factory — a candidate for a future
   registry field, not a per-provider factory.
-- **Cloudflare is env-only by design** (`setupAvailable: false`): routed and
-  keyed, but absent from the `/provider` picker (needs two credentials).
+- **Cloudflare setup needs two credentials**: the registry's `credentials.extra`
+  drives the second prompt; both values participate in readiness checks.
 - **Picker order tie at 4** is intentional: tokenharbor/commandcode/ollama/cloudflare
   all sort last, replicating the historical `default: 4`.
 - **Bare slugs** (e.g. `anthropic/claude-sonnet-4.5`) route to the active

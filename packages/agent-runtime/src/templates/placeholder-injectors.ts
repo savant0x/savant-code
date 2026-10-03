@@ -35,7 +35,7 @@ You are running on an unknown model.`
 
 You are running on **${modelId}**.
 
-Full metadata unavailable; the model was not found in the cached OpenRouter catalog.`
+Full metadata unavailable; no catalog metadata was supplied for this model.`
 }
 
 function isUserInputMessage(message: Message): message is UserMessage & {

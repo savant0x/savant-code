@@ -15,7 +15,10 @@
  * stronger than a one-time module-load parse.
  */
 import { MODEL_CATALOGS } from './model-catalogs'
-import { PROVIDER_PROTOCOL_MAPS } from '../constants/model-config'
+import {
+  PROVIDER_PROTOCOL_MAPS,
+  resolveMappedModelProtocol,
+} from '../constants/model-config'
 
 import type { ProviderConfig } from './types'
 
@@ -209,7 +212,7 @@ export function validateProviderRegistry(
         if (config.catalog.source === 'static') {
           const models = MODEL_CATALOGS[config.catalog.modelsRef]
           for (const modelId of Object.values(models)) {
-            if (map[modelId] === undefined) {
+            if (resolveMappedModelProtocol(map, modelId) === undefined) {
               problems.push(
                 `'${key}' catalog model '${modelId}' is missing from the ${config.protocolMap} protocol map — add it or routing fails closed`,
               )

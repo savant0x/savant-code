@@ -17,6 +17,14 @@ from another workspace without going through `@savant-code/common`.
 
 ## Quick Start
 
+The built-in [provider registry](src/providers/registry.ts) is authoritative
+for setup credentials, API roots, catalogs, ID transforms, and protocol maps.
+CodeCraft and CleanAPIs use OpenAI chat; xKiro's shared exact/prefix resolver
+selects Messages for its Anthropic IDs and chat for its other models. CLI
+catalog parsers and SDK routing consume this shared contract. See the
+[provider/model reference](../docs/providers.md) and
+[provider integration runbook](../docs/archive/design/Adding%20New%20Providers.md).
+
 ```bash
 # From the repo root
 bun install

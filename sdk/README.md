@@ -27,6 +27,13 @@ For direct provider routing, configure the provider-specific environment variabl
 its direct OpenAI-compatible API; Nous Portal OAuth is a separate integration and
 is not implicitly implemented by this SDK.
 
+CodeCraft API, xKiro, and CleanAPIs use `CODECRAFT_API_KEY`, `XKIRO_API_KEY`,
+and `CLEANAPIS_API_KEY`. Use full model IDs such as `codecraft/gpt-5.6-luna`,
+`cleanapis/gpt-5.6-luna`, or `xkiro/mistralai/ministral-14b`. The runtime strips
+one internal prefix; xKiro retains the upstream vendor namespace. Its explicit
+map sends `xkiro/anthropic/*` to Messages and other `xkiro/*` models to chat.
+Account access is checked by the service when inference runs.
+
 The CLI's interactive `/provider` credentials are a separate local CLI onboarding flow and are not implicitly loaded by
 SDK clients.
 
@@ -147,6 +154,17 @@ main()
 ```
 
 ## API Reference
+
+### Model information
+
+The CLI loads provider catalogs and passes reported metadata to agent prompts.
+SDK hosts may supply their own preformatted `modelInfoText` to `client.run()`;
+the SDK does not load the CLI's catalog cache automatically. The
+`{SAVANT_CODE_MODEL_INFO}` placeholder uses that block, or a model-ID fallback
+when omitted. Catalog reasoning metadata describes available controls and does
+not automatically change generation options. `contextWindow` and
+`maxOutputTokens` are separate runtime limits; preserve absent output caps.
+See [provider routing, metadata, and examples](../docs/providers.md).
 
 ### Knowledge Files
 

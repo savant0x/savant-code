@@ -29,6 +29,26 @@ export type ProviderExceptionManifestEntry = {
 export const PROVIDER_EXCEPTION_MANIFEST: readonly ProviderExceptionManifestEntry[] =
   [
     {
+      providerId: 'codecraft',
+      kinds: ['live-catalog'],
+      owner: 'cli/src/utils/openrouter-models/codecraft.ts',
+      evidence: [
+        'cli/src/utils/openrouter-models/codecraft.ts',
+        'cli/src/utils/openrouter-models/gateway.ts',
+      ],
+    },
+    {
+      providerId: 'xkiro',
+      kinds: ['live-catalog', 'multi-protocol'],
+      owner: 'cli/src/utils/openrouter-models/xkiro.ts',
+      evidence: [
+        'cli/src/utils/openrouter-models/xkiro.ts',
+        'cli/src/utils/openrouter-models/gateway.ts',
+        'common/src/constants/model-config/provider-protocols.ts',
+        'sdk/src/impl/model-provider/model-factories.ts',
+      ],
+    },
+    {
       providerId: 'openrouter',
       kinds: ['credential-resolver', 'live-catalog'],
       owner: 'sdk/src/impl/openrouter-key-resolver.ts',

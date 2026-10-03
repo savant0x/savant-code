@@ -27,7 +27,7 @@ export function formatModelInfo(
 
 You are running on **${modelId}**.
 
-Full metadata unavailable; the model was not found in the cached OpenRouter catalog.`
+Full metadata unavailable; the model was not found in the cached provider catalog.`
   }
 
   const lines: string[] = []
@@ -67,6 +67,7 @@ Full metadata unavailable; the model was not found in the cached OpenRouter cata
   if (model.modality) {
     lines.push(`- **Modalities:** ${model.modality}`)
   }
+  lines.push(...formatCatalogCapabilities(model))
   if (model.knowledgeCutoff) {
     lines.push(`- **Knowledge cutoff:** ${model.knowledgeCutoff}`)
   }
@@ -81,4 +82,25 @@ Full metadata unavailable; the model was not found in the cached OpenRouter cata
   }
 
   return lines.join('\n')
+}
+
+function formatCatalogCapabilities(model: OpenRouterModel): string[] {
+  const lines: string[] = []
+  if (model.capabilities?.length) {
+    lines.push(`- **Capabilities:** ${model.capabilities.join(', ')}`)
+  }
+  if (model.accessTier) {
+    lines.push(`- **Catalog access tier:** ${model.accessTier}`)
+  }
+  if (model.reasoningEfforts?.levels?.length) {
+    lines.push(
+      `- **Reasoning efforts:** ${model.reasoningEfforts.levels.join(', ')}`,
+    )
+  }
+  if (model.reasoningEfforts?.default) {
+    lines.push(
+      `- **Default reasoning effort:** ${model.reasoningEfforts.default}`,
+    )
+  }
+  return lines
 }

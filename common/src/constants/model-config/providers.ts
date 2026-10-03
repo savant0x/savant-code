@@ -5,12 +5,12 @@
  */
 
 // Re-export the protocol maps from the sibling module (barrel unchanged).
-// FID-2026-0916-004: OPENCODE_GO_PROTOCOLS + OPENCODE_ZEN_PROTOCOLS removed
-// with the opencode-zen/opencode-go provider removal (zen free-tier gate).
 export {
   COMMANDCODE_PROTOCOLS,
   PROVIDER_PROTOCOL_MAPS,
   TOKENROUTER_PROTOCOLS,
+  XKIRO_PROTOCOLS,
+  resolveMappedModelProtocol,
 } from './provider-protocols'
 
 export const openaiModels = {

@@ -17,6 +17,13 @@ OpenAI-compatible surface as `./openai-compatible` plus per-provider shims. Cons
 
 ## Quick Start
 
+Provider registration lives in `common/src/providers/`; the SDK factories
+consume that registry rather than requiring a new adapter for each compatible
+service. CodeCraft API and CleanAPIs use the existing chat adapter, while
+xKiro's protocol map selects chat or Anthropic Messages. Live catalog parsing
+and model-information formatting live in the CLI. See the
+[provider/model reference](../../docs/providers.md) for the shared contract.
+
 ```bash
 # From the repo root
 bun install

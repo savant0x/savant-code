@@ -1,5 +1,35 @@
 # Changelog
 
+## Unreleased — 2026-10-03
+
+### Added
+
+- **CodeCraft API and xKiro providers (FID-2026-1003-001, medium; implementation verified).**
+  Both support masked `/provider` setup, live catalogs, and exact upstream IDs.
+  xKiro uses the shared protocol resolver: Anthropic-prefixed models route to
+  Messages; other xKiro models use chat. Catalog growth is covered by explicit
+  prefix rules. Registry, SDK, CLI fanout/reset, exception owners, and generated
+  provider references agree. See [provider and model reference](docs/providers.md).
+
+### Changed
+
+- **CleanAPIs and model information (FID-2026-1003-001, medium).** CodeCraft
+  and CleanAPIs share measured schema normalization with independent keys and
+  caches. USD prices normalize to per-token values; unknown limits stay absent.
+  Capability, tier, and reasoning-effort metadata reach agent prompts; the CLI
+  and runtime fallbacks describe missing provider metadata accurately. Model
+  information and provider setup are documented across root, release, and
+  workspace READMEs. Generated provider references remain registry-owned.
+
+Validation: authenticated catalogs returned 33 CodeCraft, 129 xKiro, and
+33 CleanAPIs models on 2026-10-03; every upstream ID survived normalization.
+Live tool calls passed on all three services. xKiro Messages also passed with
+an explicit free-model test override; the mapped Claude route returned HTTP
+403 requiring paid account access. Prior implementation suites: common
+providers 72 pass, related CLI 170 pass, SDK 577 pass with one POSIX-only skip.
+FID receipts record the executed gates. Closure and archival remain pending
+the local commit required by ECHO G2; these changes are not a published release.
+
 ## 0.0.35 — 2026-10-01
 
 > **v0.0.35** — **OpenAI as a first-class platform provider**: a platform `sk-` key

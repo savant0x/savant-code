@@ -12,6 +12,42 @@
 import type { ProviderConfig } from './types'
 
 export const PROVIDER_REGISTRY_PARTITION_2 = {
+  codecraft: {
+    id: 'codecraft',
+    label: 'CodeCraft API',
+    kind: 'gateway',
+    credentials: {
+      envVar: 'CODECRAFT_API_KEY',
+      missingKeyMessage:
+        'CodeCraft API key not set. Set CODECRAFT_API_KEY environment variable or run /provider codecraft.',
+    },
+    baseUrl: 'https://codecraftapi.com/v1',
+    protocol: 'openai',
+    idTransform: 'strip',
+    catalog: { source: 'live', url: 'https://codecraftapi.com/v1/models' },
+    setupAvailable: true,
+    domain: 'codecraftapi.com',
+    order: 4,
+  },
+  xkiro: {
+    id: 'xkiro',
+    label: 'xKiro',
+    kind: 'gateway',
+    credentials: {
+      envVar: 'XKIRO_API_KEY',
+      missingKeyMessage:
+        'xKiro API key not set. Set XKIRO_API_KEY environment variable or run /provider xkiro.',
+    },
+    // Our Anthropic SDK appends /messages, retaining this /v1 API root.
+    baseUrl: 'https://api.xkiro.com/v1',
+    protocol: 'multi',
+    protocolMap: 'XKIRO_PROTOCOLS',
+    idTransform: 'strip',
+    catalog: { source: 'live', url: 'https://api.xkiro.com/v1/models' },
+    setupAvailable: true,
+    domain: 'xkiro.com',
+    order: 4,
+  },
   openai: {
     id: 'openai',
     label: 'OpenAI',

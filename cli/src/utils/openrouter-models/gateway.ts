@@ -7,18 +7,10 @@
 import fs from 'node:fs'
 
 import { logger } from '../logger'
-import {
-  __resetApinexCacheForTest,
-  fetchApinexModels,
-} from './apinex'
-import {
-  __resetBaiCacheForTest,
-  fetchBaiModels,
-} from './bai'
-import {
-  __resetCleanApisCacheForTest,
-  fetchCleanApisModels,
-} from './cleanapis'
+import { __resetApinexCacheForTest, fetchApinexModels } from './apinex'
+import { __resetBaiCacheForTest, fetchBaiModels } from './bai'
+import { __resetCleanApisCacheForTest, fetchCleanApisModels } from './cleanapis'
+import { __resetCodecraftCacheForTest, fetchCodecraftModels } from './codecraft'
 import {
   __resetCustomCatalogsForTest,
   fetchAllCustomModels,
@@ -29,22 +21,10 @@ import {
   writeGatewayCatalogToDisk,
 } from './gateway-disk-cache'
 import { resolveGatewayLiveCatalogs } from './gateway-live-results'
-import {
-  __resetKiosapiCacheForTest,
-  fetchKiosapiModels,
-} from './kiosapi'
-import {
-  __resetNousCacheForTest,
-  fetchNousModels,
-} from './nous'
-import {
-  __resetNvidiaCacheForTest,
-  fetchNvidiaModels,
-} from './nvidia'
-import {
-  __resetOpenAiCacheForTest,
-  fetchOpenAiModels,
-} from './openai'
+import { __resetKiosapiCacheForTest, fetchKiosapiModels } from './kiosapi'
+import { __resetNousCacheForTest, fetchNousModels } from './nous'
+import { __resetNvidiaCacheForTest, fetchNvidiaModels } from './nvidia'
+import { __resetOpenAiCacheForTest, fetchOpenAiModels } from './openai'
 import {
   __resetOpenRouterCacheForTest,
   fetchOpenRouterModels,
@@ -67,10 +47,8 @@ import {
   fetchUnorouterModels,
 } from './static-catalogs-gateways'
 import { CATALOG_TTL_MS } from './types'
-import {
-  __resetVercelCacheForTest,
-  fetchVercelModels,
-} from './vercel'
+import { __resetVercelCacheForTest, fetchVercelModels } from './vercel'
+import { __resetXkiroCacheForTest, fetchXkiroModels } from './xkiro'
 
 import type { OpenRouterModel } from './types'
 
@@ -169,6 +147,8 @@ export async function fetchGatewayModels(
       fetchBaiModels(forceRefresh),
       fetchVercelModels(forceRefresh),
       fetchCleanApisModels(forceRefresh),
+      fetchCodecraftModels(forceRefresh),
+      fetchXkiroModels(forceRefresh),
       // FID-2026-0910-004 Step 9 remainder: custom catalogs (live + inline)
       // merge here; per-provider failures degrade to [] (D10 ladder).
       fetchAllCustomModels(forceRefresh),
@@ -187,6 +167,8 @@ export async function fetchGatewayModels(
       baiModels,
       vercelModels,
       cleanApisModels,
+      codecraftModels,
+      xkiroModels,
       customModels,
     } = resolveGatewayLiveCatalogs(orResult, nvidiaResult, restResults)
     const tokenrouterModels = fetchTokenRouterModels()
@@ -212,6 +194,8 @@ export async function fetchGatewayModels(
       ...baiModels,
       ...vercelModels,
       ...cleanApisModels,
+      ...codecraftModels,
+      ...xkiroModels,
       ...commandCodeModels,
       ...hcnsecCatalog,
       ...tokenbomCatalog,
@@ -248,6 +232,8 @@ export function __resetOpenRouterModelsCacheForTest(): void {
   __resetBaiCacheForTest()
   __resetVercelCacheForTest()
   __resetCleanApisCacheForTest()
+  __resetCodecraftCacheForTest()
+  __resetXkiroCacheForTest()
   // Step 9 remainder: lazily-built custom fetchers are cache state too.
   __resetCustomCatalogsForTest()
   gatewayCache = null
