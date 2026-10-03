@@ -21,6 +21,14 @@
   information and provider setup are documented across root, release, and
   workspace READMEs. Generated provider references remain registry-owned.
 
+### Fixed
+
+- **Model-picker scrolling (FID-2026-1003-004, medium; implementation verified).**
+  Fixed model/header rows at one terminal line so logical scroll offsets match
+  rendered height. Keyboard, wheel, scrollbar, filter, resize, and full-ID
+  selection have native OpenTUI regression coverage. Long names clip visually
+  while selection retains the complete model ID.
+
 Validation: authenticated catalogs returned 33 CodeCraft, 129 xKiro, and
 33 CleanAPIs models on 2026-10-03; every upstream ID survived normalization.
 Live tool calls passed on all three services. xKiro Messages also passed with

@@ -16,6 +16,8 @@ export const ModelPickerHeaderRow = ({
   <box
     style={{
       width: '100%',
+      height: 1,
+      flexShrink: 0,
       paddingLeft: 1,
       paddingTop: 0,
       paddingBottom: 0,
@@ -55,6 +57,8 @@ export const ModelPickerModelRow = ({
       onClick={() => onCommit(index)}
       style={{
         width: '100%',
+        height: 1,
+        flexShrink: 0,
         paddingLeft: 1,
         paddingRight: 1,
         backgroundColor: isSelected ? theme.surfaceHover : theme.surface,
@@ -85,7 +89,7 @@ export const ModelPickerModelRow = ({
       </box>
       {/* Model name */}
       <box style={{ flexGrow: 1, minWidth: 0 }}>
-        <text fg={theme.muted} wrapMode="char" selectable={false}>
+        <text fg={theme.muted} wrapMode="none" selectable={false}>
           {model.name}
         </text>
       </box>
