@@ -4,7 +4,6 @@ import {
 } from './schema/inputs.ts'
 import { defineEndpoint, UsageModelKind } from '../../../../core/mod.ts'
 
-
 /**
  * `GET /v2/crawl/{id}` — read a crawl job: its status, counts, and a chunk of
  * its results.

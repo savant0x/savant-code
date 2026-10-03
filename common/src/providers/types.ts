@@ -111,6 +111,9 @@ export interface ProviderConfig {
    * vendor documents such an endpoint.
    */
   quota?: {
+    auth?: 'bearer' | 'x-api-key' | 'bai-dual'
+    limitPath?: string
+    resetPath?: string
     /** Documented balance/quota endpoint for the current credential. */
     url: string
     /** Dotted JSON path to the authoritative reading, e.g. `data.balance`. */

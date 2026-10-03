@@ -1,10 +1,16 @@
-// FID-2026-0905-004 — gateway decomposition: frozen-v1 protocol dispatch.
-//
-// The hello handshake (protocolVersion + bearer token, fail-closed), the
-// hello-first/auth/id framing rules, and the 13-method router. Verbatim
-// logic from gateway.ts, parameterized by the GatewayContext + FidEventBus.
+// Authenticated frozen-v1 dispatch with optional client capabilities.
 
 import { handleListCommands } from './commands-registry'
+import {
+  handleProviderNotices,
+  supportsProviderNotices,
+} from './provider-notifications-rpc'
+import { handleReplayEvents } from './replay-rpc'
+import {
+  containDispatch,
+  runMessageContained,
+  withTriggerManager,
+} from './rpc-containment'
 import {
   handleApprovalResponse,
   handleInterruptStream,
@@ -14,13 +20,13 @@ import {
   handleGetScopedThreads,
   handleUpdateScopedThreadState,
 } from './scoped-threads-rpc'
+import { emitEventBatch } from './state'
 import {
   handleTriggersCreate,
   handleTriggersDelete,
   handleTriggersList,
   handleTriggersSetEnabled,
   handleTriggersSetRecurrence,
-  requireTriggerManager,
 } from './triggers-rpc'
 import { safeTokenEqual } from '../auth'
 import {
@@ -29,7 +35,6 @@ import {
   GATEWAY_ERROR_CODES,
   GATEWAY_PROTOCOL_VERSION,
   isJsonRpcMessage,
-  notification,
   success,
 } from '../json-rpc'
 
@@ -79,13 +84,19 @@ export function handleHello(
         protocolVersion: GATEWAY_PROTOCOL_VERSION,
         capabilities: GATEWAY_CAPABILITIES,
         projectId: ctx.projectId,
+        // FID-2026-1003-002 (D6): the batch counter at hello time — the
+        // renderer's replay-cursor baseline (additive; old clients ignore).
+        eventSeq: ctx.batchSeq,
       }),
     ),
   )
   setTimeout(() => {
-    const updates = bus.collectFidUpdates()
-    if (updates.length > 0) {
-      send(JSON.stringify(notification('event', updates)))
+    // Contained boot snapshot uses the same replayable event path.
+    try {
+      const updates = bus.collectFidUpdates()
+      emitEventBatch(ctx, updates)
+    } catch (error) {
+      ctx.logger?.error?.(error, 'gateway: post-hello FID snapshot failed')
     }
   }, 0)
   return true
@@ -108,7 +119,7 @@ export function createDispatch(
   message: unknown,
   state: ConnectionState,
 ) => void {
-  function dispatch(
+  function dispatchFrame(
     send: (data: string) => void,
     message: unknown,
     state: ConnectionState,
@@ -144,6 +155,7 @@ export function createDispatch(
       }
       state.helloReceived = true
       state.authed = handleHello(ctx, bus, send, id, params)
+      state.providerNotices = state.authed && supportsProviderNotices(params)
       return
     }
 
@@ -177,7 +189,14 @@ export function createDispatch(
 
     switch (method) {
       case 'user_message':
-        void handleUserMessage(ctx, send, id, params)
+        // FID-2026-1002-008 (D3): fired with its rejection contained — the
+        // handler owns pre/post-acceptance framing; this backstop makes the
+        // `void`-ed rejection impossible by construction.
+        runMessageContained(
+          () => handleUserMessage(ctx, send, id, params),
+          send,
+          ctx.logger,
+        )
         break
       case 'approval_response':
         handleApprovalResponse(ctx, send, id, params)
@@ -206,68 +225,47 @@ export function createDispatch(
           ctx.logger,
         )
         break
+      case 'replay_events':
+        // Ordered socket preserves snapshot-before-live replay delivery.
+        handleReplayEvents(ctx, send, id, params, state.providerNotices)
+        break
+      case 'provider_notices_snapshot':
+      case 'provider_notices_ack':
+        handleProviderNotices(
+          send,
+          id,
+          method,
+          params,
+          state.providerNotices === true,
+        )
+        break
       case 'list_commands':
         handleListCommands(send, id, ctx.commands)
         break
       case 'triggers_list':
-        {
-          const manager = requireTriggerManager(
-            send,
-            id,
-            ctx.triggerManager,
-            ctx.logger,
-          )
-          if (!manager) return
-          handleTriggersList(send, id, manager, ctx.logger)
-        }
+        withTriggerManager(send, id, ctx, (manager) =>
+          handleTriggersList(send, id, manager, ctx.logger),
+        )
         break
       case 'triggers_create':
-        {
-          const manager = requireTriggerManager(
-            send,
-            id,
-            ctx.triggerManager,
-            ctx.logger,
-          )
-          if (!manager) return
-          handleTriggersCreate(send, id, params, manager)
-        }
+        withTriggerManager(send, id, ctx, (manager) =>
+          handleTriggersCreate(send, id, params, manager),
+        )
         break
       case 'triggers_set_recurrence':
-        {
-          const manager = requireTriggerManager(
-            send,
-            id,
-            ctx.triggerManager,
-            ctx.logger,
-          )
-          if (!manager) return
-          handleTriggersSetRecurrence(send, id, params, manager)
-        }
+        withTriggerManager(send, id, ctx, (manager) =>
+          handleTriggersSetRecurrence(send, id, params, manager),
+        )
         break
       case 'triggers_set_enabled':
-        {
-          const manager = requireTriggerManager(
-            send,
-            id,
-            ctx.triggerManager,
-            ctx.logger,
-          )
-          if (!manager) return
-          handleTriggersSetEnabled(send, id, params, manager)
-        }
+        withTriggerManager(send, id, ctx, (manager) =>
+          handleTriggersSetEnabled(send, id, params, manager),
+        )
         break
       case 'triggers_delete':
-        {
-          const manager = requireTriggerManager(
-            send,
-            id,
-            ctx.triggerManager,
-            ctx.logger,
-          )
-          if (!manager) return
-          handleTriggersDelete(send, id, params, manager)
-        }
+        withTriggerManager(send, id, ctx, (manager) =>
+          handleTriggersDelete(send, id, params, manager),
+        )
         break
       default:
         send(
@@ -280,6 +278,22 @@ export function createDispatch(
           ),
         )
     }
+  }
+
+  // FID-2026-1002-008 (D3): the dispatch boundary is contained — a handler
+  // throw becomes a JSON-RPC internalError failure, never an escape into
+  // Bun's websocket message callback (process-teardown class).
+  function dispatch(
+    send: (data: string) => void,
+    message: unknown,
+    state: ConnectionState,
+  ): void {
+    containDispatch({
+      frame: () => dispatchFrame(send, message, state),
+      send,
+      message,
+      logger: ctx.logger,
+    })
   }
   return dispatch
 }

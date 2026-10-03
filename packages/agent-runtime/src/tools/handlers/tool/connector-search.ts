@@ -26,14 +26,12 @@ export function makeConnectorSearchHandler(
     } catch (error) {
       return {
         output: jsonToolResult({
-          errorMessage:
-            error instanceof Error ? error.message : String(error),
+          errorMessage: error instanceof Error ? error.message : String(error),
         }),
       }
     }
   }
 }
 
-export const handleConnectorSearch = makeConnectorSearchHandler(
-  launchBundleProvider,
-)
+export const handleConnectorSearch =
+  makeConnectorSearchHandler(launchBundleProvider)

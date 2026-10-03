@@ -37,7 +37,6 @@ describe('Run Cancellation Handling', () => {
   })
 
   it('preserves session state from server when aborted and appends interruption message', async () => {
-
     const abortController = new AbortController()
 
     // Create a session state with some existing message history to verify it's preserved
@@ -122,8 +121,7 @@ describe('Run Cancellation Handling', () => {
       },
     )
 
-    const client = new SavantCodeClient({
-    })
+    const client = new SavantCodeClient({})
 
     const result = await client.run({
       agent: 'savant',
@@ -164,7 +162,6 @@ describe('Run Cancellation Handling', () => {
   })
 
   it('interruption message uses withSystemTags format', async () => {
-
     const abortController = new AbortController()
     const serverSessionState = getInitialSessionState(
       getStubProjectFileContext(),
@@ -208,8 +205,7 @@ describe('Run Cancellation Handling', () => {
       },
     )
 
-    const client = new SavantCodeClient({
-    })
+    const client = new SavantCodeClient({})
 
     const result = await client.run({
       agent: 'savant',

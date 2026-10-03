@@ -19,8 +19,7 @@ describe('Run Cancellation Handling', () => {
     // Abort before the run starts
     abortController.abort()
 
-    const client = new SavantCodeClient({
-    })
+    const client = new SavantCodeClient({})
 
     const result = await client.run({
       agent: 'savant',
@@ -33,7 +32,6 @@ describe('Run Cancellation Handling', () => {
   })
 
   it('does not add interruption message when not aborted', async () => {
-
     const serverSessionState = getInitialSessionState(
       getStubProjectFileContext(),
     )
@@ -70,8 +68,7 @@ describe('Run Cancellation Handling', () => {
       },
     )
 
-    const client = new SavantCodeClient({
-    })
+    const client = new SavantCodeClient({})
 
     // Run without aborting
     const result = await client.run({

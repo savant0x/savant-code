@@ -45,7 +45,10 @@ export async function promptAiSdk(
 
   const modelParams: ModelRequestParams = {
     model: params.model,
-    skipChatGptOAuth: true, // Always use SavantCode backend for non-streaming
+    modelRoute: params.modelRoute,
+    skipChatGptOAuth: params.modelRoute?.authMode !== 'chatgpt-oauth',
+    contextWindow: params.contextWindow,
+    logger,
   }
   const { model: aiSDKModel } = await getModelForRequest(modelParams)
 
@@ -101,7 +104,10 @@ export async function promptAiSdkStructured<T>(
   }
   const modelParams: ModelRequestParams = {
     model: params.model,
-    skipChatGptOAuth: true, // Always use SavantCode backend for non-streaming
+    modelRoute: params.modelRoute,
+    skipChatGptOAuth: params.modelRoute?.authMode !== 'chatgpt-oauth',
+    contextWindow: params.contextWindow,
+    logger,
   }
   const { model: aiSDKModel } = await getModelForRequest(modelParams)
 
@@ -110,6 +116,7 @@ export async function promptAiSdkStructured<T>(
     prompt: undefined,
     model: aiSDKModel,
     output: 'object',
+    maxOutputTokens: params.maxTokens,
     messages: convertCbToModelMessages(params),
     providerOptions: getProviderOptions({
       ...params,

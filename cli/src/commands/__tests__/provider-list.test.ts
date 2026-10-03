@@ -64,7 +64,9 @@ describe('/provider list ordering (FID-2026-1001-001)', () => {
     for (const [index, position] of builtinPositions.entries()) {
       expect(position, builtinLabels[index]).toBeGreaterThan(-1)
     }
-    expect(builtinPositions).toEqual([...builtinPositions].sort((a, b) => a - b))
+    expect(builtinPositions).toEqual(
+      [...builtinPositions].sort((a, b) => a - b),
+    )
     // Customs segment follows the built-ins segment and is sorted within it
     // ('Alpha Relay' intentionally sorts after every built-in — segment rule).
     const alphaAt = output.indexOf('Alpha Relay')

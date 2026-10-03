@@ -2,6 +2,7 @@ import { z } from 'zod/v4'
 
 import { jsonValueSchema } from './json'
 import { mcpConfigSchema } from './mcp'
+import { modelRouteSchema } from '../providers/model-route'
 
 import type { StepHandler } from './agent-template'
 import type { JSONSchema } from 'zod/v4/core'
@@ -87,6 +88,7 @@ export const DynamicAgentDefinitionSchema = z.object({
   // Required fields for new agents
   displayName: z.string(),
   model: z.string(),
+  modelRoute: modelRouteSchema.optional(),
   reasoningOptions: z
     .object({
       enabled: z.boolean().optional(),

@@ -1,4 +1,3 @@
-
 import { lintClosedTerm } from './lint.ts'
 import { normalizeFnSource } from './normalize.ts'
 import {

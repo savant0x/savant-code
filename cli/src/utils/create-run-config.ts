@@ -2,7 +2,7 @@ import path from 'path'
 
 import { MAX_AGENT_STEPS_DEFAULT } from '@savant-code/common/constants/agents'
 
-import { loadFidInventory } from './fid-loader'
+import { loadFids } from './fid-loader'
 import {
   createEventHandler,
   createStreamChunkHandler,
@@ -128,7 +128,7 @@ const matchesPattern = (str: string) =>
 
 const ENV_TEMPLATE_SUFFIXES = ['.env.example', '.env.sample', '.env.template']
 
-// FID-2026-0804-009 (code-review finding): `loadFidInventory()` does synchronous
+// FID-2026-0804-009 (code-review finding): `loadFids()` does synchronous
 // readdir + per-FID readFile, and `createRunConfig` runs on every message send.
 // Cache the active-FID path list with a short TTL — FIDs change rarely
 // mid-session, and the sidebar / fid-watcher own live freshness separately.
@@ -140,8 +140,8 @@ function getActiveFidPaths(): string[] {
   if (fidPathsCache && now - fidPathsCache.at < FID_PATHS_CACHE_TTL_MS) {
     return fidPathsCache.paths
   }
-  const paths = loadFidInventory()
-    .active.map((fid) => fid.path)
+  const paths = loadFids()
+    .map((fid) => fid.path)
     .filter((p): p is string => typeof p === 'string')
   fidPathsCache = { at: now, paths }
   return paths
@@ -189,6 +189,8 @@ export const createRunConfig = (params: CreateRunConfigParams) => {
   // FID-2026-0804-009: hoisted so the mode const drives both the runtime
   // option and the fidPaths load-skip decision.
   const echoComplianceMode = params.echoCompliance?.mode ?? 'warn'
+  const handleStreamChunk = createStreamChunkHandler(eventHandlerState)
+  const handleEvent = createEventHandler(eventHandlerState)
 
   return {
     logger,
@@ -198,8 +200,12 @@ export const createRunConfig = (params: CreateRunConfigParams) => {
     previousRun: previousRunState ?? undefined,
     agentDefinitions,
     maxAgentSteps: MAX_AGENT_STEPS_DEFAULT,
-    handleStreamChunk: createStreamChunkHandler(eventHandlerState),
-    handleEvent: createEventHandler(eventHandlerState),
+    handleStreamChunk: (chunk: Parameters<typeof handleStreamChunk>[0]) => {
+      if (!params.signal.aborted) handleStreamChunk(chunk)
+    },
+    handleEvent: (event: Parameters<typeof handleEvent>[0]) => {
+      if (!params.signal.aborted) handleEvent(event)
+    },
     signal: params.signal,
     extraSavantCodeMetadata,
     onStateSnapshot,

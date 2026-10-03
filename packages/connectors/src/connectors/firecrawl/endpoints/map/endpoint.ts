@@ -1,7 +1,6 @@
 import { zMapBody } from './schema/inputs.ts'
 import { defineEndpoint, UsageModelKind } from '../../../../core/mod.ts'
 
-
 /**
  * `POST /v2/map` — discover a site's URLs without scraping any page.
  *

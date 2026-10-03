@@ -43,6 +43,38 @@ export type GroundingCheckpoint = {
   /** Runtime safety backstops persisted so resumes cannot reset them. */
   internalStepsSinceRefresh?: number
   lastRefreshAtMs?: number | null
+  /**
+   * FID-2026-1001-003 step 3: durable mirror of the Law 1 read ledger.
+   * `filesRead` lives on the ephemeral enforcement instance, which is
+   * WeakMap-keyed by agentState object identity — a session restore replaces
+   * that object, and the fresh instance rebuilt with an empty read set
+   * re-blocked Law 1 on files the session had demonstrably read. Canonical
+   * (path-canonicalization) form → first-seen wall-clock ms, ordered by
+   * insertion. Bounded by MAX_READ_LEDGER; hydration joins with the live Set.
+   */
+  readLedger?: Record<string, number>
+  /**
+   * FID-2026-1001-003 step 2: Law 15 worktree-reconciliation baseline —
+   * repo-relative posix path → sha256 of content, for the complete captured
+   * inventory. Deliberately NOT on `EnforcementState` (Adversary
+   * finding: that object demonstrably loses state, and a lost baseline there
+   * fails open invisibly); the grounding checkpoint is the session-keyed
+   * durable store this step names. An empty captured baseline fails CLOSED:
+   * current porcelain paths absent from it and from `dirtyFiles` are
+   * unaccounted mutations.
+   */
+  worktreeBaseline?: Record<string, string>
+  /** Absolute repo root the baseline paths are relative to. */
+  worktreeBaselineRoot?: string
+  /** Capture/scan method actually used ('git' | 'walk' | 'unavailable'). */
+  worktreeBaselineMethod?: 'git' | 'walk' | 'unavailable'
+  /** Wall-clock ms when the baseline was captured; null = never captured. */
+  worktreeBaselineCapturedAt?: number | null
+  /** Paths present but not hashed (oversized) — never flagged, per the
+   *  accepted-limits statement in FID-2026-1001-003 step 2. */
+  worktreeBaselineSkipped?: string[]
+  /** Initially dirty Git paths remain candidates even after becoming clean. */
+  worktreeBaselineDirtyPaths?: string[]
 }
 
 export const GROUNDING_CHECKPOINT_SCHEMA_VERSION = 1 as const

@@ -132,4 +132,58 @@ describe('getModelForRequest ChatGPT OAuth fallback behavior', () => {
       delete process.env.INFERENCE_API_KEY
     }
   })
+
+  test('a custom INFERENCE_BASE_URL endpoint is authorized only by INFERENCE_API_KEY (FID-2026-1003-006)', async () => {
+    // Direct mode with an ambient active gateway whose registry base is NOT
+    // the request endpoint: the endpoint owns its credential. The active
+    // provider's key chain must not be resolved (no OR_MASTER_KEY exchange,
+    // no fail-closed throw) and its key must never reach the custom endpoint
+    // — even when OPENROUTER_API_KEY is set.
+    process.env.DIRECT_PROVIDER = 'openrouter'
+    process.env.INFERENCE_BASE_URL = 'https://gateway.operator.test/v1'
+    process.env.INFERENCE_API_KEY = 'gateway-own-key'
+    process.env.OPENROUTER_API_KEY = 'unrelated-openrouter-key'
+    const fetchMock = mock(() =>
+      Promise.resolve(
+        new Response('data: [DONE]\n\n', {
+          status: 200,
+          headers: { 'content-type': 'text/event-stream' },
+        }),
+      ),
+    )
+    // @ts-expect-error - test fetch has the same runtime contract
+    globalThis.fetch = fetchMock
+
+    const { getModelForRequest } = await importFresh()
+    const result = await getModelForRequest({
+      model: 'anthropic/claude-sonnet-4.5',
+    })
+    await (result.model as LanguageModelV2).doStream({
+      prompt: COMMAND_CODE_PROMPT,
+    })
+
+    const [input, init] = fetchMock.mock.calls[0] as unknown as [
+      RequestInfo | URL,
+      RequestInit | undefined,
+    ]
+    expect(String(input)).toBe(
+      'https://gateway.operator.test/v1/chat/completions',
+    )
+    expect(new Headers(init?.headers).get('authorization')).toBe(
+      'Bearer gateway-own-key',
+    )
+  })
+
+  test('a custom endpoint without INFERENCE_API_KEY fails fast naming the env var (FID-2026-1003-006)', async () => {
+    // A guaranteed-401 request is pure waste and surfaces a vendor error
+    // naming nothing — fail fast instead of borrowing the active provider's
+    // key for the operator's own endpoint.
+    process.env.DIRECT_PROVIDER = 'openrouter'
+    process.env.INFERENCE_BASE_URL = 'https://gateway.operator.test/v1'
+    process.env.OPENROUTER_API_KEY = 'unrelated-openrouter-key'
+    const { getModelForRequest } = await importFresh()
+    await expect(
+      getModelForRequest({ model: 'anthropic/claude-sonnet-4.5' }),
+    ).rejects.toThrow('INFERENCE_API_KEY is required')
+  })
 })

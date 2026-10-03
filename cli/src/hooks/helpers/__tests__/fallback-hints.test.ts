@@ -1,232 +1,163 @@
-/**
- * FID-2026-0915-001 (W5) — the 429 fallback-hint seam (RED-first).
- *
- * On a rate-limit failure the agent offers up to 2 OTHER boundary-ok hosts
- * serving the same model family — read from the harvest state, fail-silent,
- * once per model per session. Missing data ⇒ empty string ⇒ zero behavior
- * change (the error banner renders exactly as before).
- */
-import { mkdirSync, rmSync, writeFileSync } from 'node:fs'
+import { mkdtempSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 
-import {
-  buildModelIndex,
-  fallbackHint,
-} from '@savant-code/common/providers/discovery-state'
+import { captureModelRoute } from '@savant-code/common/providers/model-route'
 import { describe, expect, test } from 'bun:test'
 
-import { quotaHint, rateLimitHint } from '../send-message/fallback-hints'
+import { readProviderAlternatives } from '../../../utils/provider-alternatives'
+import { monitorProviderHealth } from '../../../utils/provider-health-monitor'
+import { rateLimitHint, quotaHint } from '../send-message/fallback-hints'
 
-function withState(
-  hosts: Record<
-    string,
-    { url: string; lastBoundary: string | null; models?: string[] }
-  >,
-): string {
-  const dir = join(tmpdir(), `fallback-hints-${Date.now()}-${Math.random()}`)
-  mkdirSync(join(dir, 'dev', 'provider-candidates'), { recursive: true })
-  writeFileSync(
-    join(dir, 'dev', 'provider-candidates', 'candidates.json'),
-    JSON.stringify({ _meta: { version: 2 }, hosts }),
-    'utf8',
-  )
-  return dir
+import type { ProviderAlternative } from '@savant-code/common/providers/provider-alternatives'
+
+const now = Date.now()
+const row: ProviderAlternative = {
+  providerId: 'openrouter',
+  host: 'openrouter.ai',
+  modelId: 'qwen/coder',
+  observedAt: now,
+  supported: true,
+  credentialReady: true,
+  boundary: 'boundary-ok',
 }
-
-const cleanup: string[] = []
-process.on('exit', () => {
-  for (const dir of cleanup) rmSync(dir, { recursive: true, force: true })
-})
-
-describe('rateLimitHint (W5 seam)', () => {
-  test('returns a hint naming up to 2 other boundary-ok hosts of the family', () => {
-    const root = withState({
-      'failing.host': {
-        url: 'https://failing.host',
-        lastBoundary: 'boundary-ok',
-        models: ['qwen3-coder:free'],
-      },
-      'fast.host': {
-        url: 'https://fast.host',
-        lastBoundary: 'boundary-ok',
-        models: ['qwen3-coder:free'],
-      },
-      'slow.host': {
-        url: 'https://slow.host',
-        lastBoundary: 'boundary-ok',
-        models: ['qwen3-coder:free'],
-      },
-      'third.host': {
-        url: 'https://third.host',
-        lastBoundary: 'boundary-ok',
-        models: ['qwen3-coder:free'],
-      },
-    })
-    cleanup.push(root)
+describe('429 alternatives', () => {
+  test('ranks exact advertised IDs before family matches, caps two, never changes the route', () => {
+    const before = process.env.DIRECT_PROVIDER
     const hint = rateLimitHint({
-      // Production derives the failing host from the error's request URL.
-      error: {
-        statusCode: 429,
-        url: 'https://failing.host/v1/chat/completions',
-      },
-      modelId: 'qwen/qwen3-coder:free',
-      projectRoot: root,
+      error: { status: 429 },
+      modelId: 'qwen/coder',
+      now,
+      readAlternatives: () => [
+        {
+          ...row,
+          providerId: 'similar',
+          host: 'similar.test',
+          modelId: 'qwen/other',
+        },
+        row,
+        {
+          ...row,
+          providerId: 'third',
+          host: 'third.test',
+          modelId: 'qwen/third',
+        },
+      ],
     })
-    expect(hint).toContain('fast.host')
-    expect(hint).toContain('slow.host')
-    expect(hint).not.toContain('third.host')
-    expect(hint).not.toContain('failing.host')
+    expect(hint.indexOf('openrouter')).toBeLessThan(hint.indexOf('similar'))
+    expect(hint).toContain('exact model ID')
+    expect(hint).toContain('similar model family')
+    expect(hint).not.toContain('third')
+    expect(hint).toContain('unverified')
+    expect(process.env.DIRECT_PROVIDER).toBe(before)
   })
-
-  test('suppresses already-suggested models for the session (once per model)', () => {
-    const root = withState({
-      'a.host': {
-        url: 'https://a.host',
-        lastBoundary: 'boundary-ok',
-        models: ['deepseek-v4'],
-      },
-      'b.host': {
-        url: 'https://b.host',
-        lastBoundary: 'boundary-ok',
-        models: ['deepseek-v4'],
-      },
-    })
-    cleanup.push(root)
-    const first = rateLimitHint({
-      error: { statusCode: 429 },
-      modelId: 'deepseek-ai/deepseek-v4-pro',
-      projectRoot: root,
-    })
-    expect(first).toContain('a.host')
-    const second = rateLimitHint({
-      error: { statusCode: 429 },
-      modelId: 'deepseek-ai/deepseek-v4-pro',
-      projectRoot: root,
-    })
-    expect(second).toBe('')
+  test('unsafe, stale, future, removed, denied, unsupported and unconfigured rows are excluded', () => {
+    for (const change of [
+      { observedAt: now - 25 * 3600_000 },
+      { observedAt: now + 1 },
+      { removed: true },
+      { rejected: true },
+      { supported: false },
+      { credentialReady: false },
+      { boundary: 'open-relay-reject' },
+    ]) {
+      const hint = rateLimitHint({
+        error: { status: 429 },
+        modelId: row.modelId,
+        now,
+        readAlternatives: () => [{ ...row, ...change }],
+      })
+      expect(hint).toContain('No confirmed eligible alternative')
+    }
   })
-
-  test('empty string on missing state file (zero behavior change)', () => {
-    const empty = join(
-      tmpdir(),
-      `fallback-hints-empty-${Date.now()}-${Math.random()}`,
+  test('deduplicates the failure episode, permits a new failure, and ignores non-429 errors', () => {
+    const error = { statusCode: 429 }
+    const params = {
+      error,
+      modelId: row.modelId,
+      now,
+      readAlternatives: () => [row],
+    }
+    expect(rateLimitHint(params)).toContain('openrouter')
+    expect(rateLimitHint(params)).toBe('')
+    expect(rateLimitHint({ ...params, error: { statusCode: 429 } })).toContain(
+      'openrouter',
     )
-    cleanup.push(empty)
-    expect(
-      rateLimitHint({
-        error: { statusCode: 429 },
-        modelId: 'qwen3-coder:free',
-        projectRoot: empty,
-      }),
-    ).toBe('')
+    expect(rateLimitHint({ ...params, error: { statusCode: 500 } })).toBe('')
   })
-
-  test('empty string on non-429 errors', () => {
-    expect(
-      rateLimitHint({
-        error: { statusCode: 500 },
-        modelId: 'qwen3-coder:free',
-        projectRoot: '.',
-      }),
-    ).toBe('')
-    expect(
-      rateLimitHint({
-        error: new Error('boom'),
-        modelId: 'qwen3-coder:free',
-        projectRoot: '.',
-      }),
-    ).toBe('')
-  })
-
-  test('never suggests open relays or unverified boundaries', () => {
-    const root = withState({
-      'ok.host': {
-        url: 'https://ok.host',
-        lastBoundary: 'boundary-ok',
-        models: ['llama-3.3-70b'],
-      },
-      'relay.host': {
-        url: 'https://relay.host',
-        lastBoundary: 'open-relay-reject',
-        models: ['llama-3.3-70b'],
-      },
-    })
-    cleanup.push(root)
-    const hint = rateLimitHint({
-      error: { statusCode: 429 },
-      modelId: 'meta/llama-3.3-70b-instruct',
-      projectRoot: root,
-    })
-    expect(hint).toContain('ok.host')
-    expect(hint).not.toContain('relay.host')
-  })
-})
-
-describe('quotaHint (FID-2026-0919-026)', () => {
-  const refusal = {
-    statusCode: 400,
-    code: 'insufficient_user_quota',
-    message:
-      'credit insufficient balance: balance=0 required=3672 (request id: 20260919193303938194165c955d568iMhaOQev)',
-  }
-
-  test('a gateway quota refusal quotes the declared note and points at /health', () => {
-    const hint = quotaHint({
-      error: refusal,
-      modelId: 'bai/deepseek-v4.1-flash',
-    })
-    expect(hint).toContain('B.AI')
-    expect(hint).toContain('prepaid')
-    expect(hint).toContain('/health')
-  })
-
-  test('an explicit provider id wins over the model prefix', () => {
-    const hint = quotaHint({
-      error: refusal,
-      modelId: 'bai/hy3',
-      providerId: 'bai',
-    })
-    expect(hint).toContain('B.AI')
-  })
-
-  test('stays silent when nothing honest applies', () => {
-    // Not a quota refusal.
-    expect(
-      quotaHint({
-        error: { code: 'invalid_request', message: 'bad param' },
-        modelId: 'bai/hy3',
-      }),
-    ).toBe('')
-    // Quota refusal, but no provider to attribute it to.
-    expect(quotaHint({ error: refusal })).toBe('')
-    expect(quotaHint({ error: refusal, modelId: 'some-bare-model' })).toBe('')
-    // Quota refusal on a provider that declares no quota note.
-    expect(quotaHint({ error: refusal, modelId: 'openrouter/hy3' })).toBe('')
-  })
-
-  test('message-only shapes are recognised, including the operator-reported text', () => {
-    const hint = quotaHint({
-      error: {
-        message:
-          'credit insufficient balance: balance=0 required=3672 (request id: 20260919193303938194165c955d568iMhaOQev)',
-      },
-      modelId: 'bai/qwen3.8-flash',
-    })
-    expect(hint).toContain('B.AI')
-  })
-})
-
-describe('fallbackHint (common, W5 selection — reused here)', () => {
-  test('selection contract stays pinned at the consumption site', () => {
-    const index = buildModelIndex([
-      {
-        host: 'x.host',
+  test('ordinary projects read the same profile catalog and dated boundary evidence', async () => {
+    const dir = mkdtempSync(join(tmpdir(), 'hint-profile-'))
+    const prior = process.env.SAVANT_CODE_CONFIG_DIR
+    const key = process.env.OPENROUTER_API_KEY
+    process.env.SAVANT_CODE_CONFIG_DIR = dir
+    process.env.OPENROUTER_API_KEY = 'placeholder'
+    try {
+      writeFileSync(
+        join(dir, 'free-options.json'),
+        JSON.stringify({
+          fetchedAt: new Date(now).toISOString(),
+          totalModels: 1,
+          models: [
+            {
+              id: row.modelId,
+              providerId: row.providerId,
+              context_length: null,
+            },
+          ],
+          newModelIds: [],
+          archivedModels: [],
+        }),
+      )
+      // Dated boundary evidence must come from the production writer: it
+      // stamps the resolved-config fact the reader binds the verdict to
+      // (FID-2026-1003-006 — a rotated endpoint invalidates old evidence).
+      await monitorProviderHealth(
+        captureModelRoute('openrouter'),
+        true,
+        new AbortController().signal,
+        () => now,
+        async () => ({
+          reachable: true,
+          modelsCount: 1,
+          modelsShapeOk: true,
+          latencyMs: 5,
+          boundary: 'boundary-ok',
+          boundaryHttpStatus: 401,
+          error: null,
+        }),
+      )
+      expect(readProviderAlternatives(now)[0]).toMatchObject({
+        providerId: 'openrouter',
+        credentialReady: true,
         boundary: 'boundary-ok',
-        latencyMs: 10,
-        models: ['glm-4.7-flash'],
-      },
-    ])
-    expect(fallbackHint('GLM-4.7-Flash', index)).toContain('x.host')
+      })
+    } finally {
+      if (prior === undefined) delete process.env.SAVANT_CODE_CONFIG_DIR
+      else process.env.SAVANT_CODE_CONFIG_DIR = prior
+      if (key === undefined) delete process.env.OPENROUTER_API_KEY
+      else process.env.OPENROUTER_API_KEY = key
+      rmSync(dir, { recursive: true, force: true })
+    }
+  })
+})
+describe('quota refusal explanation', () => {
+  test('declared quota notes cover 402, typed quota codes and the reported balance error', () => {
+    for (const error of [
+      { status: 402 },
+      { code: 'insufficient_user_quota' },
+      { message: 'credit insufficient balance: balance=0' },
+    ]) {
+      expect(
+        quotaHint({ error, providerId: 'bai', modelId: 'openai/gpt-5' }),
+      ).toContain('B.AI')
+    }
+    expect(quotaHint({ error: { status: 402 }, modelId: 'bai/hy3' })).toContain(
+      '/health',
+    )
+    expect(
+      quotaHint({ error: { status: 402 }, providerId: 'openrouter' }),
+    ).toBe('')
+    expect(quotaHint({ error: { status: 500 }, providerId: 'bai' })).toBe('')
+    expect(quotaHint({ error: { status: 402 } })).toBe('')
   })
 })

@@ -2,11 +2,12 @@ import fs from 'fs'
 import os from 'os'
 import path from 'path'
 
+import { getEffectiveProviderRegistry } from '@savant-code/common/providers/custom-providers'
+import { providerCredentialEnvNames } from '@savant-code/common/providers/readiness'
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test'
 
 import { applyPersistedDirectProviderSettings } from '../ollama-onboarding'
 import {
-  PROVIDER_SETUP_CONFIG,
   RESEARCH_KEY_SERVICES,
   applyPersistedProviderApiKeys,
   configureDefaultDirectProvider,
@@ -17,15 +18,15 @@ import {
 } from '../provider-setup'
 import { saveSettings } from '../settings'
 
-// Derived from the live config surfaces so a newly added provider or
-// research service can never be forgotten here — the hand-maintained list
-// missed KIOSAPI_API_KEY and leaked it into the suite (FID-2026-0905-006):
-// the one-configured-provider self-selection then resolved kiosapi instead
-// of the openrouter bootstrap default.
+// Derived from the live credential surfaces (FID-2026-0905-006) so a newly
+// added provider, research service, or credential alias can never be
+// forgotten here — the hand-maintained list missed KIOSAPI_API_KEY, and later
+// the OpenRouter master-key chain (OR_MASTER_KEY, seeded from .env.local by
+// module imports) leaked past this list into the readiness check. The
+// readiness name set is the one truth (Law 13).
 const PROVIDER_ENV_VARS = [
-  ...Object.values(PROVIDER_SETUP_CONFIG).map((config) => config.envVar),
-  ...Object.values(PROVIDER_SETUP_CONFIG).flatMap((config) =>
-    (config.extraEnvVars ?? []).map((extra) => extra.envVar),
+  ...Object.values(getEffectiveProviderRegistry()).flatMap(
+    providerCredentialEnvNames,
   ),
   ...Object.values(RESEARCH_KEY_SERVICES).map((service) => service.envVar),
   'DIRECT_PROVIDER',

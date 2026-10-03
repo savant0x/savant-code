@@ -18,9 +18,7 @@ export function buildFns() {
       const scrape = body.scrapeOptions
       const formats = scrape?.formats ?? []
       const names = formats.map((format: unknown) =>
-        typeof format === 'string'
-          ? format
-          : (format as { type: string }).type,
+        typeof format === 'string' ? format : (format as { type: string }).type,
       )
       let injection = false
       for (const format of formats as unknown[]) {
@@ -68,13 +66,15 @@ export function buildFns() {
       utils,
     }: {
       data: { input: { body: SearchBody }; output: unknown }
-      utils: EnvelopeData['usage'] extends never ? never : {
-        json: {
-          optionalLen(value: unknown, path: string): number | undefined
-          optionalGet(value: unknown, path: string): unknown
-          optionalNum(value: unknown, path: string): number | undefined
-        }
-      }
+      utils: EnvelopeData['usage'] extends never
+        ? never
+        : {
+            json: {
+              optionalLen(value: unknown, path: string): number | undefined
+              optionalGet(value: unknown, path: string): unknown
+              optionalNum(value: unknown, path: string): number | undefined
+            }
+          }
     }) => {
       const body = data.input.body
       const web = utils.json.optionalLen(data.output, '$.data.web') ?? 0
@@ -84,9 +84,7 @@ export function buildFns() {
       const scrape = body.scrapeOptions
       const formats = scrape?.formats ?? []
       const names = formats.map((format: unknown) =>
-        typeof format === 'string'
-          ? format
-          : (format as { type: string }).type,
+        typeof format === 'string' ? format : (format as { type: string }).type,
       )
       let injection = false
       for (const format of formats as unknown[]) {

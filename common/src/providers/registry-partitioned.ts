@@ -116,6 +116,7 @@ export const PROVIDER_REGISTRY_PARTITION = {
     // refuses a request the balance cannot cover — this is that reading
     // (FID-2026-0919-026).
     quota: {
+      auth: 'bai-dual',
       url: 'https://api.b.ai/v1/balance',
       valuePath: 'data.personal_balance',
       unit: 'credits',

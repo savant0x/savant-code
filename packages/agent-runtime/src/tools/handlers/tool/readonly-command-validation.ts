@@ -7,15 +7,18 @@
 // permitted only after safe splitting and per-segment validation (see below).
 // NOTE: Windows stderr redirections (2>nul, 2>&1) are explicitly permitted
 // as they are read-only and standard diagnostic patterns.
-const FORBIDDEN_METACHAR_REGEX = /[<>;|`$&]|\|\||\$\(/
+// FID-2026-1001-003 step 1: exported (previously module-private) so the EHEL
+// mutation classifier consumes the SAME token lists — Law 13, one truth; the
+// classifier must never grow a divergent copy.
+export const FORBIDDEN_METACHAR_REGEX = /[<>;|`$&]|\|\||\$\(/
 // Explicitly permitted Windows stderr redirections (read-only, diagnostic).
-const WINDOWS_STDERR_REDIRECT_REGEX = /\b2>nul\b|\b2>&1\b/
+export const WINDOWS_STDERR_REDIRECT_REGEX = /\b2>nul\b|\b2>&1\b/
 // Destructive filesystem commands that mutate state. These are rejected even
 // when used without metacharacters (e.g. `rm -rf /`).
-const DESTRUCTIVE_COMMAND_REGEX =
+export const DESTRUCTIVE_COMMAND_REGEX =
   /^\s*(rm|mv|cp|chmod|chown|mkdir|mkfs|dd|mount|umount|truncate|mkfifo|mknod|ln\s*-s?|rmdir|touch|tee\s*-?|shred|chattr|setfacl)\b/i
 // Mutating git operations. Read-only git (status, diff, log, show, branch, tag, remote) is allowed.
-const GIT_MUTATING_REGEX =
+export const GIT_MUTATING_REGEX =
   /^\s*git\s+(?:branch\s+-(?:D|d|M|m|--force|--move|--delete)|tag\s+-(?:d|delete|--delete)|remote\s+(?:add|remove|rename|prune|set-url)|(?:checkout|reset|rm|mv|merge|rebase|cherry-pick|revert|apply|am|switch)\b|\S+\s+--output|--force\b)/i
 // Dangerous commands that could execute arbitrary code or access the network.
 const DANGEROUS_COMMAND_REGEX =
@@ -24,8 +27,9 @@ const DANGEROUS_COMMAND_REGEX =
 /**
  * Split a command on unquoted `&&` separators. Respects single quotes,
  * double quotes, and backslash escapes so that `echo "a && b"` is not split.
+ * FID-2026-1001-003 step 1: exported for the EHEL mutation classifier.
  */
-function splitSafeAnd(command: string): string[] {
+export function splitSafeAnd(command: string): string[] {
   const segments: string[] = []
   let current = ''
   let inSingle = false
@@ -73,7 +77,7 @@ function splitSafeAnd(command: string): string[] {
  * independently against the denylists, so `cat x | sh` is rejected because the
  * `sh` segment is a shell interpreter (added to DANGEROUS_COMMAND_REGEX).
  */
-function splitSafePipes(command: string): {
+export function splitSafePipes(command: string): {
   segments: string[]
   hasOrOperator: boolean
 } {

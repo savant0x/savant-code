@@ -1,13 +1,4 @@
-/**
- * fid:verify executor tests (FID-2026-0823-009).
- *
- * Covers the allowlist safety surface (hostile args never execute), gate
- * resolution to argv, real execution against the fixtures, receipt
- * build/stamp round-trip, and the structural --check scan.
- *
- * FID-2026-0907-010 defect 2 pins: prose mentions and fenced examples of
- * the receipt/gates headings must never hijack the stamp anchor.
- */
+/** Allowlisted gate execution, workspace isolation, and receipt stamping. */
 import { describe, expect, it } from 'bun:test'
 
 import {
@@ -79,6 +70,21 @@ describe('resolveGate', () => {
     expect('error' in resolved).toBe(true)
   })
 
+  it.each(['cli', 'packages/agent-runtime'])(
+    'runs %s tests from their workspace',
+    (workspace) => {
+      const file =
+        workspace === 'cli'
+          ? 'src/utils/__tests__/fid-loader.test.ts'
+          : 'src/echo/__tests__/worktree-reconcile.test.ts'
+      const resolved = resolveGate('test', `${workspace}/${file}`)
+      if ('error' in resolved) throw new Error(resolved.error)
+      expect(resolved.argv).toEqual(['bun', 'test', file])
+      expect(resolved.cwd.replaceAll('\\', '/')).toEndWith(`/${workspace}`)
+      expect(resolved.label).toBe(`test ${workspace}/${file}`)
+    },
+  )
+
   it('maps the no-arg quality gate to the quality:report script (Task 58)', () => {
     const resolved = resolveGate('quality', '')
     expect('error' in resolved ? resolved.error : resolved.argv).toEqual([
@@ -148,13 +154,9 @@ describe('buildReceipt + stampReceipt', () => {
       exit: 0,
       signal: null,
     },
-    // Task 58: the mandatory quality gate result must cover the declared
-    // `- gate: quality` in FID_WITH_PROSE_MENTION for the end-to-end pin.
     { label: 'quality', exit: 0, signal: null },
   ]
 
-  // buildReceipt(content, results, verifiedAt) requires the timestamp
-  // (FID-2026-0928-007 class B: the old 2-arg calls predated the parameter).
   const VERIFIED_AT = '2026-09-28T00:00:00.000Z'
 
   it('builds a receipt with fingerprint + exit lines', () => {
@@ -183,8 +185,6 @@ describe('buildReceipt + stampReceipt', () => {
     expect(twice.match(/### Verification Receipt/g)?.length).toBe(1)
   })
 
-  // FID-2026-0907-010 defect 2: a backticked PROSE mention of a heading must
-  // not hijack the stamp.
   const PROSE_LINE = `The receipt heading ${BT}### Verification Receipt${BT} appears in prose here, and the gates heading too: ${BT}## Verification Gates${BT}.`
 
   const FID_WITH_PROSE_MENTION = [

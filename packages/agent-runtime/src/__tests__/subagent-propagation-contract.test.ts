@@ -2,6 +2,7 @@ import {
   MAX_SUBAGENT_DEPTH,
   MAX_SUBAGENT_FAN_OUT,
 } from '@savant-code/common/constants/agents'
+import { captureModelRoute } from '@savant-code/common/providers/model-route'
 import { getInitialAgentState } from '@savant-code/common/types/session-state'
 import { describe, expect, it } from 'bun:test'
 
@@ -133,6 +134,7 @@ describe('subagent propagation contract', () => {
       ...template,
       id: 'parent',
       model: 'parent/model',
+      modelRoute: captureModelRoute('openrouter'),
       providerOptions: {},
     }
     const child: AgentTemplate = {
@@ -144,6 +146,7 @@ describe('subagent propagation contract', () => {
 
     const merged = withParentModel(child, parent)
     expect(merged.model).toBe('parent/model')
+    expect(merged.modelRoute).toEqual(parent.modelRoute)
     expect(merged.providerOptions).toEqual({ data_collection: 'deny' })
   })
 
@@ -163,5 +166,19 @@ describe('subagent propagation contract', () => {
     const merged = withParentModel(child, parent)
     expect(merged.model).toBe('parent/model')
     expect(merged.providerOptions).toEqual({ data_collection: 'deny' })
+  })
+  it('a pinned child preserves its own serving route rather than the parent gateway', () => {
+    const parent = {
+      ...template,
+      model: 'openai/gpt-5',
+      modelRoute: captureModelRoute('openrouter'),
+    }
+    const child = {
+      ...template,
+      model: 'openai/gpt-5',
+      modelRoute: captureModelRoute('openai'),
+      inheritParentModel: false,
+    }
+    expect(withParentModel(child, parent).modelRoute).toEqual(child.modelRoute)
   })
 })

@@ -13,9 +13,9 @@ import { getCheckpointDir } from '../commands/rewind'
 import { getProjectRoot, tryGetProjectRoot } from '../project-files'
 import { useChatStore } from '../state/chat-store'
 import { useModelPickerStore } from '../state/model-picker-store'
+import { useProviderInboxStore } from '../state/provider-inbox-store'
 import { useProviderPickerStore } from '../state/provider-picker-store'
 import { useRewindPickerStore } from '../state/rewind-picker-store'
-import { useSavantFreeModelStore } from '../state/savant-free-model-store'
 import { getSystemMessage } from '../utils/message-history'
 import { applyModelPickerSelection } from '../utils/provider-setup'
 import { executeRewind } from '../utils/rewind'
@@ -78,6 +78,7 @@ export function useChatPickers({
 }: UseChatPickersArgs): UseChatPickersReturn {
   // Interactive /model picker overlay state.
   const modelPickerOpen = useModelPickerStore((s) => s.isOpen)
+  const inboxOpen = useProviderInboxStore((s) => s.open)
   const modelPickerQuery = useModelPickerStore((s) => s.query)
   const modelPickerModels = useModelPickerStore((s) => s.models)
   const modelPickerSelectedIndex = useModelPickerStore((s) => s.selectedIndex)
@@ -122,7 +123,8 @@ export function useChatPickers({
   // owners on mount or steady-state closed renders.
   const wasAnyPickerOpenRef = useRef(false)
   useEffect(() => {
-    const anyOpen = modelPickerOpen || providerPickerOpen || rewindPickerOpen
+    const anyOpen =
+      inboxOpen || modelPickerOpen || providerPickerOpen || rewindPickerOpen
     const action = pickerFocusAction(anyOpen, wasAnyPickerOpenRef.current)
     if (action === 'blur') {
       wasAnyPickerOpenRef.current = true
@@ -134,6 +136,7 @@ export function useChatPickers({
     }
   }, [
     modelPickerOpen,
+    inboxOpen,
     providerPickerOpen,
     rewindPickerOpen,
     setInputFocused,
@@ -209,7 +212,6 @@ export function useChatPickers({
   const handleModelPickerSelect = useCallback(
     (model: OpenRouterModel) => {
       applyModelPickerSelection(model)
-      useSavantFreeModelStore.getState().switchModel(model.id)
       const current = loadSavantCodeModelPreference()
       setMessages((prev) => [
         ...prev,

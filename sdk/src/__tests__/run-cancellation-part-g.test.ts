@@ -33,7 +33,6 @@ describe('Run Cancellation Handling', () => {
   })
 
   it('preserves session state even when abort happens mid-stream', async () => {
-
     const abortController = new AbortController()
     const serverSessionState = getInitialSessionState(
       getStubProjectFileContext(),
@@ -148,8 +147,7 @@ describe('Run Cancellation Handling', () => {
       },
     )
 
-    const client = new SavantCodeClient({
-    })
+    const client = new SavantCodeClient({})
 
     const result = await client.run({
       agent: 'savant',

@@ -16,8 +16,8 @@ use tauri_plugin_log::RotationStrategy;
 
 use crate::gateway::{allocate_ephemeral_port, build_spawn_spec, generate_gateway_token};
 use crate::supervisor::{
-    backoff_delay_ms, resolve_sidecar_path, should_give_up, spawn_sidecar, LifecycleState,
-    SidecarHandle, CRASH_WINDOW_SECS, MAX_CRASHES_PER_WINDOW,
+    backoff_delay_ms, resolve_sidecar_path, resolve_shell_project_root, should_give_up,
+    spawn_sidecar, LifecycleState, SidecarHandle, CRASH_WINDOW_SECS, MAX_CRASHES_PER_WINDOW,
 };
 
 const MAIN_WINDOW_LABEL: &str = "main";
@@ -136,6 +136,16 @@ fn watch_child(app: &AppHandle) -> WatchEnd {
 fn supervise_until_dead(app: AppHandle, port: u16, token: String) {
     let exe_dir = current_exe_dir();
     let triple = env!("SIDECAR_TARGET_TRIPLE");
+    // FID-2026-1002-004: the shell's launch tree decides the project root —
+    // resolved ONCE (the process cwd never changes) and reused across the
+    // crash/restart ladder so every sidecar generation anchors identically.
+    // None in a release GUI launch (install-dir cwd, no enclosing repo) →
+    // the sidecar fails closed at startup.
+    let project_root = resolve_shell_project_root();
+    info!(
+        "sidecar project root: {}",
+        project_root.as_deref().unwrap_or("<none — release launches fail closed>")
+    );
     let Some(sidecar_path) = resolve_sidecar_path(&exe_dir, SIDECAR_BASE_NAME, triple) else {
         warn!(
             "sidecar binary not found beside {}; build it with 'bun run --cwd=desktop build:sidecar'",
@@ -155,7 +165,7 @@ fn supervise_until_dead(app: AppHandle, port: u16, token: String) {
     let mut crash_instants: Vec<Instant> = Vec::new();
     loop {
         emit_lifecycle(&app, LifecycleState::Spawning, None);
-        let spec = build_spawn_spec(&sidecar_path, port, &token);
+        let spec = build_spawn_spec(&sidecar_path, port, &token, project_root.clone());
         match spawn_sidecar(&spec) {
             Err(err) => {
                 warn!("sidecar spawn failed: {err}");

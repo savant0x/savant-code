@@ -208,6 +208,7 @@ export const prepareSendRun = async (ctx: PrepareSendRunContext) => {
   const runLifecycle = createRunLifecycle({
     previousRunStateRef,
     abortController,
+    isCurrentRun: () => abortControllerRef.current === abortController,
     aiMessageId,
     finalContent,
     setRunState,

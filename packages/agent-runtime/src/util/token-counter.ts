@@ -9,11 +9,11 @@ const ANTHROPIC_TOKEN_FUDGE_FACTOR = 1.35
 /** Flat per-image/file cost. Anthropic bills a large image at ~1600 tokens; we
  *  use that ceiling instead of counting the base64 as text (which JSON.stringify
  *  would do), where a single screenshot is hundreds of thousands of chars. */
-const IMAGE_TOKEN_ESTIMATE = 1600
+export const IMAGE_TOKEN_ESTIMATE = 1600
 
 /** Per-message structural overhead (role marker, delimiters) Anthropic adds on
  *  top of the raw content. */
-const PER_MESSAGE_TOKEN_OVERHEAD = 8
+export const PER_MESSAGE_TOKEN_OVERHEAD = 8
 
 const TOKEN_COUNT_CACHE = new LRUCache<string, number>(1000)
 

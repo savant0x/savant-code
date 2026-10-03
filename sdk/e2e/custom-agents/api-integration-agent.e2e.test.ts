@@ -15,7 +15,7 @@ import {
   DEFAULT_TIMEOUT,
 } from '../utils'
 
-import type { AgentDefinition , SavantCodeClient} from '../../src'
+import type { AgentDefinition, SavantCodeClient } from '../../src'
 
 describe('Custom Agents: API Integration Agent', () => {
   let client: SavantCodeClient

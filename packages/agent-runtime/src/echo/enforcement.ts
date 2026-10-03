@@ -30,7 +30,7 @@ import {
   evaluateTurnEndImpl,
   evaluateUngroundedTurnEndImpl,
 } from './enforcement/turn-end'
-import { createEnforcementState } from './enforcement-state'
+import { createEnforcementState, MAX_READ_LEDGER } from './enforcement-state'
 import { createGroundingCheckpoint, isAgentGrounded } from './grounding'
 
 import type { EchoEnforcementOptions } from './enforcement/factory'
@@ -96,6 +96,21 @@ export class EchoEnforcement {
           checkpoint.internalStepsSinceRefresh ?? 0
         this.state.completionGateRetries = checkpoint.completionGateRetries
         this.state.completionGateDisarmed = checkpoint.completionGateDisarmed
+        // FID-2026-1001-003 step 3: hydrate the Law 1 read set from the
+        // durable checkpoint ledger. `filesRead` used to live only on this
+        // instance (WeakMap-keyed by agentState identity), so a session
+        // restore rebuilt an empty read set and Law 1 re-blocked writes to
+        // files the session had demonstrably read. Newest entries win if a
+        // persisted ledger somehow exceeds the cap. Reads hydrate; write
+        // credit never does.
+        if (checkpoint.readLedger) {
+          const entries = Object.entries(checkpoint.readLedger)
+            .sort((a, b) => b[1] - a[1])
+            .slice(0, MAX_READ_LEDGER)
+          for (const [canonical] of entries) {
+            this.state.filesRead.add(canonical)
+          }
+        }
       } else if (this.gateArmed) {
         this.agentState.groundingCheckpoint = createGroundingCheckpoint(
           this.agentState,

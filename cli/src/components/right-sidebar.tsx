@@ -12,7 +12,10 @@ import {
   SidebarToolsList,
 } from './right-sidebar-sections'
 import { LearnOverlay } from './savant-ui'
-import { createSidebarSurfaceStyle } from '../chat/styles'
+import {
+  createChatScrollbarOptions,
+  createSidebarSurfaceStyle,
+} from '../chat/styles'
 import { useFids } from '../hooks/use-fids'
 import { useTheme } from '../hooks/use-theme'
 import { useChatStore } from '../state/chat-store'
@@ -122,7 +125,6 @@ export const RightSidebar = React.memo(function RightSidebar({
         paddingBottom: 1,
         paddingLeft: 1,
         paddingRight: 1,
-        gap: 1,
         // Positioning context for the fold button: the sidebar's left edge is
         // the chat/sidebar fold line (FID-2026-0816-010 follow-up round 2).
         position: 'relative',
@@ -162,111 +164,90 @@ export const RightSidebar = React.memo(function RightSidebar({
           </text>
         </box>
       )}
-      {/* Header */}
-      <SidebarHeader />
-
-      {devMode && (
-        <text
-          attributes={TextAttributes.BOLD}
-          fg={theme.error}
-          selectable={false}
-        >
-          [DEV MODE]
-        </text>
-      )}
-
-      {/* Active Agents — only show agents that are currently active. */}
-      <SidebarActiveAgents
-        agentStack={agentStack}
-        agent={agent}
-        isStreaming={isStreaming}
-        isWaitingForResponse={isWaitingForResponse}
-      />
-
-      <AgentStatus />
-
-      {/* Session — the bound-agent identity is surfaced by the Active Agents
-          stack (with its streaming fallback) for the default main agent, so
-          only a session explicitly bound to a different agent needs its own
-          row here. */}
-      <SidebarSession
-        agent={agent}
-        cost={cost}
-        mode={mode}
-        model={model}
-        tokensUsed={tokensUsed}
-        tokensMax={tokensMax}
-        windowSource={windowSource}
-        compactionStatus={compactionLabel}
-        compactionCount={compactionCount}
-      />
-
-      {/* FID-2026-0813-022: read-only live teacher surface. Sourced from the
-          passive store mirror of the runtime singleton; the component has no
-          tool or write authority. */}
-      {teacherState !== null && teacherState.challenge !== null && (
-        <SidebarSection title="Teacher">
-          <LearnOverlay
-            challenge={teacherState.challenge}
-            events={teacherState.events}
-            receipt={teacherState.receipt}
-            persisted={teacherState.persisted}
-            competencyState={teacherState.competencyState}
-            phase={teacherState.phase}
-            completionState={teacherState.completionState}
-          />
-        </SidebarSection>
-      )}
-
-      {/* Perfection Loop — only show when the FSM is in an active phase
-          (not idle). When idle, the loop section is hidden to reduce
-          visual clutter. */}
-      {fsmPhase !== 'idle' && <PerfectionLoop />}
-
-      {/* FID-2026-0813-009: read-only live governance surface. The SDK event
-          handler stores every provenance_receipt event; the TrustMatrix
-          reducer drops unsigned/unmatched ones, and the component has no tool
-          or write authority. Mounts only while a receipt is still `pending`
-          (operator feedback 2026-08-16 round 2: it must not persist after
-          completion) and collapses by default so it stays subtle. */}
-      {trustSummary.hasPending && (
-        <SidebarSection title="Trust Matrix">
-          <TrustMatrix events={provenanceEvents} />
-        </SidebarSection>
-      )}
-
-      {/* Loop Status — shows active loop cadence, goal condition, and iteration count */}
-      <LoopStatusPanel />
-
-      {/* FID-2026-0818-007: live Auto Drive surface (read-only mirror). */}
-      <DriveStatusPanel />
-
-      {/* Tools */}
-      <SidebarToolsList toolsUsed={toolsUsed} toolsAvailable={toolsAvailable} />
-
-      {/* Files Changed — the SDK emits only `created` and `modified` write
-          events (change-file.ts:32); Added/Deleted were dead counters. */}
-      <SidebarFilesChanged filesChanged={filesChanged} />
-
-      {/* Active FIDs — live from dev/fids/ via the harness watcher; the
-          archived count keeps a converged project's FID history visible. */}
-      <SidebarActiveFids fids={fids} archivedCount={archivedCount} />
-
-      {/* History */}
-      <SidebarHistoryTimeline toolHistory={toolHistory} />
-
-      {/* Version — pushed to the bottom, centered */}
-      <box
-        marginTop="auto"
-        width="100%"
-        alignItems="center"
+      <scrollbox
+        scrollX={false}
+        scrollbarOptions={{ visible: false }}
+        verticalScrollbarOptions={createChatScrollbarOptions(theme)}
+        style={{
+          flexGrow: 1,
+          contentOptions: {
+            minHeight: '100%',
+            flexDirection: 'column',
+            flexShrink: 0,
+            gap: 1,
+          },
+        }}
         focusable={false}
         selectable={false}
       >
-        <text fg={theme.muted} wrapMode="none" selectable={false}>
-          {`v${getVersion()}`}
-        </text>
-      </box>
+        <SidebarHeader />
+        {devMode && (
+          <text
+            attributes={TextAttributes.BOLD}
+            fg={theme.error}
+            selectable={false}
+          >
+            [DEV MODE]
+          </text>
+        )}
+        <SidebarActiveAgents
+          agentStack={agentStack}
+          agent={agent}
+          isStreaming={isStreaming}
+          isWaitingForResponse={isWaitingForResponse}
+        />
+        <AgentStatus />
+        <SidebarSession
+          agent={agent}
+          cost={cost}
+          mode={mode}
+          model={model}
+          tokensUsed={tokensUsed}
+          tokensMax={tokensMax}
+          windowSource={windowSource}
+          compactionStatus={compactionLabel}
+          compactionCount={compactionCount}
+        />
+        {teacherState !== null && teacherState.challenge !== null && (
+          <SidebarSection title="Teacher">
+            <LearnOverlay
+              challenge={teacherState.challenge}
+              events={teacherState.events}
+              receipt={teacherState.receipt}
+              persisted={teacherState.persisted}
+              competencyState={teacherState.competencyState}
+              phase={teacherState.phase}
+              completionState={teacherState.completionState}
+            />
+          </SidebarSection>
+        )}
+        {fsmPhase !== 'idle' && <PerfectionLoop />}
+        {trustSummary.hasPending && (
+          <SidebarSection title="Trust Matrix">
+            <TrustMatrix events={provenanceEvents} />
+          </SidebarSection>
+        )}
+        <LoopStatusPanel />
+        <DriveStatusPanel />
+        <SidebarToolsList
+          toolsUsed={toolsUsed}
+          toolsAvailable={toolsAvailable}
+        />
+        <SidebarFilesChanged filesChanged={filesChanged} />
+        <SidebarActiveFids fids={fids} archivedCount={archivedCount} />
+        <SidebarHistoryTimeline toolHistory={toolHistory} />
+        <box
+          marginTop="auto"
+          width="100%"
+          alignItems="center"
+          focusable={false}
+          selectable={false}
+        >
+          <text fg={theme.muted} wrapMode="none" selectable={false}>
+            {`v${getVersion()}`}
+          </text>
+        </box>
+      </scrollbox>
     </box>
   )
 })

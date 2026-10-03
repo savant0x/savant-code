@@ -24,14 +24,12 @@ export function makeConnectorDescribeHandler(
     } catch (error) {
       return {
         output: jsonToolResult({
-          errorMessage:
-            error instanceof Error ? error.message : String(error),
+          errorMessage: error instanceof Error ? error.message : String(error),
         }),
       }
     }
   }
 }
 
-export const handleConnectorDescribe = makeConnectorDescribeHandler(
-  launchBundleProvider,
-)
+export const handleConnectorDescribe =
+  makeConnectorDescribeHandler(launchBundleProvider)

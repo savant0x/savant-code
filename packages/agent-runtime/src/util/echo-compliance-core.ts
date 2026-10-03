@@ -12,6 +12,11 @@ const SECURITY_SENSITIVE_PATH_PATTERN =
 const NEW_API_PATTERN =
   /(export\s+(async\s+)?function\s+\w+|export\s+(const|let|class|interface|type|enum)\s+\w+|^(async\s+)?function\s+\w+\s*\(|^\s*class\s+\w+)/m
 
+/** Law 4 wiring detector: a line-anchored export DECLARATION — not the bare
+ *  word `export` in prose, a string, or a comment (FID-2026-1001-003 step 6). */
+const WIRING_DECLARATION_PATTERN =
+  /^[ \t]*export\s+(?:default\b|declare\b|(?:async\s+)?(?:function|const|let|var|class|interface|type|enum)\b|\{|\*)/m
+
 /** User-prompt keywords that count as "explicitly request review". */
 const USER_REQUESTED_REVIEW_PATTERN =
   /\b(review|audit|verify|double-check|check\s+my\s+work)\b/i
@@ -72,6 +77,19 @@ export function classifyFileKind(path: string): 'code' | 'docs' {
 /** Pure evaluator: does written content contain a new function/API/type? */
 export function hasNewApiDeclaration(content: string): boolean {
   return NEW_API_PATTERN.test(content)
+}
+
+/**
+ * FID-2026-1001-003 step 6: pure evaluator for Law 4's wiring detector — does
+ * written content contain a module-level export DECLARATION? The previous raw
+ * `/export\s/` probe matched the word anywhere in any file, so a governance
+ * markdown document quoting `export` in a code fence registered as a wired
+ * feature and Law 4 blocked turn end demanding a caller grep for a document.
+ * Callers must ALSO gate on file kind (`classifyFileKind(path) === 'code'`);
+ * this predicate alone still matches a line-anchored export inside a fence.
+ */
+export function hasWiringDeclaration(content: string): boolean {
+  return WIRING_DECLARATION_PATTERN.test(content)
 }
 
 /** Pure evaluator: did the user explicitly request review in the prompt? */

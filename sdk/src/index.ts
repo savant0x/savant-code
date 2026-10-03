@@ -63,7 +63,10 @@ export type {
   TurnSummary,
 } from '@savant-code/agent-runtime/tools/handlers/tool/checkpoint-store'
 // Agent type exports
-export type { AgentDefinition } from '@savant-code/common/templates/initial-agents-dir/types/agent-definition'
+export type {
+  AgentDefinition,
+  ModelRoute,
+} from '@savant-code/common/templates/initial-agents-dir/types/agent-definition'
 export type { ToolName } from '@savant-code/common/tools/constants'
 
 export type {

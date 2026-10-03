@@ -19,6 +19,7 @@ import {
   recordSavantFreeInstanceOwner,
 } from '../utils/savant-free-instance-owner'
 import { rememberReferral } from '../utils/savant-free-referral-cache'
+import { HostedFallbackNotices } from './use-savant-free-session/fallback-notices'
 import { runLandingRestart } from './use-savant-free-session/landing-restart'
 import {
   callSession,
@@ -93,6 +94,7 @@ export function useSavantFreeSession(): UseSavantFreeSessionResult {
     let abortController = new AbortController()
     let timer: ReturnType<typeof setTimeout> | null = null
     let previousStatus: SavantFreeSession['status'] | null = null
+    const fallbackNotices = new HostedFallbackNotices()
     let restartGeneration = 0
     // Method for the NEXT tick. GET is read-only; POST claims/rotates a seat.
     // Startup is GET (probe before committing). After any POST completes we
@@ -136,9 +138,7 @@ export function useSavantFreeSession(): UseSavantFreeSessionResult {
           model,
         })
         if (cancelled) return
-        // After any successful call, default back to GET polling. The
-        // takeover and model_locked branches below override this when they
-        // need another POST.
+        // Default back to GET; takeover and model_locked may request POST.
         nextMethod = 'GET'
         // Race recovery: user picked a different model on the landing screen at
         // the exact moment the server admitted them with the original model.
@@ -151,20 +151,23 @@ export function useSavantFreeSession(): UseSavantFreeSessionResult {
           return
         }
         if (next.status === 'model_unavailable') {
-          // Server says the requested model isn't available right now. Flip
-          // to the always-available fallback for this run. In-memory only —
-          // `setSelectedModel` doesn't persist, so the user's saved preference
-          // is preserved for their next launch.
+          fallbackNotices.attempted(model, FALLBACK_SAVANT_FREE_MODEL_ID)
+          // Preserve the existing in-memory fallback and saved preference.
           useSavantFreeModelStore
             .getState()
             .setSelectedModel(FALLBACK_SAVANT_FREE_MODEL_ID)
-          // The unavailable response came from a POST attempt. Re-POST with
-          // the fallback model; a GET would only redisplay the old ended row
-          // and leave the restart banner stuck in its pending state.
+          // Re-POST for admission; GET would redisplay the ended session.
           nextMethod = 'POST'
           schedule(0)
           return
         }
+        if (next.status === 'active') fallbackNotices.outcome(true)
+        else if (
+          next.status === 'banned' ||
+          next.status === 'country_blocked' ||
+          next.status === 'rate_limited'
+        )
+          fallbackNotices.outcome(false)
         // Startup takeover: the initial probe GET saw we already hold a seat
         // (from a prior CLI instance). Stop here and ask before POSTing to
         // rotate our instance id; otherwise opening a second savant-free would
@@ -226,6 +229,7 @@ export function useSavantFreeSession(): UseSavantFreeSessionResult {
         if (delay !== null) schedule(delay)
       } catch (err) {
         if (cancelled || abortController.signal.aborted) return
+        fallbackNotices.outcome(false)
         const msg = err instanceof Error ? err.message : String(err)
         logger.warn({ error: msg }, '[savant-free-session] fetch failed')
         setError(msg)

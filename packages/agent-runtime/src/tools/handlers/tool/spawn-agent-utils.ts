@@ -1,3 +1,8 @@
+import {
+  modelRouteKey,
+  routeForModelReplacement,
+} from '@savant-code/common/providers/model-route'
+
 import { inheritRunGovernance } from './spawn-child-state'
 
 import type { SubagentPropagationSnapshot } from './execute-subagent'
@@ -127,7 +132,8 @@ export function resolveChildOutputBudget(
   parentTemplate: AgentTemplate,
   maxOutputTokens: number | undefined,
 ): number | undefined {
-  return childTemplate.model === parentTemplate.model
+  return modelRouteKey(childTemplate.model, childTemplate.modelRoute) ===
+    modelRouteKey(parentTemplate.model, parentTemplate.modelRoute)
     ? maxOutputTokens
     : undefined
 }
@@ -154,12 +160,18 @@ export function withParentModel(
   parentAgentTemplate: AgentTemplate,
 ): AgentTemplate {
   if (agentTemplate.inheritParentModel === false) {
-    return agentTemplate
+    return {
+      ...agentTemplate,
+      modelRoute:
+        agentTemplate.modelRoute ??
+        routeForModelReplacement(agentTemplate.model),
+    }
   }
 
   return {
     ...agentTemplate,
     model: parentAgentTemplate.model,
+    modelRoute: parentAgentTemplate.modelRoute,
     providerOptions: {
       ...parentAgentTemplate.providerOptions,
       ...agentTemplate.providerOptions,

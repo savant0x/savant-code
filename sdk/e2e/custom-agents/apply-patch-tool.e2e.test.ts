@@ -11,8 +11,7 @@ import {
   skipIfNoApiKey,
 } from '../utils'
 
-import type { SavantCodeClient , AgentDefinition } from '../../src'
-
+import type { SavantCodeClient, AgentDefinition } from '../../src'
 
 describe('Custom Agents: apply_patch tool', () => {
   let client: SavantCodeClient

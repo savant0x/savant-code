@@ -1,5 +1,6 @@
 import { readProtocolConfig } from '@savant-code/common/util/protocol-config'
 
+import { runDenyMutatingTerminal } from './deny-mutating-terminal'
 import { runExperienceCapture } from './experience-capture'
 import { runHookCommand } from './runner'
 
@@ -32,6 +33,11 @@ import type { JSONValue } from '@savant-code/common/types/json'
 export function runHook(config: HookConfig, input: HookInputData) {
   if (config.action === 'experience-capture') {
     return Promise.resolve(runExperienceCapture(input))
+  }
+  if (config.action === 'deny-mutating-terminal') {
+    // FID-2026-1001-003 step 1: in-process deny sink; the engine's catch
+    // wrapper keeps it fail-open.
+    return Promise.resolve(runDenyMutatingTerminal(input))
   }
   return runHookCommand(config, input)
 }

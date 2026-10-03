@@ -1,9 +1,4 @@
-
-import {
-  SC,
-  CompileError,
-  CompileErrorCode,
-} from './compile-shared.ts'
+import { SC, CompileError, CompileErrorCode } from './compile-shared.ts'
 import {
   type FnRef,
   type Json,
@@ -12,7 +7,6 @@ import {
   type ResourceDoc,
   type zEndpointDef,
 } from '../core/mod.ts'
-
 
 import type { FnInterner } from './fns.ts'
 import type z from 'zod'
@@ -32,9 +26,7 @@ export interface CompiledBindings {
 }
 
 export interface CompileBindingsArgs {
-  bindingsSection: NonNullable<
-    z.infer<typeof zEndpointDef>['resources']
-  >
+  bindingsSection: NonNullable<z.infer<typeof zEndpointDef>['resources']>
   providerName: string
   where: string
   endpointFile: string
@@ -170,9 +162,7 @@ export async function compileBindings(
   }
 
   compiled = {}
-  for (const [index, binding] of (
-    bindingsSection.provisions ?? []
-  ).entries()) {
+  for (const [index, binding] of (bindingsSection.provisions ?? []).entries()) {
     const { seed } = await compileBinding(
       binding as typeof binding & Record<string, never>,
       `resources.provisions[${index}]`,
@@ -192,7 +182,12 @@ export async function compileBindings(
   for (const purpose of RESOURCE_GATE_ORDER) {
     const declared = bindingsSection[purpose] ?? []
     for (const [index, binding] of (
-      declared as Array<{ id: string; key?: string; as?: string; ensure?: unknown }>
+      declared as Array<{
+        id: string
+        key?: string
+        as?: string
+        ensure?: unknown
+      }>
     ).entries()) {
       const { ensure } = await compileBinding(
         binding,

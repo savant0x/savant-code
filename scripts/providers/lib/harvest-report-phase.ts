@@ -38,6 +38,7 @@ import {
   type ContextCandidate,
   nudgeLine,
 } from '../../../common/src/providers/discovery-context'
+import { withHealthObservation } from '../../../common/src/providers/discovery-health'
 
 import type { probeEndpoint } from './probe-endpoint'
 
@@ -124,6 +125,20 @@ export async function runReportWritePhase(params: ReportWriteParams): Promise<{
     const probed = await runHealthProbePhase({ tracked, doProbe })
     health.push(...probed.health)
     healthProbes.push(...probed.healthProbes)
+    for (const row of health) {
+      const provider = tracked.find((p) => p.id === row.host)
+      if (!provider || row.verdict === 'skipped') continue
+      const observed = withHealthObservation(
+        next.get(`provider:${provider.id}`),
+        provider,
+        row.verdict,
+        nowMs,
+      )
+      next.set(`provider:${provider.id}`, observed)
+      row.observedAt = observed.healthObservedAt
+      row.removalHintId = observed.removalHintId
+      row.detail += ` · observed ${observed.healthObservedAt}${observed.removalHintId ? ` · review /provider remove ${observed.removalHintId}` : ''}`
+    }
   }
 
   // W1 — append this run's sample to each tracked host's stability ring.
@@ -243,7 +258,19 @@ export async function runReportWritePhase(params: ReportWriteParams): Promise<{
     boundary: c.boundary,
     typosquat: c.typosquat,
     classification: c.classification as ContextCandidate['classification'],
+    removalHintId: health.find((row) => row.host === c.host)?.removalHintId,
   }))
+  for (const row of health)
+    if (row.removalHintId)
+      contextCandidates.push({
+        host: row.host,
+        category: null,
+        modelsCount: null,
+        boundary: row.verdict,
+        typosquat: 'clear',
+        classification: 'changed',
+        removalHintId: row.removalHintId,
+      })
   const contextBlock = buildDiscoveryContextBlock({
     fetchedAtUtc,
     candidates: contextCandidates,

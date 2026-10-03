@@ -33,6 +33,8 @@ export type GatewayOptions = {
   onReady?: (info: { port: number }) => void
   /** DI: how a prompt run is executed. Defaults to the SDK client path. */
   runPrompt?: (params: GatewayRunPromptParams) => Promise<RunState>
+  /** Enable background provider IO with an injected runner; production defaults on. */
+  providerMonitoring?: boolean
   /** Root FIDs directory. Defaults to `<cwd>/dev/fids`. */
   fidsDir?: string
   /** DI: persisted scoped-thread reader used by the read-only RPC method. */
@@ -124,6 +126,7 @@ export type PendingApproval = {
 export type ConnectionState = {
   authed: boolean
   helloReceived: boolean
+  providerNotices?: boolean
 }
 
 /** Internal: one persisted scoped thread (read-only projection). */

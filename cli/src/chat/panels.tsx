@@ -14,6 +14,7 @@ import { LoadPreviousButton } from '../components/load-previous-button'
 import { MessageWithAgents } from '../components/message-with-agents'
 import { ModelPicker } from '../components/model-picker'
 import { PendingBashMessage } from '../components/pending-bash-message'
+import { ProviderInbox } from '../components/provider-inbox'
 import { ProviderPicker } from '../components/provider-picker'
 import { RewindPicker } from '../components/rewind-picker'
 import { SavantFreeActiveSessionSummary } from '../components/savant-free-active-session-summary'
@@ -159,6 +160,7 @@ export function ChatLayout(props: ChatLayoutProps) {
       </box>
 
       <ChatSidebar {...sidebar} />
+      <ProviderInbox height={terminalHeight} />
 
       {/* FID-2026-0816-007 step 2: pickers render as centered dialog overlays
           (dimmed backdrop + entry/exit animation) instead of inline stack. */}

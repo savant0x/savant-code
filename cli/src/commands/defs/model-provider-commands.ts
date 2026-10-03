@@ -7,6 +7,7 @@ import { getSystemMessage, getUserMessage } from '../../utils/message-history'
 import { fetchGatewayModels } from '../../utils/openrouter-models'
 import {
   activateConfiguredProvider,
+  applyModelPickerSelection,
   beginProviderSetup,
   beginResearchKeySetup,
   getConfiguredProviderNames,
@@ -18,7 +19,6 @@ import {
 import {
   loadSavantCodeModelPreference,
   loadSettings,
-  saveSavantCodeModelPreference,
 } from '../../utils/settings'
 import { clearInput, defineCommandWithArgs } from '../command-shared'
 import {
@@ -38,8 +38,19 @@ export const MODEL_PROVIDER_COMMANDS = [
       // Free-text selection always works: /model <exact-id> switches
       // immediately, even if the live catalog is unavailable.
       if (trimmedArgs) {
-        saveSavantCodeModelPreference(trimmedArgs)
-        useSavantFreeModelStore.getState().switchModel(trimmedArgs)
+        const explicit = /^--provider\s+([a-z0-9-]+)\s+(\S+)$/.exec(trimmedArgs)
+        if (trimmedArgs.startsWith('--provider') && !explicit) {
+          params.setMessages((prev) => [
+            ...prev,
+            getSystemMessage(
+              'Usage: /model --provider <provider-id> <model-id>',
+            ),
+          ])
+          return
+        }
+        if (explicit)
+          applyModelPickerSelection({ provider: explicit[1], id: explicit[2] })
+        else useSavantFreeModelStore.getState().switchModel(trimmedArgs)
         params.setMessages((prev) => [
           ...prev,
           getSystemMessage(`Model switched to: ${trimmedArgs}`),

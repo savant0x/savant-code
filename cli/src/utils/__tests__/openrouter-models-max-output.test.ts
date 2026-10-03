@@ -2,11 +2,13 @@
 // (FID-2026-0909-008 Step 4). Sibling of the context-window suite; shares the
 // family lifecycle in ./openrouter-models-test-harness.
 
+import { modelRequestLimits } from '@savant-code/common/util/model-request-limits'
 import { describe, expect, mock, test } from 'bun:test'
 
 import {
   fetchGatewayModels,
   resolveMaxOutputTokensForModel,
+  resolveContextWindowForModel,
 } from '../openrouter-models'
 import {
   makeJsonResponse,
@@ -34,6 +36,10 @@ describe('openrouter-models', () => {
       )
       await fetchGatewayModels(true)
       expect(resolveMaxOutputTokensForModel('z-ai/glm-5.2')).toBe(65536)
+      expect(
+        modelRequestLimits.get('openrouter/z-ai/glm-5.2', 'unobserved')
+          .maxOutputTokens,
+      ).toBe(65536)
     })
 
     test('canonicalizes gateway-prefixed ids before the catalog lookup', async () => {
@@ -58,17 +64,21 @@ describe('openrouter-models', () => {
 
     test('prefers top_provider.max_completion_tokens over the top-level field', async () => {
       // @ts-expect-error - mock fetch
-      globalThis.fetch = mock(() =>
+      globalThis.fetch = mock((input: RequestInfo | URL) =>
         Promise.resolve(
-          makeJsonResponse({
-            data: [
-              {
-                id: 'openai/gpt-5',
-                max_completion_tokens: 8192,
-                top_provider: { max_completion_tokens: 128000 },
-              },
-            ],
-          }),
+          makeJsonResponse(
+            String(input).includes('openrouter.ai')
+              ? {
+                  data: [
+                    {
+                      id: 'openai/gpt-5',
+                      max_completion_tokens: 8192,
+                      top_provider: { max_completion_tokens: 128000 },
+                    },
+                  ],
+                }
+              : { data: [] },
+          ),
         ),
       )
       await fetchGatewayModels(true)
@@ -108,6 +118,41 @@ describe('openrouter-models', () => {
       await fetchGatewayModels(true)
       expect(
         resolveMaxOutputTokensForModel('unknown/provider-model'),
+      ).toBeUndefined()
+    })
+
+    test('an exact gateway serving limit bounds a larger upstream capability', async () => {
+      // @ts-expect-error - mock fetch
+      globalThis.fetch = mock(() =>
+        Promise.resolve(
+          makeJsonResponse({
+            data: [
+              {
+                id: 'z-ai/fixture-flash',
+                context_length: 1310720,
+                max_completion_tokens: 943717,
+              },
+            ],
+          }),
+        ),
+      )
+      await fetchGatewayModels(true)
+      modelRequestLimits.replaceCatalog([
+        {
+          id: 'kiosapi/z-ai/fixture-flash-free',
+          contextLength: 1048576,
+          maxCompletionTokens: 131072,
+        },
+      ])
+      expect(
+        resolveContextWindowForModel('kiosapi/z-ai/fixture-flash-free'),
+      ).toBe(1048576)
+      expect(
+        resolveMaxOutputTokensForModel('kiosapi/z-ai/fixture-flash-free'),
+      ).toBe(131072)
+      expect(resolveMaxOutputTokensForModel('z-ai/fixture-flash')).toBe(943717)
+      expect(
+        resolveMaxOutputTokensForModel('z-ai/fixture-flash-v99'),
       ).toBeUndefined()
     })
 

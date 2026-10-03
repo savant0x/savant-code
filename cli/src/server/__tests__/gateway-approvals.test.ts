@@ -11,6 +11,9 @@ import {
 
 import type { PrintModeEvent } from '@savant-code/common/types/print-mode'
 
+/** Captured approvalId from the first suite's approval_request (FID-2026-1002-007). */
+const approvalIdHolder: { current: string | undefined } = { current: undefined }
+
 describe('gateway approval lifecycle', () => {
   test('ask_user surfaces as approval_request and approval_response resolves the run', async () => {
     const runPrompt = createFakeRunPrompt({
@@ -33,6 +36,8 @@ describe('gateway approval lifecycle', () => {
 
     // Trigger the bridge request (the AskUserBridge singleton is shared; the
     // gateway's subscriber converts it into an approval_request event).
+    // The approvalId is captured for later suites (FID-2026-1002-007
+    // survival test resolves it through a reconnected socket).
     const { AskUserBridge } =
       await import('@savant-code/common/utils/ask-user-bridge')
     const responsePromise = AskUserBridge.request('test-tool-call', [
@@ -57,6 +62,7 @@ describe('gateway approval lifecycle', () => {
           const events = frame.params as PrintModeEvent[]
           const approval = events.find((e) => e.type === 'approval_request')
           if (approval) {
+            approvalIdHolder.current = approval.approvalId
             socket.offMessage(onMessage)
             resolve({ params: { approvalId: approval.approvalId } })
           }
@@ -80,9 +86,9 @@ describe('gateway approval lifecycle', () => {
     socket.close()
   })
 
-  test('socket close denies a pending approval fail-closed (skipped recorded)', async () => {
+  test('a pending approval SURVIVES a socket disconnect and resolves after reconnect (FID-2026-1002-007)', async () => {
     const gateway = await startTestGateway({
-      runPrompt: createFakeRunPrompt({ delayMs: 50 }),
+      runPrompt: createFakeRunPrompt({ delayMs: 250 }),
     })
     const socket = await openSocket(gateway.port)
     await request(
@@ -104,9 +110,67 @@ describe('gateway approval lifecycle', () => {
     ])
     await new Promise((resolve) => setTimeout(resolve, 10))
 
-    // Closing the socket denies the pending approval fail-closed.
+    // Disconnect mid-approval: the pending approval stays alive on the
+    // gateway (FID-2026-1002-007) — the bridge promise does NOT resolve.
     socket.close()
+    let resolvedEarly = false
+    void responsePromise.then(() => {
+      resolvedEarly = true
+    })
+    await new Promise((resolve) => setTimeout(resolve, 60))
+    expect(resolvedEarly).toBe(false)
+
+    // Reconnect with a FRESH socket, re-hello (auth re-presented), and
+    // resolve the ORIGINAL approvalId through approval_response.
+    const socket2 = await openSocket(gateway.port)
+    await request(
+      socket2,
+      'hello',
+      { protocolVersion: GATEWAY_PROTOCOL_VERSION, token: TEST_TOKEN },
+      10,
+    )
+    await request(
+      socket2,
+      'approval_response',
+      {
+        approvalId: approvalIdHolder.current,
+        response: { answers: [], skipped: true },
+      },
+      11,
+    )
     const result = await responsePromise
     expect(result).toMatchObject({ skipped: true, answers: [] })
+    socket2.close()
+  })
+
+  test('a run settling with the socket open consumes its leftover approval (run-settle deny)', async () => {
+    const gateway = await startTestGateway({
+      runPrompt: createFakeRunPrompt({ delayMs: 60 }),
+    })
+    const socket = await openSocket(gateway.port)
+    await request(
+      socket,
+      'hello',
+      { protocolVersion: GATEWAY_PROTOCOL_VERSION, token: TEST_TOKEN },
+      1,
+    )
+    await request(socket, 'user_message', { prompt: 'run' }, 2)
+
+    const { AskUserBridge } =
+      await import('@savant-code/common/utils/ask-user-bridge')
+    const responsePromise = AskUserBridge.request('test-tool-call-3', [
+      {
+        question: 'Q?',
+        options: [{ label: 'A' }],
+        multiSelect: false,
+      },
+    ])
+    await new Promise((resolve) => setTimeout(resolve, 10))
+
+    // The fake run settles (delayMs 60) without any approval_response: the
+    // run-scoped finally denies the leftover approval fail-closed.
+    const result = await responsePromise
+    expect(result).toMatchObject({ skipped: true, answers: [] })
+    socket.close()
   })
 })

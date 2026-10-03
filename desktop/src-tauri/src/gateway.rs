@@ -11,6 +11,18 @@ use std::path::{Path, PathBuf};
 /// contract: never argv, never disk, never logs (FID-2026-0820-008).
 pub const GATEWAY_TOKEN_ENV: &str = "SAVANT_GATEWAY_TOKEN";
 
+/// ENV key carrying the project root to the sidecar (FID-2026-1002-004).
+/// ENV-only like the token: the supervisor resolves the git root of its own
+/// launch tree and passes it here, so the sidecar never has to guess from
+/// an inherited cwd (the release GUI topology anchors to the install dir).
+pub const PROJECT_ROOT_ENV: &str = "SAVANT_PROJECT_ROOT";
+
+/// ENV key declaring the supervisor's build profile to the sidecar
+/// (FID-2026-1002-004): `release` shells must receive an explicit project
+/// root — the sidecar fails closed without one; `dev` keeps the legacy
+/// git-root-of-cwd resolution.
+pub const DESKTOP_PROFILE_ENV: &str = "SAVANT_DESKTOP_PROFILE";
+
 // Frozen-contract surface: consumed by unit tests today and by the gateway
 // integration when FID-2026-0820-008 lands; dormant until then.
 /// Frozen handshake major version (FID-2026-0820-008).
@@ -34,6 +46,9 @@ pub struct SpawnSpec {
     pub program: PathBuf,
     pub args: Vec<String>,
     pub token: String,
+    /// Resolved project root (git root of the shell's launch dir) or None
+    /// when no enclosing repo exists (FID-2026-1002-004).
+    pub project_root: Option<String>,
 }
 
 pub fn generate_gateway_token() -> Result<String, getrandom::Error> {
@@ -73,12 +88,19 @@ pub fn allocate_ephemeral_port() -> std::io::Result<u16> {
     Ok(port)
 }
 
-pub fn build_spawn_spec(sidecar: &Path, port: u16, token: &str) -> SpawnSpec {
+pub fn build_spawn_spec(
+    sidecar: &Path,
+    port: u16,
+    token: &str,
+    project_root: Option<String>,
+) -> SpawnSpec {
     SpawnSpec {
         program: sidecar.to_path_buf(),
-        // The ephemeral port rides argv (it is not secret); the token never does.
+        // The ephemeral port rides argv (it is not secret); the token never
+        // does, and the project root rides env only (FID-2026-1002-004).
         args: vec![format!("--port={port}")],
         token: token.to_string(),
+        project_root,
     }
 }
 
@@ -131,9 +153,17 @@ mod tests {
             Path::new("/opt/binaries/savant-sidecar"),
             5100,
             "sekret-token",
+            Some(String::from("/repo")),
         );
         assert_eq!(spec.args, vec![String::from("--port=5100")]);
         assert!(!token_is_exposed_on_argv(&spec));
+        // FID-2026-1002-004: the project root rides ENV ONLY — never argv.
+        assert!(
+            !spec
+                .args
+                .iter()
+                .any(|arg| arg.contains("/repo") || arg.contains("SAVANT_PROJECT_ROOT"))
+        );
     }
 
     #[test]
@@ -142,6 +172,7 @@ mod tests {
             program: PathBuf::from("sidecar"),
             args: vec![String::from("--port=1"), String::from("--token=sekret")],
             token: String::from("sekret"),
+            project_root: None,
         };
         assert!(token_is_exposed_on_argv(&spec));
     }

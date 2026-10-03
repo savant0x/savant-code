@@ -1,6 +1,7 @@
 import z from 'zod/v4'
 
 import { jsonValueSchema } from './json'
+import { providerNoticeEventSchema } from '../providers/provider-notifications'
 import { toolResultOutputSchema } from './messages/content-part'
 import {
   printModeApprovalRequestSchema,
@@ -198,6 +199,7 @@ export type PrintModeComplianceWarning = z.infer<
 }
 
 export const printModeEventSchema = z.discriminatedUnion('type', [
+  providerNoticeEventSchema,
   printModeDownloadStatusSchema,
   printModeErrorSchema,
   printModeFinishSchema,

@@ -6,7 +6,10 @@ import {
   getProjectFileTree,
 } from '@savant-code/common/project-file-tree'
 
+import { planChanges, statAll } from './index-path-plan'
+
 import type { FileHasher } from './hasher'
+import type { ExistingRow, PlannedChanges } from './index-path-plan'
 import type { IndexStats, ParseFileFn } from './types'
 import type { SavantCodeFileSystem } from '@savant-code/common/types/filesystem'
 import type { FileTreeNode } from '@savant-code/common/util/file'
@@ -59,7 +62,7 @@ export async function mapWithConcurrency<T, R>(
     while (cursor < items.length) {
       const index = cursor
       cursor += 1
-      results[index] = await fn(items[index], index)
+      results[index] = await fn(items[index]!, index)
     }
   }
   const workerCount = Math.max(1, Math.min(concurrency, items.length))
@@ -69,19 +72,30 @@ export async function mapWithConcurrency<T, R>(
 
 export type IndexScanState = {
   filePaths: string[]
+  /** FID-2026-1002-006: only NEW or CHANGED files' content is materialized;
+   *  unchanged-baseline files are never read. */
   sources: Map<string, string>
   hashByPath: Map<string, string>
   changedPaths: string[]
   parsedFiles: Map<string, { identifiers: string[]; calls: string[] }>
-  existingByPath: Map<string, { id: number; path: string; hash: string }>
+  existingByPath: Map<string, ExistingRow>
+  /** True when the DB predates the v2 stat columns (legacy row set) — the
+   *  caller must backfill with one full pass. */
+  needsBackfill: boolean
+  /** Live stat per enumerated path (the v2 read-skip baseline input). */
+  statByPath: Map<string, { mtimeMs: number; size: number }>
+  /** The `fullRebuild` flag the scan actually ran under (the caller may
+   *  force it for a legacy backfill). */
+  wasFullRebuild: boolean
   stats: IndexStats
 }
 
 /**
  * Scan phase of the incremental update pass (steps 1–4): enumerate the
- * project, delete rows for files no longer on disk, hash-compare against the
- * existing index, and re-parse changed/new files. The DB-write phases (upsert,
- * edges, clustering) live in the parent `updateKnowledgeGraph`.
+ * project, delete rows for files no longer on disk, decide the changed set
+ * with a stat pre-filter + sha256 truth (FID-2026-1002-006), and re-parse
+ * changed/new files only. The DB-write phases (upsert, tokens, edges,
+ * clustering) live in the parent `updateKnowledgeGraph`.
  */
 export async function scanIndexState(params: {
   projectRoot: string
@@ -119,11 +133,34 @@ export async function scanIndexState(params: {
     .filter((p) => !p.startsWith('.savant/'))
   const filePathSet = new Set(filePaths)
 
-  // 2. Load the existing index state.
+  // 2. Load the existing index state — including the v2 stat baseline
+  // (mtimeMs + bytes) that decides which files can skip their content read
+  // entirely (FID-2026-1002-006).
   const existingRows = db
-    .query('SELECT id, path, hash FROM files')
-    .all() as Array<{ id: number; path: string; hash: string }>
-  const existingByPath = new Map(existingRows.map((r) => [r.path, r]))
+    .query('SELECT id, path, hash, mtime_ms, bytes FROM files')
+    .all() as Array<{
+    id: number
+    path: string
+    hash: string
+    mtime_ms: number | null
+    bytes: number | null
+  }>
+  const existingByPath = new Map(
+    existingRows.map((r) => [
+      r.path,
+      {
+        id: r.id,
+        path: r.path,
+        hash: r.hash,
+        mtimeMs: r.mtime_ms,
+        bytes: r.bytes,
+      },
+    ]),
+  )
+  // A legacy v1 row set has NULL stat values — no baseline to compare
+  // against, so every indexed file must be re-read once (backfill).
+  const needsBackfill =
+    existingRows.length > 0 && existingRows.every((r) => r.mtime_ms == null)
 
   const stats: IndexStats = {
     filesOnDisk: filePaths.length,
@@ -137,7 +174,7 @@ export async function scanIndexState(params: {
     durationMs: 0,
   }
 
-  // 3. Delete files no longer on disk (cascade prunes nodes/edges).
+  // 3. Delete files no longer on disk (cascade prunes nodes/edges/tokens).
   const stalePaths = existingRows
     .filter((row) => !filePathSet.has(row.path))
     .map((row) => row.path)
@@ -156,12 +193,14 @@ export async function scanIndexState(params: {
     stats.filesDeleted = stalePaths.length
   }
 
-  // 4. Hash-compare + parse changed/new files.
-  const parsedFiles = new Map<
-    string,
-    { identifiers: string[]; calls: string[] }
-  >()
-  const sources = new Map<string, string>()
+  // 4. Stat pre-filter, bounded reads, and the deterministic change walk
+  // (planning logic lives in index-path-plan.ts, FID-2026-1002-006).
+  const statByPath = await statAll(
+    filePaths,
+    projectRoot,
+    fsImpl,
+    PARSE_CONCURRENCY,
+  )
 
   const readSource = async (fullPath: string): Promise<string | null> => {
     try {
@@ -174,47 +213,48 @@ export async function scanIndexState(params: {
     }
   }
 
-  // FID-2026-0815-009 (F-12): parallelize the source reads (I/O) over a
-  // bounded pool. `sources`/`hashByPath` are lookup-only Maps, so their
-  // insertion order is irrelevant to determinism.
+  const sources = new Map<string, string>()
   const hashByPath = new Map<string, string>()
-  await mapWithConcurrency(filePaths, PARSE_CONCURRENCY, async (filePath) => {
-    const source = await readSource(path.join(projectRoot, filePath))
-    if (source === null) return
-    sources.set(filePath, source)
-    hashByPath.set(filePath, hasher.hash(source))
+  const plan: PlannedChanges = planChanges({
+    filePaths,
+    existingByPath,
+    statByPath,
+    hashByPath,
+    sources,
+    fullRebuild,
+    legacyRowSet: needsBackfill,
   })
 
-  // Ordered walk determines the changed/new set + stats (deterministic).
-  const changedPaths: string[] = []
-  for (const filePath of filePaths) {
-    const source = sources.get(filePath)
-    if (source === undefined) continue
-    const hash = hashByPath.get(filePath) as string
-    const existing = existingByPath.get(filePath)
-
-    // Unchanged (and not forcing a full rebuild) → skip entirely.
-    if (!fullRebuild && existing && existing.hash === hash) {
-      stats.filesUnchanged++
-      continue
-    }
-
-    changedPaths.push(filePath)
-
-    if (existing && existing.hash === hash) {
-      // Only reachable under fullRebuild — count as reindexed.
-      stats.filesModified++
-    } else if (existing) {
-      stats.filesModified++
-    } else {
-      stats.filesAdded++
-    }
-  }
-
-  // FID-2026-0815-009 (F-12): parse the changed/new files (best-effort) over
-  // the bounded pool. `parsedFiles` is a lookup-only Map.
+  // Bounded content reads for ONLY the planned read targets.
   await mapWithConcurrency(
-    changedPaths,
+    plan.readTargets,
+    PARSE_CONCURRENCY,
+    async (filePath) => {
+      const source = await readSource(path.join(projectRoot, filePath))
+      if (source === null) return
+      sources.set(filePath, source)
+      hashByPath.set(filePath, hasher.hash(source))
+    },
+  )
+
+  // Re-plan with the actual read results (read failures drop out; the
+  // changed-set walk and stats derive from real content evidence).
+  const finalPlan = planChanges({
+    filePaths,
+    existingByPath,
+    statByPath,
+    hashByPath,
+    sources,
+    fullRebuild,
+    legacyRowSet: needsBackfill,
+  })
+
+  const parsedFiles = new Map<
+    string,
+    { identifiers: string[]; calls: string[] }
+  >()
+  await mapWithConcurrency(
+    finalPlan.changedPaths,
     PARSE_CONCURRENCY,
     async (filePath) => {
       const parsed = await parseFile(filePath, path.join(projectRoot, filePath))
@@ -228,9 +268,15 @@ export async function scanIndexState(params: {
     filePaths,
     sources,
     hashByPath,
-    changedPaths,
+    changedPaths: finalPlan.changedPaths,
     parsedFiles,
     existingByPath,
-    stats,
+    needsBackfill,
+    statByPath,
+    wasFullRebuild: fullRebuild,
+    stats: {
+      ...stats,
+      ...finalPlan.statusCounts,
+    },
   }
 }

@@ -34,7 +34,6 @@ describe('MCP tool filtering', () => {
   })
 
   it('returns only allowlisted MCP tools when an agent restricts toolNames', async () => {
-
     spyOn(mcpClientModule, 'getMCPClient').mockResolvedValue('mcp-client-id')
     spyOn(mcpClientModule, 'listMCPTools').mockResolvedValue({
       tools: [

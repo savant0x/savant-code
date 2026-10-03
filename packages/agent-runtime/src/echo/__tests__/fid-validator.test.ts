@@ -5,6 +5,10 @@
  * step deferred/skipped (via `operator-approved <YYYY-MM-DD>`); every other
  * unimplemented step is blocked by construction and must be presented
  * before the FID transitions to converged/closed.
+ *
+ * FID-2026-1001-003 step 7 extends the gate with the heading-choice
+ * anti-evasion guard (whole-document numbered-step scan unless the document
+ * asserts `implementation_started: false`).
  */
 import { describe, expect, it } from 'bun:test'
 
@@ -107,5 +111,112 @@ describe('validateFidStepStatus', () => {
       fidWithSteps([DEFERRED_NO_MARKER], 'closed'),
     )
     expect(errors.length).toBe(2)
+  })
+})
+
+describe('validateFidStepStatus — heading-choice anti-evasion (FID-2026-1001-003 step 7)', () => {
+  const CONVERGED = (body: string): string =>
+    `# FID: evader\n\n**Status:** converged\n\n${body}`
+
+  it('REJECTS a converged FID whose unchecked numbered steps sit under a non-Step-Status heading without the assertion', () => {
+    const errors = validateFidStepStatus(
+      CONVERGED(
+        `## Work Items\n\n- [ ] **Step 1** — close the terminal bypass\n- [ ] **Step 2** — Law 15 reconciliation\n`,
+      ),
+    )
+    expect(errors.length).toBe(2)
+    expect(errors[0]).toContain('outside ## Step Status')
+    expect(errors[0]).toContain('implementation_started: false')
+  })
+
+  it('REJECTS the plan-boxes-outside-section shape (Step Status present, steps parked in an Implementation Plan)', () => {
+    const errors = validateFidStepStatus(
+      CONVERGED(
+        `## Step Status\n\n- [x] RED — done\n- [x] GREEN — done\n\n## Implementation Plan\n\n- [ ] **Step 6** — scope Law 4's wiring detector\n- [ ] **Step 7** — stop validateFidStepStatus being defeatable\n`,
+      ),
+    )
+    expect(errors.length).toBe(2)
+    expect(errors.every((e) => e.includes('outside ## Step Status'))).toBe(true)
+  })
+
+  it('allows the same shape when the document asserts implementation_started: false', () => {
+    const errors = validateFidStepStatus(
+      CONVERGED(
+        `implementation_started: false\n\n## Implementation Plan\n\n- [ ] **Step 6** — scope Law 4's wiring detector\n- [ ] **Step 7** — stop validateFidStepStatus being defeatable\n`,
+      ),
+    )
+    expect(errors).toEqual([])
+  })
+
+  it('a prose MENTION of implementation_started: false is NOT an assertion (anti-laundering)', () => {
+    const errors = validateFidStepStatus(
+      CONVERGED(
+        `The gate must verify an explicit \`implementation_started: false\` assertion.\n\n## Implementation Plan\n\n- [ ] **Step 1** — some unimplemented step\n`,
+      ),
+    )
+    expect(errors.length).toBe(1)
+    expect(errors[0]).toContain('outside ## Step Status')
+  })
+
+  it('a declaration inside a FENCE is quotation, not an assertion', () => {
+    const errors = validateFidStepStatus(
+      CONVERGED(
+        '```md\nimplementation_started: false\n```\n\n## Implementation Plan\n\n- [ ] **Step 1** — some unimplemented step\n',
+      ),
+    )
+    expect(errors.length).toBe(1)
+    expect(errors[0]).toContain('outside ## Step Status')
+  })
+
+  it('a spec quoting the step grammar inside a fence is not a plan claim (FID-0817-005 shape)', () => {
+    const errors = validateFidStepStatus(
+      CONVERGED(
+        '```\n- [ ] 2. Add scissor-hidden suspension — blocked::renderer API unverified\n```\n',
+      ),
+    )
+    expect(errors).toEqual([])
+  })
+
+  it('allows operator-approved steps parked outside the section', () => {
+    const errors = validateFidStepStatus(
+      CONVERGED(
+        `## Work Items\n\n- [ ] 1. Wire typewriter — deferred::operator-approved 2026-10-02\n`,
+      ),
+    )
+    expect(errors).toEqual([])
+  })
+
+  it('ignores prose (non-numbered) checkboxes like Risk-Level boxes outside the section', () => {
+    const errors = validateFidStepStatus(
+      CONVERGED(
+        `## Impact Assessment\n\n### Risk Level\n\n- [ ] Critical / [x] High: trust fails together\n- [ ] Medium / [ ] Low\n`,
+      ),
+    )
+    expect(errors).toEqual([])
+  })
+
+  it('does not bind non-closure statuses (analyzed) for outside-section steps', () => {
+    const errors = validateFidStepStatus(
+      `# FID: draft\n\n**Status:** analyzed\n\n## Work Items\n\n- [ ] **Step 1** — close the terminal bypass\n`,
+    )
+    expect(errors).toEqual([])
+  })
+
+  it('ignores checked numbered steps outside the section', () => {
+    const errors = validateFidStepStatus(
+      CONVERGED(
+        `## Work Items\n\n- [x] **Step 1** — close the terminal bypass\n`,
+      ),
+    )
+    expect(errors).toEqual([])
+  })
+
+  it('reports each unique outside-section step once (no duplicates)', () => {
+    const errors = validateFidStepStatus(
+      CONVERGED(
+        `## Work Items\n\n- [ ] **Step 1** — close the terminal bypass\n- [ ] **Step 1** — close the terminal bypass\n`,
+      ),
+    )
+    expect(errors.length).toBe(1)
   })
 })

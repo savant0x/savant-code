@@ -7,6 +7,7 @@
  */
 
 import { afterEach, describe, expect, test } from 'bun:test'
+import './provider-quota-policy.test'
 
 import { formatProviderQuota, readProviderQuota } from '../provider-quota'
 
@@ -28,6 +29,7 @@ const BAI_LIKE = {
   idTransform: 'strip',
   catalog: { source: 'live', url: 'https://stub.example/v1/models' },
   quota: {
+    auth: 'bai-dual',
     url: 'https://stub.example/v1/balance',
     valuePath: 'data.personal_balance',
     unit: 'credits',
@@ -64,7 +66,7 @@ describe('readProviderQuota', () => {
       key: 'stub-key',
     })
     expect(calls).toEqual(['https://stub.example/v1/balance'])
-    expect(result).toEqual({
+    expect(result).toMatchObject({
       status: 'ok',
       reading: '0 credits',
       note: 'prepaid; top up before requests can be served',
@@ -72,7 +74,7 @@ describe('readProviderQuota', () => {
     })
   })
 
-  test('accepts a string reading and omits the unit when none is declared', async () => {
+  test('rejects a nonnumeric string without inventing quota', async () => {
     const config: ProviderConfig = {
       ...BAI_LIKE,
       quota: { ...BAI_LIKE.quota, valuePath: 'status', unit: undefined },
@@ -81,7 +83,7 @@ describe('readProviderQuota', () => {
       () => new Response(JSON.stringify({ status: 'active' }), { status: 200 }),
     )
     const result = await readProviderQuota({ config, key: 'stub-key' })
-    expect(result.status === 'ok' && result.reading).toBe('active')
+    expect(result.status).toBe('unavailable')
   })
 
   test('sends the key as both documented headers and never returns it', async () => {
@@ -134,7 +136,7 @@ describe('readProviderQuota', () => {
     stubFetch(() => new Response(JSON.stringify({ data: {} }), { status: 200 }))
     expect(await readProviderQuota({ config: BAI_LIKE, key: 'k' })).toEqual({
       status: 'unavailable',
-      detail: 'no reading at "data.personal_balance"',
+      detail: 'no numeric reading at "data.personal_balance"',
     })
 
     stubFetch(() => new Response('{not json', { status: 200 }))

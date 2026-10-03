@@ -9,9 +9,15 @@ import {
   type ContextWindowSource,
 } from '@savant-code/common/constants/context-windows'
 import { PROVIDER_REGISTRY } from '@savant-code/common/providers/registry'
+import {
+  modelRequestLimits,
+  smallerTokenLimit,
+  validTokenLimit,
+} from '@savant-code/common/util/model-request-limits'
 
 import { getContextWindowForModel } from '../constants'
 import { findGatewayModel } from './gateway-lookup'
+import { contextLengthOf, maxCompletionOf } from './model-fields'
 import { getCachedOpenRouterModels } from './openrouter'
 import {
   PINNED_MAX_OUTPUT_TOKENS,
@@ -56,35 +62,6 @@ function toCanonicalModelId(modelId: string): string {
 export { findGatewayModel } from './gateway-lookup'
 
 /**
- * Field picker for {@link findModelFieldFromOpenRouter}: the model's context
- * length, preferring topProvider when present — the OpenRouter API often
- * omits the top-level context_length for resold models.
- */
-const contextLengthOf = (
-  m: OpenRouterModel | undefined,
-): number | undefined => {
-  if (!m) return undefined
-  const tp = m.topProvider?.contextLength
-  if (typeof tp === 'number') return tp
-  if (typeof m.contextLength === 'number') return m.contextLength
-  return undefined
-}
-
-/**
- * Field picker for {@link findModelFieldFromOpenRouter}: the model's max
- * completion tokens (the output budget), preferring topProvider when present.
- */
-const maxCompletionOf = (
-  m: OpenRouterModel | undefined,
-): number | undefined => {
-  if (!m) return undefined
-  const tp = m.topProvider?.maxCompletionTokens
-  if (typeof tp === 'number') return tp
-  if (typeof m.maxCompletionTokens === 'number') return m.maxCompletionTokens
-  return undefined
-}
-
-/**
  * Find a numeric model field by checking the live OpenRouter catalog.
  * Strips provider prefixes and variant suffixes to find the base model
  * (e.g. "tokenrouter/z-ai/glm-5.2-free" → "z-ai/glm-5.2").
@@ -93,8 +70,8 @@ const maxCompletionOf = (
  * FID-2026-0909-008 Step 4: the ladder (canonical → base → family →
  * name-family → name → fuzzy-name) was extracted from the former
  * `findContextLengthFromOpenRouter` so context-window and output-cap
- * resolution share one match truth (Law 13) — the ladder is identical,
- * only the field picker differs.
+ * resolution share one matching utility (Law 13). Output-cap callers stop
+ * after exact matches; an adjacent model's capability is not a safe output cap.
  *
  * Called by {@link resolveContextWindowForModel} and
  * {@link resolveMaxOutputTokensForModel}.
@@ -102,6 +79,7 @@ const maxCompletionOf = (
 function findModelFieldFromOpenRouter(
   modelId: string,
   field: (m: OpenRouterModel | undefined) => number | undefined,
+  exactOnly = false,
 ): number | undefined {
   const openRouterCatalog = getCachedOpenRouterModels()
   if (openRouterCatalog.length === 0) return undefined
@@ -136,6 +114,7 @@ function findModelFieldFromOpenRouter(
     (m) => (m.id.split('/').pop() ?? '').toLowerCase() === terminalLower,
   )
   if (field(byTerminal) !== undefined) return field(byTerminal)!
+  if (exactOnly) return undefined
 
   // 3. Family match by prefix (handles "mimo-v2.5" → "mimo").
   // FID-2026-0919-016: prefer the candidate whose terminal segment equals the
@@ -205,8 +184,8 @@ function findModelFieldFromOpenRouter(
 /**
  * Resolve the best-known context window for a model id.
  * Priority:
- * 1. Live OpenRouter catalog (via canonical model ID lookup)
- * 2. Cached gateway catalog (TokenRouter/TokenHarbor/NVIDIA/OpenCode Go)
+ * 1. Smaller exact serving-route / upstream catalog limit when known
+ * 2. Cached gateway catalog when the upstream lookup does not answer
  * 3. Vendor-published fallback table (exact id → window, provenance-tagged)
  * 4. Conservative default (200k) — explicit, never a family guess
  *
@@ -216,17 +195,17 @@ function findModelFieldFromOpenRouter(
  * the ladder with explicit provenance (see resolveContextWindowSourceForModel).
  */
 export function resolveContextWindowForModel(modelId: string): number {
-  // Check the live OpenRouter catalog first — it has the real context lengths
-  // from the API, whereas hardcoded catalogs (TokenRouter, TokenHarbor,
-  // OpenCode Go) use
-  // inferred values that may be wrong (e.g. GLM 5.2 has 1M context, not 128k).
+  // An upstream capability cannot enlarge a known gateway serving window.
   const fromOpenRouter = findModelFieldFromOpenRouter(modelId, contextLengthOf)
-  if (typeof fromOpenRouter === 'number') return fromOpenRouter
+  const exactRoute = modelRequestLimits.get(modelId, '').contextWindow
+  const servingWindow = smallerTokenLimit(exactRoute, fromOpenRouter)
+  if (servingWindow !== undefined) return servingWindow
 
   // Fall back to the gateway catalog (may have inferred context lengths)
   const fromCatalog = findGatewayModel(modelId)
-  if (typeof fromCatalog?.contextLength === 'number') {
-    return fromCatalog.contextLength
+  const catalogWindow = contextLengthOf(fromCatalog)
+  if (catalogWindow !== undefined) {
+    return catalogWindow
   }
 
   return getContextWindowForModel(modelId)
@@ -255,10 +234,9 @@ export function resolveContextWindowSourceForModel(
  *    overrides the live catalogs where the API reports an incorrect value
  *    (historically GLM 5.3 Free reported 943717 but capped at 131072;
  *    trusting the API value hard-rejected every request)
- * 2. Live OpenRouter catalog — top-level `max_completion_tokens` with the
+ * 2. Smaller exact gateway / OpenRouter ceiling — top-level field with the
  *    `top_provider.max_completion_tokens` override, as reported by the API
- * 3. Cached gateway catalog (same field, normalized by every live adapter)
- * 4. undefined — NEVER an invented value
+ * 3. undefined — NEVER an invented value or a family/name guess
  *
  * FID-2026-0909-008 Step 4: the resolved budget is threaded CLI → SDK →
  * agent loop → stream call site so chat-completions requests carry an
@@ -279,15 +257,13 @@ export function resolveMaxOutputTokensForModel(
   // over a verified provider cap. `typeof` guards inherited Object.prototype
   // members for arbitrary model-id inputs ("toString" etc.).
   const pinned = pinnedMaxOutput[modelId]
-  if (typeof pinned === 'number') return pinned
+  if (validTokenLimit(pinned) !== undefined) return pinned
 
-  const fromOpenRouter = findModelFieldFromOpenRouter(modelId, maxCompletionOf)
-  if (typeof fromOpenRouter === 'number') return fromOpenRouter
-
-  const fromCatalog = findGatewayModel(modelId)
-  if (typeof fromCatalog?.maxCompletionTokens === 'number') {
-    return fromCatalog.maxCompletionTokens
-  }
-
-  return undefined
+  const fromOpenRouter = findModelFieldFromOpenRouter(
+    modelId,
+    maxCompletionOf,
+    true,
+  )
+  const exactRoute = modelRequestLimits.get(modelId, '').maxOutputTokens
+  return smallerTokenLimit(exactRoute, fromOpenRouter)
 }

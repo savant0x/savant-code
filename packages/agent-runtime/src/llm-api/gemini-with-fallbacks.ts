@@ -3,6 +3,10 @@ import {
   openrouterModels,
 } from '@savant-code/common/old-constants'
 import {
+  captureModelRoute,
+  routeForModelReplacement,
+} from '@savant-code/common/providers/model-route'
+import {
   isAbortError,
   unwrapPromptResult,
 } from '@savant-code/common/util/error'
@@ -65,6 +69,9 @@ export async function promptFlashWithFallbacks(
           ...params,
           messages,
           model: useFinetunedModel,
+          modelRoute: routeForModelReplacement(useFinetunedModel),
+          contextWindow: undefined,
+          maxOutputTokens: undefined,
         }),
       )
     } catch (error) {
@@ -98,6 +105,11 @@ export async function promptFlashWithFallbacks(
         model: useGPT4oInsteadOfClaude
           ? openaiModels.gpt4o
           : openrouterModels.openrouter_claude_3_5_haiku,
+        modelRoute: captureModelRoute(
+          useGPT4oInsteadOfClaude ? 'openai' : 'openrouter',
+        ),
+        contextWindow: undefined,
+        maxOutputTokens: undefined,
       }),
     )
   }

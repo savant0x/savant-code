@@ -1,7 +1,6 @@
 import { zScrapeBody } from './schema/inputs.ts'
 import { defineEndpoint, Unit, UsageModelKind } from '../../../../core/mod.ts'
 
-
 /**
  * `POST /v2/scrape` — one URL into clean, LLM-ready content.
  *

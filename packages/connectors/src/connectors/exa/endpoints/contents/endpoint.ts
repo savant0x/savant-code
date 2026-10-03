@@ -1,7 +1,6 @@
 import { zExaContentsBody } from './schema/inputs.ts'
 import { defineEndpoint, Unit, UsageModelKind } from '../../../../core/mod.ts'
 
-
 /**
  * Exa /contents — clean page content for known URLs.
  *

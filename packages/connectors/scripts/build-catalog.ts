@@ -16,13 +16,9 @@
 import { mkdir, readFile, writeFile } from 'node:fs/promises'
 import { fileURLToPath } from 'node:url'
 
-
 import { compileBundle } from '../src/compiler/mod.ts'
 import { COMPILER_VERSION } from '../src/compiler/version.ts'
-import {
-  loadCategoryRegistry,
-  loadConnectorDefs,
-} from '../src/core/mod.ts'
+import { loadCategoryRegistry, loadConnectorDefs } from '../src/core/mod.ts'
 import { ENGINE_VERSION } from '../src/engine/mod.ts'
 
 const PACKAGE_ROOT = fileURLToPath(new URL('../', import.meta.url))

@@ -26,6 +26,7 @@ export const getAgentStreamFromTemplate = (params: {
    *  mid-JSON. Absent → undefined → the field is omitted from the request
    *  and the provider default governs. */
   maxOutputTokens?: number
+  contextWindow?: number
   logger: Logger
   messages: Message[]
   runId: string
@@ -88,9 +89,11 @@ export const getAgentStreamFromTemplate = (params: {
     logger,
     localAgentTemplates,
     maxOutputTokens: params.maxOutputTokens,
+    contextWindow: params.contextWindow,
     maxRetries: 3,
     messages,
     model,
+    modelRoute: template.modelRoute,
     runId,
     signal: params.signal,
     spawnableAgents: template.spawnableAgents,

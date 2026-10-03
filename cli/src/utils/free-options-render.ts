@@ -15,7 +15,7 @@ export function renderFreeOptionsMarkdown(report: FreeOptionsReport): string {
     `fetchedAt: ${report.fetchedAt ?? 'n/a'}${report.stale ? ' (**STALE** — older than 24h; run `/provider free` to refresh)' : ''}`,
   )
   lines.push('')
-  lines.push('## Wired — free models you can use today')
+  lines.push('## Wired — advertised free models; account access unverified')
   lines.push('')
   if (report.wiredFree.length === 0) {
     lines.push('_No configured provider exposes models in the free catalog._')
@@ -30,7 +30,9 @@ export function renderFreeOptionsMarkdown(report: FreeOptionsReport): string {
   lines.push('## Free tiers you have NOT wired')
   lines.push('')
   if (report.notWired.length === 0) {
-    lines.push('_Every free-catalog provider is wired._')
+    lines.push(
+      '_Every supported free-catalog provider has credentials configured._',
+    )
   } else {
     for (const lane of report.notWired) {
       lines.push(
@@ -43,10 +45,20 @@ export function renderFreeOptionsMarkdown(report: FreeOptionsReport): string {
   lines.push('')
   for (const lane of report.localFree) {
     lines.push(
-      `- **${lane.label}** — runs on your machine, no key — \`${lane.setupCommand}\``,
+      `- **${lane.label}** — registered local integration; server and model presence unverified — \`${lane.setupCommand}\``,
     )
   }
   lines.push('')
+  for (const lane of report.discoveryOnly ?? []) {
+    lines.push(
+      `- ${lane.label}: ${lane.models.length} advertised free model(s); discovery only, integration unavailable`,
+    )
+  }
+  for (const offer of report.discoveryOffers ?? [])
+    lines.push(`- Discovery: ${offer} (source: custats free-token feed)`)
+  lines.push(
+    'Configured keys and public listings do not verify your account quota. Local registration does not verify a running server.',
+  )
   return lines.join('\n')
 }
 
@@ -88,6 +100,13 @@ export function renderCommandOutput(report: FreeOptionsReport): string[] {
   lines.push(
     'The full reference (with model ids) is saved to free-options.md in your Savant config directory — ask the agent "what free options do I have?" and it can read it for you.',
   )
+  for (const lane of report.discoveryOnly ?? [])
+    lines.push(`- ${lane.label}: discovery only; integration unavailable`)
+  for (const offer of report.discoveryOffers ?? [])
+    lines.push(`- Discovery: ${offer} (source: custats free-token feed)`)
+  lines.push(
+    'Configured keys and public listings do not verify account quota; local servers must be running.',
+  )
   return lines
 }
 
@@ -117,7 +136,7 @@ export function renderFreeOptionsAnnounce(report: FreeOptionsReport): string[] {
   if (report.wiredFree.length > 0) {
     const labels = boundedLabels(report.wiredFree.map((lane) => lane.label))
     lines.push(
-      `- Wired & free: ${report.wiredFree.length} — ${labels} — free models ready with your keys`,
+      `- Wired & free: ${report.wiredFree.length} — ${labels} — advertised free models; account quota unverified`,
     )
   }
   if (report.notWired.length > 0) {

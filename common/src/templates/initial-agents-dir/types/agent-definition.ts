@@ -25,6 +25,7 @@ import type {
   ModelName,
   ReasoningOptions,
   ProviderRoutingOptions,
+  ModelRoute,
 } from './agent-models'
 import type { ToolName } from './tools'
 import type {
@@ -43,6 +44,7 @@ export type {
   GenerateN,
 } from './agent-definition-support'
 export type {
+  ModelRoute,
   ModelName,
   ReasoningOptions,
   ProviderRoutingOptions,
@@ -67,6 +69,7 @@ export interface AgentDefinition {
 
   /** AI model to use for this agent. Can be any model in OpenRouter: https://openrouter.ai/models */
   model: ModelName
+  modelRoute?: ModelRoute
 
   /**
    * https://openrouter.ai/docs/use-cases/reasoning-tokens

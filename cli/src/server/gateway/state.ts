@@ -18,9 +18,18 @@ import type {
   GatewayTriggerManager,
   PendingApproval,
   ScopedThreadRecord,
+  ConnectionState,
 } from './types'
 import type { PrintModeEvent } from '@savant-code/common/types/print-mode'
 import type { RunState } from '@savant-code/sdk'
+
+/** FID-2026-1003-002 (D6): replay-buffer bound — 1,000 batches ≈ 50 s at
+ *  the 50 ms flush tick; beyond it the replay reports `gapped` honestly. */
+export const REPLAY_BUFFER_CAP = 1_000
+
+/** FID-2026-1003-002 (D6): one replayable event batch — its position in the
+ *  single seq space plus the events exactly as they went out on the wire. */
+export type ReplayedBatch = { seq: number; events: PrintModeEvent[] }
 
 /** The per-session state + DI bundle shared by all gateway stage modules. */
 export type GatewayContext = {
@@ -49,9 +58,14 @@ export type GatewayContext = {
   }) => boolean
 
   /** Connected sockets (added on open, removed on close). */
-  connectedSockets: Set<{ send: (data: string) => void }>
-  /** Pending approvals keyed by gateway-generated approvalId; survive
-   *  socket disconnects, resolved fail-closed on close/shutdown. */
+  connectedSockets: Set<{
+    send: (data: string) => void
+    data?: ConnectionState
+  }>
+  /** Pending approvals keyed by gateway-generated approvalId. A pending
+   *  approval SURVIVES a socket disconnect (FID-2026-1002-007: the
+   *  reconnecting client re-authenticates and resolves it) and is denied
+   *  fail-closed when its owning run settles or at gateway shutdown. */
   pendingApprovals: Map<string, PendingApproval>
 
   /** Run in flight (single-session v1) — owned by run-lifecycle. */
@@ -63,6 +77,13 @@ export type GatewayContext = {
   /** Event-stream batching buffer — owned by the batching primitives. */
   eventBuffer: PrintModeEvent[]
   flushTimer: ReturnType<typeof setInterval> | null
+
+  /** FID-2026-1003-002 (D6): monotonic event-batch counter — every `event`
+   *  frame the gateway emits increments it exactly once. */
+  batchSeq: number
+  /** FID-2026-1003-002 (D6): bounded replay buffer of recent batches — a
+   *  reconnecting client recovers what it missed via replay_events. */
+  replayBuffer: ReplayedBatch[]
 }
 
 /** Create the per-session context. Only the facade calls this. */
@@ -98,6 +119,8 @@ export function createGatewayContext(params: {
     lastRunState: null,
     eventBuffer: [],
     flushTimer: null,
+    batchSeq: 0,
+    replayBuffer: [],
   }
 }
 
@@ -106,22 +129,51 @@ export function pushEvent(ctx: GatewayContext, event: PrintModeEvent): void {
   ctx.eventBuffer.push(event)
 }
 
-/** Flush buffered events to every connected, authenticated socket. The
- *  frame is a single JSON-RPC notification (`method: 'event'`) carrying the
- *  batch as params — one clean JSON-RPC frame per flush tick, so FID-009's
- *  Rust supervisor parses standard JSON-RPC 2.0, never a bare array. */
-export function flushEvents(ctx: GatewayContext): void {
-  if (ctx.eventBuffer.length === 0) return
-  const batch = ctx.eventBuffer
-  ctx.eventBuffer = []
-  const frame = JSON.stringify(notification('event', batch))
+/** FID-2026-1003-002 (D6): emit one event batch — seq-stamped and appended
+ *  to the bounded replay buffer, then sent (frame UNCHANGED: a bare
+ *  PrintModeEvent[] array) to every connected socket. Every `event` frame
+ *  the gateway emits goes through this primitive — one seq space is what
+ *  makes the replay cursor arithmetic exact. */
+export function emitEventBatch(
+  ctx: GatewayContext,
+  events: PrintModeEvent[],
+): void {
+  if (events.length === 0) return
+  const seq = ctx.batchSeq + 1
+  ctx.batchSeq = seq
+  ctx.replayBuffer.push({ seq, events })
+  if (ctx.replayBuffer.length > REPLAY_BUFFER_CAP) ctx.replayBuffer.shift()
   for (const socket of ctx.connectedSockets) {
+    if (socket.data && !socket.data.authed) continue
+    const visible = socket.data?.providerNotices
+      ? events
+      : events.filter((e) => e.type !== 'provider_notice')
+    const frame = JSON.stringify(notification('event', visible))
     try {
       socket.send(frame)
     } catch (error) {
-      ctx.logger?.error?.(error, 'gateway: event flush send failed')
+      ctx.logger?.error?.(error, 'gateway: event send failed')
     }
   }
+}
+
+/** Flush buffered events to every connected, authenticated socket. The
+ *  frame is a single JSON-RPC notification (`method: 'event'`) carrying the
+ *  batch as params — one clean JSON-RPC frame per flush tick, so FID-009's
+ *  Rust supervisor parses standard JSON-RPC 2.0, never a bare array.
+ *  FID-2026-1002-007 (D5): the timer self-stops once the buffer is empty
+ *  (idle sessions stop ticking; `pushEvent` re-arms).
+ *  FID-2026-1003-002 (D6): the batch is seq-stamped and buffered for
+ *  replay before it goes on the wire. */
+export function flushEvents(ctx: GatewayContext): void {
+  if (ctx.eventBuffer.length === 0) {
+    selfStopFlushTimer(ctx)
+    return
+  }
+  const batch = ctx.eventBuffer
+  ctx.eventBuffer = []
+  selfStopFlushTimer(ctx)
+  emitEventBatch(ctx, batch)
 }
 
 /** Start the flush interval if not already running. */
@@ -130,8 +182,23 @@ export function ensureFlushTimer(ctx: GatewayContext): void {
   ctx.flushTimer = setInterval(() => flushEvents(ctx), EVENT_FLUSH_INTERVAL_MS)
 }
 
+/**
+ * FID-2026-1002-007 (D5): the timer self-stops when the buffer drains —
+ * an idle session must not wake every 50 ms forever. The next `pushEvent`
+ * re-arms it via `ensureFlushTimer`, so the batching contract (one frame
+ * per flush tick) is unchanged.
+ */
+function selfStopFlushTimer(ctx: GatewayContext): void {
+  if (!ctx.flushTimer) return
+  clearInterval(ctx.flushTimer)
+  ctx.flushTimer = null
+}
+
 /** Deny every pending approval FAIL-CLOSED (deny + recorded in history as a
- *  skipped ask_user tool result). Called on socket close AND on shutdown. */
+ *  skipped ask_user tool result). FID-2026-1002-007 (D4): called when the
+ *  owning run settles (run-lifecycle finally) and at gateway shutdown —
+ *  NOT on socket close (a pending approval survives a disconnect; the
+ *  reconnecting client re-authenticates and resolves it). */
 export function denyPendingApprovals(ctx: GatewayContext): void {
   for (const [, approval] of ctx.pendingApprovals) {
     approval.deny()

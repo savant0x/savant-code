@@ -9,11 +9,24 @@
 import type { EnforcementState } from './types'
 
 /**
+ * FID-2026-1001-003 step 3: durability cap for the Law 1 read-ledger mirror
+ * (checkpoint `readLedger`). Bounded FIFO: once full, the oldest entry is
+ * evicted on every insert. Reads are cheap to re-do; the ledger exists so a
+ * session restore does not re-block Law 1 on already-read files — a bounded
+ * recent window satisfies that contract without unbounded growth.
+ */
+export const MAX_READ_LEDGER = 512
+
+/**
  * Create a fresh enforcement state for a new conversation.
  */
 export function createEnforcementState(): EnforcementState {
   return {
     filesRead: new Set(),
+    filesReadCanonical: new Map(),
+    // FID-2026-1001-003 step 1: per-call mutation classification (cleared on
+    // every beforeToolCall, consumed in afterToolCall).
+    pendingMutation: null,
     filesWritten: new Set(),
     dirtyFiles: new Set(),
     writtenFileContent: new Map(),
@@ -21,6 +34,10 @@ export function createEnforcementState(): EnforcementState {
     verifiedFiles: new Set(),
     failureAttributedFiles: new Set(),
     writeCount: 0,
+    // FID-2026-1001-003 step 4: repeat-block escalation ladder (N=3) and its
+    // turn-termination arm (see ./types.ts and ./enforcement/escalation.ts).
+    blockStrikes: new Map(),
+    turnTerminationArmed: false,
     featuresWired: new Set(),
     featuresVerified: new Set(),
     hasSearchedSinceGreen: false,
@@ -53,4 +70,8 @@ export function resetForNewTurn(state: EnforcementState): void {
   state.verifiedFiles.clear()
   state.failureAttributedFiles.clear()
   state.hasVerifiedSinceLastDirty = true
+  // FID-2026-1001-003 step 4: a terminated or cleanly-ended turn must not
+  // inherit a stale arm (the strikes themselves are deliberately NOT reset
+  // here — only a compliant read or verification resets the ladder).
+  state.turnTerminationArmed = false
 }

@@ -1,7 +1,6 @@
 import { zExaSearchBody } from './schema/inputs.ts'
 import { defineEndpoint, Unit, UsageModelKind } from '../../../../core/mod.ts'
 
-
 /**
  * Exa /search — neural + keyword search across the open web.
  *

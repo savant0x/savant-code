@@ -1,10 +1,5 @@
-
-import {
-  CORE_LEAF_CATEGORY_ENTRIES,
-} from './categories-core.ts'
-import {
-  EXTENDED_LEAF_CATEGORY_ENTRIES,
-} from './categories-extended.ts'
+import { CORE_LEAF_CATEGORY_ENTRIES } from './categories-core.ts'
+import { EXTENDED_LEAF_CATEGORY_ENTRIES } from './categories-extended.ts'
 import { defineLeafCategories } from '../core/mod.ts'
 
 /**

@@ -2,6 +2,10 @@ import {
   DEFAULT_SAVANT_FREE_MODEL_ID,
   resolveAvailableSavantFreeModel,
 } from '@savant-code/common/constants/savant-free-models'
+import {
+  resolveModelRoute,
+  type ModelRoute,
+} from '@savant-code/common/providers/model-route'
 import { create } from 'zustand'
 
 import { IS_SAVANT_FREE } from '../utils/constants'
@@ -9,7 +13,10 @@ import {
   DEFAULT_SAVANT_CODE_MODEL_ID,
   loadSavantCodeModelPreference,
   loadSavantFreeModelPreference,
-  saveSavantCodeModelPreference,
+  loadModelSelection,
+  saveModelSelection,
+  selectModelForProvider,
+  loadActiveProvider,
   saveSavantFreeModelPreference,
 } from '../utils/settings'
 
@@ -30,10 +37,11 @@ import {
  */
 interface SavantFreeModelStore {
   selectedModel: string
+  modelRoute?: ModelRoute
   /** In-memory only — used by server-driven auto-flips that should NOT persist. */
   setSelectedModel: (model: string) => void
   /** Unified: updates store + persists to settings. All user-initiated model changes go here. */
-  switchModel: (model: string) => void
+  switchModel: (model: string, route?: ModelRoute) => void
 }
 
 /**
@@ -71,13 +79,14 @@ export function resolveInitialSelectedModel(
 }
 
 export const useSavantFreeModelStore = create<SavantFreeModelStore>((set) => ({
+  modelRoute: IS_SAVANT_FREE ? undefined : loadModelSelection()?.route,
   selectedModel: resolveInitialSelectedModel(
     loadSavantFreeModelPreference(),
     loadSavantCodeModelPreference(),
   ),
-  setSelectedModel: (model) => set({ selectedModel: model }),
-  switchModel: (model) => {
-    set({ selectedModel: model })
+  setSelectedModel: (model) =>
+    set({ selectedModel: model, modelRoute: undefined }),
+  switchModel: (model, route) => {
     // Build-aware persistence: the paid build writes the operator's model to
     // the savant-code preference (the only key it reads on boot); the free
     // build writes the savant-free preference. Writing the free key in the
@@ -85,8 +94,12 @@ export const useSavantFreeModelStore = create<SavantFreeModelStore>((set) => ({
     // selection (minimax-m3) override the paid selection on the next launch.
     if (IS_SAVANT_FREE) {
       saveSavantFreeModelPreference(model)
+      set({ selectedModel: model, modelRoute: undefined })
     } else {
-      saveSavantCodeModelPreference(model)
+      const selection = route
+        ? saveModelSelection(model, route)
+        : selectModelForProvider(model)
+      set({ selectedModel: model, modelRoute: selection.route })
     }
   },
 }))
@@ -109,4 +122,19 @@ export function getSelectedSavantFreeModel(): string {
  */
 export function resolveActiveModel(): string {
   return getSelectedSavantFreeModel()
+}
+
+export function resolveActiveModelRoute(): ModelRoute | undefined {
+  if (IS_SAVANT_FREE) return undefined
+  const state = useSavantFreeModelStore.getState()
+  // Only an EXPLICIT selection may pin the serving route (D1): shell
+  // DIRECT_PROVIDER or the persisted /provider selection. The picker-default
+  // chain in getActiveProvider() ends in the openrouter fallback, and routing
+  // a bare slug through that default would silently replace the operator's
+  // INFERENCE_BASE_URL custom endpoint (FID-2026-0929-005 direct mode).
+  return resolveModelRoute(
+    state.selectedModel,
+    state.modelRoute,
+    process.env.DIRECT_PROVIDER ?? loadActiveProvider(),
+  )
 }

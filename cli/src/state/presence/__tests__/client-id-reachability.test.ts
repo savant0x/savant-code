@@ -76,8 +76,8 @@ describe('Discord presence client-id reachability (Law 4)', () => {
       sources,
       /SAVANT_DISCORD_CLIENT_ID\s*=\s*'1539431002089328710'/,
     )
-    expect(definitions.map((d) => d.location)).toEqual([
-      'utils/settings/preferences.ts:87',
+    expect(definitions.map((d) => d.location.split(':')[0])).toEqual([
+      'utils/settings/preferences.ts',
     ])
   })
 
@@ -103,7 +103,9 @@ describe('Discord presence client-id reachability (Law 4)', () => {
       (hit) =>
         !/function bootPresence|export function bootPresence/.test(hit.text),
     )
-    expect(bootCalls.map((c) => c.location)).toEqual(['init/init-app.ts:67'])
+    expect(bootCalls.map((c) => c.location.split(':')[0])).toEqual([
+      'init/init-app.ts',
+    ])
     expect(bootCalls[0].text).toContain('SAVANT_DISCORD_CLIENT_ID')
   })
 
@@ -125,13 +127,13 @@ describe('Discord presence client-id reachability (Law 4)', () => {
 
   it('constructs the transport only from the service id (no literal, no external input)', () => {
     const serviceConstructions = matchingLines(sources, /new PresenceService\(/)
-    expect(serviceConstructions.map((c) => c.location)).toEqual([
-      'state/presence/index.ts:26',
+    expect(serviceConstructions.map((c) => c.location.split(':')[0])).toEqual([
+      'state/presence/index.ts',
     ])
 
     const clientConstructions = matchingLines(sources, /new Client\(/)
-    expect(clientConstructions.map((c) => c.location)).toEqual([
-      'state/presence/presence-ipc.ts:43',
+    expect(clientConstructions.map((c) => c.location.split(':')[0])).toEqual([
+      'state/presence/presence-ipc.ts',
     ])
     // The factory receives the id as a parameter and forwards it — the only
     // value that parameter can ever hold is the compiled constant, proven by

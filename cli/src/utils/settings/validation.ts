@@ -4,6 +4,7 @@ import {
   parseCustomProviders,
 } from '@savant-code/common/providers/custom-providers'
 import { deriveValidProviderIds } from '@savant-code/common/providers/derive'
+import { modelSelectionSchema } from '@savant-code/common/providers/model-route'
 import { PROVIDER_REGISTRY } from '@savant-code/common/providers/registry'
 
 import { AGENT_MODES, IS_SAVANT_FREE } from '../constants'
@@ -23,6 +24,13 @@ export const validateSettings = (parsed: JSONValue): Settings => {
 
   const settings: Settings = {}
   const obj = parsed as Record<string, JSONValue>
+  const selection = modelSelectionSchema.safeParse(obj.modelSelection)
+  if (selection.success) settings.modelSelection = selection.data
+  if (Array.isArray(obj.monitoredProviders))
+    settings.monitoredProviders = obj.monitoredProviders.filter(
+      (v): v is string =>
+        typeof v === 'string' && /^[a-z0-9][a-z0-9-]*$/.test(v),
+    )
 
   // Validate mode; migrate legacy DEFAULT/LITE/MAX/PLAN/FREE values to EDIT.
   if (typeof obj.mode === 'string') {

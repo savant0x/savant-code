@@ -9,4 +9,3 @@ export const agentsResponseSchema = z.object({
   version: z.string(),
   data: DynamicAgentTemplateSchema,
 })
-

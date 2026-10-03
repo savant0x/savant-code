@@ -6,6 +6,8 @@
  */
 import fs from 'node:fs'
 
+import { modelRequestLimits } from '@savant-code/common/util/model-request-limits'
+
 import { logger } from '../logger'
 import { __resetApinexCacheForTest, fetchApinexModels } from './apinex'
 import { __resetBaiCacheForTest, fetchBaiModels } from './bai'
@@ -78,6 +80,9 @@ export function subscribeGatewayCatalog(
 }
 
 function notifyGatewayCatalogListeners(catalog: OpenRouterModel[]): void {
+  // OpenRouter leaves provider unset for historical picker semantics. Budget
+  // knowledge still needs its serving identity, including on disk warm-start.
+  modelRequestLimits.replaceCatalog(catalog, 'openrouter')
   for (const listener of gatewayCatalogListeners) {
     try {
       listener(catalog)
@@ -237,6 +242,7 @@ export function __resetOpenRouterModelsCacheForTest(): void {
   // Step 9 remainder: lazily-built custom fetchers are cache state too.
   __resetCustomCatalogsForTest()
   gatewayCache = null
+  modelRequestLimits.replaceCatalog([])
   gatewayCacheAt = 0
   gatewayInflight = null
   // FID-2026-0815-007: also clear the on-disk warm-start cache so tests start

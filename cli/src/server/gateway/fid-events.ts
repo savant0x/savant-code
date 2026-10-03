@@ -5,8 +5,8 @@
 // ENCAPSULATED here (single owner, Loop-2 decision) instead of living on the
 // shared context. Verbatim logic from gateway.ts.
 
+import { emitEventBatch } from './state'
 import { loadFidInventory } from '../../utils/fid-loader'
-import { notification } from '../json-rpc'
 
 import type { GatewayContext } from './state'
 import type { PrintModeEvent } from '@savant-code/common/types/print-mode'
@@ -16,7 +16,7 @@ import type { PrintModeEvent } from '@savant-code/common/types/print-mode'
  *  the hello/dispatch path. */
 export type FidEventBus = {
   collectFidUpdates: () => PrintModeEvent[]
-  emitFidChanges: (sockets: Iterable<{ send: (data: string) => void }>) => void
+  emitFidChanges: (ctx: GatewayContext) => void
   seed: () => void
 }
 
@@ -28,7 +28,6 @@ export type FidEventBus = {
 export function createFidEventBus(params: {
   fidsDir: string
   projectId: string
-  logger: GatewayContext['logger']
 }): FidEventBus {
   const fidStatuses = new Map<
     string,
@@ -78,9 +77,7 @@ export function createFidEventBus(params: {
     }
   }
 
-  function emitFidChanges(
-    sockets: Iterable<{ send: (data: string) => void }>,
-  ): void {
+  function emitFidChanges(ctx: GatewayContext): void {
     const next = new Map<
       string,
       {
@@ -125,14 +122,10 @@ export function createFidEventBus(params: {
     fidStatuses.clear()
     for (const [id, value] of next) fidStatuses.set(id, value)
     if (changed.length === 0) return
-    const frame = JSON.stringify(notification('event', changed))
-    for (const socket of sockets) {
-      try {
-        socket.send(frame)
-      } catch (error) {
-        params.logger?.error?.(error, 'gateway: FID update send failed')
-      }
-    }
+    // FID-2026-1003-002 (D6): FID batches ride the seq'd replay path like
+    // every other event frame — one seq space for all `event` frames is
+    // what keeps the replay cursor exact.
+    emitEventBatch(ctx, changed)
   }
 
   return { collectFidUpdates, emitFidChanges, seed }

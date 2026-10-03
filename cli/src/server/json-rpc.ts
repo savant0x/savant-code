@@ -106,4 +106,10 @@ export const GATEWAY_CAPABILITIES = [
   'triggers_set_recurrence',
   'triggers_set_enabled',
   'triggers_delete',
+  // FID-2026-1003-002 (D6): reconnect event replay (additive — the frozen
+  // capability list extends as the gateway grows).
+  'replay_events',
+  'provider_notices_v1',
+  'provider_notices_snapshot',
+  'provider_notices_ack',
 ] as const

@@ -8,12 +8,15 @@
  *
  *   1. Target-dirty hard block (kept): re-editing a file that is itself
  *      dirty-and-unverified still blocks — "verify before re-editing."
- *   2. Other-dirty advisory (new): OTHER files' pending verification is
- *      advisory. The batch-writes-then-verify pattern (explicitly allowed
- *      by the tracker layer — echo-compliance.ts evaluateAtStepBoundary
- *      fires only on `endingTurn`) can no longer deadlock: an interlocked
- *      multi-file batch whose intermediate state breaks the typecheck can
- *      always write the repair file.
+ *   2. Other-dirty BLOCK (restored 2026-10-02, FID-2026-1001-003 step 4):
+ *      other code files' pending verification blocks again. The 2026-09-18
+ *      demotion to advisory (FID-2026-0918-005) was ruled attribution
+ *      laundering by the operator (Ruling 1): Laws 1-4 are not advice. The
+ *      deadlock the demotion escaped is prevented three ways instead of by
+ *      the demotion: the verification-escape clause below, the failure-
+ *      attribution and self_correct exemptions (the repair path), and the
+ *      N=3 escalation ladder (enforcement/escalation.ts) whose terminal
+ *      response is turn termination rather than an unverified exit.
  *
  * FID-2026-0927-003 F2: the target-dirty block is where a RED verification
  * run deadlocked. Credit is withheld on failure, so the file the run is
@@ -94,8 +97,22 @@ export function runLaw3Gate(params: {
    * (the exemption does not fire) and the advisory path still records why.
    */
   fsmPhase?: string
+  /**
+   * FID-2026-1001-003 step 4: TRUE when the pending call IS the verification
+   * the Law 3 block would demand (`detectsVerificationCommand` over
+   * `terminalCommandCandidates` — the same predicate the credit path uses,
+   * Law 13). The block must never fire on its own cure.
+   */
+  verificationEscape?: boolean
 }): Law3GateResult {
   const { targetPath, state, warnings, fsmPhase } = params
+
+  // ── Deadlock escape clause (FID-2026-1001-003 step 4, mandatory) ────
+  // The pre-write block never fires on a command that IS the verification
+  // the block is asking for: the command passes through to earn credit in
+  // afterToolCallImpl via the same predicate (Law 13 — one definition of
+  // "verification", so the gate and the credit path cannot disagree).
+  if (params.verificationEscape === true) return { blocked: false }
 
   // Same unverified-dirty predicate as evaluateTurnEnd's Law 15 check —
   // one source of truth (FID-2026-0820-012). Docs are excluded by the
@@ -163,17 +180,17 @@ export function runLaw3Gate(params: {
     }
   }
 
-  // FID-2026-0918-005: other-file dirtiness is advisory. The warning names
-  // the same set the old hard block named — visibility without the
-  // deadlock. Turn-end Law 15 still blocks an unverified exit.
-  warnings.push({
-    law: 3,
-    severity: 'warning',
-    message:
-      `Law 3: ${unverifiedDirty.length} unverified file(s) pending: ` +
-      `[${unverifiedDirty.join(', ')}]. Run typecheck/lint before ` +
-      `finishing the turn.`,
-    file: targetPath,
-  })
-  return { blocked: false }
+  // ── Other-dirty BLOCK (restored, FID-2026-1001-003 step 4) ─────────
+  // Ruling 1: Laws 1-4 are not advice — the FID-2026-0918-005 demotion of
+  // this branch to advisory was attribution laundering. The block names the
+  // same set the old advisory did; the escalation ladder (escalation.ts)
+  // keys its N=3 response on exactly this block.
+  return {
+    blocked: true,
+    reason:
+      `Law 3: Verify before proceeding — ${unverifiedDirty.length} unverified ` +
+      `file(s) pending: [${unverifiedDirty.join(', ')}]. Run typecheck/lint ` +
+      `(a green verification run re-arms these files) before writing ` +
+      `other code.`,
+  }
 }

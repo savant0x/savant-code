@@ -42,10 +42,17 @@ function fakeBundle(): Bundle {
     endpoint: id.split('#')[1] ?? '',
     provider,
     minEngineVersion: '0.0.0',
-    meta: { displayName: id, summary: `synthetic ${id}`, categories: ['web-search'] },
+    meta: {
+      displayName: id,
+      summary: `synthetic ${id}`,
+      categories: ['web-search'],
+    },
     auth: {
       inject: { $fn: { key: 'k' } },
-      credentials: { type: 'object', properties: { apiKey: { type: 'string' } } },
+      credentials: {
+        type: 'object',
+        properties: { apiKey: { type: 'string' } },
+      },
     },
     request: { method: 'GET', url: `https://synthetic.test${path}` },
     input: {
@@ -78,7 +85,11 @@ function fakeBundle(): Bundle {
     specVersion: '1.0.0',
     name,
     minEngineVersion: '0.0.0',
-    meta: { displayName, summary: `synthetic provider ${name}`, categories: ['web-search'] },
+    meta: {
+      displayName,
+      summary: `synthetic provider ${name}`,
+      categories: ['web-search'],
+    },
     webhooks: undefined,
     hash: 'synthetic',
   })
@@ -107,9 +118,7 @@ describe('connector_search handler', () => {
     const bundle = fakeBundle()
     const handler = makeConnectorSearchHandler(async () => bundle)
 
-    const all = await handler(
-      handlerParams('connector_search', {}),
-    )
+    const all = await handler(handlerParams('connector_search', {}))
     const allValue = (
       all.output[0] as {
         value: { providers?: Array<{ name: string }> }
@@ -133,12 +142,9 @@ describe('connector_search handler', () => {
     const handler = makeConnectorSearchHandler(async () => {
       throw new Error('bundle unavailable')
     })
-    const result = await handler(
-      handlerParams('connector_search', {}),
-    )
-    const value = (
-      result.output[0] as { value: { errorMessage?: string } }
-    ).value
+    const result = await handler(handlerParams('connector_search', {}))
+    const value = (result.output[0] as { value: { errorMessage?: string } })
+      .value
     expect(value.errorMessage).toContain('bundle unavailable')
   })
 })
@@ -152,9 +158,8 @@ describe('connector_describe handler', () => {
         endpoint: 'alpha#one',
       }),
     )
-    const value = (
-      result.output[0] as { value: { endpoint?: { id: string } } }
-    ).value
+    const value = (result.output[0] as { value: { endpoint?: { id: string } } })
+      .value
     expect(value.endpoint?.id).toBe('alpha#one')
   })
 
@@ -166,9 +171,8 @@ describe('connector_describe handler', () => {
         endpoint: 'alpha#nope',
       }),
     )
-    const value = (
-      result.output[0] as { value: { errorMessage?: string } }
-    ).value
+    const value = (result.output[0] as { value: { errorMessage?: string } })
+      .value
     expect(value.errorMessage).toContain('endpoint not in bundle')
     expect(value.errorMessage).toContain('alpha#one')
   })
@@ -185,9 +189,8 @@ describe('connector_invoke handler', () => {
         mode: 'replay',
       }),
     )
-    const value = (
-      result.output[0] as { value: { errorMessage?: string } }
-    ).value
+    const value = (result.output[0] as { value: { errorMessage?: string } })
+      .value
     expect(value.errorMessage).toContain('replay mode is not available')
   })
 
@@ -200,9 +203,8 @@ describe('connector_invoke handler', () => {
         input: { queryParams: {} },
       }),
     )
-    const value = (
-      result.output[0] as { value: { errorMessage?: string } }
-    ).value
+    const value = (result.output[0] as { value: { errorMessage?: string } })
+      .value
     // The synthetic doc's fn table has no real entries — the engine's
     // fail-closed load gate rejects it; the handler renders that as an
     // errorMessage rather than throwing opaque.
@@ -277,9 +279,8 @@ describe('connector_credentials handler (names only — Law 12)', () => {
         provider: 'gamma',
       }),
     )
-    const value = (
-      result.output[0] as { value: { errorMessage?: string } }
-    ).value
+    const value = (result.output[0] as { value: { errorMessage?: string } })
+      .value
     expect(value.errorMessage).toContain('provider not in bundle')
   })
 })

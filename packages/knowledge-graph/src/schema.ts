@@ -16,7 +16,7 @@
  * edge, which is what makes the incremental update's "prune stale subtree"
  * step a single DELETE.
  */
-export const SCHEMA_VERSION = 1
+export const SCHEMA_VERSION = 2
 
 export const GRAPH_SCHEMA_SQL = `
 CREATE TABLE IF NOT EXISTS schema_version (
@@ -27,7 +27,9 @@ CREATE TABLE IF NOT EXISTS schema_version (
 CREATE TABLE IF NOT EXISTS files (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   path TEXT NOT NULL UNIQUE,
-  hash TEXT NOT NULL
+  hash TEXT NOT NULL,
+  mtime_ms INTEGER,
+  bytes INTEGER
 );
 
 CREATE TABLE IF NOT EXISTS nodes (
@@ -55,6 +57,22 @@ CREATE TABLE IF NOT EXISTS file_calls (
   PRIMARY KEY (file_id, token)
 );
 
+-- FID-2026-1002-006: per-file relative-import specifiers + extends-parent
+-- names, extracted at change time only. The IMPORTS/EXTENDS edge layers
+-- rebuild from these every pass (resolving against the CURRENT path set),
+-- so unchanged files are never re-read or re-regexed.
+CREATE TABLE IF NOT EXISTS file_imports (
+  file_id INTEGER NOT NULL REFERENCES files(id) ON DELETE CASCADE,
+  token TEXT NOT NULL,
+  PRIMARY KEY (file_id, token)
+);
+
+CREATE TABLE IF NOT EXISTS file_extends (
+  file_id INTEGER NOT NULL REFERENCES files(id) ON DELETE CASCADE,
+  parent TEXT NOT NULL,
+  PRIMARY KEY (file_id, parent)
+);
+
 CREATE INDEX IF NOT EXISTS idx_nodes_name ON nodes(name);
 CREATE INDEX IF NOT EXISTS idx_nodes_file_id ON nodes(file_id);
 CREATE INDEX IF NOT EXISTS idx_edges_source ON edges(source_id);
@@ -65,17 +83,39 @@ CREATE INDEX IF NOT EXISTS idx_edges_target ON edges(target_id);
 CREATE INDEX IF NOT EXISTS idx_nodes_cluster_id ON nodes(cluster_id);
 `
 
+/** Stat columns introduced by FID-2026-1002-006 (absent in v1 databases). */
+const V2_STAT_COLUMNS = [
+  { column: 'mtime_ms', ddl: 'ALTER TABLE files ADD COLUMN mtime_ms INTEGER' },
+  { column: 'bytes', ddl: 'ALTER TABLE files ADD COLUMN bytes INTEGER' },
+]
+
 /**
  * One-shot schema migration runner. Opens the database, applies the schema,
- * records the schema version, and enables WAL + foreign keys.
+ * records the schema version, and enables WAL + foreign keys. v1 databases
+ * (no stat columns) are ALTERed in place; their token/extend tables are
+ * created empty by the schema above and the next pass performs a one-time
+ * full-rebuild backfill (tracked by the missing stat values themselves).
  */
 export function applyGraphSchema(db: {
   exec(sql: string): unknown
-  prepare(sql: string): { run(...params: unknown[]): unknown }
+  prepare(sql: string): {
+    run(...params: unknown[]): unknown
+    all(...params: unknown[]): unknown[]
+  }
 }): void {
   db.exec('PRAGMA journal_mode = WAL')
   db.exec('PRAGMA foreign_keys = ON')
   db.exec(GRAPH_SCHEMA_SQL)
+  // Repo-standard column probe (packages/database/src/index.ts hasColumn).
+  const hasColumn = (column: string): boolean => {
+    const rows = db.prepare('PRAGMA table_info(files)').all() as Array<{
+      name?: string
+    }>
+    return (rows ?? []).some((row) => row.name === column)
+  }
+  for (const { column, ddl } of V2_STAT_COLUMNS) {
+    if (!hasColumn(column)) db.exec(ddl)
+  }
   db.prepare('INSERT OR IGNORE INTO schema_version (version) VALUES (?)').run(
     SCHEMA_VERSION,
   )

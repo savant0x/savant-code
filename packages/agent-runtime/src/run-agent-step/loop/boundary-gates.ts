@@ -1,6 +1,7 @@
 import { userMessage } from '@savant-code/common/util/messages'
 
 import { getOrCreateEnforcement } from '../../echo/enforcement'
+import { consumeTurnTermination } from '../../echo/enforcement/escalation'
 import { buildUserMessageContent } from '../../util/messages'
 import {
   isAutonomousContinuation,
@@ -212,10 +213,27 @@ export function applyStepBoundaryTail(
       loopParams.onResponseChunk(chunk)
     },
   })
+  const escalated = applyLawEscalationTermination(deps)
   return {
-    shouldEndTurn: post.hardEnd ? true : shouldEndTurn,
+    shouldEndTurn: post.hardEnd || escalated ? true : shouldEndTurn,
     hardEnd: post.hardEnd,
   }
+}
+
+/**
+ * FID-2026-1001-003 step 4: terminal response of the N=3 repeat-block
+ * escalation (echo/enforcement/escalation.ts). When an escalated identical
+ * block armed the termination, the turn ENDS at this boundary — the harder
+ * response the ladder exists for; the blocked command itself never ran.
+ * Consumes the arm (one termination per armed block). Main loop only,
+ * matching applyTurnEndEnforcement's blast radius — a subagent cannot act
+ * on a turn termination, its loop is bounded by its own step budget.
+ */
+function applyLawEscalationTermination(deps: BoundaryGateDeps): boolean {
+  const { currentAgentState } = deps
+  if (currentAgentState.parentId) return false
+  const enforcement = getOrCreateEnforcement(currentAgentState)
+  return consumeTurnTermination(enforcement.state)
 }
 
 /**

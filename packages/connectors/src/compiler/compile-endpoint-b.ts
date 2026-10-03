@@ -1,5 +1,3 @@
-
-
 import { resolveCredits } from './compile-endpoint-credits.ts'
 import {
   resolve,
@@ -12,7 +10,9 @@ import {
 import { hasMeteredLines } from '../core/mod.ts'
 
 import type { FnInterner } from './fns.ts'
-import type { zEndpointDef, zProviderDef ,
+import type {
+  zEndpointDef,
+  zProviderDef,
   Credits,
   FnRef,
   Json,
@@ -170,11 +170,7 @@ export async function compileEndpointPhaseB(
     `${providerFile}#usage.consolidate`,
   )
   const consolidateRef = consolidate
-    ? await interner.intern(
-        consolidate.value,
-        consolidate.label,
-        SC.fnAbiSince,
-      )
+    ? await interner.intern(consolidate.value, consolidate.label, SC.fnAbiSince)
     : undefined
 
   // ---- credits (design D26, revised D6): resolved in

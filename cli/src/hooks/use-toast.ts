@@ -30,6 +30,8 @@ export interface Toast {
   duration: number
   /** True while the exit animation is playing (removal scheduled). */
   closing: boolean
+  /** Reserved provider-warning slot survives ordinary toast overflow. */
+  retainedKey?: string
 }
 
 export interface ToastInput {
@@ -37,6 +39,7 @@ export interface ToastInput {
   variant?: ToastVariant
   /** Auto-dismiss duration in ms. Default 3000. 0 = sticky. */
   duration?: number
+  retainedKey?: string
 }
 
 interface ToastStore {
@@ -73,23 +76,26 @@ export const useToastStore = create<ToastStore>((set, get) => ({
   toasts: [],
 
   addToast: (input) => {
-    const id = `toast-${++toastIdCounter}`
+    const id = input.retainedKey ?? `toast-${++toastIdCounter}`
+    clearToastTimeout(id)
     const toast: Toast = {
       id,
       message: input.message,
       variant: input.variant ?? 'info',
       duration: input.duration ?? DEFAULT_DURATION_MS,
       closing: false,
+      retainedKey: input.retainedKey,
     }
 
     set((state) => {
       // Law 14: queue overflow drops oldest, never blocks
-      let nextToasts = [...state.toasts, toast]
+      let nextToasts = [...state.toasts.filter((t) => t.id !== id), toast]
       if (nextToasts.length > MAX_TOASTS) {
         // Drop the oldest and clear its timeout
-        const dropped = nextToasts[0]
+        const index = nextToasts.findIndex((t) => !t.retainedKey)
+        const dropped = nextToasts[Math.max(0, index)]
         if (dropped) clearToastTimeout(dropped.id)
-        nextToasts = nextToasts.slice(nextToasts.length - MAX_TOASTS)
+        nextToasts.splice(Math.max(0, index), 1)
       }
       return { toasts: nextToasts }
     })

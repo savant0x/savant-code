@@ -172,6 +172,5 @@ describe('resolveChatKeyboardAction', () => {
         type: 'none',
       })
     })
-
   })
 })

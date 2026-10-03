@@ -1,43 +1,25 @@
-/**
- * FID-2026-0928-012 — free-options discovery (BYOK).
- *
- * Savant-Code has no provider backend: users wire their own keys. "Free"
- * therefore means free tiers/models of the gateways themselves, and the
- * wired/not-wired split comes from the user's own key store ∪ env vars —
- * the same truth `applyPersistedProviderApiKeys` consumes.
- *
- * Data source (operator ruling: live fetch + local cache): the keyless
- * custats free-models catalog — agent-facing by design (robots Policy A
- * allows retrieval; LIVE probe 2026-09-28: HTTP 200, OpenRouter schema,
- * `fetchedAt` field). Fetch runs on `/provider free` invocation and,
- * since FID-2026-1001-002, on a fail-silent BACKGROUND boot refresh when the
- * cache is absent or stale — fired from `announceFreeOptionsSplit` in
- * `cli/src/chat/use-chat-bootstrap.ts`. The announce path itself reads the
- * cache only and never fetches (see `readCachedFreeOptionsReport`); the
- * boot critical path stays network-free. Any failure serves the last-good
- * cache with a staleness note and never hard-fails the command.
- *
- * The same refresh writes `~/.savant-code/free-options.md` — the
- * agent-answerable reference, so the user and the agent see one truth
- * (Law 13). Content is untrusted third-party text rendered as text; it
- * never mutates configuration.
+/** Keyless free-model catalog with a profile cache and durable notice deltas.
+ * Configured credentials, advertised offerings and account access remain separate.
+ * Refresh failure retains the last-good cache; boot delivery uses the coordinator.
  */
 import fs from 'node:fs'
 import path from 'node:path'
 
-import { PROVIDER_REGISTRY } from '@savant-code/common/providers/registry'
+import { canonicalProviderId } from '@savant-code/common/providers/readiness'
 
 import { liftCatalog } from './free-options-catalog'
+import { buildMachineContext } from './free-options-context'
 import { freeOptionsPaths } from './free-options-paths'
 import { renderFreeOptionsMarkdown } from './free-options-render'
-import { readStoredProviderKeys } from './provider-credentials'
+import { providerNotifications } from './provider-notifications'
+import { readProviderOfferDiscovery } from './provider-offers'
+import { writeFileAtomic } from './write-file-atomic'
 
 import type {
   FreeCatalogEnvelope,
   FreeLane,
   FreeOptionsContext,
   FreeOptionsReport,
-  FreeProviderAttribution,
 } from './free-options-types'
 
 // Re-export the surface the command handler and tests consume, so callers
@@ -60,7 +42,7 @@ export type {
 
 const CATALOG_URL = 'https://free-llm-models.custats.info/free_models.json'
 const CACHE_MAX_AGE_MS = 24 * 3600_000
-const FETCH_TIMEOUT_MS = 30_000
+const FETCH_TIMEOUT_MS = 5_000
 const USER_AGENT =
   'savant-code-free-options (+https://github.com/savant0x/savant-code)'
 
@@ -81,7 +63,10 @@ export async function fetchFreeCatalog(): Promise<FreeCatalogEnvelope | null> {
       signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
     })
     if (!r.ok) return null
-    return liftCatalog(await r.json())
+    const catalog = liftCatalog(await r.json())
+    return catalog && isCacheFresh(catalog.fetchedAt, Date.now())
+      ? catalog
+      : null
   } catch {
     return null
   }
@@ -97,20 +82,28 @@ export function buildFreeOptionsReport(
 ): FreeOptionsReport {
   const wiredFree: Array<FreeLane> = []
   const notWired: Array<FreeLane & { setupCommand: string }> = []
+  const discoveryOnly: FreeLane[] = []
 
   if (catalog) {
     // Group models by providerId first, then partition by wired state.
     const byProvider = new Map<string, string[]>()
     for (const model of catalog.models) {
-      const list = byProvider.get(model.providerId)
+      const id = canonicalProviderId(model.providerId)
+      const list = byProvider.get(id)
       if (list) list.push(model.id)
-      else byProvider.set(model.providerId, [model.id])
+      else byProvider.set(id, [model.id])
     }
     for (const [providerId, models] of byProvider) {
       const attribution = context.registryByProviderId[providerId]
-      if (!attribution) continue // unknown provider — not actionable here
+      if (!attribution) {
+        discoveryOnly.push({ providerId, label: providerId, models })
+        continue
+      }
       const lane = { providerId, label: attribution.label, models }
-      if (context.wiredEnvVars.has(attribution.envVar)) {
+      if (
+        attribution.credentialReady ??
+        context.wiredEnvVars.has(attribution.envVar)
+      ) {
         wiredFree.push(lane)
       } else {
         notWired.push({ ...lane, setupCommand: attribution.setupCommand })
@@ -125,6 +118,7 @@ export function buildFreeOptionsReport(
     wiredFree,
     notWired,
     localFree: context.localProviders.map((p) => ({ ...p })),
+    discoveryOnly,
   }
 }
 
@@ -133,11 +127,27 @@ export function buildFreeOptionsReport(
  * one refresh cycle: fetch-if-stale, persist cache + markdown, return the
  * report. Used by the `/provider free` handler.
  */
-export async function refreshFreeOptions(): Promise<FreeOptionsReport> {
+let refreshInFlight: Promise<FreeOptionsReport> | undefined
+export function refreshFreeOptions(): Promise<FreeOptionsReport> {
+  if (refreshInFlight) return refreshInFlight
+  refreshInFlight = refreshFreeOptionsOnce().finally(() => {
+    refreshInFlight = undefined
+  })
+  return refreshInFlight
+}
+async function refreshFreeOptionsOnce(): Promise<FreeOptionsReport> {
   const paths = freeOptionsPaths()
   const nowMs = Date.now()
 
   let catalog = await fetchFreeCatalog()
+  const fetched = catalog !== null
+  const previous = readCachedFreeCatalog()
+  if (
+    catalog &&
+    previous &&
+    Date.parse(catalog.fetchedAt) < Date.parse(previous.fetchedAt)
+  )
+    catalog = previous
   let fetchedAt: string | null = catalog?.fetchedAt ?? null
 
   if (catalog === null) {
@@ -154,32 +164,25 @@ export async function refreshFreeOptions(): Promise<FreeOptionsReport> {
 
   const report = buildFreeOptionsReport(catalog, buildMachineContext(nowMs))
   report.fetchedAt = fetchedAt
+  report.discoveryOffers = readProviderOfferDiscovery(nowMs)
 
   if (catalog !== null) {
     try {
       fs.mkdirSync(path.dirname(paths.cache), { recursive: true })
-      fs.writeFileSync(paths.cache, JSON.stringify(catalog, null, 2))
-      fs.writeFileSync(paths.markdown, renderFreeOptionsMarkdown(report))
+      writeFileAtomic(paths.cache, JSON.stringify(catalog, null, 2))
+      writeFileAtomic(paths.markdown, renderFreeOptionsMarkdown(report))
     } catch {
       // Persistence is best-effort; the command output already carries the
       // information.
     }
+    if (fetched)
+      try {
+        providerNotifications.observeCatalog(catalog)
+      } catch {
+        /* Inbox failure retains its previous snapshot. */
+      }
   }
   return report
-}
-
-/**
- * Assemble the machine context (wired ∪ env, registry attribution, local).
- * One truth for the refresh cycle and the boot announce's cached reader
- * (Law 13).
- */
-function buildMachineContext(nowMs: number): FreeOptionsContext {
-  return {
-    nowMs,
-    wiredEnvVars: collectWiredEnvVars(),
-    registryByProviderId: buildRegistryAttribution(),
-    localProviders: collectLocalProviders(),
-  }
 }
 
 /**
@@ -199,60 +202,18 @@ export function readCachedFreeOptionsReport(): FreeOptionsReport | null {
     catalog = null
   }
   if (!catalog) return null
-  return buildFreeOptionsReport(catalog, buildMachineContext(Date.now()))
+  return {
+    ...buildFreeOptionsReport(catalog, buildMachineContext(Date.now())),
+    discoveryOffers: readProviderOfferDiscovery(),
+  }
 }
 
-/** Env vars with non-empty values (persisted store ∪ environment). */
-function collectWiredEnvVars(): Set<string> {
-  const wired = new Set<string>()
+export function readCachedFreeCatalog(): FreeCatalogEnvelope | null {
   try {
-    for (const envVar of Object.keys(readStoredProviderKeys())) {
-      wired.add(envVar)
-    }
+    return liftCatalog(
+      JSON.parse(fs.readFileSync(freeOptionsPaths().cache, 'utf8')),
+    )
   } catch {
-    // No credentials file yet — env vars still count.
+    return null
   }
-  for (const config of Object.values(PROVIDER_REGISTRY)) {
-    // Local providers carry `credentials: {}` — no env var, nothing to check.
-    const envVar: string | undefined =
-      'envVar' in config.credentials ? config.credentials.envVar : undefined
-    if (envVar && process.env[envVar]?.trim()) wired.add(envVar)
-  }
-  return wired
-}
-
-/** Catalog providerId → registry attribution, for known providers. */
-function buildRegistryAttribution(): Record<string, FreeProviderAttribution> {
-  const map: Record<string, FreeProviderAttribution> = {}
-  for (const config of Object.values(PROVIDER_REGISTRY)) {
-    if (config.kind === 'local') continue
-    const envVar: string | undefined =
-      'envVar' in config.credentials ? config.credentials.envVar : undefined
-    if (!envVar) continue
-    map[config.id] = {
-      id: config.id,
-      label: config.label,
-      envVar,
-      setupCommand: `/provider ${config.id}`,
-    }
-  }
-  return map
-}
-
-/** Registry local providers (no key at all). */
-function collectLocalProviders(): Array<{
-  id: string
-  label: string
-  setupCommand: string
-}> {
-  const out: Array<{ id: string; label: string; setupCommand: string }> = []
-  for (const config of Object.values(PROVIDER_REGISTRY)) {
-    if (config.kind !== 'local') continue
-    out.push({
-      id: config.id,
-      label: config.label,
-      setupCommand: `/provider ${config.id}`,
-    })
-  }
-  return out
 }

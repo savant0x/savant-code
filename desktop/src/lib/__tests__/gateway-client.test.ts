@@ -118,7 +118,12 @@ describe('GatewayClient', () => {
       params: Record<string, unknown>
     }
     expect(helloFrame.method).toBe('hello')
-    expect(helloFrame.params).toEqual({ protocolVersion: 1, token: 'sekrit' })
+    // FID-2026-1003-006 D3: hello advertises the negotiated capability set.
+    expect(helloFrame.params).toEqual({
+      protocolVersion: 1,
+      token: 'sekrit',
+      capabilities: ['provider_notices_v1'],
+    })
     expect(server.url).toBe('ws://127.0.0.1:5151/ws')
 
     server.deliver({

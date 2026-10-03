@@ -62,11 +62,13 @@ describe('diffCandidates (downStreak + 72h prune)', () => {
     expect(d2.entries[0].downStreak).toBe(1)
     const d3 = diffCandidates(d2.next, down, T0 + 2 * DAY)
     expect(d3.entries[0].downStreak).toBe(2)
-    const d4 = diffCandidates(d3.next, down, T0 + 3 * DAY)
+    const tooEarly = diffCandidates(d3.next, down, T0 + 3 * DAY)
+    expect(tooEarly.entries[0].classification).not.toBe('lapsed')
+    const d4 = diffCandidates(tooEarly.next, down, T0 + 4 * DAY)
     expect(d4.entries[0].classification).toBe('lapsed')
     expect(d4.next.has('b.seen')).toBe(false) // pruned from tracking
     // A lapsed host that returns is new again.
-    const d5 = diffCandidates(d4.next, alive, T0 + 4 * DAY)
+    const d5 = diffCandidates(d4.next, alive, T0 + 5 * DAY)
     expect(d5.entries[0].classification).toBe('new')
   })
 

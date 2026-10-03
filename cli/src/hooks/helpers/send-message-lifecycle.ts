@@ -32,6 +32,13 @@ export type CreateRunLifecycleParams = {
   finalContent: string
   setRunState: (state: RunState | null) => void
   setIsRetrying: (value: boolean) => void
+  isCurrentRun?: () => boolean
+  storage?: {
+    resolveCurrentChatDir: typeof resolveCurrentChatDir
+    saveChatState: typeof saveChatState
+    scheduleCheckpointSave: typeof scheduleCheckpointSave
+    settleCheckpointSave: typeof settleCheckpointSave
+  }
 }
 
 export type RunLifecycle = {
@@ -71,6 +78,12 @@ export const createRunLifecycle = (
     setRunState,
     setIsRetrying,
   } = params
+  const storage = params.storage ?? {
+    resolveCurrentChatDir,
+    saveChatState,
+    scheduleCheckpointSave,
+    settleCheckpointSave,
+  }
 
   let runChatDir = ''
   let checkpointDir = ''
@@ -84,7 +97,9 @@ export const createRunLifecycle = (
     },
   }
 
-  const getRunChatIsCurrent = () => resolveCurrentChatDir() === runChatDir
+  const getRunChatIsCurrent = () =>
+    params.isCurrentRun?.() !== false &&
+    storage.resolveCurrentChatDir() === runChatDir
 
   const start = () => {
     // Capture this run's chat directory once, up front. Every save for this
@@ -93,7 +108,7 @@ export const createRunLifecycle = (
     // would persist this run's state over a different chat's transcript.
     // After a switch the store's messages belong to the new conversation,
     // so persistence and state adoption below are gated on getRunChatIsCurrent.
-    runChatDir = resolveCurrentChatDir()
+    runChatDir = storage.resolveCurrentChatDir()
 
     // FID-2026-0803-004: open this turn's persistent file checkpoint. The
     // runtime captures pre-write snapshots into checkpointDir keyed by
@@ -139,13 +154,13 @@ export const createRunLifecycle = (
       // and the post-run save below won't fire once the chat has switched.
       // scheduleCheckpointSave captures the messages array by reference, so
       // the store reset that follows the switch can't affect the write.
-      scheduleCheckpointSave(
+      storage.scheduleCheckpointSave(
         latestRunStateSnapshot,
         useChatStore.getState().messages,
         runChatDir,
       )
     })
-    saveChatState(
+    storage.saveChatState(
       latestRunStateSnapshot,
       useChatStore.getState().messages,
       runChatDir,
@@ -157,6 +172,7 @@ export const createRunLifecycle = (
 
   const onStateSnapshot = (snapshot: RunState) => {
     latestRunStateSnapshot = snapshot
+    if (abortController.signal.aborted || !getRunChatIsCurrent()) return
 
     // Wire sidebar: update context tokens and cost in real time
     // from periodic snapshots (~every 5s) so the UI stays current
@@ -171,20 +187,13 @@ export const createRunLifecycle = (
       useChatStore.getState().updateSessionCost(snapshotCost)
     }
 
-    // Don't persist once the run is aborted or the user has switched
-    // chats: the store's messages then belong to a different
-    // conversation, and checkpointing them into this run's directory
-    // would overwrite that chat's transcript with foreign (possibly
-    // empty) state — the chat would then be hidden from /history.
-    if (abortController.signal.aborted || !getRunChatIsCurrent()) {
-      return
-    }
+    // The same ownership guard protects both sidebar state and persistence.
     // Persist asynchronously and coalescing: the periodic snapshot
     // fires ~every 5s at step boundaries, and a synchronous save of the
     // (growing) transcript on the render/input thread is what stalls
     // long sessions. The authoritative synchronous saves below still
     // capture the final state.
-    scheduleCheckpointSave(
+    storage.scheduleCheckpointSave(
       snapshot,
       useChatStore.getState().messages,
       runChatDir,
@@ -192,6 +201,7 @@ export const createRunLifecycle = (
   }
 
   const adoptAndPersist = async (runState: RunState) => {
+    if (params.isCurrentRun?.() === false) return
     // Finalize: persist state and mark complete
     previousRunStateRef.current = runState
     setRunState(runState)
@@ -225,12 +235,13 @@ export const createRunLifecycle = (
 
     // Drop any queued/in-flight async checkpoint first so a stale write
     // can't land after this authoritative final save.
-    await settleCheckpointSave()
+    await storage.settleCheckpointSave()
+    if (!getRunChatIsCurrent()) return
     // Read committed state rather than saving inside a setMessages
     // updater: the store uses immer, so the updater sees a draft proxy
     // and JSON.stringify of the (unbounded) transcript through proxy
     // traps is several times slower.
-    saveChatState(
+    storage.saveChatState(
       runState,
       useChatStore.getState().messages,
       runChatDir,
@@ -239,12 +250,11 @@ export const createRunLifecycle = (
   }
 
   const persistFailureState = async () => {
-    // Persist the last checkpoint plus the error banner so a restart
-    // after a failed run still shows this turn. Settle async checkpoints
-    // first so a stale write can't clobber this one. Skipped after a
-    // mid-run chat switch — the store's messages belong to the new chat.
-    await settleCheckpointSave()
-    saveChatState(
+    // A chat switch during the drain must not mix the new transcript with
+    // this run's checkpoint, on the failure path either.
+    await storage.settleCheckpointSave()
+    if (!getRunChatIsCurrent()) return
+    storage.saveChatState(
       latestRunStateSnapshot,
       useChatStore.getState().messages,
       runChatDir,

@@ -51,12 +51,27 @@ export async function createDefaultInferenceModel(
      * provider.
      */
     protocol?: 'openai' | 'anthropic' | 'responses'
+    /**
+     * FID-2026-1003-006: the custom INFERENCE_BASE_URL endpoint owns its
+     * credential. INFERENCE_API_KEY is the only authorizing secret — the
+     * OpenRouter master-key chain is never resolved (no network exchange)
+     * and no active-provider key can reach the operator's own endpoint.
+     */
+    endpointOwnsAuth?: boolean
   },
 ): Promise<LanguageModel> {
   const inferenceBaseUrl = getInferenceBaseUrlFromEnv()
   if (!inferenceBaseUrl) {
     throw new Error(
       `INFERENCE_BASE_URL is required for model "${model}": it matches no provider registry prefix, and with no SavantCode backend there is no fallback target (FID-2026-0929-005). Set INFERENCE_BASE_URL to your inference gateway's base URL.`,
+    )
+  }
+  if (options?.endpointOwnsAuth && !getInferenceApiKeyFromEnv()?.trim()) {
+    // FID-2026-1003-006: a guaranteed-401 request is pure waste and surfaces
+    // a vendor error naming nothing. Fail fast on the named env var instead —
+    // the same contract style as the INFERENCE_BASE_URL check above.
+    throw new Error(
+      "INFERENCE_API_KEY is required for the custom INFERENCE_BASE_URL endpoint: the active provider's key chain is never sent to a custom endpoint (FID-2026-1003-006).",
     )
   }
   const openrouterUsage: OpenRouterUsageAccounting = {
@@ -67,11 +82,18 @@ export async function createDefaultInferenceModel(
   }
 
   const openrouterApiKey = getByokOpenrouterApiKeyFromEnv()
-  const resolvedOpenRouterKey = await resolveOpenRouterApiKey() // Decision 10: the ACTIVE provider's own key is authoritative when
+  // FID-2026-1003-006: when the endpoint owns its auth, the OpenRouter key
+  // chain is never resolved — no master-key network exchange, and no vendor
+  // key that could leak into the operator's own gateway.
+  const resolvedOpenRouterKey = options?.endpointOwnsAuth
+    ? undefined
+    : await resolveOpenRouterApiKey() // Decision 10: the ACTIVE provider's own key is authoritative when
   // resolved; otherwise legacy env fallbacks win over a caller key.
-  const authorizationKey = options?.preferApiKey
-    ? apiKey
-    : (resolvedOpenRouterKey ?? getInferenceApiKeyFromEnv() ?? apiKey)
+  const authorizationKey = options?.endpointOwnsAuth
+    ? (getInferenceApiKeyFromEnv() ?? '')
+    : options?.preferApiKey
+      ? apiKey
+      : (resolvedOpenRouterKey ?? getInferenceApiKeyFromEnv() ?? apiKey)
 
   const isOpenRouterCompatible =
     options?.providerId === undefined || options.providerId === 'openrouter'

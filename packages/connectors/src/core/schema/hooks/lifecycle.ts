@@ -5,10 +5,7 @@ import './lifecycle-data.ts'
 import { type FnUtils } from './ctx.ts'
 import { zHttpMethod } from '../common/http.ts'
 import { type Json, zJson } from '../json/type.ts'
-import {
-  type OwnedResource,
-  type ResourceQuery,
-} from '../resource/row.ts'
+import { type OwnedResource, type ResourceQuery } from '../resource/row.ts'
 
 /**
  * THE LIFECYCLE HOOK FAMILY — `lifecycle.start` / `lifecycle.poll` /

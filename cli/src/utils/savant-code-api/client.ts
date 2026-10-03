@@ -4,7 +4,6 @@ import { createApiRequestCore } from './request-core'
 import { buildRequestBody, DEFAULT_RETRY_CONFIG } from './retry'
 import { WEBSITE_URL } from '../../branding/constants'
 
-
 import type {
   ApiResponse,
   LoginCodeRequest,

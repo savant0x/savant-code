@@ -9,6 +9,7 @@ export type FreeCatalogModel = {
   id: string
   providerId: string
   context_length: number | null
+  expirationDate?: string | null
 }
 
 /** The catalog envelope shape we rely on (defensive lift at the boundary). */
@@ -30,6 +31,7 @@ export type FreeProviderAttribution = {
   label: string
   envVar: string
   setupCommand: string
+  credentialReady?: boolean
 }
 
 /** Everything the pure builder needs about the user's machine. */
@@ -55,4 +57,6 @@ export type FreeOptionsReport = {
   wiredFree: Array<FreeLane>
   notWired: Array<FreeLane & { setupCommand: string }>
   localFree: Array<{ id: string; label: string; setupCommand: string }>
+  discoveryOnly?: FreeLane[]
+  discoveryOffers?: string[]
 }

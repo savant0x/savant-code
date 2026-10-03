@@ -2,13 +2,7 @@ import { fileURLToPath } from 'node:url'
 
 import { describe, expect, test } from 'bun:test'
 
-import {
-  loadFixture,
-  runEndpoint,
-  testSealedUnit,
-} from '../testing/mod.ts'
-
-
+import { loadFixture, runEndpoint, testSealedUnit } from '../testing/mod.ts'
 
 /** fixture path helper — fileURLToPath, not .pathname (Windows drive letters). */
 function fixturePath(rel: string): string {

@@ -13,6 +13,7 @@ import os from 'node:os'
 import path from 'node:path'
 
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test'
+import './free-options-routing.test'
 
 import {
   isCacheFresh,
@@ -143,7 +144,9 @@ describe('FID-2026-0928-012: agent-answerable markdown', () => {
     const md = renderFreeOptionsMarkdown(buildFreeOptionsReport(CATALOG, CTX))
     expect(md).toContain('# Free options right now')
     expect(md).toContain('fetchedAt: 2026-09-28T01:00:13.744Z')
-    expect(md).toContain('## Wired — free models you can use today')
+    expect(md).toContain(
+      '## Wired — advertised free models; account access unverified',
+    )
     expect(md).toContain('OpenRouter')
     expect(md).toContain('## Free tiers you have NOT wired')
     expect(md).toContain('/provider groq')

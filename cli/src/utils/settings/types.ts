@@ -1,5 +1,6 @@
 import type { AgentMode } from '../constants'
 import type { ModelProvider } from '../openrouter-models'
+import type { ModelSelection } from '@savant-code/common/providers/model-route'
 import type { CustomProviderConfig } from '@savant-code/common/providers/types'
 
 /**
@@ -8,6 +9,8 @@ import type { CustomProviderConfig } from '@savant-code/common/providers/types'
 export type PermissionMode = 'safe' | 'prompt' | 'unsafe'
 
 export interface Settings {
+  modelSelection?: ModelSelection
+  monitoredProviders?: string[]
   mode?: AgentMode
   /** Default sandbox permission mode. "safe" is fully offline (network
    *  research denied), "prompt" (default) allows outbound research reads while

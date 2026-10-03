@@ -44,6 +44,9 @@ export const helloResultSchema = z.object({
   protocolVersion: z.number(),
   capabilities: z.array(z.string()),
   projectId: z.string().min(1),
+  /** FID-2026-1003-002 (D6): the gateway's event-batch counter at hello
+   *  time — the replay-cursor baseline (additive; absent on old sidecars). */
+  eventSeq: z.number().optional(),
 })
 
 export type InboundFrame =

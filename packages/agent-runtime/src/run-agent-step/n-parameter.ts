@@ -33,6 +33,7 @@ export async function handleNParameterStep(
     ...runParams,
     messages: agentState.messageHistory,
     model: runParams.agentTemplate.model,
+    modelRoute: runParams.agentTemplate.modelRoute,
     n,
     onCostCalculated,
     cacheDebugCorrelation: cacheDebugCorrelation

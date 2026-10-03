@@ -203,5 +203,5 @@ export function loadFidInventory(
 export function loadFids(
   fidsDir: string = join(process.cwd(), DEFAULT_FIDS_DIR),
 ): FidData[] {
-  return loadFidInventory(fidsDir).active
+  return sortFids(readFidDir(fidsDir))
 }

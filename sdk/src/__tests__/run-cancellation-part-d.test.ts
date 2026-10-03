@@ -12,7 +12,6 @@ describe('Run Cancellation Handling', () => {
     mock.restore()
   })
   it('extracts error code and message from AI SDK responseBody on 403', async () => {
-
     // Simulate AI SDK's AI_APICallError with responseBody (what the server returns for free_mode_unavailable)
     const apiError = new Error('Forbidden') as Error & {
       statusCode: number
@@ -29,8 +28,7 @@ describe('Run Cancellation Handling', () => {
 
     spyOn(mainPromptModule, 'callMainPrompt').mockRejectedValue(apiError)
 
-    const client = new SavantCodeClient({
-    })
+    const client = new SavantCodeClient({})
 
     const result = await client.run({
       agent: 'savant',
@@ -58,7 +56,6 @@ describe('Run Cancellation Handling', () => {
   })
 
   it('extracts error code and message from nested AI SDK retry errors', async () => {
-
     const apiError = new Error('Conflict') as Error & {
       statusCode: number
       responseBody: string
@@ -78,8 +75,7 @@ describe('Run Cancellation Handling', () => {
       }),
     )
 
-    const client = new SavantCodeClient({
-    })
+    const client = new SavantCodeClient({})
 
     const result = await client.run({
       agent: 'savant',
@@ -100,7 +96,6 @@ describe('Run Cancellation Handling', () => {
   })
 
   it('extracts error code from responseBody for account_suspended 403', async () => {
-
     const apiError = new Error('Forbidden') as Error & {
       statusCode: number
       responseBody: string
@@ -113,8 +108,7 @@ describe('Run Cancellation Handling', () => {
 
     spyOn(mainPromptModule, 'callMainPrompt').mockRejectedValue(apiError)
 
-    const client = new SavantCodeClient({
-    })
+    const client = new SavantCodeClient({})
 
     const result = await client.run({
       agent: 'savant',
@@ -135,7 +129,6 @@ describe('Run Cancellation Handling', () => {
   })
 
   it('falls back to error.message when responseBody is not valid JSON', async () => {
-
     const apiError = new Error('Forbidden') as Error & {
       statusCode: number
       responseBody: string
@@ -145,8 +138,7 @@ describe('Run Cancellation Handling', () => {
 
     spyOn(mainPromptModule, 'callMainPrompt').mockRejectedValue(apiError)
 
-    const client = new SavantCodeClient({
-    })
+    const client = new SavantCodeClient({})
 
     const result = await client.run({
       agent: 'savant',

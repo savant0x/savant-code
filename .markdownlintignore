@@ -56,14 +56,15 @@ desktop/src-tauri/target/
 # pasted reference records, not shipped documentation. Same exemption precedent
 # as the design research scratch docs above (raw transcripts/design docs with
 # long lines; enforcing MD013 on transcripts is meaningless).
-docs/lastsession.md
 docs/design/SkillOpt Integration into Savant.md
 
-# Operator-pasted conversation transcript at the repo root (2026-09-19) —
-# continuation input for a resumed session, not shipped documentation. Same
-# transcript exemption precedent as docs/lastsession.md (MD013/MD040 on a
-# raw tool-call transcript is meaningless).
-continue.md
+# Withdrawn 2026-10-03: the docs/lastsession.md, continue.md, and review-error.md
+# exemptions all named scratch transcript files that no longer exist. Each was
+# untracked and never committed, so none can be linted and none can be cited as
+# precedent — the review-error.md evidence it protected is quoted verbatim in
+# dev/fids/FID-2026-1002-003-request-token-budget-enforcement.md. Do not restore
+# an exemption for a file that is absent; a re-pasted transcript gets its own
+# entry with its own justification, not a dead file's precedent.
 
 # Deep-research intake docs (FID-2026-0914-003) — pasted research report
 # (Gemini Deep Research output) + its adversarial verification record;
@@ -90,3 +91,11 @@ dev/provider-candidates/**
 # make MD013 meaningless. Same exemption precedent as the scratchpad and
 # provider-candidates.
 dev/wiki/**
+
+# Operator-pasted session transcript (2026-10-03) — docs/trash/lastsession.md,
+# a re-pasted Codex session dump (~93k lines) parked in the operator's scratch
+# trash directory for grounding reads; untracked, never shipped. MD013 on a raw
+# transcript is meaningless. This is the re-pasted transcript the 2026-10-03
+# withdrawal note above requires its own entry for; same exemption precedent as
+# the pasted session-transcript artifacts.
+docs/trash/**

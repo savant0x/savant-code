@@ -22,19 +22,26 @@
  *   trip the gate. See packages/agent-runtime/src/yagni-ladder.ts.
  */
 
-import { existsSync } from 'node:fs'
-
 import { isValidSkillName } from '@savant-code/common/constants/skills'
 import {
   readSkillFile,
   skillCanonicalDir,
 } from '@savant-code/common/util/skill-management'
 
+import { recordLawBlock } from './enforcement/escalation'
+import {
+  getTargetPath,
+  isWriteTool,
+  terminalCommandCandidates,
+} from './enforcement/helpers'
 import { canonicalizePath } from './path-canonicalization'
 import { runFidGates } from './pre-write-gates-fid'
+import { runLaw1Gate } from './pre-write-gates-law1'
+import { runLaw2Gate } from './pre-write-gates-law2'
 import { runLaw3Gate } from './pre-write-gates-law3'
 import { runScopeDispositionGate } from './scope-disposition-guard'
 import { runYagniPreWriteGate } from './yagni-pre-write-gate'
+import { detectsVerificationCommand } from '../util/echo-compliance'
 
 import type {
   EnforcementMode,
@@ -88,56 +95,44 @@ export function runPreWriteGates(params: {
   /** FID-2026-0927-003 F2: the caller's current Perfection Loop phase,
    *  forwarded to the Law 3 gate's self_correct repair path. */
   fsmPhase?: string
+  /** FID-2026-1001-003 step 5a: injectable register path (test seam; the
+   *  production default is `${process.cwd()}/SCOPE.md`). */
+  scopePath?: string
 }): EnforcementResult {
-  if (!isWriteTool(params.toolName)) {
+  // FID-2026-1001-003 step 1: the pipeline classifies by EFFECT and routes
+  // mutating terminal calls here too (Law 1 consumes the targets below).
+  if (!isWriteTool(params.toolName) && params.state.pendingMutation === null) {
     return { blocked: false, warnings: [] }
   }
 
   const warnings: AdvisoryWarning[] = []
-  const targetPath = getTargetPath(params.toolName, params.input)
+  const targetPath = getTargetPath(params.input)
+  // Classified mutation targets (terminal bypass) — Law 1 iterates these.
+  const mutationTargets = params.state.pendingMutation?.targets ?? []
 
-  // ── Law 1: Read 0-EOF Before Touch ──────────────────────────────────
-  // New files are exempt: a path that does not exist on disk cannot have
-  // been read, so Law 1 cannot apply to it (matches the documented contract
-  // "Path must be in filesRead (or be a new file)"). FID-2026-0823-007
-  // (operator directive 2026-0823): Laws 1-4 are immutable process laws and
-  // BLOCK in every execution mode — the former core_4 inertness (deferring
-  // to tracker advisories) is revoked, and the existsSync new-file probe
-  // now runs in both tiers instead of only under `tier === 'all_15'`.
-  // FID-2026-0823-007 (operator directive 2026-0823): Laws 1-4 are immutable
-  // process laws and BLOCK in every execution mode — the former core_4
-  // inertness (deferring to tracker advisories) is revoked; the existsSync
-  // new-file probe now runs in both tiers.
-  //
-  // No exempt-path carve-out exists for Law 1 by design: isExemptWritePath
-  // belongs to the Law 3 gate only, so UPDATING an existing dev/fids|nova|
-  // scratchpad file requires a prior tracked read_files/read_subtree call;
-  // CREATEs stay exempt via isNewFile.
-  //
-  // Duplicate-receipt safety: recordWrite (native.ts:444) sits AFTER these
-  // gates on the dispatch path, so a blocked write never produces a tracker
-  // law1 receipt and a passing write had a tracked read — no double-report.
-  // FID-2026-0823-009: reads may be registered under ANY path spelling
-  // (raw relative pre-fix entries, canonicalized post-fix) while writes can
-  // arrive absolutized by SDK-side resolution. Compare canonical forms on
-  // both sides so one registered read satisfies any spelling of the same
-  // file. The raw-equality fast path keeps the common case allocation-free.
-  let wasRead = false
-  if (targetPath && params.state.filesRead.size > 0) {
-    const targetCanonical = canonicalizePath(targetPath)
-    for (const registered of params.state.filesRead) {
-      if (
-        registered === targetPath ||
-        canonicalizePath(registered) === targetCanonical
-      ) {
-        wasRead = true
-        break
-      }
-    }
+  // ── Law 1: Read 0-EOF Before Touch ──────────────────────────────
+  // Extracted verbatim to pre-write-gates-law1.ts (FID-2026-1001-003
+  // quality-cap decomposition). Laws 1-4 block in every mode/tier
+  // (FID-2026-0823-007); the new-file exemption lives with the gate.
+  const law1Result = runLaw1Gate({
+    targetPath,
+    mutationTargets,
+    filesRead: params.state.filesRead,
+  })
+  if (law1Result.blocked) {
+    return { blocked: true, reason: law1Result.reason, warnings }
   }
-  if (targetPath && !wasRead && !isNewFile(targetPath)) {
-    const msg = `Law 1: Read 0-EOF before touch — "${targetPath}" has not been read`
-    return { blocked: true, reason: msg, warnings }
+
+  // ── Law 2: approved scope (FID-2026-1001-003 step 5a) ────────────
+  // The write target AND the classified terminal mutation targets resolve
+  // against the register; governance surfaces are gate-level exemptions
+  // (operator ruling 2026-10-02); no pattern covering = block, fail-closed.
+  const law2Result = runLaw2Gate({
+    targets: [targetPath, ...mutationTargets],
+    scopePath: params.scopePath,
+  })
+  if (law2Result.blocked) {
+    return { blocked: true, reason: law2Result.reason, warnings }
   }
 
   // ── Immutable skill gate (FID-2026-0824-012 S2-A) ──────────────────
@@ -165,6 +160,14 @@ export function runPreWriteGates(params: {
   // (unverified-dirty predicate), FID-2026-0917-002 (docs/code split).
   // Turn-end Law 15 (enforcement/turn-end.ts) still blocks ending a turn
   // with unverified files.
+  // FID-2026-1001-003 step 4: the verification-escape predicate — TRUE when
+  // the pending call is itself a verification command (write tools carry no
+  // command field, so this is false for them). Law 13: the SAME detector the
+  // credit path uses, so the gate and the credit cannot disagree.
+  const verificationEscape = terminalCommandCandidates(params.input).some(
+    detectsVerificationCommand,
+  )
+
   const law3Result = runLaw3Gate({
     targetPath,
     state: params.state,
@@ -172,9 +175,19 @@ export function runPreWriteGates(params: {
     // FID-2026-0927-003 F2: without this the param is accepted and dropped,
     // and the self_correct exemption silently never fires.
     fsmPhase: params.fsmPhase,
+    verificationEscape,
   })
   if (law3Result.blocked) {
-    return { blocked: true, reason: law3Result.reason, warnings }
+    // FID-2026-1001-003 step 4: every hard block of this key feeds the N=3
+    // escalation ladder (tracked separately from the steering budget).
+    return recordLawBlock({
+      state: params.state,
+      law: 3,
+      toolName: params.toolName,
+      targetPath,
+      reason: law3Result.reason,
+      warnings,
+    })
   }
 
   // ── P5b YAGNI gate (FID-2026-0806-003) ──────────────────────────────
@@ -225,47 +238,4 @@ export function runPreWriteGates(params: {
   }
 
   return { blocked: false, warnings }
-}
-
-/**
- * A path that does not exist on disk is a brand-new file — Law 1 cannot
- * require reading a file that has not been created yet.
- */
-function isNewFile(path: string): boolean {
-  try {
-    return !existsSync(path)
-  } catch {
-    // Defensive: on stat failure treat as an existing file. Worst case the
-    // gate blocks in every mode (FID-2026-0823-007); recovery is one
-    // read_files call.
-    return false
-  }
-}
-
-/** Detect if a tool call writes to the filesystem. */
-function isWriteTool(toolName: string): boolean {
-  return (
-    toolName === 'write_file' ||
-    toolName === 'str_replace' ||
-    toolName === 'apply_patch'
-  )
-}
-
-/** Extract the target file path from a write tool's input. */
-function getTargetPath(
-  toolName: string,
-  input: Record<string, unknown>,
-): string | undefined {
-  if (typeof input.path === 'string') return input.path
-  // apply_patch nests the target under `operation.path`
-  // (sdk/src/tools/apply-patch.ts). Without this branch every apply_patch
-  // call resolved an undefined target and silently bypassed the Law 1/7
-  // gates and the FID gate (FID-2026-0820-014 EC-2) — while
-  // enforcement.ts's own getTargetPath tracked the write as dirty.
-  const operation = input.operation
-  if (operation && typeof operation === 'object') {
-    const path = (operation as Record<string, unknown>).path
-    if (typeof path === 'string') return path
-  }
-  return undefined
 }

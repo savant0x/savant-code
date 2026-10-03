@@ -20,6 +20,11 @@
  */
 
 /** 32-bit FNV-1a → 8-hex string, `h`-prefixed so hashes are visible as such. */
+import {
+  observeDatedFailure,
+  hasElapsedFailureWindow,
+} from './discovery-health'
+
 export function fnv1aHex(input: string): string {
   let hash = 0x811c9dc5
   for (let i = 0; i < input.length; i++) {
@@ -52,6 +57,11 @@ export type CandidateState = {
   /** 8-hex FNV-1a content hash (prose form never persisted — file readability). */
   fingerprint: string
   downStreak: number
+  downSinceUtc?: string
+  failureObservations?: string[]
+  health?: string
+  healthObservedAt?: string
+  removalHintId?: string
   lastSeenUtc: string
   /**
    * First day the pipeline saw this host (W3 churn denominator). Absent in
@@ -105,7 +115,7 @@ function fingerprintOf(card: { freeModelsEn: string[] }): string {
   // MODELS ONLY (operator review): the offering is what change detection
   // exists for. The feed's English quota prose is LLM-synthesized and
   // reworded constantly — hashing it would false-classify hosts as changed.
-  return fnv1aHex(JSON.stringify(card.freeModelsEn))
+  return fnv1aHex(JSON.stringify([...new Set(card.freeModelsEn)].sort()))
 }
 
 /**
@@ -142,12 +152,19 @@ export function diffCandidates(
     seenToday.add(card.host)
     const prev = previous.get(card.host)
     const fingerprint = fingerprintOf(card)
-    const isDown = card.status === 'down'
-    const prevStreak = prev?.downStreak ?? 0
-    const downStreak = isDown ? prevStreak + 1 : 0
+    const failure = observeDatedFailure(
+      prev,
+      card.status === 'down'
+        ? 'down'
+        : card.status === 'up' || card.status === 'healthy'
+          ? 'up'
+          : 'unknown',
+      nowMs,
+    )
+    const { downStreak } = failure
 
     let classification: DiffClassification
-    if (downStreak >= 3) {
+    if (hasElapsedFailureWindow(failure, nowMs)) {
       // 72h rule fires: today's entry IS the lapsed one. Keep the state
       // recorded (with the lapsed classification) so the report can name it;
       // it is dropped from ACTIVE tracking — a returning host is `new` again
@@ -157,7 +174,7 @@ export function diffCandidates(
       next.set(`lapsed:${card.host}`, {
         category: card.category,
         fingerprint: `lapsed:${fingerprint}`,
-        downStreak,
+        ...failure,
         lastSeenUtc: new Date(nowMs).toISOString(),
         url: card.url,
         lastBoundary: null,
@@ -174,7 +191,8 @@ export function diffCandidates(
     next.set(card.host, {
       category: card.category,
       fingerprint,
-      downStreak,
+      ...failure,
+      history: prev?.history,
       lastSeenUtc: new Date(nowMs).toISOString(),
       // firstSeen (W3): set on `new`, NEVER mutated afterwards — the churn
       // denominator must not drift.

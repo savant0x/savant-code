@@ -11,7 +11,6 @@ import type {
 } from '../../core/mod.ts'
 import type { Logger } from '../../shared/logging.ts' // port: was @shared/logging (PORT-NOTES.md)
 
-
 /**
  * The engine's PUBLIC INTERFACE — monid-services `interfaces/` +
  * implementation pattern. Hosts (the CLI, the test runner) code against

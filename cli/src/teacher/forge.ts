@@ -8,7 +8,10 @@
  * tools — so an exercise can never write to the user's project. The Forge's
  * output is a plain function source string, never a file edit.
  */
-import { resolveActiveModel } from '../state/savant-free-model-store'
+import {
+  resolveActiveModel,
+  resolveActiveModelRoute,
+} from '../state/savant-free-model-store'
 import { getSavantCodeClient } from '../utils/savant-code-client'
 
 import type { ForgeFn } from '@savant-code/agent-runtime/teacher/index'
@@ -139,7 +142,10 @@ export function resolveTeacherForgeAgent(override: string): AgentDefinition {
 
 /** The live ForgeFn: runs the teacher-forge agent headlessly and extracts. */
 export function createTeacherForge(): ForgeFn {
-  const agent = resolveTeacherForgeAgent(resolveActiveModel())
+  const agent = {
+    ...resolveTeacherForgeAgent(resolveActiveModel()),
+    modelRoute: resolveActiveModelRoute(),
+  }
   return async (steering, challenge) => {
     const client = await getSavantCodeClient({ headless: true })
     if (!client) {

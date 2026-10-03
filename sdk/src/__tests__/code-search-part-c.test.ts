@@ -150,9 +150,7 @@ describe('codeSearch', () => {
       expect(hasTruncationMessage).toBe(true)
     })
 
-    it('should handle non-UTF8 paths using path.bytes (regression test)', async () => {
-      // Bug: Only handled path.text, not path.bytes for non-UTF8 paths
-      // Fix: Check both path.text and path.bytes
+    it('reports unsupported byte paths instead of fabricating filenames', async () => {
       const searchPromise = codeSearch({
         projectPath: '/test/project',
         pattern: 'test',
@@ -162,7 +160,7 @@ describe('codeSearch', () => {
       const output = JSON.stringify({
         type: 'match',
         data: {
-          path: { bytes: 'file-with-bytes.ts' }, // Using bytes field
+          path: { bytes: Buffer.from('file-with-bytes.ts').toString('base64') },
           lines: { text: 'test content' },
           line_number: 1,
         },
@@ -174,9 +172,24 @@ describe('codeSearch', () => {
       const result = await searchPromise
       const value = asCodeSearchResult(result[0])
 
-      // Should handle path.bytes
-      expect(value.stdout).toContain('file-with-bytes.ts:')
-      expect(value.stdout).toContain('test content')
+      expect(value.errorMessage).toContain('1 event line(s)')
+      expect(value.stdout).not.toContain('Found 0 matches')
+    })
+
+    it('preserves UTF-8 characters split across process chunks', async () => {
+      const searchPromise = codeSearch({
+        projectPath: '/test/project',
+        pattern: 'café',
+      })
+      const output = Buffer.from(createRgJsonMatch('café.ts', 1, 'café'))
+      const splitAt = output.indexOf(Buffer.from('é')) + 1
+      mockProcess.stdout.emit('data', output.subarray(0, splitAt))
+      mockProcess.stdout.emit('data', output.subarray(splitAt))
+      mockProcess.emit('close', 0)
+      const value = asCodeSearchResult((await searchPromise)[0])
+      expect(value.stdout).toContain('café.ts:')
+      expect(value.stdout).toContain('café')
+      expect(value.stdout).not.toContain('�')
     })
   })
 

@@ -1,7 +1,5 @@
 import { z } from 'zod'
 
-
-
 import { applyAuth, credentialEnvVarsFor, credentialFieldsOf } from './auth.ts'
 import { EngineError, EngineErrorCode } from './errors.ts'
 import { zJsonSchemaDoc, type Json, type JsonSchemaDoc } from '../core/mod.ts'
@@ -163,9 +161,7 @@ export function directTransport(
             parseResolvedCredentials(
               await resolveParams(
                 req.provider,
-                credentialFieldsOf(
-                  parseCredentialSchema(req.auth.credentials),
-                ),
+                credentialFieldsOf(parseCredentialSchema(req.auth.credentials)),
               ),
             ),
           )

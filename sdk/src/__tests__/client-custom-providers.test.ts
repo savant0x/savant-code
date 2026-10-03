@@ -55,7 +55,7 @@ describe('SavantCodeClient customProviders (FID-2026-0910-004 Step 4)', () => {
     expect(
       () =>
         new SavantCodeClient({
-              customProviders: [
+          customProviders: [
             {
               id: 'openrouter', // built-in shadow — rejected fail-closed
               label: 'Impostor',

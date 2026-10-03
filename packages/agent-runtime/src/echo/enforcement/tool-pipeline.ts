@@ -1,4 +1,5 @@
 import {
+  classifyMutation,
   extractPaths,
   getTargetPath,
   getTier,
@@ -6,19 +7,28 @@ import {
   isPreReadAllowed,
   isTerminalTool,
   isWriteTool,
-  terminalCommandCandidates,
 } from './helpers'
-import { detectsVerificationCommand } from '../../util/echo-compliance'
+import {
+  classifyFileKind,
+  hasWiringDeclaration,
+} from '../../util/echo-compliance-core'
 import { canonicalizePath } from '../path-canonicalization'
 import { runPreWriteGates } from '../pre-write-gates'
+import { noteCompliantIntervening } from './escalation'
+import { mirrorReadIntoLedger } from './read-ledger'
+import {
+  creditCallGraphSearch,
+  creditVerificationRun,
+} from './verification-credit'
+import { maybeCaptureWorktreeBaseline } from './worktree-capture'
 
 import type { EnforcementResult } from '../types'
 import type { EnforcementSelf } from './self'
 
 /**
- * beforeToolCall pipeline (FID-2026-0819-005 Loop 303: extracted verbatim
- * from `echo/enforcement.ts`; `this.` → `self.`, stateless predicates now
- * imported from `./helpers`).
+ * beforeToolCall pipeline (FID-2026-0819-005 Loop 303: extracted from
+ * `echo/enforcement.ts`; `this.` → `self.`, stateless predicates in
+ * `./helpers`).
  */
 export function beforeToolCallImpl(
   self: EnforcementSelf,
@@ -35,14 +45,31 @@ export function beforeToolCallImpl(
 ): EnforcementResult {
   const tier = getTier(self.mode)
 
+  // FID-2026-1001-003 step 2: lazy worktree-baseline capture on the first
+  // call that can reach the worktree (write-path tools, or any call the
+  // step-1 classifier marks mutating — the first call being `sed -i` needs
+  // its baseline BEFORE it fires). No checkpoint (SDK embedders) → no-op.
+  maybeCaptureWorktreeBaseline(
+    self.ensureCheckpoint(),
+    toolName,
+    process.cwd(),
+    input,
+  )
+
+  // FID-2026-1001-003 step 1: classify by EFFECT (stash contract: EnforcementState.pendingMutation).
+  self.state.pendingMutation = classifyMutation({ toolName, params: input })
+  // FID-2026-1001-003 step 4: a compliant read (any law) or verification
+  // command (law 3) resets the escalation ladder.
+  noteCompliantIntervening({ state: self.state, toolName, input })
+
   // FID-2026-0810-002 Change 3: session-init protocol gate — UNIVERSAL.
   // No longer gated on strict mode (`tier === 'all_15'` removed). Until the
   // governing protocol file has been read 0-EOF, only read-only context
   // tools, intent logging, and clarification are allowed — in every mode.
   // The gate is armed via `gateArmed` (boot contract resolved); it is never
   // seeded for the main agent, and the read always succeeds (local file or
-  // embedded bundle), so the ritual is real everywhere. The gate clears when
-  // a read targets the protocol file (normalized path match).
+  // embedded bundle), so the ritual is real everywhere. The gate clears
+  // when a read targets the protocol file (normalized path match).
   if (!self.state.protocolRead && self.gateArmed) {
     if (self.isGroundingReadCall(toolName, input)) {
       self.groundingReadPending = true
@@ -77,7 +104,16 @@ export function beforeToolCallImpl(
     for (const p of paths) {
       // FID-2026-0823-009: store the canonical form so raw-string
       // membership matches writes arriving in any path spelling.
-      self.state.filesRead.add(canonicalizePath(p))
+      const canonical = canonicalizePath(p)
+      self.state.filesRead.add(canonical)
+      if (!self.state.filesReadCanonical.has(canonical)) {
+        self.state.filesReadCanonical.set(canonical, Date.now())
+      }
+      // FID-2026-1001-003 step 3: durable read-ledger mirror (./read-ledger)
+      // so a session restore hydrates the read set instead of re-blocking
+      // Law 1. READS only, never write credit.
+      const checkpoint = self.ensureCheckpoint()
+      if (checkpoint) mirrorReadIntoLedger(checkpoint, canonical)
     }
   }
 
@@ -107,8 +143,12 @@ export function beforeToolCallImpl(
     self.state.fidFilesWritten.add(targetPath)
   }
 
-  // Run pre-write gates for write tools
-  if (isWriteTool(toolName)) {
+  // Run pre-write gates for MUTATING calls (FID-2026-1001-003 step 1: by
+  // effect — a mutating run_terminal_command now passes through the same
+  // gate chain; a mutating terminal call carries no fidFile/fidPaths
+  // context and the Law 1 gate consumes the classified targets).
+  const mutation = self.state.pendingMutation
+  if (mutation?.mutates) {
     const result = runPreWriteGates({
       toolName: toolName,
       input: input,
@@ -133,6 +173,10 @@ export function beforeToolCallImpl(
     }
 
     if (result.blocked) {
+      // The command never dispatches — consume the stash now so a later
+      // tool call cannot inherit this call's targets (the blocked command
+      // mutated nothing).
+      self.state.pendingMutation = null
       return result
     }
 
@@ -172,6 +216,33 @@ export function afterToolCallImpl(
   // the caller; afterToolCall never blocks, it may only steer.
   const warnings: EnforcementResult['warnings'] = []
 
+  // FID-2026-1001-003 step 1 (consume): a mutating terminal call's targets
+  // join the tracking sets exactly as a write tool's would — Law 15's batch
+  // predicate and step 2's reconciliation now see the bypass. Consumed and
+  // cleared on the same call; tree-scope mutations leave targets empty and
+  // defer to the reconciliation. Cleared BEFORE any early return below.
+  const mutation = self.state.pendingMutation
+  self.state.pendingMutation = null
+  if (
+    mutation?.mutates &&
+    !isWriteTool(toolName) &&
+    // A demonstrably FAILED command mutated nothing — never record it.
+    commandSucceeded !== false
+  ) {
+    for (const target of mutation.targets) {
+      self.state.filesWritten.add(target)
+      self.state.dirtyFiles.add(target)
+      // A bypassed file has no verification credit — Law 15 must block
+      // until a verification run re-arms for it.
+      self.state.verifiedFiles.delete(target)
+      self.state.hasVerifiedSinceLastDirty = false
+      self.state.writeCount++
+    }
+    if (mutation.targets.length > 0) {
+      self.state.writtenFileContent.delete(mutation.targets[0])
+    }
+  }
+
   // Record only successful writes. The exact post-write payload is kept in a
   // bounded per-path ledger so turn-end scanners never reread unrelated disk
   // changes and can distinguish an empty file from unavailable content.
@@ -181,11 +252,9 @@ export function afterToolCallImpl(
       self.state.filesWritten.add(path)
       self.state.dirtyFiles.add(path)
       // A fresh modification revokes any prior verification credit for
-      // this file (FID-2026-0820-012 AUDIT): the cumulative
-      // dirtyFiles-minus-verifiedFiles predicate (pre-write gate and
-      // turn-end Law 15) must re-arm for re-modified files, or a
-      // verified-then-edited file would keep its stale credit and never
-      // block again.
+      // this file (FID-2026-0820-012 AUDIT): the cumulative predicate must
+      // re-arm for re-modified files, or a verified-then-edited file would
+      // keep its stale credit and never block again.
       self.state.verifiedFiles.delete(path)
       self.state.hasVerifiedSinceLastDirty = false
       self.state.writeCount++
@@ -196,84 +265,35 @@ export function afterToolCallImpl(
         self.state.writtenFileContent.delete(path)
       }
 
-      // Check for export statements (Law 4 wiring)
+      // Check for export statements (Law 4 wiring). FID-2026-1001-003
+      // step 6: file type AND declaration structure — the raw probe matched
+      // `export` inside markdown fences and Law 4 then blocked turn end for
+      // a document (row H). Docs verify with lint:md, never Law 4.
       const content =
         writtenContent ??
         (input.content as string) ??
         (input.newString as string) ??
         ''
-      if (/export\s+(default\s+)?/.test(content)) {
+      if (classifyFileKind(path) === 'code' && hasWiringDeclaration(content)) {
         self.state.featuresWired.add(path)
       }
     }
   }
 
-  // Track verification commands for Law 3 (cumulative — FID-2026-0819-001).
-  // Handles both terminal command types (RED-003) via the shared detector.
-  // FID-2026-0919-015: crediting is outcome-aware, not detection-only. A
-  // verification-shaped command credits ONLY when it demonstrably succeeded;
-  // a failed run is already visible in the transcript (no notice needed),
-  // and an unknown outcome withholds credit fail-closed with a steering
-  // notice so the agent knows the run did not count.
-  if (
-    toolName === 'run_terminal_command' ||
-    toolName === 'run_readonly_command'
-  ) {
-    const verified = terminalCommandCandidates(input).some(
-      detectsVerificationCommand,
-    )
-    if (verified) {
-      if (commandSucceeded === true) {
-        for (const f of self.state.dirtyFiles) {
-          self.state.verifiedFiles.add(f)
-        }
-        // FID-2026-0927-003 F2: a green run retires attribution from any
-        // earlier red run, so the exemption can never become permanent.
-        self.state.failureAttributedFiles.clear()
-      } else if (commandSucceeded === false) {
-        // FID-2026-0927-003 F2: record which files this failure named, so the
-        // pre-write gate can unblock the file under test while continuing to
-        // block every other dirty-unverified file. Cleared first, not
-        // appended (audit finding): an accumulating set
-        // would keep a file unlocked by a run that no longer names it, which
-        // contradicts the "most recent failed run" contract on
-        // EnforcementState.failureAttributedFiles. Attribution must be EXACTLY
-        // this run's subjects for the anti-masking property to hold.
-        self.state.failureAttributedFiles.clear()
-        for (const p of verificationFailurePaths ?? []) {
-          self.state.failureAttributedFiles.add(canonicalizePath(p))
-        }
-      } else {
-        warnings.push({
-          law: 3,
-          severity: 'warning',
-          message:
-            'Verification command detected but its outcome is unknown — Law 3 credit not granted; re-run it and confirm it passes.',
-        })
-      }
-    }
-  }
+  // Track verification commands for Law 3 (cumulative — FID-2026-0819-001;
+  // outcome-aware — FID-2026-0919-015). Extracted to ./verification-credit.
+  creditVerificationRun({
+    toolName,
+    input,
+    state: self.state,
+    commandSucceeded,
+    verificationFailurePaths,
+    warnings,
+  })
 
-  // Track grep/search for Law 4 (call-graph verification).
-  // run_readonly_command is included: it is the Orchestrator's
-  // always-available read-only shell. RED-003 added both terminal types
-  // for Law 3 but missed this Law 4 path, deadlocking hybrid sessions
-  // whose only direct shell could never credit featuresVerified.
-  if (
-    toolName === 'code_search' ||
-    toolName === 'run_terminal_command' ||
-    toolName === 'run_readonly_command'
-  ) {
-    const pattern = (input.pattern as string) ?? ''
-    const grepHit = terminalCommandCandidates(input).some(
-      (cmd) => cmd.includes('grep') || cmd.includes('find'),
-    )
-    if (pattern.includes('grep') || grepHit) {
-      for (const wired of self.state.featuresWired) {
-        self.state.featuresVerified.add(wired)
-      }
-    }
-  }
+  // Track grep/search for Law 4 (call-graph verification); extracted to
+  // ./verification-credit (RED-003: both terminal types included).
+  creditCallGraphSearch({ toolName, input, state: self.state })
 
   return { blocked: false, warnings }
 }

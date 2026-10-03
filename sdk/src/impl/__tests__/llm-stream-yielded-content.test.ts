@@ -2,7 +2,6 @@ import {
   clearMockedModules,
   mockModule,
 } from '@savant-code/common/testing/mock-modules'
-import * as realAiModule from 'ai'
 import { afterEach, beforeEach, describe, expect, mock, test } from 'bun:test'
 
 // FID-2026-0803-003 SDK-2 regression: hasYieldedContent must be set when
@@ -57,8 +56,7 @@ describe('promptAiSdkStream hasYieldedContent tracking', () => {
 
     // Override only streamText — transitive modules (e.g. common/util/messages)
     // import other 'ai' exports (modelMessageSchema) that must stay intact.
-    mock.module('ai', () => ({
-      ...realAiModule,
+    await mockModule('ai', () => ({
       streamText: streamTextMock,
     }))
 

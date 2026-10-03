@@ -56,7 +56,9 @@ describe('launch bundle', () => {
     expect(queried).toHaveProperty('endpoints')
     if ('endpoints' in queried) {
       expect(
-        queried.endpoints.some((endpoint) => endpoint.id === 'firecrawl#scrape'),
+        queried.endpoints.some(
+          (endpoint) => endpoint.id === 'firecrawl#scrape',
+        ),
       ).toBe(true)
     }
   })
@@ -75,9 +77,9 @@ describe('describeEndpoint (the doc IS the contract)', () => {
 
   test('unknown endpoint fails with the known-id list', async () => {
     const bundle = await loadLaunchBundle()
-    expect(() =>
-      describeEndpoint(bundle, 'tinyfish', 'tinyfish#nope'),
-    ).toThrow(/endpoint not in bundle/)
+    expect(() => describeEndpoint(bundle, 'tinyfish', 'tinyfish#nope')).toThrow(
+      /endpoint not in bundle/,
+    )
   })
 
   test('a provider/endpoint mismatch fails rather than executing under the wrong vendor identity', async () => {
@@ -106,7 +108,9 @@ describe('executeEndpoint replay (zero network)', () => {
     }
   })
 
-  async function runReplay(bundle: Awaited<ReturnType<typeof loadLaunchBundle>>) {
+  async function runReplay(
+    bundle: Awaited<ReturnType<typeof loadLaunchBundle>>,
+  ) {
     // The recorded chain the engine-replay suite uses — served by the
     // runtime's own structural replay, zero network.
     const raw = JSON.parse(

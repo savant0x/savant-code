@@ -1,7 +1,6 @@
 import { buildFns } from './usage-fns.ts'
 import { Unit, UsageModelKind } from '../../../../core/mod.ts'
 
-
 /** T106 file split (300-line ceiling): the search endpoint's usage model +
  *  estimate + evidence fns, moved VERBATIM from endpoint.ts. One provider
  *  (firecrawl) consumes them; the model bytes are untouched. */
@@ -158,8 +157,8 @@ export function buildUsage() {
      *  `categories` does NOT multiply — the vendor documents it as a
      *  filter, so it narrows the same result set.
      *     *  `x_routing` cannot be deduced at all (the hosts are the search's
- *  answer, not its question), so it promises 0 and settles from the
- *  delivered results. */
-  ...buildFns(),
+     *  answer, not its question), so it promises 0 and settles from the
+     *  delivered results. */
+    ...buildFns(),
   }
 }

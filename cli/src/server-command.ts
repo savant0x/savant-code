@@ -32,6 +32,15 @@ export { installStdinWatchdog } from './server/stdin-watchdog'
 /** Env var carrying the gateway bearer token (env-only delivery; argv rejected). */
 export const GATEWAY_TOKEN_ENV = 'SAVANT_GATEWAY_TOKEN'
 
+/**
+ * FID-2026-1002-004: env var declaring the launching shell's build profile
+ * (the desktop supervisor sets `release` | `dev` from its own build type).
+ * A supervised RELEASE sidecar must receive an explicit SAVANT_PROJECT_ROOT —
+ * the release GUI topology inherits the install directory as cwd, which the
+ * git-root fallback would silently adopt as the project root.
+ */
+export const DESKTOP_PROFILE_ENV = 'SAVANT_DESKTOP_PROFILE'
+
 /** Optional env override for the server-mode project root (env-only, like
  *  GATEWAY_TOKEN_ENV). Absent/blank falls back to the git root of the launch
  *  directory. Without this seeding, every gateway run dies with 'Project root
@@ -101,6 +110,21 @@ export function parseGatewayPort(argv: string[]): number {
 }
 
 /**
+ * FID-2026-1002-004: true when this sidecar was launched by a supervised
+ * RELEASE desktop shell AND no explicit project root override resolves —
+ * the one topology where the git-root/cwd fallback would silently anchor
+ * the agent to the install directory. Dev shells and manual `savant-code
+ * server` runs (no profile declared) keep today's resolution.
+ */
+export function isReleaseSidecarMissingProjectRoot(
+  env: NodeJS.ProcessEnv = process.env,
+): boolean {
+  const profile = (env[DESKTOP_PROFILE_ENV] ?? '').trim().toLowerCase()
+  const override = (env[PROJECT_ROOT_ENV] ?? '').trim()
+  return profile === 'release' && override === ''
+}
+
+/**
  * Run the `savant-code server` command: start the gateway, print the ready
  * line, and block until the process is told to stop (stdin watchdog or stop
  * signal). Returns the bound port for tests; production uses the ready line.
@@ -116,6 +140,21 @@ export async function runServerCommand(
     // eslint-disable-next-line no-console -- headless stderr contract
     console.error(
       `Error: ${GATEWAY_TOKEN_ENV} is required (env-only token delivery; argv rejected).`,
+    )
+    process.exit(2)
+  }
+
+  // Fail-closed (FID-2026-1002-004): a release desktop shell must pass the
+  // project root. Without it, resolveServerProjectRoot would anchor the run
+  // path, file tools, worktree baseline, FID rail, and chat storage to the
+  // inherited cwd (the install directory). Exit BEFORE any bind or ready
+  // line — a mis-anchored session must never start silently.
+  if (isReleaseSidecarMissingProjectRoot()) {
+    // eslint-disable-next-line no-console -- headless stderr contract
+    console.error(
+      `Error: ${PROJECT_ROOT_ENV} is required for release desktop launches ` +
+        `(the supervisor passes the resolved project root; no enclosing git ` +
+        `repo was found at the launch directory).`,
     )
     process.exit(2)
   }

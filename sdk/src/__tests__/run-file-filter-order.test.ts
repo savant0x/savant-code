@@ -125,7 +125,6 @@ describe('SavantCodeClientOptions fileFilter', () => {
   })
 
   it('should run fileFilter before gitignore check', async () => {
-
     const isFileIgnoredSpy = spyOn(
       projectFileTree,
       'isFileIgnored',

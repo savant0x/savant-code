@@ -18,6 +18,15 @@ const models: OpenRouterModel[] = Array.from({ length: 30 }, (_, index) => ({
   provider: index < 15 ? 'openai' : 'openrouter',
 }))
 
+const overlappingModels: OpenRouterModel[] = [
+  { id: 'openai/gpt-5', name: 'GPT 5', provider: 'openai' },
+  { id: 'openai/gpt-4.1', name: 'GPT 4.1', provider: 'openai' },
+  { id: 'openai/gpt-5', name: 'OpenAI GPT 5' },
+  { id: 'openai/gpt-4.1', name: 'OpenAI GPT 4.1' },
+  { id: 'deepseek/deepseek-chat', name: 'DeepSeek Chat' },
+  { id: 'qwen/qwen3-coder', name: 'Qwen Coder' },
+]
+
 function findScrollbox(node: Renderable): ScrollBoxRenderable | undefined {
   if (node instanceof ScrollBoxRenderable) return node
   for (const child of node.getChildren()) {
@@ -27,7 +36,7 @@ function findScrollbox(node: Renderable): ScrollBoxRenderable | undefined {
   return undefined
 }
 
-async function mountPicker(width = 60, height = 24) {
+async function mountPicker(width = 60, height = 24, catalog = models) {
   const setup = await createTestRenderer({ width, height, footerHeight: 0 })
   const root = createRoot(setup.renderer)
   let selectedIndex = 0
@@ -49,7 +58,7 @@ async function mountPicker(width = 60, height = 24) {
     }
     return (
       <ModelPicker
-        models={models}
+        models={catalog}
         query={query}
         selectedIndex={index}
         onSelectIndex={setIndex}
@@ -106,6 +115,54 @@ function cleanup(setup: PickerSetup): void {
 }
 
 describe('model picker physical scroll geometry', () => {
+  test('search removes unrelated rows when providers share model IDs', async () => {
+    const setup = await mountPicker(90, 24, overlappingModels)
+    try {
+      await flush(setup)
+      for (const query of ['deepseek', 'qwen', 'no-match']) {
+        setup.changeQuery(query)
+        await flush(setup)
+        const noMatch = query === 'no-match'
+        expect(scrollbox(setup).getChildren()).toHaveLength(noMatch ? 1 : 2)
+        const frame = setup.captureCharFrame()
+        expect(frame).not.toContain('openai/gpt-')
+        expect(frame).not.toContain('OPENAI')
+        expect(frame).toContain(noMatch ? 'No models match' : `${query}/`)
+      }
+      setup.changeQuery('')
+      await flush(setup)
+      expect(scrollbox(setup).getChildren()).toHaveLength(8)
+      setup.changeQuery('deepseek')
+      await flush(setup)
+      setup.mockInput.pressEnter()
+      await flush(setup)
+      expect(setup.getSelectedModel()).toEqual(overlappingModels[4])
+    } finally {
+      cleanup(setup)
+    }
+  })
+
+  test('search keeps both provider routes for a shared model ID', async () => {
+    const setup = await mountPicker(90, 24, overlappingModels)
+    try {
+      await flush(setup)
+      setup.changeQuery('gpt-5')
+      await flush(setup)
+      expect(scrollbox(setup).getChildren()).toHaveLength(4)
+      expect(setup.captureCharFrame()).not.toContain('gpt-4.1')
+      setup.mockInput.pressEnter()
+      await flush(setup)
+      expect(setup.getSelectedModel()).toEqual(overlappingModels[0])
+      setup.mockInput.pressArrow('down')
+      await flush(setup)
+      setup.mockInput.pressEnter()
+      await flush(setup)
+      expect(setup.getSelectedModel()).toEqual(overlappingModels[2])
+    } finally {
+      cleanup(setup)
+    }
+  })
+
   test('long names stay one row and keyboard traverses provider boundaries', async () => {
     const setup = await mountPicker()
     try {

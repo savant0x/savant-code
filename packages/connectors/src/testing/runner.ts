@@ -1,7 +1,6 @@
 import { join } from 'node:path' // port: was @std/path (PORT-NOTES.md)
 import { fileURLToPath } from 'node:url' // port: was @std/path fromFileUrl (PORT-NOTES.md)
 
-
 import {
   type Fixture,
   type RecordedCall,

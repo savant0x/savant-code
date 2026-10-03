@@ -44,18 +44,16 @@ export function makeConnectorCredentialsHandler(
               .join(','),
           ),
       )
-      const reports = [...fieldSets]
-        .sort()
-        .map((fields) => {
-          const shape = Object.fromEntries(
-            fields.split(',').map((field) => [field, { type: 'string' }]),
-          )
-          return providerCredentials(provider, {
-            type: 'object',
-            properties: shape,
-            required: fields.split(','),
-          }).credentials
-        })
+      const reports = [...fieldSets].sort().map((fields) => {
+        const shape = Object.fromEntries(
+          fields.split(',').map((field) => [field, { type: 'string' }]),
+        )
+        return providerCredentials(provider, {
+          type: 'object',
+          properties: shape,
+          required: fields.split(','),
+        }).credentials
+      })
       const ready =
         reports.length > 0 &&
         reports.every((set) => set.every((c) => c.present))
@@ -69,14 +67,12 @@ export function makeConnectorCredentialsHandler(
     } catch (error) {
       return {
         output: jsonToolResult({
-          errorMessage:
-            error instanceof Error ? error.message : String(error),
+          errorMessage: error instanceof Error ? error.message : String(error),
         }),
       }
     }
   }
 }
 
-export const handleConnectorCredentials = makeConnectorCredentialsHandler(
-  launchBundleProvider,
-)
+export const handleConnectorCredentials =
+  makeConnectorCredentialsHandler(launchBundleProvider)

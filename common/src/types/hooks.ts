@@ -127,7 +127,13 @@ export type _HookEventClassesDisjoint = AssertNever<
  * spawn). Actions are allowlisted: an unknown action is dropped fail-safe at
  * parse time, never executed.
  */
-export const HOOK_BUILTIN_ACTIONS = ['experience-capture'] as const
+export const HOOK_BUILTIN_ACTIONS = [
+  'experience-capture',
+  // FID-2026-1001-003 step 1 (defence-in-depth, operator-approved 2026-10-02):
+  // categorically deny worktree-mutating terminal commands BEFORE dispatch,
+  // decided by the SAME effect classifier as the pre-write gates (Law 13).
+  'deny-mutating-terminal',
+] as const
 
 export type HookBuiltinAction = (typeof HOOK_BUILTIN_ACTIONS)[number]
 

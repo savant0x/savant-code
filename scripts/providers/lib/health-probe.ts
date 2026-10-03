@@ -14,7 +14,13 @@ import { PROBE_CONCURRENCY, runWithConcurrency } from './probe-pool'
 
 import type { lookup } from 'node:dns/promises'
 
-export type HealthRow = { host: string; verdict: string; detail: string }
+export type HealthRow = {
+  host: string
+  verdict: string
+  detail: string
+  observedAt?: string
+  removalHintId?: string
+}
 export type HealthProbeRow = {
   host: string
   verdict: string

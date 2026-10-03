@@ -13,14 +13,18 @@
  *
  * @param stdout The raw stdout from ripgrep
  * @param options.matchCount The number of actual matches, excluding context lines
+ * @param options.emptyResultText FID-2026-1002-001 step 4: what an EMPTY
+ *   result renders as. The default is the clean no-match line; an anomalous
+ *   run (error exit, drops, exit-0-with-zero-collected) must NEVER render a
+ *   false "Found 0 matches" — the caller passes the anomaly text instead.
  * @returns Formatted output with matches grouped by file
  */
 export function formatCodeSearchOutput(
   stdout: string,
-  options: { matchCount?: number } = {},
+  options: { matchCount?: number; emptyResultText?: string } = {},
 ): string {
-  if (!stdout) {
-    return 'Found 0 matches'
+  if (!stdout.trim()) {
+    return options.emptyResultText ?? 'Found 0 matches'
   }
   const lines = stdout.split('\n')
   const formatted: string[] = [

@@ -18,8 +18,7 @@ interface ToolCallContentBlock {
   input: Record<string, JSONValue>
 }
 
-const setupDatabaseMocks = () => {
-}
+const setupDatabaseMocks = () => {}
 
 describe('Error preserves in-progress message history', () => {
   afterEach(() => {

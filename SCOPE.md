@@ -62,7 +62,101 @@
 
 ## Open items
 
-**Eleven** items are open.
+**Fifteen** items are open.
+(2026-10-02: T114–T117 completed and left the register on the standing
+rule — each owns a converged, implemented, verified FID in `dev/fids/`
+with receipt-stamped gates, pending G2 commit authority:
+`FID-2026-1002-004` (T114/D1: supervisor passes `SAVANT_PROJECT_ROOT`
+env-only + `SAVANT_DESKTOP_PROFILE`; sidecar fails closed in release
+without a root — 3 new Rust git-root tests, argv-exclusion pin, TS
+gate test, cargo-test probe gate), `FID-2026-1002-005` (T115/D2:
+turn-end baseline advance uses the captured root; captured-root
+regression test — the old code failed both its assertions),
+`FID-2026-1002-006` (T116/O1: graph refresh reads only changed files —
+stat pre-filter + persisted import/extend tokens + legacy backfill;
+zero-read second pass pinned; 19 pre-existing suites green unmodified),
+`FID-2026-1002-007` (T117/D4+D5: approvals survive disconnects with
+run-settle/shutdown deny; flush timer self-stops and re-arms — contract
+re-pinned, new flush-lifecycle suite). Breadth: agent-runtime 1,645
+pass / 0 fail; cli 3,797 pass / 0 fail / 18 skip; knowledge-graph 24
+pass / 0 fail; cargo test 17 pass / 0 fail; repo ESLint zero warnings;
+quality PASS; markdownlint clean. 2026-10-02: T113 completed and left the register on the standing rule —
+the full-system data-flow audit report is delivered at
+`dev/session-summaries/2026-10-02-full-data-flow-audit.md`: seven
+evidence-backed findings D1–D7 (desktop sidecar cwd anchoring; turn-end
+baseline-advance root asymmetry; gateway dispatch error containment;
+approval-lifecycle contract drift; perpetual flush timer; reconnect event
+loss; project-data basename collisions) and three optimization
+opportunities O1–O3 (knowledge-graph full-corpus refresh IO/memory;
+budget-middleware re-count; active-FID TTL sync read), with flow map,
+prior-work integration spot-check, and explicit verification limits.
+Markdown lint + Prettier pass on the report. Findings are recommendations,
+not committed work. 2026-10-03: T118 (D3) completed and left the
+register on the standing rule — `FID-2026-1002-008`
+(gateway-dispatch-error-containment, status verified, receipt stamped
+8/8 gates: cli typecheck, the new fault-injection containment suite 5
+pass / 0 fail, the five gateway family suites 21 pass / 0 fail,
+quality): the RPC dispatch boundary, the `void`-ed user_message
+handler, the hello FID-snapshot timer, and the websocket transport are
+all contained on the frozen vocabulary (`internalError -32603` /
+`run_complete {ok:false}`) through the new
+`cli/src/server/gateway/rpc-containment.ts`; fault-injection tests run
+through harness DI seams only (no module mocking). 2026-10-03: T123 (D6)
+and T124 (D7) completed and left the register on the standing rule —
+`FID-2026-1003-002` (gateway-reconnect-event-replay, status verified,
+receipt stamped 8/8 gates: cli + desktop typecheck, the new cli replay
+suite 4 pass / 0 fail, gateway-handshake + gateway-user-message, the new
+desktop client-replay suite 4 pass / 0 fail, the drift guard, quality):
+every `event` frame flows through one seq-stamped emission primitive
+(`emitEventBatch`, bounded 1,000-batch buffer) in
+`cli/src/server/gateway/state.ts`; the additive `replay_events`
+capability + method (`cli/src/server/gateway/replay-rpc.ts`), the
+additive hello `eventSeq`, and the desktop cursor/replay path
+(`gateway-client-connection.ts` + `onReplayGap`) let a reconnecting
+renderer recover the disconnect window in order through the existing
+`onEvents` seam — live wire format, envelope, error codes, and
+protocolVersion untouched. `FID-2026-1003-003`
+(project-data-basename-collision, status verified, receipt stamped 5/5
+gates: cli typecheck, the new isolation suite 4 pass / 0 fail,
+project-files-chat-id + run-state-storage-atomic, quality):
+`getProjectDataDir()` now keys `projects/<basename>-<sha256-8>` over the
+realpath-normalized root (win32-lowercased including the basename
+prefix), with a one-time guarded legacy rename — non-destructive on
+refusal; all consumers flow through the unchanged choke point.
+2026-10-03: T127 completed and left the register on the standing rule —
+`FID-2026-1003-006` (free-provider routing, catalog truth, and reliable
+notifications; status verified, receipt stamped 23/23 gates via
+`fid:verify --write`): D1 explicit serving identity (versioned `ModelRoute`
+selection persisted atomically; explicit routes win before prefix/OAuth
+logic; legacy bare-slug synthesis yields to a custom `INFERENCE_BASE_URL`
+endpoint in `resolveModelRoute`); D2 canonical attribution
+(`nvidia-nim -> nvidia`; readiness credential-name one-truth); D3 durable
+notification service + consumer lifecycle (cli coordinator +
+capability-negotiated desktop `provider_notice`); D4 semantic deltas; D5
+dated health/removal + eligible 429 hints; D6 capability-based quota +
+dated offer expiry; D7 picker correction retained. Whole-tree battery
+green: typecheck 14 legs exit 0; per-workspace tests sdk 655, cli 3826
+pass/18 skip (real-child handoff matrix 6/6), common 749, agents 156,
+evals 171, agent-runtime 1648, design-systems 19, code-map 51, database
+18, knowledge-graph 55, llm-providers 89, connectors 17, desktop 427,
+scripts/providers 46 — zero fail; ESLint zero warnings; markdownlint
+clean; Prettier clean; quality PASS. Live boundaries recorded in the FID:
+native TUI tmux smoke and a live desktop smoke not run on this host (tmux
+unavailable); ambient dev-machine `.env.local` reaches handoff children
+(routing contract holds regardless; CI deterministic); the standing
+Savant-Free e2e failures stay T122. Closure and archive await G2 commit
+authority. 2026-10-02: T109 + T110 completed and
+left the register on the standing
+rule — `FID-2026-1001-003` (all eight steps implemented: effect-based
+mutation classification closing the terminal bypass, worktree-reconciled
+Law 15, the durable Law 1 read ledger, restored Law 3 with N=3 escalation,
+the Law 2 scope gate consuming this file's machine-readable targets, and
+the Law 4 / fid-validator / prompt-content CI gates) and
+`FID-2026-1002-001` (code_search fails loud) are closed and archived,
+with CHANGELOG `2026-10-02` entries and receipts stamped via
+`fid:verify --write` from the repo root. The machine-readable targets
+section below STAYS: the Law 2 gate consumes it at write time for the
+remaining items.)
 (2026-10-01: T108 completed and left the register on the standing rule —
 evidence in archived `FID-2026-1001-001-openai-platform-provider.md`,
 CHANGELOG `Unreleased — 2026-10-01`, and the 2026-10-01 session summary.
@@ -265,6 +359,20 @@ T90-F3 was resolved by the operator ruling "T90-F3 residual needs no code"
 
 ### Providers and routing
 
+- [x] **T126. Model-picker search retains unrelated OpenAI results.**
+      Operator report 2026-10-03: "no matter what i type in /model,
+      openai is pinned at the top and it's not only returning the matches
+      for the search string, it's returning the full openai list as well".
+      **Automation level: 3.** Reproduce the rendered picker with mixed
+      provider catalogs, identify the filtering or rendering failure,
+      converge the corrective FID, apply the correction, and verify search
+      results, selection, scrolling, and production reachability.
+      **FID:** `FID-2026-1003-005`.
+      Implementation verified in the working tree: provider-scoped React
+      row keys remove stale OpenAI results; colliding-ID native regressions
+      fail before correction and pass afterwards. **Blocker:** G2 commit
+      authority is not granted by this request; FID closure/archival awaits it.
+
 - [ ] **T119. Pending provider account access and identity.**
       **Automation level: 1.** Mapped xKiro Claude Haiku live acceptance
       returned HTTP 403 requiring an active paid plan or real deposited
@@ -291,6 +399,76 @@ T90-F3 was resolved by the operator ruling "T90-F3 residual needs no code"
 
 ### Harness and process
 
+- [ ] **T122. Savant-free feature disposition (operator-owned).** Operator
+      ruling 2026-10-03, verbatim: "i think it might be smarter to leave
+      savant-free alone, just fix the problems you found and i'll address it
+      tomorrow when i have a clear day to spend more time on the savant-free
+      feature because it's in the code deeply and i don't really feel like
+      untangling it right now." Context: the full-repository battery
+      surfaced 13 failing / 5 erroring savant-free e2e tests (missing built
+      release binary + a stale `SavantFreeSession` import in 5 committed e2e
+      files); a removal scan mapped 234 reference sites outside the
+      workspace (`agents/savant/*` provider agents, the CLI free-mode
+      integration, `common/src/constants`, docs, release scripts).
+      **Blocker:** the feature is woven deeply through the CLI/agents/common
+      surfaces — disposition (repair or removal) is a dedicated
+      operator-directed session. **Automation level: 1** (no agent action;
+      the e2e failures are known and operator-owned until then).
+
+- [ ] **T112. Enforce request token budgets across all model calls.**
+      Operator request 2026-10-02: "alright so how do we fix this system wide?"
+      **Automation level: 3.** The triggering provider rejection recorded 112,977
+      input plus 943,717 requested output exceeding a 1,048,576-token serving
+      limit (quoted verbatim in the FID; the scratch transcript that carried it
+      was deleted 2026-10-03).
+      Implement a shared provider-model guard for streaming, generation,
+      structured output, subagents and retries; consume route catalog limits,
+      count final prompts/tools, bound output, and recover once from a smaller
+      provider-reported limit before delivery. Preserve unknown output-cap
+      omission and route observations without fabricating model capabilities.
+      **FID:** `FID-2026-1002-003`. Commit authorization remains operator-owned.
+      Implementation exists across every SDK model route; transport regressions
+      verify the serialized allowance and bounded initial-dispatch recovery.
+      Full SDK: 570 pass / 1 platform skip; common: 739 pass / 4 platform skips;
+      catalog: 99 pass; compaction: 23 pass. Root typecheck, zero-warning lint,
+      Markdown lint, formatting, quality and all 10 declared gates pass.
+      Implementation verified; FID stays active solely pending G2 commit authority.
+      Includes restoring leaked AI mocks in two existing SDK tests. 2026-10-03:
+      the scratch failure transcript is deleted and its `.markdownlintignore`
+      exemption withdrawn; its evidence is quoted in the FID instead, so this
+      item no longer depends on a root-level scratch file.
+
+- [ ] **T111. System data-flow, performance, and sidebar audit (2026-10-02).**
+      Operator request: review the past day's CHANGELOG and completed work,
+      repeat the data-flow audit, verify the lingering day-one bug fix,
+      identify speed/data-flow improvements, and inspect the sidebar for
+      quality defects. Audit the current working tree, including uncommitted
+      enforcement and code-search changes. Trace production callers across
+      runtime, SDK, CLI event handling, state, and sidebar rendering; reproduce
+      findings and apply verified reversible corrections through a converged
+      FID. Record evidence and measured performance in the session report.
+      **Automation level: 3.** The exact day-one symptom is being clarified
+      while the independently actionable audit proceeds.
+      **FID:** `FID-2026-1002-002`. Reproduced findings: full baseline capture
+      exhausts the real-tree budget; snapshot/sidebar and post-await save
+      ownership gaps; active-only FID loading reads the archive; byte-only
+      search events silently lose content; sidebar archive/convergence claims
+      lack evidence; presence reachability pins stale line numbers. Exact
+      corrective impact and gates are presented in the converged FID.
+      Follow-on evidence: same-chat replacement requires run identity at
+      adoption; dirty-at-capture files restored to Git-clean contents require
+      persistent candidate tracking. Both are included in this correction.
+      Live tmux evidence at 100×28 also shows the Modified counter clipped;
+      sidebar overflow correction and fresh terminal captures are included.
+      The FID gate executor runs workspace tests from the repository root,
+      contrary to the T67 guard; correcting its working directory is included.
+      **Verified 2026-10-02:** corrections implemented; all 13 FID gates pass,
+      full repository tests 7,760 pass / zero fail, final CLI 3,771 pass /
+      zero fail, and live terminal checks pass. Evidence is in the audit
+      session report and the active verified FID. **Blocker:** the exact
+      day-one symptom/FID is pending operator clarification. Commit and FID
+      archival remain subject to explicit commit authorization (G2).
+
 - [ ] **T87-B. A scaffold that predates a decomposition can never refresh, and
       nothing detects it.** Re-grounded 2026-09-28 by reading
       `cli/src/commands/init.ts` 0-EOF. The claim holds exactly: at
@@ -305,10 +483,47 @@ T90-F3 was resolved by the operator ruling "T90-F3 residual needs no code"
       type sources travel inline via `COMMON_TYPE_FILES`, with no
       `zod/v4/core` import and no `node_modules` dependency. **Blocker:** the fix
       shape — a refresh/`--force` path (weakens never-clobber), a parity check
-      that fails a gate, or accepted-by-design plus documentation.      **Automation level: 1.**
+      that fails a gate, or accepted-by-design plus      documentation.      **Automation level: 1.**
 
 ## Machine-readable scope targets
 
+<!-- FID-2026-1001-003 step 5a: per-item write targets for the Law 2 gate
+     (operator-approved 2026-10-02, "present before writing" honored). Each
+     line maps a register item to the paths its approved work may touch.
+     No pattern = non-covering, fail-closed. Items with no write surface
+     (operator-only actions) carry none. Governance surfaces the protocol
+     itself mandates are GATE-LEVEL exemptions (operator ruling 2026-10-02),
+     deliberately not register items. -->
+
+- T94: `README.md`, `README.zh-CN.md`, `scripts/*version*`
+- T127: `dev/fids/FID-2026-1003-006-free-provider-routing-notification-audit.md`,
+  `dev/session-summaries/2026-10-03-free-provider-*.md`, `common/src/**`,
+  `sdk/src/**`, `cli/src/**`, `packages/agent-runtime/src/**`, `desktop/src/**`,
+  `scripts/providers/**`, `docs/providers.md`
+- T126: `cli/src/components/model-picker*.ts*`,
+  `cli/src/components/__tests__/model-picker*.test.tsx`, `dev/fids/**`,
+  `dev/session-summaries/2026-10-03-free-provider-notification-audit.md`
+- T95-B: `scripts/skills-check-policy.ts`, `scripts/skills-check-content.ts`
+- T97: `dev/fids/archive/**`
+- R1: `desktop/src/**`
+- R2: `desktop/src/**`
+- R3: `desktop/src/**`
+- T62-followups: `dev/scratchpad/active/t62*.ts` (the catalog itself is
+  gateway-side; the local write surface is the probe scripts — verified
+  2026-10-02: no local catalog directory exists)
+- T87-B: `cli/src/commands/init.ts`, `.agents/types/**`
+- T83-E: (no write surface — operator git execution)
+- T95-C: (no write surface — operator home directory)
+- T111: `cli/src/**`, `sdk/src/**`, `common/src/**`, `packages/agent-runtime/src/**`,
+  `packages/connectors/src/**`, `scripts/fid-verify.ts`,
+  `scripts/__tests__/fid-verify.test.ts`, `dev/fids/**`, `dev/session-summaries/**`
+- T112: `common/src/**`, `sdk/src/**`, `cli/src/utils/openrouter-models/**`,
+  `cli/src/utils/__tests__/**`, `packages/agent-runtime/src/**`, `docs/**`,
+  `.markdownlintignore`, `dev/fids/**`, `dev/session-summaries/**`
+- T122: (no write surface — operator-owned)
+- T123: `cli/src/server/**`, `desktop/src/**`, `desktop/scripts/**`,
+  `dev/fids/**`, `dev/session-summaries/**`
+- T124: `cli/src/**`, `dev/fids/**`, `dev/session-summaries/**`
 - T119: `.env.local`, `docs/providers.md`,
   `dev/session-summaries/2026-10-03-provider-*.md`,
   `dev/scratchpad/active/provider-catalogs-2026-10-03/**`,

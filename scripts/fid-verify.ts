@@ -105,12 +105,15 @@ export function resolveGate(
   if (kind === 'test') {
     const safe = safeRepoPath(arg, /\.test\.(ts|tsx)$/)
     if (!safe.ok) return { error: safe.error ?? 'unsafe test path' }
+    const workspace = [...WORKSPACES]
+      .sort((a, b) => b.length - a.length)
+      .find((candidate) => arg.startsWith(`${candidate}/`))
     return {
       kind,
       arg,
       label: gateLabel(kind, arg),
-      argv: ['bun', 'test', arg],
-      cwd: root,
+      argv: ['bun', 'test', workspace ? arg.slice(workspace.length + 1) : arg],
+      cwd: workspace ? path.join(root, workspace) : root,
     }
   }
   if (kind === 'probe') {

@@ -1,3 +1,5 @@
+import type { ModelRoute } from '@savant-code/common/providers/model-route'
+import type { Logger } from '@savant-code/common/types/contracts/logger'
 import type { LanguageModel } from 'ai'
 
 /**
@@ -6,8 +8,11 @@ import type { LanguageModel } from 'ai'
 export interface ModelRequestParams {
   /** Model ID (OpenRouter format, e.g., "anthropic/claude-sonnet-4") */
   model: string
+  modelRoute?: ModelRoute
   /** If true, skip ChatGPT OAuth and use SavantCode backend (for fallback after rate limit) */
   skipChatGptOAuth?: boolean
+  contextWindow?: number
+  logger?: Logger
 }
 
 /**

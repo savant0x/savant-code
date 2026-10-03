@@ -191,12 +191,14 @@ export const orchestrationToolSafetyEntries: Partial<
   connector_describe: {
     effect: network,
     permission: allow,
-    reason: 'Reads one endpoint contract from the built-in catalog (no egress).',
+    reason:
+      'Reads one endpoint contract from the built-in catalog (no egress).',
   },
   connector_invoke: {
     effect: network,
     permission: prompt,
-    reason: 'Executes a vendor API endpoint — network egress, may consume credits.',
+    reason:
+      'Executes a vendor API endpoint — network egress, may consume credits.',
   },
   connector_credentials: {
     effect: read,

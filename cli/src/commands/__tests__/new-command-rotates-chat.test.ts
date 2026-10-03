@@ -5,9 +5,7 @@ describe('/new command', () => {
   // importing the full command-registry graph — under load that exceeds bun's
   // default 5s test timeout (flake, not regression). Give it an explicit
   // generous bound.
-  test(
-    'rotates the chat id so the previous chat is not overwritten',
-    () => {
+  test('rotates the chat id so the previous chat is not overwritten', () => {
     const commandRegistryUrl = new URL(
       '../command-registry.ts',
       import.meta.url,
@@ -89,7 +87,5 @@ describe('/new command', () => {
 
     const stderr = new TextDecoder().decode(result.stderr)
     expect(result.exitCode, stderr).toBe(0)
-    },
-    60000,
-  )
+  }, 60000)
 })

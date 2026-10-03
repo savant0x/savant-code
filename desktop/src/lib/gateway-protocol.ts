@@ -9,6 +9,7 @@
 // `gateway-protocol-inbound.ts`; both are re-exported here so the
 // `./gateway-protocol` import surface is unchanged.
 
+import { printModeEventSchema } from '@savant-code/common/types/print-mode'
 import z from 'zod/v4'
 
 export * from './gateway-protocol-inbound'
@@ -59,12 +60,14 @@ export function serializeRequest(frame: JsonRpcRequest): string {
 export const helloParamsSchema = z.object({
   protocolVersion: z.literal(GATEWAY_PROTOCOL_VERSION),
   token: z.string().min(1),
+  capabilities: z.array(z.string()).optional(),
 })
 
 export function helloRequest(id: JsonRpcId, token: string): JsonRpcRequest {
   const params = helloParamsSchema.parse({
     protocolVersion: GATEWAY_PROTOCOL_VERSION,
     token,
+    capabilities: ['provider_notices_v1'],
   })
   return { jsonrpc: '2.0', id, method: 'hello', params }
 }
@@ -203,3 +206,33 @@ export const listCommandsResultSchema = z.object({
 export function listCommandsRequest(id: JsonRpcId): JsonRpcRequest {
   return { jsonrpc: '2.0', id, method: 'list_commands', params: {} }
 }
+
+// FID-2026-1003-002: reconnect event replay (additive capability) ----------
+
+export const replayEventsParamsSchema = z.object({
+  since: z.number().int().min(0),
+})
+
+export function replayEventsRequest(
+  id: JsonRpcId,
+  since: number,
+): JsonRpcRequest {
+  return {
+    jsonrpc: '2.0',
+    id,
+    method: 'replay_events',
+    params: replayEventsParamsSchema.parse({ since }),
+  }
+}
+
+export const replayBatchSchema = z.object({
+  seq: z.number(),
+  events: z.array(printModeEventSchema),
+})
+
+export const replayResultSchema = z.object({
+  batches: z.array(replayBatchSchema),
+  earliestSeq: z.number().nullable(),
+  latestSeq: z.number(),
+  gapped: z.boolean(),
+})

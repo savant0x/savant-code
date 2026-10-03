@@ -1,4 +1,3 @@
-
 import { pickRecordedHeaders } from './fixture-schema.ts'
 
 import type { Fixture, RecordedCall } from './fixture-schema.ts'

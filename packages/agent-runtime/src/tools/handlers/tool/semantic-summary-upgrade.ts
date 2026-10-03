@@ -20,6 +20,7 @@ import {
   SEMANTIC_SUMMARY_MIN_TOKENS,
 } from './semantic-summary-prompt'
 
+import type { ModelRoute } from '@savant-code/common/providers/model-route'
 import type { TrackEventFn } from '@savant-code/common/types/contracts/analytics'
 import type { SendActionFn } from '@savant-code/common/types/contracts/client'
 import type { PromptAiSdkFn } from '@savant-code/common/types/contracts/llm'
@@ -107,6 +108,7 @@ export function validateSemanticSummary({
 export async function applySemanticSummaryUpgrade({
   promptAiSdk,
   model,
+  modelRoute,
   runId,
   clientSessionId,
   fingerprintId,
@@ -122,6 +124,7 @@ export async function applySemanticSummaryUpgrade({
   promptAiSdk: PromptAiSdkFn
   /** The session model (operator ruling MQ1: main model only — no override). */
   model: string
+  modelRoute?: ModelRoute
   runId: string
   clientSessionId: string
   fingerprintId: string
@@ -157,6 +160,7 @@ export async function applySemanticSummaryUpgrade({
       fingerprintId,
       userInputId,
       model: model as Parameters<PromptAiSdkFn>[0]['model'],
+      modelRoute,
       userId,
       sendAction,
       logger,

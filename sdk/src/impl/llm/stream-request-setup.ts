@@ -49,7 +49,10 @@ export async function prepareLlmStreamRequest(
 
   const modelParams: ModelRequestParams = {
     model: params.model,
+    modelRoute: params.modelRoute,
     skipChatGptOAuth: params.skipChatGptOAuth,
+    contextWindow: params.contextWindow,
+    logger: params.logger,
   }
   const { model: aiSDKModel, isChatGptOAuth } =
     await getModelForRequest(modelParams)

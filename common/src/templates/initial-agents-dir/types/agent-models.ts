@@ -2,6 +2,14 @@
 // Model routing option types
 // ============================================================================
 
+/** Serving endpoint identity, independent of the upstream model's vendor slug. */
+export interface ModelRoute {
+  providerId: string
+  authMode: 'provider' | 'chatgpt-oauth'
+  configRevision?: string
+  accountRevision?: string
+}
+
 /**
  * https://openrouter.ai/docs/use-cases/reasoning-tokens
  * One of `max_tokens` or `effort` is required.

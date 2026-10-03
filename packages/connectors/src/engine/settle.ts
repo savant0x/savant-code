@@ -1,4 +1,3 @@
-
 import { EngineError, EngineErrorCode } from './errors.ts'
 import { validateAgainst } from './validate.ts'
 import {
@@ -93,9 +92,7 @@ export function settle(
         usage = {
           credits: claim,
           evidence: usage.evidence,
-          ...(creditsDisagree(claim, derived)
-            ? { mismatch: { derived } }
-            : {}),
+          ...(creditsDisagree(claim, derived) ? { mismatch: { derived } } : {}),
         }
         if (usage.mismatch) {
           logger.warn('usage mismatch', {
@@ -148,9 +145,6 @@ export function settle(
 function validateUsage(doc: EndpointDoc, usage: FnUsage): void {
   const problem = countsMismatch(doc.usage.model, usage.counts)
   if (problem !== undefined) {
-    throw new EngineError(
-      EngineErrorCode.FN_CONTRACT,
-      `${doc.id}: ${problem}`,
-    )
+    throw new EngineError(EngineErrorCode.FN_CONTRACT, `${doc.id}: ${problem}`)
   }
 }

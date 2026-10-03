@@ -16,7 +16,6 @@ import {
   zEndpointDoc,
 } from '../core/mod.ts'
 
-
 import type {
   EndpointPhaseAResult,
   EndpointPhaseBResult,

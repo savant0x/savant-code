@@ -2,11 +2,7 @@ import { describe, expect, test } from 'bun:test'
 
 import { CONNECTOR_TOOL_NAMES } from '../../constants/connectors'
 import { toolNames } from '../constants'
-import {
-  clientToolCallSchema,
-  clientToolNames,
-  toolParams,
-} from '../list'
+import { clientToolCallSchema, clientToolNames, toolParams } from '../list'
 import { toolSafetyRegistry } from '../safety-registry'
 
 /**

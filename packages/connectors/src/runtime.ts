@@ -192,7 +192,9 @@ export interface RecordedFixtureSource {
   path: string
 }
 
-export function isRecordedFixtureSource(v: unknown): v is RecordedFixtureSource {
+export function isRecordedFixtureSource(
+  v: unknown,
+): v is RecordedFixtureSource {
   return (
     typeof v === 'object' &&
     v !== null &&

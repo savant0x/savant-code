@@ -3,6 +3,7 @@ import {
   models,
   type FinetunedVertexModel,
 } from '@savant-code/common/old-constants'
+import { captureModelRoute } from '@savant-code/common/providers/model-route'
 import {
   isAbortError,
   unwrapPromptResult,
@@ -94,16 +95,6 @@ export async function requestRelevantFiles(
   const candidateFiles = keyFiles.files
 
   validateFilePaths(uniq(candidateFiles))
-
-  // logger.info(
-  //   {
-  //     files,
-  //     customFilePickerConfig: customFilePickerConfig,
-  //     modelName: customFilePickerConfig?.modelName,
-  //     orgId,
-  //   },
-  //   'requestRelevantFiles: results',
-  // )
 
   return candidateFiles.slice(0, MAX_FILES_PER_REQUEST)
 }
@@ -226,6 +217,9 @@ async function getRelevantFiles(
     ...params,
     messages: savantCodeMessages,
     model: models.openrouter_gemini2_5_flash,
+    modelRoute: captureModelRoute('openrouter'),
+    contextWindow: undefined,
+    maxOutputTokens: undefined,
     useFinetunedModel: finetunedModel,
   })
   const end = performance.now()
@@ -283,6 +277,9 @@ async function getRelevantFilesForTraining(
       ...params,
       messages: messagesWithSystem({ messages: messagesWithPrompt, system }),
       model: models.openrouter_claude_sonnet_4,
+      modelRoute: captureModelRoute('openrouter'),
+      contextWindow: undefined,
+      maxOutputTokens: undefined,
       chargeUser: false,
     }),
   )

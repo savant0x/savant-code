@@ -9,7 +9,9 @@ import {
   WATCHDOG_PATH,
 } from './gateway-test-harness'
 import {
+  DESKTOP_PROFILE_ENV,
   GATEWAY_READY_MARKER,
+  isReleaseSidecarMissingProjectRoot,
   parseGatewayPort,
   PROJECT_ROOT_ENV,
   resolveServerProjectRoot,
@@ -31,6 +33,37 @@ describe('gateway server command + watchdog', () => {
     expect(parseGatewayPort(['bun', 'cli.ts', 'server', '--port=99999'])).toBe(
       0,
     )
+  })
+
+  test('release sidecar without a project root fails closed; dev and rooted launches do not (FID-2026-1002-004)', () => {
+    // The one broken topology: supervised release + no root override.
+    expect(
+      isReleaseSidecarMissingProjectRoot({
+        [DESKTOP_PROFILE_ENV]: 'release',
+      }),
+    ).toBe(true)
+    // Whitespace-only override is still missing (trim contract).
+    expect(
+      isReleaseSidecarMissingProjectRoot({
+        [DESKTOP_PROFILE_ENV]: ' release ',
+        [PROJECT_ROOT_ENV]: '   ',
+      }),
+    ).toBe(true)
+    // Root present → the supervisor did its job; the gate stays open.
+    expect(
+      isReleaseSidecarMissingProjectRoot({
+        [DESKTOP_PROFILE_ENV]: 'release',
+        [PROJECT_ROOT_ENV]: '/repo',
+      }),
+    ).toBe(false)
+    // Dev shells keep the legacy resolution (no fail-closed).
+    expect(
+      isReleaseSidecarMissingProjectRoot({
+        [DESKTOP_PROFILE_ENV]: 'dev',
+      }),
+    ).toBe(false)
+    // Manual `savant-code server` runs (no profile declared) are unaffected.
+    expect(isReleaseSidecarMissingProjectRoot({})).toBe(false)
   })
 
   test('resolveServerProjectRoot prefers the env override, then git root, then cwd', () => {

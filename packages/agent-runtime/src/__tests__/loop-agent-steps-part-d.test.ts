@@ -187,7 +187,6 @@ describe('loopAgentSteps - runAgentStep vs runProgrammaticStep behavior', () => 
       if (result.output.type === 'error') {
         expect(result.output.message).toBe('Run cancelled by user')
       }
-
     })
 
     it('should distinguish AbortError from other errors', async () => {
@@ -220,7 +219,6 @@ describe('loopAgentSteps - runAgentStep vs runProgrammaticStep behavior', () => 
         expect(result.output.message).toContain('Network connection failed')
         expect(result.output.message).not.toBe('Run cancelled by user')
       }
-
     })
 
     it('should handle signal.aborted before loop starts', async () => {

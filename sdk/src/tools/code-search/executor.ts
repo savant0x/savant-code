@@ -1,7 +1,9 @@
 import { spawn } from 'child_process'
 import * as fs from 'fs'
+import { StringDecoder } from 'node:string_decoder'
 import * as path from 'path'
 
+import { classifyCodeSearchOutcome } from './anomaly'
 import { parseSearchFlags } from './flags'
 import {
   buildCloseOutput,
@@ -54,13 +56,9 @@ export function codeSearch({
 
     const { flagsArray, extraSearchPaths } = parseSearchFlags(flags, logger)
 
-    // Use JSON output for robust parsing and early stopping
-    // --no-config prevents user/system .ripgreprc from interfering
-    // -n shows line numbers
-    // --json outputs in JSON format, which streams in and allows us to cut off the output if it grows too long
-    // "--"" prevents pattern from being misparsed as a flag (e.g., pattern starting with '-')
-    // Search paths: '.' plus blessed hidden directories that actually exist
-    // Filter out non-existent directories to avoid ripgrep stderr errors
+    // JSON output for robust parsing + early stopping; --no-config keeps a
+    // user .ripgreprc out; `--` stops a leading-'-' pattern parsing as a flag.
+    // Search paths: '.' plus existing blessed hidden dirs (no stderr noise).
     const existingHiddenDirs = INCLUDED_HIDDEN_DIRS.filter((dir) => {
       try {
         return fs.statSync(path.join(searchCwd, dir)).isDirectory()
@@ -103,6 +101,9 @@ export function codeSearch({
       cwd: searchCwd,
       stdio: ['ignore', 'pipe', 'pipe'],
     })
+    // Decode across chunk boundaries so split UTF-8 characters remain intact.
+    const stdoutDecoder = new StringDecoder('utf8')
+    const stderrDecoder = new StringDecoder('utf8')
 
     let jsonRemainder = ''
     let stderrBuf = ''
@@ -113,7 +114,6 @@ export function codeSearch({
       maxOutputStringLength,
     )
 
-    // Guard to prevent double-settlement from concurrent timeout and process close events
     let killTimeoutId: ReturnType<typeof setTimeout> | null = null
 
     const settle = (payload: CodeSearchResult) => {
@@ -195,11 +195,10 @@ export function codeSearch({
       })
     }, timeoutSeconds * 1000)
 
-    // Parse ripgrep JSON for early stopping
     childProcess.stdout.on('data', (chunk: Buffer | string) => {
       if (isResolved) return
       const chunkStr =
-        typeof chunk === 'string' ? chunk : chunk.toString('utf8')
+        typeof chunk === 'string' ? chunk : stdoutDecoder.write(chunk)
       jsonRemainder += chunkStr
 
       // Split by lines; last line might be partial
@@ -226,7 +225,7 @@ export function codeSearch({
     childProcess.stderr.on('data', (chunk: Buffer | string) => {
       if (isResolved) return
       const chunkStr =
-        typeof chunk === 'string' ? chunk : chunk.toString('utf8')
+        typeof chunk === 'string' ? chunk : stderrDecoder.write(chunk)
       // Keep stderr bounded during streaming
       const limit = Math.floor(maxOutputStringLength / 5)
       if (stderrBuf.length < limit) {
@@ -238,28 +237,18 @@ export function codeSearch({
     childProcess.once('close', (code) => {
       if (isResolved) return
 
-      // Flush any remaining JSON - handle multiple complete lines
-      try {
-        if (jsonRemainder) {
-          // Ensure we have a trailing newline for split to work correctly
-          const maybeMany = jsonRemainder.endsWith('\n')
-            ? jsonRemainder
-            : jsonRemainder + '\n'
-          for (const ln of maybeMany.split('\n')) {
-            if (!ln) continue
-            try {
-              collector.addEventLine(ln, 'flush')
-            } catch {
-              // Probe outcome: a partial trailing JSON line may legitimately
-              // fail to parse — the streamed events above are authoritative.
-            }
-          }
-        }
-      } catch {
-        // Probe outcome: the buffered remainder is not parseable JSON —
-        // ignore and close with whatever was streamed.
-      }
+      // Flush any remaining JSON — possibly multiple complete lines
+      // (FID-2026-1002-001: remainder flushing lives on the collector and
+      // every dropped line is accounted, never silent).
+      collector.flushRemainder(jsonRemainder + stdoutDecoder.end())
 
+      const outcome = classifyCodeSearchOutcome({
+        code,
+        collected: collector.matchesGlobal,
+        dropped: collector.droppedEventLines,
+        firstDroppedLine: collector.firstDroppedLine,
+        stderrBuf,
+      })
       const closeOutput = buildCloseOutput({
         fileGroups: collector.fileGroups,
         filesLimitedByMaxResults: collector.filesLimitedByMaxResults,
@@ -269,14 +258,30 @@ export function codeSearch({
         globalMaxResults,
         maxOutputStringLength,
         stderrBuf,
+        // FID-2026-1002-001 step 4: an anomalous run NEVER renders a
+        // "Found 0 matches" line — the formatter renders the anomaly text.
+        emptyResultText:
+          outcome.kind === 'anomaly' ? outcome.emptyResultText : undefined,
       })
+
+      if (outcome.kind === 'anomaly') {
+        // The absence-shaped result is not trustworthy: settle through the
+        // error channel carrying stderr and the drop count (step 3).
+        settle({
+          errorMessage: outcome.errorMessage,
+          stdout: closeOutput.stdout,
+          stderr: closeOutput.stderr,
+        })
+        return
+      }
 
       settle({
         ...closeOutput,
         message:
-          code !== null
+          (code !== null
             ? `Exit code: ${code}${collector.killedForLimit ? ' (early stop)' : ''}`
-            : '',
+            : '') +
+          (outcome.kind === 'warning' ? ` — warning: ${outcome.message}` : ''),
       })
     })
 

@@ -21,8 +21,6 @@ import {
   zResourceName,
 } from '../core/mod.ts'
 
-
-
 import type { FnInterner } from './fns.ts'
 import type z from 'zod'
 
@@ -250,8 +248,7 @@ export async function compileResource(
     },
     request: { url },
     timeouts: {
-      requestMs:
-        provider.timeouts?.requestMs ?? CC.defaultTimeouts.requestMs,
+      requestMs: provider.timeouts?.requestMs ?? CC.defaultTimeouts.requestMs,
     },
   }) as Record<string, Json>
 

@@ -12,9 +12,7 @@ const shouldRunLiveE2e = process.env.RUN_SAVANT_CODE_E2E === 'true'
  * client and the caller's own provider env (DIRECT_PROVIDER /
  * INFERENCE_BASE_URL / provider keys) supplies the inference lane.
  */
-export function setupMockClient(options?: {
-  cwd?: string
-}): SavantCodeClient {
+export function setupMockClient(options?: { cwd?: string }): SavantCodeClient {
   if (!shouldRunLiveE2e) {
     setupE2eMocks()
   }

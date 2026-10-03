@@ -1,7 +1,5 @@
 import { join } from 'node:path'
 
-
-
 import { describe, expect, test } from 'bun:test'
 
 import { compileBundle } from '../compiler/mod.ts'

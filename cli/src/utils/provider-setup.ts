@@ -1,3 +1,7 @@
+import { getEffectiveProviderRegistry } from '@savant-code/common/providers/custom-providers'
+import { captureModelRoute } from '@savant-code/common/providers/model-route'
+import { hasProviderCredentials } from '@savant-code/common/providers/readiness'
+
 import { getAuthTokenDetails, getCredentialsPath } from './auth'
 import {
   getEffectiveProviderSetupConfig,
@@ -9,10 +13,11 @@ import {
 } from './provider-key-store'
 import {
   getActiveProvider,
-  saveActiveProvider,
-  saveSavantCodeModelPreference,
+  loadSavantCodeModelPreference,
   saveSavantCodeModelProviderPreference,
+  selectModelForProvider,
 } from './settings'
+import { useSavantFreeModelStore } from '../state/savant-free-model-store'
 
 // Re-export the provider + research key surfaces from the original module
 // path (call-graph preserved for consumers in commands/router/index).
@@ -118,7 +123,14 @@ export function getMissingProviderSetup(): MissingProviderSetup | undefined {
   if (provider.toLowerCase() === 'ollama') return undefined
 
   const info = getProviderSetupInfo(provider)
-  if (!info || !process.env[info.envVar]?.trim()) return info
+  if (
+    !info ||
+    !hasProviderCredentials(
+      getEffectiveProviderRegistry()[provider],
+      process.env,
+    )
+  )
+    return info
   return undefined
 }
 
@@ -135,19 +147,24 @@ export function activateConfiguredProvider(provider: string): boolean {
   const config = getEffectiveProviderSetupConfig()[provider]
   if (!config) return false
   applyPersistedProviderApiKeys()
-  if (!process.env[config.envVar]?.trim()) return false
+  if (
+    !hasProviderCredentials(
+      getEffectiveProviderRegistry()[provider],
+      process.env,
+    )
+  )
+    return false
 
   // This function is called only after an explicit interactive provider
   // selection (/provider or the picker), so it intentionally replaces the
   // current bootstrap/custom route with the selected provider. The selected
   // provider's own shell key remains the credential source; stored keys are only
   // used when the shell has no key.
-  process.env.DIRECT_PROVIDER = provider
-  process.env.INFERENCE_BASE_URL = config.baseUrl
-  // Step 9 (D8 widening): the effective-setup lookup above validated the id;
-  // ModelProvider now accepts custom ids directly — no cast.
-  saveSavantCodeModelProviderPreference(provider)
-  saveActiveProvider(provider)
+  commitProviderSelection(
+    loadSavantCodeModelPreference() ?? 'openrouter/free',
+    provider,
+    config.baseUrl,
+  )
   return true
 }
 
@@ -173,10 +190,35 @@ export function applyModelPickerSelection(model: {
   provider?: string
 }): void {
   const provider = model.provider ?? 'openrouter'
-  saveSavantCodeModelPreference(model.id)
+  // The selection is persisted atomically with the SELECTED ROW's provider
+  // (D7) — never inferred from the model id or the previous selection — so a
+  // declined activation still records an identity-consistent route.
+  selectModelForProvider(model.id, provider)
   const activated = activateConfiguredProvider(provider)
   if (!activated) {
     saveSavantCodeModelProviderPreference(provider)
+  }
+}
+
+function commitProviderSelection(
+  model: string,
+  provider: string,
+  baseUrl?: string,
+): void {
+  const priorProvider = process.env.DIRECT_PROVIDER
+  const priorUrl = process.env.INFERENCE_BASE_URL
+  try {
+    process.env.DIRECT_PROVIDER = provider
+    if (baseUrl) process.env.INFERENCE_BASE_URL = baseUrl
+    useSavantFreeModelStore
+      .getState()
+      .switchModel(model, captureModelRoute(provider))
+  } catch (error) {
+    if (priorProvider === undefined) delete process.env.DIRECT_PROVIDER
+    else process.env.DIRECT_PROVIDER = priorProvider
+    if (priorUrl === undefined) delete process.env.INFERENCE_BASE_URL
+    else process.env.INFERENCE_BASE_URL = priorUrl
+    throw error
   }
 }
 

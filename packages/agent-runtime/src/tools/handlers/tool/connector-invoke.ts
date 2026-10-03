@@ -70,14 +70,12 @@ export function makeConnectorInvokeHandler(
     } catch (error) {
       return {
         output: jsonToolResult({
-          errorMessage:
-            error instanceof Error ? error.message : String(error),
+          errorMessage: error instanceof Error ? error.message : String(error),
         }),
       }
     }
   }
 }
 
-export const handleConnectorInvoke = makeConnectorInvokeHandler(
-  launchBundleProvider,
-)
+export const handleConnectorInvoke =
+  makeConnectorInvokeHandler(launchBundleProvider)

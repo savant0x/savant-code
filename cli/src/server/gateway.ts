@@ -58,8 +58,15 @@ import {
   defaultLoadScopedThreads,
   defaultUpdateScopedThreadState,
 } from './gateway/scoped-threads-rpc'
-import { createGatewayContext, denyPendingApprovals } from './gateway/state'
+import {
+  createGatewayContext,
+  denyPendingApprovals,
+  emitEventBatch,
+} from './gateway/state'
 import { GATEWAY_ERROR_CODES } from './json-rpc'
+import { refreshProviderNotifications } from '../chat/provider-notification-lifecycle'
+import { startProviderMonitoring } from '../utils/provider-monitoring'
+import { providerNotifications } from '../utils/provider-notifications'
 
 export { EVENT_FLUSH_INTERVAL_MS } from './gateway/types'
 export type {
@@ -126,11 +133,29 @@ export async function startGateway(
   const fidBus = createFidEventBus({
     fidsDir,
     projectId: ctx.projectId,
-    logger,
   })
 
   // Per-socket dispatch (frozen-v1 framing + 13-method router).
   const dispatch = createDispatch(ctx, fidBus)
+  const noticesEnabled =
+    options.providerMonitoring ?? options.runPrompt === undefined
+  const unsubscribeNotices = noticesEnabled
+    ? providerNotifications.subscribe('gateway', (notices) => {
+        emitEventBatch(
+          ctx,
+          notices.map((notice) => ({ type: 'provider_notice', notice })),
+        )
+        return true
+      })
+    : () => {}
+  if (noticesEnabled) void refreshProviderNotifications().catch(() => {})
+  const stopProviderMonitoring = noticesEnabled
+    ? startProviderMonitoring()
+    : () => {}
+  const noticeTimer = setInterval(() => {
+    if (noticesEnabled) void providerNotifications.deliver().catch(() => {})
+  }, 1000)
+  noticeTimer.unref?.()
 
   const unsubscribeBridge = subscribeApprovalBridge(ctx)
 
@@ -180,23 +205,36 @@ export async function startGateway(
       },
       message(ws, rawMessage) {
         const state = ws.data ?? { authed: false, helloReceived: false }
-        let parsed: unknown
+        // FID-2026-1002-008 (D3): dispatch contains its handlers
+        // (handshake-rpc.ts → rpc-containment.ts); this outer guard is the
+        // transport backstop — nothing a frame does may escape as an
+        // uncaught exception inside Bun's websocket handler.
         try {
-          parsed = JSON.parse(String(rawMessage))
-        } catch {
-          dispatch((data) => ws.send(data), null, state)
-          return
+          let parsed: unknown
+          try {
+            parsed = JSON.parse(String(rawMessage))
+          } catch {
+            dispatch((data) => ws.send(data), null, state)
+            return
+          }
+          dispatch((data) => ws.send(data), parsed, state)
+        } catch (error) {
+          ctx.logger?.error?.(
+            error,
+            'gateway: websocket message escaped containment',
+          )
         }
-        dispatch((data) => ws.send(data), parsed, state)
       },
       close(ws) {
         ctx.connectedSockets.delete(
           ws as unknown as { send: (data: string) => void },
         )
-        // An approval pending across a disconnect resolves FAIL-CLOSED so the
-        // run can settle; the desktop can re-approve after reconnect (the
-        // halted run's history records the skipped result).
-        denyPendingApprovals(ctx)
+        // FID-2026-1002-007 (D4): a pending approval SURVIVES the disconnect
+        // — the documented v1 contract. The reconnecting client must re-hello
+        // with the bearer token, so authorization still gates every
+        // approval_response. Leftover approvals fail closed at the two points
+        // where they can never be answered anymore: when the owning run
+        // settles (run-lifecycle.ts finally) and at gateway shutdown (stop()).
       },
     },
   })
@@ -206,11 +244,14 @@ export async function startGateway(
   const fidWatcher = startFidWatcher({
     fidsDir,
     onChange: () => {
-      fidBus.emitFidChanges(ctx.connectedSockets)
+      fidBus.emitFidChanges(ctx)
     },
   })
 
   const stop = (): void => {
+    clearInterval(noticeTimer)
+    unsubscribeNotices()
+    stopProviderMonitoring()
     if (ctx.flushTimer) {
       clearInterval(ctx.flushTimer)
       ctx.flushTimer = null

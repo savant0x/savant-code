@@ -1,16 +1,18 @@
 /**
  * EHEL pre-write gates — Law 3 verification gate (FID-2026-0820-012,
- * blocking scope re-defined by FID-2026-0918-005).
+ * blocking scope re-defined by FID-2026-0918-005, other-dirty leg RESTORED
+ * by FID-2026-1001-003 step 4 under Ruling 1: Laws 1-4 are not advice).
  *
- * FID-2026-0918-005 two-part rule:
+ * Current contract:
  *   1. Target-dirty hard block — re-editing a file that is itself
  *      dirty-and-unverified blocks ("verify before re-editing").
- *   2. Other-dirty advisory — OTHER files' pending verification is a
- *      warning, never a block. The old any-file hard block deadlocked
- *      interlocked multi-file batches (twice on 2026-09-18, two operator
- *      turn-ends each); the batch-writes-then-verify pattern is the
- *      documented tracker philosophy, and turn-end Law 15 preserves the
- *      no-unverified-exit invariant.
+ *   2. Other-dirty hard block (restored 2026-10-02) — OTHER code files'
+ *      pending verification blocks again. The FID-2026-0918-005 advisory
+ *      (which fixed two 2026-09-18 deadlocks) was ruled attribution
+ *      laundering; the deadlock is now prevented by the verification-escape
+ *      clause, the failure-attribution/self_correct exemptions, and the
+ *      N=3 escalation ladder (law3-escalation.test.ts) instead of by the
+ *      demotion. Turn-end Law 15 preserves the no-unverified-exit invariant.
  *
  * Sibling of the Loop-335 decomposition (parent: pre-write-gates.test.ts).
  */
@@ -20,7 +22,7 @@ import { EchoEnforcement } from '../enforcement'
 import { createEnforcementState } from '../enforcement-state'
 import { runPreWriteGates } from '../pre-write-gates'
 
-describe('runPreWriteGates — Law 3 two-part rule (FID-2026-0918-005)', () => {
+describe('runPreWriteGates — Law 3 gate (other-dirty leg restored, FID-2026-1001-003 step 4)', () => {
   function runLaw3Gate(params: {
     targetPath: string
     dirtyFiles: string[]
@@ -42,7 +44,7 @@ describe('runPreWriteGates — Law 3 two-part rule (FID-2026-0918-005)', () => {
     })
   }
 
-  // ── Part 1: the deadlock fix (other-dirty is advisory) ──────────────
+  // ── Part 1: the other-dirty leg (restored to a hard block) ─────────
 
   it('does NOT block a follow-up write when every dirty file has since passed verification', () => {
     const result = runLaw3Gate({
@@ -54,28 +56,30 @@ describe('runPreWriteGates — Law 3 two-part rule (FID-2026-0918-005)', () => {
     expect(result.warnings.length).toBe(0)
   })
 
-  it('ALLOWS a write to a CLEAN target while OTHER code files are dirty-unverified (deadlock fix)', () => {
+  it('BLOCKS a write to a CLEAN target while OTHER code files are dirty-unverified (restored leg)', () => {
+    // Deliberate flip (FID-2026-1001-003 step 4): the FID-2026-0918-005
+    // advisory allowed this write; Ruling 1 reinstates the block. The
+    // deadlock this could cause is prevented by the verification-escape
+    // clause and the N=3 escalation ladder, not by the demotion.
     const result = runLaw3Gate({
       targetPath: '/proj/src/b.ts',
       dirtyFiles: ['/proj/src/a.ts'],
     })
-    expect(result.blocked).toBe(false)
-    expect(result.warnings.length).toBe(1)
-    expect(result.warnings[0].law).toBe(3)
-    expect(result.warnings[0].severity).toBe('warning')
-    expect(result.warnings[0].message).toContain('/proj/src/a.ts')
-    expect(result.warnings[0].message).toContain('typecheck')
+    expect(result.blocked).toBe(true)
+    expect(result.reason).toContain('Law 3')
+    expect(result.reason).toContain('/proj/src/a.ts')
+    expect(result.terminateTurn).toBe(false) // first block: block, not termination
   })
 
-  it('advisory lists only the unverified set under partial credit', () => {
+  it('block reason lists only the unverified set under partial credit', () => {
     const result = runLaw3Gate({
       targetPath: '/proj/src/c.ts',
       dirtyFiles: ['/proj/src/a.ts', '/proj/src/b.ts'],
       verifiedFiles: ['/proj/src/a.ts'],
     })
-    expect(result.blocked).toBe(false)
-    expect(result.warnings[0].message).toContain('/proj/src/b.ts')
-    expect(result.warnings[0].message).not.toContain('/proj/src/a.ts')
+    expect(result.blocked).toBe(true)
+    expect(result.reason).toContain('/proj/src/b.ts')
+    expect(result.reason).not.toContain('/proj/src/a.ts')
   })
 
   // ── Part 2: the target-dirty hard block (kept, narrowed) ────────────
@@ -155,14 +159,14 @@ describe('runPreWriteGates — Law 3 two-part rule (FID-2026-0918-005)', () => {
     expect(result.blocked).toBe(false)
   })
 
-  it('docs mixed with code never appear in the advisory set', () => {
+  it('docs mixed with code never appear in the pending set', () => {
     const result = runLaw3Gate({
       targetPath: '/proj/src/b.ts',
       dirtyFiles: ['/proj/dev/handoff.md', '/proj/src/a.ts'],
     })
-    expect(result.blocked).toBe(false)
-    expect(result.warnings[0].message).toContain('/proj/src/a.ts')
-    expect(result.warnings[0].message).not.toContain('/proj/dev/handoff.md')
+    expect(result.blocked).toBe(true)
+    expect(result.reason).toContain('/proj/src/a.ts')
+    expect(result.reason).not.toContain('/proj/dev/handoff.md')
   })
 })
 
@@ -247,15 +251,16 @@ describe('Law 3 credit mechanism pin (FID-2026-0918-005 repro)', () => {
       result: { text: 'ok' },
       writeSucceeded: true,
     })
-    // No verification command — the next write to a DIFFERENT file hits the
-    // other-dirty advisory (no block) under FID-2026-0918-005...
+    // No verification command — under the RESTORED other-dirty leg
+    // (FID-2026-1001-003 step 4, Ruling 1) the next write to a DIFFERENT
+    // file now BLOCKS; the FID-2026-0918-005 advisory is history.
     const other = enforcement.beforeToolCall({
       toolName: 'write_file',
       input: { path: '/proj/src/b.ts' },
       agentId: 'savant',
     })
-    expect(other.blocked).toBe(false)
-    expect(other.warnings.some((w) => w.law === 3)).toBe(true)
+    expect(other.blocked).toBe(true)
+    expect(other.reason).toContain('Law 3')
     // ...while RE-EDITING the dirty file itself still blocks (the repair
     // loop stays honest).
     const self = enforcement.beforeToolCall({

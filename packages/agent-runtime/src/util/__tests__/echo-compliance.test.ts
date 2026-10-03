@@ -15,6 +15,7 @@ import {
   classifyFileKind,
   detectsVerificationCommand,
   hasNewApiDeclaration,
+  hasWiringDeclaration,
   isSecuritySensitivePath,
   meetsVerifierCriteria,
   userRequestedReview,
@@ -197,5 +198,25 @@ describe('classifyFileKind (FID-2026-0814-004 H-03)', () => {
     expect(classifyFileKind('/proj/src/a.ts')).toBe('code')
     expect(classifyFileKind('/proj/src/docs/helper.ts')).toBe('code')
     expect(classifyFileKind('/proj/packages/x/src/a.ts')).toBe('code')
+  })
+})
+
+describe('hasWiringDeclaration — Law 4 wiring detector scope (FID-2026-1001-003 step 6)', () => {
+  it('accepts line-anchored export declarations', () => {
+    expect(hasWiringDeclaration('export const x = 1\n')).toBe(true)
+    expect(hasWiringDeclaration('export function f() {}\n')).toBe(true)
+    expect(hasWiringDeclaration('export async function f() {}\n')).toBe(true)
+    expect(hasWiringDeclaration('export default class A {}\n')).toBe(true)
+    expect(hasWiringDeclaration('export type T = string\n')).toBe(true)
+    expect(hasWiringDeclaration("export * from './x'\n")).toBe(true)
+    expect(hasWiringDeclaration('export { a, b }\n')).toBe(true)
+    expect(hasWiringDeclaration('  export const indented = 1\n')).toBe(true)
+  })
+
+  it('rejects the bare word in strings, comments and prose', () => {
+    expect(hasWiringDeclaration('const s = "export const nope"\n')).toBe(false)
+    expect(hasWiringDeclaration('// export function nope() {}\n')).toBe(false)
+    expect(hasWiringDeclaration('The word export appears here.\n')).toBe(false)
+    expect(hasWiringDeclaration('')).toBe(false)
   })
 })

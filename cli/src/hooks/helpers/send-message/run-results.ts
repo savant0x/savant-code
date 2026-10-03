@@ -47,6 +47,7 @@ export const handleRunCompletion = (params: {
   isQueuePausedRef?: MutableRefObject<boolean>
   /** FID-2026-0915-001 (W5): keys the 429 fallback hint. */
   effectiveModelId?: string
+  effectiveProviderId?: string
 }) => {
   const {
     runState,
@@ -96,11 +97,11 @@ export const handleRunCompletion = (params: {
       // lockout, no billing message, no usage poll.
       updater.setError(
         appendHint(
-          providerOutOfCreditsError(output, process.env.DIRECT_PROVIDER),
+          providerOutOfCreditsError(output, params.effectiveProviderId),
           quotaHint({
             error: output,
             modelId: params.effectiveModelId,
-            providerId: process.env.DIRECT_PROVIDER,
+            providerId: params.effectiveProviderId,
           }),
         ),
       )
@@ -149,7 +150,7 @@ export const handleRunCompletion = (params: {
     const quotaHintText = quotaHint({
       error: output,
       modelId: params.effectiveModelId,
-      providerId: process.env.DIRECT_PROVIDER,
+      providerId: params.effectiveProviderId,
     })
     updater.setError(
       appendHint(
@@ -198,6 +199,7 @@ export const handleRunError = (params: {
   hasReceivedContent?: boolean
   /** FID-2026-0915-001 (W5): keys the 429 fallback hint. */
   effectiveModelId?: string
+  effectiveProviderId?: string
 }) => {
   const {
     error,
@@ -227,11 +229,11 @@ export const handleRunError = (params: {
     // see handleRunCompletion. No backend branch survives to rewrite them.
     updater.setError(
       appendHint(
-        providerOutOfCreditsError(error, process.env.DIRECT_PROVIDER),
+        providerOutOfCreditsError(error, params.effectiveProviderId),
         quotaHint({
           error,
           modelId: params.effectiveModelId,
-          providerId: process.env.DIRECT_PROVIDER,
+          providerId: params.effectiveProviderId,
         }),
       ),
     )
@@ -274,7 +276,7 @@ export const handleRunError = (params: {
   const quotaHintText = quotaHint({
     error,
     modelId: params.effectiveModelId,
-    providerId: process.env.DIRECT_PROVIDER,
+    providerId: params.effectiveProviderId,
   })
   updater.setError(
     appendHint(errorMessage, isRateLimited(error) ? w5Hint : quotaHintText),

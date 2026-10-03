@@ -15,9 +15,8 @@ import { getActiveDesignContract } from '../../utils/design-system-service'
 import {
   findGatewayModel,
   formatModelInfo,
-  resolveContextWindowForModel,
-  resolveMaxOutputTokensForModel,
 } from '../../utils/openrouter-models'
+import { resolveServingLimits } from '../../utils/openrouter-models/serving-limits'
 import { getSavantFreeInstanceId } from '../use-savant-free-session'
 
 import type { AgentMode } from '../../utils/constants'
@@ -151,17 +150,21 @@ export const buildSendRunConfig = (params: BuildSendRunConfigParams) => {
     (typeof agentWithModelOverride === 'string'
       ? agentDefinitions.find((def) => def.id === agentWithModelOverride)?.model
       : undefined)
-  const resolvedContextWindow = windowModelId
-    ? resolveContextWindowForModel(windowModelId)
+  const servingLimits = windowModelId
+    ? resolveServingLimits(
+        windowModelId,
+        typeof agentWithModelOverride === 'string'
+          ? undefined
+          : agentWithModelOverride.modelRoute,
+      )
     : undefined
+  const resolvedContextWindow = servingLimits?.contextWindow
   // FID-2026-0909-008 Step 4: resolve the model's documented output budget
   // (max_completion_tokens) the same way — threaded so chat-completions
   // requests carry an explicit max_tokens instead of an unset field that
   // lets provider defaults truncate large native tool calls mid-JSON.
   // undefined when no catalog reports a cap (never an invented value).
-  const resolvedMaxOutputTokens = windowModelId
-    ? resolveMaxOutputTokensForModel(windowModelId)
-    : undefined
+  const resolvedMaxOutputTokens = servingLimits?.maxOutputTokens
 
   const cachedModel = effectiveModelId
     ? findGatewayModel(effectiveModelId)

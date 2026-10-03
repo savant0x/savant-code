@@ -11,7 +11,9 @@ use std::time::{Duration, Instant};
 #[cfg(windows)]
 use std::os::windows::process::CommandExt;
 
-use crate::gateway::{SpawnSpec, GATEWAY_TOKEN_ENV};
+use crate::gateway::{
+    SpawnSpec, DESKTOP_PROFILE_ENV, GATEWAY_TOKEN_ENV, PROJECT_ROOT_ENV,
+};
 
 /// Keys forwarded from `.env.local` to the sidecar process, in addition to
 /// every `NEXT_PUBLIC_*` variable. The sidecar runs inference in direct-
@@ -216,7 +218,17 @@ pub fn spawn_sidecar(spec: &SpawnSpec) -> io::Result<SidecarHandle> {
     command
         .args(&spec.args)
         .env(GATEWAY_TOKEN_ENV, &spec.token)
-        .envs(sidecar_env_vars())
+        // FID-2026-1002-004: the supervisor is the single root authority —
+        // it passes the resolved project root (env-only) and declares its
+        // build profile so the sidecar can fail closed in release when no
+        // root was passed (the release GUI topology anchors to the install
+        // dir; dev keeps the legacy git-root-of-cwd resolution).
+        .env(DESKTOP_PROFILE_ENV, desktop_profile())
+        .envs(sidecar_env_vars());
+    if let Some(project_root) = &spec.project_root {
+        command.env(PROJECT_ROOT_ENV, project_root);
+    }
+    command
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
         .stderr(Stdio::piped());
@@ -242,6 +254,39 @@ pub fn spawn_sidecar(spec: &SpawnSpec) -> io::Result<SidecarHandle> {
         spawn_stream_drain("stderr", stderr);
     }
     Ok(SidecarHandle { child })
+}
+
+/// The build profile declared to the sidecar (FID-2026-1002-004): release
+/// GUI shells must hand the sidecar an explicit project root; dev keeps the
+/// legacy git-root-of-cwd resolution.
+pub fn desktop_profile() -> &'static str {
+    if cfg!(debug_assertions) {
+        "dev"
+    } else {
+        "release"
+    }
+}
+
+/// Walks up from `start` looking for `.git` (directory OR worktree file —
+/// submodules and worktrees carry a `.git` FILE). Returns the repo root
+/// containing the launch tree, or None (FID-2026-1002-004).
+pub fn find_git_root(start: &Path) -> Option<PathBuf> {
+    let mut current = Some(start.to_path_buf());
+    while let Some(dir) = current {
+        if dir.join(".git").exists() {
+            return Some(dir);
+        }
+        current = dir.parent().map(Path::to_path_buf);
+    }
+    None
+}
+
+/// The supervisor-side project-root resolution (FID-2026-1002-004): the git
+/// root of the shell's own launch directory, or None when there is no
+/// enclosing repo (release GUI launches) — the sidecar then fails closed.
+pub fn resolve_shell_project_root() -> Option<String> {
+    let cwd = std::env::current_dir().ok()?;
+    find_git_root(&cwd).map(|root| root.to_string_lossy().into_owned())
 }
 
 /// Resolves the sidecar binary next to the running shell executable using the
@@ -304,6 +349,7 @@ mod tests {
             program: PathBuf::from("cmd"),
             args: vec![String::from("/C"), String::from("exit 0")],
             token: token.to_string(),
+            project_root: None,
         }
     }
 
@@ -313,7 +359,47 @@ mod tests {
             program: PathBuf::from("sh"),
             args: vec![String::from("-c"), String::from("true")],
             token: token.to_string(),
+            project_root: None,
         }
+    }
+
+    #[test]
+    fn find_git_root_walks_up_to_the_repo_root() {
+        let base = std::env::temp_dir().join(format!(
+            "savant-git-root-{}",
+            std::process::id()
+        ));
+        let nested = base.join("deep").join("nesting");
+        std::fs::create_dir_all(&nested).expect("temp dirs create");
+        std::fs::create_dir_all(base.join(".git")).expect("git dir create");
+        let found = find_git_root(&nested).expect("repo root found");
+        assert_eq!(found, base);
+        std::fs::remove_dir_all(&base).expect("temp dirs removed");
+    }
+
+    #[test]
+    fn find_git_root_accepts_a_worktree_git_file() {
+        let base = std::env::temp_dir().join(format!(
+            "savant-git-worktree-{}",
+            std::process::id()
+        ));
+        let nested = base.join("wt");
+        std::fs::create_dir_all(&nested).expect("temp dirs create");
+        std::fs::write(base.join(".git"), "gitdir: /elsewhere").expect("git file write");
+        let found = find_git_root(&nested).expect("worktree root found");
+        assert_eq!(found, base);
+        std::fs::remove_dir_all(&base).expect("temp dirs removed");
+    }
+
+    #[test]
+    fn find_git_root_returns_none_outside_any_repo() {
+        let base = std::env::temp_dir().join(format!(
+            "savant-no-repo-{}",
+            std::process::id()
+        ));
+        std::fs::create_dir_all(&base).expect("temp dir create");
+        assert!(find_git_root(&base).is_none());
+        std::fs::remove_dir_all(&base).expect("temp dirs removed");
     }
 
     #[test]

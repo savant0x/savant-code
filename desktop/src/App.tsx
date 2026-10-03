@@ -16,12 +16,14 @@ import { CompactionStatusBar } from './components/chat/CompactionStatusBar'
 import { ConnectionPill } from './components/chat/ConnectionPill'
 import { FidQueuePanel } from './components/chat/FidQueuePanel'
 import { PhaseStepper } from './components/chat/PhaseStepper'
+import { ProviderNotificationsPanel } from './components/chat/ProviderNotificationsPanel'
 import { RosterRail } from './components/chat/RosterRail'
 import { ScopeSwitcher } from './components/chat/ScopeSwitcher'
 import { SessionStatusPanel } from './components/chat/SessionStatusPanel'
 import { TriggersPanel } from './components/chat/TriggersPanel'
 import { DeckView } from './floor/deck-view'
 import { useGateway, getSharedGatewayClient } from './hooks/use-gateway'
+import { useProviderNotifications } from './hooks/use-provider-notifications'
 import { formatModelLabel } from './lib/model-label'
 import { useUpdater, type UpdaterPhase } from './lib/updater'
 import { SplashScreen } from './SplashScreen'
@@ -99,6 +101,7 @@ function UpdateBanner({
 export function App(): JSX.Element {
   const lifecycle = useLifecycleEvents()
   const gateway = useGateway()
+  useProviderNotifications(getSharedGatewayClient())
   const updater = useUpdater()
 
   // Sticky session: once the transport has been ready, transient drops
@@ -215,6 +218,10 @@ export function App(): JSX.Element {
                   }}
                 />
                 <div className="workspace-right-rail">
+                  <ProviderNotificationsPanel
+                    api={getSharedGatewayClient().providerNotices}
+                    connected={gateway.status === 'ready'}
+                  />
                   <AutoDriveDashboard
                     queue={gateway.fidQueue}
                     running={gateway.running}

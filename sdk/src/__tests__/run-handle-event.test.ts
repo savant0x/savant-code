@@ -14,7 +14,6 @@ describe('SavantCodeClient handleEvent / handleStreamChunk', () => {
   })
 
   it('streams subagent start/finish once and forwards subagent chunks to handleStreamChunk', async () => {
-
     spyOn(mainPromptModule, 'callMainPrompt').mockImplementation(
       async (params: Parameters<typeof mainPromptModule.callMainPrompt>[0]) => {
         const { sendAction, action: promptAction, promptId } = params
@@ -93,8 +92,7 @@ describe('SavantCodeClient handleEvent / handleStreamChunk', () => {
     const events: PrintModeEvent[] = []
     const streamChunks: StreamChunk[] = []
 
-    const client = new SavantCodeClient({
-    })
+    const client = new SavantCodeClient({})
 
     const result = await client.run({
       agent: 'savant',

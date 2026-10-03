@@ -22,7 +22,6 @@ describe('Run Cancellation Handling', () => {
   })
 
   it('does not duplicate user message when server responds with session state', async () => {
-
     // Server session state already includes the user's message (as the server would normally do)
     const serverSessionState = getInitialSessionState(
       getStubProjectFileContext(),
@@ -58,8 +57,7 @@ describe('Run Cancellation Handling', () => {
       },
     )
 
-    const client = new SavantCodeClient({
-    })
+    const client = new SavantCodeClient({})
 
     const result = await client.run({
       agent: 'savant',
@@ -79,7 +77,6 @@ describe('Run Cancellation Handling', () => {
   })
 
   it('does not duplicate user message when cancelled and server already processed the prompt', async () => {
-
     const abortController = new AbortController()
 
     // Server session state already includes the user's message (server processed it)
@@ -139,8 +136,7 @@ describe('Run Cancellation Handling', () => {
       },
     )
 
-    const client = new SavantCodeClient({
-    })
+    const client = new SavantCodeClient({})
 
     const result = await client.run({
       agent: 'savant',

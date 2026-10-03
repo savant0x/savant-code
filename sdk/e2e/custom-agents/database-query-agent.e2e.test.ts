@@ -16,7 +16,7 @@ import {
   DEFAULT_TIMEOUT,
 } from '../utils'
 
-import type { AgentDefinition , SavantCodeClient} from '../../src'
+import type { AgentDefinition, SavantCodeClient } from '../../src'
 
 describe('Custom Agents: Database Query Agent', () => {
   let client: SavantCodeClient

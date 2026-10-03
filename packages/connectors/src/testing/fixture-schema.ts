@@ -4,8 +4,6 @@ import { z } from 'zod'
 
 import { zJson } from '../core/mod.ts'
 
-
-
 /**
  * HTTP fixture: recorded {req, res} pairs served in order during replay.
  * Headers are NEVER recorded — credentials cannot leak into fixtures.

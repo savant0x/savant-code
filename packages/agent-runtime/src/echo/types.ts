@@ -13,6 +13,26 @@ export type EnforcementTier = 'core_4' | 'all_15'
 export interface EnforcementState {
   // Law 1: Read tracking
   filesRead: Set<string>
+  /**
+   * FID-2026-1001-003 step 3: canonical-form view of the read ledger with
+   * first-seen timestamps, mirrored into the durable checkpoint on every
+   * tracked read and hydrated back into `filesRead` on instance restore.
+   */
+  filesReadCanonical: Map<string, number>
+  /**
+   * FID-2026-1001-003 step 1: the mutation classification of the tool call
+   * currently in flight, stored by `beforeToolCallImpl` so
+   * `afterToolCallImpl` can record the terminal bypass's targets into
+   * filesWritten/dirtyFiles. MUST be cleared at the start of every tool
+   * call and consumed in afterToolCallImpl — resetForNewTurn deliberately
+   * preserves cross-turn state, so a stale entry would mis-mark files on a
+   * later turn.
+   */
+  pendingMutation: {
+    mutates: boolean
+    targets: string[]
+    scope: 'targeted' | 'tree'
+  } | null
   filesWritten: Set<string>
 
   // Law 3: Verification gate
@@ -32,6 +52,20 @@ export interface EnforcementState {
    */
   failureAttributedFiles: Set<string>
   writeCount: number
+
+  // FID-2026-1001-003 step 4: repeat-block escalation (N=3). Keyed
+  // `law|tool|canonicalTarget`, tracked SEPARATELY from the steering budget
+  // (steeredKeys/steeringPerLaw) so advisory dedupe can never suppress it.
+  // Preserved across turn boundaries; reset only by an intervening compliant
+  // read or (for law 3) a verification-shaped command (./enforcement/escalation).
+  blockStrikes: Map<string, number>
+  /**
+   * Armed when an escalated key exceeds N: the next step boundary terminates
+   * the turn (boundary-gates.ts → applyLawEscalationTermination, consumed
+   * once). Cleared by the same compliant-read/verification reset that clears
+   * blockStrikes, and by resetForNewTurn as belt-and-braces.
+   */
+  turnTerminationArmed: boolean
 
   // Law 4: Call-graph tracking
   featuresWired: Set<string>
@@ -106,6 +140,10 @@ export interface EnforcementResult {
    *  just no longer sees a scary BLOCKED line for a self-healing retry
    *  (session-init grounding gate). */
   silent?: boolean
+  /** FID-2026-1001-003 step 4: the blocking result comes from an escalated
+   *  repeat (beyond N=3 identical blocks) — the boundary gate terminates the
+   *  turn. The block itself still stands. */
+  terminateTurn?: boolean
 }
 
 export interface FidValidationResult {

@@ -1,3 +1,5 @@
+import { parseProviderTokenLimitError } from '@savant-code/common/util/provider-token-limit-error'
+
 import { ECHO_CRITICAL_SENTINEL } from '../echo/protocol-summary'
 
 import type {
@@ -72,6 +74,8 @@ export class CompactionMessage_ {
  * Check if an error is a prompt-too-long error from any supported provider.
  */
 export function isPromptTooLongError(error: unknown): boolean {
+  if (parseProviderTokenLimitError(error)?.contextWindow !== undefined)
+    return true
   if (!error || typeof error !== 'object') return false
 
   const getString = (value: unknown): string | undefined => {

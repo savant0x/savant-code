@@ -1,5 +1,6 @@
 import { DEFAULT_SAVANT_CODE_MODEL_PROVIDER } from './constants'
 import { loadSettings, saveSettings } from './io'
+import { selectModelForProvider } from './model-selection'
 
 import type { AgentMode } from '../constants'
 import type { ModelProvider } from '../openrouter-models'
@@ -127,7 +128,8 @@ export const saveSavantFreeModelPreference = (model: string): void => {
  * saved yet — callers should fall back to the agent definition's model.
  */
 export const loadSavantCodeModelPreference = (): string | undefined => {
-  return loadSettings().savantCodeModelPreference
+  const settings = loadSettings()
+  return settings.modelSelection?.model ?? settings.savantCodeModelPreference
 }
 
 /**
@@ -135,10 +137,7 @@ export const loadSavantCodeModelPreference = (): string | undefined => {
  * in the CLI so the next launch defaults to it.
  */
 export const saveSavantCodeModelPreference = (model: string): void => {
-  saveSettings({
-    savantCodeModelPreference: model,
-    savantCodeModelAutoConfigured: false,
-  })
+  selectModelForProvider(model)
 }
 
 /**

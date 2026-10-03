@@ -16,6 +16,7 @@
  * Also checks for placeholder text ([pending], TODO, TBD).
  */
 
+import { findUnresolvedOutsideSectionSteps } from './fid-step-evasion'
 import { parseFidStatus } from './fid-verification-enforcement'
 
 import type { FidValidationResult } from './types'
@@ -59,12 +60,23 @@ const PLACEHOLDER_PATTERN = /\[pending\]|\bTODO\b|\bTBD\b|\[TBD\]/gi
  *   - [ ] 2. <desc> — blocked::<reason>
  *   - [ ] 3. <desc> — deferred::operator-approved <YYYY-MM-DD>
  *   - [ ] 4. <desc> — skipped::operator-approved <YYYY-MM-DD>
+ *
+ * FID-2026-1001-003 step 7 (anti-evasion): the section-scoped parse is
+ * defeatable by heading choice — an agent can move its step inventory under
+ * any other heading and reach `converged` with zero implementation. Two
+ * guards close it: (1) when the FID claims a closure status and carries NO
+ * `implementation_started: false` assertion, the whole document is scanned
+ * for NUMBERED step checkboxes outside the section (the numbered grammar
+ * keeps Risk-Level-style `- [ ] Critical` boxes out of scope, so legacy FIDs
+ * without a Step Status section are unaffected); (2) that assertion is the
+ * machine-readable no-implementation claim the gate verifies instead of
+ * inferring intent from section placement. Docs that assert
+ * `implementation_started: false` are declaring "these are plan boxes, not
+ * claims", which is exactly what unchecked boxes under a converged status
+ * must mean.
  */
 export function validateFidStepStatus(content: string): string[] {
   const errors: string[] = []
-  // `(?![^])` is the end-of-input lookahead — `\z` is not valid in JS regex.
-  const section = content.match(/^## Step Status[\s\S]*?(?=^## |(?![^]))/m)?.[0]
-  if (!section) return errors
 
   // One status truth: parseFidStatus accepts the metadata-bullet form the older
   // template used, and both call sites read through it (FID-2026-0928-002,
@@ -77,36 +89,52 @@ export function validateFidStepStatus(content: string): string[] {
   const approvalPattern = /operator-approved\s+\d{4}-\d{2}-\d{2}/
   const deferralPattern = /(?:deferred|skipped)::/
 
-  for (const line of section.split('\n')) {
-    const match = line.match(stepLinePattern)
-    if (!match) continue
-    const checked = match[1] === 'x' || match[1] === 'X'
-    const step = match[2].trim()
+  // `(?![^])` is the end-of-input lookahead — `\z` is not valid in JS regex.
+  const sectionMatch = content.match(/^## Step Status[\s\S]*?(?=^## |(?![^]))/m)
+  const section = sectionMatch?.[0]
 
-    if (checked) {
-      if (approvalPattern.test(step)) {
+  if (section) {
+    for (const line of section.split('\n')) {
+      const match = line.match(stepLinePattern)
+      if (!match) continue
+      const checked = match[1] === 'x' || match[1] === 'X'
+      const step = match[2].trim()
+
+      if (checked) {
+        if (approvalPattern.test(step)) {
+          errors.push(
+            `advisory: step "${step}" is marked implemented but carries an ` +
+              'operator-approved marker (orphan marker); remove the marker',
+          )
+        }
+        continue
+      }
+
+      if (deferralPattern.test(step) && !approvalPattern.test(step)) {
         errors.push(
-          `advisory: step "${step}" is marked implemented but carries an ` +
-            'operator-approved marker (orphan marker); remove the marker',
+          `step "${step}" is deferred/skipped without an ` +
+            'operator-approved <YYYY-MM-DD> marker — operator approval is ' +
+            'required',
         )
       }
-      continue
-    }
-
-    if (deferralPattern.test(step) && !approvalPattern.test(step)) {
-      errors.push(
-        `step "${step}" is deferred/skipped without an ` +
-          'operator-approved <YYYY-MM-DD> marker — operator approval is ' +
-          'required',
-      )
-    }
-    if (declaredClosed && !approvalPattern.test(step)) {
-      errors.push(
-        `step "${step}" is unresolved (no operator-approved marker) — ` +
-          `present it to the operator before the ${statusWord} transition`,
-      )
+      if (declaredClosed && !approvalPattern.test(step)) {
+        errors.push(
+          `step "${step}" is unresolved (no operator-approved marker) — ` +
+            `present it to the operator before the ${statusWord} transition`,
+        )
+      }
     }
   }
+
+  // FID-2026-1001-003 step 7: whole-document evasion scan lives in
+  // ./fid-step-evasion (extracted for the 300-line cap). Fenced code blocks
+  // are quotation, not plan claims — the scan strips them before matching.
+  if (declaredClosed) {
+    errors.push(
+      ...findUnresolvedOutsideSectionSteps(content, sectionMatch, statusWord),
+    )
+  }
+
   return errors
 }
 

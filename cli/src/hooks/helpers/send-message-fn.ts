@@ -136,9 +136,8 @@ export const createSendMessageBody = (
     let actualCredits: number | undefined
 
     // Execute SDK run with streaming handlers
-    // FID-2026-0915-001 (W5): hoisted — the catch path needs the model id
-    // for the 429 fallback hint (try-scoped consts are not visible there).
     let effectiveModelId: string | undefined
+    let effectiveProviderId: string | undefined
     try {
       const agentDefinitions = loadAgentDefinitions()
       const sidebarCallbacks = createSidebarEventCallbacks({
@@ -182,9 +181,17 @@ export const createSendMessageBody = (
         onStateSnapshot: (snapshot) => runLifecycle.onStateSnapshot(snapshot),
       })
       effectiveModelId = resolvedModelId
+      effectiveProviderId =
+        typeof runConfig.agent === 'string'
+          ? undefined
+          : runConfig.agent.modelRoute?.providerId
 
       startRunMonitors({
         heartbeatIntervalRef,
+        isCurrentRun: () =>
+          abortControllerRef.current === abortController &&
+          !abortController.signal.aborted &&
+          runLifecycle.getRunChatIsCurrent(),
         getLatestRunStateSnapshot: runLifecycle.getLatestRunStateSnapshot,
         stalledWatcher,
         runConfig,
@@ -221,6 +228,7 @@ export const createSendMessageBody = (
         wasAbortedByUser: abortController.signal.aborted,
         hasReceivedContent: hasReceivedContentRef.current,
         effectiveModelId,
+        effectiveProviderId,
         setStreamStatus,
         setCanProcessQueue,
         updateChainInProgress,
@@ -244,6 +252,7 @@ export const createSendMessageBody = (
         persistFailureState: runLifecycle.persistFailureState,
         // FID-2026-0915-001 (W5): the model id keys the 429 fallback hint.
         effectiveModelId,
+        effectiveProviderId,
       })
     } finally {
       // Streaming cleanup (run-completed flag, canonical reset, timers,
@@ -251,6 +260,7 @@ export const createSendMessageBody = (
       // (checkpoint close + provider/aborter release).
       finalizeRunStreaming({
         streamRefs,
+        isCurrentRun: abortControllerRef.current === abortController,
         abortController,
         heartbeatIntervalRef,
         stalledWatcher,

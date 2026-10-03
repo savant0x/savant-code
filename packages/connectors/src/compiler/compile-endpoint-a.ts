@@ -15,7 +15,6 @@ import {
   zEndpointPath,
 } from '../core/mod.ts'
 
-
 import type {
   EndpointPhaseAArgs,
   EndpointPhaseAResult,
@@ -225,9 +224,7 @@ export async function compileEndpointPhaseA(
     SC.fnAbiSince,
   )
   const credentialsSchema = toJsonSchema(
-    def.auth?.credentials ??
-      provider.auth?.credentials ??
-      zDefaultCredentials,
+    def.auth?.credentials ?? provider.auth?.credentials ?? zDefaultCredentials,
     `${where}: auth.credentials`,
   )
 
@@ -282,5 +279,3 @@ export async function compileEndpointPhaseA(
     fromErrorRef,
   }
 }
-
-

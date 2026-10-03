@@ -64,6 +64,7 @@ export function buildCloseOutput({
   globalMaxResults,
   maxOutputStringLength,
   stderrBuf,
+  emptyResultText,
 }: {
   fileGroups: Map<string, string[]>
   filesLimitedByMaxResults: Set<string>
@@ -73,6 +74,9 @@ export function buildCloseOutput({
   globalMaxResults: number
   maxOutputStringLength: number
   stderrBuf: string
+  /** FID-2026-1002-001 step 4: what an EMPTY result renders as — an
+   *  anomalous run must never render a clean "Found 0 matches". */
+  emptyResultText?: string
 }): { stdout: string; stderr?: string } {
   const limitedLines: string[] = []
   const truncatedFiles: string[] = []
@@ -107,7 +111,10 @@ export function buildCloseOutput({
 
   // Truncate output to prevent memory issues
   const truncatedStdout = truncateOutput(
-    formatCodeSearchOutput(rawOutput, { matchCount: matchesGlobal }),
+    formatCodeSearchOutput(rawOutput, {
+      matchCount: matchesGlobal,
+      emptyResultText,
+    }),
     maxOutputStringLength,
   )
 

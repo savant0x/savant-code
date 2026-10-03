@@ -1,23 +1,27 @@
-import fs from 'fs'
-
 import { getEffectiveProviderRegistry } from '@savant-code/common/providers/custom-providers'
 import {
   deriveSetupConfig,
   type ProviderSetupInfo,
 } from '@savant-code/common/providers/derive'
+import { captureModelRoute } from '@savant-code/common/providers/model-route'
+import { seedProviderAccountRevision } from '@savant-code/common/providers/provider-account-revisions'
+import { hasProviderCredentials } from '@savant-code/common/providers/readiness'
 import { PROVIDER_REGISTRY } from '@savant-code/common/providers/registry'
 import { resetOpenRouterApiKeyCache } from '@savant-code/sdk'
 
-import { getConfigDir, getCredentialsPath } from './auth'
 import {
   readCredentialsRecord,
   readStoredProviderKeys,
 } from './provider-credentials'
 import {
+  persistProviderKey,
+  synchronizeAccountRevision,
+} from './provider-key-persistence'
+import {
   getActiveProvider,
   loadActiveProvider,
-  saveActiveProvider,
-  saveSavantCodeModelProviderPreference,
+  saveModelSelection,
+  loadSavantCodeModelPreference,
 } from './settings'
 
 export const PROVIDER_SETUP_DEFAULT = 'openrouter' as const
@@ -81,10 +85,8 @@ export function applyPersistedProviderApiKeys(): void {
   const storedKeys = readStoredProviderKeys()
 
   for (const config of Object.values(getEffectiveProviderSetupConfig())) {
-    if (process.env[config.envVar]?.trim()) continue
-
     const storedKey = storedKeys[config.envVar]
-    if (storedKey) {
+    if (storedKey && !process.env[config.envVar]?.trim()) {
       process.env[config.envVar] = storedKey
     }
 
@@ -97,6 +99,14 @@ export function applyPersistedProviderApiKeys(): void {
       if (storedExtra) {
         process.env[extra.envVar] = storedExtra
       }
+    }
+  }
+  const revisions = readCredentialsRecord().providerAccountRevisions
+  if (revisions && typeof revisions === 'object' && !Array.isArray(revisions)) {
+    for (const config of Object.values(getEffectiveProviderRegistry())) {
+      const revision = revisions[config.id]
+      if (typeof revision === 'string' && /^[0-9a-f-]{36}$/.test(revision))
+        seedProviderAccountRevision(config, revision)
     }
   }
 
@@ -174,6 +184,8 @@ export function saveProviderApiKey(provider: string, apiKey: string): void {
   if (!hasShellKey) {
     process.env[config.envVar] = trimmedKey
   }
+  if (process.env[config.envVar] === trimmedKey)
+    synchronizeAccountRevision(provider)
 
   activateProviderRouting(provider, config)
 
@@ -215,33 +227,13 @@ export function saveProviderApiKeyExtra(
   if (!process.env[extraEnvVar]?.trim()) {
     process.env[extraEnvVar] = trimmed
   }
-}
-
-/** Write one credential into the shared 0600 credentials store by env-var name. */
-function persistProviderKey(envVar: string, value: string): void {
-  const credentialsPath = getCredentialsPath()
-  const existing = readCredentialsRecord()
-  const existingKeys = readStoredProviderKeys()
-
-  if (!fs.existsSync(getConfigDir())) {
-    fs.mkdirSync(getConfigDir(), { recursive: true })
-  }
-
-  const updated = {
-    ...existing,
-    providerApiKeys: {
-      ...existingKeys,
-      [envVar]: value,
-    },
-  }
-  fs.writeFileSync(credentialsPath, JSON.stringify(updated, null, 2))
-
-  // Restrict permissions where the platform supports POSIX modes. Windows
-  // ignores this mode, but the file remains inside the user config directory.
-  try {
-    fs.chmodSync(credentialsPath, 0o600)
-  } catch {
-    // Best effort only; do not make a valid Windows setup fail.
+  if (process.env[extraEnvVar] === trimmed) {
+    synchronizeAccountRevision(provider)
+    if (getActiveProvider() === provider)
+      saveModelSelection(
+        loadSavantCodeModelPreference() ?? 'openrouter/free',
+        captureModelRoute(provider),
+      )
   }
 }
 
@@ -272,8 +264,10 @@ function activateProviderRouting(
     // for gateway providers — only the local (Ollama) path keeps them.
     // Step 9 (FID-2026-0910-004 D8): the effective-setup lookup above
     // validated the id; no cast needed at the settings seam.
-    saveSavantCodeModelProviderPreference(provider)
-    saveActiveProvider(provider)
+    saveModelSelection(
+      loadSavantCodeModelPreference() ?? 'openrouter/free',
+      captureModelRoute(provider),
+    )
   }
 }
 
@@ -291,7 +285,11 @@ export function getConfiguredProviderNames(): string[] {
   const storedKeys = readStoredProviderKeys()
   const setupConfig = getEffectiveProviderSetupConfig()
   return Object.keys(setupConfig).filter((provider) => {
-    const envVar = setupConfig[provider].envVar
-    return Boolean(process.env[envVar]?.trim() || storedKeys[envVar])
+    return hasProviderCredentials(getEffectiveProviderRegistry()[provider], {
+      ...storedKeys,
+      ...Object.fromEntries(
+        Object.entries(process.env).filter(([, value]) => value?.trim()),
+      ),
+    })
   })
 }

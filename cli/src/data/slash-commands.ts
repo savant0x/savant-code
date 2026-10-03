@@ -101,6 +101,11 @@ const ALL_SLASH_COMMANDS: SlashCommand[] = [
   ...MODE_COMMANDS,
   ...COMPACT_COMMANDS,
   ...FEATURE_SLASH_COMMANDS,
+  {
+    id: 'notifications',
+    label: 'notifications',
+    description: 'Review unread provider notices and dismiss warnings',
+  },
 ]
 
 // FID-2026-0901-006 P21 command audit: in direct-provider mode there is no

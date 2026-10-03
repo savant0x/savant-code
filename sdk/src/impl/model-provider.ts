@@ -16,9 +16,15 @@ import {
   isOpenAIProviderModel,
 } from '@savant-code/common/constants/chatgpt-oauth'
 import { getEffectiveProviderRegistry } from '@savant-code/common/providers/custom-providers'
+import {
+  resolveModelRoute,
+  routeMatchesEnvironmentEndpoint,
+} from '@savant-code/common/providers/model-route'
 
 import { getValidChatGptOAuthCredentials } from '../credentials'
+import { applyModelRequestBudget } from './model-provider/apply-request-budget'
 import { createDefaultInferenceModel } from './model-provider/default-inference'
+import { resolveExplicitModelRoute } from './model-provider/explicit-route'
 import {
   createOpenAIOAuthModel,
   createProviderModel,
@@ -28,10 +34,15 @@ import {
   isChatGptOAuthRateLimited,
   resetChatGptOAuthRateLimit,
 } from './model-provider/oauth-rate-limit'
-import { resolveOpenRouterApiKey } from './openrouter-key-resolver'
+import {
+  buildMissingKeyError,
+  getActiveProviderId,
+  resolveActiveProviderKey,
+  resolveExtraCredentials,
+  resolveProviderKey,
+} from './model-provider/provider-credentials'
 
 import type { ModelRequestParams, ModelResult } from './model-provider/types'
-import type { ProviderConfig } from '@savant-code/common/providers/types'
 
 export type { ModelRequestParams, ModelResult } from './model-provider/types'
 export {
@@ -54,12 +65,20 @@ export {
 export async function getModelForRequest(
   params: ModelRequestParams,
 ): Promise<ModelResult> {
+  return applyModelRequestBudget(await resolveModelForRequest(params), params)
+}
+
+async function resolveModelForRequest(
+  params: ModelRequestParams,
+): Promise<ModelResult> {
   void resetChatGptOAuthRateLimit
   // FID-2026-0929-005: the caller-supplied `apiKey` (the deleted backend
   // identity) is no longer read. Authorization comes from the registry / the
   // active provider's own credential chain.
   void params
   const { model, skipChatGptOAuth } = params
+  if (params.modelRoute) return resolveExplicitModelRoute(params)
+  resolveModelRoute(model)
 
   // Check if we should use ChatGPT OAuth direct
   // Only attempt for allowlisted models; non-allowlisted models silently fall through.
@@ -119,10 +138,37 @@ export async function getModelForRequest(
   // follows INFERENCE_BASE_URL (set from the active provider's registry entry
   // at startup by the CLI / ollama-onboarding).
   const activeProviderId = getActiveProviderId()
-  const activeProviderKey = await resolveActiveProviderKey(activeProviderId)
   const activeProviderConfig = activeProviderId
     ? getEffectiveProviderRegistry()[activeProviderId]
     : undefined
+  // FID-2026-1003-006: a custom INFERENCE_BASE_URL endpoint — set, and either
+  // unnamed by the registry or different from the active provider's registry
+  // base — owns its own credential. The active provider's key chain is never
+  // resolved for such a request (no master-key network exchange, no
+  // fail-closed throw on a missing provider key), and its key is never sent
+  // to the operator's own endpoint: INFERENCE_API_KEY is the only
+  // authorizing secret (FID-2026-0929-005 custom-endpoint flow; D1 "never
+  // invoke an unrelated key or endpoint"). Local-kind actives are always
+  // consistent — their routes follow INFERENCE_BASE_URL by construction — so
+  // they keep the legacy flow below.
+  if (
+    process.env.INFERENCE_BASE_URL?.trim() &&
+    (activeProviderConfig === undefined ||
+      !routeMatchesEnvironmentEndpoint(activeProviderConfig))
+  ) {
+    return {
+      model: await createDefaultInferenceModel('', model, {
+        endpointOwnsAuth: true,
+        providerId: activeProviderId,
+        ...(activeProviderConfig !== undefined &&
+        activeProviderConfig.protocolMap === undefined
+          ? { protocol: resolveEntryProtocol(activeProviderConfig) }
+          : {}),
+      }),
+      isChatGptOAuth: false,
+    }
+  }
+  const activeProviderKey = await resolveActiveProviderKey(activeProviderId)
   if (
     activeProviderConfig !== undefined &&
     activeProviderConfig.kind !== 'local' &&
@@ -131,32 +177,28 @@ export async function getModelForRequest(
     throw new Error(buildMissingKeyError(activeProviderConfig))
   }
   return {
-    model: await createDefaultInferenceModel(
-      activeProviderKey ?? '',
-      model,
-      {
-        // Only a key resolved from the active provider is authoritative; the
-        // caller-supplied fallback keeps the legacy env precedence inside the
-        // factory (custom-endpoint INFERENCE_API_KEY flow preserved).
-        preferApiKey: activeProviderKey !== undefined,
-        // Backend-mode fallback retains its historical OpenRouter-compatible
-        // extensions. Direct non-OpenRouter providers, including Nous, must
-        // not receive OpenRouter attribution or structured-output assumptions.
-        providerId: activeProviderId,
-        // FID-2026-1001-001: dispatch on the ACTIVE provider's resolved wire
-        // protocol — a single-protocol Responses entry (api.openai.com) must
-        // not receive chat/completions on the bare-slug path. Undefined when
-        // no active registry gateway is resolved (legacy env flow untouched).
-        // Gated on protocolMap === undefined: bare ids have no map entry, so
-        // a map-dispatched active provider (resolveProtocol throws for them)
-        // keeps its legacy chat-format bare-slug construction byte-identical
-        // (FID Loop-2 promise; guard discovered during verification).
-        ...(activeProviderConfig !== undefined &&
-        activeProviderConfig.protocolMap === undefined
-          ? { protocol: resolveEntryProtocol(activeProviderConfig) }
-          : {}),
-      },
-    ),
+    model: await createDefaultInferenceModel(activeProviderKey ?? '', model, {
+      // Only a key resolved from the active provider is authoritative; the
+      // caller-supplied fallback keeps the legacy env precedence inside the
+      // factory (custom-endpoint INFERENCE_API_KEY flow preserved).
+      preferApiKey: activeProviderKey !== undefined,
+      // Backend-mode fallback retains its historical OpenRouter-compatible
+      // extensions. Direct non-OpenRouter providers, including Nous, must
+      // not receive OpenRouter attribution or structured-output assumptions.
+      providerId: activeProviderId,
+      // FID-2026-1001-001: dispatch on the ACTIVE provider's resolved wire
+      // protocol — a single-protocol Responses entry (api.openai.com) must
+      // not receive chat/completions on the bare-slug path. Undefined when
+      // no active registry gateway is resolved (legacy env flow untouched).
+      // Gated on protocolMap === undefined: bare ids have no map entry, so
+      // a map-dispatched active provider (resolveProtocol throws for them)
+      // keeps its legacy chat-format bare-slug construction byte-identical
+      // (FID Loop-2 promise; guard discovered during verification).
+      ...(activeProviderConfig !== undefined &&
+      activeProviderConfig.protocolMap === undefined
+        ? { protocol: resolveEntryProtocol(activeProviderConfig) }
+        : {}),
+    }),
     isChatGptOAuth: false,
   }
 }
@@ -171,70 +213,6 @@ export async function getModelForRequest(
  * explicitly active gateway is checked by the caller and fails closed when its
  * own credential is absent; custom/unknown routing can use the caller key.
  */
-function getActiveProviderId(): string | undefined {
-  const value = process.env.DIRECT_PROVIDER?.trim().toLowerCase()
-  return value || undefined
-}
-
-async function resolveActiveProviderKey(
-  activeProviderId = getActiveProviderId(),
-): Promise<string | undefined> {
-  if (!activeProviderId) return undefined
-  // The env var is arbitrary user input — the effective registry is a plain
-  // string record, so an unknown provider id yields undefined instead of a
-  // type error. Custom providers resolve identically (Step 4).
-  const config = getEffectiveProviderRegistry()[activeProviderId]
-  if (!config || config.kind === 'local') return undefined
-  return resolveProviderKey(config)
-}
-
-/**
- * Resolve the API key for a registry provider. Providers with
- * `credentials.resolver: 'openrouter'` use the master-key exchange chain
- * (OR_MASTER_KEY → OPENROUTER_API_KEY → INFERENCE_API_KEY); all others read
- * their primary env var directly.
- */
-async function resolveProviderKey(
-  config: ProviderConfig,
-): Promise<string | undefined> {
-  if (config.credentials.resolver === 'openrouter') {
-    return resolveOpenRouterApiKey()
-  }
-  const envVar = config.credentials.envVar
-  return envVar === undefined ? undefined : process.env[envVar]
-}
-
-/**
- * Read a provider's extra credentials (e.g. CLOUDFLARE_ACCOUNT_ID) from the
- * environment, fail-closed on any missing value, and return them keyed by env
- * var for base-URL placeholder resolution.
- */
-function resolveExtraCredentials(
-  config: ProviderConfig,
-): Record<string, string> {
-  const extra: Record<string, string> = {}
-  for (const cred of config.credentials.extra ?? []) {
-    const value = process.env[cred.envVar]
-    if (!value) {
-      throw new Error(
-        cred.missingMessage ??
-          `${config.label} ${cred.label} not set. Set ${cred.envVar} environment variable.`,
-      )
-    }
-    extra[cred.envVar] = value
-  }
-  return extra
-}
-
-/** Missing-key error, templated from the registry (or an explicit override). */
-function buildMissingKeyError(config: ProviderConfig): string {
-  const envVar = config.credentials.envVar
-  return (
-    config.credentials.missingKeyMessage ??
-    `${config.label} API key not set. Set ${envVar} environment variable.`
-  )
-}
-
 /**
  * Check if a model ID targets direct OpenRouter (prefix: `openrouter/`).
  * Unlike gateway prefixes, `openrouter/` is part of the real OpenRouter slug

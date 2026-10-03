@@ -77,7 +77,8 @@ export async function validateAgents(
     logger,
   })
 
-  const validationErrors: DynamicAgentValidationError[] = result.validationErrors
+  const validationErrors: DynamicAgentValidationError[] =
+    result.validationErrors
 
   // Transform validation errors to the SDK format
   const transformedErrors = validationErrors.map((error) => ({

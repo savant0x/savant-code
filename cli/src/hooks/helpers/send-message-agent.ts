@@ -1,4 +1,7 @@
-import { resolveActiveModel } from '../../state/savant-free-model-store'
+import {
+  resolveActiveModel,
+  resolveActiveModelRoute,
+} from '../../state/savant-free-model-store'
 import { getAgentIdForMode } from '../../utils/savant-free-agent-selection'
 
 import type { AgentMode } from '../../utils/constants'
@@ -39,15 +42,11 @@ export const applySavantCodeModelOverride = (
 
   if (!agentDef) return agent
 
-  // Only override if the model is actually different
-  if (agentDef.model !== modelOverride) {
-    return {
-      ...agentDef,
-      model: modelOverride,
-    }
+  return {
+    ...agentDef,
+    model: modelOverride,
+    modelRoute: resolveActiveModelRoute(),
   }
-
-  return agent
 }
 
 // Respect bash context, but avoid sending empty prompts when only images are attached.

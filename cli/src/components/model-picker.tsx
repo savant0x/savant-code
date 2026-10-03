@@ -249,7 +249,7 @@ export const ModelPicker: React.FC<ModelPickerProps> = ({
           }
           return (
             <ModelPickerModelRow
-              key={item.model.id}
+              key={`${item.provider}:${item.model.id}`}
               item={item}
               isSelected={isSelected}
               onCommit={commit}

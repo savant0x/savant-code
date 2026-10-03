@@ -1,5 +1,9 @@
 import { assignClustersToNodes, computeClusters } from './clusters'
-import { buildAllEdges } from './extract'
+import { buildEdgesFromTokens, loadTokensByFile } from './edges-from-tokens'
+import {
+  extractExtendsRelations,
+  extractRelativeImportSpecifiers,
+} from './extract'
 import { defaultFileHasher } from './hasher'
 import { NODE_TYPES } from './types'
 import {
@@ -19,20 +23,24 @@ import type { Database } from 'bun:sqlite'
  *
  * In-process, incremental, deterministic:
  * 1. Enumerate project files honoring ignore rules (project-file-tree).
- * 2. Hash-compare against the `files` table — unchanged files are skipped.
+ * 2. Stat-prefilter + hash-compare against the `files` table — only new or
+ *    changed files are read, hashed, or parsed (FID-2026-1002-006).
  * 3. Delete rows for files no longer on disk (FK cascade prunes nodes/edges).
  * 4. Re-parse only changed/new files via code-map (`parseFile`), building
- *    symbol nodes.
- * 5. Rebuild the corpus edge set (CALLS/IMPORTS/EXTENDS) from parse output +
- *    raw source — deterministic "graph assembly" over the indexed snapshot.
+ *    symbol nodes, and persist their import/extend tokens.
+ * 5. Rebuild the corpus edge set (CALLS/IMPORTS/EXTENDS) ENTIRELY from
+ *    persisted per-file tokens, resolving against the current index state —
+ *    no source reads for unchanged files (FID-2026-1002-006).
  * 6. Run the Louvain pass and write cluster ids back to nodes.
  *
  * The parse function is injectable so tests can stub tree-sitter; the default
- * uses code-map's tree-sitter layer. Imports/extends still come from raw
- * source so the engine works even when parsing is unavailable.
+ * uses code-map's tree-sitter layer. Token extraction (imports/extends) uses
+ * the same regex extractors as before — only the delivery mechanism for
+ * unchanged files moved from re-read + re-regex to persisted rows.
  *
  * Steps 1–4 live in `update-scan.ts` (`scanIndexState`); the DB-write phases
- * (upsert, edges, clustering) remain here (FID-2026-0819-005 Loop 127).
+ * (upsert, tokens, edges, clustering) remain here (FID-2026-0819-005 Loop
+ * 127).
  */
 
 export interface UpdateGraphParams {
@@ -46,11 +54,21 @@ export interface UpdateGraphParams {
   maxFileBytes?: number
 }
 
+/** True when the database predates the v2 stat columns (legacy row set). */
+export function needsStatBackfill(db: Database): boolean {
+  const rows = db
+    .query('SELECT COUNT(*) AS c, SUM(mtime_ms IS NULL) AS nulls FROM files')
+    .get() as { c: number; nulls: number | null }
+  return rows.c > 0 && rows.nulls === rows.c
+}
+
 /**
  * Run an incremental update pass over the project.
  *
  * When `fullRebuild` is true (used by `/graph refresh --full` and by the first
- * pass on an empty database), every file is treated as changed.
+ * pass on an empty database), every file is treated as changed. A legacy v1
+ * database (rows with no stat baseline) backfills with one full pass
+ * automatically so the token tables populate.
  */
 export async function updateKnowledgeGraph(
   params: UpdateGraphParams & { fullRebuild?: boolean },
@@ -68,30 +86,81 @@ export async function updateKnowledgeGraph(
   const start = Date.now()
   const fsImpl = injectedFs ?? nodeFsAdapter
 
-  // Scan phase: enumerate, stale-delete, hash-compare, parse (steps 1–4).
-  const { filePaths, sources, hashByPath, parsedFiles, existingByPath, stats } =
-    await scanIndexState({
-      projectRoot,
-      db,
-      fsImpl,
-      hasher,
-      parseFile,
-      maxFileBytes,
-      fullRebuild,
-    })
+  // FID-2026-1002-006: a legacy v1 row set (no stat baseline) cannot use the
+  // stat pre-filter and must populate the token tables — force one full pass.
+  const effectiveFullRebuild = fullRebuild || needsStatBackfill(db)
 
-  // 4b. Upsert file rows + nodes + call tokens for every changed/new file.
-  // Prune the old subtree first (single DELETE; FK cascade removes stale
-  // nodes/edges/file_calls).
+  // Scan phase: enumerate, stale-delete, stat-prefiltered read + hash-compare,
+  // parse (steps 1–4). Only changed/new files are read or parsed.
+  const scan = await scanIndexState({
+    projectRoot,
+    db,
+    fsImpl,
+    hasher,
+    parseFile,
+    maxFileBytes,
+    fullRebuild: effectiveFullRebuild,
+  })
+  const { stats } = scan
+
+  await upsertChangedFiles({ db, scan })
+  await rebuildEdges({ db })
+
+  // 6. Louvain clustering + cluster_id write-back.
+  const clusterAssignments = computeClusters({ db })
+  assignClustersToNodes({ db, assignments: clusterAssignments })
+
+  stats.nodeCount = (
+    db.query('SELECT COUNT(*) AS c FROM nodes').get() as { c: number }
+  ).c
+  stats.edgeCount = (
+    db.query('SELECT COUNT(*) AS c FROM edges').get() as { c: number }
+  ).c
+  // clusterCount must be the number of DISTINCT Louvain communities, not the
+  // number of assigned files — `clusterAssignments.size` is the file count
+  // (every file maps to exactly one cluster id), which grossly overstates the
+  // domain count on real repos (e.g. 1975 reported vs 412 actual).
+  stats.clusterCount = (
+    db
+      .query(
+        'SELECT COUNT(DISTINCT cluster_id) AS c FROM nodes WHERE cluster_id IS NOT NULL',
+      )
+      .get() as { c: number }
+  ).c
+  stats.durationMs = Date.now() - start
+
+  return stats
+}
+
+/**
+ * Step 4b: upsert file rows (with the v2 stat baseline) + nodes + call/
+ * import/extend tokens for every changed/new file. Prune the old subtree
+ * first (single DELETE; FK cascade removes stale
+ * nodes/edges/file_calls/file_imports/file_extends).
+ */
+async function upsertChangedFiles(params: {
+  db: Database
+  scan: Awaited<ReturnType<typeof scanIndexState>>
+}): Promise<void> {
+  const { db, scan } = params
+  const { filePaths, sources, hashByPath, parsedFiles, existingByPath } = scan
+  const effectiveFullRebuild = scan.wasFullRebuild
+
   const pruneStmt = db.prepare('DELETE FROM files WHERE path = ?')
   const insertFileStmt = db.prepare(
-    'INSERT INTO files (path, hash) VALUES (?, ?)',
+    'INSERT INTO files (path, hash, mtime_ms, bytes) VALUES (?, ?, ?, ?)',
   )
   const insertNodeStmt = db.prepare(
     'INSERT INTO nodes (file_id, type, name) VALUES (?, ?, ?)',
   )
   const insertCallStmt = db.prepare(
     'INSERT INTO file_calls (file_id, token) VALUES (?, ?)',
+  )
+  const insertImportStmt = db.prepare(
+    'INSERT INTO file_imports (file_id, token) VALUES (?, ?)',
+  )
+  const insertExtendsStmt = db.prepare(
+    'INSERT INTO file_extends (file_id, parent) VALUES (?, ?)',
   )
 
   db.exec('BEGIN')
@@ -102,14 +171,18 @@ export async function updateKnowledgeGraph(
       const existing = existingByPath.get(filePath)
       // FID-2026-0815-009 (F-12): reuse the scan-loop hash (no re-hash).
       const hash = hashByPath.get(filePath) as string
-      if (!fullRebuild && existing && existing.hash === hash) {
+      if (!effectiveFullRebuild && existing && existing.hash === hash) {
         continue // unchanged — already counted
       }
 
       pruneStmt.run(filePath)
-      const insertResult = insertFileStmt.run(filePath, hash) as {
-        lastInsertRowid: number
-      }
+      const stat = scan.statByPath.get(filePath)
+      const insertResult = insertFileStmt.run(
+        filePath,
+        hash,
+        stat?.mtimeMs ?? null,
+        stat?.size ?? null,
+      ) as { lastInsertRowid: number }
       const fileId = Number(insertResult.lastInsertRowid)
 
       const parsed = parsedFiles.get(filePath)
@@ -121,6 +194,15 @@ export async function updateKnowledgeGraph(
           insertCallStmt.run(fileId, call)
         }
       }
+      // FID-2026-1002-006: persist the import/extend tokens for every
+      // changed file — the raw-source extractors run ONCE per content
+      // change, never again until the content changes.
+      for (const token of extractRelativeImportSpecifiers(source)) {
+        insertImportStmt.run(fileId, token)
+      }
+      for (const { parent } of extractExtendsRelations(source)) {
+        insertExtendsStmt.run(fileId, parent)
+      }
       // Anchor node so files with no symbols still appear in node queries.
       insertNodeStmt.run(fileId, NODE_TYPES.FILE, filePath)
     }
@@ -129,8 +211,13 @@ export async function updateKnowledgeGraph(
     db.exec('ROLLBACK')
     throw error
   }
+}
 
-  // 5. Rebuild the full corpus edge set from the fresh index state.
+/**
+ * Step 5: rebuild the full corpus edge set ENTIRELY from persisted tokens +
+ * DB-resident knowledge (FID-2026-1002-006): no source reads.
+ */
+async function rebuildEdges({ db }: { db: Database }): Promise<void> {
   const fileRows = db.query('SELECT id, path FROM files').all() as Array<{
     id: number
     path: string
@@ -157,29 +244,12 @@ export async function updateKnowledgeGraph(
     list.sort((a, b) => a.length - b.length || (a < b ? -1 : a > b ? 1 : 0))
   }
 
-  // Call tokens from DB — the incremental invariant: the CALLS layer is
-  // rebuilt from persisted per-file calls (only changed files are re-parsed,
-  // so parsedFiles alone would silently drop edges for unchanged callers).
-  const callRows = db
-    .query('SELECT file_id, token FROM file_calls')
-    .all() as Array<{ file_id: number; token: string }>
-  const callsByFile = new Map<string, string[]>()
-  for (const row of callRows) {
-    const filePath = pathById.get(row.file_id)
-    if (!filePath) continue
-    const list = callsByFile.get(filePath) ?? []
-    list.push(row.token)
-    callsByFile.set(filePath, list)
-  }
-
-  const edges = buildAllEdges({
-    parsedFiles: new Map(
-      [...fileRows].map((row) => [
-        row.path,
-        { identifiers: [], calls: callsByFile.get(row.path) ?? [] },
-      ]),
-    ),
-    sources,
+  // Per-file structure tokens from DB — the incremental invariant now covers
+  // ALL THREE edge layers (FID-2026-1002-006).
+  const edges = buildEdgesFromTokens({
+    callsByFile: loadTokensByFile(db, 'file_calls', 'token', pathById),
+    importsByFile: loadTokensByFile(db, 'file_imports', 'token', pathById),
+    extendsByFile: loadTokensByFile(db, 'file_extends', 'parent', pathById),
     filePaths: currentFilePaths,
     symbolIndex: dbSymbolIndex,
   })
@@ -203,31 +273,6 @@ export async function updateKnowledgeGraph(
     db.exec('ROLLBACK')
     throw error
   }
-
-  // 6. Louvain clustering + cluster_id write-back.
-  const clusterAssignments = computeClusters({ db })
-  assignClustersToNodes({ db, assignments: clusterAssignments })
-
-  stats.nodeCount = (
-    db.query('SELECT COUNT(*) AS c FROM nodes').get() as { c: number }
-  ).c
-  stats.edgeCount = (
-    db.query('SELECT COUNT(*) AS c FROM edges').get() as { c: number }
-  ).c
-  // clusterCount must be the number of DISTINCT Louvain communities, not the
-  // number of assigned files — `clusterAssignments.size` is the file count
-  // (every file maps to exactly one cluster id), which grossly overstates the
-  // domain count on real repos (e.g. 1975 reported vs 412 actual).
-  stats.clusterCount = (
-    db
-      .query(
-        'SELECT COUNT(DISTINCT cluster_id) AS c FROM nodes WHERE cluster_id IS NOT NULL',
-      )
-      .get() as { c: number }
-  ).c
-  stats.durationMs = Date.now() - start
-
-  return stats
 }
 
 /**

@@ -17,9 +17,7 @@
         "description": "AI-native web search and content extraction — neural and keyword search across the open web with built-in highlights, summaries, and structured output extraction. Exa indexes the web for embedding-based retrieval, so a query can describe the page you want in natural language instead of matching keywords.",
         "docsUrl": "https://exa.ai/docs",
         "homepageUrl": "https://exa.ai",
-        "categories": [
-          "web-search"
-        ]
+        "categories": ["web-search"]
       },
       "hash": "sha256:eeedadf0c95e6479e311bb45ef2cac29bc1025df450bdf94944a2f1d211be6da"
     },
@@ -33,9 +31,7 @@
         "description": "Web data for agents — turn any URL into clean markdown, HTML, links, images, or schema-shaped JSON; crawl a whole site as a durable job; batch-scrape a list of URLs; search the live web with optional per-result scraping; and run an autonomous agent that browses until it has the data you described. Anti-bot proxies escalate automatically at no extra cost, PDFs parse natively, and a cache serves recent pages back in a fraction of the time.",
         "docsUrl": "https://docs.firecrawl.dev/api-reference/v2-introduction",
         "homepageUrl": "https://firecrawl.dev",
-        "categories": [
-          "web-scraping"
-        ]
+        "categories": ["web-scraping"]
       },
       "hash": "sha256:0bd164eb4a8dee2218fce334f64a4b2cdeb3bd48fbb37d12ecac43510ad58786"
     },
@@ -49,9 +45,7 @@
         "description": "Zero-cost access to the live web — browser-rendered, never-cached web, news, and research-paper search, plus clean Markdown, HTML, or JSON extraction for up to 10 URLs per call with CSS-scoped selection and conditional 304 re-fetch.",
         "docsUrl": "https://docs.tinyfish.ai",
         "homepageUrl": "https://tinyfish.ai",
-        "categories": [
-          "web-search"
-        ]
+        "categories": ["web-search"]
       },
       "hash": "sha256:fa5a43bd6fa21687c413a7dad9fe71ef64b17adb1c0cb9fbaf5659d46ae99b3f"
     }
@@ -68,17 +62,13 @@
         "summary": "Fetch clean, LLM-ready content for a list of URLs.",
         "description": "Fetch clean, LLM-ready content for a list of URLs. Returns full page text, key highlights, LLM-generated summaries, and metadata for each URL — handles JavaScript-rendered pages, PDFs, and complex layouts. Supports subpage crawling ('subpages' + 'subpageTarget') and cache freshness control via 'maxAgeHours'. Use this when you already know the URLs; start from /search if you don't.",
         "docsUrl": "https://exa.ai/docs/reference/get-contents",
-        "categories": [
-          "web-scraping"
-        ]
+        "categories": ["web-scraping"]
       },
       "auth": {
         "inject": {
           "$fn": {
             "key": "sha256:0eda26be728d407c748b7f0294013a8f7b83047ba811d09ec66426b1f7aa8597",
-            "args": [
-              "x-api-key"
-            ]
+            "args": ["x-api-key"]
           }
         },
         "credentials": {
@@ -90,9 +80,7 @@
               "minLength": 1
             }
           },
-          "required": [
-            "apiKey"
-          ]
+          "required": ["apiKey"]
         }
       },
       "request": {
@@ -225,9 +213,7 @@
                 "maximum": 9007199254740991
               }
             },
-            "required": [
-              "urls"
-            ]
+            "required": ["urls"]
           }
         }
       },
@@ -281,17 +267,13 @@
         "summary": "Search the web with Exa's neural + keyword search.",
         "description": "Search the web with Exa's neural + keyword search. Finds pages by meaning rather than keyword overlap — phrase the query as a description of the page you are looking for. Supports search types ('auto', 'instant', 'fast', 'neural', 'deep-lite', 'deep', 'deep-reasoning'), categories ('company', 'people', 'research paper', 'news', 'personal site', 'financial report'), domain filters, published-date ranges, and inline contents extraction (text/highlights/summary). Optionally use 'outputSchema' to synthesize structured JSON output across multiple sources. Returns a list of result URLs with optional content.",
         "docsUrl": "https://exa.ai/docs/reference/search",
-        "categories": [
-          "web-search"
-        ]
+        "categories": ["web-search"]
       },
       "auth": {
         "inject": {
           "$fn": {
             "key": "sha256:0eda26be728d407c748b7f0294013a8f7b83047ba811d09ec66426b1f7aa8597",
-            "args": [
-              "x-api-key"
-            ]
+            "args": ["x-api-key"]
           }
         },
         "credentials": {
@@ -303,9 +285,7 @@
               "minLength": 1
             }
           },
-          "required": [
-            "apiKey"
-          ]
+          "required": ["apiKey"]
         }
       },
       "request": {
@@ -507,9 +487,7 @@
                 }
               }
             },
-            "required": [
-              "query"
-            ]
+            "required": ["query"]
           }
         },
         "toRequest": {
@@ -583,9 +561,7 @@
         "summary": "Read a batch scrape job's status and a chunk of its results.",
         "description": "Read a batch scrape job by id: its status, page counts, credits used, and a chunk of the scraped pages. Firecrawl caps a response at 10 MB, so a large batch returns its pages in chunks — the batch result carries the first chunk plus a `next` URL. Call this with the job `id` and the `skip` from that URL to pull the following chunk, repeating until `next` is absent. Free — reading a job consumes no credits; the batch itself was already billed. Jobs expire roughly 24 hours after they complete, which the response reports as `expiresAt`.",
         "docsUrl": "https://docs.firecrawl.dev/api-reference/endpoint/batch-scrape-get",
-        "categories": [
-          "web-scraping"
-        ]
+        "categories": ["web-scraping"]
       },
       "auth": {
         "inject": {
@@ -603,9 +579,7 @@
               "minLength": 1
             }
           },
-          "required": [
-            "apiKey"
-          ]
+          "required": ["apiKey"]
         }
       },
       "request": {
@@ -636,9 +610,7 @@
                 "description": "The batch scrape job id, returned as `id` by firecrawl#batch/scrape."
               }
             },
-            "required": [
-              "id"
-            ]
+            "required": ["id"]
           }
         }
       },
@@ -687,9 +659,7 @@
         "summary": "Read a crawl job's status and a chunk of its results.",
         "description": "Read a crawl job by id: its status, page counts, credits used, and a chunk of the crawled pages. Firecrawl caps a response at 10 MB, so a large crawl returns its pages in chunks — the crawl result carries the first chunk plus a `next` URL. Call this with the job `id` and the `skip` from that URL to pull the following chunk, repeating until `next` is absent. Free — reading a job consumes no credits; the crawl itself was already billed. Jobs expire roughly 24 hours after they complete, which the response reports as `expiresAt`.",
         "docsUrl": "https://docs.firecrawl.dev/api-reference/endpoint/crawl-get",
-        "categories": [
-          "web-scraping"
-        ]
+        "categories": ["web-scraping"]
       },
       "auth": {
         "inject": {
@@ -707,9 +677,7 @@
               "minLength": 1
             }
           },
-          "required": [
-            "apiKey"
-          ]
+          "required": ["apiKey"]
         }
       },
       "request": {
@@ -740,9 +708,7 @@
                 "description": "The crawl job id, returned as `id` by firecrawl#crawl."
               }
             },
-            "required": [
-              "id"
-            ]
+            "required": ["id"]
           }
         }
       },
@@ -791,9 +757,7 @@
         "summary": "List a website's URLs, fast, without scraping content.",
         "description": "Give a domain and get back its URLs without scraping any page content — the cheap reconnaissance step before a crawl or batch scrape. `sitemap` selects whether the site's sitemap is combined with link discovery ('include'), used exclusively ('only'), or skipped; `search` orders the returned URLs by relevance to a term; `includeSubdomains` widens scope; `limit` caps the set. One flat charge per call however many URLs return. The response is links and titles only — no page content; pipe the URLs into a scrape or batch scrape when you need the text.",
         "docsUrl": "https://docs.firecrawl.dev/api-reference/endpoint/map",
-        "categories": [
-          "web-scraping"
-        ]
+        "categories": ["web-scraping"]
       },
       "auth": {
         "inject": {
@@ -811,9 +775,7 @@
               "minLength": 1
             }
           },
-          "required": [
-            "apiKey"
-          ]
+          "required": ["apiKey"]
         }
       },
       "request": {
@@ -838,11 +800,7 @@
               "sitemap": {
                 "description": "'include' (default) combines the sitemap with link discovery, 'only' trusts the sitemap alone, 'skip' ignores it.",
                 "type": "string",
-                "enum": [
-                  "skip",
-                  "include",
-                  "only"
-                ]
+                "enum": ["skip", "include", "only"]
               },
               "includeSubdomains": {
                 "description": "Include subdomains of the site (default true).",
@@ -894,9 +852,7 @@
                     "description": "The username associated with the request."
                   }
                 },
-                "required": [
-                  "username"
-                ]
+                "required": ["username"]
               },
               "threatProtection": {
                 "type": "object",
@@ -904,10 +860,7 @@
                   "mode": {
                     "description": "URL scanning mode for this request. 'normal' checks URLs against Google Web Risk and costs +2 credits per URL scanned.",
                     "type": "string",
-                    "enum": [
-                      "off",
-                      "normal"
-                    ]
+                    "enum": ["off", "normal"]
                   },
                   "riskScoreThreshold": {
                     "type": "integer",
@@ -937,17 +890,12 @@
                   },
                   "failurePolicy": {
                     "type": "string",
-                    "enum": [
-                      "open",
-                      "closed"
-                    ]
+                    "enum": ["open", "closed"]
                   }
                 }
               }
             },
-            "required": [
-              "url"
-            ]
+            "required": ["url"]
           }
         }
       },
@@ -1006,9 +954,7 @@
         "summary": "Scrape one URL into clean markdown, HTML, or schema-shaped JSON.",
         "description": "Turn a single URL into clean Markdown, HTML, links, images, a summary, or a screenshot — and add a `json` format object to LLM-extract structured data against your own schema or prompt. Anti-bot handling is included at no extra cost: `proxy` defaults to 'auto', which retries with enhanced proxies when the plain fetch is blocked, at the same price. `maxAge` reuses a recent cached copy for a much faster response; set 0 to force a live fetch. PDFs parse natively and bill per PDF page. Two costs to know before choosing this endpoint: a page answering 403 or 404 is still charged, because the browser and proxy were already spent — check `metadata.statusCode` before retrying a blocked URL — and the LLM formats (`json`, `question`, `highlights`, `audio`, `video`) each add four times the base page cost.",
         "docsUrl": "https://docs.firecrawl.dev/api-reference/endpoint/scrape",
-        "categories": [
-          "web-scraping"
-        ]
+        "categories": ["web-scraping"]
       },
       "auth": {
         "inject": {
@@ -1026,9 +972,7 @@
               "minLength": 1
             }
           },
-          "required": [
-            "apiKey"
-          ]
+          "required": ["apiKey"]
         }
       },
       "request": {
@@ -1085,9 +1029,7 @@
                           ]
                         }
                       },
-                      "required": [
-                        "type"
-                      ]
+                      "required": ["type"]
                     },
                     {
                       "type": "object",
@@ -1118,15 +1060,10 @@
                               "maximum": 9007199254740991
                             }
                           },
-                          "required": [
-                            "width",
-                            "height"
-                          ]
+                          "required": ["width", "height"]
                         }
                       },
-                      "required": [
-                        "type"
-                      ]
+                      "required": ["type"]
                     },
                     {
                       "type": "object",
@@ -1152,9 +1089,7 @@
                           "type": "boolean"
                         }
                       },
-                      "required": [
-                        "type"
-                      ]
+                      "required": ["type"]
                     },
                     {
                       "type": "object",
@@ -1167,10 +1102,7 @@
                           "type": "array",
                           "items": {
                             "type": "string",
-                            "enum": [
-                              "git-diff",
-                              "json"
-                            ]
+                            "enum": ["git-diff", "json"]
                           }
                         },
                         "schema": {
@@ -1194,9 +1126,7 @@
                           ]
                         }
                       },
-                      "required": [
-                        "type"
-                      ],
+                      "required": ["type"],
                       "description": "Requires 'markdown' to also be in the formats array."
                     },
                     {
@@ -1212,10 +1142,7 @@
                           "description": "Natural-language question about the page; the answer lands in the response's `answer` field."
                         }
                       },
-                      "required": [
-                        "type",
-                        "question"
-                      ]
+                      "required": ["type", "question"]
                     },
                     {
                       "type": "object",
@@ -1230,10 +1157,7 @@
                           "description": "Source-text selection request; the selection lands in the response's `highlights` field."
                         }
                       },
-                      "required": [
-                        "type",
-                        "query"
-                      ]
+                      "required": ["type", "query"]
                     }
                   ]
                 }
@@ -1321,11 +1245,7 @@
                         "mode": {
                           "description": "'fast': embedded text only. 'auto' (default): fast with OCR fallback. 'ocr': force OCR on every page.",
                           "type": "string",
-                          "enum": [
-                            "fast",
-                            "auto",
-                            "ocr"
-                          ]
+                          "enum": ["fast", "auto", "ocr"]
                         },
                         "maxPages": {
                           "description": "Cap the number of PDF pages parsed.",
@@ -1346,9 +1266,7 @@
                           "type": "boolean"
                         }
                       },
-                      "required": [
-                        "type"
-                      ]
+                      "required": ["type"]
                     }
                   ]
                 }
@@ -1374,9 +1292,7 @@
                           "type": "string"
                         }
                       },
-                      "required": [
-                        "type"
-                      ],
+                      "required": ["type"],
                       "description": "Wait for a duration OR for an element — provide one."
                     },
                     {
@@ -1408,15 +1324,10 @@
                               "maximum": 9007199254740991
                             }
                           },
-                          "required": [
-                            "width",
-                            "height"
-                          ]
+                          "required": ["width", "height"]
                         }
                       },
-                      "required": [
-                        "type"
-                      ]
+                      "required": ["type"]
                     },
                     {
                       "type": "object",
@@ -1432,10 +1343,7 @@
                           "type": "boolean"
                         }
                       },
-                      "required": [
-                        "type",
-                        "selector"
-                      ]
+                      "required": ["type", "selector"]
                     },
                     {
                       "type": "object",
@@ -1448,10 +1356,7 @@
                           "type": "string"
                         }
                       },
-                      "required": [
-                        "type",
-                        "text"
-                      ]
+                      "required": ["type", "text"]
                     },
                     {
                       "type": "object",
@@ -1464,10 +1369,7 @@
                           "type": "string"
                         }
                       },
-                      "required": [
-                        "type",
-                        "key"
-                      ]
+                      "required": ["type", "key"]
                     },
                     {
                       "type": "object",
@@ -1478,18 +1380,13 @@
                         },
                         "direction": {
                           "type": "string",
-                          "enum": [
-                            "up",
-                            "down"
-                          ]
+                          "enum": ["up", "down"]
                         },
                         "selector": {
                           "type": "string"
                         }
                       },
-                      "required": [
-                        "type"
-                      ]
+                      "required": ["type"]
                     },
                     {
                       "type": "object",
@@ -1499,9 +1396,7 @@
                           "const": "scrape"
                         }
                       },
-                      "required": [
-                        "type"
-                      ]
+                      "required": ["type"]
                     },
                     {
                       "type": "object",
@@ -1514,10 +1409,7 @@
                           "type": "string"
                         }
                       },
-                      "required": [
-                        "type",
-                        "script"
-                      ]
+                      "required": ["type", "script"]
                     },
                     {
                       "type": "object",
@@ -1549,9 +1441,7 @@
                           "type": "number"
                         }
                       },
-                      "required": [
-                        "type"
-                      ]
+                      "required": ["type"]
                     }
                   ]
                 }
@@ -1584,11 +1474,7 @@
               "proxy": {
                 "description": "'auto' (default) retries with enhanced anti-bot proxies when the basic fetch is blocked. Enhanced proxies carry NO surcharge.",
                 "type": "string",
-                "enum": [
-                  "basic",
-                  "enhanced",
-                  "auto"
-                ]
+                "enum": ["basic", "enhanced", "auto"]
               },
               "storeInCache": {
                 "description": "Store the page in the Firecrawl index and cache (default true). Sensitive options (actions, headers) force this false.",
@@ -1610,11 +1496,7 @@
                       "mode": {
                         "description": "Redaction strategy. 'accurate' (default) is model-only and optimized for precision, 'aggressive' increases recall with extra heuristics, 'fast' uses heuristics without the model call.",
                         "type": "string",
-                        "enum": [
-                          "accurate",
-                          "aggressive",
-                          "fast"
-                        ]
+                        "enum": ["accurate", "aggressive", "fast"]
                       },
                       "entities": {
                         "description": "Restrict redaction to these entity buckets. Omit to redact all.",
@@ -1634,11 +1516,7 @@
                       "replaceStyle": {
                         "description": "'tag' (default) replaces spans with placeholders like <EMAIL>, 'mask' replaces characters with *, 'remove' deletes the span.",
                         "type": "string",
-                        "enum": [
-                          "tag",
-                          "mask",
-                          "remove"
-                        ]
+                        "enum": ["tag", "mask", "remove"]
                       }
                     }
                   }
@@ -1657,9 +1535,7 @@
                     "type": "boolean"
                   }
                 },
-                "required": [
-                  "name"
-                ]
+                "required": ["name"]
               },
               "threatProtection": {
                 "type": "object",
@@ -1667,10 +1543,7 @@
                   "mode": {
                     "description": "URL scanning mode for this request. 'normal' checks URLs against Google Web Risk and costs +2 credits per URL scanned.",
                     "type": "string",
-                    "enum": [
-                      "off",
-                      "normal"
-                    ]
+                    "enum": ["off", "normal"]
                   },
                   "riskScoreThreshold": {
                     "type": "integer",
@@ -1700,10 +1573,7 @@
                   },
                   "failurePolicy": {
                     "type": "string",
-                    "enum": [
-                      "open",
-                      "closed"
-                    ]
+                    "enum": ["open", "closed"]
                   }
                 }
               },
@@ -1716,26 +1586,20 @@
                     "description": "The username associated with the request."
                   }
                 },
-                "required": [
-                  "username"
-                ]
+                "required": ["username"]
               },
               "url": {
                 "type": "string",
                 "format": "uri",
                 "description": "The URL to scrape.",
-                "examples": [
-                  "https://example.com/pricing"
-                ]
+                "examples": ["https://example.com/pricing"]
               },
               "zeroDataRetention": {
                 "description": "Persist nothing beyond the lifetime of the request (default false). Enterprise-gated; costs +1 credit per page and is incompatible with the screenshot format.",
                 "type": "boolean"
               }
             },
-            "required": [
-              "url"
-            ]
+            "required": ["url"]
           }
         }
       },
@@ -1931,9 +1795,7 @@
         "summary": "Search the web and optionally scrape every result.",
         "description": "Run a web search and get ranked results, optionally with each result's full page content in the same call. `sources` selects web, images, or news; `categories` narrows to developer, research, or PDF results; `includeDomains` / `excludeDomains`, `tbs`, `location` and `country` shape the result set. `limit` is required and caps the results — search bills 2 credits per 10 results, rounded up, so 11 results cost 4. Attach `scrapeOptions` to scrape each result in the same call; that adds the full per-page scrape cost for every result returned, including the LLM format surcharges, so it is much more expensive than the search alone.",
         "docsUrl": "https://docs.firecrawl.dev/api-reference/endpoint/search",
-        "categories": [
-          "web-search"
-        ]
+        "categories": ["web-search"]
       },
       "auth": {
         "inject": {
@@ -1951,9 +1813,7 @@
               "minLength": 1
             }
           },
-          "required": [
-            "apiKey"
-          ]
+          "required": ["apiKey"]
         }
       },
       "request": {
@@ -1970,9 +1830,7 @@
                 "type": "string",
                 "maxLength": 500,
                 "description": "The search query.",
-                "examples": [
-                  "latest temporal workflow best practices"
-                ]
+                "examples": ["latest temporal workflow best practices"]
               },
               "limit": {
                 "description": "Maximum results to return, per source type when several sources are requested (vendor default 10). Search bills 2 credits per 10 results, rounded up, so 11 results cost 4.",
@@ -1987,11 +1845,7 @@
                   "anyOf": [
                     {
                       "type": "string",
-                      "enum": [
-                        "web",
-                        "images",
-                        "news"
-                      ]
+                      "enum": ["web", "images", "news"]
                     },
                     {
                       "type": "object",
@@ -2008,9 +1862,7 @@
                           "type": "string"
                         }
                       },
-                      "required": [
-                        "type"
-                      ]
+                      "required": ["type"]
                     },
                     {
                       "type": "object",
@@ -2020,9 +1872,7 @@
                           "const": "images"
                         }
                       },
-                      "required": [
-                        "type"
-                      ]
+                      "required": ["type"]
                     },
                     {
                       "type": "object",
@@ -2032,9 +1882,7 @@
                           "const": "news"
                         }
                       },
-                      "required": [
-                        "type"
-                      ]
+                      "required": ["type"]
                     }
                   ]
                 }
@@ -2046,11 +1894,7 @@
                   "anyOf": [
                     {
                       "type": "string",
-                      "enum": [
-                        "developer",
-                        "research",
-                        "pdf"
-                      ]
+                      "enum": ["developer", "research", "pdf"]
                     },
                     {
                       "type": "object",
@@ -2060,9 +1904,7 @@
                           "const": "developer"
                         }
                       },
-                      "required": [
-                        "type"
-                      ]
+                      "required": ["type"]
                     },
                     {
                       "type": "object",
@@ -2072,9 +1914,7 @@
                           "const": "research"
                         }
                       },
-                      "required": [
-                        "type"
-                      ]
+                      "required": ["type"]
                     },
                     {
                       "type": "object",
@@ -2084,9 +1924,7 @@
                           "const": "pdf"
                         }
                       },
-                      "required": [
-                        "type"
-                      ]
+                      "required": ["type"]
                     }
                   ]
                 }
@@ -2140,10 +1978,7 @@
                 "type": "array",
                 "items": {
                   "type": "string",
-                  "enum": [
-                    "anon",
-                    "zdr"
-                  ]
+                  "enum": ["anon", "zdr"]
                 }
               },
               "scrapeOptions": {
@@ -2194,9 +2029,7 @@
                               ]
                             }
                           },
-                          "required": [
-                            "type"
-                          ]
+                          "required": ["type"]
                         },
                         {
                           "type": "object",
@@ -2227,15 +2060,10 @@
                                   "maximum": 9007199254740991
                                 }
                               },
-                              "required": [
-                                "width",
-                                "height"
-                              ]
+                              "required": ["width", "height"]
                             }
                           },
-                          "required": [
-                            "type"
-                          ]
+                          "required": ["type"]
                         },
                         {
                           "type": "object",
@@ -2261,9 +2089,7 @@
                               "type": "boolean"
                             }
                           },
-                          "required": [
-                            "type"
-                          ]
+                          "required": ["type"]
                         },
                         {
                           "type": "object",
@@ -2276,10 +2102,7 @@
                               "type": "array",
                               "items": {
                                 "type": "string",
-                                "enum": [
-                                  "git-diff",
-                                  "json"
-                                ]
+                                "enum": ["git-diff", "json"]
                               }
                             },
                             "schema": {
@@ -2303,9 +2126,7 @@
                               ]
                             }
                           },
-                          "required": [
-                            "type"
-                          ],
+                          "required": ["type"],
                           "description": "Requires 'markdown' to also be in the formats array."
                         },
                         {
@@ -2321,10 +2142,7 @@
                               "description": "Natural-language question about the page; the answer lands in the response's `answer` field."
                             }
                           },
-                          "required": [
-                            "type",
-                            "question"
-                          ]
+                          "required": ["type", "question"]
                         },
                         {
                           "type": "object",
@@ -2339,10 +2157,7 @@
                               "description": "Source-text selection request; the selection lands in the response's `highlights` field."
                             }
                           },
-                          "required": [
-                            "type",
-                            "query"
-                          ]
+                          "required": ["type", "query"]
                         }
                       ]
                     }
@@ -2430,11 +2245,7 @@
                             "mode": {
                               "description": "'fast': embedded text only. 'auto' (default): fast with OCR fallback. 'ocr': force OCR on every page.",
                               "type": "string",
-                              "enum": [
-                                "fast",
-                                "auto",
-                                "ocr"
-                              ]
+                              "enum": ["fast", "auto", "ocr"]
                             },
                             "maxPages": {
                               "description": "Cap the number of PDF pages parsed.",
@@ -2455,9 +2266,7 @@
                               "type": "boolean"
                             }
                           },
-                          "required": [
-                            "type"
-                          ]
+                          "required": ["type"]
                         }
                       ]
                     }
@@ -2483,9 +2292,7 @@
                               "type": "string"
                             }
                           },
-                          "required": [
-                            "type"
-                          ],
+                          "required": ["type"],
                           "description": "Wait for a duration OR for an element — provide one."
                         },
                         {
@@ -2517,15 +2324,10 @@
                                   "maximum": 9007199254740991
                                 }
                               },
-                              "required": [
-                                "width",
-                                "height"
-                              ]
+                              "required": ["width", "height"]
                             }
                           },
-                          "required": [
-                            "type"
-                          ]
+                          "required": ["type"]
                         },
                         {
                           "type": "object",
@@ -2541,10 +2343,7 @@
                               "type": "boolean"
                             }
                           },
-                          "required": [
-                            "type",
-                            "selector"
-                          ]
+                          "required": ["type", "selector"]
                         },
                         {
                           "type": "object",
@@ -2557,10 +2356,7 @@
                               "type": "string"
                             }
                           },
-                          "required": [
-                            "type",
-                            "text"
-                          ]
+                          "required": ["type", "text"]
                         },
                         {
                           "type": "object",
@@ -2573,10 +2369,7 @@
                               "type": "string"
                             }
                           },
-                          "required": [
-                            "type",
-                            "key"
-                          ]
+                          "required": ["type", "key"]
                         },
                         {
                           "type": "object",
@@ -2587,18 +2380,13 @@
                             },
                             "direction": {
                               "type": "string",
-                              "enum": [
-                                "up",
-                                "down"
-                              ]
+                              "enum": ["up", "down"]
                             },
                             "selector": {
                               "type": "string"
                             }
                           },
-                          "required": [
-                            "type"
-                          ]
+                          "required": ["type"]
                         },
                         {
                           "type": "object",
@@ -2608,9 +2396,7 @@
                               "const": "scrape"
                             }
                           },
-                          "required": [
-                            "type"
-                          ]
+                          "required": ["type"]
                         },
                         {
                           "type": "object",
@@ -2623,10 +2409,7 @@
                               "type": "string"
                             }
                           },
-                          "required": [
-                            "type",
-                            "script"
-                          ]
+                          "required": ["type", "script"]
                         },
                         {
                           "type": "object",
@@ -2658,9 +2441,7 @@
                               "type": "number"
                             }
                           },
-                          "required": [
-                            "type"
-                          ]
+                          "required": ["type"]
                         }
                       ]
                     }
@@ -2693,11 +2474,7 @@
                   "proxy": {
                     "description": "'auto' (default) retries with enhanced anti-bot proxies when the basic fetch is blocked. Enhanced proxies carry NO surcharge.",
                     "type": "string",
-                    "enum": [
-                      "basic",
-                      "enhanced",
-                      "auto"
-                    ]
+                    "enum": ["basic", "enhanced", "auto"]
                   },
                   "storeInCache": {
                     "description": "Store the page in the Firecrawl index and cache (default true). Sensitive options (actions, headers) force this false.",
@@ -2719,11 +2496,7 @@
                           "mode": {
                             "description": "Redaction strategy. 'accurate' (default) is model-only and optimized for precision, 'aggressive' increases recall with extra heuristics, 'fast' uses heuristics without the model call.",
                             "type": "string",
-                            "enum": [
-                              "accurate",
-                              "aggressive",
-                              "fast"
-                            ]
+                            "enum": ["accurate", "aggressive", "fast"]
                           },
                           "entities": {
                             "description": "Restrict redaction to these entity buckets. Omit to redact all.",
@@ -2743,11 +2516,7 @@
                           "replaceStyle": {
                             "description": "'tag' (default) replaces spans with placeholders like <EMAIL>, 'mask' replaces characters with *, 'remove' deletes the span.",
                             "type": "string",
-                            "enum": [
-                              "tag",
-                              "mask",
-                              "remove"
-                            ]
+                            "enum": ["tag", "mask", "remove"]
                           }
                         }
                       }
@@ -2766,9 +2535,7 @@
                         "type": "boolean"
                       }
                     },
-                    "required": [
-                      "name"
-                    ]
+                    "required": ["name"]
                   },
                   "threatProtection": {
                     "type": "object",
@@ -2776,10 +2543,7 @@
                       "mode": {
                         "description": "URL scanning mode for this request. 'normal' checks URLs against Google Web Risk and costs +2 credits per URL scanned.",
                         "type": "string",
-                        "enum": [
-                          "off",
-                          "normal"
-                        ]
+                        "enum": ["off", "normal"]
                       },
                       "riskScoreThreshold": {
                         "type": "integer",
@@ -2809,10 +2573,7 @@
                       },
                       "failurePolicy": {
                         "type": "string",
-                        "enum": [
-                          "open",
-                          "closed"
-                        ]
+                        "enum": ["open", "closed"]
                       }
                     }
                   },
@@ -2825,9 +2586,7 @@
                         "description": "The username associated with the request."
                       }
                     },
-                    "required": [
-                      "username"
-                    ]
+                    "required": ["username"]
                   }
                 }
               },
@@ -2837,10 +2596,7 @@
                   "mode": {
                     "description": "URL scanning mode for this request. 'normal' checks URLs against Google Web Risk and costs +2 credits per URL scanned.",
                     "type": "string",
-                    "enum": [
-                      "off",
-                      "normal"
-                    ]
+                    "enum": ["off", "normal"]
                   },
                   "riskScoreThreshold": {
                     "type": "integer",
@@ -2870,18 +2626,12 @@
                   },
                   "failurePolicy": {
                     "type": "string",
-                    "enum": [
-                      "open",
-                      "closed"
-                    ]
+                    "enum": ["open", "closed"]
                   }
                 }
               }
             },
-            "required": [
-              "query",
-              "limit"
-            ]
+            "required": ["query", "limit"]
           }
         }
       },
@@ -3093,17 +2843,13 @@
           "Validators only come back on a live fetch: pair 'include_etag_and_last_modified' with 'ttl' of 0. Which one you get is the origin's choice - replay whichever arrived."
         ],
         "docsUrl": "https://docs.tinyfish.ai/fetch-api/reference",
-        "categories": [
-          "web-scraping"
-        ]
+        "categories": ["web-scraping"]
       },
       "auth": {
         "inject": {
           "$fn": {
             "key": "sha256:0eda26be728d407c748b7f0294013a8f7b83047ba811d09ec66426b1f7aa8597",
-            "args": [
-              "X-API-Key"
-            ]
+            "args": ["X-API-Key"]
           }
         },
         "credentials": {
@@ -3115,9 +2861,7 @@
               "minLength": 1
             }
           },
-          "required": [
-            "apiKey"
-          ]
+          "required": ["apiKey"]
         }
       },
       "request": {
@@ -3149,11 +2893,7 @@
               "format": {
                 "description": "Output format for each result's `text`. 'markdown' (default) is best for LLM consumption, 'html' returns cleaned semantic HTML, 'json' returns a structured document tree.",
                 "type": "string",
-                "enum": [
-                  "markdown",
-                  "html",
-                  "json"
-                ]
+                "enum": ["markdown", "html", "json"]
               },
               "links": {
                 "description": "Include every <a href> on the page as absolute URLs in the result's `links` array. Defaults to false.",
@@ -3212,9 +2952,7 @@
                 }
               }
             },
-            "required": [
-              "urls"
-            ],
+            "required": ["urls"],
             "additionalProperties": false
           }
         }
@@ -3253,18 +2991,13 @@
         "summary": "Search the live web, news, or research papers — free.",
         "description": "Browser-rendered search over the live web — results are never cached, so pricing pages, earnings releases, and breaking news are current at query time. Set 'domain_type' to 'web' (default), 'news' (adds publisher and date), or 'research_paper' (adds authors, venue, year, cited_by_count, and pdf_url). Filters cover geo ('location') and 'language', domain allow/block lists ('include_domains' / 'exclude_domains'), a freshness window ('recency_minutes') or calendar bounds ('after_date' / 'before_date'), publication-year bounds for papers, and paging ('page', 0-10). Pass 'purpose' — a short statement of the task the results are for — to sharpen ranking. Returns position, title, url, site_name, and snippet per result. Snippets only: this endpoint does not return page content — pipe the result URLs into TinyFish /fetch, which is also free, when you need the full text.",
         "docsUrl": "https://docs.tinyfish.ai/search-api/reference",
-        "categories": [
-          "web-search",
-          "news-search"
-        ]
+        "categories": ["web-search", "news-search"]
       },
       "auth": {
         "inject": {
           "$fn": {
             "key": "sha256:0eda26be728d407c748b7f0294013a8f7b83047ba811d09ec66426b1f7aa8597",
-            "args": [
-              "X-API-Key"
-            ]
+            "args": ["X-API-Key"]
           }
         },
         "credentials": {
@@ -3276,9 +3009,7 @@
               "minLength": 1
             }
           },
-          "required": [
-            "apiKey"
-          ]
+          "required": ["apiKey"]
         }
       },
       "request": {
@@ -3343,11 +3074,7 @@
               "domain_type": {
                 "description": "Corpus to search. 'web' (default) returns general results; 'news' adds publisher and date; 'research_paper' searches academic work and adds authors, venue, year, cited_by_count, and pdf_url.",
                 "type": "string",
-                "enum": [
-                  "web",
-                  "news",
-                  "research_paper"
-                ]
+                "enum": ["web", "news", "research_paper"]
               },
               "pub_year_min": {
                 "description": "Inclusive lower publication-year bound (must not exceed pub_year_max). Only supported for domain_type=research_paper. Example: 2017.",
@@ -3368,9 +3095,7 @@
                 "maximum": 10
               }
             },
-            "required": [
-              "query"
-            ],
+            "required": ["query"],
             "additionalProperties": false
           }
         }
@@ -3708,9 +3433,7 @@
       }
     ],
     "membership": {
-      "news-search": [
-        "tinyfish#search"
-      ],
+      "news-search": ["tinyfish#search"],
       "web-scraping": [
         "exa#contents",
         "firecrawl#batch/scrape/{id}",
@@ -3719,11 +3442,7 @@
         "firecrawl#scrape",
         "tinyfish#fetch"
       ],
-      "web-search": [
-        "exa#search",
-        "firecrawl#search",
-        "tinyfish#search"
-      ]
+      "web-search": ["exa#search", "firecrawl#search", "tinyfish#search"]
     }
   },
   "fnTable": {

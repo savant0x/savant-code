@@ -18,6 +18,7 @@ import { CHAT_COMMANDS } from './defs/chat'
 import { CORE_COMMANDS } from './defs/core'
 import { MISC_COMMANDS } from './defs/misc'
 import { MODE_COMMANDS } from './defs/modes'
+import { NOTIFICATION_COMMANDS } from './defs/notifications'
 import { DESIGN_COMMANDS } from './design'
 import { useChatStore } from '../state/chat-store'
 import { IS_SAVANT_FREE } from '../utils/constants'
@@ -47,6 +48,7 @@ const ALL_COMMANDS: CommandDefinition[] = [
   ...DESIGN_COMMANDS,
   ...MODE_COMMANDS,
   ...MISC_COMMANDS,
+  ...NOTIFICATION_COMMANDS,
 ]
 
 // Export the removal sets for the gating-parity test (FID-007 V4).

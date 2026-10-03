@@ -14,7 +14,7 @@ import {
   clearMockedModules,
   mockModule,
 } from '@savant-code/common/testing/mock-modules'
-import * as realAiModule from 'ai'
+import { InvalidToolInputError, NoSuchToolError } from 'ai'
 import { afterEach, beforeEach, describe, expect, mock, test } from 'bun:test'
 
 const REAL_FETCH = globalThis.fetch
@@ -122,7 +122,7 @@ describe('FID-2026-0912-005: invalid vendor tool-call classification', () => {
       input: undefined,
       dynamic: true,
       invalid: true,
-      error: new realAiModule.InvalidToolInputError({
+      error: new InvalidToolInputError({
         toolName: 'read_files',
         toolInput: '{"paths":["a.ts"',
         cause: new Error('Unexpected end of JSON input'),
@@ -131,8 +131,7 @@ describe('FID-2026-0912-005: invalid vendor tool-call classification', () => {
     const streamTextMock = mock(() =>
       createFakeStreamResult([truncatedArgsPart]),
     )
-    mock.module('ai', () => ({
-      ...realAiModule,
+    await mockModule('ai', () => ({
       streamText: streamTextMock,
     }))
 
@@ -177,11 +176,10 @@ describe('FID-2026-0912-005: invalid vendor tool-call classification', () => {
       input: undefined,
       dynamic: true,
       invalid: true,
-      error: new realAiModule.NoSuchToolError({ toolName: 'mystery_tool' }),
+      error: new NoSuchToolError({ toolName: 'mystery_tool' }),
     }
     const streamTextMock = mock(() => createFakeStreamResult([unknownToolPart]))
-    mock.module('ai', () => ({
-      ...realAiModule,
+    await mockModule('ai', () => ({
       streamText: streamTextMock,
     }))
 
@@ -216,8 +214,7 @@ describe('FID-2026-0912-005: invalid vendor tool-call classification', () => {
       invalid: false,
     }
     const streamTextMock = mock(() => createFakeStreamResult([validPart]))
-    mock.module('ai', () => ({
-      ...realAiModule,
+    await mockModule('ai', () => ({
       streamText: streamTextMock,
     }))
 

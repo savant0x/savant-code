@@ -9,8 +9,6 @@ import type {
 } from '../core/mod.ts'
 import type z from 'zod'
 
-
-
 // T106 file split: the endpoint-phase argument/result contracts for the
 // compile.ts phase modules (compile-endpoint-a/b.ts + -doc.ts). Types only —
 // every phase body is a verbatim extraction from the pre-split compile.ts.

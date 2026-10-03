@@ -101,6 +101,21 @@ function parseHostEntry(
         }
       : null,
     lastProbeAttemptUtc,
+    downSinceUtc:
+      typeof e['downSinceUtc'] === 'string' ? e['downSinceUtc'] : undefined,
+    failureObservations: Array.isArray(e['failureObservations'])
+      ? e['failureObservations'].filter(
+          (v): v is string =>
+            typeof v === 'string' && Number.isFinite(Date.parse(v)),
+        )
+      : undefined,
+    health: typeof e['health'] === 'string' ? e['health'] : undefined,
+    healthObservedAt:
+      typeof e['healthObservedAt'] === 'string'
+        ? e['healthObservedAt']
+        : undefined,
+    removalHintId:
+      typeof e['removalHintId'] === 'string' ? e['removalHintId'] : undefined,
   }
 }
 

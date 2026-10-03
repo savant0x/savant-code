@@ -35,11 +35,15 @@ describe('EchoEnforcement — Law 3 re-arm on re-modification (FID-2026-0820-012
       result: { text: 'ok' },
       writeSucceeded: true,
     })
-    // A verification command credits the dirty file.
+    // A verification command credits the dirty file. commandSucceeded: true
+    // is REQUIRED since FID-2026-0919-015 (crediting is outcome-aware) — the
+    // FID-2026-0918-005 advisory leg masked its absence; the restored block
+    // exposed it (FID-2026-1001-003 step 4).
     enforcement.afterToolCall({
       toolName: 'run_readonly_command',
       input: { command: 'bun run typecheck' },
       result: { text: 'ok' },
+      commandSucceeded: true,
     })
     // Follow-up writes are allowed under the cumulative credit.
     const allowed = enforcement.beforeToolCall({
@@ -50,9 +54,10 @@ describe('EchoEnforcement — Law 3 re-arm on re-modification (FID-2026-0820-012
     expect(allowed.blocked).toBe(false)
 
     // Re-modifying the verified file must revoke its stale credit. Under the
-    // FID-2026-0918-005 two-part rule the OTHER-file write is advisory-only,
-    // so the re-arm is asserted on the target-dirty leg: re-editing the
-    // revoked file itself blocks until fresh verification runs.
+    // RESTORED other-dirty leg (FID-2026-1001-003 step 4) the OTHER-file
+    // write now blocks too (pinned below); the re-arm is asserted on the
+    // target-dirty leg: re-editing the revoked file itself blocks until
+    // fresh verification runs.
     enforcement.afterToolCall({
       toolName: 'str_replace',
       input: { path },
@@ -67,6 +72,32 @@ describe('EchoEnforcement — Law 3 re-arm on re-modification (FID-2026-0820-012
     expect(reblocked.blocked).toBe(true)
     expect(reblocked.reason).toContain('Law 3')
     expect(reblocked.reason).toContain('/proj/src/a.ts')
+  })
+
+  it('BLOCKS a write to a different file while a dirty-unverified file pends (restored leg, FID-2026-1001-003 step 4)', () => {
+    // Deliberate flip of the FID-2026-0918-005 advisory: Ruling 1 — Laws 1-4
+    // are not advice. The deadlock risk is handled by the verification-escape
+    // clause and the N=3 escalation ladder (law3-escalation.test.ts).
+    const enforcement = new EchoEnforcement('hybrid')
+    enforcement.beforeToolCall({
+      toolName: 'read_files',
+      input: { paths: ['ECHO.md'] },
+      agentId: 'savant',
+    })
+    enforcement.afterToolCall({
+      toolName: 'write_file',
+      input: { path: '/proj/src/a.ts' },
+      result: { text: 'ok' },
+      writeSucceeded: true,
+    })
+    const other = enforcement.beforeToolCall({
+      toolName: 'str_replace',
+      input: { path: '/proj/src/b.ts' },
+      agentId: 'savant',
+    })
+    expect(other.blocked).toBe(true)
+    expect(other.reason).toContain('Law 3')
+    expect(other.reason).toContain('/proj/src/a.ts')
   })
 })
 

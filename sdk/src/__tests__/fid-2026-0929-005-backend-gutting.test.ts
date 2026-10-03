@@ -1,7 +1,6 @@
 import { getCiEnv } from '@savant-code/common/env-ci'
 import { describe, expect, test } from 'bun:test'
 
-
 import { SavantCodeClient } from '../client'
 import * as sdkEnv from '../env'
 import { createDefaultInferenceModel } from '../impl/model-provider/default-inference'

@@ -1,14 +1,4 @@
-// FID-2026-0820-010 Loop 3 — WebSocket transport state machine for the
-// desktop session gateway (FID-2026-0820-008 contract): hello-first
-// handshake, typed status machine, exponential-backoff reconnect. The raw
-// socket sits behind the TransportFactory seam (./gateway-transport) and the
-// request lifecycle behind ./gateway-requests — tests substitute fakes
-// (dependency injection, never module mocks).
-//
-// FID-2026-0819-005 Loop 246: the typed request surface lives in
-// ./gateway-client-requests and the connection lifecycle in
-// ./gateway-client-connection — free functions / controller over seams, with
-// the public method signatures here unchanged.
+// Gateway client: typed requests over injected transport and connection controllers.
 
 import {
   GatewayConnectionController,
@@ -31,6 +21,7 @@ import {
   type GatewayRequestContext,
 } from './gateway-client-requests'
 import { GATEWAY_ERROR_CODES } from './gateway-protocol'
+import { GatewayProviderNotifications } from './gateway-provider-notifications'
 import { GatewayRequestError, RequestCorrelator } from './gateway-requests'
 import {
   browserTransportFactory,
@@ -65,6 +56,7 @@ export type {
 const DEFAULT_REQUEST_TIMEOUT_MS = 10_000
 
 export class GatewayClient {
+  readonly providerNotices: GatewayProviderNotifications
   private readonly factory: TransportFactory
   private readonly requestTimeoutMs: number
   private readonly requests = new RequestCorrelator()
@@ -72,6 +64,9 @@ export class GatewayClient {
   private readonly statusListeners = new ListenerSet<GatewayStatus>()
   private readonly eventListeners = new ListenerSet<PrintModeEvent[]>()
   private readonly runCompleteListeners = new ListenerSet<RunCompleteInfo>()
+  private readonly replayGapListeners = new ListenerSet<{
+    reason: string
+  }>()
   private nextRequestId = 1
   private projectIdValue: string | null = null
   private triggersAvailableValue = false
@@ -99,11 +94,15 @@ export class GatewayClient {
         emitRunComplete: (frame: RunCompleteFrame) => {
           this.runCompleteListeners.emit(frame)
         },
-        onHello: (projectId, triggersAvailable) => {
+        onHello: (projectId, triggersAvailable, providerNotices) => {
+          this.providerNotices.enabled = providerNotices
           this.projectIdValue = projectId
           // FID-2026-0824-005 step 5: the server's capability list decides the
           // triggers panel's availability (graceful degradation, no probing).
           this.triggersAvailableValue = triggersAvailable
+        },
+        onReplayGap: (info) => {
+          this.replayGapListeners.emit(info)
         },
       },
     )
@@ -111,6 +110,7 @@ export class GatewayClient {
       dispatch: async (frame) => this.dispatch(frame),
       nextId: () => this.nextId(),
     }
+    this.providerNotices = new GatewayProviderNotifications(this.requestCtx)
   }
 
   getStatus(): GatewayStatus {
@@ -137,6 +137,13 @@ export class GatewayClient {
 
   onRunComplete(listener: (info: RunCompleteInfo) => void): () => void {
     return this.runCompleteListeners.add(listener)
+  }
+
+  /** FID-2026-1003-002 (D6): the reconnect replay could not recover
+   *  everything (the disconnect outlasted the replay window) or failed —
+   *  the renderer can surface this. */
+  onReplayGap(listener: (info: { reason: string }) => void): () => void {
+    return this.replayGapListeners.add(listener)
   }
 
   connect(config: GatewayConfig): void {

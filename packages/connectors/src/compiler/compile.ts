@@ -1,25 +1,17 @@
-
 import { z } from 'zod'
-
 
 import { assembleBundle } from './compile-bundle.ts'
 import { compileEndpointPhaseA } from './compile-endpoint-a.ts'
 import { compileEndpointPhaseB } from './compile-endpoint-b.ts'
 import { compileBindings } from './compile-endpoint-bindings.ts'
 import { assembleEndpointDoc } from './compile-endpoint-doc.ts'
-import {
-  buildMembership,
-  sortConnectorSources,
-} from './compile-intake.ts'
+import { buildMembership, sortConnectorSources } from './compile-intake.ts'
 import {
   assembleProviderDoc,
   checkProviderPoolsDrained,
 } from './compile-provider.ts'
 import { compileResource } from './compile-resource.ts'
-import {
-  parseCategories,
-  parseDoc,
-} from './compile-shared.ts'
+import { parseCategories, parseDoc } from './compile-shared.ts'
 import { FnInterner } from './fns.ts'
 import {
   assertPureJson,
@@ -191,9 +183,7 @@ export async function compileBundle(
         phaseA,
         phaseB,
         bindingRefs,
-        compiledBindings: compiledBindings as
-          | Record<string, Json>
-          | undefined,
+        compiledBindings: compiledBindings as Record<string, Json> | undefined,
         hasResources: def.resources !== undefined,
         loggerWarn: (message, fields) => logger?.warn(message, fields),
       })

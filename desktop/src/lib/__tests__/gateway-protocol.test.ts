@@ -218,11 +218,17 @@ describe('outbound builders', () => {
   })
 
   test('hello and user_message carry the frozen v1 shapes', () => {
+    // FID-2026-1003-006 D3: the hello advertises the negotiated capability
+    // set additively — the protocol version stays frozen at 1.
     expect(helloRequest(1, 'tok')).toEqual({
       jsonrpc: '2.0',
       id: 1,
       method: 'hello',
-      params: { protocolVersion: GATEWAY_PROTOCOL_VERSION, token: 'tok' },
+      params: {
+        protocolVersion: GATEWAY_PROTOCOL_VERSION,
+        token: 'tok',
+        capabilities: ['provider_notices_v1'],
+      },
     })
     expect(userMessageRequest(2, 'do it')).toEqual({
       jsonrpc: '2.0',

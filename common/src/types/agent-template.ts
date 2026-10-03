@@ -13,6 +13,7 @@ import type { MCPConfig } from './mcp'
 import type { Model } from '../old-constants'
 import type { ToolResultOutput } from './messages/content-part'
 import type { AgentState, AgentTemplateType } from './session-state'
+import type { ModelRoute } from '../providers/model-route'
 import type {
   ToolCall,
   AgentState as PublicAgentState,
@@ -115,6 +116,7 @@ export type AgentTemplate<
   id: AgentTemplateType
   displayName: string
   model: Model
+  modelRoute?: ModelRoute
   /**
    * When false, the agent keeps its own model even when spawned as a subagent.
    * Defaults to true (inherit the parent agent's model).

@@ -14,7 +14,6 @@ import {
   zProviderDoc,
 } from '../core/mod.ts'
 
-
 import type { FnInterner } from './fns.ts'
 
 // T106 file split: the provider-level finishing sections extracted VERBATIM
@@ -101,9 +100,7 @@ export async function assembleProviderDoc(args: {
     name: providerName,
     minEngineVersion: semverMax([
       ...providerEndpointDocs.map((doc) => doc.minEngineVersion),
-      ...Object.values(providerResourceDocs).map(
-        (doc) => doc.minEngineVersion,
-      ),
+      ...Object.values(providerResourceDocs).map((doc) => doc.minEngineVersion),
       ...(provider.webhooks ? [SC.resourcesSince] : []),
     ]),
     meta: provider.meta as unknown as Json,

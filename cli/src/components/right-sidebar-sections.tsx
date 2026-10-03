@@ -112,14 +112,12 @@ export const SidebarActiveFids = ({
         </box>
       ) : (
         <text fg={theme.muted} wrapMode="none" selectable={false}>
-          {archivedCount > 0
-            ? '(none active — all closed)'
-            : '(none — loop converged)'}
+          (none active)
         </text>
       )}
       {archivedCount > 0 && (
         <text fg={theme.muted} wrapMode="none" selectable={false}>
-          {`${archivedCount} archived (closed)`}
+          {`${archivedCount} archived`}
         </text>
       )}
     </SidebarSection>

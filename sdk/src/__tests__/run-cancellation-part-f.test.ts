@@ -26,7 +26,6 @@ describe('Run Cancellation Handling', () => {
   })
 
   it('preserves message history across cancelled run and subsequent run', async () => {
-
     const abortController = new AbortController()
 
     // First run: server processes the user message and does some work, then user cancels
@@ -86,8 +85,7 @@ describe('Run Cancellation Handling', () => {
       },
     )
 
-    const client = new SavantCodeClient({
-    })
+    const client = new SavantCodeClient({})
 
     // Run 1: cancelled mid-stream
     const firstRunResult = await client.run({

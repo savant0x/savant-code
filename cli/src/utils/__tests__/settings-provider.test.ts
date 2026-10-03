@@ -12,9 +12,12 @@ const { getConfigDir } = await import('../config-dir')
 
 describe('settings telemetry defaults', () => {
   let originalConfigDir: string | undefined
+  let originalDirectProvider: string | undefined
   let tempDir: string
 
   beforeEach(() => {
+    originalDirectProvider = process.env.DIRECT_PROVIDER
+    delete process.env.DIRECT_PROVIDER
     // Override the config directory via env so the test is isolated from the
     // user's real home directory and avoids os.homedir() caching on Windows.
     originalConfigDir = process.env.SAVANT_CODE_CONFIG_DIR
@@ -23,6 +26,8 @@ describe('settings telemetry defaults', () => {
   })
 
   afterEach(() => {
+    if (originalDirectProvider === undefined) delete process.env.DIRECT_PROVIDER
+    else process.env.DIRECT_PROVIDER = originalDirectProvider
     if (originalConfigDir === undefined) {
       delete process.env.SAVANT_CODE_CONFIG_DIR
     } else {
@@ -117,5 +122,32 @@ describe('settings telemetry defaults', () => {
     const { loadSettings } = await import('../settings')
     const settings = loadSettings()
     expect(settings.savantCodeModelProviderPreference).toBe('tokenharbor')
+  })
+  test('versioned selection atomically mirrors legacy fields and preserves colliding upstream IDs', async () => {
+    const { selectModelForProvider, loadModelSelection, loadSettings } =
+      await import('../settings')
+    selectModelForProvider('openai/gpt-5', 'openrouter')
+    expect(loadModelSelection()).toMatchObject({
+      version: 1,
+      model: 'openai/gpt-5',
+      route: { providerId: 'openrouter' },
+    })
+    const stored = loadSettings()
+    expect(stored.savantCodeModelPreference).toBe('openai/gpt-5')
+    expect(stored.activeProvider).toBe('openrouter')
+    expect(stored.savantCodeModelProviderPreference).toBe('openrouter')
+    expect(() =>
+      selectModelForProvider('offline-id', 'removed-provider'),
+    ).toThrow()
+    expect(loadModelSelection()?.model).toBe('openai/gpt-5')
+  })
+  test('picker defaults alone cannot reinterpret conflicting legacy active intent', async () => {
+    const { loadModelSelection, saveSettings } = await import('../settings')
+    saveSettings({
+      savantCodeModelPreference: 'openai/gpt-5',
+      activeProvider: 'openrouter',
+      savantCodeModelProviderPreference: 'openai',
+    })
+    expect(loadModelSelection()).toBeUndefined()
   })
 })

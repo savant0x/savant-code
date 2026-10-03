@@ -19,14 +19,12 @@ describe('Run Cancellation Handling', () => {
   })
 
   it('preserves user message when callMainPrompt throws an error', async () => {
-
     // Simulate callMainPrompt throwing an error (network failure, server error, etc.)
     spyOn(mainPromptModule, 'callMainPrompt').mockRejectedValue(
       new Error('Network connection failed'),
     )
 
-    const client = new SavantCodeClient({
-    })
+    const client = new SavantCodeClient({})
 
     const result = await client.run({
       agent: 'savant',
@@ -61,7 +59,6 @@ describe('Run Cancellation Handling', () => {
   })
 
   it('does not add empty assistant message when no streaming content', async () => {
-
     const abortController = new AbortController()
     const serverSessionState = getInitialSessionState(
       getStubProjectFileContext(),
@@ -110,8 +107,7 @@ describe('Run Cancellation Handling', () => {
       },
     )
 
-    const client = new SavantCodeClient({
-    })
+    const client = new SavantCodeClient({})
 
     const result = await client.run({
       agent: 'savant',
@@ -138,7 +134,6 @@ describe('Run Cancellation Handling', () => {
   })
 
   it('preserves user message with USER_PROMPT tag when error thrown during callMainPrompt', async () => {
-
     let streamedContent = ''
     spyOn(mainPromptModule, 'callMainPrompt').mockImplementation(
       async (params: Parameters<typeof mainPromptModule.callMainPrompt>[0]) => {
@@ -158,8 +153,7 @@ describe('Run Cancellation Handling', () => {
       },
     )
 
-    const client = new SavantCodeClient({
-    })
+    const client = new SavantCodeClient({})
 
     const result = await client.run({
       agent: 'savant',

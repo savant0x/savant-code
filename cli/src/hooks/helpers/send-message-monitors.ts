@@ -18,6 +18,7 @@ export type StartRunMonitorsParams = {
   agentDefinitionCount: number
   mainAgentName: string
   resolvedContextWindow: number | undefined
+  isCurrentRun: () => boolean
 }
 
 /**
@@ -72,7 +73,9 @@ export const startRunMonitors = (params: StartRunMonitorsParams): void => {
   // Polls latestRunStateSnapshot every 2s to keep the sidebar's
   // contextTokensUsed fresh during long sub-agent chains. The
   // snapshot ref is updated by onStateSnapshot.
+  if (heartbeatIntervalRef.current) clearInterval(heartbeatIntervalRef.current)
   heartbeatIntervalRef.current = setInterval(() => {
+    if (!params.isCurrentRun()) return
     const snap = getLatestRunStateSnapshot()
     if (!snap) return
     // FID-2026-0718-010 (F3): poll token count every 2s. Cap is set

@@ -20,6 +20,8 @@ export type FinalizeRunStreamingParams = {
   setStreamStatus: (status: StreamStatus) => void
   queueReset: QueueResetDeps
   updater: BatchedMessageUpdater
+  /** Shared streaming state may already belong to a newer run after abort. */
+  isCurrentRun: boolean
 }
 
 /**
@@ -43,6 +45,10 @@ export const finalizeRunStreaming = (
     queueReset,
     updater,
   } = params
+  if (!params.isCurrentRun) {
+    updater.dispose()
+    return
+  }
 
   // FID-2026-0718-010 (F2 + Q14): BEFORE clearing live state provider,
   // mark the run as completed so late-arriving chunks short-circuit.
@@ -106,6 +112,7 @@ export type HandleRunCatchParams = {
   persistFailureState: () => Promise<void>
   /** FID-2026-0915-001 (W5): keys the 429 fallback-hint lookup. */
   effectiveModelId?: string
+  effectiveProviderId?: string
 }
 
 /**
@@ -146,6 +153,7 @@ export const handleRunCatch = async (
       ...queueReset,
       hasReceivedContent,
       effectiveModelId,
+      effectiveProviderId: params.effectiveProviderId,
     })
     // Persist the last checkpoint plus the error banner so a restart
     // after a failed run still shows this turn (see persistFailureState).

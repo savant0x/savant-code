@@ -25,9 +25,5 @@ export {
   zRedactPIIOptions,
   zThreatProtectionOverride,
 } from './common-options.ts'
-export {
-  zAction,
-  zParser,
-  zScrapeFormat,
-} from './common-formats.ts'
+export { zAction, zParser, zScrapeFormat } from './common-formats.ts'
 export { zScrapeOptions, zWebhook } from './common-scrape.ts'

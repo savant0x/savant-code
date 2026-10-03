@@ -124,6 +124,7 @@ export async function applyPrunerPostRunGuards(opts: {
   ) {
     const upgrade = await applySemanticSummaryUpgrade({
       ...opts.upgrade,
+      modelRoute: opts.parentAgentTemplate.modelRoute,
       deterministicExcerpt: prunerSummaryExcerpt,
     })
     prunerSummaryExcerpt = upgrade.excerpt

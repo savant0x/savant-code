@@ -1,5 +1,6 @@
 import type { TrackEventFn } from './analytics'
 import type { SendActionFn } from './client'
+import type { ModelRoute } from '../../providers/model-route'
 import type { PromptResult } from '../../util/error'
 import type {
   OpenRouterProviderRoutingOptions,
@@ -89,6 +90,8 @@ export type PromptAiSdkStreamFn = (
     clientSessionId: string
     fingerprintId: string
     model: Model
+    modelRoute?: ModelRoute
+    contextWindow?: number
     userId: string | undefined
     chargeUser?: boolean
     thinkingBudget?: number
@@ -128,6 +131,8 @@ export type PromptAiSdkFn = (
     fingerprintId: string
     userInputId: string
     model: Model
+    modelRoute?: ModelRoute
+    contextWindow?: number
     userId: string | undefined
     chargeUser?: boolean
     agentId?: string
@@ -158,6 +163,8 @@ export type PromptAiSdkStructuredInput<T> = {
   fingerprintId: string
   userInputId: string
   model: Model
+  modelRoute?: ModelRoute
+  contextWindow?: number
   userId: string | undefined
   maxTokens?: number
   temperature?: number

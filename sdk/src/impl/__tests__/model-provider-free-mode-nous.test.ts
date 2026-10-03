@@ -20,9 +20,7 @@ describe('getModelForRequest ChatGPT OAuth fallback behavior', () => {
   test('requires the Nous Research API key', async () => {
     const { getModelForRequest } = await importFresh()
 
-    await expect(
-      getModelForRequest({ model: NOUS_MODEL }),
-    ).rejects.toThrow(
+    await expect(getModelForRequest({ model: NOUS_MODEL })).rejects.toThrow(
       'Nous Research API key not set. Set NOUS_API_KEY environment variable or run /provider nous.',
     )
   })

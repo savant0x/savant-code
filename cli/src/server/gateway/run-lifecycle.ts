@@ -17,100 +17,138 @@ import {
   notification,
   success,
 } from '../json-rpc'
+import {
+  containUserMessageFailure,
+  denyPendingApprovalsContained,
+} from './rpc-containment'
 import { ensureFlushTimer, pushEvent } from './state'
 
 import type { GatewayContext } from './state'
 import type { AskUserResponse } from '@savant-code/common/tools/params/tool/ask-user'
 import type { RunState } from '@savant-code/sdk'
 
-/** Execute a user_message: single-session guard, then run and stream. */
+/** Execute a user_message: single-session guard, then run and stream.
+ *  FID-2026-1002-008 (D3): the whole body is contained — the function
+ *  never rejects. A pre-acceptance throw answers the still-open request
+ *  with -32603; a post-acceptance throw emits the terminal run_complete
+ *  {ok:false} (containUserMessageFailure picks by the phase flags). */
 export async function handleUserMessage(
   ctx: GatewayContext,
   send: (data: string) => void,
   id: number | string,
   params: unknown,
 ): Promise<void> {
-  if (ctx.activeRun) {
-    send(
-      JSON.stringify(
-        failure(
-          id,
-          GATEWAY_ERROR_CODES.sessionBusy,
-          'Session busy: a run is already in flight',
-        ),
-      ),
-    )
-    return
-  }
-
-  const record = (params ?? {}) as Record<string, unknown>
-  const prompt = typeof record.prompt === 'string' ? record.prompt : ''
-  if (!prompt.trim()) {
-    send(
-      JSON.stringify(
-        failure(
-          id,
-          GATEWAY_ERROR_CODES.invalidRequest,
-          'user_message requires a non-empty prompt',
-        ),
-      ),
-    )
-    return
-  }
-
-  // Reconnect recovery (v1 scope): a client-supplied previousRun wins;
-  // otherwise a continueId resolves through the existing session-restore
-  // machinery; otherwise the in-process last settled RunState is reused.
-  let previousRun: RunState | undefined
-  if (record.previousRun && typeof record.previousRun === 'object') {
-    previousRun = record.previousRun as RunState
-  } else if (
-    typeof record.continueId === 'string' &&
-    record.continueId.trim()
-  ) {
-    const saved = loadMostRecentChatState(record.continueId.trim())
-    previousRun = saved?.runState ?? undefined
-  } else if (ctx.lastRunState) {
-    previousRun = ctx.lastRunState
-  }
-
-  const abortController = new AbortController()
-  ctx.activeRun = { abortController }
-  send(JSON.stringify(success(id, { accepted: true })))
-
+  let accepted = false
+  let terminalSent = false
   try {
-    const finalState = await ctx.runPrompt({
-      prompt,
-      previousRun,
-      signal: abortController.signal,
-      onEvent: (event) => {
-        pushEvent(ctx, event)
-        ensureFlushTimer(ctx)
-      },
-      onTextChunk: (chunk) => {
-        // TokenStreamEvent → printModeText (design-doc Table 1 mapping).
-        pushEvent(ctx, { type: 'text', text: chunk })
-        ensureFlushTimer(ctx)
-      },
-    })
-    ctx.lastRunState = finalState
-    send(
-      JSON.stringify(
-        notification('run_complete', {
-          ok: true,
-          runId: finalState.traceSessionId ?? randomUUID(),
-        }),
-      ),
-    )
+    if (ctx.activeRun) {
+      send(
+        JSON.stringify(
+          failure(
+            id,
+            GATEWAY_ERROR_CODES.sessionBusy,
+            'Session busy: a run is already in flight',
+          ),
+        ),
+      )
+      return
+    }
+
+    const record = (params ?? {}) as Record<string, unknown>
+    const prompt = typeof record.prompt === 'string' ? record.prompt : ''
+    if (!prompt.trim()) {
+      send(
+        JSON.stringify(
+          failure(
+            id,
+            GATEWAY_ERROR_CODES.invalidRequest,
+            'user_message requires a non-empty prompt',
+          ),
+        ),
+      )
+      return
+    }
+
+    // Reconnect recovery (v1 scope): a client-supplied previousRun wins;
+    // otherwise a continueId resolves through the existing session-restore
+    // machinery; otherwise the in-process last settled RunState is reused.
+    let previousRun: RunState | undefined
+    if (record.previousRun && typeof record.previousRun === 'object') {
+      previousRun = record.previousRun as RunState
+    } else if (
+      typeof record.continueId === 'string' &&
+      record.continueId.trim()
+    ) {
+      const saved = loadMostRecentChatState(record.continueId.trim())
+      previousRun = saved?.runState ?? undefined
+    } else if (ctx.lastRunState) {
+      previousRun = ctx.lastRunState
+    }
+
+    const abortController = new AbortController()
+    // Acceptance lands BEFORE the activeRun claim: the claim is a plain
+    // store with no await in between, so the single-session guard is
+    // unchanged, and a dead acceptance send can no longer strand a claimed
+    // slot (FID-2026-1002-008 D3).
+    send(JSON.stringify(success(id, { accepted: true })))
+    accepted = true
+    ctx.activeRun = { abortController }
+
+    try {
+      const finalState = await ctx.runPrompt({
+        prompt,
+        previousRun,
+        signal: abortController.signal,
+        onEvent: (event) => {
+          pushEvent(ctx, event)
+          ensureFlushTimer(ctx)
+        },
+        onTextChunk: (chunk) => {
+          // TokenStreamEvent → printModeText (design-doc Table 1 mapping).
+          pushEvent(ctx, { type: 'text', text: chunk })
+          ensureFlushTimer(ctx)
+        },
+      })
+      ctx.lastRunState = finalState
+      send(
+        JSON.stringify(
+          notification('run_complete', {
+            ok: true,
+            runId: finalState.traceSessionId ?? randomUUID(),
+          }),
+        ),
+      )
+      terminalSent = true
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error)
+      send(
+        JSON.stringify(
+          notification('run_complete', { ok: false, error: message }),
+        ),
+      )
+      terminalSent = true
+    } finally {
+      ctx.activeRun = null
+      // FID-2026-1002-007 (D4): when the run settles, any still-pending
+      // approval can never be answered into an effect anymore — the
+      // ask_user tool call's outcome is fixed by the run's outcome. Deny
+      // leftovers fail-closed (empty map = no-op on the normal resolve
+      // path). FID-2026-1002-008 (D3): contained — a bridge fault here
+      // must not reject the void-ed run promise.
+      denyPendingApprovalsContained(ctx)
+    }
   } catch (error) {
-    const message = error instanceof Error ? error.message : String(error)
-    send(
-      JSON.stringify(
-        notification('run_complete', { ok: false, error: message }),
-      ),
-    )
-  } finally {
-    ctx.activeRun = null
+    // FID-2026-1002-008 (D3): outer containment — never reject. activeRun
+    // needs no cleanup here: every path that set it already cleared it in
+    // the inner finally, and the pre-acceptance paths never set it.
+    containUserMessageFailure({
+      send,
+      id,
+      logger: ctx.logger,
+      accepted,
+      terminalSent,
+      error,
+    })
   }
 }
 
@@ -165,6 +203,10 @@ export async function injectTriggerRun(
       ctx.logger?.error?.(`trigger-driven run failed: ${message}`)
     } finally {
       ctx.activeRun = null
+      // FID-2026-1002-007 (D4): same run-settle cleanup as
+      // handleUserMessage — contained (FID-2026-1002-008 D3): a bridge
+      // fault here must not reject the void-ed run promise.
+      denyPendingApprovalsContained(ctx)
     }
   })()
   return { accepted: true }

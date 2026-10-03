@@ -4,5 +4,4 @@
 import type { zSearchBody } from './schema/inputs.ts'
 import type z from 'zod'
 
-
 export type SearchBody = z.infer<typeof zSearchBody>

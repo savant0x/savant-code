@@ -68,11 +68,20 @@ export const ModelPickerModelRow = ({
       }}
     >
       {/* Marker + model ID */}
-      <box style={{ flexDirection: 'row', flexShrink: 0, gap: 0 }}>
-        <text fg={theme.primary} wrapMode="none" selectable={false}>
+      <box
+        key="identity"
+        style={{ flexDirection: 'row', flexShrink: 0, gap: 0 }}
+      >
+        <text
+          key="marker"
+          fg={theme.primary}
+          wrapMode="none"
+          selectable={false}
+        >
           {isSelected ? '› ' : '  '}
         </text>
         <text
+          key="model-id"
           fg={theme.foreground}
           attributes={isSelected ? 1 : 0}
           wrapMode="none"
@@ -82,13 +91,13 @@ export const ModelPickerModelRow = ({
         </text>
       </box>
       {/* Provider badge */}
-      <box style={{ flexShrink: 0 }}>
+      <box key="provider" style={{ flexShrink: 0 }}>
         <Badge variant="info" brackets={false}>
           {provider}
         </Badge>
       </box>
       {/* Model name */}
-      <box style={{ flexGrow: 1, minWidth: 0 }}>
+      <box key="name" style={{ flexGrow: 1, minWidth: 0 }}>
         <text fg={theme.muted} wrapMode="none" selectable={false}>
           {model.name}
         </text>
