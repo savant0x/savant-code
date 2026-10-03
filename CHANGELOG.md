@@ -4,7 +4,7 @@
 
 ### Added
 
-- **CodeCraft API and xKiro providers (FID-2026-1003-001, medium; implementation verified).**
+- **CodeCraft API and xKiro providers (FID-2026-1003-001, medium; closed 2026-10-03).**
   Both support masked `/provider` setup, live catalogs, and exact upstream IDs.
   xKiro uses the shared protocol resolver: Anthropic-prefixed models route to
   Messages; other xKiro models use chat. Catalog growth is covered by explicit
@@ -23,7 +23,7 @@
 
 ### Fixed
 
-- **Model-picker scrolling (FID-2026-1003-004, medium; implementation verified).**
+- **Model-picker scrolling (FID-2026-1003-004, medium; closed 2026-10-03).**
   Fixed model/header rows at one terminal line so logical scroll offsets match
   rendered height. Keyboard, wheel, scrollbar, filter, resize, and full-ID
   selection have native OpenTUI regression coverage. Long names clip visually
@@ -35,8 +35,11 @@ Live tool calls passed on all three services. xKiro Messages also passed with
 an explicit free-model test override; the mapped Claude route returned HTTP
 403 requiring paid account access. Prior implementation suites: common
 providers 72 pass, related CLI 170 pass, SDK 577 pass with one POSIX-only skip.
-FID receipts record the executed gates. Closure and archival remain pending
-the local commit required by ECHO G2; these changes are not a published release.
+Both FIDs are closed and archived with implementation commits `72af5480`
+(providers, 23 gates passed) and `27161203` (scroll, six gates passed), satisfying
+ECHO G2. Project-wide documentation and model information are updated. T119
+retains Claude account access and the possible fourth provider's missing
+identity. These local commits are not a published release or remote push.
 
 ## 0.0.35 — 2026-10-01
 

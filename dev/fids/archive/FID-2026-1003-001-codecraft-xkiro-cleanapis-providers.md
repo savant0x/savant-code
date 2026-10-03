@@ -3,8 +3,9 @@
 **Filename:** `FID-2026-1003-001-codecraft-xkiro-cleanapis-providers.md`
 **ID:** FID-2026-1003-001
 **Severity:** medium
-**Status:** verified
+**Status:** closed
 **Created:** 2026-10-03 00:42
+**Closed:** 2026-10-03
 **Automation level:** 3
 **YAGNI-Compliance:** Verified: shared parsing serves two measured identical schemas;
 prefix-map dispatch is required by xKiro's live catalog and the operator's multi choice.
@@ -26,7 +27,7 @@ API, xKiro, and CleanAPIs**. CleanAPIs counts toward this scope despite its
 existing registration. The operator recalls possibly a fourth provider;
 all user messages in the root transcript were rechecked, and only CodeCraft
 and xKiro were named there. A fourth name or URL is awaiting clarification
-and will be incorporated into this same plan when supplied.
+and remains registered under T119 for a separately converged FID when supplied.
 
 ## Environment
 
@@ -192,7 +193,7 @@ incorrectly. Existing provider contracts must retain their behavior.
 
 ### Approach
 
-Follow [Adding a New LLM Provider](../../docs/archive/design/Adding%20New%20Providers.md)
+Follow [Adding a New LLM Provider](../../../docs/archive/design/Adding%20New%20Providers.md)
 in order, adapting its paths to the current partitioned tree. Keep registry
 derivation authoritative. Reuse CleanAPIs rather than adding a duplicate;
 add live wrappers and exception owners where actual code requires them.
@@ -484,14 +485,26 @@ unreleased rather than claiming uncommitted FID closure.
 
 ## Resolution
 
-Implementation verified under T119: CodeCraft and xKiro are integrated;
+Closed and archived on 2026-10-03 following the operator's authorization:
+"proceed w/ the local push and close for the completed fids".
+Implementation commit: `72af5480e44e749c81055db570c27a6618cfe37d`.
+The local commit contains the provider implementation, tests, project-wide
+documentation, and verified FID evidence. Its 42 staged files passed the
+repository's credential scan; whitespace checks passed. No remote push or
+published release was performed.
+
+Implementation completed under T119: CodeCraft and xKiro are integrated;
 CleanAPIs catalog normalization is completed. Catalog, routing, setup,
 generated references, additive tests, and all declared gates pass. Live tool
 calls pass for all three services and both xKiro transports, with the explicit
 free-model Messages override distinguished from the mapped Claude route.
 Mapped Claude live acceptance remains blocked by HTTP 403 account access.
-The possible fourth provider still needs a name or URL. The FID stays active
-pending these external boundaries and G2 commit/closure authority.
+The possible fourth provider still needs a name or URL. Those two external
+boundaries remain open in T119; closing the verified implementation does not
+claim Claude inference acceptance, authorize account purchases, or add an
+unidentified provider. All 23 declared gates passed before closure; the
+archived receipt preserves that executed verification record. ECHO G2 is
+satisfied by the local implementation commit above.
 
 ## Lessons Learned
 

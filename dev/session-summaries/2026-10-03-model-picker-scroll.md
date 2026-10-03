@@ -56,3 +56,10 @@ same six executed results and original verification timestamp. No source
 behavior changed. Subsequent live provider terminal checks also confirmed
 selection visibility after twenty Down presses and a 100×28 to 60×24 resize;
 those results are in the provider integration summary.
+
+Local closure completed, 2026-10-03: the operator authorized local commits
+and closure. Commit `27161203d885599eb97ea8a2d231ad1b19e8ff95` contains the
+scroll correction, native tests, verified FID, summary, and changelog entry.
+The five-file staged credential scan and whitespace checks passed.
+FID-2026-1003-004 is closed and archived with that hash in Resolution;
+T120 is removed from the active register. No remote push or release was made.

@@ -62,7 +62,7 @@
 
 ## Open items
 
-**Ten** items are open.
+**Eleven** items are open.
 (2026-10-01: T108 completed and left the register on the standing rule —
 evidence in archived `FID-2026-1001-001-openai-platform-provider.md`,
 CHANGELOG `Unreleased — 2026-10-01`, and the 2026-10-01 session summary.
@@ -265,6 +265,16 @@ T90-F3 was resolved by the operator ruling "T90-F3 residual needs no code"
 
 ### Providers and routing
 
+- [ ] **T119. Pending provider account access and identity.**
+      **Automation level: 1.** Mapped xKiro Claude Haiku live acceptance
+      returned HTTP 403 requiring an active paid plan or real deposited
+      balance. Operator account access is needed before repeating that leg;
+      no purchase is authorized. The possible fourth provider still needs
+      its name or URL before a new converged integration FID can be prepared.
+      The three confirmed services and project-wide model/documentation work
+      are completed in archived `FID-2026-1003-001`, implementation commit
+      `72af5480`; only these two external boundaries remain here.
+
 - [ ] **T62-followups (remaining items routed, not blocking Task 62
       closure):** (1) is **completed 2026-09-28** — commandcode catalog
       case-drift re-keyed to the live roster casing (`zai-org/GLM-5.2/5.3`),
@@ -296,3 +306,10 @@ T90-F3 was resolved by the operator ruling "T90-F3 residual needs no code"
       `zod/v4/core` import and no `node_modules` dependency. **Blocker:** the fix
       shape — a refresh/`--force` path (weakens never-clobber), a parity check
       that fails a gate, or accepted-by-design plus documentation.      **Automation level: 1.**
+
+## Machine-readable scope targets
+
+- T119: `.env.local`, `docs/providers.md`,
+  `dev/session-summaries/2026-10-03-provider-*.md`,
+  `dev/scratchpad/active/provider-catalogs-2026-10-03/**`,
+  `dev/scratchpad/active/provider-integration-*`

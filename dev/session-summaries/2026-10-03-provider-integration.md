@@ -92,3 +92,15 @@ All six scroll FID gates also passed on a fresh run at
 2026-10-03T06:30:29.734Z; both receipts validate. The local commit plan is
 `2026-10-03-provider-closure-plan.md`, including selective staging for shared
 files and preservation of the pending account-access/provider-identity items.
+
+Local closure completed, 2026-10-03: the operator authorized "proceed w/ the
+local push and close for the completed fids". Provider implementation and
+project-wide documentation were committed as
+`72af5480e44e749c81055db570c27a6618cfe37d`; the separate scroll correction is
+`27161203d885599eb97ea8a2d231ad1b19e8ff95`. Their 42-file and five-file staged
+credential scans passed, and unrelated shared-file hunks were excluded.
+FID-2026-1003-001 and FID-2026-1003-004 are closed and moved to `dev/fids/archive/`
+with their implementation hashes in Resolution. CHANGELOG records closure;
+T120 is removed and T119 retains only Claude entitlement and the unnamed
+fourth provider. Private keys and raw catalogs are excluded. No remote push,
+release, or account purchase was performed.

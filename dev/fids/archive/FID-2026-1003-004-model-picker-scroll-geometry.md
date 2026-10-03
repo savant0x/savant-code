@@ -3,8 +3,9 @@
 **Filename:** `FID-2026-1003-004-model-picker-scroll-geometry.md`
 **ID:** FID-2026-1003-004
 **Severity:** medium
-**Status:** verified
+**Status:** closed
 **Created:** 2026-10-03 01:00
+**Closed:** 2026-10-03
 **Automation level:** 3
 **YAGNI-Compliance:** Verified
 
@@ -22,7 +23,8 @@ actual native renderer rather than relying on logical viewport math alone.
 
 - Windows, PowerShell, Bun 1.3.14; CLI OpenTUI 0.5.3 and React 19.
 - Current working tree; unrelated existing changes preserved.
-- Single-agent ECHO, automation level 3; no commit or push authorization.
+- Single-agent ECHO, automation level 3; local commit/closure authorized
+  2026-10-03. No remote push or release included.
 
 ## Detailed Description
 
@@ -197,8 +199,13 @@ headless renderer, not a full interactive chat-session smoke.
 
 The one-line row correction and native behavior tests are implemented.
 Scroll geometry now agrees with item-index offsets at narrow and normal
-widths; full IDs remain unchanged on selection. No commit, closure, or
-archive is claimed. The verification receipt records the declared gates.
+widths; full IDs remain unchanged on selection. Closed and archived on
+2026-10-03 following the operator's authorization: "proceed w/ the local push
+and close for the completed fids". Implementation commit:
+`27161203d885599eb97ea8a2d231ad1b19e8ff95`. Its five staged files passed the
+repository credential scan and whitespace checks. All six declared gates
+passed before closure; the archived receipt preserves that executed record.
+T120 leaves the active register. No remote push or published release was made.
 
 ## Lessons Learned
 

@@ -2,7 +2,7 @@
 
 The operator requested project-wide CHANGELOG, README, and model-information
 updates and closure if completed. The implementation and documentation are
-verified in the working tree. No index changes or commits have been made.
+verified in the working tree. At preparation, no index changes or commits had been made.
 ECHO G2 requires committed implementation hashes before closure and archival.
 
 ## Verified changes
@@ -91,3 +91,17 @@ not been established. A possible fourth provider still needs its name or URL.
 Closing the verified implementation must retain those pending boundaries
 explicitly rather than claim successful Claude inference or a fourth addition.
 No remote push, publish, or account purchase is included in this plan.
+
+## Execution record
+
+The operator approved local commits and closure on 2026-10-03. Provider
+implementation and project-wide documentation were committed as
+`72af5480e44e749c81055db570c27a6618cfe37d`; scroll source/tests and their
+changelog entry were committed separately as
+`27161203d885599eb97ea8a2d231ad1b19e8ff95`. Shared README documentation covers
+both verified changes in the provider commit. Gateway request-budget hunks
+and unrelated changelog entries remain unstaged. Exact-index credential
+scans passed for 42 provider files and five scroll files.
+Both FIDs are closed and archived with those hashes; the closure documentation
+commit reconciles CHANGELOG, summaries, and the pending-only T119 register.
+No remote push, published release, or account purchase was performed.
