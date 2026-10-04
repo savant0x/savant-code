@@ -70,12 +70,17 @@ describe('FID-2026-0919-018 — mid-id-version ladder fallthrough', () => {
         { id: 'z-ai/glm-5.3-flash:batch', context_length: 1_048_576 },
       ],
     })
+    // FID-2026-1003-008: this id gained a vendor-sourced fallback-table row
+    // (1,048,575), so tier 3 now answers instead of the default. No-bleed is
+    // still proven two ways: the value differs from the near-collisions'
+    // catalog-sourced 1,048,576, and the source is 'fallback-table', not
+    // 'catalog' — the ladder never matched flashx or :batch.
     expect(resolveContextWindowForModel('kiosapi/glm-5.3-flash-free')).toBe(
-      200_000,
+      1_048_575,
     )
     expect(
       resolveContextWindowSourceForModel('kiosapi/glm-5.3-flash-free'),
-    ).toBe('default')
+    ).toBe('fallback-table')
   })
 
   test('terminal-version ids keep their FID-016 behavior (no regression)', async () => {
