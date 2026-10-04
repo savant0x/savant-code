@@ -4,6 +4,24 @@
 
 ### Added
 
+- **Gateway context-window coverage sweep (FID-2026-1004-002, high; closed
+  2026-10-04).** 264 of 1,843 runtime-catalog ids resolved to the silent 200k
+  context-window default: apinex and bai publish no window fields at all (their
+  whole rosters), the coverage gate only pinned the catalogs earlier FIDs
+  touched, and the audit's "166 non-chat" bucket hid chat flagships
+  (orcarouter/openai/gpt-5.5 ran against a 200k denominator with a 1M+ true
+  window — the FID-2026-1003-008 RequestInputBudgetError class). Fix
+  (operator-ruled sourcing, cross-gateway rows only): 88 consensus-sourced
+  rows (apinex 32, bai 41, orcarouter 6, nvidia 9) in two seam-split section
+  files plus parent-table additions under the 300-line ceiling; ~150 remaining
+  silent ids documented in grouped no-row registers; a
+  WINDOW_COVERAGE_REGISTER disposition for every one of the 23 registry
+  providers with a fail-closed lint suite (a new provider without a
+  disposition fails the build); the LIVE verify-window-truth probe extended to
+  census the no-publish gateways' rosters (LIVE 2026-10-04: apinex 34/34, bai
+  59/59 registered). Receipt 12/12 gates; full cli battery 3,868 pass / 0
+  fail; sdk 586 / 0.
+
 - **Discovery daily cycle rebuilt to spec (FID-2026-1004-001, high; closed
   2026-10-04).** The T111–T127 batch orphaned the discovery boot-check when
   it moved the announce builder into shared code, leaving the pipeline

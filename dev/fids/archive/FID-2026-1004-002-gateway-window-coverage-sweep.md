@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-1004-002-gateway-window-coverage-sweep.md`
 **ID:** FID-2026-1004-002
 **Severity:** high
-**Status:** verified
+**Status:** closed (implemented + verified, 2026-10-04)
 > (`converged` is the correct pre-implementation status per
 > FID-2026-0915-004; `fixed` is deprecated-but-accepted legacy language —
 > do not use it for new FIDs. The receipt contract still keys to
@@ -397,19 +397,20 @@ audit time. Ladder suites re-run to catch stale "lands on the default" pins
 
 ### Implementation Evidence (REQUIRED for `closed`)
 
-- [ ] **Commit SHA:** pending (G2: closure requires a commit — prepared,
-      not executed; the operator grants commit authority)
-- [ ] **File:line ranges:** common/src/constants/context-window-table-apinex.ts
+- [x] **Commit SHA:** `8323ccf6` (implementation, 12 files, 1,713
+      insertions) — closure commit follows
+- [x] **File:line ranges:** common/src/constants/context-window-table-apinex.ts
       (whole file, 32 rows + register); common/src/constants/context-window-table-bai.ts
       (whole file, 41 rows + register); common/src/constants/context-window-table.ts
       (imports, orcarouter 6 + nvidia 9 rows, grouped no-row registers, two
       spreads); common/src/constants/window-coverage-register.ts (23
       dispositions); scripts/providers/verify-window-truth.ts (census);
       four new suites in cli/src/utils/openrouter-models/__tests__/
-- [ ] **Gate output:** see Verification Receipt (all exit 0)
-- [ ] **Reproducibility:** grep "apinex/\|bai/" in common/src/constants/;
+- [x] **Gate output:** see Verification Receipt (all exit 0, re-stamped
+      after the lint repairs)
+- [x] **Reproducibility:** grep "apinex/\|bai/" in common/src/constants/;
       run the window-truth suites; re-run the audit probe
-- [ ] **Step statuses:** all seven Proposed Solution steps `implemented`
+- [x] **Step statuses:** all seven Proposed Solution steps `implemented`
 
 ### Code Verification Evidence
 
@@ -469,8 +470,8 @@ audit time. Ladder suites re-run to catch stale "lands on the default" pins
 
 ## Resolution
 
-- **Closed Date:** pending (G2 — implementation is verified; closure and
-  archive await operator commit authority, T127 precedent)
+- **Closed Date:** 2026-10-04 (G2 satisfied: `8323ccf6` implementation;
+  closure commit follows)
 - **Fix Description:** 88 sourced rows (apinex 32, bai 41, orcarouter 6,
   nvidia 9) via two seam-split section files + parent-table additions;
   ~150 remaining silent ids documented in grouped no-row registers;
@@ -480,10 +481,18 @@ audit time. Ladder suites re-run to catch stale "lands on the default" pins
   window-truth-router-gaps.test.ts, window-coverage-register.test.ts.
 - **Verification Evidence:** Verification Receipt below; LIVE census
   apinex 34/34 + bai 59/59 registered (2026-10-04).
-- **Archived:** pending
+- **Archived:** yes — moved to `dev/fids/archive/` in the closure commit
 
 > When status is set to **closed**, move this file to `dev/fids/archive/` and append an entry to `CHANGELOG.md`.
 
 ## Lessons Learned
 
-(pending closure)
+A coverage gate that pins only the catalogs a FID touched lets every
+provider added later reopen the defect class by default — apinex/bai
+shipped silently because FID-2026-0916-002 pinned tokenrouter/
+tokenharbor/commandcode and FID-2026-1003-008 pinned kiosapi. The gate
+must attach to the PROVIDER, not the FID: a registry-wide coverage
+register with a fail-closed lint (every new provider needs a
+disposition) plus a LIVE census of the no-publish gateways' rosters, so
+registry growth and roster growth both fail loudly instead of
+re-opening the silent-200k gap.

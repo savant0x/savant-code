@@ -62,7 +62,7 @@
 
 ## Open items
 
-**Four** items are open.
+**Three** items are open.
 (2026-10-03 (decision digest): the failure behind FID-2026-1003-007 —
 register items sat `**Blocker:** operator ruling` for weeks because nothing
 PRESENTED them — was fixed the same day. Every pending decision was
@@ -278,24 +278,6 @@ T90-F3 was resolved by the operator ruling "T90-F3 residual needs no code"
 
 ### Providers and routing
 
-- [ ] **T128. Gateway context-window coverage sweep (all chat-surface silent-200k ids).**
-      **Automation level: 3.** Operator ruling 2026-10-04 (structured ruling:
-      fix scope = all chat surfaces; sourcing = cross-gateway rows only, no
-      fresh live probe; prevention = all five presented gates). **Status:
-      implemented + verified 2026-10-04** —
-      `FID-2026-1004-002-gateway-window-coverage-sweep.md` receipt stamped
-      12/12 gates (full typecheck, window-truth battery 45/45, register lint
-      + fallbacks 15/15, ladder suites 25/25, quality PASS, LIVE probe exit 0
-      with census apinex 34/34 + bai 59/59 registered). 88 sourced rows
-      (apinex 32, bai 41, orcarouter 6, nvidia 9) + ~150 documented no-row
-      ids; WINDOW_COVERAGE_REGISTER + fail-closed lint over all 23 registry
-      providers; LIVE apinex/bai roster census in verify-window-truth.ts.
-      **Pending:** (a) G2 commit authority for closure + archive + CHANGELOG
-      entry; (b) the T128(f) censuses (66 gateway-advertised-exactly-200000
-      rows; 5 zero-row registry providers cloudflare/ollama/codecraft/xkiro/
-      cleanapis) — registered analysis items, dispositions recorded in
-      `window-coverage-register.ts`.
-
 - [ ] **T119. Pending provider account access and identity.**
       **Automation level: 1.** Mapped xKiro Claude Haiku live acceptance
       returned HTTP 403 requiring an active paid plan or real deposited
@@ -356,16 +338,6 @@ T90-F3 was resolved by the operator ruling "T90-F3 residual needs no code"
   `dev/session-summaries/2026-10-03-provider-*.md`,
   `dev/scratchpad/active/provider-catalogs-2026-10-03/**`,
   `dev/scratchpad/active/provider-integration-*`
-- T128: `common/src/constants/context-window-table.ts`,
-  `common/src/constants/context-window-table-apinex.ts`,
-  `common/src/constants/context-window-table-bai.ts`,
-  `common/src/constants/window-coverage-register.ts`,
-  `cli/src/utils/openrouter-models/__tests__/window-truth-*.test.ts`,
-  `cli/src/utils/openrouter-models/__tests__/window-coverage-register.test.ts`,
-  `scripts/providers/verify-window-truth.ts`,
-  `dev/fids/FID-2026-1004-002-*.md`,
-  `dev/scratchpad/active/window-coverage-*`,
-  `dev/session-summaries/2026-10-04-window-coverage-*.md`
 - T62-followups: `dev/scratchpad/active/t62*.ts` (the catalog itself is
   gateway-side; the local write surface is the probe scripts — verified
   2026-10-02: no local catalog directory exists)

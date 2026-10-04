@@ -71,10 +71,13 @@ receipt stamped 12/12 gates).
 
 ## Open items
 
-- T128 stays in `SCOPE.md`: implementation verified; closure + archive +
-  CHANGELOG entry await G2 commit authority (T127 precedent).
-- T128(f) censuses (66 exactly-200000 rows; 5 zero-row providers:
-  cloudflare/ollama/codecraft/xkiro/cleanapis) are registered follow-up
+- **T128 CLOSED 2026-10-04** on operator commit authority ("1 local only"):
+  implementation commit `8323ccf6` (12 files, 1,713 insertions, path-scoped);
+  closure commit moves the FID to `dev/fids/archive/` and adds the CHANGELOG
+  `Unreleased — 2026-10-04` entry. The item left the register on the standing
+  rule. **No push performed** — local commits only.
+- The T128(f) censuses (66 exactly-200000 rows; 5 zero-row providers:
+  cloudflare/ollama/codecraft/xkiro/cleanapis) remain registered follow-up
   analysis inside the approved scope — the register records each provider's
   `no-runtime-rows` disposition with the census date.
 
