@@ -11,6 +11,24 @@
   prefix rules. Registry, SDK, CLI fanout/reset, exception owners, and generated
   provider references agree. See [provider and model reference](docs/providers.md).
 
+- **Gateway reconnect event replay (FID-2026-1003-002, low; closed 2026-10-03).**
+  Every gateway `event` frame flows through one seq-stamped emission primitive
+  with a bounded 1,000-batch replay buffer, so batches flushed during a
+  disconnect are no longer dropped. A reconnecting desktop client recovers the
+  window in order through the additive `replay_events {since}` method, the
+  additive hello `eventSeq`, and the `'replay_events'` capability, feeding
+  recovered batches through the existing `onEvents` seam; unrecoverable gaps
+  surface via `onReplayGap`. Live wire format, envelope, error codes, and
+  `GATEWAY_PROTOCOL_VERSION` are unchanged (drift-guarded).
+
+- **Durable provider notifications (FID-2026-1003-006, high; closed 2026-10-03).**
+  Provider changes reach users instead of vanishing: a durable notification
+  service with a CLI inbox coordinator and capability-negotiated desktop
+  `provider_notice` frames (`provider_notices_v1`), semantic model
+  added/removed/changed deltas, dated health/removal notices with eligible
+  429 fallback hints, and capability-based quota windows with dated offer
+  expiry.
+
 ### Changed
 
 - **CleanAPIs and model information (FID-2026-1003-001, medium).** CodeCraft
@@ -21,6 +39,21 @@
   information and provider setup are documented across root, release, and
   workspace READMEs. Generated provider references remain registry-owned.
 
+- **Request token budgets enforced across every model call (FID-2026-1002-003,
+  high; closed 2026-10-03).** A shared provider-model guard covers streaming,
+  generation, structured output, subagents, and retries: route catalog limits
+  are consumed, final prompts/tools are counted, output is bounded, and one
+  recovery attempt re-dispatches against a smaller provider-reported limit
+  before delivery. Unknown output caps stay omitted; observations never
+  fabricate model capabilities.
+
+- **Knowledge-graph refresh reads only changed files (FID-2026-1002-006,
+  medium; closed 2026-10-03).** A stat pre-filter plus a sha256 baseline means
+  the refresh reads, hashes, and parses only new or changed files;
+  IMPORTS/EXTENDS edge layers derive from persisted tokens instead of
+  re-reading sources, and legacy v1 databases backfill automatically on the
+  next pass.
+
 ### Fixed
 
 - **Model-picker scrolling (FID-2026-1003-004, medium; closed 2026-10-03).**
@@ -28,6 +61,51 @@
   rendered height. Keyboard, wheel, scrollbar, filter, resize, and full-ID
   selection have native OpenTUI regression coverage. Long names clip visually
   while selection retains the complete model ID.
+
+- **System data-flow audit corrections (FID-2026-1002-002, high; closed
+  2026-10-03).** Full baseline capture fits the real-tree budget; snapshot/
+  sidebar and post-await save ownership gaps are closed; active-only FID
+  loading no longer reads the archive; byte-only search events stop silently
+  losing content; sidebar archive/convergence claims carry evidence; the FID
+  gate executor runs workspace tests from their workspace root per the T67
+  guard.
+
+- **Desktop sidecar resolves its project root (FID-2026-1002-004, high; closed
+  2026-10-03).** The supervisor passes `SAVANT_PROJECT_ROOT` env-only with a
+  declared build profile; the sidecar fails closed before binding when a
+  release launch arrives without a root (Rust git-root tests, argv-exclusion
+  pin, release-gate test, cargo probe gate).
+
+- **Turn-end baseline advance uses the captured root (FID-2026-1002-005,
+  medium; closed 2026-10-03).** The advance resolves its root from the
+  captured baseline root, matching the reconciliation contract; the old code
+  failed both of its assertions and is pinned by a captured-root regression.
+
+- **Gateway approvals survive disconnects; the flush timer retires
+  (FID-2026-1002-007, low; closed 2026-10-03).** Approval deny moved to
+  run-settle plus shutdown so a disconnect can no longer lose pending
+  approvals; the event flush timer self-stops when the buffer drains and
+  re-arms on push (contract re-pinned; new flush-lifecycle suite).
+
+- **Gateway dispatch error containment (FID-2026-1002-008, medium; closed
+  2026-10-03).** The RPC dispatch boundary, the `void`-ed `user_message`
+  handler, the hello FID-snapshot timer, and the websocket transport are all
+  contained on the frozen v1 vocabulary (`internalError -32603` /
+  `run_complete {ok:false}`); a handler throw can no longer tear down the
+  sidecar or wedge a session. No wire-contract change; fault-injection tests
+  run through harness DI seams only.
+
+- **Per-project data directories are collision-proof (FID-2026-1003-003, low;
+  closed 2026-10-03).** `getProjectDataDir()` keys
+  `projects/<basename>-<sha256-8>` over the realpath-normalized root
+  (win32-lowercased), ending same-basename cross-project conversation bleed;
+  a one-time guarded rename migrates existing history non-destructively.
+
+- **Model-picker search keeps provider identity (FID-2026-1003-005, medium;
+  closed 2026-10-03).** Provider-scoped React row keys end stale direct-OpenAI
+  rows being retained after search when OpenRouter serves the same model IDs;
+  colliding-ID native regressions fail before the correction and pass after,
+  and both routes sharing an ID remain independently selectable.
 
 Validation: authenticated catalogs returned 33 CodeCraft, 129 xKiro, and
 33 CleanAPIs models on 2026-10-03; every upstream ID survived normalization.
@@ -40,6 +118,22 @@ Both FIDs are closed and archived with implementation commits `72af5480`
 ECHO G2. Project-wide documentation and model information are updated. T119
 retains Claude account access and the possible fourth provider's missing
 identity. These local commits are not a published release or remote push.
+
+Validation: the eleven FIDs documented above (FID-2026-1002-002, -003, -004,
+-005, -006, -007, -008 and FID-2026-1003-002, -003, -005, -006) were
+implemented and verified with receipt-stamped gates, then landed together in
+batch commit `9f1b8068` (351 files) on 2026-10-03 after a pristine
+full-repository battery: 7,878 pass / 0 fail across all 13 workspaces plus
+script gates (sdk 655, cli 3,826 pass / 18 skip, common 749, agent-runtime
+1,648, desktop 427; typecheck 14 legs exit 0; ESLint, markdownlint, Prettier,
+and quality all clean). The custom-endpoint auth seam was hardened in the
+same commit: a custom `INFERENCE_BASE_URL` endpoint is authorized by
+`INFERENCE_API_KEY` only — no active-provider key-chain resolution and no
+fail-closed throw naming an unrelated provider (handoff matrix 6/6; child
+cases 4.2–5.7s, previously 10–22s while the master-key exchange was in
+play). All eleven FIDs are closed and archived to `dev/fids/archive/` with
+the closure commit, satisfying ECHO G2. These local commits are not a
+published release or remote push.
 
 ## 2026-10-02 — EHEL enforcement restored end-to-end: effect-based mutation classification, worktree-reconciled Law 15, Law 2 scope gate, and fail-loud code_search (2 FIDs archived)
 

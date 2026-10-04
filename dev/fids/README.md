@@ -5,6 +5,17 @@ operator decision, implementation, runtime review, or closure evidence.
 
 ## Current active FIDs
 
+**2026-10-03 — the October batch: eleven FIDs closed and archived with the
+batch landing (`9f1b8068`).** The operator granted G2 ("Batch + close all"):
+the verified tree (351 files) landed as one batch commit on local main after
+a pristine full-repository battery (7,878 pass / 0 fail), and
+`FID-2026-1002-002`/-003/-004/-005/-006/-007/-008 plus
+`FID-2026-1003-002`/-003/-005/-006 were flipped to
+`closed (implemented + verified, 2026-10-03, commit 9f1b8068)` and moved to
+`dev/fids/archive/`, with per-FID entries under CHANGELOG
+`Unreleased — 2026-10-03`. Local commits only — no push, no release.
+**The active FID queue is empty again.**
+
 **The active FID queue is empty** (2026-09-27): the records below were closed and
 archived on operator directive, with their receipts re-stamped at the archived
 paths. Each block is kept as the record of what it claimed while it was active.

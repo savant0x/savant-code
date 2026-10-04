@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-1002-005-turn-end-baseline-advance-root.md`
 **ID:** FID-2026-1002-005
 **Severity:** medium
-**Status:** verified
+**Status:** closed (implemented + verified, 2026-10-03, commit 9f1b8068)
 **Created:** 2026-10-02
 **Automation level:** 3
 **YAGNI-Compliance:** Verified
@@ -215,5 +215,6 @@ implementation at level 3.
   turn-end integration block of the worktree-reconcile suite.
 - **Verification Evidence:** all four declared gates exit 0; receipt
   stamped below by the project verifier.
-- **Commit SHA:** pending — commit authority is operator-owned (G2); no
-  commit made.
+- **Commit SHA:** `9f1b8068` — landed in the 2026-10-03 batch commit on
+  local main (operator granted G2; local commit only, no push).
+- **Archived:** 2026-10-03 (moved to `dev/fids/archive/`)

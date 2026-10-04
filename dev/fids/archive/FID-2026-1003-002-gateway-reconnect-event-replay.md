@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-1003-002-gateway-reconnect-event-replay.md`
 **ID:** FID-2026-1003-002
 **Severity:** low
-**Status:** verified
+**Status:** closed (implemented + verified, 2026-10-03, commit 9f1b8068)
 **Created:** 2026-10-03
 **Automation level:** 3
 **YAGNI-Compliance:** Verified
@@ -309,9 +309,14 @@ ordering. Ready for implementation at level 3.
   exit 0; cli replay 4/4 + server family 51/0; desktop replay 4/4 +
   full desktop 425/0 + drift 2/0; ESLint zero warnings; quality PASS;
   receipt stamped by the project verifier.
-- **Commit SHA:** pending — commit authority is operator-owned (G2);
-  no commit made.
+- **Commit SHA:** `9f1b8068` — landed in the 2026-10-03 batch commit on
+  local main (operator granted G2; local commit only, no push).
+- **Archived:** 2026-10-03 (moved to `dev/fids/archive/`)
 
 ## Lessons Learned
 
-PENDING — filled at closure.
+Fire-and-forget event delivery silently loses data whenever the consumer set
+is empty. A bounded server-side replay buffer plus an additive cursor
+recovers the disconnect window without breaking a frozen wire contract — and
+one seq space for every event frame (live batches, snapshots, FID updates)
+is the invariant that makes client cursor arithmetic exact.

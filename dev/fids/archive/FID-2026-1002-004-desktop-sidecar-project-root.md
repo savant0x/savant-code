@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-1002-004-desktop-sidecar-project-root.md`
 **ID:** FID-2026-1002-004
 **Severity:** high
-**Status:** verified
+**Status:** closed (implemented + verified, 2026-10-03, commit 9f1b8068)
 **Created:** 2026-10-02
 **Automation level:** 3
 **YAGNI-Compliance:** Verified
@@ -253,5 +253,6 @@ level 3.
 - **Verification Evidence:** all four declared gates exit 0 (typecheck
   cli; server-command suite; cargo probe; quality); receipt stamped by
   the project verifier.
-- **Commit SHA:** pending — commit authority is operator-owned (G2); no
-  commit made.
+- **Commit SHA:** `9f1b8068` — landed in the 2026-10-03 batch commit on
+  local main (operator granted G2; local commit only, no push).
+- **Archived:** 2026-10-03 (moved to `dev/fids/archive/`)

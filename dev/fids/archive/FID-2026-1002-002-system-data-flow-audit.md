@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-1002-002-system-data-flow-audit.md`
 **ID:** FID-2026-1002-002
 **Severity:** high
-**Status:** verified
+**Status:** closed (implemented + verified, 2026-10-03, commit 9f1b8068)
 **Created:** 2026-10-02
 **Automation level:** 3
 **YAGNI-Compliance:** Verified
@@ -217,9 +217,11 @@ zero failures. Source wiring, probes, and live tmux checks are detailed in
 
 ## Resolution
 
-Implementation verified in the working tree. Receipt is refreshed against
-this final document. Commit and archival require explicit authorization;
-the exact day-one symptom remains pending operator clarification.
+Implemented and verified in the working tree; landed in the 2026-10-03 batch
+commit `9f1b8068` on local main (operator granted G2; local commit only, no
+push). The exact day-one symptom remains pending operator clarification;
+every other finding's correction is implemented and receipt-stamped.
+- **Archived:** 2026-10-03 (moved to `dev/fids/archive/`)
 
 ## Lessons Learned
 

@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-1003-003-project-data-basename-collision.md`
 **ID:** FID-2026-1003-003
 **Severity:** low
-**Status:** verified
+**Status:** closed (implemented + verified, 2026-10-03, commit 9f1b8068)
 **Created:** 2026-10-03
 **Automation level:** 3
 **YAGNI-Compliance:** Verified
@@ -230,9 +230,13 @@ config-dir seam. Ready for implementation at level 3.
 - **Verification Evidence:** cli typecheck exit 0; isolation 4/4;
   declared neighbor gates 14/0; neighbor sweep 79/0; ESLint zero
   warnings; quality PASS; receipt stamped by the project verifier.
-- **Commit SHA:** pending — commit authority is operator-owned (G2);
-  no commit made.
+- **Commit SHA:** `9f1b8068` — landed in the 2026-10-03 batch commit on
+  local main (operator granted G2; local commit only, no push).
+- **Archived:** 2026-10-03 (moved to `dev/fids/archive/`)
 
 ## Lessons Learned
 
-PENDING — filled at closure.
+A basename is a label, not an identity: human-readable filesystem keys need
+a uniqueness guarantee too. Hashing the normalized realpath keeps the
+readable prefix while making the namespace collision-proof, and a guarded
+one-time rename migrates existing history without a schema ceremony.

@@ -62,7 +62,7 @@
 
 ## Open items
 
-**Fifteen** items are open.
+**Twelve** items are open.
 (2026-10-02: T114–T117 completed and left the register on the standing
 rule — each owns a converged, implemented, verified FID in `dev/fids/`
 with receipt-stamped gates, pending G2 commit authority:
@@ -145,7 +145,14 @@ native TUI tmux smoke and a live desktop smoke not run on this host (tmux
 unavailable); ambient dev-machine `.env.local` reaches handoff children
 (routing contract holds regardless; CI deterministic); the standing
 Savant-Free e2e failures stay T122. Closure and archive await G2 commit
-authority. 2026-10-02: T109 + T110 completed and
+authority. 2026-10-03 (closure): G2 was granted — the operator picked
+"Batch + close all"; the verified tree landed in batch commit `9f1b8068`
+and ALL eleven October FIDs (`FID-2026-1002-002` … `-008`,
+`FID-2026-1003-002`/-003/-005/-006) are closed and archived with
+CHANGELOG entries under `Unreleased — 2026-10-03`. T111
+(`FID-2026-1002-002`), T112 (`FID-2026-1002-003`), and T126
+(`FID-2026-1003-005`) therefore also completed and left the register on
+the standing rule. 2026-10-02: T109 + T110 completed and
 left the register on the standing
 rule — `FID-2026-1001-003` (all eight steps implemented: effect-based
 mutation classification closing the terminal bypass, worktree-reconciled
@@ -359,20 +366,6 @@ T90-F3 was resolved by the operator ruling "T90-F3 residual needs no code"
 
 ### Providers and routing
 
-- [x] **T126. Model-picker search retains unrelated OpenAI results.**
-      Operator report 2026-10-03: "no matter what i type in /model,
-      openai is pinned at the top and it's not only returning the matches
-      for the search string, it's returning the full openai list as well".
-      **Automation level: 3.** Reproduce the rendered picker with mixed
-      provider catalogs, identify the filtering or rendering failure,
-      converge the corrective FID, apply the correction, and verify search
-      results, selection, scrolling, and production reachability.
-      **FID:** `FID-2026-1003-005`.
-      Implementation verified in the working tree: provider-scoped React
-      row keys remove stale OpenAI results; colliding-ID native regressions
-      fail before correction and pass afterwards. **Blocker:** G2 commit
-      authority is not granted by this request; FID closure/archival awaits it.
-
 - [ ] **T119. Pending provider account access and identity.**
       **Automation level: 1.** Mapped xKiro Claude Haiku live acceptance
       returned HTTP 403 requiring an active paid plan or real deposited
@@ -414,60 +407,6 @@ T90-F3 was resolved by the operator ruling "T90-F3 residual needs no code"
       surfaces — disposition (repair or removal) is a dedicated
       operator-directed session. **Automation level: 1** (no agent action;
       the e2e failures are known and operator-owned until then).
-
-- [ ] **T112. Enforce request token budgets across all model calls.**
-      Operator request 2026-10-02: "alright so how do we fix this system wide?"
-      **Automation level: 3.** The triggering provider rejection recorded 112,977
-      input plus 943,717 requested output exceeding a 1,048,576-token serving
-      limit (quoted verbatim in the FID; the scratch transcript that carried it
-      was deleted 2026-10-03).
-      Implement a shared provider-model guard for streaming, generation,
-      structured output, subagents and retries; consume route catalog limits,
-      count final prompts/tools, bound output, and recover once from a smaller
-      provider-reported limit before delivery. Preserve unknown output-cap
-      omission and route observations without fabricating model capabilities.
-      **FID:** `FID-2026-1002-003`. Commit authorization remains operator-owned.
-      Implementation exists across every SDK model route; transport regressions
-      verify the serialized allowance and bounded initial-dispatch recovery.
-      Full SDK: 570 pass / 1 platform skip; common: 739 pass / 4 platform skips;
-      catalog: 99 pass; compaction: 23 pass. Root typecheck, zero-warning lint,
-      Markdown lint, formatting, quality and all 10 declared gates pass.
-      Implementation verified; FID stays active solely pending G2 commit authority.
-      Includes restoring leaked AI mocks in two existing SDK tests. 2026-10-03:
-      the scratch failure transcript is deleted and its `.markdownlintignore`
-      exemption withdrawn; its evidence is quoted in the FID instead, so this
-      item no longer depends on a root-level scratch file.
-
-- [ ] **T111. System data-flow, performance, and sidebar audit (2026-10-02).**
-      Operator request: review the past day's CHANGELOG and completed work,
-      repeat the data-flow audit, verify the lingering day-one bug fix,
-      identify speed/data-flow improvements, and inspect the sidebar for
-      quality defects. Audit the current working tree, including uncommitted
-      enforcement and code-search changes. Trace production callers across
-      runtime, SDK, CLI event handling, state, and sidebar rendering; reproduce
-      findings and apply verified reversible corrections through a converged
-      FID. Record evidence and measured performance in the session report.
-      **Automation level: 3.** The exact day-one symptom is being clarified
-      while the independently actionable audit proceeds.
-      **FID:** `FID-2026-1002-002`. Reproduced findings: full baseline capture
-      exhausts the real-tree budget; snapshot/sidebar and post-await save
-      ownership gaps; active-only FID loading reads the archive; byte-only
-      search events silently lose content; sidebar archive/convergence claims
-      lack evidence; presence reachability pins stale line numbers. Exact
-      corrective impact and gates are presented in the converged FID.
-      Follow-on evidence: same-chat replacement requires run identity at
-      adoption; dirty-at-capture files restored to Git-clean contents require
-      persistent candidate tracking. Both are included in this correction.
-      Live tmux evidence at 100×28 also shows the Modified counter clipped;
-      sidebar overflow correction and fresh terminal captures are included.
-      The FID gate executor runs workspace tests from the repository root,
-      contrary to the T67 guard; correcting its working directory is included.
-      **Verified 2026-10-02:** corrections implemented; all 13 FID gates pass,
-      full repository tests 7,760 pass / zero fail, final CLI 3,771 pass /
-      zero fail, and live terminal checks pass. Evidence is in the audit
-      session report and the active verified FID. **Blocker:** the exact
-      day-one symptom/FID is pending operator clarification. Commit and FID
-      archival remain subject to explicit commit authorization (G2).
 
 - [ ] **T87-B. A scaffold that predates a decomposition can never refresh, and
       nothing detects it.** Re-grounded 2026-09-28 by reading

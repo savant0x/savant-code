@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-1003-005-model-picker-provider-row-identity.md`
 **ID:** FID-2026-1003-005
 **Severity:** medium
-**Status:** verified
+**Status:** closed (implemented + verified, 2026-10-03, commit 9f1b8068)
 **Created:** 2026-10-03 11:20
 **Automation level:** 3
 **YAGNI-Compliance:** Verified
@@ -200,10 +200,12 @@ resolve that routing collision.
 ## Resolution
 
 Implemented and verified in the working tree. Provider-scoped React identities
-prevent stale OpenAI rows after search. The active FID remains verified pending
-explicit G2 commit authority; it is not closed or archived. No commit hash is
-claimed. Markdown and changed-file formatting checks are part of final
-artifact validation; the executed declared gates are receipt-stamped.
+prevent stale OpenAI rows after search. The operator granted G2 ("Batch +
+close all", 2026-10-03); the correction landed in the batch commit `9f1b8068`
+on local main — local commit only, no push. Markdown and changed-file
+formatting checks are part of final artifact validation; the executed declared
+gates are receipt-stamped.
+- **Archived:** 2026-10-03 (moved to `dev/fids/archive/`)
 
 ## Lessons Learned
 

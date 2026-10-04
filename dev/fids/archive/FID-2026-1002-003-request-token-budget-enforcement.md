@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-1002-003-request-token-budget-enforcement.md`
 **ID:** FID-2026-1002-003
 **Severity:** high
-**Status:** verified
+**Status:** closed (implemented + verified, 2026-10-03, commit 9f1b8068)
 **Created:** 2026-10-02
 **Automation level:** 3
 **YAGNI-Compliance:** Verified
@@ -286,8 +286,10 @@ gates passed; the final receipt is stamped below by the project verifier.
 
 ## Resolution
 
-Implemented under the level-3 task instruction. Closure is blocked only on G2:
-the operator has not authorized a commit. No commit, push or FID archival done.
+Implemented under the level-3 task instruction. The operator granted G2
+("Batch + close all", 2026-10-03); the work landed in the batch commit
+`9f1b8068` on local main — local commit only, no push.
+- **Archived:** 2026-10-03 (moved to `dev/fids/archive/`)
 
 ## Lessons Learned
 

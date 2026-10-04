@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-1002-007-gateway-approval-survival-flush-timer.md`
 **ID:** FID-2026-1002-007
 **Severity:** low
-**Status:** verified
+**Status:** closed (implemented + verified, 2026-10-03, commit 9f1b8068)
 **Created:** 2026-10-02
 **Automation level:** 3
 **YAGNI-Compliance:** Verified
@@ -227,5 +227,6 @@ implementation at level 3.
 - **Verification Evidence:** cli typecheck exit 0; gateway family 41/0;
   approvals 3/0; flush-lifecycle 5/0; quality gate 0; receipt stamped by
   the project verifier.
-- **Commit SHA:** pending — commit authority is operator-owned (G2); no
-  commit made.
+- **Commit SHA:** `9f1b8068` — landed in the 2026-10-03 batch commit on
+  local main (operator granted G2; local commit only, no push).
+- **Archived:** 2026-10-03 (moved to `dev/fids/archive/`)

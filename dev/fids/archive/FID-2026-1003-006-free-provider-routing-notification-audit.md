@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-1003-006-free-provider-routing-notification-audit.md`
 **ID:** FID-2026-1003-006
 **Severity:** high
-**Status:** verified
+**Status:** closed (implemented + verified, 2026-10-03, commit 9f1b8068)
 **Created:** 2026-10-03 11:35
 **Automation level:** 3
 **YAGNI-Compliance:** Verified
@@ -583,7 +583,10 @@ claim is permitted while those failures remain.
 Plan converged after five passes. The operator authorized implementation on
 2026-10-03: "proceed w/ the work". Implementation is complete; every declared
 gate is green and the implementation record below distinguishes tested and
-live boundaries. Closure and archive await the operator's commit (G2).
+live boundaries. The operator granted G2 ("Batch + close all", 2026-10-03);
+the work landed in the batch commit `9f1b8068` on local main — local commit
+only, no push.
+- **Archived:** 2026-10-03 (moved to `dev/fids/archive/`)
 
 ## Implementation Record
 

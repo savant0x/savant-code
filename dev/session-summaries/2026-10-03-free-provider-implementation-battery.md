@@ -94,12 +94,13 @@ scripts/providers gates.
 FID-2026-1003-006: status `verified`, receipt stamped (23/23 gates),
 implementation record and step status written into the FID; SCOPE.md T127
 left the register on the standing rule with the completion evidence.
-Closure, CHANGELOG entry, and archive await the operator's commit (G2).
+Closure, CHANGELOG entry, and archive were executed later the same session
+after the operator granted G2 (ceremony section below).
 
 ## Pristine single-run chain record (2026-10-03)
 
 One uninterrupted `bun run test` invocation on a quiet machine, full output
-retained at `dev/scratchpad/chain-pristine.log`, chain exit code 0, zero
+retained at `dev/scratchpad/archive/chain-pristine.log`, chain exit code 0, zero
 failures in any leg:
 
 | Leg (`bun run --cwd=<ws> test`) | Pass | Skip | Fail | Files | Duration |
@@ -140,3 +141,30 @@ FID-2026-1002-002/-003/-004/-005/-006/-007/-008, FID-2026-1003-002/-003/
 `dev/scratchpad/**` is gitignored. Nothing was staged or committed; the tree
 is exactly the battery-verified state. FID-2026-1003-006 remains `verified`,
 receipt stamped 23/23 gates.
+
+## Closure ceremony executed (2026-10-03, later the same session)
+
+The operator granted G2 mid-session ("Batch + close all") and re-confirmed:
+"make sure you properly update the changelog and move the completed fids".
+Executed, local-only:
+
+- Batch commit `9f1b8068` landed on main (351 files, +22849/−3333): "feat:
+  land the verified T111-T127 provider, budget, audit and sidecar work",
+  listing all 11 FIDs. The first attempt was rejected by the repo's
+  commit-msg hook (agent-attribution watermark); it was re-committed without
+  attribution trailers per the no-attribution law. No push, no release.
+- All 11 FIDs flipped to `closed (implemented + verified, 2026-10-03, commit
+  9f1b8068)`, pending-commit bullets resolved, PENDING lessons filled, and
+  `git mv`'d to `dev/fids/archive/`. The active FID queue is empty.
+- CHANGELOG `Unreleased — 2026-10-03` now documents the landed work (gateway
+  replay, provider notifications, token budgets, changed-only graph refresh,
+  audit corrections, sidecar root, baseline advance, approvals/flush timer,
+  dispatch containment, project-data isolation, picker row identity) with a
+  closure/validation paragraph citing `9f1b8068` and the pristine 7,878/0
+  battery.
+- SCOPE.md register: T111/T112/T126 left on the standing rule (count 15 →
+  12); machine-readable targets retained (T127 precedent).
+
+The two handoff directives above were superseded by the operator's in-session
+authorization; the standing rule remains: commits are local-only — no push,
+no release.

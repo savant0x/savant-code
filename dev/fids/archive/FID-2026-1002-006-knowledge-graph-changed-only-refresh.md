@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-1002-006-knowledge-graph-changed-only-refresh.md`
 **ID:** FID-2026-1002-006
 **Severity:** medium
-**Status:** verified
+**Status:** closed (implemented + verified, 2026-10-03, commit 9f1b8068)
 **Created:** 2026-10-02
 **Automation level:** 3
 **YAGNI-Compliance:** Verified
@@ -298,5 +298,6 @@ modules (all read 0-EOF, direct file edits):
   suites green unmodified.
 - **Verification Evidence:** receipt stamped by the project verifier; all
   six declared gates exit 0.
-- **Commit SHA:** pending — commit authority is operator-owned (G2); no
-  commit made.
+- **Commit SHA:** `9f1b8068` — landed in the 2026-10-03 batch commit on
+  local main (operator granted G2; local commit only, no push).
+- **Archived:** 2026-10-03 (moved to `dev/fids/archive/`)
