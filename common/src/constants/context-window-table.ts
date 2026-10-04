@@ -14,6 +14,8 @@
  *   2026-09-14; qwen3.8-27b:free pins the metadata value over the
  *   conflicting 262.1K tag — flagged in the FID).
  */
+import { KIOSAPI_CONTEXT_WINDOW_FALLBACKS } from './context-window-table-kiosapi'
+
 export const CONTEXT_WINDOW_FALLBACKS: ReadonlyMap<string, number> = new Map([
   // --- hcnsec (FID-2026-0913-001) ---
   ['hcnsec/glm-5.3-flash', 1_310_720],
@@ -182,27 +184,10 @@ export const CONTEXT_WINDOW_FALLBACKS: ReadonlyMap<string, number> = new Map([
   ['commandcode/poolside/laguna-s-2.1-free', 1_048_576],
   ['commandcode/inclusionai/ling-3.0-flash-sante:free', 262_144],
   ['commandcode/meituan/LongCat-2.0:free', 1_048_756], // live 2026-09-19 (was 1,048,576 — vendor's odd 1,048,756)
-  // --- kiosapi (FID-2026-0919-019: live-roster sweep found 8/19 ids on the
-  // 200k default; six vendor-published windows researched 2026-09-19) ---
-  // Vendor wiki "512K" (deprecated model, page kept live). NEEDS-REVIEW:
-  // AgnesAI GitHub README claims "256K after the June 2026 rollback"; the
-  // live vendor wiki outranks the stale README.
-  ['kiosapi/agnes-2.0-flash', 524_288],
-  // Vendor wiki "512K" (GA model).
-  ['kiosapi/agnes-2.5-flash', 524_288],
-  // Vendor wiki full spec page "512K"; max output 65,536 confirms the
-  // binary-K convention. The 262,144 in third-party posts is the
-  // open-weight Preview checkpoint, NOT this production/API model.
-  ['kiosapi/agnes-3.0-flash', 524_288],
-  // Upstream window vendor-published in FID-2026-0916-005
-  // (atria/Atria-Dawn-Preview); kiosapi is a second gateway for it.
-  ['kiosapi/atria-dawn-preview', 262_144],
-  // xKiro spec sheet "262K" (the "256K" secondary source is the same value
-  // rounded).
-  ['kiosapi/sensenova-6.8-flash-lite', 262_144],
-  // NVIDIA model card "256K token context window"; vLLM recipe pins
-  // --max-model-len 262144.
-  ['kiosapi/diffusiongemma-26b-a4b-it', 262_144],
-  // kiosapi/big-pickle: deliberately NO row — stealth Zen model with no
-  // vendor spec; the only aggregator value (200K) equals the default.
+  // --- kiosapi: seam-split to ./context-window-table-kiosapi
+  // (FID-2026-1003-008 — the full 77-model Model Square roster outgrew this
+  // module's 300-line quality ceiling; FID-2026-0919-019 researched the
+  // original 6 rows). The spread keeps the single Map and every import
+  // path stable. No-row ids are documented in the section file's header.
+  ...KIOSAPI_CONTEXT_WINDOW_FALLBACKS,
 ])
