@@ -62,7 +62,7 @@
 
 ## Open items
 
-**Three** items are open.
+**Four** items are open.
 (2026-10-03 (decision digest): the failure behind FID-2026-1003-007 —
 register items sat `**Blocker:** operator ruling` for weeks because nothing
 PRESENTED them — was fixed the same day. Every pending decision was
@@ -278,6 +278,40 @@ T90-F3 was resolved by the operator ruling "T90-F3 residual needs no code"
 
 ### Providers and routing
 
+- [ ] **T131. Authoritative provider-integration runbook + archived-runbook
+      drift repair.** **Automation level: 3.** Operator request 2026-10-04:
+      "make a new doc, on how to correctly add a new provider. And fix the
+      runbook drift". Write `docs/adding-a-provider.md` grounded in the LIVE
+      enforcing modules (not the archived claim, per the
+      `archived-runbook-is-claim-not-contract` lesson), covering the four
+      fail-closed gates the archived runbook omits: the
+      `WINDOW_COVERAGE_REGISTER` closed-world invariant
+      (FID-2026-1004-002, `cli/.../__tests__/window-coverage-register.test.ts`),
+      the `requiredExceptionKinds` derivation table + manifest ownership
+      (`common/src/providers/audit.ts`), the `gateway.ts` /
+      `gateway-live-results.ts` positional settled-ladder contract (insert
+      before the custom-catalogs tail or silently shift every slot), and
+      `validateProviderUrlOwnership`. Repair four measured drifts in
+      `docs/archive/design/Adding New Providers.md`: the stale `acme` fixture
+      pointer (the real fixture is `fixture`/`FIXTURE_API_KEY` in
+      `validate-provider-registry.test.ts`; `acme` lives only in the unrelated
+      `cli/.../verify-custom-provider.test.ts`), the omitted `quota` field
+      (FID-2026-0919-026, live in `types.ts`), the header-table vs Step-3
+      contradiction on protocol-map location, and a supersede banner. Link the
+      new doc from `docs/index.md` + `docs/providers.md`. Docs-only; no
+      production code changes. FID: `FID-2026-1004-005-provider-runbook.md`.
+
+- [ ] **T130. NEEDS-REVIEW provenance upgrade (live OpenRouter cross-vote).**
+      **Automation level: 3.** Operator ruling 2026-10-04 (structured ruling:
+      "Upgrade provenance" — supersedes the cross-gateway-rows-only sourcing
+      rule for this ONE keyless read-only probe). One re-runnable probe fetches
+      the OpenRouter public catalog; the ~20 single-source/inheritance rows
+      flagged NEEDS-REVIEW in FID-2026-1004-002 upgrade to consensus where
+      OpenRouter agrees, conservative minimum on conflict, stay flagged where
+      OpenRouter has no listing. Data-only edits + provenance comments + pin
+      threshold re-derivation (justified in the FID, never silently weakened).
+      FID: `FID-2026-1004-004-provenance-upgrade.md`.
+
 - [ ] **T119. Pending provider account access and identity.**
       **Automation level: 1.** Mapped xKiro Claude Haiku live acceptance
       returned HTTP 403 requiring an active paid plan or real deposited
@@ -338,6 +372,13 @@ T90-F3 was resolved by the operator ruling "T90-F3 residual needs no code"
   `dev/session-summaries/2026-10-03-provider-*.md`,
   `dev/scratchpad/active/provider-catalogs-2026-10-03/**`,
   `dev/scratchpad/active/provider-integration-*`
+- T130: `common/src/constants/context-window-table.ts`,
+  `common/src/constants/context-window-table-apinex.ts`,
+  `common/src/constants/context-window-table-bai.ts`,
+  `cli/src/utils/openrouter-models/__tests__/window-truth-*.test.ts`,
+  `dev/fids/FID-2026-1004-004-*.md`,
+  `dev/scratchpad/active/provenance-upgrade-*`,
+  `dev/session-summaries/2026-10-04-window-census-*.md`
 - T62-followups: `dev/scratchpad/active/t62*.ts` (the catalog itself is
   gateway-side; the local write surface is the probe scripts — verified
   2026-10-02: no local catalog directory exists)

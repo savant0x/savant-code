@@ -23,6 +23,20 @@
  * Census provenance: dev/scratchpad/active/window-coverage-audit-output.txt
  * (probe re-run 2026-10-04, exit 0): 1,843 rows, 264 silent-200k, 66 rows
  * advertising exactly 200000, 5 registry providers with zero rows.
+ *
+ * Exactly-200000 census (FID-2026-1004-003, OpenRouter cross-vote 2026-10-04,
+ * probe: dev/scratchpad/active/window-census-classify.ts): of the 66 rows
+ * advertising exactly 200000 — 50 REAL (OpenRouter agrees: claude-haiku-4.5,
+ * opus-4.1/4.5, sonnet-4, the o-series), 3 consistent with already-flagged
+ * table defaults (commandcode haiku-4-5, tokenbom doubao, th-orchestra),
+ * 7 LEAK-PROBABLE (the gateway's own catalog under-states the GLM-4.x/5
+ * family: orcarouter/z-ai/glm-4.6|4.7|5|5.1 and vercel/zai/glm-4.6|4.7 at
+ * 200000 vs OpenRouter 204800; vercel/zai/glm-5v-turbo 200000 vs 202752 —
+ * catalog-owned divergence, ~2% under-window, self-correcting if the vendor
+ * updates; registered, NOT rowed — a fallback row is inert while the catalog
+ * value wins tier 1), 6 UNDETERMINED (vercel claude-3-haiku, claude-opus-4,
+ * o3-fast, o4-mini-fast, glm-4.7-flashx; openrouter/free stealth alias — no
+ * cross source lists them; NEEDS-REVIEW, re-census on vendor data).
  */
 
 export type WindowCoverageDisposition =
@@ -99,14 +113,14 @@ export const WINDOW_COVERAGE_REGISTER: ReadonlyMap<
     'cloudflare',
     {
       disposition: 'no-runtime-rows',
-      note: 'Static catalog, zero runtime rows observed (census 2026-10-04) — T128-f census pending.',
+      note: 'Static curated catalog (modelsRef) + account-scoped API (baseUrl embeds {CLOUDFLARE_ACCOUNT_ID}); gateway-catalog population needs token + account id — not keyless (T129 census 2026-10-04). Not dead.',
     },
   ],
   [
     'ollama',
     {
       disposition: 'local',
-      note: 'Local daemon; model list comes from the local runtime, not a gateway catalog.',
+      note: 'Local daemon; model list comes from the local runtime, not a gateway catalog. Daemon confirmed reachable (HTTP 200, 2026-10-04); excluded from the gateway catalog by design (kind local).',
     },
   ],
   [
@@ -183,14 +197,14 @@ export const WINDOW_COVERAGE_REGISTER: ReadonlyMap<
     'codecraft',
     {
       disposition: 'no-runtime-rows',
-      note: 'Live catalog, zero runtime rows observed (census 2026-10-04) — T128-f census pending.',
+      note: 'Live catalog auth-gated: HTTP 401 keyless (probed 2026-10-04) — zero rows without CODECRAFT_API_KEY. Not dead; self-populates when a key is configured.',
     },
   ],
   [
     'xkiro',
     {
       disposition: 'no-runtime-rows',
-      note: 'Live catalog, zero runtime rows (HTTP 403 paywall observed, T119) — T128-f census pending.',
+      note: 'Live catalog NOW KEYLESS: HTTP 200 with 129 rows carrying context_length (probed 2026-10-04 — the T119-era 403 lifted). Fetcher is wired in gateway.ts; the runtime snapshot predates the lift, so rows appear on the next catalog rebuild and self-correct thereafter.',
     },
   ],
   [
@@ -211,7 +225,7 @@ export const WINDOW_COVERAGE_REGISTER: ReadonlyMap<
     'cleanapis',
     {
       disposition: 'no-runtime-rows',
-      note: 'Live catalog, zero runtime rows observed (census 2026-10-04) — T128-f census pending.',
+      note: 'Live catalog auth-gated (401 keyless — registry comment probe reconfirmed by the 2026-10-04 census) — zero rows without CLEANAPIS_API_KEY. Not dead; self-populates when a key is configured.',
     },
   ],
 ])

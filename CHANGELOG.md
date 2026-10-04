@@ -4,6 +4,19 @@
 
 ### Added
 
+- **Window-census follow-ups (FID-2026-1004-003, medium; closed 2026-10-04).**
+  The 66 runtime-catalog rows advertising exactly 200000 are classified via
+  OpenRouter cross-vote: 50 REAL (claude-haiku-4.5, opus-4.1/4.5, sonnet-4,
+  the o-series), 3 consistent with already-flagged table defaults, 7
+  LEAK-PROBABLE (the GLM-4.x/5 family under-states 204800/202752 as 200000 —
+  catalog-owned ~2% under-window, registered with a re-census trigger rather
+  than inert fallback rows), 6 UNDETERMINED (dated NEEDS-REVIEW notes). All
+  five zero-row registry providers diagnosed — none dead: cloudflare
+  static+account-scoped, ollama local by design (daemon up), codecraft and
+  cleanapis auth-gated 401, and xkiro LIVE KEYLESS again (129 rows with
+  context_length; the T119-era 403 lifted — rows self-populate on the next
+  catalog rebuild via the already-wired fetcher).
+
 - **Gateway context-window coverage sweep (FID-2026-1004-002, high; closed
   2026-10-04).** 264 of 1,843 runtime-catalog ids resolved to the silent 200k
   context-window default: apinex and bai publish no window fields at all (their
