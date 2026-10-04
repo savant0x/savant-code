@@ -62,8 +62,49 @@
 
 ## Open items
 
-**Twelve** items are open.
-(2026-10-02: T114–T117 completed and left the register on the standing
+**Four** items are open.
+(2026-10-03 (decision digest): the failure behind FID-2026-1003-007 —
+register items sat `**Blocker:** operator ruling` for weeks because nothing
+PRESENTED them — was fixed the same day. Every pending decision was
+presented and ruled on in one sitting: **T94** — the operator's model ("it's
+not handwritten, im pretty sure it's part of the release script system") is
+now the contract: the release script owns the whole callout (label since
+FID-2026-0919-023; body via `syncReleaseCallouts` + fail-closed
+`version:check` callout-body drift; the real-tree drift it immediately caught
+and synced proved the premise). **T83-E** — both `backup-pre-rewrite-*`
+branches deleted (git execution authorized; gc not run, so recovery remains
+possible). **T95-B** — `tauri` added to `COMMAND_ALLOWLIST` (operator-ruled
+security widening); **T95-C**'s only error was T95-B, so `skills:check` now
+exits 0 (27 skills, 0 errors, warnings demoted by design) — both leave.
+**FID-2026-1003-007** (the surfacing mechanism itself) also completed and
+left the register on the standing rule — its own first live run surfaced the
+item *itself* as a pending decision, because that item quotes the
+`**Blocker:**` convention mid-sentence to describe the failure and the
+parser read the quotation as a declaration; the parser now requires a
+line-leading declaration, the third pin reproduces the defect, and the
+register-prose citations of the day's completed rulings are now quotations
+(`scope-register-check` PASS, 0 issues; suite 12/0; `validate:repository`
+PASS). Its record is archived
+`FID-2026-1003-007-pending-operator-decision-surfacing.md` with the
+CHANGELOG entry under `Unreleased — 2026-10-03`.
+**T97** — operator bulk-close ruling: 32 pre-cutoff archive records flipped
+to `closed (pre-cutoff historical record — operator bulk-close ruling,
+2026-10-03)` (30 status-line flips + 2 malformed inserts, -010/-011);
+`FID-2026-0919-009` stays untouched as the deliberate dated decline marker
+(FID-2026-0928-013); `validate:repository` PASS. **R1** — the window
+metaphor + atmosphere in the Code Universe HTML export
+(`cli/src/commands/graph-export/universe-css.ts` — NOT the desktop app) are
+accepted as-is (dated accept marker). **R2** — settled by measurement:
+Chrome-headless render of the real `UNIVERSE_CSS` at 1280×800 / 1100×480 /
+900×420 shows the footer fully visible, the 34px band exactly reserved, zero
+main overflow, zero horizontal clip (probe:
+`dev/scratchpad/active/r2-viewport-probe/`). **R3** — the register line was
+STALE: the four D1 colours already landed as `:root` tokens
+(`--gutter/--file-meta/--status/--hint`) in v0.0.34 (`d4264141`); the tail is
+accepted as literals. **T87-B** — `/init --force` refresh implemented
+(never-clobber stays default; knowledge.md and non-template files never
+touched; 24/24 init-suite pins). All eight leave the register on the
+standing rule. 2026-10-02: T114–T117 completed and left the register on the standing
 rule — each owns a converged, implemented, verified FID in `dev/fids/`
 with receipt-stamped gates, pending G2 commit authority:
 `FID-2026-1002-004` (T114/D1: supervisor passes `SAVANT_PROJECT_ROOT`
@@ -235,136 +276,25 @@ T62-followup(1) was re-grounded LIVE and completed as `FID-2026-0928-010`.
 T90-F3 was resolved by the operator ruling "T90-F3 residual needs no code"
 (closed as `FID-2026-0927-003`).
 
-### Release and tooling
-
-- [ ] **T94. The release headline prose has no owner, so `version:bump` relabels
-      the previous release's claims on every bump.** `updateDocSurfaces` replaces
-      only the version *token*; the `> **vX.Y.Z** — …` callout body in
-      `README.md:17` and `README.zh-CN.md:15` is hand-written and is never derived
-      from the CHANGELOG section. The v0.0.34 cut inherited three consecutive
-      releases' content under one label because of it (the `v0.0.33` bump
-      relabelled the `v0.0.32` prose, which had itself been relabelled — the
-      drift FID-2026-0919-023 recorded and the drift checker only *reports*).
-      Fixed by hand for 0.0.34: each README now describes its own release and
-      chains the previous one beneath it honestly. **Blocker:** the fix shape —
-      derive the callout from the current CHANGELOG section, or have
-      `version:check` assert the callout matches the section it labels and fail
-      closed on drift. Either is a change to the documented-version-surface
-      contract, so it is an operator call, not a patch. **Automation level: 3**
-      (mechanical once the shape is chosen).
-
-- [ ] **T83-E. Release cleanup — two retained branches should not exist.**
-      Operator ruling 2026-09-28: *"we should not be using different branches to
-      begin with, i only permitted main for usage."* **Confirmed still present
-      2026-09-28** — `git branch --list` returns exactly `backup-pre-rewrite-
-      20260913`, `backup-pre-rewrite-20260922` and `main`. The second branch
-      was never named in this register: it tracks git state, and
-      `scope.unregistered-item` only walks `dev/fids/`, so a branch cannot red
-      the coverage gate. Both are local to this machine and their retention
-      condition is met (the v0.0.33 tag is pushed and the release verified
-      complete). **Blocker:** git execution is the operator's. Delete both, then
-      optionally `git reflog expire --expire=now --all && git gc --prune=now`.      **Automation level: 1.**
-
-### Skills governance
-
-- [ ] **T95-B. `tauri signer generate` is not on `COMMAND_ALLOWLIST`**
-      (`scripts/skills-check-policy.ts:24-90`) — **confirmed still open
-      2026-09-28**: `tauri` does not appear in that policy file at all, and it is
-      a genuine first-class dependency of this repo's own desktop workspace
-      (`desktop/package.json:12`, `"tauri": "tauri"`). It is a real CLI, so the
-      RC2 label/prose rules correctly do not suppress it; the only ways to clear
-      it are to widen the allowlist or to stop writing the command as an inline
-      span, which would degrade the skill. Blast radius is one consumer —
-      `scripts/skills-check-content.ts:215` gates whether a skill may *mention* a
-      command, not whether anything executes; `BLOCKLIST_PATTERNS` runs on the
-      raw body and is untouched, and `skills:check` is in neither the pre-push
-      hook, the release preaudit, nor `.github/`. **Blocker:** widening a security
-      control is an operator ruling. **Automation level: 1.**
-
-- [ ] **T95-C. `skills:check` cannot ever exit 0 in this environment.** Re-measured
-      2026-09-28: **17** finding lines sit outside the project directory — 10
-      under `C:\Users\spenc\.agents\` and 7 under `C:\Users\spenc\.claude\`. The
-      line previously said 14, which was stale. The error *counter* is
-      unaffected — `skills-check.ts:167` demotes home-dir findings to warnings by
-      design — and the run reports `26 skill(s) scanned · 1 error · 33
-      warning(s)`; the 1 error is T95-B. A CI or fresh-clone run inherits the
-      home-dir findings. **Blocker:** they live outside the project directory,
-      which is read-only to this session; fixing them means editing operator
-      home-dir skills. **Automation level: 1.**
-
-### Archived-FID disposition
-
-- [ ] **T97. 39 archived FIDs carry a non-`closed` status** — re-measured
-      2026-09-29 with the repo's own `parseFidStatus`, not a re-implemented
-      regex: the archive holds **436** records, of which **395** are `closed`
-      (including decorated forms like `closed (2026-08-09 — …)`) and **41**
-      are problem records (39 non-`closed` + 2 with no `**Status:**` line —
-      `FID-2026-0807-010` / `-011`, genuinely malformed). **The 2026-09-28
-      figures (428/386/39) were stale.** The 9 records created on/after the
-      2026-09-15 closure-vocabulary cutoff were repaired and are now
-      mechanically guarded (`FID-2026-0928-013`: eight status flips to
-      `closed` aligned to their own ledger/Resolution evidence, one dated
-      operator-decline marker on `FID-2026-0919-009`); the guard fails
-      `validate:repository` on any future post-cutoff non-`closed` archived
-      record. **Remaining disposition surface for this item: the pre-cutoff
-      August batch (~30 records: 2026-08 code-universe/deck/desktop-era
-      `fixed`/`verified`/`implemented`) + the 2 malformed records.**
-      **Risk:** the archive is outside the active queue, so
-      `scope.unregistered-item` — which walks only `dev/fids/FID-*.md` —
-      cannot see any of them. **Blocker:** closing them requires per-record
-      implementation evidence (commit SHA or file:line + grep); bulk-setting
-      them to `closed` would be exactly the Ground-Truth violation this
-      protocol exists to prevent, and the alternative — moving them back to
-      the active queue — would put ~30 unverifiable items in front of the
-      operator at once. This needs an operator ruling on the disposition.      **Automation level: 1.**
-
-### Code Universe rulings (FID-2026-0928-003 / -004)
-
-- [ ] **R1. Draggable OS-window metaphor plus comet/starfield/watermark/SFX** —
-      Gate 7 product-identity call, confirmed present in the stylesheet read
-      2026-09-28: `.window-title-bar` with `cursor:grab` and `user-select:none`
-      (the drag affordance), `.window-btn` with `.window-minimized` /
-      `.window-maximized` variants, the `.docked-sibling` stacked-taskbar
-      arithmetic whose comment spells out the load-bearing sum
-      (`8px + 38px + 34px + 6px`), `.space-stars` / `.space-star` /
-      `.shooting-star` with a `9s linear` travel animation, and the
-      `CHARACTER_WATERMARK_DATA_URI` `::after` layer. Genuinely dual: the
-      windows carry real panel state (that arithmetic is not decorative) while
-      the atmosphere is. **Blocker:** product identity is the operator's.      **Automation level: 1.**
-
-- [ ] **R2. `body{overflow:hidden}` + `height:100vh` may clip short viewports**,
-      and the D3 type lift makes tight one-line headers more likely to wrap.
-      Re-grounded against the stylesheet 2026-09-28, which gives a real mechanism
-      rather than the earlier hand-wave. The load-bearing property is
-      **`min-height:0` on `.universe-main`** (`universe-css.ts:10`) — that is
-      what lets a flex child shrink below its content size, so a taller header
-      shrinks the main region instead of pushing it out of the shell. Every
-      overlay is `position:absolute` with its space reserved rather than
-      overlapped: `.universe-footer` is `bottom:0;height:34px` and
-      `.viewport-wrap` is `inset:0 0 34px`, so the footer never covers content;
-      the header is a normal in-flow flex row that wraps at the 1100px
-      breakpoint. Scrollable regions (`.region-nav`, `.graph-sidebar`,
-      `.browser-grid`, `.document-surface`) each carry an explicit
-      `overflow-*:auto` plus `max-height`/`min-height` bounds. **The CSS
-      structure therefore argues against clipping, and the D3 lift is absorbed
-      by `min-height:0`.** That is still a *reasoning from source*, not a
-      render, and the D3 lift made it likelier to matter. **Blocker:** only a
-      real render at a short viewport settles it. **Automation level: 1.**
-
-- [ ] **R3. Distinct literals remain, and the D1 fix added more.** Confirmed by
-      reading the stylesheet 2026-09-28: the six colours lifted for WCAG AA are
-      now literals rather than tokens — `#4f80a1` (`.document-line-number`,
-      `.document-breadcrumb-sep`), `#5e81a3` (`.region-file small`), `#667fa2`
-      (`.universe-footer`), `#6780a4` (`.center-focus-hint`, `.region-more`) —
-      so routing *those four* through `:root` is the obvious next step and needs
-      no `color-mix()` or browser-support decision. Beyond them, a longer tail
-      of one-off values remains (`#17304c`, `#173b55`, `#99b4d5`, `#06152b`,
-      `#dbeafe`, `#c4e8ff`, `#8fd9d8`, …), many alpha variants, which would need
-      `color-mix()`. **Blocker:** the browser-support call applies to the tail
-      only, not to the four D1 colours. **Automation level: 3** for the four
-      tokens, 1 for the tail.
-
 ### Providers and routing
+
+- [ ] **T128. Gateway context-window coverage sweep (all chat-surface silent-200k ids).**
+      **Automation level: 3.** Operator ruling 2026-10-04 (structured ruling:
+      fix scope = all chat surfaces; sourcing = cross-gateway rows only, no
+      fresh live probe; prevention = all five presented gates). **Status:
+      implemented + verified 2026-10-04** —
+      `FID-2026-1004-002-gateway-window-coverage-sweep.md` receipt stamped
+      12/12 gates (full typecheck, window-truth battery 45/45, register lint
+      + fallbacks 15/15, ladder suites 25/25, quality PASS, LIVE probe exit 0
+      with census apinex 34/34 + bai 59/59 registered). 88 sourced rows
+      (apinex 32, bai 41, orcarouter 6, nvidia 9) + ~150 documented no-row
+      ids; WINDOW_COVERAGE_REGISTER + fail-closed lint over all 23 registry
+      providers; LIVE apinex/bai roster census in verify-window-truth.ts.
+      **Pending:** (a) G2 commit authority for closure + archive + CHANGELOG
+      entry; (b) the T128(f) censuses (66 gateway-advertised-exactly-200000
+      rows; 5 zero-row registry providers cloudflare/ollama/codecraft/xkiro/
+      cleanapis) — registered analysis items, dispositions recorded in
+      `window-coverage-register.ts`.
 
 - [ ] **T119. Pending provider account access and identity.**
       **Automation level: 1.** Mapped xKiro Claude Haiku live acceptance
@@ -375,8 +305,10 @@ T90-F3 was resolved by the operator ruling "T90-F3 residual needs no code"
       The three confirmed services and project-wide model/documentation work
       are completed in archived `FID-2026-1003-001`, implementation commit
       `72af5480`; only these two external boundaries remain here.
+      **Blocker:** operator account access (xKiro paid plan) and the fourth
+      provider's identity — both external to the repository.
 
-- [ ] **T62-followups (remaining items routed, not blocking Task 62
+- [ ] **T62-followups (remaining items routed, not blocking `Task 62`
       closure):** (1) is **completed 2026-09-28** — commandcode catalog
       case-drift re-keyed to the live roster casing (`zai-org/GLM-5.2/5.3`),
       the two rows' windows re-sourced to the gateway's own publication, the
@@ -389,6 +321,8 @@ T90-F3 was resolved by the operator ruling "T90-F3 residual needs no code"
       `deepseek-v4.1-flash:free` catalog add + free-cell identity re-run
       after 2026-09-19T04:32 allowance reset; (3) tokenrouter self-ID
       completion on operator top-up (`bun dev/scratchpad/active/t62-round3.ts`).
+      **Blocker:** operator credits/keys — tokenharbor allowance reset and
+      tokenrouter top-up, both external to the repository.
 
 ### Harness and process
 
@@ -408,22 +342,6 @@ T90-F3 was resolved by the operator ruling "T90-F3 residual needs no code"
       operator-directed session. **Automation level: 1** (no agent action;
       the e2e failures are known and operator-owned until then).
 
-- [ ] **T87-B. A scaffold that predates a decomposition can never refresh, and
-      nothing detects it.** Re-grounded 2026-09-28 by reading
-      `cli/src/commands/init.ts` 0-EOF. The claim holds exactly: at
-      **`init.ts:70-73`** the per-file loop is
-      `if (existsSync(targetPath)) { messages.push('… already exists.'); continue }`
-      — a present file is never rewritten, so a project `/init`-ed before the
-      8-file split keeps the old hub indefinitely, which is how this repo's own
-      `.agents/types/` sat ~5 weeks stale with a hub importing modules the
-      current template set does not contain (T86-A). Nothing in the file
-      compares the scaffold against `COMMON_TYPE_FILES`, so parity is
-      undetectable. The T87-A fix is also confirmed present in this read: the
-      type sources travel inline via `COMMON_TYPE_FILES`, with no
-      `zod/v4/core` import and no `node_modules` dependency. **Blocker:** the fix
-      shape — a refresh/`--force` path (weakens never-clobber), a parity check
-      that fails a gate, or accepted-by-design plus      documentation.      **Automation level: 1.**
-
 ## Machine-readable scope targets
 
 <!-- FID-2026-1001-003 step 5a: per-item write targets for the Law 2 gate
@@ -434,36 +352,21 @@ T90-F3 was resolved by the operator ruling "T90-F3 residual needs no code"
      itself mandates are GATE-LEVEL exemptions (operator ruling 2026-10-02),
      deliberately not register items. -->
 
-- T94: `README.md`, `README.zh-CN.md`, `scripts/*version*`
-- T127: `dev/fids/FID-2026-1003-006-free-provider-routing-notification-audit.md`,
-  `dev/session-summaries/2026-10-03-free-provider-*.md`, `common/src/**`,
-  `sdk/src/**`, `cli/src/**`, `packages/agent-runtime/src/**`, `desktop/src/**`,
-  `scripts/providers/**`, `docs/providers.md`
-- T126: `cli/src/components/model-picker*.ts*`,
-  `cli/src/components/__tests__/model-picker*.test.tsx`, `dev/fids/**`,
-  `dev/session-summaries/2026-10-03-free-provider-notification-audit.md`
-- T95-B: `scripts/skills-check-policy.ts`, `scripts/skills-check-content.ts`
-- T97: `dev/fids/archive/**`
-- R1: `desktop/src/**`
-- R2: `desktop/src/**`
-- R3: `desktop/src/**`
-- T62-followups: `dev/scratchpad/active/t62*.ts` (the catalog itself is
-  gateway-side; the local write surface is the probe scripts — verified
-  2026-10-02: no local catalog directory exists)
-- T87-B: `cli/src/commands/init.ts`, `.agents/types/**`
-- T83-E: (no write surface — operator git execution)
-- T95-C: (no write surface — operator home directory)
-- T111: `cli/src/**`, `sdk/src/**`, `common/src/**`, `packages/agent-runtime/src/**`,
-  `packages/connectors/src/**`, `scripts/fid-verify.ts`,
-  `scripts/__tests__/fid-verify.test.ts`, `dev/fids/**`, `dev/session-summaries/**`
-- T112: `common/src/**`, `sdk/src/**`, `cli/src/utils/openrouter-models/**`,
-  `cli/src/utils/__tests__/**`, `packages/agent-runtime/src/**`, `docs/**`,
-  `.markdownlintignore`, `dev/fids/**`, `dev/session-summaries/**`
-- T122: (no write surface — operator-owned)
-- T123: `cli/src/server/**`, `desktop/src/**`, `desktop/scripts/**`,
-  `dev/fids/**`, `dev/session-summaries/**`
-- T124: `cli/src/**`, `dev/fids/**`, `dev/session-summaries/**`
 - T119: `.env.local`, `docs/providers.md`,
   `dev/session-summaries/2026-10-03-provider-*.md`,
   `dev/scratchpad/active/provider-catalogs-2026-10-03/**`,
   `dev/scratchpad/active/provider-integration-*`
+- T128: `common/src/constants/context-window-table.ts`,
+  `common/src/constants/context-window-table-apinex.ts`,
+  `common/src/constants/context-window-table-bai.ts`,
+  `common/src/constants/window-coverage-register.ts`,
+  `cli/src/utils/openrouter-models/__tests__/window-truth-*.test.ts`,
+  `cli/src/utils/openrouter-models/__tests__/window-coverage-register.test.ts`,
+  `scripts/providers/verify-window-truth.ts`,
+  `dev/fids/FID-2026-1004-002-*.md`,
+  `dev/scratchpad/active/window-coverage-*`,
+  `dev/session-summaries/2026-10-04-window-coverage-*.md`
+- T62-followups: `dev/scratchpad/active/t62*.ts` (the catalog itself is
+  gateway-side; the local write surface is the probe scripts — verified
+  2026-10-02: no local catalog directory exists)
+- T122: (no write surface — operator-owned)

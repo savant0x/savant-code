@@ -14,6 +14,8 @@
  *   2026-09-14; qwen3.8-27b:free pins the metadata value over the
  *   conflicting 262.1K tag — flagged in the FID).
  */
+import { APINEX_CONTEXT_WINDOW_FALLBACKS } from './context-window-table-apinex'
+import { BAI_CONTEXT_WINDOW_FALLBACKS } from './context-window-table-bai'
 import { KIOSAPI_CONTEXT_WINDOW_FALLBACKS } from './context-window-table-kiosapi'
 
 export const CONTEXT_WINDOW_FALLBACKS: ReadonlyMap<string, number> = new Map([
@@ -184,10 +186,74 @@ export const CONTEXT_WINDOW_FALLBACKS: ReadonlyMap<string, number> = new Map([
   ['commandcode/poolside/laguna-s-2.1-free', 1_048_576],
   ['commandcode/inclusionai/ling-3.0-flash-sante:free', 262_144],
   ['commandcode/meituan/LongCat-2.0:free', 1_048_756], // live 2026-09-19 (was 1,048,576 — vendor's odd 1,048,756)
+  // --- orcarouter + nvidia chat-surface gap subsets (FID-2026-1004-002:
+  // operator-ruled cross-gateway sourcing; both gateways publish windows for
+  // most of their rows — these are only the silent-gap chat ids).
+  // Deliberately NO row for the remaining silent ids, grouped:
+  // - orcarouter non-chat (no context-window semantics): gemini-2.5/-3.8-*-tts,
+  //   gpt-4o-mini-tts *, tts-1 *, gemini-embedding *, text-embedding-3 *,
+  //   text-embedding-ada-002, imagen-4.0 *, gpt-image-1/-1-mini/-1.5/-2,
+  //   kling-v2/v2-1/v2-5/v2-6/v3/v3-omni/video-o1, grok-imagine-image,
+  //   gemini-robotics-er-1.6-preview, orca/dub, orcaverify-text1.0(+ -free),
+  //   gpt-5-search-api (+ dated).
+  // - orcarouter rolling `-latest` aliases (the window follows the target
+  //   model — pinning would go stale): gemini-flash-latest,
+  //   gemini-flash-lite-latest, gemini-pro-latest, gpt-5-chat-latest,
+  //   gpt-5.1-chat-latest, gpt-5.2-chat-latest.
+  // - orcarouter no cross-gateway row: gemini-3.1-flash-lite, gemma-4-31b-it,
+  //   minimax-h3, qwen3-vl-235b-a22b-instruct, hy3-free, hy4-preview-free,
+  //   gpt-3.5-turbo-0125/1106, gpt-4-0613, gpt-5.4-mini/nano (dated),
+  //   orcarouter/free (stealth), codex-auto-review.
+  // - vercel (23 silent ids): all non-chat voice/tts/transcribe
+  //   (fish-audio s1/s2*, mai-voice/mai-transcribe *, gemini-*-tts,
+  //   gpt-4o-*-transcribe, gpt-realtime-whisper, tts-1 *, whisper-1,
+  //   grok-stt/grok-tts) — no context-window semantics for this surface.
+  // - nvidia non-chat: embed-qa/nv-embedqa/nemotron-3-embed *,
+  //   llama-3.2-nemoretriever/vlm-embed, nemoguard */content-safety/
+  //   topic-control/safety-guard, nemotron-4-340b-reward, riva-translate *,
+  //   nemotron-parse *, nvclip, deplot, kosmos-2, neva-22b, vila,
+  //   muse-glimmer, ai-synthetic-video-detector, diffusiongemma,
+  //   ising-calibration, arctic-embed.
+  // - nvidia legacy chat / no cross-gateway row: yi-large, fuyu-8b,
+  //   jamba-1.5-large, sea-lion-7b, starcoder2-15b, dbrx-instruct,
+  //   deepseek-coder-6.7b, codegemma-1.1-7b/7b, gemma-2b/3-12b/3-4b/4-31b,
+  //   recurrentgemma-2b, granite-3.0-3b/8b + granite-34b/8b-code,
+  //   codellama-70b, llama-3.2-*-vision, llama-guard-4-12b, llama2-70b,
+  //   phi-3-vision, phi-3.5-moe, codestral-22b, mistral-7b/large/large-2,
+  //   mixtral-8x22b, nemotron-4-340b-instruct, nemotron-nano-3-30b,
+  //   nemotron-3-nano-omni, llama3-chatqa-1.5-70b, mistral-nemo
+  //   (-minitron), gpt-oss-20b, palmyra-creative/fin/med (+32k), zamba2-7b.
+  ['orcarouter/deepseek/deepseek-v4-flash-free', 1_048_576], // KIO/-free + family consensus
+  ['orcarouter/openai/gpt-5.5', 1_050_000], // UNO + CC + KIO
+  // NEEDS-REVIEW: dated snapshot inherits gpt-5.5 (consensus).
+  ['orcarouter/openai/gpt-5.5-2026-04-23', 1_050_000],
+  // NEEDS-REVIEW: single source (TR/openai/gpt-5.5-pro).
+  ['orcarouter/openai/gpt-5.5-pro', 1_050_000],
+  // NEEDS-REVIEW: dated snapshot inherits gpt-5.5-pro.
+  ['orcarouter/openai/gpt-5.5-pro-2026-04-23', 1_050_000],
+  // NEEDS-REVIEW: single source (KIO/glm-5.3-flash-free).
+  ['orcarouter/z-ai/glm-5.3-flash-free', 1_048_575],
+  // --- nvidia chat-surface gap subset ---
+  ['nvidia/deepseek-ai/deepseek-v4.1-flash', 1_048_576], // CC + KIO
+  // NEEDS-REVIEW: single source (CC/moonshotai/Kimi-K2.6).
+  ['nvidia/moonshotai/kimi-k2.6', 262_144],
+  ['nvidia/moonshotai/kimi-k3', 1_048_576], // HC + TB + TR + TH + CC + KIO
+  ['nvidia/nvidia/nemotron-3-super-120b-a12b', 262_144], // TR + KIO
+  // NEEDS-REVIEW: single source (KIO/nemotron-3-ultra-550b-a55b).
+  ['nvidia/nvidia/nemotron-3-ultra-550b-a55b', 262_144],
+  // INF 1,048,576 vs KIO 262,144 → conservative minimum.
+  ['nvidia/nvidia/nemotron-3.5-lightning-30b-a3b', 262_144],
+  // NEEDS-REVIEW: single source (KIO/laguna-xs-2.1).
+  ['nvidia/poolside/laguna-xs-2.1', 262_144],
+  // CC gateway-advertised 1,000,000 vs KIO 1,048,576 → minimum.
+  ['nvidia/z-ai/glm-5.3', 1_000_000],
+  ['nvidia/z-ai/glm-5.3-flash', 1_048_575], // KIO vs INF/UNO → minimum
   // --- kiosapi: seam-split to ./context-window-table-kiosapi
   // (FID-2026-1003-008 — the full 77-model Model Square roster outgrew this
   // module's 300-line quality ceiling; FID-2026-0919-019 researched the
   // original 6 rows). The spread keeps the single Map and every import
   // path stable. No-row ids are documented in the section file's header.
   ...KIOSAPI_CONTEXT_WINDOW_FALLBACKS,
+  ...APINEX_CONTEXT_WINDOW_FALLBACKS,
+  ...BAI_CONTEXT_WINDOW_FALLBACKS,
 ])
