@@ -59,7 +59,7 @@ describe('FID-2026-1004-002: apinex roster windows', () => {
     expect(
       getContextWindowFallback('apinex/free/deepseek-v4-flash-0731')
         .contextWindow,
-    ).toBe(1_310_720)
+    ).toBe(1_048_576)
     expect(
       getContextWindowFallback('apinex/claude-fable-5.1').contextWindow,
     ).toBe(1_000_000)

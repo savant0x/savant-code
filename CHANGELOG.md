@@ -4,6 +4,16 @@
 
 ### Added
 
+- **NEEDS-REVIEW provenance upgrade (FID-2026-1004-004, medium; closed
+  2026-10-04).** One keyless OpenRouter public-catalog cross-vote (466 rows)
+  upgraded 27 of the sweep's 28 NEEDS-REVIEW provenance flags to two-source
+  consensus (24 agree, 3 conservative-minimum holds), corrected one row DOWN
+  (apinex/free/deepseek-v4-flash-0731 1,310,720 → 1,048,576 — over-claim
+  removed by 2-of-2), and retained exactly one flag (bai/gemini-3-flash — no
+  OpenRouter listing). The mechanical flag-floor pin was re-derived 15 → 4
+  with the upgrade evidence cited in the FID and the survivors enumerated in
+  the test.
+
 - **Window-census follow-ups (FID-2026-1004-003, medium; closed 2026-10-04).**
   The 66 runtime-catalog rows advertising exactly 200000 are classified via
   OpenRouter cross-vote: 50 REAL (claude-haiku-4.5, opus-4.1/4.5, sonnet-4,

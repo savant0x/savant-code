@@ -225,25 +225,30 @@ export const CONTEXT_WINDOW_FALLBACKS: ReadonlyMap<string, number> = new Map([
   //   (-minitron), gpt-oss-20b, palmyra-creative/fin/med (+32k), zamba2-7b.
   ['orcarouter/deepseek/deepseek-v4-flash-free', 1_048_576], // KIO/-free + family consensus
   ['orcarouter/openai/gpt-5.5', 1_050_000], // UNO + CC + KIO
-  // NEEDS-REVIEW: dated snapshot inherits gpt-5.5 (consensus).
+  // Dated snapshot inherits gpt-5.5 (consensus + OR-live 2026-10-04).
   ['orcarouter/openai/gpt-5.5-2026-04-23', 1_050_000],
-  // NEEDS-REVIEW: single source (TR/openai/gpt-5.5-pro).
+  // Consensus: TR/openai/gpt-5.5-pro + OR-live 2026-10-04
+  // (openai/gpt-5.5-pro = 1050000).
   ['orcarouter/openai/gpt-5.5-pro', 1_050_000],
-  // NEEDS-REVIEW: dated snapshot inherits gpt-5.5-pro.
+  // Dated snapshot inherits gpt-5.5-pro (consensus + OR-live 2026-10-04).
   ['orcarouter/openai/gpt-5.5-pro-2026-04-23', 1_050_000],
-  // NEEDS-REVIEW: single source (KIO/glm-5.3-flash-free).
+  // Conservative minimum: KIO/glm-5.3-flash-free 1048575 vs OR-live 1048576
+  // (2026-10-04) — min holds.
   ['orcarouter/z-ai/glm-5.3-flash-free', 1_048_575],
   // --- nvidia chat-surface gap subset ---
   ['nvidia/deepseek-ai/deepseek-v4.1-flash', 1_048_576], // CC + KIO
-  // NEEDS-REVIEW: single source (CC/moonshotai/Kimi-K2.6).
+  // Consensus: CC/moonshotai/Kimi-K2.6 + OR-live 2026-10-04
+  // (moonshotai/kimi-k2.6 = 262144).
   ['nvidia/moonshotai/kimi-k2.6', 262_144],
   ['nvidia/moonshotai/kimi-k3', 1_048_576], // HC + TB + TR + TH + CC + KIO
   ['nvidia/nvidia/nemotron-3-super-120b-a12b', 262_144], // TR + KIO
-  // NEEDS-REVIEW: single source (KIO/nemotron-3-ultra-550b-a55b).
+  // Consensus: KIO/nemotron-3-ultra-550b-a55b + OR-live 2026-10-04
+  // (nvidia/nemotron-3-ultra-550b-a55b = 262144).
   ['nvidia/nvidia/nemotron-3-ultra-550b-a55b', 262_144],
   // INF 1,048,576 vs KIO 262,144 → conservative minimum.
   ['nvidia/nvidia/nemotron-3.5-lightning-30b-a3b', 262_144],
-  // NEEDS-REVIEW: single source (KIO/laguna-xs-2.1).
+  // Consensus: KIO/laguna-xs-2.1 + OR-live 2026-10-04
+  // (poolside/laguna-xs-2.1 = 262144).
   ['nvidia/poolside/laguna-xs-2.1', 262_144],
   // CC gateway-advertised 1,000,000 vs KIO 1,048,576 → minimum.
   ['nvidia/z-ai/glm-5.3', 1_000_000],

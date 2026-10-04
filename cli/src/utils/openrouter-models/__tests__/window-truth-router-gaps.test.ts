@@ -163,9 +163,15 @@ describe('FID-2026-1004-002: vercel non-chat register + provenance flags', () =>
   })
 
   test('NEEDS-REVIEW provenance flags persist across the derived sections', () => {
-    // Mechanical provenance check: single-source/inheritance rows must stay
-    // flagged, so a future editor cannot silently promote a weak claim.
+    // Mechanical provenance check: rows whose provenance is still weak must
+    // stay flagged. Floor re-derived in FID-2026-1004-004: 27 flags
+    // legitimately became OR-live consensus (2026-10-04 probe); the survivors
+    // are the parent flagged-defaults (hcnsec Qwen3.8-Flash-Next, tokenbom
+    // doubao, th-orchestra), bai/gemini-3-flash (no OpenRouter listing), and
+    // the rule statements in the section headers. Deleting any survivor
+    // still fails here.
     const flags = (parentSource() + sectionSources()).match(/NEEDS-REVIEW/g)
-    expect(flags?.length ?? 0).toBeGreaterThanOrEqual(15)
+    expect(flags?.length ?? 0).toBeGreaterThanOrEqual(4)
+    expect(sectionSources()).toMatch(/NEEDS-REVIEW[^\n]*gemini-3-flash/)
   })
 })

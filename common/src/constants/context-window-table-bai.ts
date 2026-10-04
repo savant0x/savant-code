@@ -20,7 +20,8 @@ export const BAI_CONTEXT_WINDOW_FALLBACKS: ReadonlyArray<
   // --- Anthropic Claude family (BR+TR+TH+CC+KIO rows agree: 1,000,000) ---
   ['bai/claude-fable-5', 1_000_000], // BR + TR + TH + CC + KIO
   ['bai/claude-fable-5.1', 1_000_000], // BR + CC + KIO
-  // NEEDS-REVIEW: single source (CC/claude-haiku-4-5-20251001).
+  // Consensus: CC/claude-haiku-4-5-20251001 + OR-live 2026-10-04
+  // (anthropic/claude-haiku-4.5 = 200000).
   ['bai/claude-haiku-4.5', 200_000],
   ['bai/claude-opus-4.6', 1_000_000], // TR + CC + KIO
   ['bai/claude-opus-4.7', 1_000_000], // BR + TR + CC + KIO
@@ -38,17 +39,19 @@ export const BAI_CONTEXT_WINDOW_FALLBACKS: ReadonlyArray<
   // --- Google Gemini ---
   ['bai/gemini-3.1-pro', 1_048_576], // TR + INF + KIO
   // NEEDS-REVIEW: inherits KIO/gemini-3-flash, itself a flagged family
-  // inference — flag carried, not laundered.
+  // inference — flag carried, not laundered. OR-live 2026-10-04: no listing
+  // (rechecked in FID-2026-1004-004).
   ['bai/gemini-3-flash', 1_048_576],
-  // NEEDS-REVIEW: single source (KIO/gemini-3.5-flash).
+  // Consensus: KIO/gemini-3.5-flash + OR-live 2026-10-04 (google/
+  // gemini-3.5-flash = 1048576).
   ['bai/gemini-3.5-flash', 1_048_576],
   ['bai/gemini-3.6-flash', 1_048_576], // KIO + UNO
-  // NEEDS-REVIEW: inherits KIO/gemini-3.8-flash (flagged family inference).
+  // Consensus: KIO/gemini-3.8-flash + OR-live 2026-10-04 (google/
+  // gemini-3.8-flash = 1048576).
   ['bai/gemini-3.8-flash', 1_048_576],
   // --- Z.AI GLM (conservative minimum on the recorded conflicts) ---
-  // TR row records the 2-of-3 vote (bazaarlink+OpenRouter vs orcarouter
-  // 200,000; FID-2026-0916-002).
-  // NEEDS-REVIEW: single table row (the vote's durable record).
+  // Consensus: TR row (the recorded 2-of-3 vote, FID-2026-0916-002) +
+  // OR-live 2026-10-04 (z-ai/glm-5.1 = 204800).
   ['bai/glm-5.1', 204_800],
   ['bai/glm-5.2', 1_048_576], // TR 2-of-3 + TH + KIO
   // CC gateway-advertised 1,000,000 (binding) vs KIO 1,048,576 → minimum.
@@ -57,20 +60,25 @@ export const BAI_CONTEXT_WINDOW_FALLBACKS: ReadonlyArray<
   ['bai/glm-5.3-flash', 1_048_575],
   // --- OpenAI GPT (capability 1,050,000 family consensus) ---
   ['bai/gpt-5.5', 1_050_000], // UNO + CC + KIO
-  // NEEDS-REVIEW: serving variant inherits gpt-5.5 (consensus).
+  // Serving variant inherits gpt-5.5 (consensus; OR-live 2026-10-04 direct
+  // openai/gpt-5.5 = 1050000).
   ['bai/gpt-5.5-instant', 1_050_000],
   ['bai/gpt-5.6-luna', 1_050_000], // BR + TH + CC + KIO
   ['bai/gpt-5.6-sol', 1_050_000], // BR + TH + CC + KIO (+TR)
   ['bai/gpt-5.6-terra', 1_050_000], // BR + TH + CC + KIO
   ['bai/gpt-6-astra', 1_050_000], // TH + UNO + KIO
-  // NEEDS-REVIEW: single source (KIO/gpt-6-luna).
+  // Consensus: KIO/gpt-6-luna + OR-live 2026-10-04 (openai/gpt-6-luna =
+  // 1050000).
   ['bai/gpt-6-luna', 1_050_000],
-  // NEEDS-REVIEW: single source (KIO/gpt-6-sol).
+  // Consensus: KIO/gpt-6-sol + OR-live 2026-10-04 (openai/gpt-6-sol =
+  // 1050000).
   ['bai/gpt-6-sol', 1_050_000],
-  // NEEDS-REVIEW: single source (KIO/gpt-6.1-sol).
+  // Consensus: KIO/gpt-6.1-sol + OR-live 2026-10-04 (openai/gpt-6.1-sol =
+  // 1050000).
   ['bai/gpt-6.1-sol', 1_050_000],
   // --- Moonshot Kimi (HC + TB + TR + TH + CC + KIO agree on k3) ---
-  // NEEDS-REVIEW: single source (CC/moonshotai/Kimi-K2.6).
+  // Consensus: CC/moonshotai/Kimi-K2.6 + OR-live 2026-10-04
+  // (moonshotai/kimi-k2.6 = 262144).
   ['bai/kimi-k2.6', 262_144],
   ['bai/kimi-k3', 1_048_576],
   // --- Xiaomi Mimo (conflict resolved as in the kiosapi section) ---
@@ -78,18 +86,21 @@ export const BAI_CONTEXT_WINDOW_FALLBACKS: ReadonlyArray<
   // same resolution as KIO/mimo-v2.5 — Law 11).
   ['bai/mimo-v2.5', 1_048_576],
   ['bai/mimo-v2.5-pro', 1_050_000], // TH + TR/xiaomi agree
-  // NEEDS-REVIEW: single source (KIO/mimo-v2.6-flash).
+  // Conservative minimum: KIO/mimo-v2.6-flash 1048576 vs OR-live 1050000
+  // (2026-10-04) — min holds.
   ['bai/mimo-v2.6-flash', 1_048_576],
   // --- MiniMax ---
-  // NEEDS-REVIEW: single source (CC/MiniMaxAI/MiniMax-M2.7).
+  // Consensus: CC/MiniMaxAI/MiniMax-M2.7 + OR-live 2026-10-04
+  // (minimax/minimax-m2.7 = 204800).
   ['bai/minimax-m2.7', 204_800],
   ['bai/minimax-m3', 1_048_576], // TB + TR + CC
   // --- Qwen (capability 1,000,000 family consensus) ---
   // INF + UNO + CC agree; serving caveat: providers serve 262,144
   // (serving-limits handles).
   ['bai/qwen3.8-27b', 1_000_000],
-  // NEEDS-REVIEW: single source (KIO/qwen3.8-flash-free — the
-  // operator-reported bug row, OR-live 2026-10-03 + operator-stated 1M).
+  // Consensus: KIO/qwen3.8-flash-free (operator-reported bug row, OR-live
+  // 2026-10-03 + operator-stated 1M) + OR-live 2026-10-04
+  // (qwen/qwen3.8-flash = 1000000).
   ['bai/qwen3.8-flash', 1_000_000],
   ['bai/qwen3.8-max', 1_000_000], // TH + BR + CC/Qwen3.8-Max
 ]

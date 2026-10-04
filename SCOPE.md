@@ -62,7 +62,7 @@
 
 ## Open items
 
-**Four** items are open.
+**Three** items are open.
 (2026-10-03 (decision digest): the failure behind FID-2026-1003-007 —
 register items sat `**Blocker:** operator ruling` for weeks because nothing
 PRESENTED them — was fixed the same day. Every pending decision was
@@ -278,6 +278,22 @@ T90-F3 was resolved by the operator ruling "T90-F3 residual needs no code"
 
 ### Providers and routing
 
+- [ ] **T132. Harness self-diagnosis integrity (FID-2026-1004-006).**
+      **Automation level: 3.** Operator request 2026-10-04 ("make a fid to
+      address ALL issues found"). Four defects from one session, all the shape
+      "a failure is reported with a confident, specific cause that is wrong":
+      (A) `code_search`'s ripgrep spawn error names the vendored binary and
+      prescribes re-fetching it when the real cause is a file-path `cwd`
+      (`sdk/src/tools/code-search/executor.ts`, `searchCwd` never
+      `isDirectory`-checked); (B) `loadScopeArtifact`
+      (`packages/agent-runtime/src/echo/pre-write-gates-law2.ts`) parses only
+      an entry's first line, so indented continuation globs are dropped and
+      T119/T130 under-register their real write surfaces; (C) the AUDIT phase
+      has no mechanical check that an audit cited `file:line`, so a degenerate
+      non-audit passes as one; (D) the open-items header count drifted on edit.
+      RED status `created`, severity high, awaiting the Perfection Loop.
+      FID: `FID-2026-1004-006-harness-self-diagnosis-integrity.md`.
+
 - [ ] **T131. Authoritative provider-integration runbook + archived-runbook
       drift repair.** **Automation level: 3.** Operator request 2026-10-04:
       "make a new doc, on how to correctly add a new provider. And fix the
@@ -300,17 +316,6 @@ T90-F3 was resolved by the operator ruling "T90-F3 residual needs no code"
       contradiction on protocol-map location, and a supersede banner. Link the
       new doc from `docs/index.md` + `docs/providers.md`. Docs-only; no
       production code changes. FID: `FID-2026-1004-005-provider-runbook.md`.
-
-- [ ] **T130. NEEDS-REVIEW provenance upgrade (live OpenRouter cross-vote).**
-      **Automation level: 3.** Operator ruling 2026-10-04 (structured ruling:
-      "Upgrade provenance" — supersedes the cross-gateway-rows-only sourcing
-      rule for this ONE keyless read-only probe). One re-runnable probe fetches
-      the OpenRouter public catalog; the ~20 single-source/inheritance rows
-      flagged NEEDS-REVIEW in FID-2026-1004-002 upgrade to consensus where
-      OpenRouter agrees, conservative minimum on conflict, stay flagged where
-      OpenRouter has no listing. Data-only edits + provenance comments + pin
-      threshold re-derivation (justified in the FID, never silently weakened).
-      FID: `FID-2026-1004-004-provenance-upgrade.md`.
 
 - [ ] **T119. Pending provider account access and identity.**
       **Automation level: 1.** Mapped xKiro Claude Haiku live acceptance
@@ -372,13 +377,11 @@ T90-F3 was resolved by the operator ruling "T90-F3 residual needs no code"
   `dev/session-summaries/2026-10-03-provider-*.md`,
   `dev/scratchpad/active/provider-catalogs-2026-10-03/**`,
   `dev/scratchpad/active/provider-integration-*`
-- T130: `common/src/constants/context-window-table.ts`,
-  `common/src/constants/context-window-table-apinex.ts`,
-  `common/src/constants/context-window-table-bai.ts`,
-  `cli/src/utils/openrouter-models/__tests__/window-truth-*.test.ts`,
-  `dev/fids/FID-2026-1004-004-*.md`,
-  `dev/scratchpad/active/provenance-upgrade-*`,
-  `dev/session-summaries/2026-10-04-window-census-*.md`
+- T132: `dev/fids/FID-2026-1004-006-*.md`, `sdk/src/tools/code-search/executor.ts`,
+  `sdk/src/tools/code-search/__tests__/*.ts`,
+  `packages/agent-runtime/src/echo/pre-write-gates-law2.ts`,
+  `packages/agent-runtime/src/echo/__tests__/law2-scope-gate.test.ts`
+- T131: `docs/adding-a-provider.md`, `docs/index.md`, `docs/providers.md`, `docs/archive/design/*.md`
 - T62-followups: `dev/scratchpad/active/t62*.ts` (the catalog itself is
   gateway-side; the local write surface is the probe scripts — verified
   2026-10-02: no local catalog directory exists)
