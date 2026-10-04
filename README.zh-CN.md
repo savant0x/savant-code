@@ -16,7 +16,10 @@
 > 实时模型选择器，CleanAPIs 的目录元数据映射已完善。`/model` 的模型与分组行
 > 现在固定为一行，滚动与窗口缩放时选中项保持可见，显示截断不会改变完整模型 ID。
 > 模型信息包含已报告的限制、价格、能力、访问等级与推理选项；未知值不会被编造。
-> xKiro 的目录可见性不代表账户拥有付费模型权限。参见
+> xKiro 的目录可见性不代表账户拥有付费模型权限。此外：持久的提供商通知服务上线（`/notifications`
+> 收件箱：模型增删改、健康/下线日期、配额与优惠窗口），网关支持重连事件重放，请求 token
+> 预算在所有模型调用上强制执行，自定义 `INFERENCE_BASE_URL` 端点仅由 `INFERENCE_API_KEY`
+> 授权。参见
 > [提供商与模型说明](docs/providers.md)和[更新日志](CHANGELOG.md)。
 
 > **v0.0.35** —— **OpenAI 平台直连成为一等提供商**：平台 `sk-` 密钥
@@ -717,8 +720,9 @@ savant-code
 `CLOUDFLARE_API_TOKEN`。密钥提示为遮罩输入，并将密钥全局存储在
 Savant-Code 配置的 `credentials.json` 中；不会加入
 聊天记录。shell 环境变量优先于已存储的密钥，因此 CI 与托管环境可以不使用本地持久化来配置提供商。高级直接提供商
-集成可以使用 `INFERENCE_BASE_URL` 与 `INFERENCE_API_KEY`；OpenRouter 可使用 `OPENROUTER_API_KEY` 或
-`SAVANT_CODE_BYOK_OPENROUTER`。
+集成可以使用 `INFERENCE_BASE_URL` 与 `INFERENCE_API_KEY`；当 `INFERENCE_BASE_URL` 指向自定义端点时，
+`INFERENCE_API_KEY` 是该端点的唯一凭据——活动提供商的密钥链绝不会发送到自定义端点（缺失时快速失败并指名该变量）。
+OpenRouter 可使用 `OPENROUTER_API_KEY` 或 `SAVANT_CODE_BYOK_OPENROUTER`。
 
 ---
 
@@ -765,6 +769,8 @@ Savant-Code 配置的 `credentials.json` 中；不会加入
 | `/health`（`/status`、`/check`） | 检查 Ollama、提供商模式、模型与权限状态 |
 | `/diagnostics`（`/diag`、`/processes`） | 显示本地进程与资源诊断信息 |
 | `/provider` | 使用遮罩输入配置托管提供商密钥 |
+| `/provider free` | 列出你已接入（和未接入）的免费模型通道 |
+| `/notifications` | 打开提供商通知收件箱（路由警告、模型增删改、健康/下线、配额与优惠） |
 | `/research-keys`（`/research-key`） | 设置调研 API 密钥（`serper`、`context7`、`parallel`、`tavily`、`exa`、`firecrawl`，遮罩输入） |
 | `/presence`（`/discord`） | 查看或更改 Discord Rich Presence：`status`、`enable`、`disable` |
 | `/mode` | 列出四种模式及其契约，或切换：`/mode <名称>` 或 `/mode:<名称>` |

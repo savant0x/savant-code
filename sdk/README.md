@@ -18,8 +18,12 @@ npm install @savant-code/sdk
 
 The SDK client takes **no API key** — there is no hosted backend (FID-2026-0929-005). Inference
 runs through your own provider credentials resolved from the environment (`OPENROUTER_API_KEY`,
-`TOKENROUTER_API_KEY`, `NVIDIA_API_KEY`, and the rest of the provider registry). `INFERENCE_BASE_URL`
-must be set (directly or via a provider config) or the client throws a configuration error naming it.
+`TOKENROUTER_API_KEY`, `NVIDIA_API_KEY`, and the rest of the provider registry).
+`INFERENCE_BASE_URL` must be set (directly or via a provider config) or the
+client throws a configuration error naming it. When it names a custom endpoint
+(anything other than the active provider's registry base), `INFERENCE_API_KEY`
+is required and is that endpoint's only credential — the provider key chain is
+never sent to a custom endpoint.
 
 For direct provider routing, configure the provider-specific environment variables documented by the runtime, including
 `OPENCODE_API_KEY` (shared by OpenCode Go and OpenCode Zen), `TOKENROUTER_API_KEY`, `TOKENHARBOR_API_KEY`,

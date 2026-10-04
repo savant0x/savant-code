@@ -16,7 +16,12 @@ local-first use with Ollama.
 
 > **Unreleased — 2026-10-03:** CodeCraft API and xKiro join `/provider` and
 > the live model picker; CleanAPIs catalog metadata is completed. `/model`
-> scrolling now keeps model and header rows one terminal line tall. See the
+> scrolling now keeps model and header rows one terminal line tall. Also
+> landed: durable provider notifications with a `/notifications` inbox
+> (semantic deltas, dated health/removal notices, quota/offer windows),
+> gateway reconnect event replay, request token budgets enforced across every
+> model call, and a custom `INFERENCE_BASE_URL` endpoint authorized by
+> `INFERENCE_API_KEY` alone. See the
 > [provider/model reference](docs/providers.md) and [CHANGELOG](CHANGELOG.md).
 
 > **v0.0.35** — **OpenAI is a first-class platform provider**: a platform `sk-` key
@@ -250,7 +255,7 @@ history. The supported hosted providers are:
 | UnoRouter | `/provider unorouter` or `DIRECT_PROVIDER=unorouter` | `UNOROUTER_API_KEY` | Hosted gateway |
 | Vercel AI Gateway | `/provider vercel` or `DIRECT_PROVIDER=vercel` | `AI_GATEWAY_API_KEY` | Hosted gateway |
 | xKiro | `/provider xkiro` or `DIRECT_PROVIDER=xkiro` | `XKIRO_API_KEY` | Hosted gateway |
-| Custom endpoint | Environment configuration | `INFERENCE_BASE_URL`, `INFERENCE_API_KEY` | Advanced OpenAI-compatible endpoint |
+| Custom endpoint | Environment configuration | `INFERENCE_BASE_URL`, `INFERENCE_API_KEY` | Advanced OpenAI-compatible endpoint; authorized by `INFERENCE_API_KEY` alone |
 <!-- GENERATED:provider-table-end -->
 
 CodeCraft and CleanAPIs use authenticated live catalogs. xKiro publishes a
@@ -1054,8 +1059,11 @@ prompt is masked and stores the key globally in the Savant-Code config
 `credentials.json`; it is not added to chat history. Shell environment variables
 take precedence over stored keys, so CI and managed environments can configure
 providers without using local persistence. Advanced direct-provider integrations
-may use `INFERENCE_BASE_URL` and `INFERENCE_API_KEY`; OpenRouter can use
-`OPENROUTER_API_KEY` or `SAVANT_CODE_BYOK_OPENROUTER`.
+may use `INFERENCE_BASE_URL` and `INFERENCE_API_KEY`; when `INFERENCE_BASE_URL`
+names a custom endpoint, `INFERENCE_API_KEY` is that endpoint's only credential —
+the active provider's key chain is never sent to it, and a missing key fails fast
+naming the variable. OpenRouter can use `OPENROUTER_API_KEY` or
+`SAVANT_CODE_BYOK_OPENROUTER`.
 
 ---
 
@@ -1106,6 +1114,8 @@ Commands can be entered with `/`; aliases are shown in parentheses.
 | `/health` (`/status`, `/check`) | Check Ollama, provider mode, model, and permission status |
 | `/diagnostics` (`/diag`, `/processes`) | Show local process and resource diagnostics |
 | `/provider` | Configure a hosted provider key with masked input |
+| `/provider free` | List free-model lanes you have (and haven't) wired |
+| `/notifications` | Open the provider notification inbox |
 | `/research-keys` (`/research-key`) | Set a research API key (`serper`, `context7`, `parallel`, `tavily`, `exa`, `firecrawl`) with masked input |
 | `/mode` | List the four modes and their contracts, or switch: `/mode <name>` or `/mode:<name>` |
 | `/model` | Select or switch the active hosted model |
@@ -1118,6 +1128,8 @@ Commands can be entered with `/`; aliases are shown in parentheses.
 | `/image` (`/img`, `/attach`) | Attach an image for supported multimodal models |
 | `/init` | Create starter agent types and `knowledge.md` |
 | `/login` / `/logout` | Authenticate or end the current session |
+| `/connect` | Connect a ChatGPT account (OAuth) |
+| `/end-session` | End a free session (lets you switch model) |
 | `/exit` (`/quit`, `/q`) | Quit the CLI |
 
 ---

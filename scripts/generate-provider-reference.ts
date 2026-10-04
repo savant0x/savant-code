@@ -145,7 +145,7 @@ function renderProviderTable(): string {
     rows.push(`| ${config.label} | ${selection} | ${envVars} | ${notes} |`)
   }
   rows.push(
-    '| Custom endpoint | Environment configuration | `INFERENCE_BASE_URL`, `INFERENCE_API_KEY` | Advanced OpenAI-compatible endpoint |',
+    '| Custom endpoint | Environment configuration | `INFERENCE_BASE_URL`, `INFERENCE_API_KEY` | Advanced OpenAI-compatible endpoint; authorized by `INFERENCE_API_KEY` alone |',
   )
   return rows.join('\n') + '\n'
 }

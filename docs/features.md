@@ -220,12 +220,16 @@ Works with multiple inference providers:
   key env var, inline model list, API key). Customs live in the same
   picker, support `/provider edit`/`test`/`remove`, and are stored in
   `settings.json` with keys in the local credentials file
-- **Custom endpoint** — Any OpenAI-compatible API
+- **Custom endpoint** — Any OpenAI-compatible API via `INFERENCE_BASE_URL`,
+  authorized by `INFERENCE_API_KEY` alone — the active provider's key chain is
+  never sent to a custom endpoint (a missing key fails fast naming the variable)
 
 Gateway model context lengths can be resolved from the live catalog. In
 BYOK/direct mode (`DIRECT_PROVIDER` or `INFERENCE_BASE_URL` set) every backend
 call is short-circuited — inference routes straight to the configured endpoint
-(FID-2026-0806-009/010).
+(FID-2026-0806-009/010). A custom `INFERENCE_BASE_URL` endpoint is authorized
+by `INFERENCE_API_KEY` alone; the active provider's key chain is never sent
+to it.
 
 ---
 
@@ -263,6 +267,27 @@ build resolves its boot model only from the `/model` selection (`openrouter/free
 when unset) and never reads the unreleased savant-free catalog or its persisted
 preference, so a stale free-model preference cannot silently switch the operator
 to a paid model (FID-2026-0814-010).
+
+---
+
+## Provider Notifications
+
+Provider changes reach you instead of vanishing. A durable notification
+service watches your provider routes and live catalogs and records notices
+with severity and timestamps (FID-2026-1003-006):
+
+- **Semantic deltas** — models added to, removed from, or changed on the
+  providers you have wired
+- **Health and removal** — dated provider health/removal notices, with the
+  eligible `:free` fallback hints when a 429 makes them relevant
+- **Quota and offers** — capability-based quota windows and dated offer
+  expiry from the custats feeds
+
+Notices surface as toasts — a retained warning for route-severity items and
+a grouped info toast for the rest — and `/notifications` opens the provider
+inbox to read and dismiss them (both builds). The desktop shell receives the
+same notices over the gateway when it advertises the `provider_notices_v1`
+capability in its hello.
 
 ---
 
@@ -550,8 +575,8 @@ for the full design.
 | `/health`                                       | Check provider, Ollama, model, and permission status                                  |
 | `/mode`                                         | List the four modes and their contracts                                               |
 | `/model`                                        | Select or switch the active model                                                     |
-| `/provider`                                     | Configure a hosted provider key                                                       |
-| `/provider free`                                | List free-model lanes you have (and haven't) wired                                    |
+| `/provider`                                     | Configure a hosted provider key                                                       || `/provider free`                                | List free-model lanes you have (and haven't) wired                                      |
+| `/notifications`                                | Open the provider notification inbox (route warnings, deltas, health/removal, quota/offers) |
 | `/bash`                                         | Run a shell command                                                                   |
 | `/image`                                        | Attach an image for multimodal models                                                 |
 | `/init`                                         | Create starter agent types and knowledge.md                                           |
@@ -564,16 +589,13 @@ for the full design.
 | `/design`                                       | List, select, create, edit, or reset the active design system                         |
 | `/release`                                      | Run the public release flow: `/release preview \| diagnose \| go \| resume \| status` |
 | `/feedback`                                     | Share general feedback about SavantCode                                               |
-| `/publish`                                      | Publish an agent to the registry                                                      |
-| `/usage`                                        | View credits and subscription quota                                                   |
-| `/subscribe`                                    | Subscribe to get more usage                                                           |
-| `/connect`                                      | Connect a ChatGPT account (OAuth)                                                     |
+| `/publish`                                      | Publish an agent to the registry                                                      || `/connect`                                      | Connect a ChatGPT account (OAuth)                                                     |
 | `/end-session`                                  | End a free session (lets you switch model)                                            |
 | `/exit`                                         | Quit the CLI                                                                          |
 
 **Availability:** SavantFree exposes `/connect`, `/plan`, and `/end-session`; the full build
-adds `/mode`, `/model`, `/provider`, `/usage`, `/subscribe`, `/publish`, `/release`, `/image`,
-and `/ads:enable` / `/ads:disable`. Skill commands (`/skill:<name>`) appear once a skill is
+adds `/mode`, `/model`, `/provider`, `/publish`, `/release`, `/image`, and
+`/ads:enable` / `/ads:disable`; `/notifications` ships in both builds. Skill commands (`/skill:<name>`) appear once a skill is
 loaded. Each mode has its own `/mode:<name>` command (see
 [Execution Modes](savant-code-modes.md)).
 

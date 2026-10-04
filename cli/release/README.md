@@ -69,7 +69,7 @@ Or select one of the supported gateway providers directly:
 | UnoRouter | `/provider unorouter` or `DIRECT_PROVIDER=unorouter` | `UNOROUTER_API_KEY` | Hosted gateway |
 | Vercel AI Gateway | `/provider vercel` or `DIRECT_PROVIDER=vercel` | `AI_GATEWAY_API_KEY` | Hosted gateway |
 | xKiro | `/provider xkiro` or `DIRECT_PROVIDER=xkiro` | `XKIRO_API_KEY` | Hosted gateway |
-| Custom endpoint | Environment configuration | `INFERENCE_BASE_URL`, `INFERENCE_API_KEY` | Advanced OpenAI-compatible endpoint |
+| Custom endpoint | Environment configuration | `INFERENCE_BASE_URL`, `INFERENCE_API_KEY` | Advanced OpenAI-compatible endpoint; authorized by `INFERENCE_API_KEY` alone |
 <!-- GENERATED:provider-table-end -->
 
 CodeCraft API and CleanAPIs use authenticated live model catalogs; xKiro has
@@ -350,6 +350,8 @@ Commands can be entered with `/`; aliases are shown in parentheses.
 | `/health` (`/status`, `/check`) | Check provider, Ollama, model, and permission status |
 | `/diagnostics` (`/diag`, `/processes`) | Show local process and resource diagnostics |
 | `/provider` | Configure a hosted provider key with masked input |
+| `/provider free` | List free-model lanes you have (and haven't) wired |
+| `/notifications` | Open the provider notification inbox |
 | `/mode` | List the four modes and their contracts, or switch: `/mode <name>` or `/mode:<name>` |
 | `/model` | Select or switch the active model |
 | `/publish` | Publish agent templates through the Savant backend |
