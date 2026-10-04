@@ -4,6 +4,17 @@
 
 ### Added
 
+- **Discovery daily cycle rebuilt to spec (FID-2026-1004-001, high; closed
+  2026-10-04).** The T111–T127 batch orphaned the discovery boot-check when
+  it moved the announce builder into shared code, leaving the pipeline
+  manual-only — report 2 days stale, custats 6 days, with no error anywhere.
+  The CLI boot now spawns the freeairouter harvest and (operator ruling)
+  the custats leg in the background whenever their artifacts are >24h old
+  (repo-gated, free-build exempt, fail-silent, each leg independent), and
+  the sanitized announce surfaces once per candidate set as a system
+  message. A reachability census pins the call sites so a future refactor
+  fails a test instead of silently killing the cycle again.
+
 - **Pending operator decisions are surfaced mechanically (FID-2026-1003-007,
   high; closed 2026-10-03).** Register items blocked on an operator ruling sat
   with a `**Blocker:**` sentence that nothing ever presented, so the backlog

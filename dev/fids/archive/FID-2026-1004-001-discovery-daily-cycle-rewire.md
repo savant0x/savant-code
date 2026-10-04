@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-1004-001-discovery-daily-cycle-rewire.md`
 **ID:** FID-2026-1004-001
 **Severity:** high
-**Status:** verified
+**Status:** closed (implemented + verified, 2026-10-04)
 > (`converged` is the correct pre-implementation status per
 > FID-2026-0915-004; `fixed` is deprecated-but-accepted legacy language —
 > do not use it for new FIDs. The receipt contract still keys to
@@ -269,7 +269,7 @@ Rebuild to spec against the current architecture — **reuse, never restore**:
 - [x] Step 3 — announce surface re-added in `cli/src/chat/use-chat-bootstrap.ts` via extracted helper
 - [x] Step 4 — three test artifacts (reachability census, custats gate pins, announce-helper pins)
 - [x] Step 5 — LIVE boot verification in this repo
-- [ ] Step 6 — FID loop records + receipt + G2 closure commit
+- [x] Step 6 — FID loop records + receipt + G2 closure commit
 
 ## Perfection Loop
 
@@ -350,11 +350,25 @@ Rebuild to spec against the current architecture — **reuse, never restore**:
 > deferrals — every step must be `implemented`, `blocked`, or `deferred`
 > (operator-approved only).
 
-- [ ] **Commit SHA:** pending
-- [ ] **File:line ranges:** pending
-- [ ] **Gate output:** pending
-- [ ] **Reproducibility:** pending
-- [ ] **Step statuses:** pending
+- [x] **Commit SHA:** `8dc1fc22` (implementation); closure in the docs
+  commit that archives this record
+- [x] **File:line ranges:** `common/src/providers/discovery-boot.ts:47`
+  (`shouldRunCustatsBootCheck`); `cli/src/cli-boot-steps.ts:102`
+  (`spawnDiscoveryHarvestIfStale`, with `artifactAge` + `spawnDetached`
+  helpers below it); `cli/src/index.tsx:147` (entrypoint call, pre-headless);
+  `cli/src/utils/discovery-announce.ts:30` (`buildDiscoveryAnnouncement`,
+  sidecar IO beside it); `cli/src/chat/use-chat-bootstrap.ts:60-79`
+  (once-per-mount announce effect)
+- [x] **Gate output:** fid:verify receipt all-PASS (typecheck cli 0;
+  `cli-boot-steps.test.ts` 7 pass; `discovery-seams.test.ts` 20 pass;
+  `discovery-announce.test.tsx` 6 pass; quality PASS 1498) — see
+  Verification Receipt below
+- [x] **Reproducibility:** `grep -rn "spawnDiscoveryHarvestIfStale" cli/src`
+  → `cli-boot-steps.ts:102` + `index.tsx:147`; `grep -rn
+  "shouldRunCustatsBootCheck" common/src scripts/providers` → the gate +
+  its pins; LIVE artifacts refreshed 2026-10-04 02:04
+- [x] **Step statuses:** Steps 1–5 `implemented`; Step 6 `implemented`
+  (this closure)
 
 ### Code Verification Evidence
 
@@ -383,16 +397,31 @@ Rebuild to spec against the current architecture — **reuse, never restore**:
 
 ## Resolution
 
-- **Closed Date:** pending (G2: closure requires a commit)
-- **Fix Description:** pending
-- **Tests Added:** pending
-- **Verification Evidence:** pending
-- **Archived:** pending
+- **Closed Date:** 2026-10-04 02:10 (G2 satisfied: 8dc1fc22 + closure commit)
+- **Fix Description:** the daily discovery cycle rebuilt to spec — both
+  legs (freeairouter harvest + operator-ruled custats) spawn fail-silent
+  from the CLI boot path when their artifacts are >24h old; the sanitized
+  announce surfaces once per candidate set; a reachability census pins the
+  call sites against the root-cause class (cross-FID seam orphaning).
+- **Tests Added:** Yes — 5 spawn/guard pins + reachability census in
+  `cli/src/cli-boot-steps.test.ts`, 4 boundary pins in
+  `scripts/providers/__tests__/discovery-seams.test.ts`, 6 decision pins
+  in `cli/src/chat/__tests__/discovery-announce.test.tsx`
+- **Verification Evidence:** fid:verify receipt (below, all-PASS); LIVE
+  both legs exit 0 with artifacts refreshed 2026-10-04 02:04; announce
+  decision returns SURFACES for the new candidate set
+- **Archived:** 2026-10-04 (moved to `dev/fids/archive/` in the closure commit)
 
 > When status is set to **closed**, move this file to `dev/fids/archive/` and append an entry to `CHANGELOG.md`.
 
 ## Lessons Learned
 
-Pending closure — provisional: a verified batch can orphan an earlier FID's
-production wiring when seam ownership moves across packages; reachability
-must be a tested artifact (census pins on call sites), not a human memory.
+A verified batch can orphan an earlier FID's production wiring when seam
+ownership moves across packages: the batch's gates covered only its own
+features, so the deletion of the discovery call sites shipped green and the
+automation died silently for a day before the operator noticed by inspecting
+a folder. Two preventions landed here: reachability must be a TESTED
+artifact (the census pin fails any future refactor that drops the call
+sites — Law 4 with a mechanical backstop), and daily-cycle contracts should
+be audited across FID boundaries when the surfaces they feed are refactored
+(FID-2026-1003-006 moved the builder but nobody re-checked the consumer).
