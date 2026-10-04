@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-1003-008-kiosapi-roster-context-windows.md`
 **ID:** FID-2026-1003-008
 **Severity:** high
-**Status:** verified
+**Status:** closed (implemented + verified, 2026-10-04)
 > (`converged` is the correct pre-implementation status per
 > FID-2026-0915-004; `fixed` is deprecated-but-accepted legacy language —
 > do not use it for new FIDs. The receipt contract still keys to
@@ -288,23 +288,45 @@ Map. The live probe scripts remain runnable end-to-end evidence.
 
 ### Loop 3 — Final convergence
 
-- **RED:** pending closure audit
-- **GREEN:** pending
-- **AUDIT:** pending
-- **ADVERSARIAL:** pending
-- **CHANGE DELTA:** pending
+- **RED:** closure pass re-derived the blast radius: the new table feeds
+  tier 3 of the shared resolution ladder (`resolveContextWindowForModel`),
+  so every neighboring suite that pins kiosapi ids through the ladder —
+  not just the two window-truth files in the receipt's gate list — must be
+  re-proven.
+- **GREEN:** the closure pass ran the four ladder suites
+  (`openrouter-models-context-window`, `-fid-0919-016`, `-fid-0919-018`,
+  `-max-output`) and caught one stale pin: FID-2026-0919-018's
+  "unmatched id lands on the default" expectation for
+  `kiosapi/glm-5.3-flash-free` (200k) predates this FID's vendor-sourced
+  row (1,048,575). Superseded in 9b549205 with the no-bleed proof
+  preserved and strengthened (value differs from the near-collisions'
+  catalog 1,048,576; source is 'fallback-table', never 'catalog').
+- **AUDIT:** all six openrouter-models suites re-run green: 50 pass /
+  0 fail / 99 expect() calls (2026-10-04). Window resolution is proven
+  end-to-end through tiers 1→3 for kiosapi ids; the compaction and
+  sidebar consumers take this result via the existing wiring
+  (`use-chat-bootstrap`, `default-run-prompt`, `serving-limits`).
+- **ADVERSARIAL:** the original receipt's gate list omitted the ladder
+  suites — a verification-coverage gap, not a false PASS: every gate it
+  listed did pass, and the expanded pass found the real regression the
+  narrower list would have shipped to the first live run. Coverage now
+  matches the blast radius (shared-ladder consumers, not the table alone).
+- **CHANGE DELTA:** ~3% (status, loop 3, resolution; receipt unchanged)
 
 ## Resolution
 
-- **Closed Date:** pending (G2: closure requires a commit)
+- **Closed Date:** 2026-10-04 (G2 satisfied: c8362c4b implementation,
+  9b549205 stale-pin repair, closure commit)
 - **Fix Description:** 69 sourced kiosapi rows via the seam-split section
   file, spread into the single Map; full 77-id Model Square roster covered
   (69 rows + 8 documented no-row ids).
 - **Tests Added:** Yes — `cli/src/utils/openrouter-models/__tests__/window-truth-kiosapi.test.ts`
   (5 tests: operator-bug row, spot windows, `-req` inheritance, no-row
-  defaults, seam-wiring census)
-- **Verification Evidence:** see Verification Receipt
-- **Archived:** pending
+  defaults, seam-wiring census), plus the FID-2026-0919-018 stale-pin
+  supersession in the closure pass (9b549205)
+- **Verification Evidence:** see Verification Receipt; closure-audit
+  expansion in Loop 3 (ladder suites 50/0 green, 2026-10-04)
+- **Archived:** yes — moved to `dev/fids/archive/` in the closure commit
 
 > When status is set to **closed**, move this file to `dev/fids/archive/` and append an entry to `CHANGELOG.md`.
 

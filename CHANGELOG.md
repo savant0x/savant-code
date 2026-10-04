@@ -1,8 +1,19 @@
 # Changelog
 
-## Unreleased — 2026-10-03
+## Unreleased — 2026-10-04
 
 ### Added
+
+- **Pending operator decisions are surfaced mechanically (FID-2026-1003-007,
+  high; closed 2026-10-03).** Register items blocked on an operator ruling sat
+  with a `**Blocker:**` sentence that nothing ever presented, so the backlog
+  was found by hand and ruled on in one sitting. The session-end review now
+  parses the register's own convention and surfaces every blocked item in
+  `dev/agenda.md` (boot-read at intake) plus `PRESENT:` routing notes; a
+  clean register stays silent, and the agenda's 50-line bound is now enforced
+  mechanically. A blocker must be *declared* by a line-leading `**Blocker:**`
+  on the item's own line — the first live run caught the mechanism surfacing
+  its own item, whose prose quotes the convention, and that is pinned.
 
 - **CodeCraft API and xKiro providers (FID-2026-1003-001, medium; closed 2026-10-03).**
   Both support masked `/provider` setup, live catalogs, and exact upstream IDs.
@@ -31,6 +42,18 @@
 
 ### Changed
 
+- **Release script owns the README release callout (FID-2026-1003-007-era
+  housekeeping, T94 ruling 2026-10-03).** The operator's model is now the
+  contract: the CHANGELOG's newest released section is the callout's prose
+  owner, `updateDocSurfaces` syncs it into the README at every docs pass,
+  and `version:check` fails closed on callout-body drift (the check
+  immediately caught and synced the real tree's hand-drift). Also landed
+  under the same decision digest: `/init --force` refreshes the
+  `.agents/types` scaffold from the current template set (never-clobber
+  stays the default; `knowledge.md` and non-template files are never
+  touched); `tauri` joins the skills `COMMAND_ALLOWLIST` (operator-ruled
+  security widening — `skills:check` now exits 0).
+
 - **CleanAPIs and model information (FID-2026-1003-001, medium).** CodeCraft
   and CleanAPIs share measured schema normalization with independent keys and
   caches. USD prices normalize to per-token values; unknown limits stay absent.
@@ -55,6 +78,20 @@
   next pass.
 
 ### Fixed
+
+- **kiosapi roster context windows (FID-2026-1003-008, high; closed
+  2026-10-04).** Every kiosapi id missing from the fallback table resolved
+  to the 200k default, steering compaction with a 5x-too-small denominator
+  while the SDK budget guard used the true window, until a
+  qwen3.8-flash-free run died on RequestInputBudgetError (input estimate
+  1,347,990 vs the 1M context). The full 77-id Model Square roster is now
+  covered by 69 vendor-sourced rows (OpenRouter cross-vote; kiosapi's API
+  publishes no window fields), seam-split into their own module under the
+  300-line ceiling, with a 5-pin suite plus a seam-wiring census; eight
+  image/stealth ids deliberately stay rowless on the flagged default. The
+  closure pass also ran the neighboring ladder suites and superseded one
+  stale 200k pin (glm-5.3-flash-free) with the sourced row, no-bleed proof
+  intact.
 
 - **Model-picker scrolling (FID-2026-1003-004, medium; closed 2026-10-03).**
   Fixed model/header rows at one terminal line so logical scroll offsets match
