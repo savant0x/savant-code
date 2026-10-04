@@ -35,3 +35,20 @@ export function isDiscoveryRepo(repoRoot: string): boolean {
     existsSync(join(repoRoot, 'scripts', 'providers'))
   )
 }
+
+/**
+ * FID-2026-1004-001 — the custats leg of the same daily cycle (operator
+ * ruling 2026-10-04: the second discovery source joins the boot-check; it
+ * was manual-only from FID-2026-0928-011 until this ruling). Same contract
+ * and the same FRESH_MS boundary as {@link shouldRunBootCheck}: run when
+ * the ledger is missing, run when stale, skip when fresh (exactly 24h
+ * counts as fresh).
+ */
+export function shouldRunCustatsBootCheck(input: {
+  ledgerExists: boolean
+  ledgerAgeMs: number | null
+}): boolean {
+  if (!input.ledgerExists) return true
+  if (input.ledgerAgeMs === null) return true
+  return input.ledgerAgeMs > FRESH_MS
+}

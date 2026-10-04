@@ -25,6 +25,7 @@ import {
   detectAndApplyOscTheme,
   discloseAnalyticsNoticeOnce,
   discloseFreeOptionsNoticeOnce,
+  spawnDiscoveryHarvestIfStale,
 } from './cli-boot-steps'
 import { dispatchCommandsAndHeadless } from './cli-command-dispatch'
 import { handleDesignInput } from './cli-design-input'
@@ -140,6 +141,10 @@ async function main(): Promise<void> {
   // it — the Adversary found headless users got neither surface. Stderr-only
   // and flag-retired, so it never corrupts piped stdout and never repeats.
   discloseFreeOptionsNoticeOnce()
+
+  // Daily discovery cycle (FID-2026-1004-001): in-repo background harvest
+  // when report/ledger >24h old — fail-silent, detached, pre-headless.
+  spawnDiscoveryHarvestIfStale()
 
   // Command + headless dispatch (release, --auto, --print/piped/CI).
   // Handled invocations terminate or return; false falls through to the

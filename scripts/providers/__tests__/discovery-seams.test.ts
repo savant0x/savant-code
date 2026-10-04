@@ -8,7 +8,10 @@
  */
 import { describe, expect, test } from 'bun:test'
 
-import { shouldRunBootCheck } from '@savant-code/common/providers/discovery-boot'
+import {
+  shouldRunBootCheck,
+  shouldRunCustatsBootCheck,
+} from '@savant-code/common/providers/discovery-boot'
 import {
   buildDiscoveryContextBlock,
   summarizeForContext,
@@ -236,6 +239,41 @@ describe('boot-check gating (24h cache, report-driven)', () => {
       shouldRunBootCheck({
         reportExists: true,
         reportAgeMs: 24 * 60 * 60 * 1000,
+      }),
+    ).toBe(false)
+  })
+})
+
+describe('custats boot-check gating (FID-2026-1004-001: the daily cycle covers both legs)', () => {
+  test('runs when no ledger exists yet', () => {
+    expect(
+      shouldRunCustatsBootCheck({ ledgerExists: false, ledgerAgeMs: null }),
+    ).toBe(true)
+  })
+
+  test('skips when the ledger is fresh (<24h)', () => {
+    expect(
+      shouldRunCustatsBootCheck({
+        ledgerExists: true,
+        ledgerAgeMs: 2 * 60 * 60 * 1000,
+      }),
+    ).toBe(false)
+  })
+
+  test('runs when the ledger is stale (>24h)', () => {
+    expect(
+      shouldRunCustatsBootCheck({
+        ledgerExists: true,
+        ledgerAgeMs: 25 * 60 * 60 * 1000,
+      }),
+    ).toBe(true)
+  })
+
+  test('boundary: exactly 24h is fresh (skip)', () => {
+    expect(
+      shouldRunCustatsBootCheck({
+        ledgerExists: true,
+        ledgerAgeMs: 24 * 60 * 60 * 1000,
       }),
     ).toBe(false)
   })

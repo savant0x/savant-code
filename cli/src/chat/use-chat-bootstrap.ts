@@ -1,9 +1,15 @@
 import { useEffect, useRef } from 'react'
 
 import { useProviderNotifications } from './provider-notification-lifecycle'
+import { tryGetProjectRoot } from '../project-files'
 import { useChatStore } from '../state/chat-store'
 import { useGatewayCatalogStore } from '../state/gateway-catalog-store'
 import { IS_SAVANT_FREE } from '../utils/constants'
+import {
+  buildDiscoveryAnnouncement,
+  readAnnouncedKey,
+  writeAnnouncedKey,
+} from '../utils/discovery-announce'
 import { getSystemMessage } from '../utils/message-history'
 import {
   resolveContextWindowForModel,
@@ -46,6 +52,32 @@ export function useChatBootstrap(args: UseChatBootstrapArgs): void {
       getSystemMessage(getProviderSetupGuidance(missing)),
     ])
   }, [args.messages.length, args.setMessages])
+  // Sanitized discovery announce (FID-2026-0914-003 MQ5, rebuilt by
+  // FID-2026-1004-001): surfaces the harvester's agent-context block once
+  // per candidate set — repo-gated, free-build exempt, fail-silent. The
+  // block is built by the harvester from structured facts only, so no
+  // feed prose can enter model context by construction.
+  const discoveryAnnouncedRef = useRef(false)
+  useEffect(() => {
+    if (discoveryAnnouncedRef.current) return
+    discoveryAnnouncedRef.current = true
+    try {
+      const repoRoot = tryGetProjectRoot()
+      if (!repoRoot || IS_SAVANT_FREE) return
+      const announcement = buildDiscoveryAnnouncement({
+        repoRoot,
+        lastAnnouncedKey: readAnnouncedKey(repoRoot),
+      })
+      if (!announcement) return
+      args.setMessages((prev) => [
+        ...prev,
+        getSystemMessage(announcement.block),
+      ])
+      writeAnnouncedKey(repoRoot, announcement.setKey)
+    } catch {
+      // Fail-silent (MQ5): announce failures never break the TUI.
+    }
+  }, [args.setMessages])
   const loadedAt = useGatewayCatalogStore((s) => s.lastLoadedAt)
   useEffect(() => {
     if (!args.sidebarModel) return
