@@ -39,12 +39,13 @@ export {
 
 // Audited gateway catalogs (FID-2026-0913-001) + curated gateway catalogs
 // (FID-2026-0914-001) + bazaarlink (FID-2026-0915-006) + atria
-// (FID-2026-0916-005).
+// (FID-2026-0916-005) + intern (FID-2026-1004-008).
 export {
   atriaModels,
   bazaarlinkModels,
   hcnsecModels,
   infronModels,
+  internModels,
   tokenbomModels,
   unorouterModels,
 } from './model-config/gateway-catalogs'
@@ -70,6 +71,7 @@ export type {
   BazaarlinkModel,
   HcnsecModel,
   InfronModel,
+  InternModel,
   TokenbomModel,
   UnorouterModel,
 } from './model-config/gateway-catalogs'

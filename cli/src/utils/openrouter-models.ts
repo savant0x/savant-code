@@ -60,6 +60,7 @@ export {
   fetchAtriaModels,
   fetchBazaarlinkModels,
   fetchInfronModels,
+  fetchInternModels,
   fetchUnorouterModels,
 } from './openrouter-models/static-catalogs-gateways'
 export {

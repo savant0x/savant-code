@@ -200,6 +200,7 @@ Works with multiple inference providers:
 - **HCNSec** — OpenAI-compatible gateway on an audited static 7-model allowlist (`HCNSEC_API_KEY`)
 - **TokenBom** — OpenAI-compatible gateway on an audited static 7-model allowlist (`TOKENBOM_API_KEY`)
 - **Atria AI** — OpenAI-compatible hosted gateway on an audited static one-model allowlist (`ATRIA_API_KEY`; `Atria-Dawn-Preview`, 256K context)
+- **Intern InkStone** — OpenAI-compatible hosted gateway on a static 10-model allowlist (`INTERN_API_KEY`; Shanghai AI Laboratory's 书生·端砚 at `https://discovery-api.intern-ai.org.cn/v1`, the China-hosted twin of Atria AI — context windows pinned from the authenticated live probe 2026-10-04)
 - **Infron** — OpenAI-compatible inference-routing platform on a curated static 9-model allowlist (`INFRON_API_KEY`; inference at `llm.onerouter.pro/v1` per vendor docs)
 - **UnoRouter** — OpenAI-compatible gateway on a curated static 17-model allowlist (`UNOROUTER_API_KEY`; `:free` slugs never bill per vendor docs)
 - **BazaarLink** — OpenAI-compatible gateway on a static 12-model allowlist (`BAZAARLINK_API_KEY`; the identity-audited genuine free channel `qwen/qwen3.7-flash:free` @ 1M ctx + 11 curated paid flagships per the 2026-09-15 top-coding ranking — substituted free channels excluded by ruling)

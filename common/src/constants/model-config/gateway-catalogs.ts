@@ -158,3 +158,30 @@ export const atriaModels = {
   atria_dawn_preview: 'atria/Atria-Dawn-Preview',
 } as const
 export type AtriaModel = (typeof atriaModels)[keyof typeof atriaModels]
+
+/**
+ * Intern InkStone catalog (FID-2026-1004-008) — the Shanghai AI Laboratory
+ * science-discovery platform behind discovery.intern-ai.org.cn (书生·端砚),
+ * the China-hosted twin of the `atria` entry with a 10-model roster instead
+ * of one. A STATIC map (not an authenticated-live fetch): the vendor's
+ * /v1/models is key-protected (HTTP 401 keyless, probed 2026-10-04) AND
+ * publishes windows in a non-OpenRouter `schema_version: "2.4"` shape
+ * (`input_modalities[].supported_inputs.max_context_length.value`) that the
+ * shared parser does not read — so this checked-in set is the source of
+ * truth and the exact-id windows are pinned in the fallback table from the
+ * LIVE authenticated probe (2026-10-04). Every value is the vendor's own
+ * bare id; `intern/` is the internal routing prefix (`idTransform: 'strip'`).
+ */
+export const internModels = {
+  intern_agents_a1: 'intern/Agents-A1',
+  intern_atria_dawn_preview: 'intern/Atria-Dawn-Preview',
+  intern_deepseek_v4_flash_0731: 'intern/deepseek-v4-flash-0731',
+  intern_deepseek_v4_flash_vision: 'intern/deepseek-v4-flash-vision',
+  intern_deepseek_v4_pro_0813: 'intern/deepseek-v4-pro-0813',
+  intern_glm_5_3: 'intern/glm-5.3',
+  intern_s2: 'intern/intern-s2',
+  intern_kimi_k2_6: 'intern/kimi-k2.6',
+  intern_minimax_m3: 'intern/minimax-m3',
+  intern_qwen_3_8_27b: 'intern/qwen3.8-27b',
+} as const
+export type InternModel = (typeof internModels)[keyof typeof internModels]

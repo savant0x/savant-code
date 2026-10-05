@@ -31,6 +31,7 @@ import {
   commandcodeModels,
   hcnsecModels,
   infronModels,
+  internModels,
   tokenbomModels,
   tokenharborModels,
   tokenrouterModels,
@@ -76,6 +77,7 @@ const NAME_CATALOG_MODEL_IDS: readonly string[] = [
   ...Object.values(unorouterModels),
   ...Object.values(bazaarlinkModels),
   ...Object.values(atriaModels),
+  ...Object.values(internModels),
 ]
 
 /**

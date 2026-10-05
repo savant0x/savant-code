@@ -145,4 +145,41 @@ export const PROVIDER_REGISTRY_PARTITION_2 = {
     domain: 'cleanapis.com',
     order: 4,
   },
+  intern: {
+    id: 'intern',
+    label: 'Intern InkStone',
+    kind: 'gateway',
+    credentials: {
+      envVar: 'INTERN_API_KEY',
+      // /provider hint is part of the canonical message.
+      missingKeyMessage:
+        'Intern InkStone API key not set. Set INTERN_API_KEY environment variable or run /provider intern.',
+    },
+    // The discovery.intern-ai.org.cn console (token-plan/home?tabIndex=3)
+    // pins the OpenAI-compatible base: discovery-api.intern-ai.org.cn/v1.
+    // (The Anthropic lane is the same host WITHOUT /v1 — the client appends
+    // /v1/messages.) The vendor is the Shanghai AI Laboratory's 书生·端砚
+    // (Intern InkStone) platform — the China-hosted twin of `atria`
+    // (api.atria-asi.ai), with a 10-model roster instead of one. Live probe
+    // 2026-10-04: reachable 1.8 s keyless; /v1/models 401 keyless and
+    // 200 / 10 rows authenticated; /v1/chat/completions 200 round-trip.
+    baseUrl: 'https://discovery-api.intern-ai.org.cn/v1',
+    // Every one of the 10 models supports OpenAI Chat Completions, so a
+    // single protocol is correct — a protocolMap is mandatory only for
+    // MIXED rosters (the vendor's Anthropic / Responses lanes stay available
+    // to external clients, outside Savant's routing).
+    protocol: 'openai',
+    // Upstream ids are bare (`glm-5.3`, `intern-s2`); `strip` removes only
+    // the internal `intern/` routing prefix.
+    idTransform: 'strip',
+    // STATIC 10-model allowlist (FID-2026-1004-008): the vendor's /v1/models
+    // is key-protected (401 keyless) AND publishes windows in a
+    // non-OpenRouter `schema_version: "2.4"` shape the shared parser does not
+    // read — a checked-in set with exact-id fallback rows is the source of
+    // truth (the atria precedent).
+    catalog: { source: 'static', modelsRef: 'intern' },
+    setupAvailable: true,
+    domain: 'intern-ai.org.cn',
+    order: 4,
+  },
 } as const satisfies Record<string, ProviderConfig>

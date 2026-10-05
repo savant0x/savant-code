@@ -194,6 +194,13 @@ export const WINDOW_COVERAGE_REGISTER: ReadonlyMap<
     },
   ],
   [
+    'intern',
+    {
+      disposition: 'table-section',
+      note: 'Static 10-model catalog (FID-2026-1004-008). The authenticated /v1/models DOES publish windows, but in a non-OpenRouter schema_version "2.4" shape (input_modalities[].supported_inputs.max_context_length.value) the shared parser does not read; the 10 exact-id rows are pinned from the LIVE probe 2026-10-04.',
+    },
+  ],
+  [
     'codecraft',
     {
       disposition: 'no-runtime-rows',

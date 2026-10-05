@@ -13,6 +13,7 @@ import {
   atriaModels,
   bazaarlinkModels,
   infronModels,
+  internModels,
   unorouterModels,
 } from '@savant-code/common/constants/model-config'
 
@@ -182,6 +183,39 @@ export function fetchAtriaModels(): OpenRouterModel[] {
     provider: 'atria' as const,
     // FID-2026-0916-002 (V6): the vendor fallback table replaces the
     // substring heuristic — every curated Atria id is pinned there.
+    contextLength: getContextWindowFallback(id).contextWindow,
+  }))
+}
+
+/** Display names for Intern InkStone model ids (FID-2026-1004-008). */
+const INTERN_NAMES: Record<string, string> = {
+  'intern/Agents-A1': 'Agents A1',
+  'intern/Atria-Dawn-Preview': 'Atria Dawn Preview',
+  'intern/deepseek-v4-flash-0731': 'DeepSeek V4 Flash 0731',
+  'intern/deepseek-v4-flash-vision': 'DeepSeek V4 Flash Vision',
+  'intern/deepseek-v4-pro-0813': 'DeepSeek V4 Pro 0813',
+  'intern/glm-5.3': 'GLM 5.3',
+  'intern/intern-s2': 'Intern S2',
+  'intern/kimi-k2.6': 'Kimi K2.6',
+  'intern/minimax-m3': 'MiniMax M3',
+  'intern/qwen3.8-27b': 'Qwen 3.8 27B',
+}
+
+/**
+ * Return the Intern InkStone catalog (FID-2026-1004-008) — the Shanghai AI
+ * Laboratory science-discovery platform's 10-model roster (the China-hosted
+ * twin of `atria`). Static by design: the vendor's /v1/models is
+ * key-protected (401 keyless) and publishes windows in a non-OpenRouter
+ * `schema_version: "2.4"` shape the shared parser does not read, so the
+ * checked-in set is the source of truth (the atria precedent). Every id's
+ * window is pinned in the common fallback table from the LIVE authenticated
+ * probe (2026-10-04). Synchronous.
+ */
+export function fetchInternModels(): OpenRouterModel[] {
+  return Object.values(internModels).map((id) => ({
+    id,
+    name: INTERN_NAMES[id] ?? id.slice('intern/'.length),
+    provider: 'intern' as const,
     contextLength: getContextWindowFallback(id).contextWindow,
   }))
 }

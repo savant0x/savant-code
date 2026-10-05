@@ -13,6 +13,7 @@ import {
   commandcodeModels,
   hcnsecModels,
   infronModels,
+  internModels,
   tokenbomModels,
   tokenharborModels,
   tokenrouterModels,
@@ -30,4 +31,5 @@ export const MODEL_CATALOGS = {
   unorouter: unorouterModels,
   bazaarlink: bazaarlinkModels,
   atria: atriaModels,
+  intern: internModels,
 } as const

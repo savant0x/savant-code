@@ -56,6 +56,7 @@ describe('/provider list ordering (FID-2026-1001-001)', () => {
     const builtinLabels = [
       'Atria AI',
       'Clean APIs',
+      'Intern InkStone',
       'KiosAPI',
       'OpenAI',
       'OpenRouter',

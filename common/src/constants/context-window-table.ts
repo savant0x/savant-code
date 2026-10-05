@@ -85,6 +85,23 @@ export const CONTEXT_WINDOW_FALLBACKS: ReadonlyMap<string, number> = new Map([
   // --- atria (FID-2026-0916-005: single one-model static catalog;
   // 256K window is vendor-published in api.atria-asi.ai/docs) ---
   ['atria/Atria-Dawn-Preview', 262_144],
+  // --- intern (FID-2026-1004-008: 10-model static catalog; windows are the
+  // vendor's OWN authenticated /v1/models publication, read from
+  // input_modalities[].supported_inputs.max_context_length.value on the LIVE
+  // probe 2026-10-04 — NOT the family heuristic and NOT the `atria` twin's
+  // values). NOTE the deliberate divergence: intern/Atria-Dawn-Preview is
+  // 524,288 here while atria/Atria-Dawn-Preview is 262,144 — two different
+  // deployments of the same upstream model. ---
+  ['intern/Agents-A1', 262_144],
+  ['intern/Atria-Dawn-Preview', 524_288],
+  ['intern/deepseek-v4-flash-0731', 1_048_576],
+  ['intern/deepseek-v4-flash-vision', 1_048_576],
+  ['intern/deepseek-v4-pro-0813', 1_048_576],
+  ['intern/glm-5.3', 1_048_576],
+  ['intern/intern-s2', 262_144],
+  ['intern/kimi-k2.6', 262_144],
+  ['intern/minimax-m3', 1_048_576],
+  ['intern/qwen3.8-27b', 262_144],
   // --- tokenrouter (FID-2026-0916-002: the pre-program catalog finally
   // migrated off the family heuristic. Sources: bazaarlink + orcarouter
   // keyed /v1/models rosters 2026-09-16; OpenRouter public catalog as

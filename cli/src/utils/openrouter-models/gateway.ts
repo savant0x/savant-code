@@ -2,7 +2,8 @@
  * Combined gateway catalog — OpenRouter + TokenRouter + TokenHarbor + NVIDIA NIM
  * + CommandCode + Nous Research + KiosAPI + APInex + OrcaRouter + B.AI +
  * HCNSec + TokenBom + Infron + UnoRouter + BazaarLink + Atria AI +
- * Vercel AI Gateway + OpenAI (FID-2026-1001-001) — plus subscription plumbing.
+ * Intern InkStone (FID-2026-1004-008) + Vercel AI Gateway + OpenAI
+ * (FID-2026-1001-001) — plus subscription plumbing.
  */
 import fs from 'node:fs'
 
@@ -46,6 +47,7 @@ import {
   fetchAtriaModels,
   fetchBazaarlinkModels,
   fetchInfronModels,
+  fetchInternModels,
   fetchUnorouterModels,
 } from './static-catalogs-gateways'
 import { CATALOG_TTL_MS } from './types'
@@ -108,8 +110,8 @@ function notifyGatewayCatalogListeners(catalog: OpenRouterModel[]): void {
  * - OpenAI (live API, authenticated — FID-2026-1001-001)
  * - OrcaRouter (live API, public)
  * - B.AI (live API, authenticated)
- * - HCNSec / TokenBom / Infron / UnoRouter / BazaarLink / Atria AI
- *   (static audited catalogs)
+ * - HCNSec / TokenBom / Infron / UnoRouter / BazaarLink / Atria AI /
+ *   Intern InkStone (static audited catalogs)
  * - Vercel AI Gateway (live API, public)
  *
  * Fetches live sources in parallel via Promise.allSettled(). If a source fails,
@@ -185,6 +187,7 @@ export async function fetchGatewayModels(
     const unorouterCatalog = fetchUnorouterModels()
     const bazaarlinkCatalog = fetchBazaarlinkModels()
     const atriaCatalog = fetchAtriaModels()
+    const internCatalog = fetchInternModels()
 
     const combined = [
       ...orModels,
@@ -208,6 +211,7 @@ export async function fetchGatewayModels(
       ...unorouterCatalog,
       ...bazaarlinkCatalog,
       ...atriaCatalog,
+      ...internCatalog,
       ...customModels,
     ]
     combined.sort((a, b) => a.id.localeCompare(b.id))

@@ -87,6 +87,7 @@ Or configure one directly:
 | APInex | `/provider apinex` | `APINEX_API_KEY` (authenticated live model catalog) |
 | OpenAI | `/provider openai` | `OPENAI_API_KEY` (OpenAI platform direct; Responses API) |
 | Atria AI | `/provider atria` | `ATRIA_API_KEY` (audited static one-model allowlist: `Atria-Dawn-Preview`, 256K context window) |
+| Intern InkStone | `/provider intern` | `INTERN_API_KEY` (static 10-model allowlist: Shanghai AI Laboratory's 书生·端砚 at `https://discovery-api.intern-ai.org.cn/v1`, the China-hosted twin of Atria AI) |
 | Vercel AI Gateway | `/provider vercel` | `AI_GATEWAY_API_KEY` (keyless live model catalog; the key may also come from `.env.local`/shell — shell takes precedence) |
 | Clean APIs | `/provider cleanapis` | `CLEANAPIS_API_KEY` (authenticated live model catalog; OpenAI-compatible at `https://cleanapis.com/v1`) |
 | CodeCraft API | `/provider codecraft` | `CODECRAFT_API_KEY` (authenticated live model catalog; OpenAI chat at `https://codecraftapi.com/v1`) |
