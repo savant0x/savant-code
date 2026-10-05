@@ -117,7 +117,71 @@ export function updateDocSurfaces(
     changed.push('CHANGELOG.md')
   }
 
+  // T94 (operator ruling 2026-10-03: "it's part of the release script system"):
+  // the release-script system owns the whole callout, label AND body — the
+  // CHANGELOG's newest released section is the prose owner and the README
+  // mirrors it. At bump time the new section is empty, so this is a no-op;
+  // whenever the CHANGELOG callout and the README callout disagree, the README
+  // is converged here, and `version:check` fails closed until it is.
+  changed.push(...syncReleaseCallouts(root))
+
   return [...new Set(changed)]
+}
+
+/** The README's release callout: the first contiguous `>` block opened by a `**vX.Y.Z** —` line. */
+export function findReleaseCalloutBlock(
+  content: string,
+): { version: string; block: string } | undefined {
+  const lines = content.split('\n')
+  for (let index = 0; index < lines.length; index += 1) {
+    const match = lines[index]!.match(/^> \*\*v(\d+\.\d+\.\d+)\*\* —/)
+    if (!match) continue
+    let end = index
+    while (end + 1 < lines.length && lines[end + 1]!.startsWith('>')) end += 1
+    return {
+      version: match[1]!,
+      block: lines.slice(index, end + 1).join('\n'),
+    }
+  }
+  return undefined
+}
+
+/**
+ * The newest RELEASED CHANGELOG section's callout — the prose owner (T94).
+ * The first `## <version> — <date>` heading in the reverse-chronological file
+ * opens it; an `Unreleased` accumulation header is not a released section.
+ */
+export function findNewestChangelogCallout(
+  changelog: string,
+): { version: string; block: string } | undefined {
+  const heading = changelog.match(/^## \d+\.\d+\.\d+ — /m)
+  if (!heading || heading.index === undefined) return undefined
+  return findReleaseCalloutBlock(changelog.slice(heading.index))
+}
+
+/**
+ * Copy the CHANGELOG's newest release callout over the README's release
+ * callout. Idempotent; a no-op when either side has no callout yet or they
+ * already agree. Returns the relative paths changed.
+ */
+export function syncReleaseCallouts(root: string): string[] {
+  let changelog: string
+  let readme: string
+  try {
+    changelog = fs.readFileSync(path.join(root, 'CHANGELOG.md'), 'utf8')
+    readme = fs.readFileSync(path.join(root, 'README.md'), 'utf8')
+  } catch {
+    return []
+  }
+  const owner = findNewestChangelogCallout(changelog)
+  const mirror = findReleaseCalloutBlock(readme)
+  if (!owner || !mirror || owner.block === mirror.block) return []
+  fs.writeFileSync(readmePath(root), readme.replace(mirror.block, owner.block))
+  return ['README.md']
+}
+
+function readmePath(root: string): string {
+  return path.join(root, 'README.md')
 }
 
 /** A document surface that states the product version in prose or a badge. */
@@ -190,6 +254,28 @@ export function collectDocVersionDrift(
     if (version !== product) {
       drift.push({ file: surface.file, version, hint: surface.hint })
     }
+  }
+
+  // T94: the README release-callout BODY is owned by the CHANGELOG — the
+  // newest released section's callout is what the README must mirror. Both
+  // sides must exist before the comparison means anything (a fresh repo with
+  // no release section, or a README with no callout, has nothing to drift).
+  try {
+    const owner = findNewestChangelogCallout(
+      fs.readFileSync(path.join(root, 'CHANGELOG.md'), 'utf8'),
+    )
+    const mirror = findReleaseCalloutBlock(
+      fs.readFileSync(path.join(root, 'README.md'), 'utf8'),
+    )
+    if (owner && mirror && owner.block !== mirror.block) {
+      drift.push({
+        file: 'README.md',
+        version: mirror.version,
+        hint: 'release-callout body — sync from the CHANGELOG section (updateDocSurfaces)',
+      })
+    }
+  } catch {
+    // A missing CHANGELOG/README surface is reported by the loop above.
   }
   return drift
 }

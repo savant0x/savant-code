@@ -60,6 +60,7 @@ Or select one of the supported gateway providers directly:
 | CommandCode | `/provider commandcode` or `DIRECT_PROVIDER=commandcode` | `COMMAND_CODE_API_KEY` | OpenAI-compatible hosted inference (dual-protocol) |
 | HCNSec | `/provider hcnsec` or `DIRECT_PROVIDER=hcnsec` | `HCNSEC_API_KEY` | OpenAI-compatible gateway on an audited static 7-model allowlist |
 | Infron | `/provider infron` or `DIRECT_PROVIDER=infron` | `INFRON_API_KEY` | Hosted gateway |
+| Intern InkStone | `/provider intern` or `DIRECT_PROVIDER=intern` | `INTERN_API_KEY` | Hosted gateway |
 | KiosAPI | `/provider kiosapi` or `DIRECT_PROVIDER=kiosapi` | `KIOSAPI_API_KEY` | OpenAI-compatible gateway (live catalog) |
 | Nous Research | `/provider nous` or `DIRECT_PROVIDER=nous` | `NOUS_API_KEY` | OpenAI-compatible direct inference; Portal OAuth is separate |
 | Ollama | Automatic detection | `OLLAMA_HOST` (optional) | Local inference; no API key required |
@@ -164,6 +165,7 @@ BAI_API_KEY=dummy-bai-key-replace-me
 HCNSEC_API_KEY=dummy-hcnsec-key-replace-me
 TOKENBOM_API_KEY=dummy-tokenbom-key-replace-me
 INFRON_API_KEY=dummy-infron-key-replace-me
+INTERN_API_KEY=dummy-intern-key-replace-me
 UNOROUTER_API_KEY=dummy-unorouter-key-replace-me
 BAZAARLINK_API_KEY=dummy-bazaarlink_api_key-replace-me
 AI_GATEWAY_API_KEY=dummy-ai-gateway-key-replace-me

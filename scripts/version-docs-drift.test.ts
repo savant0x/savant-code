@@ -108,4 +108,46 @@ describe('documented version surfaces (FID-2026-0919-023)', () => {
       expect(surface.pattern.source).toContain('(\\d+')
     }
   })
+
+  test('the README release-callout body is owned by the CHANGELOG (T94)', () => {
+    const root = createRoot('0.0.23')
+    // The newest released section carries the release callout (the prose
+    // owner); the README mirrors it verbatim — multi-line `>` block included.
+    writeFileSync(
+      path.join(root, 'CHANGELOG.md'),
+      '# Changelog\n\n## 0.0.23 — 2026-10-03\n\n> **v0.0.23** — the release prose\n> continued across lines\n\n### Fixed\n\n- thing\n',
+    )
+    // The README starts out mirroring the section callout exactly.
+    writeFileSync(
+      path.join(root, 'README.md'),
+      '# README\n\n> **v0.0.23** — the release prose\n> continued across lines\n',
+    )
+    expect(collectDocVersionDrift(root, '0.0.23')).toEqual([])
+
+    // The old drift vector: a hand-edited README body under a matching label.
+    writeFileSync(
+      path.join(root, 'README.md'),
+      '# README\n\n> **v0.0.23** — stale prose\n',
+    )
+    const drift = collectDocVersionDrift(root, '0.0.23')
+    expect(drift).toHaveLength(1)
+    expect(drift[0]?.file).toBe('README.md')
+    expect(drift[0]?.hint).toContain('release-callout body')
+
+    // The doc writer syncs the body from the CHANGELOG section.
+    const changed = updateDocSurfaces(root, '0.0.23', '0.0.23', '2026-10-03')
+    expect(changed).toContain('README.md')
+    const synced = readFileSync(path.join(root, 'README.md'), 'utf8')
+    expect(synced).toContain('> **v0.0.23** — the release prose')
+    expect(synced).toContain('> continued across lines')
+    expect(collectDocVersionDrift(root, '0.0.23')).toEqual([])
+  })
+
+  test('callout drift is not reported before both sides exist (fresh repo)', () => {
+    // createRoot writes a bare `# Changelog` with no released section — there
+    // is nothing for the README to mirror yet, so the comparison must stay
+    // silent rather than red every fresh checkout.
+    const root = createRoot()
+    expect(collectDocVersionDrift(root, '0.0.23')).toEqual([])
+  })
 })

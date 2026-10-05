@@ -24,168 +24,19 @@ local-first use with Ollama.
 > `INFERENCE_API_KEY` alone. See the
 > [provider/model reference](docs/providers.md) and [CHANGELOG](CHANGELOG.md).
 
-> **v0.0.35** — **OpenAI is a first-class platform provider**: a platform `sk-` key
-> (`/provider openai`, `OPENAI_API_KEY`) routes `openai/<id>` — and bare slugs while
-> OpenAI is active — over the **Responses API** at api.openai.com, while the
-> ChatGPT-subscription OAuth lane keeps precedence for its allowlisted models
-> (`skipChatGptOAuth` still forces the platform lane); the `/provider` picker now
-> sorts alphabetically and the live `/v1/models` roster joins the model catalog.
-> The **connector layer lands**: the monid port ships as `packages/connectors` and
-> its catalog reaches the agent vocabulary as a four-tool meta-family
-> (`connector_search` / `connector_describe` / `connector_invoke` /
-> `connector_credentials` — credentials report env names and presence, never
-> values). **Direct mode is the product**: the backend-mode surface is retired
-> across CLI and SDK (stage 2 of gut-the-backend — the backend login UI, the
-> backend billing branches, the backend-as-inference fallback), only an explicit
-> env backend key defers boot routing, direct-mode 402s render the provider's own
-> message instead of phantom backend billing, and the harness asserts its own
-> identity against supplier-branded personas on gateway free lanes.
-> Previously shipped in v0.0.34: two built-in gateway providers, both live-verified end to end:
-> **Vercel AI Gateway** (keyless live catalog, slash-bearing upstream ids
-> stripped exactly one segment) and **Clean APIs** (authenticated live catalog,
-> catalog **200 / 33 models** and a real `chat/completions` round-trip
-> returning `PONG`). And a **critical soundness fix to the Law 3 verification
-> gate**: credit was shape-aware rather than outcome-aware, so a failing
-> `bun test` — non-zero `exitCode`, plain-text output, no structured error —
-> was credited as a **pass**, leaving the gate inert for the dominant failure
-> mode. Also here: Cloudflare is now **setup-surfaced** (dual-credential
-> wizard seam: token + account id); `scripts/**` is fully type-gated (36
-> errors fixed, boundary widened); **CommandCode GLM ids re-keyed to the live
-> roster casing** and the window-truth probe repaired; the discovery pipeline
-> gained a **second source** (custats feeds: offers ledger with expiry radar
-> and model enrichment/retirement); new **`/provider free`** lists free lanes
-> you have — and haven't — wired, with an agent-answerable reference; the
-> idea shelf got an archive with a full status review; and the FID receipt
-> deadlock closed with the write-boundary residual accepted by ruling. Also:
-> the `@@` hunk row no longer spends the panel's loudest colour on a line
-> carrying no change information; four mutation-proven guards against
-> controls that looked load-bearing and were not; a standing type-check
-> surface for the release engine; and the release-recovery path (`--resume`
-> plus a bounded npm read-after-write retry) that was dead.
-> Governance: agents may stage, commit, and push granular commits to origin
-> main; force-push, history rewrite, and release mutations stay operator-only.
-> Previously shipped in v0.0.33: this release hardened the security posture
-> and closed holes in the verification contract the agent itself operates
-> under. Spawned shells no longer inherit provider credentials (allowlisted
-> child env), secret values are masked by shape before the telemetry fan-out,
-> signing failures are loud instead of silent, database templates get
-> fail-closed capability clamps, and the destructive-command denylist now holds
-> in every mode including the dev override. FID verification detects promised
-> test artifacts by meaning (any section, any new/updated wording) and names
-> the records it does not enforce instead of skipping them silently;
-> repo-gate checks can be declared on a FID's own receipt — which is how two
-> shipped bare-runtime spawns in the release tooling were caught and fixed.
-> Model context windows resolve exact terminal segments for mid-id-version
-> ids (kiosapi/grok-4.6 no longer inherits a 2M window), the fallback table
-> was audited against the live OpenRouter catalog with 17 corrections,
-> verification credits only commands that actually succeeded, and EHEL blocks
-> Law-3 circular writes at write time.
-> Previously shipped in v0.0.32: the `/model` picker now activates the
-> selected provider's routing (closing the silent savant-code.com
-> passthrough that surfaced as a bogus "Out of credits" error), and the
-> free-compute harvester's daily scan runs through a bounded concurrency
-> pool with boundary-unverifiable hosts re-probing on a 3-day cadence —
-> typical daily wall clock drops from ~14s to ~1.1s with evidence
-> freshness bounded at 3 days.
-> Previously shipped in v0.0.31: user-defined custom providers via
-> `/provider` (the full feature: add/edit/list/remove wizard with first-class
-> registry entries — prefix routing, catalogs, key storage, live tests),
-> four new audited gateway providers (OrcaRouter and B.AI keyed-live
-> verified; HCNSec and TokenBom on audited 14-model static allowlists —
-> the registry now carries 16 providers), the skill-evolution suite
-> (trust-boundary ledger appends + fail-closed drift gate,
-> archive-not-purge draft expiration, the durable pattern wiki, and an
-> isolated gated proposer), and vendor-path tool-call classification
-> (native-incomplete steering/strikes/experience-ledger now cover the
-> Anthropic/Google-compatible families).
-> Previously shipped in v0.0.30: the NDJSON delegation transport (Phases
-> 1-2: `--print --json` emits NDJSON frames on stdout — progress, one
-> artifact, errors — and reads parent control frames on stdin with
-> cooperative cancel + parked steering), the APInex gateway provider (keyed
-> live acceptance passed), `/provider <name> update` key replacement, four
-> mechanized harness-honesty gates (ripgrep boot probe, edit-size guidance,
-> the exit-code-masking audit, and `verify:clean` — the committed tree
-> proven to compile from a clean checkout), the picker-focus-loss fix,
-> `skill_manage` brought onto the canonical command-result template, and
-> FID receipt-stamping integrity fixes. The active FID queue closed to
-> empty (8 records archived 2026-09-08).
-> Previously shipped in v0.0.29: the quality-campaign closeout (every
-> residue source monolith decomposed — `native.ts`, `gateway.ts`,
-> `office-scene.tsx`, `public-release.ts` — with the quality ratchet at
-> zero violations), release-pipeline durability + desktop integration
-> (`BACKUP_BUNDLE`, `DESKTOP_BUNDLES`/`DESKTOP_RELEASE`, per-release
-> updater-manifest verification), the KiosAPI provider,
-> the Triggers program (opt-in `SAVANT_TRIGGERS=1`), and the
-> quality-ratchet file remediation. Governance: agents may commit and push
-> locally; public releases flow exclusively through the hardened release
-> pipeline.
-> Previously shipped in v0.0.28: the compaction integrity rebuild (master
-> FID-2026-0824-022 + children -023…-027: preservation contract + digest
-> schema, minimal-surgery algorithm, evidence spill, removed-content ledger),
-> the eval system rebuild v3 (master FID-2026-0824-013 + children -014…-019:
-> FSM alignment, sandbox hardening, skill-efficacy engine, governance corpus +
-> bounded autorater + Tier-1 pre-push smoke), the desktop chat surface + Auto
-> Drive dashboard (FID-2026-0820-010), the compaction summary output
-> (FID-2026-0828-001), and the Discord Rich Presence refinements.
-> Previously shipped in v0.0.26/27: the terminal UI overhaul
-> (FID-2026-0816-002..012), Auto Drive (`/auto-drive`) and Discord Rich
-> Presence (`/presence`), the quality-ratchet decomposition passes, and the
-> model migration to `z-ai/glm-5.3-flash`. See [CHANGELOG.md](CHANGELOG.md)
-> for the full history.
->
-> **v0.0.26 background** — the release shipped the optimization and automation
-> program
-> (FIDs 003–010), the ECHO remediation package (FID-2026-0811-015..021), and
-> the LEARNINGS feedback-system remediation (FID-2026-0811-022..029), plus
-> four newer programs: Zero-Trust Agentic Provenance (FID-2026-0813-001..010),
-> the homegrown Agent-Steering Teacher (FID-2026-0813-011..020 plus the live
-> read-only sidebar surface `FID-2026-0813-022`, with a live `/learn` pipeline,
-> ZTAP-signed attempt receipts, local progression persistence, and a read-only
-> sidebar panel), the canonical version-bump tool (FID-2026-0813-021), and the
-> harness observability & integrity remediation (`FID-2026-0813-023` — the
-> `savantCode$1` rebrand-corruption repair, a live Trust Matrix with an honest
-> empty-state, a reactive context meter with working auto-compact plus a
-> compaction-status row, corrected Files Changed counters, and an operator
-> help overlay).
->
-> **Harness-speed remediation + grounding (FID-2026-0815-001..013):** the
-> full harness-speed program — lazy per-step prompt formatting, an async trace
-> writer, history-copy reduction, async checkpoint capture, single-pass
-> compaction, a cached model catalog with async registry I/O, UI no-op guards,
-> and parallel code-map/knowledge-graph indexing (findings F-01…F-12) — plus
-> three follow-on hot-path sweeps (FID-2026-0815-011..013: one system-prompt
-> tokenization per step, deferred trace serialization, a strict-only
-> `existsSync` probe, a bounded read-pattern scan, a trimmed per-step debug
-> payload, and no eager full-history copy). Also closes the agent grounding
-> gap: `formatCurrentDateTime()` now injects the correct **current date and
-> time** (weekday + timezone) and refreshes it every step, so the agent never
-> derives the wrong weekday from a bare date.
->
-> **Universal session-init grounding (FID-2026-0810-002):** every session boots
-> with a deterministic grounding ritual — the harness protocol and grounding
-> files are read local-first, with the **full harness grounding set embedded in
-> the runtime** as a fallback, so npm-installed copies in any project boot
-> (no crash, no scaffolding). The boot reads are enforced in every mode
-> (HYBRID, STRICT, ANALYZE, SCAFFOLD, PLAN, DEFAULT) via a universal tool gate
-> and a first-turn completion gate, and the embedded copies are generated from
-> the repo files with a drift check that fails validation if they fall out of
-> sync.
->
-> The prior unified provider registry remains historical ground truth; this
-> build adds drift detection without changing provider routing. The **unified
-> provider registry** makes `common`'s typed
-> `PROVIDER_REGISTRY` the single source of truth for every provider surface
-> (routing, credentials, `/provider` setup, picker sections, model catalogs,
-> generated docs — adding a provider is now one registry entry, see
-> `docs/archive/design/Adding New Providers.md`), with a single `activeProvider`
-> setting and automatic migration from the legacy `directProvider`. The
-> **release system is fully hardened**: a zero-command, token-native,
-> reversible release engine (`release:public`, opt-in automation via
-> `SAVANT_CODE_RELEASE_AUTOMATION=1`) with deterministic gates
-> (frozen-lockfile, build, typecheck, test, eslint, markdownlint, prettier,
-> npm-pack dry-runs), receipt-bound resume, and **binary-asset verification**
-> — the 5-platform build workflow now fails loudly if a release ships without
-> all of its tarballs (FID-2026-0809-002).
+> **v0.0.35** — **OpenAI as a first-class platform provider**: a platform `sk-` key
+> (`/provider openai`) routes `openai/<id>` — and bare slugs while OpenAI is active —
+> over the **Responses API** at api.openai.com, while the ChatGPT-subscription OAuth
+> lane keeps precedence for its allowlisted models, and the `/provider` picker finally
+> sorts alphabetically. The **connector layer lands**: the monid port ships as
+> `packages/connectors` and its catalog reaches the agent vocabulary as a four-tool
+> meta-family (`connector_search` / `describe` / `invoke` / `credentials`). **Direct
+> mode is the product** — the backend-mode surface is retired across CLI and SDK
+> (stage 2), only an explicit env backend key defers boot routing, direct-mode 402s
+> render the provider's own message, and the dead login surface is deleted. Also:
+> the harness asserts its own identity against supplier-branded personas. Previously
+> shipped in v0.0.34: live-verified **Vercel AI Gateway** + **Clean APIs**, the
+> Cloudflare dual-credential wizard, and the Law 3 verification-gate soundness fix.
 
 ---
 
@@ -246,6 +97,7 @@ history. The supported hosted providers are:
 | CommandCode | `/provider commandcode` or `DIRECT_PROVIDER=commandcode` | `COMMAND_CODE_API_KEY` | OpenAI-compatible hosted inference (dual-protocol) |
 | HCNSec | `/provider hcnsec` or `DIRECT_PROVIDER=hcnsec` | `HCNSEC_API_KEY` | OpenAI-compatible gateway on an audited static 7-model allowlist |
 | Infron | `/provider infron` or `DIRECT_PROVIDER=infron` | `INFRON_API_KEY` | Hosted gateway |
+| Intern InkStone | `/provider intern` or `DIRECT_PROVIDER=intern` | `INTERN_API_KEY` | Hosted gateway |
 | KiosAPI | `/provider kiosapi` or `DIRECT_PROVIDER=kiosapi` | `KIOSAPI_API_KEY` | OpenAI-compatible gateway (live catalog) |
 | Nous Research | `/provider nous` or `DIRECT_PROVIDER=nous` | `NOUS_API_KEY` | OpenAI-compatible direct inference; Portal OAuth is separate |
 | Ollama | Automatic detection | `OLLAMA_HOST` (optional) | Local inference; no API key required |
@@ -600,7 +452,8 @@ code 2 blocks a tool.
   file diffs throughout the TUI.
 - **Gateway providers** — OpenRouter, TokenRouter, TokenHarbor, NVIDIA NIM,
   CommandCode, Nous Research, KiosAPI, APInex,
-OrcaRouter, B.AI, HCNSec, TokenBom, Infron, UnoRouter, BazaarLink, Atria AI,
+OrcaRouter, B.AI, HCNSec, TokenBom, Infron, Intern InkStone, UnoRouter,
+  BazaarLink, Atria AI,
   OpenAI, Vercel AI Gateway, Clean APIs, CodeCraft API, xKiro, and Cloudflare Workers AI via
   `@savant-code/llm-providers`. Nous Research uses the direct OpenAI-compatible API; Portal OAuth
   is a separate integration.
@@ -1038,6 +891,7 @@ picker or choose one directly:
 /provider hcnsec
 /provider tokenbom
 /provider infron
+/provider intern
 /provider unorouter
 /provider bazaarlink
 /provider vercel
@@ -1052,7 +906,8 @@ The supported environment variables are `OPENAI_API_KEY`, `OPENROUTER_API_KEY`,
 `TOKENHARBOR_API_KEY`, `NVIDIA_API_KEY`, `COMMAND_CODE_API_KEY`,
 `NOUS_API_KEY`, `KIOSAPI_API_KEY`, `APINEX_API_KEY`,
 `ORCAROUTER_API_KEY`, `BAI_API_KEY`, `HCNSEC_API_KEY`, `TOKENBOM_API_KEY`,
-`ATRIA_API_KEY`, `INFRON_API_KEY`, `UNOROUTER_API_KEY`, `BAZAARLINK_API_KEY`,
+`ATRIA_API_KEY`, `INTERN_API_KEY`, `INFRON_API_KEY`, `UNOROUTER_API_KEY`,
+`BAZAARLINK_API_KEY`,
 `AI_GATEWAY_API_KEY`, `CLEANAPIS_API_KEY`, `CODECRAFT_API_KEY`, `XKIRO_API_KEY`,
 `CLOUDFLARE_API_TOKEN`. The key
 prompt is masked and stores the key globally in the Savant-Code config

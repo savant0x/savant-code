@@ -180,6 +180,7 @@ ollama serve
 | HCNSec | `/provider hcnsec` | `HCNSEC_API_KEY` | OpenAI 兼容网关（审计后的 7 模型静态白名单） |
 | TokenBom | `/provider tokenbom` | `TOKENBOM_API_KEY` | OpenAI 兼容网关（审计后的 7 模型静态白名单） |
 | Atria AI | `/provider atria` | `ATRIA_API_KEY` | OpenAI 兼容托管网关（审计后的单模型静态白名单：`Atria-Dawn-Preview`，256K 上下文） |
+| Intern InkStone | `/provider intern` | `INTERN_API_KEY` | OpenAI 兼容托管网关（静态 10 模型白名单：上海人工智能实验室书生·端砚，`https://discovery-api.intern-ai.org.cn/v1`，Atria AI 的中国托管孪生） |
 | Infron | `/provider infron` | `INFRON_API_KEY` | OpenAI 兼容推理路由平台（精选的 9 模型静态白名单） |
 | UnoRouter | `/provider unorouter` | `UNOROUTER_API_KEY` | OpenAI 兼容网关（精选的 17 模型静态白名单；`:free` 模型不计费） |
 | BazaarLink | `/provider bazaarlink` | `BAZAARLINK_API_KEY` | OpenAI 兼容网关（12 模型静态白名单：身份审计的 `qwen3.7-flash:free`，1M 上下文 + 11 个精选付费旗舰模型） |
@@ -372,7 +373,7 @@ MCP 工具发现、模式切换（`HYBRID` / `SCAFFOLD` / `STRICT` / `ANALYZE`�
 - **通用复制按钮** —— 在整个 TUI 中悬停即可复制代码块、工具输出与文件 diff。
 - **网关提供商** —— 通过 `@savant-code/llm-providers` 支持 OpenRouter、TokenRouter、TokenHarbor、NVIDIA NIM、
   CommandCode、Nous Research、KiosAPI、APInex、OrcaRouter、B.AI、HCNSec、
-TokenBom、Infron、UnoRouter、BazaarLink、Atria AI、OpenAI、Vercel AI Gateway、Clean APIs、CodeCraft API、xKiro 与
+TokenBom、Infron、Intern InkStone、UnoRouter、BazaarLink、Atria AI、OpenAI、Vercel AI Gateway、Clean APIs、CodeCraft API、xKiro 与
   Cloudflare Workers AI。Nous Research 使用 OpenAI 兼容直连
   API；Portal OAuth 是独立集成。
 - **默认模型** —— 通过 OpenRouter 使用 `openrouter/free`（可通过 `/model` 配置）。
@@ -704,6 +705,7 @@ savant-code
 /provider hcnsec
 /provider tokenbom
 /provider infron
+/provider intern
 /provider unorouter
 /provider bazaarlink
 /provider vercel
@@ -715,7 +717,8 @@ savant-code
 
 支持的环境变量是 `OPENROUTER_API_KEY`、`TOKENROUTER_API_KEY`、`TOKENHARBOR_API_KEY`、`NVIDIA_API_KEY`、
 `COMMAND_CODE_API_KEY`、`OPENAI_API_KEY`、`NOUS_API_KEY`、`KIOSAPI_API_KEY`、`APINEX_API_KEY`、`ORCAROUTER_API_KEY`、
-`BAI_API_KEY`、`HCNSEC_API_KEY`、`TOKENBOM_API_KEY`、`ATRIA_API_KEY`、`INFRON_API_KEY`、`UNOROUTER_API_KEY`、
+`BAI_API_KEY`、`HCNSEC_API_KEY`、`TOKENBOM_API_KEY`、`ATRIA_API_KEY`、`INTERN_API_KEY`、`INFRON_API_KEY`、
+`UNOROUTER_API_KEY`、
 `BAZAARLINK_API_KEY`、`AI_GATEWAY_API_KEY`、`CLEANAPIS_API_KEY`、`CODECRAFT_API_KEY`、`XKIRO_API_KEY` 与
 `CLOUDFLARE_API_TOKEN`。密钥提示为遮罩输入，并将密钥全局存储在
 Savant-Code 配置的 `credentials.json` 中；不会加入
