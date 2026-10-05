@@ -3,13 +3,10 @@ import * as fs from 'fs'
 import { StringDecoder } from 'node:string_decoder'
 import * as path from 'path'
 
-import { classifyCodeSearchOutcome } from './anomaly'
+import { createEscalatingKill } from './child-kill'
+import { settleOnClose, type CodeSearchResult } from './close-payload'
 import { parseSearchFlags } from './flags'
-import {
-  buildCloseOutput,
-  buildLimitedOutput,
-  buildPartialOutput,
-} from './format'
+import { buildLimitedOutput, buildPartialOutput } from './format'
 import { RipgrepMatchCollector } from './match-collector'
 import { INCLUDED_HIDDEN_DIRS } from './schema'
 import { getBundledRgPath } from '../../native/ripgrep'
@@ -17,9 +14,21 @@ import { getBundledRgPath } from '../../native/ripgrep'
 import type { SavantCodeToolOutput } from '../../../../common/src/tools/list'
 import type { Logger } from '@savant-code/common/types/contracts/logger'
 
-type CodeSearchResult =
-  | { stdout: string; message: string; stderr?: string; exitCode?: number }
-  | { errorMessage: string; stdout?: string; stderr?: string }
+/**
+ * True when `p` exists and is a directory.
+ *
+ * FID-2026-1004-006: deliberately total — a `statSync` that throws means "not
+ * a directory", because a path that does not exist is also not a directory and
+ * both must be rejected before they reach `spawn` (which reports either case
+ * as an ENOENT naming the executable).
+ */
+function isExistingDirectory(p: string): boolean {
+  try {
+    return fs.statSync(p).isDirectory()
+  } catch {
+    return false
+  }
+}
 
 export function codeSearch({
   projectPath,
@@ -54,18 +63,36 @@ export function codeSearch({
     const projectRoot = path.resolve(projectPath)
     const searchCwd = cwd ? path.resolve(projectRoot, cwd) : projectRoot
 
+    // FID-2026-1004-006 (A)+(C-1): `uv_spawn` rejects a non-directory `cwd` and
+    // reports the failure against the EXECUTABLE, so a file path — and equally a
+    // path that does not exist — surfaces as an ENOENT naming the ripgrep
+    // binary and prescribing `fetch-ripgrep`, a remedy that cannot apply.
+    // Measured (dev/scratchpad/active/enoent-cwd-probe.ts): directory cwd
+    // spawns; file cwd and non-existent cwd both return the identical ENOENT.
+    // Measure the search directory here and name the real offending path.
+    if (!isExistingDirectory(searchCwd)) {
+      return resolve([
+        {
+          type: 'json',
+          value: {
+            stdout: '',
+            message:
+              `Code search failed: the search path is not a directory: ` +
+              `"${searchCwd}". Pass a directory path, or omit \`cwd\` to ` +
+              `search the project root.`,
+          },
+        },
+      ])
+    }
+
     const { flagsArray, extraSearchPaths } = parseSearchFlags(flags, logger)
 
     // JSON output for robust parsing + early stopping; --no-config keeps a
     // user .ripgreprc out; `--` stops a leading-'-' pattern parsing as a flag.
     // Search paths: '.' plus existing blessed hidden dirs (no stderr noise).
-    const existingHiddenDirs = INCLUDED_HIDDEN_DIRS.filter((dir) => {
-      try {
-        return fs.statSync(path.join(searchCwd, dir)).isDirectory()
-      } catch {
-        return false
-      }
-    })
+    const existingHiddenDirs = INCLUDED_HIDDEN_DIRS.filter((dir) =>
+      isExistingDirectory(path.join(searchCwd, dir)),
+    )
     // FID-076: Extra search paths from non-flag arguments in flagsArray
     const searchPaths = ['.', ...extraSearchPaths, ...existingHiddenDirs]
     const args = [
@@ -101,6 +128,7 @@ export function codeSearch({
       cwd: searchCwd,
       stdio: ['ignore', 'pipe', 'pipe'],
     })
+    const escalatingKill = createEscalatingKill(childProcess)
     // Decode across chunk boundaries so split UTF-8 characters remain intact.
     const stdoutDecoder = new StringDecoder('utf8')
     const stderrDecoder = new StringDecoder('utf8')
@@ -114,8 +142,6 @@ export function codeSearch({
       maxOutputStringLength,
     )
 
-    let killTimeoutId: ReturnType<typeof setTimeout> | null = null
-
     const settle = (payload: CodeSearchResult) => {
       if (isResolved) return
       isResolved = true
@@ -126,42 +152,17 @@ export function codeSearch({
       childProcess.removeAllListeners()
       signal?.removeEventListener('abort', onAbort)
 
-      // Clear both the main timeout and the kill timeout to prevent late callbacks
+      // Clear both the main timeout and any pending kill escalation to
+      // prevent late callbacks.
       clearTimeout(timeoutId)
-      if (killTimeoutId) {
-        clearTimeout(killTimeoutId)
-        killTimeoutId = null
-      }
+      escalatingKill.dispose()
 
       resolve([{ type: 'json', value: payload }])
     }
 
-    const hardKill = () => {
-      try {
-        childProcess.kill('SIGTERM')
-      } catch {
-        // Best-effort kill: an already-exited child is the expected outcome.
-      }
-      // Store timeout reference so it can be cleared if process closes normally
-      killTimeoutId = setTimeout(() => {
-        try {
-          childProcess.kill('SIGKILL')
-        } catch {
-          // Best-effort escalation: the process may have exited between
-          // signals — the fallback kill below shares that contract.
-          try {
-            childProcess.kill()
-          } catch {
-            // Same best-effort contract; nothing actionable remains.
-          }
-        }
-        killTimeoutId = null
-      }, 1000)
-    }
-
     const onAbort = () => {
       if (isResolved) return
-      hardKill()
+      escalatingKill.terminate()
 
       settle({
         stdout: buildPartialOutput(
@@ -176,7 +177,7 @@ export function codeSearch({
 
     const timeoutId = setTimeout(() => {
       if (isResolved) return
-      hardKill()
+      escalatingKill.terminate()
 
       const truncatedStdout = buildPartialOutput(
         collector.fileGroups,
@@ -208,7 +209,7 @@ export function codeSearch({
       for (const line of lines) {
         if (!line) continue
         if (collector.addEventLine(line, 'stream') === 'limit-hit') {
-          hardKill()
+          escalatingKill.terminate()
 
           const limited = buildLimitedOutput(
             collector.fileGroups,
@@ -236,53 +237,17 @@ export function codeSearch({
 
     childProcess.once('close', (code) => {
       if (isResolved) return
-
-      // Flush any remaining JSON — possibly multiple complete lines
-      // (FID-2026-1002-001: remainder flushing lives on the collector and
-      // every dropped line is accounted, never silent).
-      collector.flushRemainder(jsonRemainder + stdoutDecoder.end())
-
-      const outcome = classifyCodeSearchOutcome({
-        code,
-        collected: collector.matchesGlobal,
-        dropped: collector.droppedEventLines,
-        firstDroppedLine: collector.firstDroppedLine,
-        stderrBuf,
-      })
-      const closeOutput = buildCloseOutput({
-        fileGroups: collector.fileGroups,
-        filesLimitedByMaxResults: collector.filesLimitedByMaxResults,
-        matchesGlobal: collector.matchesGlobal,
-        killedForLimit: collector.killedForLimit,
-        maxResults,
-        globalMaxResults,
-        maxOutputStringLength,
-        stderrBuf,
-        // FID-2026-1002-001 step 4: an anomalous run NEVER renders a
-        // "Found 0 matches" line — the formatter renders the anomaly text.
-        emptyResultText:
-          outcome.kind === 'anomaly' ? outcome.emptyResultText : undefined,
-      })
-
-      if (outcome.kind === 'anomaly') {
-        // The absence-shaped result is not trustworthy: settle through the
-        // error channel carrying stderr and the drop count (step 3).
-        settle({
-          errorMessage: outcome.errorMessage,
-          stdout: closeOutput.stdout,
-          stderr: closeOutput.stderr,
-        })
-        return
-      }
-
-      settle({
-        ...closeOutput,
-        message:
-          (code !== null
-            ? `Exit code: ${code}${collector.killedForLimit ? ' (early stop)' : ''}`
-            : '') +
-          (outcome.kind === 'warning' ? ` — warning: ${outcome.message}` : ''),
-      })
+      settle(
+        settleOnClose({
+          childExitCode: code,
+          collector,
+          remainingStdout: jsonRemainder + stdoutDecoder.end(),
+          stderrBuf,
+          maxResults,
+          globalMaxResults,
+          maxOutputStringLength,
+        }),
+      )
     })
 
     childProcess.once('error', (error) => {
@@ -290,8 +255,17 @@ export function codeSearch({
       // FID-2026-0918-007: the message names the resolved path and the
       // workspace-correct repair command so a mid-session failure is
       // self-explanatory.
+      // FID-2026-1004-006 (A): that remedy is only truthful when the
+      // executable is genuinely absent — which is now decidable, because the
+      // search directory has already been proven to be a directory above. A
+      // bad `cwd` can no longer reach this branch, so ENOENT here really does
+      // mean "ripgrep is not where we resolved it".
+      const remedy =
+        (error as NodeJS.ErrnoException).code === 'ENOENT'
+          ? " Repair with 'bun run --cwd=sdk fetch-ripgrep' or set SAVANT_CODE_RG_PATH."
+          : ''
       settle({
-        errorMessage: `Failed to execute ripgrep at "${rgPath}": ${error.message}. Repair with 'bun run --cwd=sdk fetch-ripgrep' or set SAVANT_CODE_RG_PATH.`,
+        errorMessage: `Failed to execute ripgrep at "${rgPath}": ${error.message}.${remedy}`,
       })
     })
   })

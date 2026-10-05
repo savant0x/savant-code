@@ -1,4 +1,6 @@
-import path from 'path'
+import { mkdirSync, mkdtempSync, rmSync } from 'node:fs'
+import { tmpdir } from 'node:os'
+import { join, resolve } from 'node:path'
 
 import {
   clearMockedModules,
@@ -9,7 +11,15 @@ import {
   asCodeSearchResult,
   createRgJsonMatch,
 } from '@savant-code/common/testing/mocks'
-import { describe, expect, it, mock, beforeEach, afterEach } from 'bun:test'
+import {
+  describe,
+  expect,
+  it,
+  mock,
+  beforeEach,
+  afterEach,
+  afterAll,
+} from 'bun:test'
 
 import { codeSearch } from '../tools/code-search'
 
@@ -193,15 +203,30 @@ describe('codeSearch', () => {
   })
 
   describe('cwd parameter handling', () => {
-    // FID-016 Fix B: use path.resolve() in test expectations so mocks match
-    // the impl's path.resolve() output on both POSIX and Windows. On POSIX
-    // path.resolve yields the literal '/test/project'; on Windows it yields
-    // 'C:\test\project' depending on the current drive. Using path.resolve in
-    // both sides eliminates the platform mismatch.
-    const normPath = (p: string) => path.resolve(p)
+    // The spawn-path contract is pinned against REAL fixture directories:
+    // FID-2026-1004-006 refuses a non-directory cwd before spawn, so
+    // resolution must be observed on directories that exist on disk. (The
+    // earlier synthetic '/test/project' paths passed only while the spawn
+    // was unguarded, and depended on machine accidents to pass at all.)
+    const createdDirs: string[] = []
+    const makeFixtureRoot = (name: string): string => {
+      const root = mkdtempSync(join(tmpdir(), 'code-search-cwd-'))
+      mkdirSync(join(root, name))
+      createdDirs.push(root)
+      return root
+    }
+
+    afterAll(() => {
+      for (const dir of createdDirs) {
+        rmSync(dir, { recursive: true, force: true })
+      }
+    })
+
     it('should handle cwd: "." correctly', async () => {
+      const root = makeFixtureRoot('subdir')
+
       const searchPromise = codeSearch({
-        projectPath: '/test/project',
+        projectPath: root,
         pattern: 'test',
         cwd: '.',
       })
@@ -217,12 +242,14 @@ describe('codeSearch', () => {
       expect(mockSpawn).toHaveBeenCalled()
       const spawnOptions = mockSpawn.mock.calls[0]![2] as { cwd: string }
       // When cwd is '.', it should resolve to the project root
-      expect(spawnOptions.cwd).toBe(normPath('/test/project'))
+      expect(spawnOptions.cwd).toBe(resolve(root))
     })
 
     it('should handle cwd: "subdir" correctly', async () => {
+      const root = makeFixtureRoot('subdir')
+
       const searchPromise = codeSearch({
-        projectPath: '/test/project',
+        projectPath: root,
         pattern: 'test',
         cwd: 'subdir',
       })
@@ -237,12 +264,17 @@ describe('codeSearch', () => {
       // Verify spawn was called with correct cwd
       expect(mockSpawn).toHaveBeenCalled()
       const spawnOptions = mockSpawn.mock.calls[0]![2] as { cwd: string }
-      expect(spawnOptions.cwd).toBe(path.resolve('/test/project', 'subdir'))
+      expect(spawnOptions.cwd).toBe(resolve(root, 'subdir'))
     })
 
     it('should search cwd outside the project directory', async () => {
+      const root = makeFixtureRoot('subdir')
+      const outsideDir = resolve(root, '../outside')
+      mkdirSync(outsideDir)
+      createdDirs.push(outsideDir)
+
       const searchPromise = codeSearch({
-        projectPath: '/test/project',
+        projectPath: root,
         pattern: 'test',
         cwd: '../outside',
       })
@@ -257,7 +289,7 @@ describe('codeSearch', () => {
       // Verify spawn was called with the resolved outside cwd
       expect(mockSpawn).toHaveBeenCalled()
       const spawnOptions = mockSpawn.mock.calls[0]![2] as { cwd: string }
-      expect(spawnOptions.cwd).toBe(path.resolve('/test/project', '../outside'))
+      expect(spawnOptions.cwd).toBe(resolve(root, '../outside'))
     })
   })
 })

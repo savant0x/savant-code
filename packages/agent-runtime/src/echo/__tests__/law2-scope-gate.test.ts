@@ -179,6 +179,35 @@ describe('FID-2026-1001-003 step 5a — Law 2 scope gate', () => {
     expect(result.blocked).toBe(false)
   })
 
+  // FID-2026-1004-006 (B): the register writes long entries across INDENTED
+  // continuation lines, and the previous line-only match dropped those globs —
+  // so the register silently under-covered its own approved write surfaces (a
+  // Law 2 block on a target the item already listed).
+  it("collects globs from an item's indented continuation lines (FID-2026-1004-006)", () => {
+    const scopePath = writeRegister(
+      '# SCOPE — fixture\n\n- T-fix: `src/**`,\n  `docs/**`,\n  `scripts/*.ts`\n',
+    )
+    const artifact = loadScopeArtifact(scopePath)
+    expect(artifact.patterns).toEqual(['src/**', 'docs/**', 'scripts/*.ts'])
+  })
+
+  it('stops continuation at a blank line and at the next item (fail-closed)', () => {
+    const scopePath = writeRegister(
+      '# SCOPE — fixture\n\n- T-a: `src/a.ts`,\n  `src/b.ts`\n\n  `not/an/owned/glob.ts`\n- T-b: `other/**`\n',
+    )
+    const artifact = loadScopeArtifact(scopePath)
+    // `not/an/owned/glob.ts` sits after a blank line, so it belongs to no item.
+    expect(artifact.patterns).toEqual(['src/a.ts', 'src/b.ts', 'other/**'])
+  })
+
+  it('indented prose that follows NO item contributes nothing (fail-closed)', () => {
+    const scopePath = writeRegister(
+      '# SCOPE — fixture\n\nSome prose.\n  Indented `stray/glob` under no item.\n- T-fix: `src/**`\n',
+    )
+    const artifact = loadScopeArtifact(scopePath)
+    expect(artifact.patterns).toEqual(['src/**'])
+  })
+
   it('loadScopeArtifact parses the machine-readable section only', () => {
     const scopePath = writeRegister(
       '# SCOPE — fixture\n\n- T-fix: `src/**`, `README.md`\nProse with a `stray/glob` not on a target line.\n',

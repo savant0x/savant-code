@@ -63,6 +63,18 @@ export interface ScopeArtifact {
  * Parse the register's machine-readable target section: lines shaped
  * `- <item-id>: \`glob\`, \`glob\``. An item line without backticked globs
  * contributes nothing (non-covering by construction).
+ *
+ * FID-2026-1004-006 (B): an item's globs may wrap onto INDENTED continuation
+ * lines, which is how the register itself writes long entries. The previous
+ * line-only match silently dropped those globs, so the register under-covered
+ * its own approved write surfaces — a `Law 2` block on a target the item
+ * already listed (and the same latent failure on every other multi-line entry,
+ * including `T119` and `T130`).
+ *
+ * Continuation is bounded so the fix stays FAIL-CLOSED: it stops at the next
+ * item, at a blank line, and at any non-indented text. Prose that merely
+ * mentions a backticked glob therefore still contributes nothing — an indented
+ * line only counts when it directly follows an item head.
  */
 export function loadScopeArtifact(
   scopePath: string = join(process.cwd(), 'SCOPE.md'),
@@ -70,9 +82,24 @@ export function loadScopeArtifact(
   if (!existsSync(scopePath)) return { patterns: [], exists: false }
   const text = readFileSync(scopePath, 'utf8')
   const patterns: string[] = []
-  for (const line of text.matchAll(/^- ([A-Za-z0-9-]+): (.+)$/gm)) {
-    for (const glob of line[2].matchAll(/`([^`]+)`/g)) {
+  const ITEM_HEAD = /^- ([A-Za-z0-9-]+): (.+)$/
+  const INDENTED = /^[ \t]+\S/
+  const lines = text.split(/\r?\n/)
+
+  const collectGlobs = (line: string): void => {
+    for (const glob of line.matchAll(/`([^`]+)`/g)) {
       patterns.push(glob[1])
+    }
+  }
+
+  for (let i = 0; i < lines.length; i++) {
+    const head = ITEM_HEAD.exec(lines[i])
+    if (!head) continue
+    collectGlobs(head[2])
+    for (let j = i + 1; j < lines.length; j++) {
+      const next = lines[j]
+      if (next.trim() === '' || !INDENTED.test(next)) break
+      collectGlobs(next)
     }
   }
   return { patterns, exists: true }
