@@ -33,6 +33,23 @@ afterEach(() => {
 const MS_PER_DAY = 24 * 60 * 60 * 1000
 const NOW = Date.UTC(2026, 7, 24, 12)
 
+/**
+ * FID-2026-1003-007 — a scratch root whose SCOPE.md holds exactly the given
+ * open-item lines, plus the review run over it. The register header is
+ * identical in every case; only the items differ.
+ */
+function reviewRegister(
+  items: string[],
+): ReturnType<typeof runSessionEndReview> {
+  const root = fixtureRoot()
+  fs.writeFileSync(
+    path.join(root, 'SCOPE.md'),
+    ['# SCOPE', '', '## Open items', '', ...items].join('\n'),
+    'utf8',
+  )
+  return runSessionEndReview(root)
+}
+
 const BODY = `# Test Skill\n\n## When to Use\nx\n\n## Procedure\n1. y\n\n## Pitfalls\n- z\n\n## Verification\nrun\n`
 
 function record(
@@ -195,5 +212,79 @@ describe('runSessionEndReview', () => {
       const src = fs.readFileSync(abs, 'utf8')
       expect(src).not.toContain('skill-wiki')
     }
+  })
+
+  test('FID-2026-1003-007: register items blocked on a ruling are surfaced in the agenda + routing', () => {
+    const review = reviewRegister([
+      '- [ ] **T999. Some operator-gated thing.**',
+      '      Prose line one.',
+      '      **Blocker:** widening a security control is an operator ruling.',
+      '      **Automation level: 1.**',
+      '',
+      '- [ ] **T998. Already-decided thing without a blocker.**',
+      '      No blocker sentence here.',
+    ])
+    expect(review.decisions).toHaveLength(1)
+    expect(review.decisions[0]?.id).toBe('T999')
+    expect(review.agenda).toContain('## Pending operator decisions')
+    expect(review.agenda).toContain('**T999**')
+    expect(review.agenda).toContain('blocker: widening a security control')
+    expect(review.agenda).not.toContain('T998')
+    expect(
+      review.routing.some((note) => note.startsWith('PRESENT: T999')),
+    ).toBe(true)
+  })
+
+  test('FID-2026-1003-007: an item that quotes the convention is not a decision', () => {
+    // The live first run surfaced FID-2026-1003-007's own register entry as a
+    // pending decision: the item *documents* the convention by quoting
+    // `**Blocker:**` mid-sentence, and the parser read the quotation as a
+    // declaration. A mechanism item must never ask the operator for a ruling it
+    // is itself delivering.
+    const review = reviewRegister([
+      '- [ ] **FID-2026-1003-007. Decisions are surfaced mechanically.** The',
+      '      failure: register items sat `**Blocker:** operator ruling` for',
+      '      weeks because nothing presented them.',
+      '      **FID:** `FID-2026-1003-007`. **Automation level: 3** for the',
+      '      mechanism.',
+      '',
+      '- [ ] **T996. A genuinely blocked item.**',
+      '      Prose line one.',
+      '      **Blocker:** operator ruling required.',
+    ])
+    expect(review.decisions).toHaveLength(1)
+    expect(review.decisions[0]?.id).toBe('T996')
+    expect(review.decisions[0]?.blocker).toBe('operator ruling required.')
+    expect(
+      review.routing.some((note) => note.includes('FID-2026-1003-007')),
+    ).toBe(false)
+  })
+
+  test('FID-2026-1003-007: decision lines respect the markdown line-length bound', () => {
+    // A fixed 110-char blocker budget plus its 15-char prefix rendered 125
+    // columns and failed `lint:md` (MD013) on the live register. The budget is
+    // now the remainder after each line's own prefix, and an over-long id must
+    // shorten the summary instead of overflowing the line.
+    const review = reviewRegister([
+      '- [ ] **T62-followups-extra-long-identifier. Item.**',
+      '      Prose line one that runs on and on and on and should be truncated.',
+      '      **Blocker:** operator credits and keys, which are external to the',
+      '      repository and cannot be resolved from inside it at all.',
+    ])
+    expect(review.decisions).toHaveLength(1)
+    for (const line of review.agenda.split('\n')) {
+      expect(line.length).toBeLessThanOrEqual(120)
+    }
+  })
+
+  test('FID-2026-1003-007: a register with no blocked items stays silent', () => {
+    const review = reviewRegister([
+      '- [ ] **T997. Unblocked thing.** No blocker.',
+    ])
+    expect(review.decisions).toEqual([])
+    expect(review.agenda).not.toContain('Pending operator decisions')
+    expect(review.routing.some((note) => note.startsWith('PRESENT:'))).toBe(
+      false,
+    )
   })
 })

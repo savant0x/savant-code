@@ -77,6 +77,10 @@ export const COMMAND_ALLOWLIST = new Set([
   'cp',
   'mv',
   'rm',
+  // Tauri v2 CLI — first-class dependency of the desktop workspace
+  // (desktop/package.json "tauri"); operator-ruled onto the allowlist
+  // 2026-10-03 (T95-B).
+  'tauri',
   'touch',
   'curl',
   'wget',

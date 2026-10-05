@@ -38,6 +38,12 @@ import type { ExperienceRecord } from '@savant-code/common/types/experience'
 
 export const DEFAULT_WINDOW_DAYS = 14
 export const DEFAULT_MIN_FREQUENCY = 3
+/**
+ * FID-2026-1005-003 Step 1: a repeated failure is a candidate signal only
+ * when it occurred across ≥ 3 DISTINCT sessions — three retries inside one
+ * session are one investigation, not three independent failures.
+ */
+export const DEFAULT_MIN_SESSIONS = 3
 const MS_PER_DAY = 24 * 60 * 60 * 1000
 
 /**
@@ -128,6 +134,11 @@ export type Recurrence = {
   count: number
   /** Total count including expected failures and out-of-window records. */
   totalCount: number
+  /**
+   * FID-2026-1005-003 Step 1: distinct session ids behind the in-window
+   * records. Promotion gates on this, not on `count` alone.
+   */
+  distinctSessions: number
   firstTs: string
   lastTs: string
 }
@@ -163,6 +174,11 @@ export function computeRecurrences(
       (record) => !isExpectedFailure(record.errorFirstLine),
     )
     if (inWindowFiltered.length < minFrequency) continue
+    // FID-2026-1005-003 Step 1: distinct-session count over the same
+    // filtered set — retries inside one session do not widen this.
+    const distinctSessions = new Set(
+      inWindowFiltered.map((record) => record.sessionId),
+    ).size
     const timestamps = inWindow
       .map((record) => Date.parse(record.ts))
       .filter((ts) => Number.isFinite(ts))
@@ -173,6 +189,7 @@ export function computeRecurrences(
       errorFirstLine: group.errorFirstLine,
       count: inWindowFiltered.length,
       totalCount: group.records.length,
+      distinctSessions,
       firstTs:
         timestamps.length > 0 ? new Date(timestamps[0]).toISOString() : '',
       lastTs:
@@ -207,7 +224,7 @@ function report(rootDir: string): void {
   )
   for (const r of recurrences) {
     console.log(
-      `- [${r.count}×] ${r.toolName}: ${r.errorFirstLine.slice(0, 120)}`,
+      `- [${r.count}× / ${r.distinctSessions} session(s)] ${r.toolName}: ${r.errorFirstLine.slice(0, 120)}`,
     )
   }
 }

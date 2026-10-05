@@ -36,6 +36,101 @@ export const erosionBlockSchema = z.object({
 })
 export type ErosionBlock = z.infer<typeof erosionBlockSchema>
 
+/**
+ * FID-2026-1005-003 Step 5 — content identity + multi-task manifest.
+ *
+ * OPTIONAL additive fields (back-compat: v1.0 artifacts keep parsing).
+ * `skill_content_sha256` is the sha256 of the EXACT SKILL.md bytes the
+ * trials ran against — a proof label is only current while this hash
+ * matches the draft on disk; any edit invalidates the label. `tasks` is
+ * the explicit fixture manifest (representative trigger tasks, near-miss
+ * tasks, and unaffected tasks); a one-task or legacy artifact (no manifest)
+ * can never earn a cross-task `PROVEN ON N TASKS` label.
+ */
+export const proofContentBlockSchema = z.object({
+  skill_content_sha256: z.string().length(64),
+  tasks: z
+    .array(
+      z.object({
+        task_id: z.string().min(1),
+        role: z.enum(['representative', 'near_miss', 'unaffected']),
+        baseline_pass_rate: z.number().min(0).max(1),
+        active_pass_rate: z.number().min(0).max(1),
+        regressed: z.boolean(),
+      }),
+    )
+    .min(1),
+})
+export type ProofContentBlock = z.infer<typeof proofContentBlockSchema>
+export type ProofTaskRow = ProofContentBlock['tasks'][number]
+
+/**
+ * The proof LABEL gate (FID-2026-1005-003 Step 5): a current, manifest-
+ * backed artifact earns `PROVEN ON N TASKS` only when —
+ *   - the artifact carries a content block whose `skill_content_sha256`
+ *     equals the CURRENT draft's sha (freshness),
+ *   - every intended task activated the skill,
+ *   - baseline/active runs exist for each manifest task (alignment),
+ *   - aggregate outcome improved, and
+ *   - zero manifest tasks regressed.
+ * Everything else — including legacy single-task artifacts — is `UNPROVEN`.
+ * `UNPROVEN` is advisory, not punitive: operator trust remains possible and
+ * explicit.
+ */
+export function proofLabelForArtifact(
+  artifact: SkillProofArtifact | null,
+  currentSkillContentSha256: string | null,
+): {
+  label: 'proven_on_n_tasks' | 'unproven'
+  taskCount: number
+  reasons: string[]
+} {
+  const reasons: string[] = []
+  if (artifact === null) {
+    reasons.push('no proof artifact')
+    return { label: 'unproven', taskCount: 0, reasons }
+  }
+  // Schema-validating read gives us the optional block via passthrough;
+  // re-validate here so legacy artifacts fail the label explicitly.
+  const block = proofContentBlockSchema.safeParse({
+    skill_content_sha256: (artifact as { skill_content_sha256?: unknown })
+      .skill_content_sha256,
+    tasks: (artifact as { tasks?: unknown }).tasks,
+  })
+  if (!block.success) {
+    reasons.push('legacy/single-task artifact (no content-bound task manifest)')
+    return { label: 'unproven', taskCount: 0, reasons }
+  }
+  const tasks = block.data.tasks
+  if (
+    currentSkillContentSha256 === null ||
+    block.data.skill_content_sha256 !== currentSkillContentSha256
+  ) {
+    reasons.push('stale: artifact hash does not match the current draft')
+  }
+  if (!artifact.activation_verified) {
+    reasons.push('activation not verified on every active-arm trial')
+  }
+  if (!(artifact.metrics.skill_lift > 0)) {
+    reasons.push('aggregate outcome did not improve')
+  }
+  const regressed = tasks.filter((t) => t.regressed)
+  if (regressed.length > 0) {
+    reasons.push(`${regressed.length} manifest task(s) regressed`)
+  }
+  const misaligned = tasks.filter(
+    (t) => !(t.baseline_pass_rate >= 0 && t.active_pass_rate >= 0),
+  )
+  if (misaligned.length > 0) {
+    reasons.push('manifest task(s) missing a paired baseline/active run')
+  }
+  return {
+    label: reasons.length === 0 ? 'proven_on_n_tasks' : 'unproven',
+    taskCount: reasons.length === 0 ? tasks.length : 0,
+    reasons,
+  }
+}
+
 export const proofArtifactSchema = z.object({
   schema_version: z.literal('1.0'),
   skill_name: z.string().min(1),
@@ -67,6 +162,12 @@ export const proofArtifactSchema = z.object({
     receipt_fingerprint: z.string().optional(),
   }),
   erosion: erosionBlockSchema.optional(),
+  // FID-2026-1005-003 Step 5 (optional additive block — see
+  // proofContentBlockSchema): content-bound multi-task manifest, deliberately
+  // SEPARATE from ztap.receipt_fingerprint (a provenance receipt hash, not
+  // skill-content identity).
+  skill_content_sha256: z.string().length(64).optional(),
+  tasks: proofContentBlockSchema.shape.tasks.optional(),
 })
 export type SkillProofArtifact = z.infer<typeof proofArtifactSchema>
 export type ZtapMode = 'off' | 'record' | 'enforce'

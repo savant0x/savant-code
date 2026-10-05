@@ -11,8 +11,10 @@ import { appendRejectedProposal } from '@savant-code/common/util/skill-wiki'
 
 import { getProjectRoot } from '../project-files'
 import {
+  activityMessage,
   discoverSkills,
   formatTable,
+  showDraftReviewMessage,
   showMessage,
   statusMessage,
 } from './skills-discovery'
@@ -72,9 +74,18 @@ export function runSkillsCommand(projectRoot: string, args: string): string {
     const name = parts[1]
     if (!name) {
       output = 'Usage: `/skills show <name>`'
+    } else if (parts.includes('--review')) {
+      // FID-2026-1005-003: the exact-draft review surface — draft SHA, full
+      // SKILL.md body, diff vs live, and source evidence. The operator
+      // judges the quarantined bytes here before `/skills trust`.
+      output = showDraftReviewMessage(projectRoot, name)
     } else {
       output = showMessage(projectRoot, name)
     }
+  } else if (sub === 'activity') {
+    // FID-2026-1005-003: read-only lifecycle event review (bounded tail +
+    // unseen count). Never acknowledges — delivery state is unaffected.
+    output = activityMessage(projectRoot)
   } else if (sub === 'trust') {
     const name = parts[1]
     if (!name) {

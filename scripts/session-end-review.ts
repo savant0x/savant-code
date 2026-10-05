@@ -24,6 +24,10 @@
 import * as fs from 'node:fs'
 import * as path from 'node:path'
 
+import {
+  claimSkillLifecycleEvents,
+  formatSkillLifecycleNoticeLine,
+} from '@savant-code/common/util/skill-lifecycle-events'
 import { countQuarantinedDrafts } from '@savant-code/common/util/skill-management'
 import { proposalsForSession } from '@savant-code/common/util/skill-proposals'
 import { updateWikiPattern } from '@savant-code/common/util/skill-wiki'
@@ -35,6 +39,12 @@ import {
 
 export const AGENDA_MAX_LINES = 50
 export const AGENDA_MAX_ITEMS = 3
+/**
+ * MD013 column bound for the agenda file (`lint:md` runs repository-wide, and
+ * the agenda is a committed markdown artifact, not a console line). Decision
+ * lines budget what remains after their own prefix rather than a fixed slice.
+ */
+export const AGENDA_MAX_LINE = 120
 export const AGENDA_PATH = path.join('dev', 'agenda.md')
 
 export type AgendaItem = {
@@ -44,11 +54,19 @@ export type AgendaItem = {
   totalCount: number
 }
 
+export type PendingDecision = {
+  id: string
+  summary: string
+  blocker: string
+}
+
 export type SessionEndReview = {
   items: AgendaItem[]
   agenda: string
   /** Candidate FID-routing notes (line-bounded). */
   routing: string[]
+  /** FID-2026-1003-007: open register items blocked on an operator ruling. */
+  decisions: PendingDecision[]
   /** FID-2026-0912-003: pages created this run (updates are not counted). */
   wikiPages: number
   /**
@@ -75,11 +93,89 @@ export function quarantineAlertNote(rootDir: string): string | null {
   )
 }
 
+/**
+ * FID-2026-1005-003 Step 4 — headless skill-event visibility.
+ *
+ * Every unseen lifecycle event (per the CLI surface's own cursor) surfaces
+ * here as one formatted notice line at session end — the durable net for
+ * events created while no TUI was watching. Metadata-only lines, built by
+ * the shared formatter; acknowledgement stays with the rendering surface
+ * (this report NEVER advances the cursor — it is a report, not a display).
+ */
+export function skillLifecycleReportLines(rootDir: string): string[] {
+  const { events, remaining } = claimSkillLifecycleEvents(rootDir, 'cli')
+  if (events.length === 0) return []
+  const lines = events.map(formatSkillLifecycleNoticeLine)
+  if (remaining > 0) {
+    lines.push(`… ${remaining} more — run \`/skills activity\``)
+  }
+  return lines
+}
+
+/**
+ * FID-2026-1003-007 — pending operator decisions, parsed from SCOPE.md.
+ *
+ * The 2026-10-03 failure this closes: register items sat `**Blocker:**
+ * operator ruling` for weeks because nothing PRESENTED them — the operator
+ * found the backlog by hand and ruled on all of it in one sitting. The
+ * register's own convention (`- [ ] **ID. title** … **Blocker:** …`) is
+ * parsed here so the session-end review surfaces every pending decision in
+ * the agenda (boot-read at next-session intake) and the routing notes.
+ */
+export function pendingOperatorDecisions(scope: string): PendingDecision[] {
+  const decisions: PendingDecision[] = []
+  const lines = scope.split('\n')
+  for (let index = 0; index < lines.length; index += 1) {
+    // The id ends at the first `.` (T94.) — or at an opening paren for
+    // compound ids (`T62-followups (remaining …).**`).
+    const open = lines[index]!.match(
+      /^- \[ \] \*\*([A-Za-z0-9][A-Za-z0-9-]*)(?:\.|\s\()/,
+    )
+    if (!open) continue
+    let block = lines[index]!
+    let cursor = index + 1
+    // A blocker is DECLARED by a line-leading `**Blocker:**` on the item's own
+    // continuation line — that is the register's convention. A mid-sentence
+    // `**Blocker:**` belongs to an item that *documents* the convention (this
+    // register's own FID-2026-1003-007 entry quotes it inside backticks), not
+    // to one blocked on a ruling. Matching the quotation surfaces the item that
+    // describes the mechanism as a decision the operator owes, with the quoted
+    // sentence as its blocker — noise that erodes the signal the mechanism
+    // exists to create. Anchor on the declaration and capture from there, so an
+    // item that quotes first and declares later still reads its own blocker.
+    let blockerStart = -1
+    while (
+      cursor < lines.length &&
+      !/^(#{2,3} |- \[ \])/.test(lines[cursor]!)
+    ) {
+      if (blockerStart < 0 && /^\s*\*\*Blocker:\*\*/.test(lines[cursor]!)) {
+        blockerStart = block.length
+      }
+      block += ' ' + lines[cursor]!.trim()
+      cursor += 1
+    }
+    if (blockerStart < 0) continue
+    const blocker = block.slice(blockerStart).match(/\*\*Blocker:\*\*([^*]*)/)
+    if (!blocker) continue
+    decisions.push({
+      id: open[1]!.trim(),
+      summary: block.slice(open[0].length, open[0].length + 160).trim(),
+      blocker: blocker[1]!.trim().slice(0, 140),
+    })
+  }
+  return decisions
+}
+
 /** Build the agenda document from the current recurrences (≤ 50 lines). */
 export function buildAgenda(
   recurrences: ReturnType<typeof computeRecurrences>,
-  opts: { maxItems?: number } = {},
-): { items: AgendaItem[]; agenda: string; routing: string[] } {
+  opts: { maxItems?: number; decisions?: PendingDecision[] } = {},
+): {
+  items: AgendaItem[]
+  agenda: string
+  routing: string[]
+  decisions: PendingDecision[]
+} {
   const maxItems = opts.maxItems ?? AGENDA_MAX_ITEMS
   const items: AgendaItem[] = recurrences.slice(0, maxItems).map((r) => ({
     toolName: r.toolName,
@@ -105,6 +201,22 @@ export function buildAgenda(
       )
     }
   }
+  const decisions = opts.decisions ?? []
+  if (decisions.length > 0) {
+    lines.push('## Pending operator decisions (FID-2026-1003-007)', '')
+    for (const decision of decisions.slice(0, 8)) {
+      // MD013 caps the agenda at 120 columns, so each decision's budget is
+      // what is left after its own rendered prefix — an id longer than the
+      // widest (T62-followups) shortens the summary rather than overflowing.
+      const summaryPrefix = `- [ ] **${decision.id}** — `
+      const blockerPrefix = '      blocker: '
+      lines.push(
+        `${summaryPrefix}${decision.summary.slice(0, AGENDA_MAX_LINE - summaryPrefix.length)}`,
+        `${blockerPrefix}${decision.blocker.slice(0, AGENDA_MAX_LINE - blockerPrefix.length)}`,
+        '',
+      )
+    }
+  }
   const routing: string[] = []
   for (const item of items) {
     routing.push(
@@ -113,8 +225,14 @@ export function buildAgenda(
         `Orchestrator direct write when <100 lines (hybrid routing rule).`,
     )
   }
-  const agenda = lines.join('\n').trimEnd() + '\n'
-  return { items, agenda, routing }
+  for (const decision of decisions) {
+    routing.push(
+      `PRESENT: ${decision.id} — blocker: ${decision.blocker.slice(0, 100)} ` +
+        `(SCOPE.md — present at next-session intake; never leave unpresented).`,
+    )
+  }
+  const agenda = lines.slice(0, AGENDA_MAX_LINES).join('\n').trimEnd() + '\n'
+  return { items, agenda, routing, decisions }
 }
 
 /** Refresh dev/agenda.md from the ledger. Returns the review result. */
@@ -124,7 +242,15 @@ export function runSessionEndReview(
 ): SessionEndReview {
   const records = readExperienceLedger(rootDir)
   const recurrences = computeRecurrences(records, { now: opts.now })
-  const built = buildAgenda(recurrences)
+  let decisions: PendingDecision[] = []
+  try {
+    decisions = pendingOperatorDecisions(
+      fs.readFileSync(path.join(rootDir, 'SCOPE.md'), 'utf8'),
+    )
+  } catch {
+    // No SCOPE.md in this root (tests, foreign repos) — no decisions to surface.
+  }
+  const built = buildAgenda(recurrences, { decisions })
   const agendaFile = path.join(rootDir, AGENDA_PATH)
   fs.mkdirSync(path.dirname(agendaFile), { recursive: true })
   fs.writeFileSync(agendaFile, built.agenda, 'utf8')
@@ -140,8 +266,14 @@ export function runSessionEndReview(
   }
   // FID-2026-0910-001 P3: the deterministic net for non-chat draft sources.
   const quarantineNote = quarantineAlertNote(rootDir)
-  const routing =
-    quarantineNote !== null ? [...built.routing, quarantineNote] : built.routing
+  // FID-2026-1005-003 Step 4: durable lifecycle-event notices in the same
+  // report (metadata-only lines; the cursor is NOT advanced by this report).
+  const lifecycleLines = skillLifecycleReportLines(rootDir)
+  const routing = [
+    ...built.routing,
+    ...(quarantineNote !== null ? [quarantineNote] : []),
+    ...lifecycleLines,
+  ]
   // FID-2026-0912-004: the proposer may draft only once per session — read
   // from the proposal store, not from conversation memory.
   const proposerEligible =
@@ -151,6 +283,7 @@ export function runSessionEndReview(
     items: built.items,
     agenda: built.agenda,
     routing,
+    decisions: built.decisions,
     wikiPages,
     proposerEligible,
   }

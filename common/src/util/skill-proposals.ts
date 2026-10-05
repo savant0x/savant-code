@@ -16,6 +16,8 @@
 import * as fs from 'node:fs'
 import * as path from 'node:path'
 
+import { sha256Hex } from './hash'
+
 /** One proposed skill change (atomic: one skill, one action). */
 export type SkillProposalRecord = {
   /** sha256 over the canonical proposal payload (dedupe + receipt binding). */
@@ -132,4 +134,109 @@ export function buildDraftingPrompt(input: DraftingPromptInput): string {
     '',
   ]
   return lines.join('\n')
+}
+
+/**
+ * FID-2026-1005-003 Steps 2–3 — the mechanical→proposer candidate handoff.
+ *
+ * The recurrence pipeline (lessons-to-skills) identifies a candidate and
+ * calls `prepareCandidateHandoff` instead of writing a generic draft body:
+ * this reserves the session's ONE proposal slot mechanically (the record
+ * store is the cap, not prompt discipline) and returns everything the
+ * isolated Scribe drafting turn needs — the lesson's canonical rule and
+ * trigger, the recurrence evidence, and the isolation prompt built by
+ * `buildDraftingPrompt`. The slot is taken BEFORE any `skill_manage` write
+ * so a concurrent session cannot double-draft.
+ */
+export type CandidateHandoffInput = {
+  /** Skill name derived from the lesson's canonical rule. */
+  skillName: string
+  /** The lesson title the candidate was extracted from. */
+  lessonTitle: string
+  /** The lesson's canonical rule — the actual procedure to teach. */
+  canonicalRule: string
+  /** Tool whose failure triggers the skill. */
+  toolName: string
+  /** Normalized error first line (the trigger). */
+  errorFirstLine: string
+  /** In-window occurrence count. */
+  count: number
+  /** Distinct sessions behind the count (the promotion gate). */
+  distinctSessions: number
+}
+
+export type CandidateHandoff = {
+  skillName: string
+  proposalSha: string
+  patternKey: string
+  prompt: string
+  record: SkillProposalRecord
+}
+
+/**
+ * Reserve the proposal slot for `sessionId` and build the handoff. A
+ * duplicate `proposalSha` is the idempotent-resume case (same proposal,
+ * retried after a failed write — returns the handoff again); any OTHER
+ * proposal for a session that already has one fails closed with the store's
+ * duplicate-slot error.
+ */
+export function prepareCandidateHandoff(
+  rootDir: string,
+  candidate: CandidateHandoffInput,
+  opts: { sessionId?: string; now?: number } = {},
+): { ok: boolean; handoff?: CandidateHandoff; error?: string } {
+  const sessionId = opts.sessionId ?? 'lessons-to-skills'
+  const payload = JSON.stringify({
+    skillName: candidate.skillName,
+    lesson: candidate.lessonTitle,
+    rule: candidate.canonicalRule,
+    tool: candidate.toolName,
+    error: candidate.errorFirstLine,
+    count: candidate.count,
+    distinctSessions: candidate.distinctSessions,
+  })
+  const proposalSha = sha256Hex(payload)
+  const record: SkillProposalRecord = {
+    proposalSha,
+    skillName: candidate.skillName,
+    action: 'create',
+    patternKey: `lesson:${candidate.canonicalRule}`,
+    createdAt: new Date(opts.now ?? Date.now()).toISOString(),
+    sessionId,
+    rationale: `recurrence ${candidate.count}× / ${candidate.distinctSessions} distinct sessions + lesson '${candidate.lessonTitle}'`,
+  }
+  const recorded = recordProposal(rootDir, record)
+  if (!recorded.ok) {
+    // Idempotent resume of the SAME proposal is allowed; anything else
+    // means the session slot is taken — fail closed.
+    if (loadProposalRecord(rootDir, proposalSha) === null) {
+      return { ok: false, error: recorded.error ?? 'proposal slot taken' }
+    }
+  }
+  const prompt = buildDraftingPrompt({
+    wikiIndex: `Candidate: ${candidate.lessonTitle} — rule: ${candidate.canonicalRule} (guard-grade lesson, ${candidate.distinctSessions} distinct sessions)`,
+    patternPages: [
+      [
+        `## ${candidate.lessonTitle}`,
+        `Canonical rule: ${candidate.canonicalRule}`,
+        `Trigger: '${candidate.toolName}' failing with '${candidate.errorFirstLine}'`,
+        `Evidence: ${candidate.count} occurrences across ${candidate.distinctSessions} distinct sessions`,
+        'Draft contract: When to Use (this trigger) / Procedure (the canonical rule as numbered steps) / Pitfalls (the guard as a forbidden shortcut) / Verification (the project suite).',
+      ].join('\n'),
+    ],
+    dedupedTraces: [
+      `${candidate.toolName}: ${candidate.errorFirstLine} (${candidate.count}× / ${candidate.distinctSessions} sessions)`,
+    ],
+    skillInventory: [],
+  })
+  return {
+    ok: true,
+    handoff: {
+      skillName: candidate.skillName,
+      proposalSha,
+      patternKey: record.patternKey,
+      prompt,
+      record,
+    },
+  }
 }

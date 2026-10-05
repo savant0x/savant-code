@@ -34,6 +34,7 @@ function record(
   tool: string,
   error: string,
   daysAgo: number,
+  sessionId = 's1',
 ): ExperienceRecord {
   return {
     ts: new Date(NOW - daysAgo * MS_PER_DAY).toISOString(),
@@ -41,7 +42,7 @@ function record(
     toolName: tool,
     errorFirstLine: error,
     contextHash: '0'.repeat(64),
-    sessionId: 's',
+    sessionId,
   }
 }
 
@@ -82,12 +83,14 @@ describe('parseLessons', () => {
 })
 
 describe('findCandidates (S3-B extraction criteria)', () => {
-  test('flags a matching recurring pattern as eligible', () => {
+  test('flags a matching cross-session recurring pattern as eligible', () => {
     const root = fixtureRoot()
+    // FID-2026-1005-003 Step 1: the promotion gate is DISTINCT sessions —
+    // the fixture spans three, one occurrence each.
     writeLedger(root, [
-      record('run_command', 'guard depends on launch environment state', 1),
-      record('run_command', 'guard depends on launch environment state', 2),
-      record('run_command', 'guard depends on launch environment state', 3),
+      record('run_command', 'guard depends on launch environment state', 1, 's1'),
+      record('run_command', 'guard depends on launch environment state', 2, 's2'),
+      record('run_command', 'guard depends on launch environment state', 3, 's3'),
     ])
     fs.mkdirSync(path.join(root, 'dev'), { recursive: true })
     fs.writeFileSync(
@@ -98,6 +101,23 @@ describe('findCandidates (S3-B extraction criteria)', () => {
     const candidates = findCandidates(root, { now: NOW })
     expect(candidates).toHaveLength(1)
     expect(candidates[0].reasons).toEqual([])
+    expect(candidates[0].distinctSessions).toBe(3)
+  })
+
+  test('a 3× pattern confined to ONE session is not a candidate (distinct-session gate)', () => {
+    const root = fixtureRoot()
+    writeLedger(root, [
+      record('run_command', 'guard depends on launch environment state', 1, 's1'),
+      record('run_command', 'guard depends on launch environment state', 2, 's1'),
+      record('run_command', 'guard depends on launch environment state', 3, 's1'),
+    ])
+    fs.mkdirSync(path.join(root, 'dev'), { recursive: true })
+    fs.writeFileSync(
+      path.join(root, 'dev', 'LEARNINGS.md'),
+      `# LEARNINGS\n\n${LESSON_TEMPLATE}`,
+      'utf8',
+    )
+    expect(findCandidates(root, { now: NOW })).toHaveLength(0)
   })
 
   test('below-frequency patterns are not candidates', () => {
@@ -117,12 +137,12 @@ describe('findCandidates (S3-B extraction criteria)', () => {
 })
 
 describe('draftCandidates', () => {
-  test('drafts an eligible candidate into quarantine only', () => {
+  test('drafts an eligible candidate into quarantine with the proposal + event contract', () => {
     const root = fixtureRoot()
     writeLedger(root, [
-      record('run_command', 'guard depends on launch environment state', 1),
-      record('run_command', 'guard depends on launch environment state', 2),
-      record('run_command', 'guard depends on launch environment state', 3),
+      record('run_command', 'guard depends on launch environment state', 1, 's1'),
+      record('run_command', 'guard depends on launch environment state', 2, 's2'),
+      record('run_command', 'guard depends on launch environment state', 3, 's3'),
     ])
     fs.mkdirSync(path.join(root, 'dev'), { recursive: true })
     fs.writeFileSync(
@@ -135,20 +155,59 @@ describe('draftCandidates', () => {
     // in-window regardless of the real date (date-bomb guard).
     const drafted = draftCandidates(root, { now: NOW })
     expect(drafted.length).toBeGreaterThan(0)
-    const draftDir = path.join(
-      root,
-      '.agents',
-      'skills',
-      '.quarantine',
-      drafted[0],
-    )
+    const name = drafted[0]
+    const draftDir = path.join(root, '.agents', 'skills', '.quarantine', name)
     expect(fs.existsSync(path.join(draftDir, 'SKILL.md'))).toBe(true)
     // NOT in the live skills dir.
     expect(
-      fs.existsSync(
-        path.join(root, '.agents', 'skills', drafted[0], 'SKILL.md'),
-      ),
+      fs.existsSync(path.join(root, '.agents', 'skills', name, 'SKILL.md')),
     ).toBe(false)
+    // FID-2026-1005-003 Steps 2–4: the proposal slot was reserved BEFORE the
+    // write, the draft body carries the CANONICAL RULE (not a generic
+    // template), and one mutation-boundary lifecycle event was emitted.
+    const proposals = JSON.parse(
+      fs.readFileSync(path.join(root, '.savant', 'skill-proposals.json'), 'utf8'),
+    ) as Array<{ skillName: string; sessionId: string }>
+    expect(proposals).toHaveLength(1)
+    expect(proposals[0].skillName).toBe(name)
+    const skillBody = fs.readFileSync(path.join(draftDir, 'SKILL.md'), 'utf8')
+    expect(skillBody).toContain('no-environment-dependent-guards')
+    const events = fs
+      .readFileSync(
+        path.join(root, '.savant', 'skill-lifecycle-events.jsonl'),
+        'utf8',
+      )
+      .trim()
+      .split('\n')
+      .map((line) => JSON.parse(line) as { action: string; skillName: string })
+    expect(events).toHaveLength(1)
+    expect(events[0].action).toBe('draft_created')
+    expect(events[0].skillName).toBe(name)
+  })
+
+  test('a second distinct proposal for the same session fails closed (no double draft)', () => {
+    const root = fixtureRoot()
+    writeLedger(root, [
+      record('run_command', 'guard depends on launch environment state', 1, 's1'),
+      record('run_command', 'guard depends on launch environment state', 2, 's2'),
+      record('run_command', 'guard depends on launch environment state', 3, 's3'),
+    ])
+    fs.mkdirSync(path.join(root, 'dev'), { recursive: true })
+    fs.writeFileSync(
+      path.join(root, 'dev', 'LEARNINGS.md'),
+      `# LEARNINGS\n\n${LESSON_TEMPLATE}`,
+      'utf8',
+    )
+    const first = draftCandidates(root, { now: NOW })
+    expect(first.length).toBeGreaterThan(0)
+    // A second pass in the SAME session: the slot is taken, nothing new is
+    // drafted and no extra proposal record exists.
+    const second = draftCandidates(root, { now: NOW })
+    expect(second).toEqual([])
+    const proposals = JSON.parse(
+      fs.readFileSync(path.join(root, '.savant', 'skill-proposals.json'), 'utf8'),
+    ) as unknown[]
+    expect(proposals).toHaveLength(1)
   })
 
   test('does not draft when the lesson is below the non-obvious bar', () => {

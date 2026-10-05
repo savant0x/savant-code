@@ -2,23 +2,14 @@
 /**
  * FID-2026-0824-012 S3-B — auto-parse lessons → skills (draft pipeline).
  *
- * Extraction criteria (all must hold before a draft is created):
- *   - recurrence ≥ 3 within the rolling 14-day window (from the ledger);
- *   - a matching canonical rule in dev/LEARNINGS.md with Status active;
- *   - non-obvious: the lesson carries a Guard/Invariant beyond the bare
- *     failure line (a 2+ line Guard implies real synthesis, not trivia);
- *   - cross-project heuristic: the lesson's Evidence spans 2+ distinct
- *     paths (different modules) or the owning FID is closed/verified.
- *
- * Drafts go through the SAME validation path as the skill_manage tool
- * (common/src/util/skill-management.ts createSkill → buildAgentSkillDocument)
- * and land in `.agents/skills/.quarantine/` — NEVER loadable until an
- * operator runs `skills trust`. Each draft carries provenance
- * `{sourceLessonId, sessionId, evidence}` in the ledger provenanceRef.
- *
- * Rejected drafts (quarantine entries older than 30 days, never trusted) are
- * ARCHIVED move-only to `.quarantine/.archive/` (FID-2026-0912-002) — never
- * deleted. Nothing auto-promotes.
+ * Extraction criteria (enforced in `findCandidates`, tested in
+ * `__tests__/lessons-to-skills.test.ts`): cross-session recurrence ≥ 3 in
+ * the 14-day window (FID-2026-1005-003: DISTINCT sessions), a matching
+ * active canonical rule from dev/LEARNINGS.md, a non-trivial guard, and
+ * 2+ evidence paths. Drafts go through the SAME quarantine engine as the
+ * `skill_manage` tool and land in `.agents/skills/.quarantine/` — never
+ * loadable until an operator runs `skills trust`. Rejected drafts archive
+ * move-only after 30 days (FID-2026-0912-002). Nothing auto-promotes.
  *
  * CLI: `bun run lessons:to-skills [--archive]`
  */
@@ -26,7 +17,15 @@
 import * as fs from 'node:fs'
 import * as path from 'node:path'
 
+import { emitSkillMutationEvent } from '@savant-code/common/util/skill-lifecycle-events'
 import { createSkill } from '@savant-code/common/util/skill-management'
+// FID-2026-1005-003 Steps 2–4: the mechanical script identifies candidates
+// and hands each one to the isolated proposer (prepareCandidateHandoff in
+// common) — it no longer authors draft bodies itself. Draft creation goes
+// through the shared quarantine engine with the candidate's real content,
+// and the mutation-boundary lifecycle event keeps the operator-visible
+// traffic-light path identical for background creations.
+import { prepareCandidateHandoff } from '@savant-code/common/util/skill-proposals'
 
 import {
   archiveRejectedDrafts,
@@ -34,6 +33,7 @@ import {
 } from './draft-archive.js'
 import {
   computeRecurrences,
+  DEFAULT_MIN_SESSIONS,
   readExperienceLedger,
 } from './experiences-dedup.js'
 
@@ -105,6 +105,8 @@ export type DraftCandidate = {
   toolName: string
   errorFirstLine: string
   count: number
+  /** FID-2026-1005-003 Step 1: distinct sessions behind the recurrence. */
+  distinctSessions: number
   reasons: string[]
 }
 
@@ -130,6 +132,10 @@ export function findCandidates(
     )
 
   for (const recurrence of recurrences) {
+    // FID-2026-1005-003 Step 1: three failures in ONE session are a retry
+    // loop, not a reusable-skill signal — a failure-derived candidate
+    // requires the pattern across ≥ 3 distinct sessions.
+    if (recurrence.distinctSessions < DEFAULT_MIN_SESSIONS) continue
     // Best-effort semantic link: a lesson whose canonical-rule tokens overlap
     // the failure's tokens (the full-fidelity Scribe path does the deep match;
     // this mechanical script only needs a defensible candidate signal).
@@ -167,6 +173,7 @@ export function findCandidates(
         toolName: recurrence.toolName,
         errorFirstLine: recurrence.errorFirstLine,
         count: recurrence.count,
+        distinctSessions: recurrence.distinctSessions,
         reasons,
       })
       continue
@@ -177,16 +184,29 @@ export function findCandidates(
       toolName: recurrence.toolName,
       errorFirstLine: recurrence.errorFirstLine,
       count: recurrence.count,
+      distinctSessions: recurrence.distinctSessions,
       reasons: [],
     })
   }
   return candidates
 }
 
-/** Draft candidate skills into quarantine via the shared engine path. */
+/**
+ * FID-2026-1005-003 Steps 2–4 — the single proposal path.
+ *
+ * For each eligible candidate: mechanically reserve the session's ONE
+ * proposal slot (`prepareCandidateHandoff` — the record store is the cap,
+ * duplicate shas are idempotent resumes, a second distinct proposal fails
+ * closed), then create the draft through the shared quarantine engine with
+ * the candidate's REAL content — the lesson's canonical rule as the
+ * procedure and the trigger/guard contract — replacing the old generic
+ * template that never carried the actual lesson. The mutation-boundary
+ * event is emitted on success AND on failure (a failed draft must not
+ * pretend a draft exists); the event is the durable traffic-light notice.
+ */
 export function draftCandidates(
   rootDir: string,
-  opts: { now?: number } = {},
+  opts: { now?: number; sessionId?: string } = {},
 ): string[] {
   const drafted: string[] = []
   for (const candidate of findCandidates(rootDir, opts)) {
@@ -196,6 +216,25 @@ export function draftCandidates(
       .replace(/^-+|-+$/g, '')
       .slice(0, 64)
     if (!name || name.length < 3) continue
+
+    // Step 2–3: reserve the proposal slot mechanically BEFORE the write.
+    const reserved = prepareCandidateHandoff(
+      rootDir,
+      {
+        skillName: name,
+        lessonTitle: candidate.lessonTitle,
+        canonicalRule: candidate.canonicalRule,
+        toolName: candidate.toolName,
+        errorFirstLine: candidate.errorFirstLine,
+        count: candidate.count,
+        distinctSessions: candidate.distinctSessions,
+      },
+      { sessionId: opts.sessionId, now: opts.now },
+    )
+    if (!reserved.ok || reserved.handoff === undefined) continue
+
+    // Step 2: the draft contract — trigger, exact procedure, guard,
+    // verification — all from the candidate's evidence-backed fields.
     const result = createSkill({
       rootDir,
       name,
@@ -209,11 +248,8 @@ export function draftCandidates(
         `When ${candidate.toolName} fails with: \`${candidate.errorFirstLine}\`.`,
         '',
         '## Procedure',
-        '1. Recognize the pattern (recurred ' +
-          candidate.count +
-          '× in 14 days).',
-        '2. Apply the canonical rule from the source lesson.',
-        '3. Verify with the project test suite before proceeding.',
+        `1. ${candidate.canonicalRule}`,
+        '2. Verify with the project test suite before proceeding.',
         '',
         '## Pitfalls',
         '- Do not treat this as a blanket bypass — the rule exists because the naive path fails.',
@@ -222,12 +258,21 @@ export function draftCandidates(
         '- `bun run typecheck` (all workspaces)',
         '- Focused test suite for the affected area',
         '',
-        '> Auto-drafted from lesson: ' + candidate.lessonTitle,
+        `> Auto-drafted from lesson: ${candidate.lessonTitle} (${candidate.count}× across ${candidate.distinctSessions} distinct sessions)`,
         '',
       ].join('\n'),
-      sessionId: 'lessons-to-skills',
-      reason: `S3-B auto-draft from recurrence (${candidate.count}×) + canonical rule ${candidate.canonicalRule}`,
-      provenanceRef: `lesson:${candidate.canonicalRule}`,
+      sessionId: reserved.handoff.record.sessionId,
+      reason: `S3-B proposal ${reserved.handoff.proposalSha.slice(0, 12)} from recurrence (${candidate.count}× / ${candidate.distinctSessions} sessions) + canonical rule ${candidate.canonicalRule}`,
+      provenanceRef: `lesson:${candidate.canonicalRule} proposal:${reserved.handoff.proposalSha}`,
+    })
+
+    // Step 4: the mutation-boundary lifecycle event — success and failure
+    // both surface, metadata-only, in the durable traffic-light log.
+    emitSkillMutationEvent(rootDir, {
+      skillName: name,
+      action: result.ok ? 'draft_created' : 'draft_failed',
+      sessionId: reserved.handoff.record.sessionId,
+      now: opts.now,
     })
     if (result.ok) drafted.push(name)
   }

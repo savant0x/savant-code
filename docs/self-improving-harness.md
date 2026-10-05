@@ -163,6 +163,31 @@ when no drafts pend):
 
 Nothing auto-promotes; trust remains operator-only.
 
+### 3.5 Durable lifecycle events (FID-2026-1005-003)
+
+Every skill-learning transition — proposal presented, draft
+created/updated, draft failed — also writes one **metadata-only event** to
+`.savant/skill-lifecycle-events.jsonl` (`.savant/skill-lifecycle-events.ts`
+module in `common`). The event log is the durable traffic-light source: it
+survives headless and closed-TUI sessions, and both the CLI and the desktop
+consume it with **per-surface acknowledgements**
+(`.savant/skill-lifecycle-cursors.json`) — an event is acknowledged only
+after that surface inserted it into its visible transcript (at-least-once
+replay after a crash; no duplicates within a healthy session).
+
+The notice line names skill, action, proof state, and trust state — a green
+write badge means the WRITE succeeded, never trust: drafts always read
+`QUARANTINED — PENDING TRUST · unproven`. Review the exact draft before
+trusting with `/skills show <name> --review` (draft SHA, full SKILL.md,
+diff vs live, proposal evidence); `/skills activity` lists recent events
+read-only with an unseen count. Evidence policy: a failure-derived skill
+requires the pattern across ≥ 3 **distinct sessions** (three retries in one
+session are one investigation); mechanical drafts are proposed through the
+isolated proposer with a reserved per-session proposal slot
+(`.savant/skill-proposals.json`); a `PROVEN ON N TASKS` label requires a
+current `skill_content_sha256` and a multi-task fixture manifest with zero
+regressions — everything else shows `UNPROVEN`.
+
 ## 4. Operator command reference
 
 | Command | What it does |
@@ -170,6 +195,8 @@ Nothing auto-promotes; trust remains operator-only.
 | `/skills` | Status: trusted / quarantined counts |
 | `/skills list` · `/skills list --quarantined` | Table of trusted skills / untrusted drafts |
 | `/skills show <name>` | Frontmatter + version history + snapshots |
+| `/skills show <name> --review` | **Exact draft review**: draft SHA, full SKILL.md, diff vs live, proposal evidence |
+| `/skills activity` | Recent skill lifecycle events (read-only, bounded tail) |
 | `/skills trust <name>` | **Release a draft** (operator-only) |
 | `/skills untrust <name>` | Demote a trusted skill back to quarantine |
 | `/skills rollback <name> <seq>` | Restore a versioned snapshot into live |
@@ -229,6 +256,8 @@ a lesson-derived draft skill have not yet been operator-confirmed.
 | `common/src/types/experience.ts` | `ExperienceRecordSchema` (S1-A) |
 | `common/src/util/experiences.ts` | Shared normalization + dedup keys |
 | `common/src/util/skill-management.ts` | `skill_manage` engine: versioning, quarantine, trust, rollback |
+| `common/src/util/skill-proposals.ts` | Isolated proposer: record store, prompt builder, candidate handoff (FID-2026-1005-003) |
+| `common/src/util/skill-lifecycle-events.ts` | Metadata-only lifecycle events + per-surface delivery cursors (FID-2026-1005-003) |
 | `common/src/tools/params/tool/skill-manage.ts` | Tool schema |
 | `common/src/constants/skills.ts` | `QUARANTINE_DIR_NAME`, version rules |
 | `packages/agent-runtime/src/hooks/experience-capture.ts` | In-process capture sink |
@@ -240,7 +269,7 @@ a lesson-derived draft skill have not yet been operator-confirmed.
 | `scripts/skills-check.ts` | `skills:check` validator |
 | `scripts/experiences-dedup.ts` | Dedup/recurrence/purge |
 | `scripts/session-end-review.ts` | Mechanical SessionEnd review (S3-A) |
-| `scripts/lessons-to-skills.ts` | Auto-draft pipeline (S3-B) |
+| `scripts/lessons-to-skills.ts` | Auto-draft pipeline (S3-B; distinct-session gate + proposer handoff + mutation-boundary events) |
 | `scripts/learnings-retire.ts` | Move-only retirement (S3-C) |
 | `scripts/evolve-skills.ts` | Operator evolution ritual (S4-A) |
 | `agents/scribe/scribe.ts` | Session-end review contract |
