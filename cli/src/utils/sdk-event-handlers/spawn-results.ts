@@ -48,13 +48,41 @@ const updateSpawnAgentBlock = (
       }
       // Agents like thinker return all output at the end via lastMessage,
       // while agents like basher may have already streamed their text.
-      const hasStreamedTextContent = childBlocks.some(
-        (b) => b.type === 'text' && b.textType === 'text',
+      // FID-2026-1005-001: the streamed text is a live preview, NOT proof of
+      // complete display — reconcile the authoritative final text against it
+      // instead of dropping it whenever any streamed block exists.
+      const streamedTextBlocks = childBlocks.filter(
+        (b): b is Extract<ContentBlock, { type: 'text' }> =>
+          b.type === 'text' && b.textType === 'text',
       )
-      const finalBlocks =
-        content && !hasStreamedTextContent
-          ? [...childBlocks, { type: 'text', content } as ContentBlock]
-          : childBlocks
+      const hasStreamedTextContent = streamedTextBlocks.length > 0
+      const streamedText = streamedTextBlocks
+        .map((b) => b.content)
+        .join('')
+      let finalBlocks: ContentBlock[] = childBlocks
+      if (content) {
+        if (!hasStreamedTextContent) {
+          // Nothing streamed: append the authoritative final text.
+          finalBlocks = [...childBlocks, { type: 'text', content }]
+        } else if (content === streamedText) {
+          // Byte-equal: keep the streamed block (no duplicate).
+          finalBlocks = childBlocks
+        } else if (
+          streamedText.length < content.length &&
+          content.startsWith(streamedText)
+        ) {
+          // True prefix: the stream was cut before the end — append only
+          // the missing suffix so the display equals the final result.
+          finalBlocks = [
+            ...childBlocks,
+            { type: 'text', content: content.slice(streamedText.length) },
+          ]
+        } else {
+          // Divergent text: the final result is authoritative — show it
+          // alongside the preview rather than dropping either.
+          finalBlocks = [...childBlocks, { type: 'text', content }]
+        }
+      }
       if (finalBlocks.length > 0) {
         return {
           ...block,

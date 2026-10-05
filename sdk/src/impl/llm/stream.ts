@@ -19,6 +19,7 @@ import {
   streamErrorLogFields,
 } from './stream-error-chunk'
 import { finalizeLlmStream } from './stream-finalize'
+import { createOutputLimitTracker } from './stream-output-limit'
 import { prepareLlmStreamRequest } from './stream-request-setup'
 import { getProviderOptions } from './usage'
 
@@ -81,8 +82,10 @@ export async function* promptAiSdkStream(
 
   // Track if we've yielded any content - if so, we can't safely fall back
   let hasYieldedContent = false
-
+  // FID-2026-1005-001: output-limit tracking (stream-output-limit.ts).
+  const outputLimit = createOutputLimitTracker()
   for await (const chunkValue of response.fullStream) {
+    if (outputLimit.observe(chunkValue) === 'skip') continue
     if (chunkValue.type !== 'text-delta') {
       const flushed = stopSequenceHandler.flush()
       if (flushed) {
@@ -277,11 +280,18 @@ export async function* promptAiSdkStream(
   }
   const flushed = stopSequenceHandler.flush()
   if (flushed) {
+    hasYieldedContent = true
     yield {
       type: 'text',
       text: flushed,
       ...(agentChunkMetadata ?? {}),
     }
+  }
+
+  // FID-2026-1005-001: a text-only length cut is INCOMPLETE — the explicit
+  // error chunk keeps a truncated fragment from relaying as a verdict.
+  if (outputLimit.requiresExplicitError()) {
+    yield { type: 'error', message: outputLimit.errorMessage() }
   }
 
   return finalizeLlmStream(response, aiSDKModel, isChatGptOAuth, params)
