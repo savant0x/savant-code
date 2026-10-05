@@ -4,6 +4,26 @@
 
 ### Added
 
+- **Harness self-diagnosis integrity (FID-2026-1004-006, high; closed
+  2026-10-04, commit 8ef81dde).** Three defects in the harness's own error
+  surfaces, all one shape — a failure reported with a confident, specific
+  cause that is wrong. `code_search` now stats the resolved search directory
+  before spawning: a file-path or non-existent `cwd` fails naming the
+  searched path, instead of surfacing as an ENOENT against the vendored
+  ripgrep binary and prescribing `fetch-ripgrep` (measured: a file `cwd` and
+  a non-existent one produce byte-identical `uv_spawn` errors naming the
+  executable); the re-fetch remedy survives only where the binary is
+  genuinely absent. The Law 2 scope gate's `loadScopeArtifact` accumulates
+  an item's backticked globs across indented continuation lines (stopping at
+  the next item, a blank line, or non-indented text), so the register covers
+  its own wrapped entries — T119/T132-class targets no longer sit on lines
+  the parser silently dropped; stray prose still contributes nothing
+  (fail-closed). The register's open-items count was brought back into
+  agreement with its body. The AUDIT-citation gate (step 5) remains blocked
+  on the operator ruling that the Verifier agent is not negotiable;
+  re-designed plans must keep the role intact. Receipt 6/6 declared gates;
+  sdk 589/0; agent-runtime 1,651/0; close-payload/escalating-kill extracted
+  verbatim under the 300-line quality ceiling.
 - **NEEDS-REVIEW provenance upgrade (FID-2026-1004-004, medium; closed
   2026-10-04).** One keyless OpenRouter public-catalog cross-vote (466 rows)
   upgraded 27 of the sweep's 28 NEEDS-REVIEW provenance flags to two-source

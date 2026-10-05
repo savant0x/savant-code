@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-1004-006-harness-self-diagnosis-integrity.md`
 **ID:** FID-2026-1004-006
 **Severity:** high
-**Status:** verified
+**Status:** closed (implemented + verified, 2026-10-04, commit 8ef81dde)
 **Created:** 2026-10-04 18:15
 **Automation level:** 3
 **YAGNI-Compliance:** Resolved 2026-10-04 — the two changes are minimal (a
@@ -547,8 +547,10 @@ the `scope-register-check` probe, and the repo-wide `quality` gate.
 
 ### Implementation Evidence (REQUIRED for `closed`)
 
-- [ ] **Commit SHA:** pending — closure is the operator's act (G2); the
-      verified tree is uncommitted by standing rule.
+- [x] **Commit SHA:** `8ef81dde` — implementation commit (10 files,
+      +1285/−113): the two production modules, the parser, both test files,
+      the two extraction modules, the verified FID, and both session
+      summaries. Local only — no remote push.
 - [x] **File:line ranges:** `sdk/src/tools/code-search/executor.ts:25-34`
       (`isExistingDirectory`), `:73-83` (named not-a-directory error before
       spawn), `:263-271` (remedy confined to the executable-absent branch),
@@ -611,11 +613,27 @@ the `scope-register-check` probe, and the repo-wide `quality` gate.
 
 ## Resolution
 
-- **Closed Date:** pending
-- **Fix Description:** pending
-- **Tests Added:** pending
-- **Verification Evidence:** pending
-- **Archived:** pending
+- **Closed Date:** 2026-10-04 (G2: implementation commit `8ef81dde`)
+- **Fix Description:** (A)+(C-1) the search directory is stat-checked before
+  spawn and a non-directory `cwd` fails naming the searched path — the
+  `fetch-ripgrep` remedy now appears only when the executable is genuinely
+  absent; (B) `loadScopeArtifact` accumulates an item's globs across indented
+  continuation lines with fail-closed stop conditions; (D) the register's
+  open-items count agrees with its body. (C-2) step 5 stays BLOCKED on the
+  operator ruling recorded in the Loop-1 AUDIT section — the Verifier role
+  is not negotiable; the design decision is deferred to a presented plan
+  under that constraint.
+- **Tests Added:** `sdk/src/tools/code-search/__tests__/cwd-resolution.test.ts`
+  (3 pins) and three continuation pins in
+  `packages/agent-runtime/src/echo/__tests__/law2-scope-gate.test.ts`
+  (16 total); two `code-search-part-d.test.ts` cwd-resolution pins re-based
+  on real fixture directories. Full sdk 589/0, agent-runtime 1,651/0.
+- **Verification Evidence:** receipt stamped 2026-10-04, 6/6 declared gates
+  PASS (`fid:verify --write` exit 0); evidence citations in Implementation
+  Evidence above. The stored fingerprint no longer matches these closure
+  edits — documented by-design drift for closed records.
+- **Archived:** yes — the closure commit moves this file to
+  `dev/fids/archive/`.
 
 ## Lessons Learned
 

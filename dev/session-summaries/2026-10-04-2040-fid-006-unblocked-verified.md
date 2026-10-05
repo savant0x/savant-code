@@ -88,6 +88,23 @@ touched files.
   parser fix live; revert optional, no longer required.
 - Standing operator-blocked items: T119, T122, T62-followups.
 
+## Closure (2026-10-04, same session — operator authorized: "it needs to be added to the changelog and closed")
+
+- Implementation commit `8ef81dde` (10 files, +1285/−113): both production
+  modules, the parser, both test files, the two extraction modules, the
+  `verified` FID, and both session summaries. Staged credential scan clean
+  (10 files). Local only — no push.
+- Status → `closed (implemented + verified, 2026-10-04, commit 8ef81dde)`,
+  Implementation Evidence SHA filled, Resolution section completed, FID
+  moved to `dev/fids/archive/`. Active FID queue is empty (README only).
+  The stored receipt fingerprint no longer matches the closure edits —
+  documented by-design drift for closed records.
+- CHANGELOG `Unreleased — 2026-10-04` entry added (defects A/B/D, the
+  measured ENOENT mechanism, step 5's operator-blocked status).
+- SCOPE.md: T132 removed from the register (item + machine-readable
+  target); open count corrected **Five → Four** (T131, T119, T62-followups,
+  T122 remain).
+
 ## Frictions (recurring, re-confirmed)
 
 - `write_file` dropped its `instructions` param again (this session's

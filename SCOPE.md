@@ -62,7 +62,7 @@
 
 ## Open items
 
-**Three** items are open.
+**Four** items are open.
 (2026-10-03 (decision digest): the failure behind FID-2026-1003-007 —
 register items sat `**Blocker:** operator ruling` for weeks because nothing
 PRESENTED them — was fixed the same day. Every pending decision was
@@ -278,22 +278,6 @@ T90-F3 was resolved by the operator ruling "T90-F3 residual needs no code"
 
 ### Providers and routing
 
-- [ ] **T132. Harness self-diagnosis integrity (FID-2026-1004-006).**
-      **Automation level: 3.** Operator request 2026-10-04 ("make a fid to
-      address ALL issues found"). Four defects from one session, all the shape
-      "a failure is reported with a confident, specific cause that is wrong":
-      (A) `code_search`'s ripgrep spawn error names the vendored binary and
-      prescribes re-fetching it when the real cause is a file-path `cwd`
-      (`sdk/src/tools/code-search/executor.ts`, `searchCwd` never
-      `isDirectory`-checked); (B) `loadScopeArtifact`
-      (`packages/agent-runtime/src/echo/pre-write-gates-law2.ts`) parses only
-      an entry's first line, so indented continuation globs are dropped and
-      T119/T130 under-register their real write surfaces; (C) the AUDIT phase
-      has no mechanical check that an audit cited `file:line`, so a degenerate
-      non-audit passes as one; (D) the open-items header count drifted on edit.
-      RED status `created`, severity high, awaiting the Perfection Loop.
-      FID: `FID-2026-1004-006-harness-self-diagnosis-integrity.md`.
-
 - [ ] **T131. Authoritative provider-integration runbook + archived-runbook
       drift repair.** **Automation level: 3.** Operator request 2026-10-04:
       "make a new doc, on how to correctly add a new provider. And fix the
@@ -377,10 +361,6 @@ T90-F3 was resolved by the operator ruling "T90-F3 residual needs no code"
   `dev/session-summaries/2026-10-03-provider-*.md`,
   `dev/scratchpad/active/provider-catalogs-2026-10-03/**`,
   `dev/scratchpad/active/provider-integration-*`
-- T132: `dev/fids/FID-2026-1004-006-*.md`, `sdk/src/tools/code-search/executor.ts`,
-  `sdk/src/tools/code-search/__tests__/*.ts`,
-  `packages/agent-runtime/src/echo/pre-write-gates-law2.ts`,
-  `packages/agent-runtime/src/echo/__tests__/law2-scope-gate.test.ts`
 - T131: `docs/adding-a-provider.md`, `docs/index.md`, `docs/providers.md`, `docs/archive/design/*.md`
 - T62-followups: `dev/scratchpad/active/t62*.ts` (the catalog itself is
   gateway-side; the local write surface is the probe scripts — verified
