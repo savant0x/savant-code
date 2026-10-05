@@ -210,7 +210,7 @@ git tag -d v0.0.27   # required manually; fresh run otherwise fails
 
 ### Implementation Evidence (REQUIRED for `closed`)
 
-- [x] **Commit SHA:** Committed as `a1f13b8f`; push withheld by the operator.; all changes in
+- [x] **Commit SHA:** `a1f13b8f` (committed locally; push withheld); all changes in
       `scripts/public-release.ts` + `scripts/public-release.test.ts` (+ `SCOPE.md`, this FID, `CHANGELOG.md`)
 - [x] **File:line ranges:**
   - P3 — carve-out: `scripts/public-release.ts:1653-1662` (`CREDENTIAL_SOURCE_NAME_PATTERN`,

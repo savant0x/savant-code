@@ -39,7 +39,7 @@ of exactly zero.
 
 - **OS:** Windows (win32), bash shell
 - **Language/Runtime:** TypeScript (strict), Bun 1.3.14
-- **Commit/State:** `main`; the 0.0.33 working tree; nothing committed (G2 withheld)
+- **Commit/State:** `main`; the 0.0.33 working tree; Committed as `3f2cb767`; push withheld by the operator.
 - **Live target:** `https://api.b.ai/v1` (key material never printed; identified by
   sha256 prefix only — Law 12)
 

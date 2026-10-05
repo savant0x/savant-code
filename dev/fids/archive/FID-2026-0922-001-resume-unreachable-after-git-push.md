@@ -468,8 +468,8 @@ artifacts).
       (`npm-guards.ts:154`, `:127`).
 - [x] FID status reflects the actual implementation state — `closed` on the
       operator's closure directive, after the implementation existed in the
-      worktree and all three declared gates passed live. The commit is withheld
-      (G2), so this record carries file:line + receipt evidence rather than a SHA.
+      worktree and all three declared gates passed live. The work is committed locally
+      as `d31de31b`, with the push withheld by the operator.
 
 ## Resolution
 
@@ -502,10 +502,10 @@ artifacts).
   Committed as `d31de31b`; push withheld by the operator.
 - **Archived:** 2026-09-24 — moved to `dev/fids/archive/`, and the receipt was
   re-stamped LIVE at the archived path (three gates, exit 0) so the closed record
-  is byte-consistent with its final content. Commit SHA pending operator git
-  execution (G2 withheld); the implementation evidence is the file:line ranges in
-  this record plus the live receipt, which the FID Lifecycle rule admits for
-  `closed`.
+  is byte-consistent with its final content. The work is committed locally as `d31de31b`,
+  with the push withheld by the operator. The implementation evidence is the file:line
+  ranges in this record plus the live receipt, which the FID Lifecycle rule admits
+  for `closed`.
 
 ## Lessons Learned
 

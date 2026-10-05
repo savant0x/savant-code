@@ -39,7 +39,7 @@ prohibition is now enforced mechanically at write time and in the repository gat
 
 - **OS:** Windows (win32), bash shell
 - **Language/Runtime:** TypeScript (strict), Bun 1.3.14
-- **Commit/State:** `main`; the 0.0.33 working tree; nothing committed (G2 withheld)
+- **Commit/State:** `main`; the 0.0.33 working tree; Committed as `682f0189`; push withheld by the operator.
 
 ## Detailed Description
 

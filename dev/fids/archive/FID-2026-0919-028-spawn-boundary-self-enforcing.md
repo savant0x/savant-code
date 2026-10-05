@@ -37,7 +37,7 @@ is recorded under Evidence.
 - **OS:** Windows (win32), bash shell
 - **Language/Runtime:** TypeScript (strict), Bun 1.3.14
 - **Tool Versions:** tsc (workspace `packages/agent-runtime`), eslint, prettier
-- **Commit/State:** `main`; the 0.0.33 working tree; nothing committed (G2 withheld)
+- **Commit/State:** `main`; the 0.0.33 working tree; Committed as `4fbd26b5`; push withheld by the operator.
 
 ## Detailed Description
 

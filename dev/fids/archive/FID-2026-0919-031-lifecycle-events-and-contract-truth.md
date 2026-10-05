@@ -345,5 +345,5 @@ docs/design/hook-system.md                                  events/payload table
   files)`; `validate:repository` PASS; `scope-register-check` PASS (0 issues);
   both probe gates exit 0 (`handoff-transport` PASS, `hook-events` PASS).
 - **Archived:** 2026-09-22 — moved to `dev/fids/archive/`; receipt re-stamped
-  LIVE at the archived path (7/7 gates). Commit SHA pending operator git
-  execution (G2 withheld).
+  LIVE at the archived path (7/7 gates). Committed as `c2f21e23`;
+  push withheld by the operator.

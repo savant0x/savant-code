@@ -37,8 +37,8 @@ receipt assertions — while each suite passed alone.
 
 - **OS:** Windows (win32), bash shell
 - **Language/Runtime:** TypeScript (strict), Bun 1.3.14
-- **Commit/State:** `main`, working tree with the 0.0.33 bump applied; nothing
-  committed (G2 withheld)
+- **Commit/State:** `main`, working tree with the 0.0.33 bump applied; Committed as `bdc72655`;
+  push withheld by the operator.
 - **Gates available:** `typecheck` ×12, `test`, `lint`, `lint_md`, `format`,
   plus `quality`, `validate:repository`, `version:check`, `release:public:preview`
 
