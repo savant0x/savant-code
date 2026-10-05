@@ -3,7 +3,7 @@
  * Generate provider reference docs from PROVIDER_REGISTRY — the single source
  * of truth (FID-2026-0809-001 Phase 5).
  *
- * Renders three checked-in surfaces between explicit markers so the
+ * Renders four checked-in surfaces between explicit markers so the
  * hand-written prose around them survives:
  *
  *   1. `.env.example` — the "Gateway providers" env-var section
@@ -13,6 +13,14 @@
  *   3. `README.md` — the quick-start provider table rows (same markers;
  *      FID-2026-0913-005 — the main README table drifted two releases
  *      behind the registry because no generator owned it).
+ *   4. `docs/providers.md` — the full registry table (markers:
+ *      `<!-- GENERATED:registry-table-start/end -->`; FID-2026-1005-004 —
+ *      the reference documented 4 of 24 providers because no generator
+ *      owned it).
+ *
+ * The table renderers live in ./provider-tables (split out for the 300-line
+ * quality ceiling); this module owns the surface list, the marker surgery,
+ * and the drift report.
  *
  * Hand-maintained surfaces (translations, feature bullets, prefix lists)
  * cannot be byte-rendered; `--check` additionally runs the window/token
@@ -29,11 +37,14 @@
 import { readFileSync, writeFileSync } from 'fs'
 import { resolve } from 'path'
 
-import { PROVIDER_REGISTRY } from '@savant-code/common/providers/registry'
-
 import { handSurfaceDrift } from './provider-docs-drift'
+import {
+  orderedProviders,
+  renderProviderTable,
+  renderRegistryTable,
+} from './provider-tables'
 
-import type { ProviderConfig } from '@savant-code/common/providers/types'
+export { renderRegistryTable }
 
 const ROOT = resolve(import.meta.dir, '..')
 
@@ -41,16 +52,11 @@ const ENV_START = '# GENERATED:provider-gateway-env-start'
 const ENV_END = '# GENERATED:provider-gateway-env-end'
 const TABLE_START = '<!-- GENERATED:provider-table-start -->'
 const TABLE_END = '<!-- GENERATED:provider-table-end -->'
+const REGISTRY_TABLE_START = '<!-- GENERATED:registry-table-start -->'
+const REGISTRY_TABLE_END = '<!-- GENERATED:registry-table-end -->'
 
 const ENV_DUMMY = (envVar: string): string =>
   `dummy-${envVar.toLowerCase()}-replace-me`
-
-/** Registry entries ordered by picker order, then id (deterministic). */
-function orderedProviders(): ProviderConfig[] {
-  return Object.values(PROVIDER_REGISTRY).sort(
-    (a, b) => a.order - b.order || a.id.localeCompare(b.id),
-  )
-}
 
 // ---------------------------------------------------------------------------
 // .env.example gateway section
@@ -79,75 +85,6 @@ function renderEnvSection(): string {
     lines.push('')
   }
   return lines.join('\n').trimEnd() + '\n'
-}
-
-// ---------------------------------------------------------------------------
-// Provider table rows (shared by cli/release/README.md and README.md)
-// ---------------------------------------------------------------------------
-
-const TABLE_NOTES: Record<string, string> = {
-  ollama: 'Local inference; no API key required',
-  openrouter:
-    'Default provider; free tier (`openrouter/free`) is the boot default; direct mode without the Savant backend',
-  tokenrouter: 'Multi-provider gateway',
-  tokenharbor: 'OpenAI-compatible hosted gateway',
-  nvidia: 'NVIDIA-hosted inference',
-  'opencode-go': 'Hosted gateway (dual-protocol)',
-  commandcode: 'OpenAI-compatible hosted inference (dual-protocol)',
-  nous: 'OpenAI-compatible direct inference; Portal OAuth is separate',
-  kiosapi: 'OpenAI-compatible gateway (live catalog)',
-  apinex: 'Hosted gateway with an authenticated live model catalog',
-  orcarouter:
-    'Multi-provider gateway with a live model catalog (free tier currently gated vendor-side on GitHub account linkage)',
-  bai: 'OpenAI-compatible gateway with an authenticated live model catalog',
-  hcnsec: 'OpenAI-compatible gateway on an audited static 7-model allowlist',
-  tokenbom: 'OpenAI-compatible gateway on an audited static 7-model allowlist',
-  'opencode-zen':
-    'Pay-per-use gateway, 70 models incl. free tier (multi-protocol)',
-  cloudflare:
-    'Workers AI gateway; the `/provider` flow prompts for the token, then the account id (env vars take precedence)',
-}
-
-const TABLE_SELECTION: Record<string, string> = {
-  ollama: 'Automatic detection',
-}
-
-/**
- * Full contiguous provider table — header + delimiter + rows. The markers
- * wrap the ENTIRE table: an HTML comment between the delimiter row and the
- * body rows terminates the table token, which un-exempts the rows from
- * markdownlint MD013's `tables: false` and breaks strict renderers
- * (FID-2026-0913-005 Loop 2 — the original marker placement had shipped
- * broken in cli/release/README.md, masked by that file's MD013 disable).
- */
-function renderProviderTable(): string {
-  const rows: string[] = [
-    '| Provider | Selection | Environment variable | Notes |',
-    '| --- | --- | --- | --- |',
-  ]
-  for (const config of orderedProviders()) {
-    const selection =
-      TABLE_SELECTION[config.id] ??
-      (config.setupAvailable
-        ? `\`/provider ${config.id}\` or \`DIRECT_PROVIDER=${config.id}\``
-        : 'Environment configuration')
-    const envVars =
-      config.id === 'openrouter'
-        ? '`OR_MASTER_KEY`, `OPENROUTER_API_KEY`, or `INFERENCE_API_KEY`'
-        : config.id === 'ollama'
-          ? '`OLLAMA_HOST` (optional)'
-          : [
-              `\`${config.credentials.envVar}\``,
-              ...(config.credentials.extra?.map((e) => `\`${e.envVar}\``) ??
-                []),
-            ].join(' + ')
-    const notes = TABLE_NOTES[config.id] ?? 'Hosted gateway'
-    rows.push(`| ${config.label} | ${selection} | ${envVars} | ${notes} |`)
-  }
-  rows.push(
-    '| Custom endpoint | Environment configuration | `INFERENCE_BASE_URL`, `INFERENCE_API_KEY` | Advanced OpenAI-compatible endpoint; authorized by `INFERENCE_API_KEY` alone |',
-  )
-  return rows.join('\n') + '\n'
 }
 
 // ---------------------------------------------------------------------------
@@ -187,7 +124,7 @@ type GeneratedSurface = {
   render: () => string
 }
 
-/** The three byte-exact GENERATED surfaces. */
+/** The four byte-exact GENERATED surfaces. */
 const SURFACES: readonly GeneratedSurface[] = [
   {
     label: 'provider env reference',
@@ -209,6 +146,13 @@ const SURFACES: readonly GeneratedSurface[] = [
     start: TABLE_START,
     end: TABLE_END,
     render: renderProviderTable,
+  },
+  {
+    label: 'registry table (docs/providers.md)',
+    file: 'docs/providers.md',
+    start: REGISTRY_TABLE_START,
+    end: REGISTRY_TABLE_END,
+    render: renderRegistryTable,
   },
 ] as const
 
@@ -276,4 +220,6 @@ function main(): void {
   }
 }
 
-main()
+// Guarded so the renderers stay importable (the pin suite imports
+// `renderRegistryTable`); `import.meta.main` is true under `bun run`.
+if (import.meta.main) main()

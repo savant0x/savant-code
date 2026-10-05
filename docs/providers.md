@@ -6,14 +6,83 @@ shell environment variables take precedence. SDK applications resolve their
 own environment credentials and do not automatically load CLI key storage.
 The [root provider setup](../README.md#configure-a-hosted-provider-key) and
 [installation guide](installation.md) cover the full built-in registry.
+Contributors adding a new built-in provider follow
+[adding-a-provider.md](adding-a-provider.md).
 
-## CodeCraft API, xKiro, and CleanAPIs
+## Built-in provider registry
 
-| Service | Setup | Environment key | Internal model ID | Default protocol |
-|---|---|---|---|---|
-| CodeCraft API | `/provider codecraft` | `CODECRAFT_API_KEY` | `codecraft/<upstream-id>` | OpenAI chat |
-| xKiro | `/provider xkiro` | `XKIRO_API_KEY` | `xkiro/<vendor>/<model>` | Explicit map below |
-| Clean APIs | `/provider cleanapis` | `CLEANAPIS_API_KEY` | `cleanapis/<upstream-id>` | OpenAI chat |
+Every built-in provider derives from `PROVIDER_REGISTRY`
+(`common/src/providers/registry.ts`) — the single source of truth for routing
+prefixes, credentials, API roots, protocols, and catalogs. The table below is
+**generated** from it by `bun run generate:provider-docs`, so a new registry
+entry appears here on the next run, and `generate:provider-docs:check` fails
+closed if this section drifts from the registry.
+
+| Column | Meaning |
+|---|---|
+| Provider | Display label shown in `/provider` and `/model` |
+| ID | The routing prefix — `intern/<model-id>` selects through this provider |
+| Kind | `gateway` (hosted), `local` (a local daemon), or `env-only` |
+| Credential | The env var(s) the `/provider` wizard stores and the runtime resolves |
+| API root | The API base; the protocol layer appends the endpoint path |
+| Protocol | The wire protocol, naming the dispatch map where one applies |
+| Catalog | `live` (fetched from the vendor), `static` (checked in), `inline`, or `none` |
+
+<!-- GENERATED:registry-table-start -->
+| Provider | ID | Kind | Credential | API root | Protocol | Catalog |
+| --- | --- | --- | --- | --- | --- | --- |
+| OpenAI | `openai` | gateway | `OPENAI_API_KEY` | `https://api.openai.com/v1` | responses | live |
+| OpenRouter | `openrouter` | gateway | `OPENROUTER_API_KEY` | `https://openrouter.ai/api/v1` | openai | live |
+| TokenRouter | `tokenrouter` | gateway | `TOKENROUTER_API_KEY` | `https://api.tokenrouter.com/v1` | multi (`TOKENROUTER_PROTOCOLS`) | static (31 models) |
+| NVIDIA NIM | `nvidia` | gateway | `NVIDIA_API_KEY` | `https://integrate.api.nvidia.com/v1` | openai | live |
+| APInex | `apinex` | gateway | `APINEX_API_KEY` | `https://api.apinex.bond/v1` | openai | live |
+| Atria AI | `atria` | gateway | `ATRIA_API_KEY` | `https://api.atria-asi.ai/v1` | openai | static (1 model) |
+| B.AI | `bai` | gateway | `BAI_API_KEY` | `https://api.b.ai/v1` | openai | live |
+| BazaarLink | `bazaarlink` | gateway | `BAZAARLINK_API_KEY` | `https://api.bazaarlink.ai/v1` | openai | static (12 models) |
+| Clean APIs | `cleanapis` | gateway | `CLEANAPIS_API_KEY` | `https://cleanapis.com/v1` | openai | live |
+| Cloudflare | `cloudflare` | gateway | `CLOUDFLARE_API_TOKEN` + `CLOUDFLARE_ACCOUNT_ID` | `https://api.cloudflare.com/client/v4/accounts/{CLOUDFLARE_ACCOUNT_ID}/ai/v1` | openai | static (14 models) |
+| CodeCraft API | `codecraft` | gateway | `CODECRAFT_API_KEY` | `https://codecraftapi.com/v1` | openai | live |
+| CommandCode | `commandcode` | gateway | `COMMAND_CODE_API_KEY` | `https://api.commandcode.ai/provider/v1` | openai-anthropic (`COMMANDCODE_PROTOCOLS`) | static (33 models) |
+| HCNSec | `hcnsec` | gateway | `HCNSEC_API_KEY` | `https://api.hcnsec.cn/v1` | openai | static (7 models) |
+| Infron | `infron` | gateway | `INFRON_API_KEY` | `https://llm.onerouter.pro/v1` | openai | static (9 models) |
+| Intern InkStone | `intern` | gateway | `INTERN_API_KEY` | `https://discovery-api.intern-ai.org.cn/v1` | openai | static (10 models) |
+| KiosAPI | `kiosapi` | gateway | `KIOSAPI_API_KEY` | `https://kiosapi.com/v1` | openai | live |
+| Nous Research | `nous` | gateway | `NOUS_API_KEY` | `https://inference-api.nousresearch.com/v1` | openai | live |
+| Ollama | `ollama` | local | — | `http://localhost:11434/v1` | openai | none |
+| OrcaRouter | `orcarouter` | gateway | `ORCAROUTER_API_KEY` | `https://api.orcarouter.ai/v1` | openai | live |
+| TokenBom | `tokenbom` | gateway | `TOKENBOM_API_KEY` | `https://tokenbom.com/v1` | openai | static (7 models) |
+| TokenHarbor | `tokenharbor` | gateway | `TOKENHARBOR_API_KEY` | `https://tokenharbor.ai/v1` | openai | static (17 models) |
+| UnoRouter | `unorouter` | gateway | `UNOROUTER_API_KEY` | `https://api.unorouter.com/v1` | openai | static (17 models) |
+| Vercel AI Gateway | `vercel` | gateway | `AI_GATEWAY_API_KEY` | `https://ai-gateway.vercel.sh/v1` | openai | live |
+| xKiro | `xkiro` | gateway | `XKIRO_API_KEY` | `https://api.xkiro.com/v1` | multi (`XKIRO_PROTOCOLS`) | live |
+<!-- GENERATED:registry-table-end -->
+
+### Notable providers
+
+- **OpenRouter** is the default boot provider (`openrouter/free` free tier).
+  Its credential resolves through a chain: `OR_MASTER_KEY` is exchanged for a
+  regular key via `/api/v1/keys`, then `OPENROUTER_API_KEY`, then
+  `INFERENCE_API_KEY`. It is the one provider whose `idTransform` is `keep`,
+  because `openrouter/` is part of the real upstream slug.
+- **Cloudflare** is the only provider needing **two** credentials —
+  `CLOUDFLARE_API_TOKEN` plus `CLOUDFLARE_ACCOUNT_ID`, which is embedded
+  mid-path in the API root. The `/provider` wizard prompts for both.
+- **Ollama** is the only `local` provider: no API key, detected at startup, and
+  no catalog section in the picker.
+- **CommandCode, TokenRouter, and xKiro** carry multi-protocol rosters. Their
+  per-model wire protocol comes from a shared dispatch map, so a Claude id can
+  route to `/v1/messages` while a GPT id routes to `/v1/chat/completions`.
+- **Intern InkStone and Atria AI** are the same vendor on two deployments, each
+  with a checked-in static catalog. Intern InkStone's `/v1/models` is
+  key-protected and publishes context windows in a non-OpenRouter
+  `schema_version: "2.4"` shape the shared parser does not read, so its windows
+  are pinned in the fallback table rather than read from a live catalog.
+- **HCNSec, TokenBom, Infron, UnoRouter, and BazaarLink** are curated static
+  allowlists. Their live `/v1/models` rosters exist but are not the catalog: the
+  audited set is checked in deliberately, because identity substitutions and
+  dead channels were measured on the live listings.
+
+### Live catalogs
 
 CodeCraft and CleanAPIs fetch authenticated `/v1/models` catalogs. xKiro's
 chat catalog is public. Rosters are live rather than pinned to a model list
@@ -79,17 +148,19 @@ produces a model-ID fallback without inventing capabilities, prices, or limits.
 
 ## SDK hosts
 
-Supply `CODECRAFT_API_KEY`, `XKIRO_API_KEY`, or `CLEANAPIS_API_KEY` in the host
-environment, and set a full prefixed model ID on the selected agent definition.
-SDK hosts can pass their own `modelInfoText` to `client.run()`; the CLI's catalog
-cache is not automatically imported into SDK-only applications. Only verified
-metadata should be included. See the [SDK README](../sdk/README.md#model-information)
-and [SDK reference](sdk-overview.md#provider-routing-and-credentials).
+Supply `CODECRAFT_API_KEY`, `XKIRO_API_KEY`, `CLEANAPIS_API_KEY`, or
+`INTERN_API_KEY` in the host environment, and set a full prefixed model ID on
+the selected agent definition. SDK hosts can pass their own `modelInfoText` to
+`client.run()`; the CLI's catalog cache is not automatically imported into
+SDK-only applications. Only verified metadata should be included. See the
+[SDK README](../sdk/README.md#model-information) and
+[SDK reference](sdk-overview.md#provider-routing-and-credentials).
 
 ## Adding another provider
 
-Follow the [provider integration runbook](archive/design/Adding%20New%20Providers.md).
+Follow the [provider integration runbook](adding-a-provider.md).
 The shared registry owns credentials, API roots, catalog declarations, ID
 transforms, and map names. A live source also requires normalization, gateway
 fanout/results/reset, exception ownership, tests, and generated references.
-Generate provider tables from the registry and verify hand-maintained mentions.
+The registry table above is generated — run `bun run generate:provider-docs`
+after a registry change, then verify the hand-maintained mentions it reports.

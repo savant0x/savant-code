@@ -1,5 +1,17 @@
 # Adding a New LLM Provider
 
+> **SUPERSEDED (2026-10-04).** The live runbook is
+> [`docs/adding-a-provider.md`](../../adding-a-provider.md). This file is the
+> archived record of the contract as it stood when this registry was built; it
+> is kept for history and is exempt from `lint:md`. Four drifts were repaired
+> below, but the authoritative source is the current doc — per
+> `dev/LEARNINGS.md` → `archived-runbook-is-claim-not-contract`, an archived
+> runbook is a dated claim, not a contract. In particular the *window-coverage
+> register gate* (FID-2026-1004-002), the `requiredExceptionKinds` derivation,
+> the `gateway.ts` / `gateway-live-results.ts` positional settled-ladder
+> contract, and `validateProviderUrlOwnership` are documented only in the
+> current doc.
+
 **Registry-led routing and setup; explicit live catalogs and exception owners.**
 
 This is the entire runbook. Since FID-2026-0809-001, every provider surface
@@ -16,7 +28,7 @@ ownership as described below; then regenerate and check the references.
 |--------|----------|------|
 | `PROVIDER_REGISTRY` | `common/src/providers/registry.ts` | **The single source of truth** — one typed entry per provider |
 | `MODEL_CATALOGS` | `common/src/providers/model-catalogs.ts` | Static model maps (typed keys referenced by registry entries) |
-| Protocol maps | `common/src/constants/model-config.ts` | Per-model wire protocol for dual-protocol providers |
+| Protocol maps | `common/src/constants/model-config/provider-protocols.ts` (`PROVIDER_PROTOCOL_MAPS`, re-exported by `common/src/constants/model-config.ts`) | Per-model wire protocol for dual/multi-protocol providers |
 | Derivation | `common/src/providers/derive.ts` | Pure `derive*` functions over an injected registry |
 | Validation | `common/src/providers/validate.ts` + `__tests__/validate-provider-registry.test.ts` | Structural checks + derivation parity (the drift killer) |
 | Docs generator | `scripts/generate-provider-reference.ts` | Renders `.env.example` gateway section + `cli/release/README.md` provider table |
@@ -63,6 +75,10 @@ tokenharbor: {
                                            //  `openai` in registry-partitioned-2.ts is the template)
   idTransform: 'strip',                    // 'strip' | 'keep' | 'cf-rewrite'
   catalog: { source: 'static', modelsRef: 'tokenharbor' },  // see Step 2
+  // optional: quota: { url, valuePath, unit?, note, auth?, limitPath?, resetPath? }
+  //   key-scoped account/quota endpoint (FID-2026-0919-026) — data only; the
+  //   request path never reads it. Declare ONLY where the vendor documents one
+  //   (provider-contract-pins.test.ts enforces "documented, or not at all").
   setupAvailable: true,                    // appears in /provider picker
   domain: 'tokenharbor.ai',                // favicon / logo
   order: 4,                                // picker group; unknown providers sort at 4
@@ -185,9 +201,12 @@ CI — it fails when the docs drift from the registry.
 ### Step 5 — Add tests (additive, three small files)
 
 - `common/src/providers/__tests__/validate-provider-registry.test.ts` — a
-  fixture entry proving the one-entry claim: add `fixture/…` to a test registry
-  and assert routing, setup, picker grouping, and guidance all derive without
-  touching any other file (the existing `acme` fixture is the template).
+  fixture entry proving the one-entry claim: add a test-registry entry built from
+  that file's `base()` helper (id `fixture`, key `FIXTURE_API_KEY`, base URL
+  `https://api.fixture.example/v1`) and assert routing, setup, picker grouping,
+  and guidance all derive without touching any other file. (The `acme` record
+  lives in the unrelated `cli/src/utils/__tests__/verify-custom-provider.test.ts`
+  custom-provider suite — 2026-10-04 correction.)
 - `sdk/src/impl/__tests__/model-provider-free-mode.test.ts` — key present routes
   to the generic factory; key missing throws the templated error.
 - `cli/src/utils/__tests__/provider-setup.test.ts` — `saveProviderApiKey()`

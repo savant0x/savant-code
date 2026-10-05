@@ -79,7 +79,7 @@ No code is written without a plan. No plan is accepted without audit. No audit p
 - **Context compaction** — 4-layer progressive auto-compaction with a single trigger authority keeps sessions running through large codebases; `/compact` forces an immediate compact-and-stop pass
 - **Checkpoint & Rewind** — Persistent per-turn edit checkpoints with `/rewind` modes for code, conversation, both, or session fork
 - **Fail-closed streaming** — Incomplete or malformed tool calls are rejected, not coerced
-- **Provider flexibility** — Works with Ollama (local-first), OpenRouter (default boot provider, free tier `openrouter/free`), OpenAI, TokenHarbor, TokenRouter, NVIDIA NIM, CommandCode, Nous Research, Cloudflare Workers AI, KiosAPI, APInex, OrcaRouter, B.AI, HCNSec, TokenBom, Infron, UnoRouter, BazaarLink, Atria AI, Vercel AI Gateway, Clean APIs, CodeCraft API, xKiro, or any OpenAI-compatible API
+- **Provider flexibility** — Works with Ollama (local-first), OpenRouter (default boot provider, free tier `openrouter/free`), OpenAI, TokenHarbor, TokenRouter, NVIDIA NIM, CommandCode, Nous Research, Cloudflare Workers AI, KiosAPI, APInex, OrcaRouter, B.AI, HCNSec, TokenBom, Infron, UnoRouter, BazaarLink, Atria AI, Intern InkStone, Vercel AI Gateway, Clean APIs, CodeCraft API, xKiro, or any OpenAI-compatible API
 - **Research (web search + docs)** — `web_search`, `read_docs`, and `deep_research` work keylessly out of the box (Qwant + DuckDuckGo search; a self-populating local SQLite docset cache), with optional Bring-Your-Own-Key sources (`/research-keys`) and keyless version-aware freshness
 - **GitHub integration** — Read-only PR/issue/CI review via official MCP server
 - **Database helper** — 4 native tools with adapter-enforced safety (read-only by default, LIMIT injection, SQL redaction)
@@ -131,7 +131,7 @@ No code is written without a plan. No plan is accepted without audit. No audit p
 
 ### Reference
 
-- [Agents & Tools](agents-and-tools.md) · [Modes](savant-code-modes.md) · [Testing](testing.md) · [Privacy](privacy.md) · [Installation](installation.md) · [Versioning](SAVANT-VERSIONING.md) · [Public Release Workflow](public-release.md) · [Gravity Index starter](gravity-integration-starter.md)
+- [Agents & Tools](agents-and-tools.md) · [Modes](savant-code-modes.md) · [Testing](testing.md) · [Privacy](privacy.md) · [Installation](installation.md) · [Versioning](SAVANT-VERSIONING.md) · [Public Release Workflow](public-release.md) · [Gravity Index starter](gravity-integration-starter.md) · [Adding a Provider](adding-a-provider.md)
 
 ### Archives
 
