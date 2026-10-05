@@ -5,6 +5,23 @@ operator decision, implementation, runtime review, or closure evidence.
 
 ## Current active FIDs
 
+**2026-10-05 — the all-FIDs session: five FIDs closed and archived; the active
+queue is empty.** Operator directive ("complete all open fids in full then
+properly close out the session", automation level 3, single-agent ECHO
+v0.1.2): `FID-2026-1005-004` (provider registry reference — gates re-verified,
+stale duplicate step fixed), `FID-2026-1004-005` (provider runbook, T131 —
+record authored from live tree verification), `FID-2026-1004-007` (launch
+digest + inbox, T132 — Step 7 completion watcher implemented),
+`FID-2026-1005-001` (inter-agent message integrity, T134 — three boundaries
+fixed and pinned), `FID-2026-1005-002` (right sidebar, T135 — keyboard access,
+rail-below-100, overflow removed, count path), and `FID-2026-1005-003` (skill
+learning, T136 — single proposal path, durable lifecycle events, content-bound
+proof labels) were all closed with pasted gate output at their archived paths
+and per-FID entries under CHANGELOG `Unreleased — 2026-10-04`. NEEDS-REVIEW
+boundaries recorded honestly: live TUI keyboard traversal + theme contrast
+(-002) and the live capture-to-trust exercise (-003) require operator sessions.
+Nothing committed (G2 withheld). **The active FID queue is empty again.**
+
 **2026-10-03 — the October batch: eleven FIDs closed and archived with the
 batch landing (`9f1b8068`).** The operator granted G2 ("Batch + close all"):
 the verified tree (351 files) landed as one batch commit on local main after

@@ -4,6 +4,121 @@
 
 ### Added
 
+- **Evidence-based skill learning: single proposal path, durable
+  lifecycle events, content-bound proof labels (FID-2026-1005-003, high;
+  closed 2026-10-05).** The self-improving harness's six gaps are closed.
+  Recurrence gates on DISTINCT sessions (`computeRecurrences` now reports
+  `distinctSessions`; three retries in one session never draft). The
+  mechanical draft's generic template is deleted — candidates reserve a
+  proposal slot mechanically (`prepareCandidateHandoff`, idempotent by
+  content sha, fail-closed on a second proposal per session) and the draft
+  body IS the lesson's canonical rule. Every skill mutation emits a
+  metadata-only lifecycle event (`.savant/skill-lifecycle-events.jsonl`)
+  consumed by the CLI traffic-light surface, `/skills activity`, and the
+  session-end report, with per-surface cursors that acknowledge only after
+  transcript insertion (at-least-once crash replay; green ≠ trusted — the
+  notice always reads QUARANTINED — PENDING TRUST · unproven).
+  `/skills show <name> --review` exposes the exact quarantined bytes: draft
+  sha, full SKILL.md, diff vs live, proposal evidence. Proof artifacts gain
+  `skill_content_sha256` + a multi-task fixture manifest;
+  `PROVEN ON N TASKS` requires a current hash, activation, lift, and zero
+  regressions — legacy/single-task artifacts stay UNPROVEN. Root typecheck
+  exit 0; scripts 49/0, common 11/0, cli 16/0, evals 20/0 focused tests;
+  quality PASS; lint:md clean. Live capture-to-trust exercise recorded
+  NEEDS-REVIEW (operator TUI session).
+- **Right sidebar keyboard access + measured render-path optimization
+  (FID-2026-1005-002, medium; closed 2026-10-05).** The sidebar audit's five
+  findings are fixed. Keyboard: section headers and FID-card rows toggle on
+  Enter/Space and a new Ctrl+G focus cycle (input unfocused/empty, same guard
+  as Ctrl+B) rotates focus through them — OpenTUI 0.5.3 has no Tab traversal,
+  so the sidebar provides the parent control; a focused title inverts as the
+  compact indicator (`right-sidebar-focus.ts`, pure + unit-tested). Width:
+  the compact rail now serves every terminal below 100 columns (native
+  captures showed the 40-column sidebar leaving ~20 columns for chat at 60).
+  Reachability: every active FID renders in the scrollable section and is
+  individually expandable — the passive "+N more active" label and its
+  `MAX_VISIBLE_FIDS` cap are gone. Text: the Auto Drive goal renders full
+  and word-wrapped (60-char slice removed). Refresh cost: archived FIDs are
+  counted from directory entries (`countArchivedFids`, ~0.31 ms) instead of
+  parsing all 455 archived files (~54.65 ms); `loadFidInventory` keeps its
+  full contract, the watcher keeps the count fresh. cli typecheck exit 0,
+  focused suites 22/22, eslint 0, quality PASS. Live TUI verification of the
+  focus traversal + theme contrast recorded NEEDS-REVIEW (no
+  `core-linux-x64` OpenTUI binary for the WSL capture boot).
+- **Inter-agent message integrity + final-result reconciliation
+  (FID-2026-1005-001, high; closed 2026-10-05).** The incident behind the FID
+  (an Adversary verdict that *looked* truncated) decomposed into three
+  independently pinned boundaries. Runtime batch relay: a new
+  byte-equality boundary probe (`subagent-boundary.test.ts`) drives a long
+  marker-delimited `last_message` result through `handleSpawnAgents` and
+  proves the selected text survives `jsonToolResult` unsliced, scratch-turn
+  history never leaks. CLI display: `spawn-results.ts` no longer drops the
+  final result when any text streamed — byte-equal keeps the stream, a true
+  prefix gets the missing suffix appended, divergence shows the
+  authoritative final text beside the preview (pins in
+  `sdk-event-handlers-final-result.test.ts`). Output limits: a
+  `finishReason === 'length'` cut with no tool call now yields an explicit
+  `Output limit reached: … partial fragment, not a complete answer.` chunk
+  (`stream-output-limit.ts` + `stream.ts`) instead of presenting a
+  fragment as a verdict. Full typecheck chain exit 0, quality PASS (1498
+  files), focused suites 46 pass / 0 fail, eslint 0 on all touched files.
+- **Launch free-provider digest + candidate inbox routing
+  (FID-2026-1004-007, low; closed 2026-10-05).** The free-compute discovery
+  pipeline's report now reaches the user at launch: a once-per-day digest
+  rewires the previously orphaned `renderFreeOptionsAnnounce` with the
+  expiring offers and the discovery delta (silent when both sources are
+  empty), and NEW discovery candidates route into `/notifications` as
+  `candidate`-kind notices (`changed` is excluded — probe jitter marks ~34
+  hosts changed every run). A new event-driven completion watcher
+  (`discovery-completion-watcher.ts`, the `fid-watcher.ts` pattern) closes
+  the timing gap the audit found: the detached boot harvest can publish
+  `agent-context.txt` after the chat-mount effects run, and the watcher
+  routes its new hosts on the artifact's set-key transition — no polling, the
+  spawn contract untouched, idempotent downstream via the coordinator's
+  fact-value dedup. 25/25 focused tests (8 new watcher legs), cli + common
+  typecheck exit 0, eslint 0, quality PASS.
+- **Authoritative provider runbook + archived-runbook drift repair
+  (FID-2026-1004-005, low; closed 2026-10-05).** `docs/adding-a-provider.md`
+  is the new authoritative, live provider-integration runbook (490 lines),
+  grounded in the enforcing modules and covering the four fail-closed gates
+  the archived design doc omits: the `WINDOW_COVERAGE_REGISTER`
+  closed-world invariant, the `requiredExceptionKinds` derivation table +
+  exception-manifest ownership, the `gateway.ts` positional settled-ladder
+  contract, and `validateProviderUrlOwnership`. The archived
+  `docs/archive/design/Adding New Providers.md` was repaired for four
+  measured drifts (stale `acme` fixture pointer, the omitted `quota`
+  field, the header-vs-Step-3 protocol-map contradiction) and now carries a
+  SUPERSEDED banner routing readers to the live runbook, which is linked from
+  `docs/index.md` and `docs/providers.md`. Docs-only change set.
+- **Provider registry reference (FID-2026-1005-004, low; closed 2026-10-05).**
+  `docs/providers.md` now carries a generated 24-row registry table (label, id,
+  kind, credential, API root, protocol, catalog source) between markers, rendered
+  from `PROVIDER_REGISTRY` by a 4th byte-exact generator surface. The pin suite
+  asserts every registry dimension per row against registry values, and
+  `generate:provider-docs:check` fails closed on drift. The file previously
+  documented 4 of 24 providers with no drift guard.
+- **Intern InkStone (FID-2026-1004-008, low; closed 2026-10-05).** The
+  Shanghai AI Laboratory science-discovery platform behind
+  `discovery.intern-ai.org.cn` (书生·端砚) joins the registry as built-in
+  provider `intern` — a static 10-model, single-protocol OpenAI gateway at
+  `https://discovery-api.intern-ai.org.cn/v1` with `INTERN_API_KEY`. It is the
+  China-hosted twin of the already-shipped `atria` entry, with a 10-model
+  roster instead of one. The **live probe decided the design**: the endpoint is
+  reachable (1.8 s keyless) and its model-list route is auth-gated (401
+  keyless, 200 with a key, 10 rows), but it publishes context windows in a
+  non-OpenRouter `schema_version: "2.4"` shape
+  (`input_modalities[].supported_inputs.max_context_length.value`) that no
+  existing parser reads — so the operator chose a static catalog over a
+  bespoke live parser. The probe also caught a real cross-deployment
+  divergence: `Atria-Dawn-Preview` is 524,288 here against the twin's pinned
+  262,144. All 10 exact-id windows are pinned from the authenticated probe, and
+  inference was verified separately with a real `chat/completions` round-trip
+  (HTTP 200). The entry derives **zero** exception kinds, so no manifest entry
+  is required — adding one would fail closed as a stale kind. 7 new pin legs
+  plus the two registry-count pins and the provider-list label pin; typecheck
+  ×4 exit 0, `common` providers 78/78, CLI catalog + pin suites 102/102,
+  docs-drift clean, eslint 0, lint:md 0, prettier clean.
+
 - **Harness self-diagnosis integrity (FID-2026-1004-006, high; closed
   2026-10-04, commit 8ef81dde).** Three defects in the harness's own error
   surfaces, all one shape — a failure reported with a confident, specific

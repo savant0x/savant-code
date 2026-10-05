@@ -62,7 +62,7 @@
 
 ## Open items
 
-**Four** items are open.
+**Three** items are open.
 (2026-10-03 (decision digest): the failure behind FID-2026-1003-007 —
 register items sat `**Blocker:** operator ruling` for weeks because nothing
 PRESENTED them — was fixed the same day. Every pending decision was
@@ -223,7 +223,14 @@ hypothesis to verify, not assume: ChatGPT Pro is consumer ChatGPT billing
 and does not include platform-API credits; if our provider only accepts
 platform `sk-` keys, the credential class itself is the failure, and the
 interesting question is whether openclaw/hermes solve it via ChatGPT
-OAuth/Codex-style auth instead.) Each names its own specific blocker. Nothing here
+OAuth/Codex-style auth instead.) (2026-10-05: FID-2026-1004-008 (T133) closed and archived on the standing rule;
+FID-2026-1005-004 (T137) closed and archived on the standing rule.)
+(2026-10-05: T137 completed and left the register on the standing rule —
+evidence in archived `FID-2026-1005-004-provider-registry-reference.md`,
+CHANGELOG `Unreleased — 2026-10-04`.
+2026-10-05: T131 completed and left the register on the standing rule —
+evidence in archived `FID-2026-1004-005-provider-runbook.md` (record authored
+at closure), CHANGELOG `Unreleased — 2026-10-04`.) Each names its own specific blocker. Nothing here
 may be dropped, trimmed, or reclassified without an operator ruling; a working
 tree state is not a disposition. When an item closes it leaves this file
 entirely — its evidence goes to `CHANGELOG.md`, not to a section here.
@@ -260,6 +267,13 @@ register on this rule; evidence in archived `FID-2026-0928-006`/-007/-008/
 -009/-010 and `FID-2026-0927-003`, the AGENTS.md T67 guard, and the
 2026-09-28 session summaries.)
 
+(2026-10-05 (register pass): the seven completed item sections T131–T137 and their
+machine-readable targets left this register under the standing rule. Their record is the
+CHANGELOG `Unreleased — 2026-10-04`, the archived FIDs, and
+`dev/session-summaries/2026-10-05-1551-echo-boot-grounding.md`. Two operator quotations
+that existed only here are preserved verbatim in that summary — T132: "i want to figure
+out a better way to show the info from on launch" and "rewire it into the new surface".)
+
 **Ground-truthed against the live tree 2026-09-28.** Eleven items were re-checked
 against source read 0-EOF, not by re-implementing repo logic. **Three were wrong
 or incomplete and are corrected above** (T97, T95-C, T96-followup) and one gained
@@ -277,29 +291,6 @@ T90-F3 was resolved by the operator ruling "T90-F3 residual needs no code"
 (closed as `FID-2026-0927-003`).
 
 ### Providers and routing
-
-- [ ] **T131. Authoritative provider-integration runbook + archived-runbook
-      drift repair.** **Automation level: 3.** Operator request 2026-10-04:
-      "make a new doc, on how to correctly add a new provider. And fix the
-      runbook drift". Write `docs/adding-a-provider.md` grounded in the LIVE
-      enforcing modules (not the archived claim, per the
-      `archived-runbook-is-claim-not-contract` lesson), covering the four
-      fail-closed gates the archived runbook omits: the
-      `WINDOW_COVERAGE_REGISTER` closed-world invariant
-      (FID-2026-1004-002, `cli/.../__tests__/window-coverage-register.test.ts`),
-      the `requiredExceptionKinds` derivation table + manifest ownership
-      (`common/src/providers/audit.ts`), the `gateway.ts` /
-      `gateway-live-results.ts` positional settled-ladder contract (insert
-      before the custom-catalogs tail or silently shift every slot), and
-      `validateProviderUrlOwnership`. Repair four measured drifts in
-      `docs/archive/design/Adding New Providers.md`: the stale `acme` fixture
-      pointer (the real fixture is `fixture`/`FIXTURE_API_KEY` in
-      `validate-provider-registry.test.ts`; `acme` lives only in the unrelated
-      `cli/.../verify-custom-provider.test.ts`), the omitted `quota` field
-      (FID-2026-0919-026, live in `types.ts`), the header-table vs Step-3
-      contradiction on protocol-map location, and a supersede banner. Link the
-      new doc from `docs/index.md` + `docs/providers.md`. Docs-only; no
-      production code changes. FID: `FID-2026-1004-005-provider-runbook.md`.
 
 - [ ] **T119. Pending provider account access and identity.**
       **Automation level: 1.** Mapped xKiro Claude Haiku live acceptance
@@ -344,10 +335,16 @@ T90-F3 was resolved by the operator ruling "T90-F3 residual needs no code"
       integration, `common/src/constants`, docs, release scripts).
       **Blocker:** the feature is woven deeply through the CLI/agents/common
       surfaces — disposition (repair or removal) is a dedicated
-      operator-directed session. **Automation level: 1** (no agent action;
+operator-directed session. **Automation level: 1** (no agent action;
       the e2e failures are known and operator-owned until then).
 
 ## Machine-readable scope targets
+
+<!-- 2026-10-05 (all-FIDs session): T131, T137, T134, T135, T136, T132
+     completed and left the register on the standing rule; T133's FID is
+     archived. 2026-10-05 (register pass): the seven completed item sections and
+     their target lines were removed; completed work's record is the CHANGELOG,
+     the archived FID, and the session summary. -->
 
 <!-- FID-2026-1001-003 step 5a: per-item write targets for the Law 2 gate
      (operator-approved 2026-10-02, "present before writing" honored). Each
@@ -361,7 +358,6 @@ T90-F3 was resolved by the operator ruling "T90-F3 residual needs no code"
   `dev/session-summaries/2026-10-03-provider-*.md`,
   `dev/scratchpad/active/provider-catalogs-2026-10-03/**`,
   `dev/scratchpad/active/provider-integration-*`
-- T131: `docs/adding-a-provider.md`, `docs/index.md`, `docs/providers.md`, `docs/archive/design/*.md`
 - T62-followups: `dev/scratchpad/active/t62*.ts` (the catalog itself is
   gateway-side; the local write surface is the probe scripts — verified
   2026-10-02: no local catalog directory exists)
