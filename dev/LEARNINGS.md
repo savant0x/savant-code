@@ -1,5 +1,54 @@
 # LEARNINGS
 
+## Lesson: A parser that reads prose must separate *describing* a convention from *using* one
+
+- **Date:** 2026-10-03
+- **Failure:** `FID-2026-1003-007` surfaces register items blocked on an operator ruling by parsing
+  SCOPE.md's own convention. Its 11-pin suite passed, then the **first live run against the real
+  register** reported the mechanism's own item as a pending decision, with the blocker "operator
+  ruling for weeks because nothing presented them" — the item *quotes* `**Blocker:**` mid-sentence to
+  describe the failure the mechanism fixes, and the parser read the quotation as a declaration. A
+  mechanism asking the operator for a ruling it is itself delivering is worse than silence: it
+  manufactures the exact noise it exists to cut, on every session end.
+- **Evidence:** scripts/session-end-review.ts → symbol:pendingOperatorDecisions
+- **Invariant:** The fixture is the tell. Pins written against hand-picked prose prove the *intended*
+  case and are blind to any real document that *mentions* the convention — the live register is the
+  only input that quotes it. Make the declaration **structural** (a line-leading token on its own
+  continuation line) rather than making the text special; capture from the declaration, so an item
+  that quotes first and declares later still reads its own blocker.
+- **Guard:** For any prose-parsing mechanism over a real human-edited document, add one pin whose
+  fixture **documents the convention it parses** and asserts it yields nothing. Then run the
+  mechanism once against the real document before calling it verified — the live run is part of the
+  evidence, not a smoke test.
+- **Verification:** 13/13 suite; live agenda surfaces exactly T119, T62-followups, T122;
+  `scope-register-check` PASS; `validate:repository` PASS.
+- **Scope:** internal
+- **Owning FID:** FID-2026-1003-007 (closed + archived)
+- **Status:** active
+- **Canonical rule:** prose-parser-must-separate-description-from-declaration
+
+## Lesson: A fixed character budget must account for the prefix that renders before it
+
+- **Date:** 2026-10-03
+- **Failure:** The pending-decision agenda line sliced the blocker to 110 characters and then
+  prefixed `      blocker: ` (15 more), rendering 125 columns against MD013's 120 bound.
+  `lint:md` failed on the *generated* `dev/agenda.md` — a committed artifact — not on the source that
+  produced it, so the defect was invisible at the function and only appeared through a repo-wide
+  markdown gate on real output.
+- **Evidence:** scripts/session-end-review.ts → symbol:AGENDA_MAX_LINE
+- **Invariant:** A truncation budget is a budget for the *whole rendered line*, not for the field.
+  Compute it as the remainder after the actual prefix: `` `${prefix}${value.slice(0, MAX - prefix.length)}` ``.
+  A variable-width prefix (an interpolated id) makes a constant budget wrong for every id but the
+  shortest one.
+- **Guard:** Any generated file that is committed and linted needs a unit pin asserting the
+  *rendered* lines respect the linter's bound, using the worst-case variable (here: an over-long id),
+  not the sample that happens to fit.
+- **Verification:** 13/13 suite incl. the new width pin; `lint:md` clean; prettier clean.
+- **Scope:** internal
+- **Owning FID:** FID-2026-1003-007 (closed + archived)
+- **Status:** active
+- **Canonical rule:** truncation-budget-includes-its-rendered-prefix
+
 ## Lesson: The register-completeness gate decides what a scope register may be condensed to, not the author
 
 - **Date:** 2026-09-27
@@ -1013,3 +1062,82 @@
   an undesired interaction)
 - **Status:** active
 - **Canonical rule:** eHEL-verification-credit-is-per-agent
+
+## Lesson: Focusable is not reachable — keyboard access needs a control that moves focus
+
+- **Date:** 2026-10-05
+- **Failure:** The right sidebar's section headers and FID cards were
+  mouse-only (`focusable={false}` + onMouseDown). Setting `focusable={true}`
+  alone would not have fixed keyboard access: OpenTUI 0.5.3 has no Tab
+  traversal (verified against the vendored core — `focus()` only registers a
+  per-renderable keypress handler, nothing cycles focusable renderables), so
+  a focusable control nobody can focus is still unreachable.
+- **Evidence:** cli/src/components/right-sidebar-focus.ts →
+  symbol:createSidebarFocusController (the parent cycle);
+  cli/src/components/savant-ui/primitives/sidebar-section.tsx →
+  symbol:SidebarSection (registration + Enter/Space activation).
+- **Invariant:** A keyboard-accessible control needs (1) an activation key
+  handler, (2) focus state it can render, and (3) a parent mechanism that
+  moves focus to it — all three, or none.
+- **Guard:** Before adding `focusable` to any TUI control, grep the platform
+  version for Tab/focus-cycling; if absent, wire the control into an explicit
+  focus-cycle parent in the same change.
+- **Verification:** cli sidebar-collapse suite 10/10 (5 new cycle legs);
+  typecheck exit 0; quality PASS.
+- **Scope:** cli, TUI
+- **Owning FID:** FID-2026-1005-002 (closed + archived)
+- **Status:** active
+- **Canonical rule:** focusable-requires-a-focus-mover
+
+## Lesson: Count-only consumers should not pay for a full parse — derive the count at the source
+
+- **Date:** 2026-10-05
+- **Failure:** The right sidebar consumed only `archivedFids.length`, but
+  `useFids` fed it from `loadFidInventory`, which parses every archived FID's
+  Markdown on each refresh — 54.65 ms vs 0.31 ms for a directory listing at
+  the current archive size (455 files), on a hot cache, on every watcher hit.
+- **Evidence:** cli/src/utils/fid-loader.ts → symbol:countArchivedFids;
+  cli/src/hooks/use-fids.ts → symbol:useFids.
+- **Invariant:** When a caller uses only a projection (length/count/exists),
+  the data path must do work proportional to the projection; the rich API
+  stays available for callers that need the full shape.
+- **Guard:** Before wiring a loader into a hot refresh path, list every field
+  each consumer reads; if the set is a projection, add a projection-specific
+  function beside the loader and point the hot path at it (keep the watcher
+  driving freshness — the projection must stay live).
+- **Verification:** cli fid-loader suite 12/12 (3 new count-path legs incl.
+  freshness across create/remove); measured delta in FID-2026-1005-002 Loop 2.
+- **Scope:** cli, performance
+- **Owning FID:** FID-2026-1005-002 (closed + archived)
+- **Status:** active
+- **Canonical rule:** count-only-consumers-get-count-paths
+
+## Lesson: Reserve proposal slots mechanically — a record store is a cap, prompt discipline is a wish
+
+- **Date:** 2026-10-05
+- **Failure:** The isolated skill proposer's one-atomic-proposal-per-session
+  contract had no production caller and no mechanical enforcement point on
+  the draft path; the mechanical lesson script wrote generic draft bodies
+  directly (omitting the actual lesson rule) and only a session-end text
+  alert could surface background drafts.
+- **Evidence:** common/src/util/skill-proposals.ts →
+  symbol:prepareCandidateHandoff (reservation before write, idempotent by
+  content sha); common/src/util/skill-lifecycle-events.ts →
+  symbol:appendSkillLifecycleEvent (metadata-only durable events);
+  scripts/lessons-to-skills.ts → symbol:draftCandidates (the production
+  caller).
+- **Invariant:** Concurrency/caps must be enforced by a store the code cannot
+  bypass (reserve BEFORE the side effect; retries idempotent by content
+  hash; a different proposal fails closed). Operator-facing notices must be
+  derivable from a schema with no free-text fields, so untrusted prose cannot
+  reach a privileged surface by construction.
+- **Guard:** When a contract says "at most one per session/turn", name the
+  record store that rejects the second one and write the same-session
+  second-attempt pin; when a notice must not echo untrusted text, define the
+  event schema first and build display text from validated fields only.
+- **Verification:** scripts suites 49/0; common suites 11/0; evals 20/0;
+  root typecheck exit 0; quality PASS.
+- **Scope:** harness, skills
+- **Owning FID:** FID-2026-1005-003 (closed + archived)
+- **Status:** active
+- **Canonical rule:** reserve-slots-mechanically-notices-are-metadata-only

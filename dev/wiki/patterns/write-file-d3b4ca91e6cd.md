@@ -7,12 +7,14 @@
 - **Tool:** write_file
 - **Dedup key:** `sha256:d3b4ca91e6cddf4e4fe5ada3ca22763093b2b084cce6b4e89bc5fbbeea5c9e3c`
 - **Sample line:** `Incomplete arguments for tool write_file; retry the tool call with a complete arguments object.`
-- **Recurrences (14d window):** 12 (total 12)
+- **Recurrences (14d window):** 9 (total 13)
 - **First seen:** 2026-09-16T23:08:55.515Z
-- **Last seen:** 2026-09-28T11:42:05.671Z
+- **Last seen:** 2026-10-05T08:08:58.999Z
 - **Routing:** promote via FID when resolved+verified (hybrid routing rule)
 
 ## Evidence
 
 - 2026-09-19 — recurrences 4 (total 4), first 2026-09-16, last 2026-09-18
 - 2026-09-30 — recurrences 12 (total 12), first 2026-09-16, last 2026-09-28
+- 2026-10-04 — recurrences 8 (total 12), first 2026-09-27, last 2026-09-28
+- 2026-10-05 — recurrences 9 (total 13), first 2026-09-27, last 2026-10-05

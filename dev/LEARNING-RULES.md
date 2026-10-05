@@ -139,3 +139,20 @@ This catalog provides stable names for lessons that explain those authorities.
   (`scanUnregisteredTaskReferences` / `collectRegisteredTasks` — a `## Task NN`
   heading is the registration of every `TNN-X` item under it)
 - **Validation:** `bun run scripts/scope-register-check.ts`
+
+## Rule: prose-parser-must-separate-description-from-declaration
+
+- **Authority:** `scripts/session-end-review.ts` (`pendingOperatorDecisions` — a
+  blocker is *declared* by a line-leading `**Blocker:**`, so a register entry that
+  quotes the convention in prose is not read as a decision)
+- **Validation:** `scripts/__tests__/session-end-review.test.ts`
+  (the quoting-item pin; recorded in
+  `dev/fids/archive/FID-2026-1003-007-pending-operator-decision-surfacing.md`)
+
+## Rule: truncation-budget-includes-its-rendered-prefix
+
+- **Authority:** `scripts/session-end-review.ts` (`AGENDA_MAX_LINE` — the agenda
+  is a committed markdown artifact, so each field's budget is what remains after
+  its own rendered prefix, not a constant slice)
+- **Validation:** `scripts/__tests__/session-end-review.test.ts`
+  (the line-length pin; `bun run lint:md` is the gate that caught it)
