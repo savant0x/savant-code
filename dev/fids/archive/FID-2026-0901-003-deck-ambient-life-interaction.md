@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-0901-003-deck-ambient-life-interaction.md`
 **ID:** FID-2026-0901-003
 **Severity:** medium
-**Status:** fixed
+**Status:** closed (pre-cutoff historical record — operator bulk-close ruling, 2026-10-03)
 **Created:** 2026-09-01
 **YAGNI-Compliance:** Verified
 

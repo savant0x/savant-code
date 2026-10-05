@@ -2,6 +2,7 @@
 
 **Phase:** RED → GREEN → AUDIT → ADVERSARIAL → COMPLETE
 **Date:** 2026-08-07
+**Status:** closed (pre-cutoff historical record — operator bulk-close ruling, 2026-10-03)
 **YAGNI-Compliance:** All items operator-requested; no speculative scope.
 
 ## RED — Issue catalog (evidence)

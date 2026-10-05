@@ -13,7 +13,7 @@
 **Filename:** `FID-2026-0831-001-deck-rebuild-neon-noir-office.md`
 **ID:** FID-2026-0831-001
 **Severity:** high
-**Status:** fixed
+**Status:** closed (pre-cutoff historical record — operator bulk-close ruling, 2026-10-03)
 **Created:** 2026-08-31
 **Parent:** FID-2026-0822-012, FID-2026-0829-001, FID-2026-0828-002
 

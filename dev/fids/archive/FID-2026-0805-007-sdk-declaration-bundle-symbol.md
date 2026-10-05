@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-0805-007-sdk-declaration-bundle-symbol.md`  
 **ID:** `FID-2026-0805-007`  
 **Author:** Savant  
-**Status:** `fixed` → `verified` → `closed`
+**Status:** closed (pre-cutoff historical record — operator bulk-close ruling, 2026-10-03)
 
 ## Problem
 

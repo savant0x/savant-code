@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-0905-001-native-tool-executor-decomposition.md`
 **ID:** FID-2026-0905-001
 **Severity:** medium
-**Status:** fixed
+**Status:** closed (pre-cutoff historical record — operator bulk-close ruling, 2026-10-03)
 **Created:** 2026-09-05 09:14
 **YAGNI-Compliance:** Verified (scope reduction only — no new capability proposed)
 **Parent:** FID-2026-0819-005 (closed 2026-09-05 — this FID scopes the first of the five

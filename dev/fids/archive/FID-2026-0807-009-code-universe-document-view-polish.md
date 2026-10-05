@@ -1,6 +1,6 @@
 # FID-2026-0807-009 — Code Universe: Character Watermark + Document-View Polish
 
-**Status:** `analyzed` → operator-approved (user directive) → implemented
+**Status:** closed (pre-cutoff historical record — operator bulk-close ruling, 2026-10-03)
 **Area:** `cli/src/commands/graph-export/template.ts` (+ generated watermark asset)
 **Signed:** Savant (Savant session)
 

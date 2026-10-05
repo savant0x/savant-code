@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-0909-003-verify-clean-sdk-declaration-gate.md`
 **ID:** FID-2026-0909-003
 **Severity:** medium
-**Status:** fixed
+**Status:** closed (pre-cutoff historical record — operator bulk-close ruling, 2026-10-03)
 **Created:** 2026-09-09 03:24
 **YAGNI-Compliance:** PASS (2026-09-09 — see Loop 1)
 

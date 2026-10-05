@@ -5,7 +5,7 @@
 **Filename:** `FID-2026-0807-008-code-universe-polish-batch.md`
 **ID:** FID-2026-0807-008
 **Severity:** medium
-**Status:** verified
+**Status:** closed (pre-cutoff historical record — operator bulk-close ruling, 2026-10-03)
 **Created:** 2026-08-07
 **Author:** Savant
 **YAGNI-Compliance:** Verified

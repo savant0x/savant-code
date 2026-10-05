@@ -11,7 +11,7 @@
 **Filename:** `FID-2026-0828-002-deck-live-fidelity.md`
 **ID:** FID-2026-0828-002
 **Severity:** high
-**Status:** fixed
+**Status:** closed (pre-cutoff historical record — operator bulk-close ruling, 2026-10-03)
 **Created:** 2026-08-28
 **Parent:** FID-2026-0822-012 (command deck), FID-2026-0824-011 (live driver)
 

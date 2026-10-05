@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-0819-004-native-tool-call-recovery-self-heal.md`
 **ID:** FID-2026-0819-004
 **Severity:** critical
-**Status:** created
+**Status:** closed (pre-cutoff historical record — operator bulk-close ruling, 2026-10-03)
 **Created:** 2026-08-19
 
 ---

@@ -11,7 +11,7 @@
 **Filename:** `FID-2026-0829-001-deck-visual-activity.md`
 **ID:** FID-2026-0829-001
 **Severity:** critical
-**Status:** fixed
+**Status:** closed (pre-cutoff historical record — operator bulk-close ruling, 2026-10-03)
 **Created:** 2026-08-29
 **Parent:** FID-2026-0822-012 (command deck), FID-2026-0828-002 (live fidelity)
 

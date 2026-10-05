@@ -5,7 +5,7 @@
 **Filename:** `FID-2026-0807-006-code-universe-document-and-image-viewer.md`
 **ID:** FID-2026-0807-006
 **Severity:** high
-**Status:** verified
+**Status:** closed (pre-cutoff historical record — operator bulk-close ruling, 2026-10-03)
 **Created:** 2026-08-07
 **Author:** Savant 
 **YAGNI-Compliance:** Verified

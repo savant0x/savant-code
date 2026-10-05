@@ -3,8 +3,7 @@
 **Filename:** `FID-2026-0911-001-provider-picker-add-new-entry.md`
 **ID:** FID-2026-0911-001
 **Severity:** low
-**Status:** fixed (Loop 1 RED + Loop 2 GREEN recorded; Loop 3 AUDIT/ADVERSARIAL
-in progress)
+**Status:** closed (pre-cutoff historical record — operator bulk-close ruling, 2026-10-03)
 **Created:** 2026-09-11 (operator directive: "/provider dropdown should offer
 'add new' that opens the full wizard easily")
 **YAGNI-Compliance:** Verified — one picker entry + one selection branch
