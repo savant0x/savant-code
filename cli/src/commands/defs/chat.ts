@@ -80,7 +80,10 @@ export const CHAT_COMMANDS = [
   defineCommand({
     name: 'init',
     handler: async (params) => {
-      const { postUserMessage } = handleInitializationFlowLocally()
+      // T87-B: `/init --force` refreshes the .agents/types scaffold from the
+      // current template set (never-clobber stays the default).
+      const force = /(^|\s)--force(\s|$)/.test(params.inputValue)
+      const { postUserMessage } = handleInitializationFlowLocally({ force })
       const trimmed = params.inputValue.trim()
 
       params.saveToHistory(trimmed)

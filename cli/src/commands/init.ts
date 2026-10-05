@@ -32,15 +32,23 @@ This file gives ${brandName} context about your project: goals, commands, conven
 - Things to avoid:
 `
 
-export function handleInitializationFlowLocally(): {
+export function handleInitializationFlowLocally(
+  options: { force?: boolean } = {},
+): {
   postUserMessage: PostUserMessageFn
 } {
+  const force = options.force === true
   const projectRoot = getProjectRoot()
   const knowledgePath = path.join(projectRoot, PRIMARY_KNOWLEDGE_FILE_NAME)
   const messages: string[] = []
 
   if (existsSync(knowledgePath)) {
     messages.push(`📋 \`${PRIMARY_KNOWLEDGE_FILE_NAME}\` already exists.`)
+    if (force) {
+      messages.push(
+        `📋 \`${PRIMARY_KNOWLEDGE_FILE_NAME}\` left untouched — \`--force\` refreshes the \`.agents/types/\` scaffold only.`,
+      )
+    }
   } else {
     writeFileSync(knowledgePath, INITIAL_KNOWLEDGE_FILE)
     messages.push(`✅ Created \`${PRIMARY_KNOWLEDGE_FILE_NAME}\``)
@@ -72,7 +80,8 @@ export function handleInitializationFlowLocally(): {
 
   for (const { fileName, source } of COMMON_TYPE_FILES) {
     const targetPath = path.join(agentsTypesDir, fileName)
-    if (existsSync(targetPath)) {
+    const existed = existsSync(targetPath)
+    if (existed && !force) {
       messages.push(`📋 \`.agents/types/${fileName}\` already exists.`)
       continue
     }
@@ -82,7 +91,11 @@ export function handleInitializationFlowLocally(): {
         throw new Error('Source content is empty')
       }
       writeFileSync(targetPath, source)
-      messages.push(`✅ Copied \`.agents/types/${fileName}\``)
+      messages.push(
+        existed
+          ? `🔄 Refreshed \`.agents/types/${fileName}\` from the current template`
+          : `✅ Copied \`.agents/types/${fileName}\``,
+      )
     } catch (error) {
       messages.push(
         `⚠️ Failed to copy \`.agents/types/${fileName}\`: ${

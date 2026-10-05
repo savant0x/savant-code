@@ -79,10 +79,13 @@ describe('init — .agents/types scaffold end to end', () => {
   const projects: string[] = []
   let previousProjectRoot: string | undefined
 
-  const runInit = (project: string): string => {
+  const runInit = (
+    project: string,
+    options?: { force?: boolean },
+  ): string => {
     previousProjectRoot = tryGetProjectRoot()
     setProjectRoot(project)
-    const { postUserMessage } = handleInitializationFlowLocally()
+    const { postUserMessage } = handleInitializationFlowLocally(options)
     return messageText(postUserMessage([]))
   }
 
@@ -150,6 +153,37 @@ describe('init — .agents/types scaffold end to end', () => {
     expect(readFileSync(path.join(scaffoldDir, 'tools.ts'), 'utf8')).toBe(
       '// operator edit\n',
     )
+  })
+
+  test('--force refreshes the template scaffold in place; user files and knowledge.md survive', () => {
+    const project = mkdtempSync(path.join(os.tmpdir(), 'savant-init-scaffold-'))
+    projects.push(project)
+    runInit(project)
+    const scaffoldDir = scaffoldDirOf(project)
+    // The T87-B defect shape: a hub written by an older template set (before a
+    // decomposition) can never be refreshed by the plain run.
+    writeFileSync(
+      path.join(scaffoldDir, 'tools.ts'),
+      '// stale pre-decomposition hub\n',
+    )
+    writeFileSync(path.join(scaffoldDir, 'user-notes.ts'), '// operator-added\n')
+    const knowledgePath = path.join(project, KNOWLEDGE_FILE_NAME)
+    writeFileSync(knowledgePath, '# my knowledge\n')
+
+    const text = runInit(project, { force: true })
+
+    expect(text).toContain('🔄 Refreshed `.agents/types/tools.ts`')
+    expect(readFileSync(path.join(scaffoldDir, 'tools.ts'), 'utf8')).toBe(
+      readFileSync(path.join(templateDir, 'tools.ts'), 'utf8'),
+    )
+    // Files outside the shipped template set are never touched, even on --force.
+    expect(readFileSync(path.join(scaffoldDir, 'user-notes.ts'), 'utf8')).toBe(
+      '// operator-added\n',
+    )
+    expect(text).not.toContain('user-notes')
+    // knowledge.md is user content — --force never rewrites it.
+    expect(readFileSync(knowledgePath, 'utf8')).toBe('# my knowledge\n')
+    expect(text).toContain('left untouched')
   })
 
   test('keeps every relative import resolvable inside the generated scaffold', () => {
