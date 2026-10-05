@@ -15,7 +15,12 @@ import type { KeyEvent } from '@opentui/core'
  *
  * FID-2026-0816-007 step 1: wired to `useTerminalBreakpoints`. Below the
  * narrow breakpoint (< 60 cols) the sidebar collapses to an icon rail so the
- * chat column stays usable; at 60+ cols the full surface is restored.
+ * chat column stays usable.
+ *
+ * FID-2026-1005-002: the full-sidebar breakpoint is based on usable chat
+ * width — the fixed 40-column sidebar leaves ~20 columns for chat at 60
+ * cols (native captures in the FID), so the compact rail serves every
+ * width below 100 cols and the full surface is restored at 100+.
  *
  * FID-2026-0816-010 follow-up (manual fold): the sidebar can also be folded to
  * the icon rail at ANY width via Ctrl+B (input unfocused/empty) or the `»` edge
@@ -40,7 +45,7 @@ export function ChatSidebar(props: ChatSidebarProps) {
     agentMode,
   } = props
 
-  const { isNarrow } = useTerminalBreakpoints()
+  const { isWide } = useTerminalBreakpoints()
   const sidebarCollapsed = useChatStore((s) => s.sidebarCollapsed)
   const setSidebarCollapsed = useChatStore((s) => s.setSidebarCollapsed)
 
@@ -83,14 +88,14 @@ export function ChatSidebar(props: ChatSidebarProps) {
     fsmPhase,
   }
 
-  if (sidebarCollapsed || isNarrow) {
+  if (sidebarCollapsed || !isWide) {
     return (
       <SidebarRail
         {...sidebarProps}
         // The `«` unfold handle only makes sense when the rail is shown by a
-        // manual fold at a wide terminal (unfolding at <60 cols is a no-op —
-        // the width breakpoint keeps it collapsed).
-        onUnfold={!isNarrow ? () => setSidebarCollapsed(false) : undefined}
+        // manual fold at a full-sidebar terminal (unfolding below 100 cols is
+        // a no-op — the width breakpoint keeps the rail).
+        onUnfold={isWide ? () => setSidebarCollapsed(false) : undefined}
       />
     )
   }

@@ -1,6 +1,12 @@
 import { TextAttributes } from '@opentui/core'
+import { useKeyboard } from '@opentui/react'
 import React from 'react'
 
+import {
+  createSidebarFocusController,
+  isSidebarFocusCycleKey,
+  SidebarFocusContext,
+} from './right-sidebar-focus'
 import { formatCompactionStatus } from './right-sidebar-format'
 import { SidebarHeader } from './right-sidebar-header'
 import {
@@ -32,6 +38,7 @@ import {
 import { SidebarSection } from './savant-ui/primitives/sidebar-section'
 
 import type { AgentInfo, FilesChanged, ToolCall } from './right-sidebar-format'
+import type { KeyEvent } from '@opentui/core'
 
 export interface RightSidebarProps {
   tokensUsed: number
@@ -84,6 +91,29 @@ export const RightSidebar = React.memo(function RightSidebar({
   const theme = useTheme()
   const [collapseHovered, setCollapseHovered] = React.useState(false)
 
+  // FID-2026-1005-002: the sidebar's keyboard focus cycle. Ctrl+G (input
+  // unfocused or empty — the same guard as the Ctrl+B fold) moves focus
+  // through the section headers and FID-card rows; each control activates
+  // on Enter/Space (see right-sidebar-focus.ts). The controller reaches the
+  // controls via the context provider below.
+  const focusController = React.useMemo(
+    () => createSidebarFocusController(),
+    [],
+  )
+  useKeyboard(
+    React.useCallback(
+      (key: KeyEvent) => {
+        if (!isSidebarFocusCycleKey(key)) return
+        const { inputFocused, inputValue } = useChatStore.getState()
+        if (inputFocused && inputValue.length > 0) return
+        key.preventDefault?.()
+        key.stopPropagation?.()
+        focusController.focusNext()
+      },
+      [focusController],
+    ),
+  )
+
   const devMode = useChatStore((s) => s.devMode)
   const provenanceEvents = useChatStore((s) => s.provenanceEvents)
   const teacherState = useChatStore((s) => s.teacherState)
@@ -109,11 +139,13 @@ export const RightSidebar = React.memo(function RightSidebar({
   // useFids hook (production consumer of loadFids) into the sidebar. The
   // harness watcher keeps it live; archived FIDs are surfaced so a converged
   // project's FID history stays visible.
-  const { fids: activeFids, archived: archivedFids } = useFids()
+  // FID-2026-1005-002: archivedCount comes from the directory-listing count
+  // path (no archive parsing on refresh); the full `loadFidInventory`
+  // contract stays available to callers that need archived metadata.
+  const { fids: activeFids, archivedCount } = useFids()
 
   // Pass full FID summaries so the card can display the complete description.
   const fids = activeFids
-  const archivedCount = archivedFids.length
   const compactionLabel =
     compactionStatus !== null ? formatCompactionStatus(compactionStatus) : null
 
@@ -164,90 +196,92 @@ export const RightSidebar = React.memo(function RightSidebar({
           </text>
         </box>
       )}
-      <scrollbox
-        scrollX={false}
-        scrollbarOptions={{ visible: false }}
-        verticalScrollbarOptions={createChatScrollbarOptions(theme)}
-        style={{
-          flexGrow: 1,
-          contentOptions: {
-            minHeight: '100%',
-            flexDirection: 'column',
-            flexShrink: 0,
-            gap: 1,
-          },
-        }}
-        focusable={false}
-        selectable={false}
-      >
-        <SidebarHeader />
-        {devMode && (
-          <text
-            attributes={TextAttributes.BOLD}
-            fg={theme.error}
-            selectable={false}
-          >
-            [DEV MODE]
-          </text>
-        )}
-        <SidebarActiveAgents
-          agentStack={agentStack}
-          agent={agent}
-          isStreaming={isStreaming}
-          isWaitingForResponse={isWaitingForResponse}
-        />
-        <AgentStatus />
-        <SidebarSession
-          agent={agent}
-          cost={cost}
-          mode={mode}
-          model={model}
-          tokensUsed={tokensUsed}
-          tokensMax={tokensMax}
-          windowSource={windowSource}
-          compactionStatus={compactionLabel}
-          compactionCount={compactionCount}
-        />
-        {teacherState !== null && teacherState.challenge !== null && (
-          <SidebarSection title="Teacher">
-            <LearnOverlay
-              challenge={teacherState.challenge}
-              events={teacherState.events}
-              receipt={teacherState.receipt}
-              persisted={teacherState.persisted}
-              competencyState={teacherState.competencyState}
-              phase={teacherState.phase}
-              completionState={teacherState.completionState}
-            />
-          </SidebarSection>
-        )}
-        {fsmPhase !== 'idle' && <PerfectionLoop />}
-        {trustSummary.hasPending && (
-          <SidebarSection title="Trust Matrix">
-            <TrustMatrix events={provenanceEvents} />
-          </SidebarSection>
-        )}
-        <LoopStatusPanel />
-        <DriveStatusPanel />
-        <SidebarToolsList
-          toolsUsed={toolsUsed}
-          toolsAvailable={toolsAvailable}
-        />
-        <SidebarFilesChanged filesChanged={filesChanged} />
-        <SidebarActiveFids fids={fids} archivedCount={archivedCount} />
-        <SidebarHistoryTimeline toolHistory={toolHistory} />
-        <box
-          marginTop="auto"
-          width="100%"
-          alignItems="center"
+      <SidebarFocusContext.Provider value={focusController}>
+        <scrollbox
+          scrollX={false}
+          scrollbarOptions={{ visible: false }}
+          verticalScrollbarOptions={createChatScrollbarOptions(theme)}
+          style={{
+            flexGrow: 1,
+            contentOptions: {
+              minHeight: '100%',
+              flexDirection: 'column',
+              flexShrink: 0,
+              gap: 1,
+            },
+          }}
           focusable={false}
           selectable={false}
         >
-          <text fg={theme.muted} wrapMode="none" selectable={false}>
-            {`v${getVersion()}`}
-          </text>
-        </box>
-      </scrollbox>
+          <SidebarHeader />
+          {devMode && (
+            <text
+              attributes={TextAttributes.BOLD}
+              fg={theme.error}
+              selectable={false}
+            >
+              [DEV MODE]
+            </text>
+          )}
+          <SidebarActiveAgents
+            agentStack={agentStack}
+            agent={agent}
+            isStreaming={isStreaming}
+            isWaitingForResponse={isWaitingForResponse}
+          />
+          <AgentStatus />
+          <SidebarSession
+            agent={agent}
+            cost={cost}
+            mode={mode}
+            model={model}
+            tokensUsed={tokensUsed}
+            tokensMax={tokensMax}
+            windowSource={windowSource}
+            compactionStatus={compactionLabel}
+            compactionCount={compactionCount}
+          />
+          {teacherState !== null && teacherState.challenge !== null && (
+            <SidebarSection title="Teacher">
+              <LearnOverlay
+                challenge={teacherState.challenge}
+                events={teacherState.events}
+                receipt={teacherState.receipt}
+                persisted={teacherState.persisted}
+                competencyState={teacherState.competencyState}
+                phase={teacherState.phase}
+                completionState={teacherState.completionState}
+              />
+            </SidebarSection>
+          )}
+          {fsmPhase !== 'idle' && <PerfectionLoop />}
+          {trustSummary.hasPending && (
+            <SidebarSection title="Trust Matrix">
+              <TrustMatrix events={provenanceEvents} />
+            </SidebarSection>
+          )}
+          <LoopStatusPanel />
+          <DriveStatusPanel />
+          <SidebarToolsList
+            toolsUsed={toolsUsed}
+            toolsAvailable={toolsAvailable}
+          />
+          <SidebarFilesChanged filesChanged={filesChanged} />
+          <SidebarActiveFids fids={fids} archivedCount={archivedCount} />
+          <SidebarHistoryTimeline toolHistory={toolHistory} />
+          <box
+            marginTop="auto"
+            width="100%"
+            alignItems="center"
+            focusable={false}
+            selectable={false}
+          >
+            <text fg={theme.muted} wrapMode="none" selectable={false}>
+              {`v${getVersion()}`}
+            </text>
+          </box>
+        </scrollbox>
+      </SidebarFocusContext.Provider>
     </box>
   )
 })

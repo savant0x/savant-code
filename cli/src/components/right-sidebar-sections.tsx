@@ -4,7 +4,6 @@ import {
   formatCost,
   formatToolHistoryEvent,
   formatTokens,
-  MAX_VISIBLE_FIDS,
   resolveActiveAgentDisplay,
   type AgentInfo,
   type ToolCall,
@@ -103,12 +102,10 @@ export const SidebarActiveFids = ({
           focusable={false}
           selectable={false}
         >
-          <FidList fids={fids.slice(0, MAX_VISIBLE_FIDS)} sortBy="severity" />
-          {fids.length > MAX_VISIBLE_FIDS && (
-            <text fg={theme.muted} wrapMode="none" selectable={false}>
-              {`+${fids.length - MAX_VISIBLE_FIDS} more active`}
-            </text>
-          )}
+          {/* FID-2026-1005-002: every active FID renders (the section body
+              scrolls); FidCard rows are keyboard reachable via the sidebar
+              focus cycle, so no passive overflow count is needed. */}
+          <FidList fids={fids} sortBy="severity" />
         </box>
       ) : (
         <text fg={theme.muted} wrapMode="none" selectable={false}>

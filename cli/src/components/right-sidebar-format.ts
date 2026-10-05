@@ -18,9 +18,6 @@ export interface FilesChanged {
   deleted: number
 }
 
-/** Max active FIDs rendered before a "+N more active" overflow line. */
-export const MAX_VISIBLE_FIDS = 4
-
 /**
  * Format a token count for display, e.g. 1200 -> "1.2k".
  */

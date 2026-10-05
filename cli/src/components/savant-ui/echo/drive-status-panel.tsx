@@ -45,7 +45,9 @@ export function DriveStatusPanel() {
         label="Goal"
         value={
           <text fg={theme.foreground} wrapMode="word" selectable={false}>
-            {status.goal.slice(0, 60)}
+            {/* FID-2026-1005-002: the full goal renders word-wrapped — the
+                60-character slice hid the drive objective. */}
+            {status.goal}
           </text>
         }
       />

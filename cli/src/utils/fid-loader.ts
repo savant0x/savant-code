@@ -205,3 +205,31 @@ export function loadFids(
 ): FidData[] {
   return sortFids(readFidDir(fidsDir))
 }
+
+/**
+ * Count archived FIDs from archive directory entries alone (FID-2026-1005-002).
+ *
+ * The sidebar consumes only `archivedFids.length`, but `loadFidInventory`
+ * parses every archived Markdown file to produce it (54.65 ms vs 0.31 ms for
+ * a directory listing at the current archive size, measured in the FID).
+ * This sidebar-specific count path does work proportional to the displayed
+ * information; callers that need archived metadata keep the full
+ * `loadFidInventory` contract, and the harness watcher keeps the count
+ * fresh on create/archive/remove.
+ *
+ * Law 14: never throws — missing or unreadable directories yield 0.
+ */
+export function countArchivedFids(
+  fidsDir: string = join(process.cwd(), DEFAULT_FIDS_DIR),
+): number {
+  const archiveDir = join(fidsDir, 'archive')
+  if (!existsSync(archiveDir)) return 0
+
+  try {
+    return readdirSync(archiveDir).filter(
+      (name) => name.startsWith('FID-') && name.endsWith('.md'),
+    ).length
+  } catch {
+    return 0
+  }
+}

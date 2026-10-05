@@ -17,7 +17,7 @@ import { join } from 'node:path'
 
 import { afterAll, describe, expect, test } from 'bun:test'
 
-import { loadFidInventory, loadFids } from '../fid-loader'
+import { countArchivedFids, loadFidInventory, loadFids } from '../fid-loader'
 
 const TABLE_FORMAT_FID = `# FID-2026-0804-005 — Semantic Caching Engine
 
@@ -164,6 +164,50 @@ describe('loadFids — backward compatibility', () => {
     )
 
     expect(loadFids(dir)).toHaveLength(1)
+  })
+})
+
+describe('countArchivedFids — sidebar count path (FID-2026-1005-002)', () => {
+  test('counts archived FIDs from directory entries without parsing them', () => {
+    const dir = setupFidsDir()
+    writeFileSync(
+      join(dir, 'FID-2026-0804-005-semantic-caching-engine.md'),
+      TABLE_FORMAT_FID,
+    )
+    writeFileSync(
+      join(dir, 'archive', 'FID-2026-0804-001-provider-key-management.md'),
+      LEGACY_FORMAT_FID,
+    )
+    // A malformed archived file still counts (the count path never parses).
+    writeFileSync(
+      join(dir, 'archive', 'FID-2026-0804-099-malformed.md'),
+      MALFORMED_FID,
+    )
+    // Non-FID archive entries are excluded.
+    writeFileSync(join(dir, 'archive', 'README.md'), '# not a FID')
+
+    expect(countArchivedFids(dir)).toBe(2)
+  })
+
+  test('stays fresh as archive files are created and removed', () => {
+    const dir = setupFidsDir()
+    expect(countArchivedFids(dir)).toBe(0)
+
+    const archivedFile = join(
+      dir,
+      'archive',
+      'FID-2026-0804-001-provider-key-management.md',
+    )
+    writeFileSync(archivedFile, LEGACY_FORMAT_FID)
+    expect(countArchivedFids(dir)).toBe(1)
+
+    rmSync(archivedFile)
+    expect(countArchivedFids(dir)).toBe(0)
+  })
+
+  test('missing archive directory yields 0, never throws (Law 14)', () => {
+    const missing = join(tempRoot, 'does-not-exist')
+    expect(countArchivedFids(missing)).toBe(0)
   })
 })
 
