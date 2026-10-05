@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-1004-007-launch-free-provider-digest.md`
 **ID:** FID-2026-1004-007
 **Severity:** low
-**Status:** closed
+**Status:** closed (implemented + verified, 2026-10-05, commit 30d26644)
 **Created:** 2026-10-04 22:50
 **Automation level:** 3
 **YAGNI-Compliance:** Yes — reuse the existing digest, discovery artifact,
@@ -203,8 +203,7 @@ changed each run on probe jitter, so routing them would spam the inbox.
 
 ### Implementation Evidence (REQUIRED for `closed`)
 
-- [ ] **Commit SHA:** pending — G2 commit authority not exercised (working-tree
-      implementation only)
+- [x] **Commit SHA:** `30d26644` — feat(cli): free-provider launch digest
 - [x] **File:line ranges:** `cli/src/utils/discovery-completion-watcher.ts`
       (new, whole file); `cli/src/chat/use-chat-bootstrap.ts:97-126` (watcher
       lifecycle: ref at 97-100, start at 118-125, cleanup effect at 135-141),

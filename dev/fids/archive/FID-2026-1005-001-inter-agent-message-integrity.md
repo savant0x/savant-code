@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-1005-001-inter-agent-message-integrity.md`
 **ID:** FID-2026-1005-001
 **Severity:** high
-**Status:** closed
+**Status:** closed (implemented + verified, 2026-10-05, commit f2302d73)
 **Created:** 2026-10-05 00:23
 **Automation level:** 3
 **YAGNI-Compliance:** Yes — reconcile the existing final-result path and test
@@ -257,8 +257,8 @@ Three independent regression pins now guard the batch relay, the CLI display
 reconciliation, and output-limit labeling; every Verification Gate ran green
 with pasted output in Loop 3. The original 2026-10-04 incident's raw child
 bytes could not be retro-classified, but the failure mode it exposed (display
-suppression after a partial stream) is fixed and fenced. Commit pending
-operator git execution (G2 withheld).
+suppression after a partial stream) is fixed and fenced. Committed locally as
+`f2302d73`; push withheld by the operator.
 
 ## Lessons Learned
 

@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-1003-007-pending-operator-decision-surfacing.md`
 **ID:** FID-2026-1003-007
 **Severity:** high
-**Status:** closed (implemented + verified, 2026-10-03)
+**Status:** closed (implemented + verified, 2026-10-03, commit a550b809)
 **Created:** 2026-10-03
 **Automation level:** 3
 **YAGNI-Compliance:** Verified — one parser over the register's own

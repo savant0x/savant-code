@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-1005-002-right-sidebar-audit-and-optimization.md`
 **ID:** FID-2026-1005-002
 **Severity:** medium
-**Status:** closed
+**Status:** closed (implemented + verified, 2026-10-05, commit e57aeee9)
 **Created:** 2026-10-05 00:23
 **Automation level:** 3
 **YAGNI-Compliance:** Yes — reuse existing focus, rail, watcher, and FID
@@ -255,8 +255,8 @@ All four declared Verification Gates ran green with pasted output in Loop 3.
 The keyboard, width, reachability, text-loss, and refresh-cost findings are
 fixed; live TUI verification of the new focus traversal and theme contrast is
 recorded as NEEDS-REVIEW (platform cannot boot the TUI natively — no
-`core-linux-x64` OpenTUI binary). Commit pending operator git execution
-(G2 withheld).
+`core-linux-x64` OpenTUI binary). Committed locally as `e57aeee9`; push withheld by the
+operator.
 
 ## Lessons Learned
 

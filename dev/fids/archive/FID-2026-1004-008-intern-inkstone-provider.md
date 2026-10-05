@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-1004-008-intern-inkstone-provider.md`
 **ID:** FID-2026-1004-008
 **Severity:** low
-**Status:** closed
+**Status:** closed (implemented + verified, 2026-10-05, commit 8540d80e)
 **Created:** 2026-10-04 23:42
 **Automation level:** 3
 **YAGNI-Compliance:** Pending
@@ -291,8 +291,7 @@ prettier; `validate:repository`; `quality:report`.
 
 ### Implementation Evidence (REQUIRED for `closed`)
 
-- [ ] **Commit SHA:** pending — G2 commit authority not yet exercised for this
-      change set (working-tree implementation only)
+- [x] **Commit SHA:** `8540d80e` — feat(providers): add the intern InkStone provider
 - [x] **File:line ranges:** see *Code Verification Evidence* below
 - [x] **Gate output:** see *Code Verification Evidence* below
 - [x] **Reproducibility:** `grep -rn "intern" common/src/providers/registry-partitioned-2.ts`

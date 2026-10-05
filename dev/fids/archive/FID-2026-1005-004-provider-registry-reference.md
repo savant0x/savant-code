@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-1005-004-provider-registry-reference.md`
 **ID:** FID-2026-1005-004
 **Severity:** low
-**Status:** closed
+**Status:** closed (implemented + verified, 2026-10-05, commit 7da0a55f)
 **Created:** 2026-10-05 00:55
 **Automation level:** 3
 **YAGNI-Compliance:** Yes — extend the existing generated-surface mechanism and one focused pin suite.
@@ -253,7 +253,7 @@ new suite, `bun run typecheck:scripts`, `lint:md`, `prettier --check`,
 
 ### Implementation Evidence (REQUIRED for `closed`)
 
-- [x] **Commit SHA:** (recorded at closure)
+- [x] **Commit SHA:** `7da0a55f` — docs(providers): add runbook and registry table
 - [x] **File:line ranges:** `scripts/__tests__/provider-registry-doc.test.ts`
       (new field-level pin test, lines 86-127);
       `scripts/generate-provider-reference.ts` (renderRegistryTable +

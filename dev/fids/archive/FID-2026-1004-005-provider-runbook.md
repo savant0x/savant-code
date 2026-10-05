@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-1004-005-provider-runbook.md`
 **ID:** FID-2026-1004-005
 **Severity:** low
-**Status:** closed
+**Status:** closed (implemented + verified, 2026-10-05, commit 7da0a55f)
 **Created:** 2026-10-04 (registered in SCOPE.md as T131; this record authored 2026-10-05)
 **Automation level:** 3
 **YAGNI-Compliance:** Verified — docs-only; no new mechanism, one new
@@ -169,8 +169,7 @@ markdown lint, prettier.
 
 ### Implementation Evidence (REQUIRED for `closed`)
 
-- [ ] **Commit SHA:** pending — G2 commit authority not exercised (working-tree
-      implementation only)
+- [x] **Commit SHA:** `7da0a55f` — docs(providers): add runbook and registry table
 - [x] **File:line ranges:** `docs/adding-a-provider.md` (490 lines, whole file);
       `docs/archive/design/Adding New Providers.md:3` (SUPERSEDED banner),
       `:205-207` (fixture pointer), protocol-map section (Step 3);
