@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-0919-024-no-agent-side-scope-trimming.md`
 **ID:** FID-2026-0919-024
 **Severity:** critical
-**Status:** closed
+**Status:** closed (commit 682f0189)
 **Created:** 2026-09-19 20:30
 **Automation level:** 3
 **YAGNI-Compliance:** Confirmed (no new capability: extends the existing
@@ -233,9 +233,7 @@ on both the write path and the repository gate.
 
 ## Resolution
 
-- **Closed Date:** 2026-09-19 21:15 UTC (closed with the commit SHA pending
-  operator git execution, G2 withheld; file:line + grep evidence recorded
-  instead, per the FID Lifecycle rule for `closed`)
+- **Closed Date:** 2026-09-19 21:15 UTC (Committed as `682f0189`; push withheld by the operator.)
 - **Fix Description:** The vocabulary that permitted an unapproved scope trim is
   gone from both protocols: nothing is ever out of scope is now the stated rule,
   with exactly two lawful states (completed, or blocked on a *specific* blocker —

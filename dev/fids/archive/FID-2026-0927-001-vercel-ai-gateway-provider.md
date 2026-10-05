@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-0927-001-vercel-ai-gateway-provider.md`
 **ID:** FID-2026-0927-001
 **Severity:** low
-**Status:** closed
+**Status:** closed (commit c602219c)
 **Created:** 2026-09-27 11:24
 **Automation level:** 3
 **YAGNI-Compliance:** Verified
@@ -280,9 +280,7 @@ checks).
 
 ### Implementation Evidence (REQUIRED for `closed`)
 
-- [x] **Commit SHA:** none — G2 withheld (the single-agent protocol reserves git
-      execution to the operator); evidence below is file:line + grep, the form
-      the FID Lifecycle rule admits for `closed`.
+- [x] **Commit SHA:** `c602219c` — feat(providers): add Vercel AI Gateway and Clean APIs as built-in providers
 - [x] **File:line ranges:**
       `common/src/providers/registry-partitioned-2.ts:15-45` (the `vercel`
       entry in a new second partition — `registry-partitioned.ts` was measured

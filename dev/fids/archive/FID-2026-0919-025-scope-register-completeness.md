@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-0919-025-scope-register-completeness.md`
 **ID:** FID-2026-0919-025
 **Severity:** high
-**Status:** closed
+**Status:** closed (commit 682f0189)
 **Created:** 2026-09-19 21:30
 **Automation level:** 3
 **YAGNI-Compliance:** Confirmed (no new capability or dependency: the check reuses
@@ -252,9 +252,7 @@ of the scope guard agree on what counts as history.
 
 ## Resolution
 
-- **Closed Date:** 2026-09-19 23:40 UTC (closed with the commit SHA pending
-  operator git execution, G2 withheld; file:line + grep evidence recorded
-  instead, per the FID Lifecycle rule for `closed`)
+- **Closed Date:** 2026-09-19 23:40 UTC (Committed as `682f0189`; push withheld by the operator.)
 - **Fix Description:** Register coverage is decidable and enforced. Two legs from
   one authority (`packages/agent-runtime/src/echo/scope-register-completeness.ts`):
   every active `dev/fids/FID-*.md` must be named in `SCOPE.md` (reported at its

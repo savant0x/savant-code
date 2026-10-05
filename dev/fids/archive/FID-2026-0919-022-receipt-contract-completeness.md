@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-0919-022-receipt-contract-completeness.md`
 **ID:** FID-2026-0919-022
 **Severity:** medium
-**Status:** closed
+**Status:** closed (commit 394f9a60)
 **Created:** 2026-09-19 14:10
 **YAGNI-Compliance:** Confirmed (no new capability: one existing check made
 independently runnable so the EXISTING `probe` gate kind can express it; two
@@ -221,11 +221,7 @@ and is documented as permanently non-declarable, with the recursion reason.
 
 ### Implementation Evidence (REQUIRED for `closed`)
 
-- [ ] **Commit SHA:** NOT YET ASSIGNED — G2 commit authorization is withheld
-  by the operator (2026-09-19). Closure evidence is therefore the file:line
-  ranges plus the grep match below, which the FID Lifecycle rule admits for
-  `closed` ("commit SHA **or** file:line ranges + grep match"). The SHA is
-  filled in here when the operator executes the commit.
+- [x] **Commit SHA:** `394f9a60` — chore(scripts,sdk): FID contract widening + receipt completeness
 - [x] **File:line ranges:** `sdk/scripts/ensure-ripgrep-vendor.ts:114`
   (`spawnSync(process.execPath, ['run','fetch-ripgrep'], …)`),
   `sdk/src/__tests__/ensure-ripgrep-vendor.test.ts:39`

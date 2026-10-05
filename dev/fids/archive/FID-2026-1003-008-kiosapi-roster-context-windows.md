@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-1003-008-kiosapi-roster-context-windows.md`
 **ID:** FID-2026-1003-008
 **Severity:** high
-**Status:** closed (implemented + verified, 2026-10-04)
+**Status:** closed (implemented + verified, 2026-10-04, commit d10da542)
 > (`converged` is the correct pre-implementation status per
 > FID-2026-0915-004; `fixed` is deprecated-but-accepted legacy language —
 > do not use it for new FIDs. The receipt contract still keys to
@@ -246,7 +246,7 @@ Map. The live probe scripts remain runnable end-to-end evidence.
 
 ### Implementation Evidence (REQUIRED for `closed`)
 
-- [ ] **Commit SHA:** pending (G2: closure requires a commit)
+- [x] **Commit SHA:** `d10da542` — docs(fids): close and archive FID-2026-1003-008 after the ladder-suite closure audit
 - [ ] **File:line ranges:** common/src/constants/context-window-table-kiosapi.ts
       (whole file); common/src/constants/context-window-table.ts (import +
       spread); cli/src/utils/openrouter-models/__tests__/window-truth-kiosapi.test.ts

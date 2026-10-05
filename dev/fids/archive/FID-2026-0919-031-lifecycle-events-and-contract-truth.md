@@ -7,7 +7,7 @@ documentation had drifted from the code.
 **Filename:** `FID-2026-0919-031-lifecycle-events-and-contract-truth.md`
 **ID:** FID-2026-0919-031
 **Severity:** high
-**Status:** closed
+**Status:** closed (commit c2f21e23)
 **Created:** 2026-09-19 23:55
 **Automation level:** 3
 **YAGNI-Compliance:** Confirmed (no new capability or dependency: the events are
@@ -44,8 +44,8 @@ Plus the config table was missing `action` (FID-2026-0824-012) entirely.
 - **OS:** Windows (win32), bash shell
 - **Language/Runtime:** TypeScript (strict), Bun 1.3.14
 - **Tool Versions:** tsc (12 workspaces), eslint, prettier, markdownlint
-- **Commit/State:** `main`; the 0.0.33 working tree; nothing committed (G2
-  withheld — the operator holds the commit)
+- **Commit/State:** `main`; the 0.0.33 working tree; Committed as `c2f21e23`;
+  push withheld by the operator.
 
 ## Detailed Description
 

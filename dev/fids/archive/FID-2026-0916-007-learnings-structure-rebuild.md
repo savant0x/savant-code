@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-0916-007-learnings-structure-rebuild.md`
 **ID:** FID-2026-0916-007
 **Severity:** high
-**Status:** closed
+**Status:** closed (commit a25f07b5)
 **Created:** 2026-09-16 19:08
 **YAGNI-Compliance:** Verified
 
@@ -199,7 +199,7 @@ untouched.
 
 ### Implementation Evidence
 
-- [x] **Commit SHA:** pending (uncommitted; operator to commit)
+- [x] **Commit SHA:** Committed as `a25f07b5`; push withheld by the operator.
 - [x] **File:line ranges:** `scripts/learnings-retire.ts` (parseCap +
       removeLessonSpans + applyRetirement); `scripts/learnings-validation.ts`
       (markerIssues inversion); `scripts/learnings.ts` (output disambiguation);

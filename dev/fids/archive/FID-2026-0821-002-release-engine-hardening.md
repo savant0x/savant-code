@@ -5,7 +5,7 @@
 **Filename:** `FID-2026-0821-002-release-engine-hardening.md`
 **ID:** FID-2026-0821-002
 **Severity:** medium
-**Status:** closed
+**Status:** closed (commit a1f13b8f)
 **Created:** 2026-08-21 16:20
 **YAGNI-Compliance:** Verified
 
@@ -210,7 +210,7 @@ git tag -d v0.0.27   # required manually; fresh run otherwise fails
 
 ### Implementation Evidence (REQUIRED for `closed`)
 
-- [x] **Commit SHA:** working-tree implementation (commit pending operator approval); all changes in
+- [x] **Commit SHA:** Committed as `a1f13b8f`; push withheld by the operator.; all changes in
       `scripts/public-release.ts` + `scripts/public-release.test.ts` (+ `SCOPE.md`, this FID, `CHANGELOG.md`)
 - [x] **File:line ranges:**
   - P3 — carve-out: `scripts/public-release.ts:1653-1662` (`CREDENTIAL_SOURCE_NAME_PATTERN`,

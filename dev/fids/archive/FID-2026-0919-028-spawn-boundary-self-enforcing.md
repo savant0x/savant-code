@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-0919-028-spawn-boundary-self-enforcing.md`
 **ID:** FID-2026-0919-028
 **Severity:** high
-**Status:** closed
+**Status:** closed (commit 4fbd26b5)
 **Created:** 2026-09-20 00:25
 **Automation level:** 3
 **YAGNI-Compliance:** Confirmed (no new capability or dependency: the partition
@@ -270,9 +270,7 @@ at the authority; 7 pins added; workspace typecheck clean.
 
 ## Resolution
 
-- **Closed Date:** 2026-09-19 21:09 UTC (closed with the commit SHA pending
-  operator git execution, G2 withheld; file:line + grep evidence recorded
-  instead, per the FID Lifecycle rule for `closed`)
+- **Closed Date:** 2026-09-19 21:09 UTC (Committed as `4fbd26b5`; push withheld by the operator.)
 - **Fix Description:** `spawn-child-fields.ts` classifies all 54 `AgentState`
   fields once (13 inherited / 14 child-owned / 27 by-design-with-reason);
   `createAgentState` inherits via `inheritFromParent()` so the list drives

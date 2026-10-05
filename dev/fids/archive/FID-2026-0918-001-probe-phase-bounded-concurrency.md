@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-0918-001-probe-phase-bounded-concurrency.md`
 **ID:** FID-2026-0918-001
 **Severity:** medium
-**Status:** closed
+**Status:** closed (commit 69f6e7a7)
 > (`converged` is the correct pre-implementation status per
 > FID-2026-0915-004; `fixed` is deprecated-but-accepted legacy language —
 > do not use it for new FIDs. The receipt contract still keys to
@@ -189,8 +189,7 @@ Correctness constraints (all preserved):
 
 ### Implementation Evidence (REQUIRED for `closed`)
 
-- [x] **Commit SHA:** pending operator commit (G1/G2 — agent prepares the
-      path-scoped staging plan; closure + archive follow the commit)
+- [x] **Commit SHA:** Committed as `69f6e7a7`; push withheld by the operator.
 - [x] **File:line ranges:** `scripts/providers/lib/probe-pool.ts:19-45`
       (runWithConcurrency + PROBE_CONCURRENCY);
       `scripts/providers/lib/harvest-phases.ts:11,60-90` (probe-merge

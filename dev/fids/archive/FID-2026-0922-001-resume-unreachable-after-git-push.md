@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-0922-001-resume-unreachable-after-git-push.md`
 **ID:** FID-2026-0922-001
 **Severity:** high
-**Status:** closed
+**Status:** closed (commit d31de31b)
 **Created:** 2026-09-22 18:40
 **Automation level:** 1
 > (The remedy is a change to a fail-closed release guard, so it is
@@ -499,7 +499,7 @@ artifacts).
   battery and the four adversarial challenges. Negative legs: the pre-fix guard
   failed the new pre-audit pin (`Expected: "warn" / Received: "block"`), and a
   temporary single-shot window failed the absorb pin in 0.73 ms (both restored).
-  Nothing committed (G2 withheld — the operator holds the commit).
+  Committed as `d31de31b`; push withheld by the operator.
 - **Archived:** 2026-09-24 — moved to `dev/fids/archive/`, and the receipt was
   re-stamped LIVE at the archived path (three gates, exit 0) so the closed record
   is byte-consistent with its final content. Commit SHA pending operator git

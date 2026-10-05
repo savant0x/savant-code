@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-0928-013-archived-fid-closure-guard.md`
 **ID:** FID-2026-0928-013
 **Severity:** medium
-**Status:** closed
+**Status:** closed (commit 9ab1f7e1)
 **Created:** 2026-09-28
 **Automation level:** 3
 **YAGNI-Compliance:** Verified
@@ -289,7 +289,7 @@ One check, two surfaces, three record repairs:
 
 ### Implementation Evidence (REQUIRED for `closed`)
 
-- [ ] **Commit SHA:** pending operator git execution (G2 withheld)
+- [x] **Commit SHA:** `9ab1f7e1` — fix(scripts): fail validate:repository on post-cutoff archived FID status drift
 - [x] **File:line ranges:** `scripts/fid-gates.ts:175-247` (cutoff constant,
       marker regex, date parser, `validateArchivedFidClosures`);
       `scripts/audit-fid-archived-closures.ts:1-25` (probe);

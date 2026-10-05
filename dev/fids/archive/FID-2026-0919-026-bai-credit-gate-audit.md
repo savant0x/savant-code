@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-0919-026-bai-credit-gate-audit.md`
 **ID:** FID-2026-0919-026
 **Severity:** medium
-**Status:** closed
+**Status:** closed (commit 3f2cb767)
 **Created:** 2026-09-19 22:20
 **Automation level:** 3
 **YAGNI-Compliance:** Confirmed (no new capability built: the audit reuses the
@@ -336,9 +336,7 @@ refusal is self-diagnosing.
 
 ## Resolution
 
-- **Closed Date:** 2026-09-19 23:40 UTC (closed with the commit SHA pending
-  operator git execution, G2 withheld; file:line + grep evidence recorded
-  instead, per the FID Lifecycle rule for `closed`)
+- **Closed Date:** 2026-09-19 23:40 UTC (Committed as `3f2cb767`; push withheld by the operator.)
 - **Fix Description:** The audit (no code change was warranted for the operator's
   report — the integration is correct and the failure is account state) plus the
   operator-ruled diagnostic fix (**both** surfaces). (a) A data-only

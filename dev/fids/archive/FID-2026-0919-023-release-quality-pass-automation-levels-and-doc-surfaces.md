@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-0919-023-release-quality-pass-automation-levels-and-doc-surfaces.md`
 **ID:** FID-2026-0919-023
 **Severity:** high
-**Status:** closed
+**Status:** closed (commit bdc72655)
 **Created:** 2026-09-19 18:40
 **Automation level:** 3
 **YAGNI-Compliance:** Confirmed (no new capability: two existing mechanisms —
@@ -288,9 +288,7 @@ undo a process-wide replacement that (measured) cannot be undone.
 
 ## Resolution
 
-- **Closed Date:** 2026-09-19 20:05 UTC (closed with the commit SHA pending
-  operator git execution, G2 withheld; file:line + grep evidence recorded
-  instead, per the FID Lifecycle rule for `closed`)
+- **Closed Date:** 2026-09-19 20:05 UTC (Committed as `bdc72655`; push withheld by the operator.)
 - **Fix Description:** The automation ladder is documented and single-sourced
   across the surfaces that carry it; documented version surfaces are now a
   checked contract whose first run found and healed a seven-release-stale file

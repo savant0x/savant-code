@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-0919-021-fid-contract-widening-and-enforcement-report.md`
 **ID:** FID-2026-0919-021
 **Severity:** medium
-**Status:** closed
+**Status:** closed (commit 394f9a60)
 **Created:** 2026-09-19 13:20
 **YAGNI-Compliance:** Confirmed (widens an existing detector and makes an
 existing skip explicit — no new capability, no new dependency, no new file
@@ -260,11 +260,7 @@ Structured skip, before and after (validateFidVerification on a closed doc):
 
 ### Implementation Evidence (REQUIRED for `closed`)
 
-- [ ] **Commit SHA:** NOT YET ASSIGNED — G2 commit authorization is withheld
-  by the operator (2026-09-19). Closure evidence is therefore the file:line
-  ranges plus the grep match below, which the FID Lifecycle rule admits for
-  `closed` ("commit SHA **or** file:line ranges + grep match"). The SHA is
-  filled in here when the operator executes the commit.
+- [x] **Commit SHA:** `394f9a60` — chore(scripts,sdk): FID contract widening + receipt completeness
 - [x] **File:line ranges:** `packages/agent-runtime/src/echo/fid-verification-enforcement.ts`
   (new; `parseFidStatus`, `describeVerificationEnforcement`),
   `packages/agent-runtime/src/echo/fid-verification-contract-sweep.ts`

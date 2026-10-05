@@ -5,7 +5,7 @@
 **Filename:** `FID-2026-0821-003-context-window-jumping-threshold-parity.md`
 **ID:** FID-2026-0821-003
 **Severity:** medium
-**Status:** closed
+**Status:** closed (commit f929c903)
 **Created:** 2026-08-21 19:20
 **YAGNI-Compliance:** Verified
 
@@ -257,7 +257,7 @@ the executed body IS the emitted body, so any future drift fails loudly instead 
 
 ### Implementation Evidence (REQUIRED for `closed`)
 
-- [x] **Commit SHA:** working-tree implementation (commit pending operator approval / release-only-commits rule)
+- [x] **Commit SHA:** Committed as `f929c903`; push withheld by the operator.
 - [x] **File:line ranges:**
   - A1 — `reconcileTokenCount` optional logger + decision line:
     `packages/agent-runtime/src/run-agent-step/reconcile-token-count.ts:47-92` (logger param `:39`, decision log `:65-89`);

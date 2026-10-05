@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-0907-001-picker-close-focus-loss.md`
 **ID:** FID-2026-0907-001
 **Severity:** high
-**Status:** closed
+**Status:** closed (commit ca029e8f)
 **Created:** 2026-09-07
 **YAGNI-Compliance:** Verified
 
@@ -242,7 +242,7 @@ three pickers, then type + click).
 
 ### Implementation Evidence (REQUIRED for `closed`)
 
-- [ ] **Commit SHA:** pending G2 stamp (operator commit; recorded at closure)
+- [x] **Commit SHA:** `ca029e8f` — fix(cli): picker focus restore + /provider update (FID-2026-0907-001, -009)
 - [x] **File:line ranges:** `cli/src/chat/picker-focus-transition.ts:1-36`
       (pure predicate); `cli/src/chat/use-chat-pickers.ts:10` (import),
       `:119-147` (symmetric open/restore effect);

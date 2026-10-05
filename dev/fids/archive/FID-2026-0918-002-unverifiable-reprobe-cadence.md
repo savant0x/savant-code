@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-0918-002-unverifiable-reprobe-cadence.md`
 **ID:** FID-2026-0918-002
 **Severity:** low
-**Status:** closed
+**Status:** closed (commit 69f6e7a7)
 **Created:** 2026-09-18 12:05
 **YAGNI-Compliance:** Verified — one gate function + one pure stamp
 helper + an additive optional state field; no new network surface, no new
@@ -185,8 +185,9 @@ Grace-rule precedent: PROBE_LAPSED_AFTER_DAYS = 3 (health.ts:10)
 
 ## Implementation Evidence (REQUIRED for `closed`)
 
-- [x] **Commit SHA:** pending operator commit (G1/G2 — closure + archive
-      follow the commit)
+- [x] **Commit SHA:** `69f6e7a7` — feat(providers): bounded-concurrency probe
+      pool + 3-day unverifiable re-probe cadence (FID-2026-0918-001,
+      FID-2026-0918-002)
 - [x] **File:line ranges:** `scripts/providers/lib/health.ts`
       (UNVERIFIABLE_REPROBE_DAYS + shouldReprobeUnverifiable +
       withProbeAttempt); `common/src/providers/discovery-state.ts`
