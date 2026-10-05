@@ -17,6 +17,7 @@ import { afterEach, beforeEach, describe, expect, test } from 'bun:test'
 import {
   buildDiscoveryAnnouncement,
   readAnnouncedKey,
+  readDiscoveryCounts,
   writeAnnouncedKey,
 } from '../../utils/discovery-announce'
 
@@ -117,8 +118,59 @@ describe('discovery announce decision (FID-2026-1004-001, MQ5)', () => {
     fs.mkdirSync(path.join(tempRepoRoot, 'dev', 'provider-candidates'), {
       recursive: true,
     })
-    expect(readAnnouncedKey(tempRepoRoot)).toBeNull()
+expect(readAnnouncedKey(tempRepoRoot)).toBeNull()
     writeAnnouncedKey(tempRepoRoot, 'set-7')
     expect(readAnnouncedKey(tempRepoRoot)).toBe('set-7')
+  })
+})
+
+describe('discovery counts (FID-2026-1004-007)', () => {
+  let tempRepoRoot = ''
+
+  beforeEach(() => {
+    tempRepoRoot = fs.mkdtempSync(
+      path.join(os.tmpdir(), 'savant-discovery-counts-'),
+    )
+  })
+
+  afterEach(() => {
+    fs.rmSync(tempRepoRoot, { recursive: true, force: true })
+  })
+
+  function seed(setKey: string): void {
+    fs.mkdirSync(path.join(tempRepoRoot, 'dev', 'provider-candidates'), {
+      recursive: true,
+    })
+    fs.writeFileSync(
+      path.join(
+        tempRepoRoot,
+        'dev',
+        'provider-candidates',
+        'agent-context.txt',
+      ),
+      `${setKey}\n[provider-discovery] block\n`,
+      'utf8',
+    )
+  }
+
+  test('counts new/changed and collects only the new hosts', () => {
+    seed(
+      JSON.stringify([
+        'a.example:new',
+        'b.example:changed',
+        'c.example:unchanged',
+      ]),
+    )
+    const counts = readDiscoveryCounts(tempRepoRoot)
+    expect(counts?.newCount).toBe(1)
+    expect(counts?.changedCount).toBe(1)
+    expect(counts?.newHosts).toEqual(['a.example'])
+    expect(typeof counts?.observedAtMs).toBe('number')
+  })
+
+  test('null for an absent artifact and for a non-JSON set key', () => {
+    expect(readDiscoveryCounts(tempRepoRoot)).toBeNull()
+    seed('set-1')
+    expect(readDiscoveryCounts(tempRepoRoot)).toBeNull()
   })
 })

@@ -8,8 +8,15 @@ import { IS_SAVANT_FREE } from '../utils/constants'
 import {
   buildDiscoveryAnnouncement,
   readAnnouncedKey,
+  readDiscoveryCounts,
   writeAnnouncedKey,
 } from '../utils/discovery-announce'
+import { startDiscoveryCompletionWatcher } from '../utils/discovery-completion-watcher'
+import { observeDiscoveryCandidates } from '../utils/discovery-inbox'
+import {
+  readCachedFreeOptionsReport,
+  renderFreeOptionsDigest,
+} from '../utils/free-options'
 import { getSystemMessage } from '../utils/message-history'
 import {
   resolveContextWindowForModel,
@@ -19,6 +26,10 @@ import {
   getMissingProviderSetup,
   getProviderSetupGuidance,
 } from '../utils/provider-setup'
+import {
+  loadFreeOptionsDigestShownOn,
+  markFreeOptionsDigestShown,
+} from '../utils/settings'
 
 import type { ChatMessage } from '../types/chat'
 import type { AgentMode } from '../utils/constants'
@@ -78,6 +89,67 @@ export function useChatBootstrap(args: UseChatBootstrapArgs): void {
       // Fail-silent (MQ5): announce failures never break the TUI.
     }
   }, [args.setMessages])
+  // Once-per-day free-provider launch digest (FID-2026-1004-007): rewires the
+  // orphaned renderFreeOptionsAnnounce and folds in the expiring offers plus
+  // the discovery delta. Repo-gated only for the discovery leg; free-build
+  // exempt; fail-silent. NEW discovery candidates are also routed into the
+  // notification inbox (durable review) — `changed` is excluded (probe jitter).
+  const digestShownRef = useRef(false)
+  const discoveryCompletionWatcherRef = useRef<ReturnType<
+    typeof startDiscoveryCompletionWatcher
+  > | null>(null)
+  useEffect(() => {
+    if (digestShownRef.current) return
+    digestShownRef.current = true
+    try {
+      if (IS_SAVANT_FREE) return
+      const repoRoot = tryGetProjectRoot()
+      const discovery = repoRoot ? readDiscoveryCounts(repoRoot) : null
+      // Inbox routing runs on EVERY boot — deliberately OUTSIDE the
+      // once-per-day digest gate, so a candidate discovered after the day's
+      // first boot still reaches /notifications. The coordinator dedupes by
+      // fact value, so repeat boots are idempotent.
+      if (discovery && discovery.newHosts.length > 0)
+        observeDiscoveryCandidates(discovery)
+      // Step 7 (FID-2026-1004-007): the boot harvest is DETACHED and can
+      // publish agent-context.txt after these mount effects ran. Watch the
+      // artifact for a set-key transition and route its NEW hosts then —
+      // event-driven (no polling), dedup by key at the watcher + by fact
+      // value at the coordinator. Fail-silent; free-build exempt.
+      if (repoRoot)
+        discoveryCompletionWatcherRef.current = startDiscoveryCompletionWatcher(
+          {
+            repoRoot,
+            initialSetKey: discovery?.setKey ?? null,
+            observe: observeDiscoveryCandidates,
+          },
+        )
+      const now = new Date()
+      const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
+      if (loadFreeOptionsDigestShownOn() === today) return
+      const lines = renderFreeOptionsDigest(
+        readCachedFreeOptionsReport(),
+        discovery
+          ? {
+              newCount: discovery.newCount,
+              changedCount: discovery.changedCount,
+            }
+          : null,
+      )
+      if (lines.length === 0) return
+      args.setMessages((prev) => [...prev, getSystemMessage(lines.join('\n'))])
+      markFreeOptionsDigestShown(today)
+    } catch {
+      // Fail-silent (FID-2026-1004-007): the digest never breaks the TUI.
+    }
+  }, [args.setMessages])
+  useEffect(
+    () => () => {
+      discoveryCompletionWatcherRef.current?.close()
+      discoveryCompletionWatcherRef.current = null
+    },
+    [],
+  )
   const loadedAt = useGatewayCatalogStore((s) => s.lastLoadedAt)
   useEffect(() => {
     if (!args.sidebarModel) return

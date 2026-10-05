@@ -10,9 +10,10 @@ export const providerNoticeSchema = z
     providerId: identity,
     modelId: identity.optional(),
     kind: z.enum([
-      'summary',
+'summary',
       'model-added',
       'model-removed',
+      'candidate',
       'health-down',
       'health-up',
       'quota-low',

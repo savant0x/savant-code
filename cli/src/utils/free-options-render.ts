@@ -121,7 +121,10 @@ function boundedLabels(labels: string[]): string {
  * split (FID-2026-1001-002). Empty when there is nothing to say (no cache
  * timestamp, or every lane list empty) so a nothing message never posts.
  */
-export function renderFreeOptionsAnnounce(report: FreeOptionsReport): string[] {
+export function renderFreeOptionsAnnounce(
+  report: FreeOptionsReport,
+  discovery: DiscoveryDigestCounts | null = null,
+): string[] {
   // Truthy guard, not `=== null`: a hand-corrupted cache JSON can leave
   // `fetchedAt` runtime-undefined (the type says `string | null`, so the
   // `=== null` form would let "catalog fetchedAt undefined" reach the user).
@@ -142,7 +145,7 @@ export function renderFreeOptionsAnnounce(report: FreeOptionsReport): string[] {
   if (report.notWired.length > 0) {
     const labels = boundedLabels(report.notWired.map((lane) => lane.label))
     lines.push(
-      `- Not wired: ${report.notWired.length} — ${labels} — each starts with /provider <name>`,
+`- Not wired: ${report.notWired.length} — ${labels} — each starts with /provider <name>`,
     )
   }
   if (report.localFree.length > 0) {
@@ -151,6 +154,51 @@ export function renderFreeOptionsAnnounce(report: FreeOptionsReport): string[] {
       `- Local & free: ${report.localFree.length} — ${labels} — no key needed`,
     )
   }
-  lines.push('Run /provider free for the full split with model ids.')
+  const offers = report.discoveryOffers ?? []
+  if (offers.length > 0) {
+    lines.push(
+      `- Offers: ${offers.length} advertised free-token offer(s) ending soon — ${offers.slice(0, 2).join('; ')}`,
+    )
+  }
+  if (discovery && (discovery.newCount > 0 || discovery.changedCount > 0)) {
+    lines.push(
+      `- Discovery: ${discovery.newCount} new / ${discovery.changedCount} changed free-provider candidate(s) since the last harvest`,
+    )
+  }
+  lines.push(
+    'Run /provider free for the full split with model ids; /notifications to review.',
+  )
   return lines
+}
+
+/**
+ * FID-2026-1004-007 — the discovery delta the digest needs. The renderer's
+ * contract is narrower than the producer's `DiscoveryCounts`, so it takes
+ * this structural subset rather than importing the discovery module's type;
+ * the call site is typed against `DiscoveryCounts`, so a producer rename
+ * still fails the build (no silent drift).
+ */
+export interface DiscoveryDigestCounts {
+  newCount: number
+  changedCount: number
+}
+
+/**
+ * Compose the once-per-day launch digest (FID-2026-1004-007): the rewired
+ * free-lane announce (plus expiring offers and the discovery delta), or a
+ * delta-only message when no catalog cache exists. Empty when there is
+ * nothing honest to say, so a nothing message never posts.
+ */
+export function renderFreeOptionsDigest(
+  report: FreeOptionsReport | null,
+  discovery: DiscoveryDigestCounts | null,
+): string[] {
+  if (report) return renderFreeOptionsAnnounce(report, discovery)
+  if (discovery && (discovery.newCount > 0 || discovery.changedCount > 0)) {
+    return [
+      `Free-provider discovery — ${discovery.newCount} new / ${discovery.changedCount} changed candidate(s) since the last harvest.`,
+      'Run /provider free for the full split with model ids; /notifications to review.',
+    ]
+  }
+  return []
 }

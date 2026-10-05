@@ -108,6 +108,20 @@ export const markFreeOptionsNoticeShown = (): void => {
 }
 
 /**
+ * Local calendar date (YYYY-MM-DD) the free-provider launch digest was last
+ * shown (FID-2026-1004-007). Undefined until the first digest renders.
+ */
+export const loadFreeOptionsDigestShownOn = (): string | undefined => {
+  return loadSettings().freeOptionsDigestShownOn
+}
+
+/** Record the launch digest as shown for `date`. Idempotent per date. */
+export const markFreeOptionsDigestShown = (date: string): void => {
+  if (loadSettings().freeOptionsDigestShownOn === date) return
+  saveSettings({ freeOptionsDigestShownOn: date })
+}
+
+/**
  * Load the saved savant-free model preference. Returns undefined if none is
  * saved yet — callers should fall back to DEFAULT_SAVANT_FREE_MODEL_ID.
  */

@@ -28,8 +28,10 @@ export { liftCatalog } from './free-options-catalog'
 export {
   renderCommandOutput,
   renderFreeOptionsAnnounce,
+  renderFreeOptionsDigest,
   renderFreeOptionsMarkdown,
 } from './free-options-render'
+export type { DiscoveryDigestCounts } from './free-options-render'
 export { freeOptionsPaths } from './free-options-paths'
 export type {
   FreeCatalogEnvelope,

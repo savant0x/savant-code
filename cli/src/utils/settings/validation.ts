@@ -102,12 +102,23 @@ export const validateSettings = (parsed: JSONValue): Settings => {
 
   // Validate analyticsNoticeShown
   if (typeof obj.analyticsNoticeShown === 'boolean') {
-    settings.analyticsNoticeShown = obj.analyticsNoticeShown
+settings.analyticsNoticeShown = obj.analyticsNoticeShown
   }
 
   // Validate freeOptionsNoticeShown (FID-2026-1001-002)
   if (typeof obj.freeOptionsNoticeShown === 'boolean') {
     settings.freeOptionsNoticeShown = obj.freeOptionsNoticeShown
+  }
+
+  // Validate freeOptionsDigestShownOn (FID-2026-1004-007) — the local
+  // calendar date (YYYY-MM-DD) the launch digest last rendered. This is a
+  // whitelist, so without the branch below the field is dropped on every
+  // load and the once-per-day gate never latches.
+  if (
+    typeof obj.freeOptionsDigestShownOn === 'string' &&
+    /^\d{4}-\d{2}-\d{2}$/.test(obj.freeOptionsDigestShownOn)
+  ) {
+    settings.freeOptionsDigestShownOn = obj.freeOptionsDigestShownOn
   }
 
   // Design-system selections are stable IDs only; paths are handled by the
