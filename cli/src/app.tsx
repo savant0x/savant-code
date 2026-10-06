@@ -15,7 +15,7 @@ import { useTheme } from './hooks/use-theme'
 import { getProjectRoot, startNewChat } from './project-files'
 import { useChatHistoryStore } from './state/chat-history-store'
 import { useChatStore } from './state/chat-store'
-import { abortActiveRun } from './utils/active-run'
+import { abandonActiveRun } from './utils/branch-summary'
 import { findGitRoot } from './utils/git'
 
 import type { MultilineInputHandle } from './components/multiline-input'
@@ -133,7 +133,9 @@ export const App = ({
 
   const handleResumeChat = useCallback(
     (chatId: string) => {
-      abortActiveRun()
+      // FID-2026-1006-003 WP6: resuming abandons a mid-turn run, which leaves
+      // a branch summary of the conversation being left behind.
+      abandonActiveRun()
       closeChatHistory()
       resetChatStore()
       setResumeChatId(chatId)
@@ -142,7 +144,9 @@ export const App = ({
   )
 
   const handleNewChat = useCallback(() => {
-    abortActiveRun()
+    // FID-2026-1006-003 WP6: as in handleResumeChat, abandoning a mid-turn run
+    // leaves a branch summary of the conversation being left behind.
+    abandonActiveRun()
     closeChatHistory()
     resetChatStore()
     startNewChat()

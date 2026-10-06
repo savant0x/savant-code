@@ -16,7 +16,17 @@ export function clearActiveRunAborter(ownerId: string): void {
   }
 }
 
-/** Abort the in-flight agent run, if any. Safe to call when idle. */
-export function abortActiveRun(): void {
-  activeRun?.abort()
+/**
+ * Abort the in-flight agent run, if any. Safe to call when idle.
+ *
+ * FID-2026-1006-003 WP6: reports whether a run was actually aborted, so a
+ * chat switch can tell "this conversation was mid-turn and is being
+ * abandoned" apart from "nothing was running" and leave a branch summary
+ * behind in the first case (see utils/branch-summary.ts). Callers that only
+ * want the abort may ignore the result.
+ */
+export function abortActiveRun(): boolean {
+  if (!activeRun) return false
+  activeRun.abort()
+  return true
 }

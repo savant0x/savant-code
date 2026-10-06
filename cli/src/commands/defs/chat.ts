@@ -1,6 +1,6 @@
 import { startNewChat } from '../../project-files'
 import { useChatStore } from '../../state/chat-store'
-import { abortActiveRun } from '../../utils/active-run'
+import { abandonActiveRun } from '../../utils/branch-summary'
 import { capturePendingAttachments } from '../../utils/pending-attachments'
 import {
   clearInput,
@@ -45,8 +45,10 @@ export const CHAT_COMMANDS = [
       // Abort any in-flight run BEFORE clearing state and rotating the chat
       // id: an orphaned run would keep streaming after the switch and its
       // late checkpoints/final save would persist the old conversation's
-      // state under the new chat (or vice versa).
-      abortActiveRun()
+      // state under the new chat (or vice versa). FID-2026-1006-003 WP6: a run
+      // that was actually mid-turn also leaves a branch summary of the
+      // abandoned conversation behind (utils/branch-summary.ts).
+      abandonActiveRun()
 
       // Reset dev override mode on new chat
       useChatStore.getState().setDevMode(false)
