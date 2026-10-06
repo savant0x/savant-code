@@ -48,7 +48,7 @@ export class SavantAgentRunner implements AgentRunner {
     this.collector = new TraceCollector(config.task.task_id, runId, startTime)
   }
 
-  async executePrompt(prompt: string): Promise<RunState> {
+  async executePrompt(prompt: string, signal?: AbortSignal): Promise<RunState> {
     if (!this.config || !this.client || !this.sandbox || !this.collector) {
       throw new Error(
         'Runner has not been initialized. Call initialize() first.',
@@ -61,9 +61,11 @@ export class SavantAgentRunner implements AgentRunner {
       cwd: this.sandbox.getWorkingDir(),
       agentDefinitions: this.config.agentDefinitions,
       maxAgentSteps: this.config.maxAgentSteps,
+      skillsDir: this.config.skillsDir,
       env: this.config.env,
       // FID-2026-0824-015: eval runs are forced into safe mode by default.
       permissionMode: this.config.permissionMode ?? 'safe',
+      signal,
       customToolDefinitions: this.config.customToolDefinitions,
       projectFiles: this.config.projectFiles,
       drainSteeringMessages: this.config.drainSteeringMessages,

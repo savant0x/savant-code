@@ -13,6 +13,33 @@ import type { MODEL_CATALOGS } from './model-catalogs'
  * picker ordering, setup availability).
  */
 
+/**
+ * Evidence class for a fact-bearing provider claim (FID-2026-1005-009),
+ * mirroring the reference FREE_TIERS methodology: `public-page` (a provider
+ * page anyone can read), `api-public` (an unauthenticated provider
+ * endpoint), `console-verified` (a figure visible only behind an account —
+ * the record must name the date and who saw it), and `reported-unverified`
+ * (the honest default for pre-audit facts).
+ */
+export type FactEvidenceClass =
+  'public-page' | 'api-public' | 'console-verified' | 'reported-unverified'
+
+/**
+ * Provenance record attached beside a fact-bearing registry field
+ * (FID-2026-1005-009). Data-only. `console-verified` requires `verified`
+ * (date) and `witness` (who saw it) — enforced by
+ * `validateFactEvidence` in `./fact-evidence`.
+ */
+export interface FactEvidence {
+  class: FactEvidenceClass
+  /** The page/endpoint the claim came from. */
+  source: string
+  /** ISO date the figure was observed (required for console-verified). */
+  verified?: string
+  /** Who observed it, e.g. a FID record naming the live probe. */
+  witness?: string
+}
+
 /** Provider categories: cloud gateways, local runtimes (ollama), env-only. */
 export type ProviderKind = 'gateway' | 'local' | 'env-only'
 
@@ -95,6 +122,8 @@ export interface ProviderConfig {
         modelsRef: keyof typeof MODEL_CATALOGS
         /** Optional human-readable names map ref for a static catalog. */
         namesRef?: string
+        /** Provenance for the checked-in roster (FID-2026-1005-009). */
+        evidence?: FactEvidence
       }
     | {
         /** FID-2026-0910-004 D3: user-supplied model list (custom providers).
@@ -122,6 +151,8 @@ export interface ProviderConfig {
     unit?: string
     /** One-line, actionable explanation of a quota refusal. */
     note: string
+    /** Provenance for the documented endpoint (FID-2026-1005-009). */
+    evidence?: FactEvidence
   }
   /** Whether the provider appears in the `/provider` setup picker. */
   setupAvailable: boolean

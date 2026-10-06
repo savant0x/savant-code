@@ -4,6 +4,7 @@ import {
 } from '@savant-code/common/providers/model-route'
 import { providerAccountRevision } from '@savant-code/common/providers/provider-account-revisions'
 import { quotaEpisode } from '@savant-code/common/providers/provider-quota-policy'
+import { quotaNoticeKindForTransition } from '@savant-code/common/providers/provider-quota-state'
 
 import { providerNotifications } from './provider-notifications'
 import { readProviderQuota, type ProviderQuotaResult } from './provider-quota'
@@ -69,13 +70,22 @@ export class ProviderQuotaMonitor {
     quota: ProviderQuotaResult,
   ): void {
     if (quota.status !== 'ok' || quota.amount === undefined) return
+    const priorRaw = this.coordinator.storage.presentation().facts[`${source}:episode`]
+    let previous: ReturnType<typeof quotaEpisode> | undefined
+    try {
+      if (priorRaw) {
+        const parsed: unknown = JSON.parse(priorRaw)
+        if (typeof parsed === 'object' && parsed !== null &&
+          'level' in parsed && typeof parsed.level === 'string' &&
+          ['healthy', 'approaching_limit', 'exhausted', 'unavailable', 'unknown'].includes(parsed.level) &&
+          'revision' in parsed && typeof parsed.revision === 'number' && Number.isFinite(parsed.revision))
+          previous = parsed as ReturnType<typeof quotaEpisode>
+      }
+    } catch {
+      // A corrupt legacy record is unknown, never an exhaustion fact.
+    }
     this.coordinator.storage.stage((s) => {
-      const metadata = s.facts[`${source}:episode`]
-      const episode = quotaEpisode(
-        metadata ? JSON.parse(metadata) : undefined,
-        quota,
-        this.now(),
-      )
+      const episode = quotaEpisode(previous, quota, this.now())
       return {
         ...s,
         revision: s.revision + 1,
@@ -86,6 +96,17 @@ export class ProviderQuotaMonitor {
       this.coordinator.storage.presentation().facts[`${source}:episode`],
     ) as ReturnType<typeof quotaEpisode>
     const level = episode.level
+    // FID-2026-1005-008: emission preconditions — a quota notice is
+    // lawfully emitted only on a real transition (`quota-recovered`
+    // requires a prior observed exhaustion; `unknown`/`unavailable` emit
+    // nothing). Legacy-persisted levels fail to match the vocabulary and
+    // normalize within one probe round (read-migration, no script).
+    const kind = quotaNoticeKindForTransition(
+      previous?.level ?? 'unknown',
+      level,
+      'authenticated-usage-api',
+    )
+    if (kind === null) return
     this.coordinator.observe(
       source,
       [
@@ -94,14 +115,9 @@ export class ProviderQuotaMonitor {
           value: `${level}:${episode.revision}`,
           providerId: config.id,
           selected,
-          kind:
-            level === 'exhausted'
-              ? 'quota-exhausted'
-              : level === 'low'
-                ? 'quota-low'
-                : 'quota-recovered',
-          severity: level === 'ok' ? 'info' : 'warning',
-          message: `${config.label}: ${level === 'ok' ? 'quota reading available' : `quota ${level}`} (${quota.reading}). ${quota.note}`,
+          kind,
+          severity: kind === 'quota-recovered' ? 'info' : 'warning',
+          message: `${config.label}: ${kind === 'quota-recovered' ? 'quota recovered' : kind === 'quota-low' ? 'quota approaching limit' : 'quota exhausted'} (${quota.reading}). ${quota.note}`,
         },
       ],
       this.now(),

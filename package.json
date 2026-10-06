@@ -43,7 +43,7 @@
     "generate:protocol-bundle": "bun run scripts/generate-protocol-bundle.ts",
     "generate:protocol-bundle:check": "bun run scripts/generate-protocol-bundle.ts --check",
     "lint:md": "markdownlint .",
-    "validate:repository": "bun scripts/validate-repository.ts",
+    "validate:repository": "bun scripts/provider-docs-counts-drift.ts && bun scripts/validate-repository.ts",
     "verify:clean": "bun scripts/verify-clean.ts",
     "fid:verify": "bun scripts/fid-verify.ts",
     "skills:check": "bun scripts/skills-check.ts",

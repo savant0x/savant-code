@@ -110,6 +110,23 @@ describe('FID-2026-0928-012: agent-answerable markdown', () => {
     const md = renderFreeOptionsMarkdown(report)
     expect(md).toContain('STALE')
   })
+
+  test('free-listing caveat follows evidence class while account access stays unverified', () => {
+    const report = buildFreeOptionsReport(CATALOG, CTX)
+    expect(report.catalogEvidence?.source).toContain('free_models.json')
+    const reported = {
+      ...report,
+      catalogEvidence: { class: 'reported-unverified' as const, source: 'operator report' },
+    }
+    expect(renderFreeOptionsMarkdown(reported)).toContain('reported free models; listing unverified; account access unverified')
+    expect(renderFreeOptionsAnnounce(reported).join('\n')).toContain('listing unverified')
+    expect(report.quotaReading).toEqual({ state: 'unknown', source: 'none' })
+    const exhausted = {
+      ...report,
+      quotaReading: { state: 'exhausted' as const, source: 'authenticated-usage-api' as const },
+    }
+    expect(renderFreeOptionsAnnounce(exhausted).join('\n')).toContain('quota observed exhausted')
+  })
 })
 
 describe('FID-2026-0928-012: /provider free command output', () => {

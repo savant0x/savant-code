@@ -3,10 +3,12 @@
 // `maxOutputTokens: undefined` — the unset budget was the generator of the
 // native tool-call truncation class this FID closes.
 
+import { advertisedModelVisible } from '@savant-code/common/providers/availability-state'
 import { promptSuccess } from '@savant-code/common/util/error'
 import { describe, expect, test } from 'bun:test'
 
 import { getAgentStreamFromTemplate } from '../prompt-agent-stream'
+import { DEFAULT_RETRY_POLICY } from '../provider-boundary/retry-policy'
 
 import type { AgentTemplate } from '@savant-code/common/types/agent-template'
 import type { PromptAiSdkStreamFn } from '@savant-code/common/types/contracts/llm'
@@ -52,7 +54,9 @@ function makeBaseParams(stream: PromptAiSdkStreamFn) {
     clientSessionId: 'test-session',
     fingerprintId: 'test-fingerprint',
     localAgentTemplates: {},
-    logger: {} as never as Logger,
+    // The seam now records stream-recovery accounting through the logger
+    // (FID-2026-1005-007), so the stub carries the used methods.
+    logger: { info: () => {}, warn: () => {} } as never as Logger,
     messages: [] as Message[],
     runId: 'test-run',
     signal: new AbortController().signal,
@@ -101,8 +105,58 @@ describe('getAgentStreamFromTemplate output-budget forwarding (FID-2026-0909-008
 
     const params = captured[0]
     expect(params.model).toBe('z-ai/glm-5.3-free')
-    expect(params.maxRetries).toBe(3)
+    // FID-2026-1005-006: the classified boundary owns retries, so the
+    // client's blind retry is disabled (was a uniform `maxRetries: 3`).
+    expect(params.maxRetries).toBe(0)
     expect(params.tools).toEqual({})
     expect(params.runId).toBe('test-run')
+  })
+
+  test('a malformed retryPolicy fails at call time, loudly (FID-2026-1005-006)', () => {
+    const { stream } = makeCapturingStream()
+    // The measured session-killer shape: timing keys nested under backoff.
+    expect(() =>
+      getAgentStreamFromTemplate({
+        ...makeBaseParams(stream),
+        retryPolicy: { maxAttempts: 3, backoff: { baseDelayMs: 500 } },
+      }),
+    ).toThrow(/retryPolicy\.backoff/)
+  })
+
+  test('production stream calls share the breaker across turns', async () => {
+    let calls = 0
+    const stream: PromptAiSdkStreamFn = async function* () {
+      calls++
+      throw { status: 503 }
+    }
+    const base = {
+      ...makeBaseParams(stream),
+      clientSessionId: 'breaker-integration-session',
+      retryPolicy: { ...DEFAULT_RETRY_POLICY, maxAttempts: 1 },
+    }
+    for (let turn = 0; turn < 3; turn++) {
+      await expect(getAgentStreamFromTemplate({ ...base, runId: `failure-${turn}` }).next()).rejects.toThrow()
+    }
+    await expect(getAgentStreamFromTemplate({ ...base, runId: 'blocked' }).next()).rejects.toThrow(/Circuit breaker open/)
+    expect(calls).toBe(3)
+  })
+
+  test('an explicit model refusal hides it and a later success restores it', async () => {
+    const providerId = 'chatanywhere'
+    const modelId = 'availability-test/model-unique'
+    const routed = {
+      ...makeBaseParams(async function* () {
+        throw { status: 404, responseBody: JSON.stringify({ error: { code: 'model_not_found' } }) }
+      }),
+      template: { ...template, model: modelId, modelRoute: { providerId, authMode: 'provider' as const } },
+    }
+    await expect(getAgentStreamFromTemplate(routed).next()).rejects.toThrow()
+    expect(advertisedModelVisible(providerId, modelId)).toBe(false)
+    const success = {
+      ...routed,
+      promptAiSdkStream: async function* () { return promptSuccess('restored') },
+    }
+    await getAgentStreamFromTemplate(success).next()
+    expect(advertisedModelVisible(providerId, modelId)).toBe(true)
   })
 })

@@ -23,12 +23,13 @@ import type { ProviderConfig } from '../types'
  * as its first argument so tests inject a fixture instead of the singleton).
  */
 describe('PROVIDER_REGISTRY (FID-2026-0809-001 Phase 1)', () => {
-  test('covers all twenty-four current providers', () => {
+  test('covers all twenty-five current providers', () => {
     expect(Object.keys(PROVIDER_REGISTRY).sort()).toEqual([
       'apinex',
       'atria',
       'bai',
       'bazaarlink',
+      'chatanywhere',
       'cleanapis',
       'cloudflare',
       'codecraft',
@@ -102,6 +103,7 @@ describe('PROVIDER_REGISTRY (FID-2026-0809-001 Phase 1)', () => {
       'vercel',
       'cleanapis',
       'intern',
+      'chatanywhere',
     ]) {
       expect(deriveProviderOrder(PROVIDER_REGISTRY, id)).toBe(4)
     }
@@ -109,13 +111,14 @@ describe('PROVIDER_REGISTRY (FID-2026-0809-001 Phase 1)', () => {
     expect(deriveProviderOrder(PROVIDER_REGISTRY, 'unknown')).toBe(4)
   })
 
-  test('setup config derives exactly the twenty-three current setup providers', () => {
+  test('setup config derives exactly the twenty-four current setup providers', () => {
     const setup = deriveSetupConfig(PROVIDER_REGISTRY)
     expect(Object.keys(setup).sort()).toEqual([
       'apinex',
       'atria',
       'bai',
       'bazaarlink',
+      'chatanywhere',
       'cleanapis',
       'cloudflare',
       'codecraft',
@@ -170,6 +173,11 @@ describe('PROVIDER_REGISTRY (FID-2026-0809-001 Phase 1)', () => {
       label: 'Clean APIs',
       envVar: 'CLEANAPIS_API_KEY',
       baseUrl: 'https://cleanapis.com/v1',
+    })
+    expect(setup.chatanywhere).toEqual({
+      label: 'ChatAnywhere',
+      envVar: 'CHATANYWHERE_API_KEY',
+      baseUrl: 'https://api.chatanywhere.tech/v1',
     })
   })
 

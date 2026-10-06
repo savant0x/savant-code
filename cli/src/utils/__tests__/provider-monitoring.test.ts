@@ -65,11 +65,18 @@ test('quota monitor honors Retry-After, refusal refresh, hysteresis, and account
     ).toHaveLength(1)
     result = { ...result, amount: 20, reading: '20 credits' }
     now++
-    await measure()
+    const resumed = new ProviderQuotaMonitor(
+      new AbortController().signal,
+      () => now,
+      async () => result,
+      service,
+    )
+    await resumed.measure(route, true, { BAI_API_KEY: 'fixture-quota' }, true)
     expect(
       service.snapshot().notices.find((n) => n.kind === 'quota-exhausted')
         ?.resolved,
     ).toBe(true)
+    expect(service.snapshot().notices.some((n) => n.kind === 'quota-recovered')).toBe(true)
     result = { ...result, amount: 0, reading: '0 credits' }
     now++
     await measure()

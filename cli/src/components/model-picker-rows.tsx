@@ -1,16 +1,17 @@
 import { Button } from './button'
+import { freeBadgeFor } from '../utils/free-badge'
 import { Badge } from './savant-ui/data-display/badge'
 
-import type { ModelProvider, ModelItem } from './model-picker-grouping'
+import type { KeyItem, ModelItem } from './model-picker-grouping'
 import type { ChatTheme } from '../types/theme-system'
 
 interface ModelPickerHeaderRowProps {
-  provider: ModelProvider
+  label: string
   theme: ChatTheme
 }
 
 export const ModelPickerHeaderRow = ({
-  provider,
+  label,
   theme,
 }: ModelPickerHeaderRowProps) => (
   <box
@@ -30,7 +31,33 @@ export const ModelPickerHeaderRow = ({
         wrapMode: 'none',
       }}
     >
-      {provider.toUpperCase()}
+      {label}
+    </text>
+  </box>
+)
+
+interface ModelPickerKeyRowProps {
+  item: KeyItem
+  theme: ChatTheme
+}
+
+/** Blank free-key placeholder row — names the key slot, never the secret. */
+export const ModelPickerKeyRow = ({ item, theme }: ModelPickerKeyRowProps) => (
+  <box
+    style={{
+      width: '100%',
+      height: 1,
+      flexShrink: 0,
+      paddingLeft: 3,
+      paddingTop: 0,
+      paddingBottom: 0,
+      backgroundColor: theme.surface,
+    }}
+  >
+    <text style={{ fg: theme.muted, wrapMode: 'none' }}>
+      {item.ready
+        ? `${item.envVar}: ···· (free key set)`
+        : `${item.envVar}: ______ (blank — add your free key)`}
     </text>
   </box>
 )
@@ -87,7 +114,7 @@ export const ModelPickerModelRow = ({
           wrapMode="none"
           selectable={false}
         >
-          {model.id}
+          {`${freeBadgeFor(model)}${model.id}`}
         </text>
       </box>
       {/* Provider badge */}

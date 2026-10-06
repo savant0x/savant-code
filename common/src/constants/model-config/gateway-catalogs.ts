@@ -185,3 +185,45 @@ export const internModels = {
   intern_qwen_3_8_27b: 'intern/qwen3.8-27b',
 } as const
 export type InternModel = (typeof internModels)[keyof typeof internModels]
+
+/**
+ * ChatAnywhere catalog (FID-2026-1005-010) — the gateway's full chat roster
+ * (27 of the 30 rows on the keyed /v1/models probe 2026-10-05; the 3
+ * text-embedding-* ids are excluded as non-chat). The gateway serves bare
+ * upstream ids (`gpt-5.6-sol`) and publishes NO window fields on /v1/models
+ * (row shape: id/object/created/owned_by), so this checked-in set is the
+ * source of truth and windows live in the context-window-table-chatanywhere
+ * seam (cross-gateway consensus; the intern precedent). Free-key tier:
+ * 10,000 points/day (chatanywhere/gpt_api_free).
+ */
+export const chatanywhereModels = {
+  chatanywhere_gpt_5: 'chatanywhere/gpt-5',
+  chatanywhere_gpt_5_1: 'chatanywhere/gpt-5.1',
+  chatanywhere_gpt_5_2: 'chatanywhere/gpt-5.2',
+  chatanywhere_gpt_5_mini: 'chatanywhere/gpt-5-mini',
+  chatanywhere_gpt_5_nano: 'chatanywhere/gpt-5-nano',
+  chatanywhere_gpt_5_4: 'chatanywhere/gpt-5.4',
+  chatanywhere_gpt_5_4_mini: 'chatanywhere/gpt-5.4-mini',
+  chatanywhere_gpt_5_4_nano: 'chatanywhere/gpt-5.4-nano',
+  chatanywhere_gpt_5_5: 'chatanywhere/gpt-5.5',
+  chatanywhere_gpt_5_6_sol: 'chatanywhere/gpt-5.6-sol',
+  chatanywhere_gpt_5_6_luna: 'chatanywhere/gpt-5.6-luna',
+  chatanywhere_gpt_5_6_terra: 'chatanywhere/gpt-5.6-terra',
+  chatanywhere_gpt_6_astra: 'chatanywhere/gpt-6-astra',
+  chatanywhere_gpt_6_sol: 'chatanywhere/gpt-6-sol',
+  chatanywhere_gpt_6_luna: 'chatanywhere/gpt-6-luna',
+  chatanywhere_gpt_6_1_sol: 'chatanywhere/gpt-6.1-sol',
+  chatanywhere_gpt_4_1: 'chatanywhere/gpt-4.1',
+  chatanywhere_gpt_4_1_mini: 'chatanywhere/gpt-4.1-mini',
+  chatanywhere_gpt_4_1_nano: 'chatanywhere/gpt-4.1-nano',
+  chatanywhere_gpt_4o: 'chatanywhere/gpt-4o',
+  chatanywhere_gpt_4o_mini: 'chatanywhere/gpt-4o-mini',
+  chatanywhere_gpt_3_5_turbo: 'chatanywhere/gpt-3.5-turbo',
+  chatanywhere_deepseek_v3_2: 'chatanywhere/deepseek-v3.2',
+  chatanywhere_deepseek_chat: 'chatanywhere/deepseek-chat',
+  chatanywhere_deepseek_v4_pro: 'chatanywhere/deepseek-v4-pro',
+  chatanywhere_deepseek_v4_flash: 'chatanywhere/deepseek-v4-flash',
+  chatanywhere_deepseek_v4_1_flash: 'chatanywhere/deepseek-v4.1-flash',
+} as const
+export type ChatanywhereModel =
+  (typeof chatanywhereModels)[keyof typeof chatanywhereModels]

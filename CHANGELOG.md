@@ -4,6 +4,13 @@
 
 ### Added
 
+- **Three-tier skill evaluation gates (FID-2026-1005-005; verified 2026-10-06).** Added structural, trigger-routing, and behavioral evaluation for all 11 trusted skills; paired proof trials use constrained temp-workspace tools, description-hash trust checks, and a durable rejection impact ledger. Declared FID gates pass; live token-costed trials remain operator-invoked.
+- **Provider failure classification and circuit breaker (FID-2026-1005-006; verified 2026-10-06).** Provider failures are classified before retry decisions; load-time retry policy validation and a per-provider closed/open/half-open breaker bound recovery probes. Five declared gates pass.
+- **Bounded stream recovery (FID-2026-1005-007; verified 2026-10-06).** Added one checkpoint-seeded, tools-disabled recovery request for eligible truncated reasoning turns, with physical-request accounting and hard bounds. Four declared gates pass.
+- **Provider availability verdicts and quota states (FID-2026-1005-008; verified 2026-10-06).** Distinguishes provider availability verdicts from gateway faults and model eligibility; quota truth uses explicit states and evidence-based notification transitions. Ten declared gates pass.
+- **Evidence-classed provider facts and documentation drift gate (FID-2026-1005-009; verified 2026-10-06).** Registry facts carry evidence class, source, and verification date; registry validation detects unsupported fact changes and a recompute gate catches numeric documentation drift. Seven declared gates pass.
+- **ChatAnywhere free-key provider (FID-2026-1005-010; verified 2026-10-06).** Added the ChatAnywhere provider catalog, documented provider surfaces, and model-picker free-key section with a reusable free-model marker. Live `/v1/models` and `gpt-5.6-sol` probe succeeded; declared gates pass.
+
 - **Evidence-based skill learning: single proposal path, durable
   lifecycle events, content-bound proof labels (FID-2026-1005-003, high;
   closed 2026-10-05).** The self-improving harness's six gaps are closed.

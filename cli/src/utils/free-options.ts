@@ -5,6 +5,7 @@
 import fs from 'node:fs'
 import path from 'node:path'
 
+import { advertisedModelVisible } from '@savant-code/common/providers/availability-state'
 import { canonicalProviderId } from '@savant-code/common/providers/readiness'
 
 import { liftCatalog } from './free-options-catalog'
@@ -91,6 +92,7 @@ export function buildFreeOptionsReport(
     const byProvider = new Map<string, string[]>()
     for (const model of catalog.models) {
       const id = canonicalProviderId(model.providerId)
+      if (!advertisedModelVisible(id, model.id)) continue
       const list = byProvider.get(id)
       if (list) list.push(model.id)
       else byProvider.set(id, [model.id])
@@ -117,6 +119,8 @@ export function buildFreeOptionsReport(
   return {
     fetchedAt: catalog?.fetchedAt ?? null,
     stale: catalog !== null && !isCacheFresh(catalog.fetchedAt, context.nowMs),
+    ...(catalog ? { catalogEvidence: { class: 'api-public' as const, source: CATALOG_URL } } : {}),
+    quotaReading: { state: 'unknown', source: 'none' },
     wiredFree,
     notWired,
     localFree: context.localProviders.map((p) => ({ ...p })),

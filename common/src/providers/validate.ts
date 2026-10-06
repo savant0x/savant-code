@@ -14,12 +14,17 @@
  * compile time (exhaustiveness) + this enforced test suite, which is strictly
  * stronger than a one-time module-load parse.
  */
+import {
+  changedFactsNeedingEvidence,
+  validateFactEvidence,
+} from './fact-evidence'
 import { MODEL_CATALOGS } from './model-catalogs'
 import {
   PROVIDER_PROTOCOL_MAPS,
   resolveMappedModelProtocol,
 } from '../constants/model-config'
 
+import type { FactRecord } from './fact-evidence'
 import type { ProviderConfig } from './types'
 
 const KINDS = new Set<ProviderConfig['kind']>(['gateway', 'local', 'env-only'])
@@ -62,11 +67,44 @@ export function parseRegistryUrl(url: string): URL | null {
 }
 
 /**
+ * Numeric facts derivable from the registry (static/inline catalog model
+ * counts, with the entry's `evidence` when present) — shared with the
+ * docs-count drift script so the baseline diff compares like with like
+ * (FID-2026-1005-009, Law 13).
+ */
+export function registryFactRecords(
+  registry: Record<string, ProviderConfig>,
+): FactRecord[] {
+  const facts: FactRecord[] = []
+  for (const config of Object.values(registry)) {
+    if (config.catalog.source === 'static') {
+      facts.push({
+        key: `${config.id}.catalog.model-count`,
+        value: Object.keys(MODEL_CATALOGS[config.catalog.modelsRef]).length,
+        evidence: config.catalog.evidence,
+      })
+    } else if (config.catalog.source === 'inline') {
+      facts.push({
+        key: `${config.id}.catalog.model-count`,
+        value: Object.keys(config.catalog.models).length,
+      })
+    }
+  }
+  return facts
+}
+
+/**
  * Validate a provider registry. Returns a list of human-readable problems;
  * an empty array means the registry is structurally sound.
+ *
+ * FID-2026-1005-009 provenance: (1) present `evidence` records must be
+ * well-formed; (2) with a `baseline`, a new/changed numeric fact without
+ * evidence fails (the caller derives the baseline from the last generated
+ * surface; a missing baseline grandfathers).
  */
 export function validateProviderRegistry(
   registry: Record<string, ProviderConfig>,
+  baseline?: readonly FactRecord[],
 ): string[] {
   const problems: string[] = []
   const envVarOwners = new Map<
@@ -177,6 +215,18 @@ export function validateProviderRegistry(
           )
         }
       }
+      // Evidence provenance (FID-2026-1005-009): present records must be
+      // well-formed; absence is grandfathered (the baseline rule decides).
+      if (config.catalog.evidence !== undefined) {
+        problems.push(
+          ...validateFactEvidence(`${key}.catalog`, config.catalog.evidence),
+        )
+      }
+    }
+    if (config.quota?.evidence !== undefined) {
+      problems.push(
+        ...validateFactEvidence(`${key}.quota`, config.quota.evidence),
+      )
     }
 
     // Inline catalog (FID-2026-0910-004 D3): same invariant as static —
@@ -226,6 +276,14 @@ export function validateProviderRegistry(
   // Derivation-parity: valid ids are exactly the registry keys.
   if (new Set(ids).size !== ids.length) {
     problems.push('Registry keys are not unique')
+  }
+
+  // Changed-fact rule (FID-2026-1005-009): a new/changed numeric fact
+  // without an evidence record fails, naming the fact and old → new.
+  if (baseline !== undefined) {
+    problems.push(
+      ...changedFactsNeedingEvidence(registryFactRecords(registry), baseline),
+    )
   }
 
   return problems

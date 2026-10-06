@@ -60,6 +60,7 @@ export type WindowCoverageEntry = {
 export const NO_PUBLISH_GATEWAY_IDS: readonly string[] = [
   'apinex',
   'bai',
+  'chatanywhere',
   'kiosapi',
 ]
 
@@ -198,6 +199,13 @@ export const WINDOW_COVERAGE_REGISTER: ReadonlyMap<
     {
       disposition: 'table-section',
       note: 'Static 10-model catalog (FID-2026-1004-008). The authenticated /v1/models DOES publish windows, but in a non-OpenRouter schema_version "2.4" shape (input_modalities[].supported_inputs.max_context_length.value) the shared parser does not read; the 10 exact-id rows are pinned from the LIVE probe 2026-10-04.',
+    },
+  ],
+  [
+    'chatanywhere',
+    {
+      disposition: 'table-section',
+      note: 'Static 27-model chat catalog (FID-2026-1005-010). The keyed /v1/models publishes NO window fields (row shape id/object/created/owned_by, 30 rows, probed 2026-10-05); 13 exact-id rows are cross-gateway consensus in the context-window-table-chatanywhere seam, 14 ids documented no-row.',
     },
   ],
   [

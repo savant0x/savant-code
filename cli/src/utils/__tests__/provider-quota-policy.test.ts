@@ -21,20 +21,20 @@ test('quota episodes distinguish unknown, zero and low, with hysteresis and obse
   )
   expect(episode.level).toBe('unknown')
   episode = quotaEpisode(episode, reading, 100)
-  expect(episode.level).toBe('low')
+  expect(episode.level).toBe('approaching_limit')
   expect(quotaEpisode(episode, { ...reading, amount: 12 }, 100).revision).toBe(
     episode.revision,
   )
   episode = quotaEpisode(episode, { ...reading, amount: 20 }, 100)
-  expect(episode.level).toBe('ok')
+  expect(episode.level).toBe('healthy')
   expect(
     quotaEpisode(episode, { ...reading, amount: 0, limit: undefined }, 100)
       .level,
   ).toBe('exhausted')
   expect(
     quotaEpisode(undefined, { ...reading, limit: undefined }, 100).level,
-  ).toBe('ok')
-  const old = { level: 'low' as const, revision: 1, resetAt: 50 }
+  ).toBe('healthy')
+  const old = { level: 'approaching_limit' as const, revision: 1, resetAt: 50 }
   expect(quotaEpisode(old, { ...reading, resetAt: 200 }, 100).revision).toBe(2)
 })
 test('declared credential auth rejects redirects and malicious origins; failures redact secrets', async () => {

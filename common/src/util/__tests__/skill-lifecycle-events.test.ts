@@ -31,7 +31,10 @@ afterEach(() => {
   }
 })
 
-function event(action: 'draft_created' | 'draft_failed', ts = '2026-10-05T00:00:00.000Z') {
+function event(
+  action: 'draft_created' | 'draft_failed',
+  ts = '2026-10-05T00:00:00.000Z',
+) {
   return {
     ts,
     skillName: 'no-environment-dependent-guards',
@@ -44,7 +47,10 @@ function event(action: 'draft_created' | 'draft_failed', ts = '2026-10-05T00:00:
 describe('appendSkillLifecycleEvent / readSkillLifecycleEvents', () => {
   test('writes one metadata-only JSONL line per event and reads it back', () => {
     const dir = root()
-    const { ok, event: written } = appendSkillLifecycleEvent(dir, event('draft_created'))
+    const { ok, event: written } = appendSkillLifecycleEvent(
+      dir,
+      event('draft_created'),
+    )
     expect(ok).toBe(true)
     expect(written?.id).toHaveLength(64)
     const raw = fs.readFileSync(
@@ -55,7 +61,12 @@ describe('appendSkillLifecycleEvent / readSkillLifecycleEvents', () => {
     const parsed = JSON.parse(raw) as Record<string, unknown>
     // Metadata-only contract: no free-text fields the renderer could echo.
     expect(Object.keys(parsed).sort()).toEqual([
-      'action', 'id', 'proofState', 'skillName', 'trustState', 'ts',
+      'action',
+      'id',
+      'proofState',
+      'skillName',
+      'trustState',
+      'ts',
     ])
     const events = readSkillLifecycleEvents(dir)
     expect(events).toHaveLength(1)
@@ -76,8 +87,14 @@ describe('appendSkillLifecycleEvent / readSkillLifecycleEvents', () => {
 describe('per-surface delivery cursors', () => {
   test('a surface sees only events after its own cursor; acks are independent', () => {
     const dir = root()
-    appendSkillLifecycleEvent(dir, event('draft_created', '2026-10-05T00:00:01Z'))
-    appendSkillLifecycleEvent(dir, event('draft_failed', '2026-10-05T00:00:02Z'))
+    appendSkillLifecycleEvent(
+      dir,
+      event('draft_created', '2026-10-05T00:00:01Z'),
+    )
+    appendSkillLifecycleEvent(
+      dir,
+      event('draft_failed', '2026-10-05T00:00:02Z'),
+    )
 
     // Both surfaces start at the full log; claiming does not acknowledge.
     const cliFirst = claimSkillLifecycleEvents(dir, 'cli')

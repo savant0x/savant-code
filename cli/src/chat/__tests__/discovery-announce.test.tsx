@@ -118,7 +118,7 @@ describe('discovery announce decision (FID-2026-1004-001, MQ5)', () => {
     fs.mkdirSync(path.join(tempRepoRoot, 'dev', 'provider-candidates'), {
       recursive: true,
     })
-expect(readAnnouncedKey(tempRepoRoot)).toBeNull()
+    expect(readAnnouncedKey(tempRepoRoot)).toBeNull()
     writeAnnouncedKey(tempRepoRoot, 'set-7')
     expect(readAnnouncedKey(tempRepoRoot)).toBe('set-7')
   })

@@ -131,8 +131,17 @@ function catalogCell(config: ProviderConfig): string {
       return 'none'
     case 'inline':
       return `inline (${modelCountLabel(Object.keys(catalog.models).length)})`
-    case 'static':
-      return `static (${modelCountLabel(Object.keys(MODEL_CATALOGS[catalog.modelsRef]).length)})`
+    case 'static': {
+      const count = modelCountLabel(
+        Object.keys(MODEL_CATALOGS[catalog.modelsRef]).length,
+      )
+      // FID-2026-1005-009: evidence classes render into the registry table
+      // (reported-unverified prints as such — never dressed up as a fact).
+      const ev = catalog.evidence
+      return ev === undefined
+        ? `static (${count})`
+        : `static (${count}; evidence: ${ev.class}${ev.verified ? ` ${ev.verified}` : ''})`
+    }
   }
 }
 

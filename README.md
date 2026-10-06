@@ -91,6 +91,7 @@ history. The supported hosted providers are:
 | Atria AI | `/provider atria` or `DIRECT_PROVIDER=atria` | `ATRIA_API_KEY` | Hosted gateway |
 | B.AI | `/provider bai` or `DIRECT_PROVIDER=bai` | `BAI_API_KEY` | OpenAI-compatible gateway with an authenticated live model catalog |
 | BazaarLink | `/provider bazaarlink` or `DIRECT_PROVIDER=bazaarlink` | `BAZAARLINK_API_KEY` | Hosted gateway |
+| ChatAnywhere | `/provider chatanywhere` or `DIRECT_PROVIDER=chatanywhere` | `CHATANYWHERE_API_KEY` | Hosted gateway |
 | Clean APIs | `/provider cleanapis` or `DIRECT_PROVIDER=cleanapis` | `CLEANAPIS_API_KEY` | Hosted gateway |
 | Cloudflare | `/provider cloudflare` or `DIRECT_PROVIDER=cloudflare` | `CLOUDFLARE_API_TOKEN` + `CLOUDFLARE_ACCOUNT_ID` | Workers AI gateway; the `/provider` flow prompts for the token, then the account id (env vars take precedence) |
 | CodeCraft API | `/provider codecraft` or `DIRECT_PROVIDER=codecraft` | `CODECRAFT_API_KEY` | Hosted gateway |
@@ -452,7 +453,8 @@ code 2 blocks a tool.
   file diffs throughout the TUI.
 - **Gateway providers** — OpenRouter, TokenRouter, TokenHarbor, NVIDIA NIM,
   CommandCode, Nous Research, KiosAPI, APInex,
-OrcaRouter, B.AI, HCNSec, TokenBom, Infron, Intern InkStone, UnoRouter,
+OrcaRouter, B.AI, HCNSec, TokenBom, Infron, Intern InkStone, ChatAnywhere,
+  UnoRouter,
   BazaarLink, Atria AI,
   OpenAI, Vercel AI Gateway, Clean APIs, CodeCraft API, xKiro, and Cloudflare Workers AI via
   `@savant-code/llm-providers`. Nous Research uses the direct OpenAI-compatible API; Portal OAuth
@@ -892,6 +894,7 @@ picker or choose one directly:
 /provider tokenbom
 /provider infron
 /provider intern
+/provider chatanywhere
 /provider unorouter
 /provider bazaarlink
 /provider vercel
@@ -909,6 +912,7 @@ The supported environment variables are `OPENAI_API_KEY`, `OPENROUTER_API_KEY`,
 `ATRIA_API_KEY`, `INTERN_API_KEY`, `INFRON_API_KEY`, `UNOROUTER_API_KEY`,
 `BAZAARLINK_API_KEY`,
 `AI_GATEWAY_API_KEY`, `CLEANAPIS_API_KEY`, `CODECRAFT_API_KEY`, `XKIRO_API_KEY`,
+`CHATANYWHERE_API_KEY`,
 `CLOUDFLARE_API_TOKEN`. The key
 prompt is masked and stores the key globally in the Savant-Code config
 `credentials.json`; it is not added to chat history. Shell environment variables

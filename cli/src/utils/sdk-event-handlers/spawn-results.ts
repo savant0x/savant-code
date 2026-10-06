@@ -56,9 +56,7 @@ const updateSpawnAgentBlock = (
           b.type === 'text' && b.textType === 'text',
       )
       const hasStreamedTextContent = streamedTextBlocks.length > 0
-      const streamedText = streamedTextBlocks
-        .map((b) => b.content)
-        .join('')
+      const streamedText = streamedTextBlocks.map((b) => b.content).join('')
       let finalBlocks: ContentBlock[] = childBlocks
       if (content) {
         if (!hasStreamedTextContent) {

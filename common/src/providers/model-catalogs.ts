@@ -9,6 +9,7 @@
 import {
   atriaModels,
   bazaarlinkModels,
+  chatanywhereModels,
   cloudflareModels,
   commandcodeModels,
   hcnsecModels,
@@ -32,4 +33,5 @@ export const MODEL_CATALOGS = {
   bazaarlink: bazaarlinkModels,
   atria: atriaModels,
   intern: internModels,
+  chatanywhere: chatanywhereModels,
 } as const

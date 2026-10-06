@@ -16,6 +16,7 @@
  */
 import { APINEX_CONTEXT_WINDOW_FALLBACKS } from './context-window-table-apinex'
 import { BAI_CONTEXT_WINDOW_FALLBACKS } from './context-window-table-bai'
+import { CHATANYWHERE_CONTEXT_WINDOW_FALLBACKS } from './context-window-table-chatanywhere'
 import { KIOSAPI_CONTEXT_WINDOW_FALLBACKS } from './context-window-table-kiosapi'
 
 export const CONTEXT_WINDOW_FALLBACKS: ReadonlyMap<string, number> = new Map([
@@ -278,4 +279,8 @@ export const CONTEXT_WINDOW_FALLBACKS: ReadonlyMap<string, number> = new Map([
   ...KIOSAPI_CONTEXT_WINDOW_FALLBACKS,
   ...APINEX_CONTEXT_WINDOW_FALLBACKS,
   ...BAI_CONTEXT_WINDOW_FALLBACKS,
+  // --- chatanywhere: seam-split (FID-2026-1005-010; the gateway publishes
+  // no window fields — cross-gateway consensus rows; no-row ids documented
+  // in the section file) ---
+  ...CHATANYWHERE_CONTEXT_WINDOW_FALLBACKS,
 ])

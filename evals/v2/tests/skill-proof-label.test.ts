@@ -12,7 +12,9 @@ import type { SkillProofArtifact } from '../src/stats/skill-efficacy'
 
 const sha = (seed: string) => seed.padEnd(64, '0').slice(0, 64)
 
-function baseArtifact(overrides: Partial<SkillProofArtifact> = {}): SkillProofArtifact {
+function baseArtifact(
+  overrides: Partial<SkillProofArtifact> = {},
+): SkillProofArtifact {
   return proofArtifactSchema.parse({
     schema_version: '1.0',
     skill_name: 'no-environment-dependent-guards',
@@ -125,7 +127,15 @@ describe('proofLabelForArtifact (FID-2026-1005-003 Step 5)', () => {
     expect(
       proofContentBlockSchema.safeParse({
         skill_content_sha256: sha('x'),
-        tasks: [{ task_id: 't', role: 'other', baseline_pass_rate: 0, active_pass_rate: 0, regressed: false }],
+        tasks: [
+          {
+            task_id: 't',
+            role: 'other',
+            baseline_pass_rate: 0,
+            active_pass_rate: 0,
+            regressed: false,
+          },
+        ],
       }).success,
     ).toBe(false)
   })

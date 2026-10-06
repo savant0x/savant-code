@@ -6,7 +6,15 @@ import { emptyMcpServers } from '@savant-code/common/testing/fixtures/agent-runt
 import { TEST_AGENT_RUNTIME_IMPL } from '@savant-code/common/testing/impl/agent-runtime'
 import { getInitialSessionState } from '@savant-code/common/types/session-state'
 import { assistantMessage } from '@savant-code/common/util/messages'
-import { afterAll, beforeEach, describe, expect, it, mock, spyOn } from 'bun:test'
+import {
+  afterAll,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  mock,
+  spyOn,
+} from 'bun:test'
 
 import * as runAgentStep from '../run-agent-step'
 import { mockFileContext } from './test-utils'
@@ -114,7 +122,9 @@ describe('Subagent Batch Boundary (FID-2026-1005-001)', () => {
     const toolCall: SavantCodeToolCall<'spawn_agents'> = {
       toolName: 'spawn_agents' as const,
       toolCallId: 'boundary-tool-call',
-      input: { agents: [{ agent_type: 'thinker', prompt: 'Deliver a verdict' }] },
+      input: {
+        agents: [{ agent_type: 'thinker', prompt: 'Deliver a verdict' }],
+      },
     }
 
     const { output } = await handleSpawnAgents({

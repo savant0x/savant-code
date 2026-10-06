@@ -43,9 +43,7 @@ function seedStreamingAgent(
       spawnIndex: 0,
     } as any,
   ])
-  ctx.streaming.setStreamingAgents(
-    () => new Set([opts.agentId ?? 'tool-1-0']),
-  )
+  ctx.streaming.setStreamingAgents(() => new Set([opts.agentId ?? 'tool-1-0']))
 }
 
 /** The spawn_agents tool_result event for one lastMessage-mode child. */

@@ -1,3 +1,5 @@
+import path from 'node:path'
+
 import { hashChange } from '@savant-code/common/crypto/hash'
 import {
   countQuarantinedDrafts,
@@ -18,6 +20,7 @@ import {
   showMessage,
   statusMessage,
 } from './skills-discovery'
+import { appendSkillImpactRejection } from './skills-impact-ledger'
 import {
   formatErosionAdvisory,
   formatProofAdvisory,
@@ -91,7 +94,9 @@ export function runSkillsCommand(projectRoot: string, args: string): string {
     if (!name) {
       output = 'Usage: `/skills trust <name>`'
     } else {
-      const result = trustSkill(projectRoot, name)
+      const result = trustSkill(projectRoot, name, {
+        triggerCasesDir: path.join(projectRoot, 'evals', 'v2', 'skill-cases'),
+      })
       if (!result.ok) {
         output = `❌ ${result.error}`
       } else {
@@ -141,9 +146,9 @@ export function runSkillsCommand(projectRoot: string, args: string): string {
         reason: reason || gateSummary,
         rejectedAt: new Date().toISOString(),
       })
+      appendSkillImpactRejection(projectRoot, name, reason, readProofGate(projectRoot, name), new Date().toISOString())
       output =
-        `🗑 Rejected '${name}' — recorded in the pattern wiki ` +
-        '(rejected-proposal memory).'
+        `🗑 Rejected '${name}' — recorded in the pattern wiki and skill-impact ledger.`
     }
   } else if (sub === 'prove') {
     // FID-2026-0824-016: paired-trial execution lives in @savant-code/evals

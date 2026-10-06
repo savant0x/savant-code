@@ -39,6 +39,7 @@ closed if this section drifts from the registry.
 | Atria AI | `atria` | gateway | `ATRIA_API_KEY` | `https://api.atria-asi.ai/v1` | openai | static (1 model) |
 | B.AI | `bai` | gateway | `BAI_API_KEY` | `https://api.b.ai/v1` | openai | live |
 | BazaarLink | `bazaarlink` | gateway | `BAZAARLINK_API_KEY` | `https://api.bazaarlink.ai/v1` | openai | static (12 models) |
+| ChatAnywhere | `chatanywhere` | gateway | `CHATANYWHERE_API_KEY` | `https://api.chatanywhere.tech/v1` | openai | static (27 models; evidence: console-verified 2026-10-05) |
 | Clean APIs | `cleanapis` | gateway | `CLEANAPIS_API_KEY` | `https://cleanapis.com/v1` | openai | live |
 | Cloudflare | `cloudflare` | gateway | `CLOUDFLARE_API_TOKEN` + `CLOUDFLARE_ACCOUNT_ID` | `https://api.cloudflare.com/client/v4/accounts/{CLOUDFLARE_ACCOUNT_ID}/ai/v1` | openai | static (14 models) |
 | CodeCraft API | `codecraft` | gateway | `CODECRAFT_API_KEY` | `https://codecraftapi.com/v1` | openai | live |

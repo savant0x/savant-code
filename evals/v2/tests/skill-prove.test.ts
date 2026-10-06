@@ -111,6 +111,24 @@ describe('scanActivation (FID-2026-0824-016)', () => {
 })
 
 describe('runSkillProve paired loop (FID-2026-0824-016)', () => {
+  it('persists each expectation result in the paired artifact', async () => {
+    const params = await makeParams(async ({ arm, index }) => ({
+      exitOk: true,
+      trace: traceFor(arm === 'active'),
+      expectationResults: [{ expectation: 'fixture passed', passed: true, evidence: `trial ${index}` }],
+    }))
+    const { artifact, artifactPath } = await runSkillProve(params)
+    expect(artifact.trials.baseline[0].expectation_results?.[0]).toMatchObject({
+      expectation: 'fixture passed',
+      passed: true,
+      evidence: 'trial 0',
+    })
+    const onDisk = JSON.parse(readFileSync(artifactPath, 'utf8')) as {
+      trials: { active: { expectation_results: { evidence: string }[] }[] }
+    }
+    expect(onDisk.trials.active[1].expectation_results[0].evidence).toBe('trial 1')
+  })
+
   it('runs baseline before active and writes a parseable artifact', async () => {
     const runner = scriptRunner({
       baseline: [

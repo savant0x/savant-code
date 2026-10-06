@@ -3,6 +3,8 @@
  * Own module so the lib, renderers, and command handler can import them
  * without pulling in the fetch/IO half (Law 13, cycle-free).
  */
+import type { QuotaStateReading } from '@savant-code/common/providers/provider-quota-state'
+import type { FactEvidence } from '@savant-code/common/providers/types'
 
 /** One free-model row we consume from the custats catalog. */
 export type FreeCatalogModel = {
@@ -54,6 +56,10 @@ export type FreeLane = {
 export type FreeOptionsReport = {
   fetchedAt: string | null
   stale: boolean
+  /** Provenance of the free-model claims, separate from account eligibility. */
+  catalogEvidence?: FactEvidence
+  /** The best observed account quota state; absent data is unknown. */
+  quotaReading?: QuotaStateReading
   wiredFree: Array<FreeLane>
   notWired: Array<FreeLane & { setupCommand: string }>
   localFree: Array<{ id: string; label: string; setupCommand: string }>

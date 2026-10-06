@@ -210,6 +210,7 @@ Works with multiple inference providers:
 - **Clean APIs** — OpenAI-compatible hosted gateway with an authenticated live model catalog (`CLEANAPIS_API_KEY`; OpenAI Chat Completions at `https://cleanapis.com/v1`)
 - **CodeCraft API** — Authenticated live model catalog and OpenAI chat (`CODECRAFT_API_KEY`; `https://codecraftapi.com/v1`)
 - **xKiro** — Public live chat catalog (`XKIRO_API_KEY`; `https://api.xkiro.com/v1`). Anthropic model IDs use Messages; other IDs use OpenAI chat. Vendor namespaces remain intact. Catalog tiers describe requirements; paid-model access depends on the account.
+- **ChatAnywhere** — OpenAI-compatible hosted gateway on a static 27-model chat roster (`CHATANYWHERE_API_KEY`; `https://api.chatanywhere.tech/v1`; free-key tier: 10,000 points/day per the vendor's GPT_API_free docs)
 - **OpenAI** — Platform API keys via `/provider openai` or `OPENAI_API_KEY`; Responses API at `https://api.openai.com/v1`, with an authenticated live catalog
 - **NVIDIA NIM** — NVIDIA-hosted inference
 - **CommandCode** — OpenAI-compatible hosted inference

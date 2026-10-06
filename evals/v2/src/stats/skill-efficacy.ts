@@ -20,6 +20,11 @@ export const trialOutcomeSchema = z.object({
   activated: z.boolean().optional(),
   /** sha256 of the serialized trace events for this trial. */
   trace_sha256: z.string().length(64),
+  expectation_results: z.array(z.object({
+    expectation: z.string(),
+    passed: z.boolean(),
+    evidence: z.string(),
+  })).optional(),
 })
 export type TrialOutcome = z.infer<typeof trialOutcomeSchema>
 

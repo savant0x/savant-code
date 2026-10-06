@@ -6,7 +6,10 @@
  */
 import { describe, expect, test } from 'bun:test'
 
-import { buildDiscoveryFacts, observeDiscoveryCandidates } from '../discovery-inbox'
+import {
+  buildDiscoveryFacts,
+  observeDiscoveryCandidates,
+} from '../discovery-inbox'
 
 import type { DiscoveryCounts } from '../discovery-announce'
 import type { ProviderFact } from '@savant-code/common/providers/provider-notifications'
@@ -63,11 +66,14 @@ describe('FID-2026-1004-007: new-candidate inbox facts', () => {
 
   test('no new hosts → no observe call', () => {
     let called = 0
-    observeDiscoveryCandidates({ ...COUNTS, newHosts: [] }, {
-      observe: () => {
-        called++
+    observeDiscoveryCandidates(
+      { ...COUNTS, newHosts: [] },
+      {
+        observe: () => {
+          called++
+        },
       },
-    })
+    )
     expect(called).toBe(0)
   })
 })

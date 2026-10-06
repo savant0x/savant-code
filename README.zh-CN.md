@@ -188,6 +188,7 @@ ollama serve
 | Clean APIs | `/provider cleanapis` | `CLEANAPIS_API_KEY` | 托管网关（密钥认证的实时模型目录） |
 | CodeCraft API | `/provider codecraft` | `CODECRAFT_API_KEY` | OpenAI 兼容网关（密钥认证的实时模型目录） |
 | xKiro | `/provider xkiro` | `XKIRO_API_KEY` | 实时聊天模型目录；Anthropic 模型使用 Messages，其余模型使用 OpenAI 聊天 |
+| ChatAnywhere | `/provider chatanywhere` | `CHATANYWHERE_API_KEY` | OpenAI 兼容托管网关（静态 27 模型聊天白名单；免费密钥层每日 10,000 积分；`https://api.chatanywhere.tech/v1`） |
 | Cloudflare | `/provider cloudflare` | `CLOUDFLARE_API_TOKEN` + `CLOUDFLARE_ACCOUNT_ID` | Workers AI 网关；`/provider` 流程先提示输入令牌，再输入账户 ID（环境变量优先） |
 
 密钥持久化在 Windows 的 `C:\Users\<username>\.savant-code\credentials.json` 或 macOS/Linux 的
@@ -373,7 +374,8 @@ MCP 工具发现、模式切换（`HYBRID` / `SCAFFOLD` / `STRICT` / `ANALYZE`�
 - **通用复制按钮** —— 在整个 TUI 中悬停即可复制代码块、工具输出与文件 diff。
 - **网关提供商** —— 通过 `@savant-code/llm-providers` 支持 OpenRouter、TokenRouter、TokenHarbor、NVIDIA NIM、
   CommandCode、Nous Research、KiosAPI、APInex、OrcaRouter、B.AI、HCNSec、
-TokenBom、Infron、Intern InkStone、UnoRouter、BazaarLink、Atria AI、OpenAI、Vercel AI Gateway、Clean APIs、CodeCraft API、xKiro 与
+TokenBom、Infron、Intern InkStone、ChatAnywhere、
+UnoRouter、BazaarLink、Atria AI、OpenAI、Vercel AI Gateway、Clean APIs、CodeCraft API、xKiro 与
   Cloudflare Workers AI。Nous Research 使用 OpenAI 兼容直连
   API；Portal OAuth 是独立集成。
 - **默认模型** —— 通过 OpenRouter 使用 `openrouter/free`（可通过 `/model` 配置）。
@@ -706,6 +708,7 @@ savant-code
 /provider tokenbom
 /provider infron
 /provider intern
+/provider chatanywhere
 /provider unorouter
 /provider bazaarlink
 /provider vercel
@@ -719,7 +722,8 @@ savant-code
 `COMMAND_CODE_API_KEY`、`OPENAI_API_KEY`、`NOUS_API_KEY`、`KIOSAPI_API_KEY`、`APINEX_API_KEY`、`ORCAROUTER_API_KEY`、
 `BAI_API_KEY`、`HCNSEC_API_KEY`、`TOKENBOM_API_KEY`、`ATRIA_API_KEY`、`INTERN_API_KEY`、`INFRON_API_KEY`、
 `UNOROUTER_API_KEY`、
-`BAZAARLINK_API_KEY`、`AI_GATEWAY_API_KEY`、`CLEANAPIS_API_KEY`、`CODECRAFT_API_KEY`、`XKIRO_API_KEY` 与
+`BAZAARLINK_API_KEY`、`CHATANYWHERE_API_KEY`、`AI_GATEWAY_API_KEY`、
+`CLEANAPIS_API_KEY`、`CODECRAFT_API_KEY`、`XKIRO_API_KEY` 与
 `CLOUDFLARE_API_TOKEN`。密钥提示为遮罩输入，并将密钥全局存储在
 Savant-Code 配置的 `credentials.json` 中；不会加入
 聊天记录。shell 环境变量优先于已存储的密钥，因此 CI 与托管环境可以不使用本地持久化来配置提供商。高级直接提供商

@@ -14,6 +14,7 @@ import {
 import type { ErosionGateConfig } from '../erosion/gate'
 import type { ErosionSnapshot } from '../erosion/metrics'
 import type { TraceDocument } from '../runner'
+import type { ExpectationResult } from '../skill-evals/behavioral'
 import type {
   SkillProofArtifact,
   TrialOutcome,
@@ -26,6 +27,7 @@ const MIN_SKILL_CITATIONS = 2
 export interface TrialRunResult {
   exitOk: boolean
   trace: TraceDocument
+  expectationResults?: ExpectationResult[]
 }
 
 export type TrialArm = 'baseline' | 'active'
@@ -157,6 +159,7 @@ export async function runSkillProve(params: RunSkillProveParams): Promise<{
         index,
         passed: run.exitOk,
         trace_sha256: hashTrace(run.trace),
+        ...(run.expectationResults ? { expectation_results: run.expectationResults } : {}),
         ...(arm === 'active'
           ? { activated: scanActivation(run.trace, params.skillName) }
           : {}),

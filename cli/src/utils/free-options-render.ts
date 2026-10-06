@@ -6,6 +6,29 @@
  */
 import type { FreeOptionsReport } from './free-options-types'
 
+function freeClaimCaveat(report: FreeOptionsReport): string {
+  return report.catalogEvidence?.class === 'reported-unverified'
+    ? 'reported free models; listing unverified'
+    : 'advertised free models'
+}
+
+function quotaCaveat(report: FreeOptionsReport): string {
+  const reading = report.quotaReading
+  if (!reading || reading.source === 'none' || reading.state === 'unknown')
+    return 'account quota unverified'
+  if (reading.state === 'unavailable') return 'account quota unavailable'
+  if (reading.state === 'exhausted') return 'account quota observed exhausted'
+  if (reading.state === 'approaching_limit') return 'account quota approaching limit'
+  return 'account quota observed healthy'
+}
+
+function quotaFootnote(report: FreeOptionsReport): string {
+  const reading = report.quotaReading
+  return !reading || reading.source === 'none' || reading.state === 'unknown'
+    ? 'Configured keys and public listings do not verify your account quota'
+    : `${quotaCaveat(report)} (source: ${reading.source})`
+}
+
 /** Render the agent-answerable markdown reference. */
 export function renderFreeOptionsMarkdown(report: FreeOptionsReport): string {
   const lines: string[] = []
@@ -15,7 +38,7 @@ export function renderFreeOptionsMarkdown(report: FreeOptionsReport): string {
     `fetchedAt: ${report.fetchedAt ?? 'n/a'}${report.stale ? ' (**STALE** — older than 24h; run `/provider free` to refresh)' : ''}`,
   )
   lines.push('')
-  lines.push('## Wired — advertised free models; account access unverified')
+  lines.push(`## Wired — ${freeClaimCaveat(report)}; account access unverified`)
   lines.push('')
   if (report.wiredFree.length === 0) {
     lines.push('_No configured provider exposes models in the free catalog._')
@@ -57,7 +80,7 @@ export function renderFreeOptionsMarkdown(report: FreeOptionsReport): string {
   for (const offer of report.discoveryOffers ?? [])
     lines.push(`- Discovery: ${offer} (source: custats free-token feed)`)
   lines.push(
-    'Configured keys and public listings do not verify your account quota. Local registration does not verify a running server.',
+    `${quotaFootnote(report)}. Local registration does not verify a running server.`,
   )
   return lines.join('\n')
 }
@@ -105,7 +128,7 @@ export function renderCommandOutput(report: FreeOptionsReport): string[] {
   for (const offer of report.discoveryOffers ?? [])
     lines.push(`- Discovery: ${offer} (source: custats free-token feed)`)
   lines.push(
-    'Configured keys and public listings do not verify account quota; local servers must be running.',
+    `${quotaFootnote(report)}; local servers must be running.`,
   )
   return lines
 }
@@ -139,13 +162,13 @@ export function renderFreeOptionsAnnounce(
   if (report.wiredFree.length > 0) {
     const labels = boundedLabels(report.wiredFree.map((lane) => lane.label))
     lines.push(
-      `- Wired & free: ${report.wiredFree.length} — ${labels} — advertised free models; account quota unverified`,
+      `- Wired & free: ${report.wiredFree.length} — ${labels} — ${freeClaimCaveat(report)}; ${quotaCaveat(report)}`,
     )
   }
   if (report.notWired.length > 0) {
     const labels = boundedLabels(report.notWired.map((lane) => lane.label))
     lines.push(
-`- Not wired: ${report.notWired.length} — ${labels} — each starts with /provider <name>`,
+      `- Not wired: ${report.notWired.length} — ${labels} — each starts with /provider <name>`,
     )
   }
   if (report.localFree.length > 0) {

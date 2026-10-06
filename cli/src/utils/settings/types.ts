@@ -69,7 +69,7 @@ export interface Settings {
   /** Set once the free-options discovery notice has been shown
    *  (FID-2026-1001-002). The one-line first-run notice only prints to users
    *  who have never seen it, then retires. */
-freeOptionsNoticeShown?: boolean
+  freeOptionsNoticeShown?: boolean
   /** Local calendar date (YYYY-MM-DD) the free-provider launch digest was
    *  last shown (FID-2026-1004-007). Gates the once-per-day boot digest. */
   freeOptionsDigestShownOn?: string

@@ -119,6 +119,8 @@ export interface RunnerConfig {
   agentDefinitions?: AgentDefinition[]
   /** Maximum agent steps allowed for a single run. */
   maxAgentSteps?: number
+  /** Explicit skill root so paired proof arms differ only by skill presence. */
+  skillsDir?: string
   /** Environment variables merged over the sandbox defaults. */
   env?: Record<string, string>
   /**
@@ -126,7 +128,7 @@ export interface RunnerConfig {
    * Eval runs default to 'safe' at the runner boundary so agent-generated
    * commands cannot take destructive host actions.
    */
-  permissionMode?: 'safe'
+  permissionMode?: 'safe' | 'unsafe'
   /** Custom tools exposed to the agent. */
   customToolDefinitions?: CustomToolDefinition[]
   /** Initial project files for the agent context. */

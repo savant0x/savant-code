@@ -1,10 +1,9 @@
 /**
  * FID-2026-0824-016/-018 production surface: the evals CLI `prove`
  * subcommand. Launches paired baseline/active trials through
- * `runSkillProve`, reusing ONLY existing machinery — `TempDirSandbox`,
- * `SavantAgentRunner`, and `DeterministicVerifier` — so a proof run measures
- * exactly what the benchmark measures (deterministic checks inside a
- * hardened tempdir, safe permission mode at the runner boundary).
+ * `runSkillProve`, using `TempDirSandbox`, `SavantAgentRunner`, and
+ * `DeterministicVerifier`. Dialogue trials use safe mode; execution trials
+ * expose only contained file tools inside a fresh temp directory.
  *
  * Exit semantics: 0 only when the artifact proves immutable eligibility
  * (`gate.eligible_for_immutable`). Any other outcome exits 1 so CI can gate
@@ -14,16 +13,16 @@
 
 import path from 'node:path'
 
+import { isValidSkillName } from '@savant-code/common/constants/skills'
 import { loadLocalAgents } from '@savant-code/sdk'
 
 import { loadTaskRegistry } from '../registry'
+import { buildProductionTrialRunner } from './production-trial-runner'
+import { defaultJudge } from './skill-judge'
 import { runSkillProve } from './skill-prove'
-import { SavantAgentRunner } from '../runners/savant'
-import { TempDirSandbox } from '../sandboxes/tempdir'
-import { DeterministicVerifier } from '../verify'
+import { loadBehavioralCase } from '../skill-evals/behavioral'
 
 import type { TaskDefinition } from '../schema'
-import type { TrialRunResult } from './skill-prove'
 import type { ZtapMode, SkillProofArtifact } from '../stats/skill-efficacy'
 import type { AgentDefinition } from '@savant-code/sdk'
 
@@ -55,6 +54,8 @@ export interface ProveCliOptions {
 export interface ProveCommandDeps {
   loadRegistry: (tasksDir: string) => Promise<Record<string, TaskDefinition>>
   loadAgentDefinitions: () => Promise<AgentDefinition[]>
+  loadBehavioralCase: typeof loadBehavioralCase
+  judge?: (prompt: string, signal: AbortSignal) => Promise<string>
   runProve: typeof runSkillProve
 }
 
@@ -149,42 +150,6 @@ export function parseProveArgs(argv: string[]): ProveCliOptions {
   }
 }
 
-/**
- * Production trial runner over the EXISTING benchmark stack: hardened
- * tempdir sandbox + SDK runner + deterministic checks. One isolated trial
- * per invocation; teardown always runs (fail-fast propagates afterwards).
- */
-function buildProductionTrialRunner(
-  task: TaskDefinition,
-  opts: ProveCliOptions,
-  agentDefinitions: AgentDefinition[],
-): (trial: {
-  arm: 'baseline' | 'active'
-  index: number
-}) => Promise<TrialRunResult> {
-  return async ({ arm }) => {
-    const sandbox = new TempDirSandbox({ prefix: `savant-prove-${arm}-` })
-    const runner = new SavantAgentRunner()
-    await sandbox.prepare()
-    try {
-      await runner.initialize({
-        task,
-        sandbox,
-        agentId: opts.agentId,
-        agentDefinitions,
-        maxAgentSteps: opts.maxAgentSteps,
-      })
-      await runner.executePrompt(task.inputs.prompt)
-      const trace = runner.collectTrace()
-      const verification = await new DeterministicVerifier(sandbox).verify(task)
-      console.log(`[${arm}] verification: ${verification.status}`)
-      return { exitOk: verification.passed, trace }
-    } finally {
-      await sandbox.teardown()
-    }
-  }
-}
-
 function printSummary(
   artifact: SkillProofArtifact,
   artifactPath: string,
@@ -232,10 +197,12 @@ export async function runProveCommand(
   deps: ProveCommandDeps = {
     loadRegistry: loadTaskRegistry,
     loadAgentDefinitions: defaultLoadAgentDefinitions,
+    loadBehavioralCase,
     runProve: runSkillProve,
   },
 ): Promise<{ artifactPath: string; exitCode: number }> {
   const opts = parseProveArgs(argv)
+  if (!isValidSkillName(opts.skillName)) throw new Error('Invalid skill name')
 
   const registry = await deps.loadRegistry(opts.tasksDir)
   const task: TaskDefinition | undefined = registry[opts.taskId]
@@ -247,6 +214,15 @@ export async function runProveCommand(
   }
 
   const agentDefinitions = await deps.loadAgentDefinitions()
+  const behavioral = deps.loadBehavioralCase(opts.projectRoot, opts.skillName, opts.taskId)
+  if (behavioral.kind === 'execution') {
+    const setupFiles = new Set(task.environment.setup_files ?? [])
+    for (const file of behavioral.files) {
+      if (!setupFiles.has(file)) throw new Error(`Behavioral fixture '${file}' is absent from task setup_files`)
+    }
+  }
+  const judge = deps.judge ?? ((prompt: string, signal: AbortSignal) =>
+    defaultJudge(prompt, signal, opts.agentId, agentDefinitions))
   console.log(
     `Proving skill '${opts.skillName}' on task '${opts.taskId}' — ${opts.trialsPerArm} trial(s) per arm…`,
   )
@@ -261,7 +237,7 @@ export async function runProveCommand(
     ...(opts.maxAgentSteps !== undefined
       ? { maxAgentSteps: opts.maxAgentSteps }
       : {}),
-    runTrial: buildProductionTrialRunner(task, opts, agentDefinitions),
+    runTrial: buildProductionTrialRunner(task, opts, agentDefinitions, behavioral, judge),
   })
 
   printSummary(artifact, artifactPath)

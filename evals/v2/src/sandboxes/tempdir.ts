@@ -88,6 +88,7 @@ export class TempDirSandbox implements Sandbox {
   }
 
   async prepare(): Promise<void> {
+    if (this.workingDir) return
     this.workingDir = await mkdtemp(path.join(tmpdir(), this.prefix))
   }
 

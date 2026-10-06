@@ -227,5 +227,4 @@ describe('Subagent Streaming', () => {
     expect(firstCall.userInputId).toBe('test-input')
     expect(secondCall.userInputId).toBe('test-input')
   })
-
 })

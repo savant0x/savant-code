@@ -182,4 +182,49 @@ export const PROVIDER_REGISTRY_PARTITION_2 = {
     domain: 'intern-ai.org.cn',
     order: 4,
   },
+  chatanywhere: {
+    id: 'chatanywhere',
+    label: 'ChatAnywhere',
+    kind: 'gateway',
+    credentials: {
+      envVar: 'CHATANYWHERE_API_KEY',
+      // /provider hint is part of the canonical message.
+      missingKeyMessage:
+        'ChatAnywhere API key not set. Set CHATANYWHERE_API_KEY environment variable or run /provider chatanywhere.',
+    },
+    // chatanywhere.tech — OpenAI-compatible gateway (docs.chatanywhere.tech).
+    // Live probes 2026-10-05 (FID-2026-1005-010): GET /v1/models -> 200 /
+    // 30 rows (row shape id/object/created/owned_by — NO window fields);
+    // POST /v1/chat/completions -> 200 round-trip on gpt-5.6-sol ("pong",
+    // usage 11/4/15). Free-key tier: 10,000 points/day, refreshed daily
+    // (chatanywhere/gpt_api_free).
+    baseUrl: 'https://api.chatanywhere.tech/v1',
+    protocol: 'openai',
+    // Upstream ids are bare (`gpt-5.6-sol`); `strip` removes only the
+    // internal `chatanywhere/` routing prefix — the intern/atria precedent.
+    idTransform: 'strip',
+    // STATIC 27-model chat allowlist (FID-2026-1005-010): the roster is
+    // small and audited (30 rows observed 2026-10-05; the 3 text-embedding-*
+    // ids excluded as non-chat) and the gateway publishes no window fields,
+    // so a checked-in set with exact-id fallback rows is the source of truth
+    // (the intern precedent).
+    catalog: {
+      source: 'static',
+      modelsRef: 'chatanywhere',
+      // FID-2026-1005-009: the roster size is a verified figure — observed
+      // through the authenticated /v1/models live probe (the record FID
+      // names the witness). One entry demonstrates the evidence classes;
+      // pre-existing facts stay unannotated (grandfathered).
+      evidence: {
+        class: 'console-verified',
+        source:
+          'GET https://api.chatanywhere.tech/v1/models (auth) — 30 rows observed 2026-10-05, 3 text-embedding-* ids excluded as non-chat',
+        verified: '2026-10-05',
+        witness: 'FID-2026-1005-010 live-probe receipt',
+      },
+    },
+    setupAvailable: true,
+    domain: 'chatanywhere.tech',
+    order: 4,
+  },
 } as const satisfies Record<string, ProviderConfig>

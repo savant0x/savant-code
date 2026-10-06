@@ -1,0 +1,28 @@
+{
+  "skillName": "coding-go",
+  "descriptionSha256": "1f2a318283c762311b9560e5bd2ea8400f08553820961a87b0ff3f86bf2858a5",
+  "trigger": {
+    "positive": [
+      { "prompt": "naming and error handling conventions for this Go module", "topK": 1 },
+      { "prompt": "concurrency patterns for this Go worker pool — channel or mutex?" },
+      { "prompt": "how should this Go function return and wrap errors?" }
+    ],
+    "negative": [
+      { "prompt": "rust ownership and lifetime patterns for this struct", "owner": "coding-rust" },
+      { "prompt": "java exception hierarchy for this parser", "owner": "coding-java" }
+    ]
+  },
+  "behavioral": [
+    {
+      "id": "context-error-review",
+      "taskId": "skill-dialogue",
+      "kind": "dialogue",
+      "prompt": "Review this Go worker: func run() { go func() { _, _ = fetch() }() }. Explain how to make cancellation and errors observable and show a short corrected outline.",
+      "expectedOutput": "A Go-specific correction for goroutine lifecycle and errors.",
+      "expectations": [
+        "Passes a context into the worker or fetch path and makes the goroutine lifecycle bounded.",
+        "Checks the returned error and wraps it with context using %w when returning it."
+      ]
+    }
+  ]
+}

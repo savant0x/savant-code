@@ -160,6 +160,11 @@ describe('runProveCommand (production prove caller)', () => {
     return {
       loadRegistry: async () => registry,
       loadAgentDefinitions: async () => [],
+      loadBehavioralCase: () => ({
+        id: 'fixture', taskId: 'proof-demo', kind: 'dialogue',
+        prompt: 'use the skill', expectedOutput: 'a useful answer',
+        files: [], expectations: ['The answer follows the skill.'],
+      }),
       runProve: async (params) => {
         captured.params = { ...params }
         return {

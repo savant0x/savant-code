@@ -2,7 +2,11 @@ import { useKeyboard } from '@opentui/react'
 import { useCallback, useEffect, useMemo, useRef } from 'react'
 
 import { buildGroupedItems, type ListItem } from './model-picker-grouping'
-import { ModelPickerHeaderRow, ModelPickerModelRow } from './model-picker-rows'
+import {
+  ModelPickerHeaderRow,
+  ModelPickerKeyRow,
+  ModelPickerModelRow,
+} from './model-picker-rows'
 import { getPickerViewport, normalizeSelectableIndex } from './picker-viewport'
 import { createChatScrollbarOptions } from '../chat/styles'
 import { useTerminalDimensions } from '../hooks/use-terminal-dimensions'
@@ -26,7 +30,8 @@ interface ModelPickerProps {
  * Interactive, searchable model picker for the /model command.
  *
  * - Filters the FULL live catalog by substring (id or name) — no truncation.
- * - Groups models by provider with section headers.
+ * - Groups models by provider with section headers; free-related entries
+ *   hoist into a FREE KEY section with the blank key placeholder row.
  * - Shows a provider badge for every model.
  * - Arrow / Tab navigation with a viewport that keeps the focus in view.
  * - Enter (or click) selects; Escape closes.
@@ -241,8 +246,17 @@ export const ModelPicker: React.FC<ModelPickerProps> = ({
           if (item.type === 'header') {
             return (
               <ModelPickerHeaderRow
-                key={`header-${item.provider}`}
-                provider={item.provider}
+                key={`header-${item.provider ?? item.label}`}
+                label={item.label}
+                theme={theme}
+              />
+            )
+          }
+          if (item.type === 'key') {
+            return (
+              <ModelPickerKeyRow
+                key={`key-${item.envVar}`}
+                item={item}
                 theme={theme}
               />
             )

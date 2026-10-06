@@ -1,0 +1,28 @@
+{
+  "skillName": "coding-rust",
+  "descriptionSha256": "0851adc8f527394d3614e938f025fdf24d64509642bdb98a65345530620722d4",
+  "trigger": {
+    "positive": [
+      { "prompt": "ownership patterns for this rust struct holding a Vec and a closure", "topK": 1 },
+      { "prompt": "naming conventions for this rust crate — errors module layout?" },
+      { "prompt": "error handling patterns for this rust io helper" }
+    ],
+    "negative": [
+      { "prompt": "go concurrency for the queue consumer", "owner": "coding-go" },
+      { "prompt": "python naming for the test fixtures", "owner": "coding-python" }
+    ]
+  },
+  "behavioral": [
+    {
+      "id": "result-ownership-review",
+      "taskId": "skill-dialogue",
+      "kind": "dialogue",
+      "prompt": "Review this Rust helper in production code: fn read_name(path: String) -> String { std::fs::read_to_string(path).unwrap() }. Show a corrected signature and body outline.",
+      "expectedOutput": "A Rust-specific correction for ownership and recoverable errors.",
+      "expectations": [
+        "Returns a Result and propagates the I/O error instead of calling unwrap.",
+        "Borrows the path where practical rather than consuming an owned String unnecessarily."
+      ]
+    }
+  ]
+}

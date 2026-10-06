@@ -79,10 +79,7 @@ describe('init — .agents/types scaffold end to end', () => {
   const projects: string[] = []
   let previousProjectRoot: string | undefined
 
-  const runInit = (
-    project: string,
-    options?: { force?: boolean },
-  ): string => {
+  const runInit = (project: string, options?: { force?: boolean }): string => {
     previousProjectRoot = tryGetProjectRoot()
     setProjectRoot(project)
     const { postUserMessage } = handleInitializationFlowLocally(options)
@@ -166,7 +163,10 @@ describe('init — .agents/types scaffold end to end', () => {
       path.join(scaffoldDir, 'tools.ts'),
       '// stale pre-decomposition hub\n',
     )
-    writeFileSync(path.join(scaffoldDir, 'user-notes.ts'), '// operator-added\n')
+    writeFileSync(
+      path.join(scaffoldDir, 'user-notes.ts'),
+      '// operator-added\n',
+    )
     const knowledgePath = path.join(project, KNOWLEDGE_FILE_NAME)
     writeFileSync(knowledgePath, '# my knowledge\n')
 

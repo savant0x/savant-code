@@ -62,7 +62,28 @@
 
 ## Open items
 
-**Three** items are open.
+**Eight** items are open.
+(2026-10-05 (in-pass fix, per "NOTHING IS EVER OUT OF SCOPE"): the
+`validate:repository` run during the FID-drafting pass returned 1 issue,
+none from the FIDs — `quality.ratchet`:
+`scripts/__tests__/lessons-to-skills.test.ts` at 327 lines exceeded the
+300-line absolute maximum (growth from the in-flight worktree changes).
+**Automation level: 3.** Completed in the same pass on the
+FID-2026-0914-001 split precedent: the `draftCandidates` block and its
+fixture helpers moved verbatim to
+`scripts/__tests__/lessons-to-skills-drafting.test.ts` (self-contained,
+header noting the cap), import trimmed accordingly; both suites re-run
+green and `validate:repository` restored to PASS below. The item is
+completed, so it holds no open box here — its evidence is this note and
+the two suite outputs.
+(2026-10-05 (reference-project review): T138–T142 registered — the
+operator-directed top-5 impact review of the vendored reference projects in
+`resources/` produced five improvement records, drafted at `created` this
+session per the operator directive "Draft FIDs for the top 5 ideas, ranked,
+following the FID template": `FID-2026-1005-005` through
+`FID-2026-1005-009`, one per item below. Perfection Loop convergence and
+implementation follow the FID lifecycle; the items below hold that pending
+work.)
 (2026-10-03 (decision digest): the failure behind FID-2026-1003-007 —
 register items sat `**Blocker:** operator ruling` for weeks because nothing
 PRESENTED them — was fixed the same day. Every pending decision was
@@ -320,6 +341,87 @@ T90-F3 was resolved by the operator ruling "T90-F3 residual needs no code"
       **Blocker:** operator credits/keys — tokenharbor allowance reset and
       tokenrouter top-up, both external to the repository.
 
+- [ ] **T145. `website/` deliberate project root — awaiting operator
+      commit.** **Automation level: 3** (registration only; the git action
+      is operator-owned, G1). Operator ruling 2026-10-05 (structured
+      question): "Leave as deliberate root" — the new top-level `website/`
+      tree (one 48 KB `index.html`, created 2026-10-05 18:47) is intended
+      project work, not a vendored foreign tree. `scripts/audit-vendored-tree.ts`
+      accepts any root once it carries tracked content — the check is
+      self-maintaining by design (no allowlist exists or is wanted).
+      **Blocker:** the operator's deliberate `git add`/commit of `website/`;
+      until then `bun run validate:repository` reports exactly this one
+      `vendored.tree.foreign-root` issue — attributable to T145, not to the
+      T144 work.
+
+- [ ] **T144. ChatAnywhere provider + free-key star marking.**
+      **Automation level: 3.** `FID-2026-1005-010` drafted at `created`
+      2026-10-05 (now `verified`) per operator directive "Read over
+      adding a provider. I want
+      to add https://chatanywhere.tech/pricing, then in the model page, a
+      special section with the 'free key', lets add a star or something for
+      those entries. Add a blank key entry and we'll test gpt5.6 sol - this
+      needs a fid though" (+ "i added the key under
+      CHATANYWHERE_API_KEY"). Design rulings recorded verbatim in the FID:
+      blank key entry = placeholder row for the free key; star = reusable
+      predicate ("free" in the name OR from the free-key provider) applied
+      to all free options. Live evidence already green (2026-10-05):
+      `/v1/models` 200/30 rows, `gpt-5.6-sol` completion 200 "pong".
+      **Implemented + verified 2026-10-05** (FID status `verified`, receipt
+      stamped): registry entry + static 27-model catalog + table-section
+      window seam (13 cross-gateway rows), `cli/src/utils/free-badge.ts`
+      marker, FREE KEY section with blank key row on the model page, 13
+      hand-maintained doc surfaces synced (`generate:provider-docs:check`
+      clean). All gates green. Awaiting operator archive/closure (G1:
+      nothing committed).
+
+- [ ] **T139. Provider failure classification + bounded-probe circuit
+      breaker.** **Automation level: 3.** `FID-2026-1005-006` converged
+      2026-10-05 (drafted at `created` same day) from the
+      reference-project review: classify every
+      provider failure (transient / administrative / unknown) before any
+      retry decision, add a per-provider breaker (`closed` / `open` /
+      `half_open`) whose cooldown schedules one bounded probe, and validate
+      retry-policy shape at load time so a mis-shaped policy can never
+      produce non-finite backoff. Sources:
+      `resources/OmniRoute-v3.8.51/docs/OMNIROUTE_PROVIDER_FAILOVER.md`,
+      `resources/dsh-our-free-model-main/README.md` (measured 429 and
+      policy-shape failures). Perfection Loop converged 2026-10-05
+      (GREEN design grounded in the live retry/quota seams; audit corrected
+      the `quotaEpisode` overclaim); implementation verified 2026-10-06
+      (5/5 declared gates pass). Awaiting G2 commit authority and archive.
+
+- [ ] **T141. Availability verdict taxonomy + truthful quota states.**
+      **Automation level: 3.** `FID-2026-1005-008` verified 2026-10-05 (converged,
+      then implemented + receipt stamped same day)
+      from the reference-project review: separate provider
+      verdicts (declared-not-routed, reason recorded) from gateway faults
+      (5xx / 429 / timeout / parse — never a verdict) and eligibility-gated
+      models; five-state quota enum where `unknown` is never `exhausted`
+      and never disables a lane; notification preconditions
+      (`quota-exhausted` requires an observed zero, `quota-recovered`
+      requires a prior recorded exhaustion). Sources:
+      `resources/dsh-our-free-model-main/README.md`,
+      `resources/OmniRoute-v3.8.51/docs/OMNIROUTE_QUOTA_TELEMETRY.md`.
+      Perfection Loop converged 2026-10-05 (source-absent → `unknown` vs
+      source-down → `unavailable` split recorded); implementation verified
+      2026-10-06 (10/10 declared gates pass). Awaiting G2 commit authority
+      and archive.
+
+- [ ] **T142. Evidence-classed provider facts + docs-count drift gate.**
+      **Automation level: 3.** `FID-2026-1005-009` verified 2026-10-05 (converged,
+      then implemented + receipt stamped same day)
+      from the reference-project review: provenance metadata
+      (evidence class + source + verification date) on fact-bearing
+      registry entries, a changed-fact-without-evidence rule inside
+      `validateProviderRegistry`, and a recompute gate that fails the build
+      when numeric prose claims drift from the registry. Source:
+      `resources/OmniRoute-v3.8.51/docs/reference/FREE_TIERS.md`
+      (`// evidence:` classes + `check:docs-counts`). Perfection Loop
+      converged 2026-10-05 (baseline-diff rule proven against edited
+      entries); implementation verified 2026-10-06 (7/7 declared gates pass,
+      including the live drift probe). Awaiting G2 commit authority and archive.
+
 ### Harness and process
 
 - [ ] **T122. Savant-free feature disposition (operator-owned).** Operator
@@ -337,6 +439,27 @@ T90-F3 was resolved by the operator ruling "T90-F3 residual needs no code"
       surfaces — disposition (repair or removal) is a dedicated
 operator-directed session. **Automation level: 1** (no agent action;
       the e2e failures are known and operator-owned until then).
+
+- [ ] **T138. Three-tier skill evals — structural, trigger-routing,
+      behavioral.** **Automation level: 3.** `FID-2026-1005-005` implemented
+      and verified 2026-10-06: all 11 trusted skills have behavioral rubrics;
+      structural and routing tiers pass offline; paired behavioral trials
+      support dialogue and constrained file execution; description hashes
+      gate trust; rejected changes record paired scores. All 11 declared
+      gates pass. Awaiting G2 commit authority and archive.
+
+- [ ] **T140. Bounded stream recovery for truncated long-reasoning turns.**
+      **Automation level: 3.** `FID-2026-1005-007` converged 2026-10-05 (drafted at `created` same day)
+      from the reference-project review: when a gateway cuts a
+      stream mid-reasoning, one bounded recovery request (checkpoint-seeded,
+      tools disabled, at most two physical requests per logical turn, hard
+      budgets, no infinite continuation) rescues the turn; accounting
+      separates physical requests from logical turns. Source:
+      `resources/dsh-our-free-model-main/README.md` (issue #12). Perfection
+      Loop converged 2026-10-05 (caps as named constants beside
+      `native-strikes.ts` precedent; accounting seams grounded to
+      `reconcile-token-count.ts`); implementation verified 2026-10-06
+      (4/4 declared gates pass). Awaiting G2 commit authority and archive.
 
 ## Machine-readable scope targets
 
@@ -362,3 +485,33 @@ operator-directed session. **Automation level: 1** (no agent action;
   gateway-side; the local write surface is the probe scripts — verified
   2026-10-02: no local catalog directory exists)
 - T122: (no write surface — operator-owned)
+- T145: (no write surface — operator-owned git action)
+- T144: `common/src/providers/**`, `common/src/constants/**`,
+  `cli/src/components/model-picker*`, `cli/src/utils/free-badge.ts`,
+  `cli/src/utils/openrouter-models/**`, `docs/providers.md`, `README.md`,
+  `README.zh-CN.md`, `cli/release/README.md`, `docs/index.md`,
+  `docs/sdk-overview.md`, `docs/installation.md`, `docs/features.md`,
+  `dev/fids/**`
+- T138: `evals/**`, `scripts/skills-check*`,
+  `common/src/util/skill-management/**`, `common/src/util/skill-trigger-cases.ts`,
+  `cli/src/commands/skills.ts`, `cli/src/commands/skills-impact-ledger.ts`,
+  `cli/src/commands/__tests__/skills-command.test.ts`,
+  `scripts/lessons-to-skills.ts`
+- T139: `packages/agent-runtime/src/**`,
+  `common/src/providers/provider-quota-policy.ts`
+- T140: `packages/agent-runtime/src/**`
+- T141: `common/src/providers/**`, `cli/src/utils/free-options-render.ts`,
+  `cli/src/utils/discovery-inbox.ts`, `cli/src/utils/free-options.ts`,
+  `cli/src/utils/free-options-types.ts`, `cli/src/utils/__tests__/free-options.test.ts`,
+  `cli/src/utils/provider-quota-monitor.ts`, `cli/src/utils/__tests__/provider-monitoring.test.ts`,
+  `cli/src/components/model-picker-grouping.ts`,
+  `cli/src/components/__tests__/model-picker-free-section.test.ts`,
+  `packages/agent-runtime/src/provider-boundary/**`,
+  `packages/agent-runtime/src/prompt-agent-stream.ts`,
+  `packages/agent-runtime/src/__tests__/prompt-agent-stream-forwarding.test.ts`
+- T142: `common/src/providers/types.ts`, `common/src/providers/validate.ts`,
+  `scripts/generate-provider-reference.ts`, `scripts/provider-docs-drift.ts`,
+  `scripts/__tests__/provider-docs-counts-drift.test.ts`, `docs/providers.md`,
+  `package.json`, `scripts/provider-docs-counts-drift.ts`,
+  `cli/src/utils/free-options-types.ts`, `cli/src/utils/free-options.ts`,
+  `cli/src/utils/free-options-render.ts`, `cli/src/utils/__tests__/free-options.test.ts`

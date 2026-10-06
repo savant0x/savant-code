@@ -1,3 +1,17 @@
+import { recordModelAvailability } from '@savant-code/common/providers/availability-state'
+import { classifyAvailabilityObservation } from '@savant-code/common/providers/availability-verdict'
+
+import { explicitModelRejection } from './provider-boundary/availability-observation'
+import { runWithClassifiedRetry } from './provider-boundary/classified-stream-retry'
+import { ClassifiedProviderError } from './provider-boundary/failure-class'
+import { providerCircuitBreakerFor } from './provider-boundary/provider-circuit-breaker'
+import { resolveRetryPolicy } from './provider-boundary/retry-policy'
+import { accumulateChunk } from './stream-recovery/outcome'
+import { runTurnWithRecovery } from './stream-recovery/recovery-executor'
+import { countTokens } from './util/token-counter'
+
+import type { ProviderCircuitBreaker } from './provider-boundary/provider-circuit-breaker'
+import type { StreamCloseKind } from './stream-recovery/outcome'
 import type { AgentTemplate } from './templates/types'
 import type { OpenRouterProviderOptions } from '@savant-code/common/types/agent-template'
 import type { TrackEventFn } from '@savant-code/common/types/contracts/analytics'
@@ -44,6 +58,10 @@ export const getAgentStreamFromTemplate = (params: {
   onCacheDebugUsageReceived?: (usage: CacheDebugUsageData) => void
 
   onCostCalculated?: (credits: number) => Promise<void>
+  /** FID-2026-1005-006: validated at call time (throws on shape mismatch). */
+  retryPolicy?: unknown
+  /** FID-2026-1005-006: per-provider breaker gating this boundary. */
+  circuitBreaker?: ProviderCircuitBreaker
   promptAiSdkStream: PromptAiSdkStreamFn
   sendAction: SendActionFn
   trackEvent: TrackEventFn
@@ -90,7 +108,9 @@ export const getAgentStreamFromTemplate = (params: {
     localAgentTemplates,
     maxOutputTokens: params.maxOutputTokens,
     contextWindow: params.contextWindow,
-    maxRetries: 3,
+    // FID-2026-1005-006: the classified boundary owns retries (see below),
+    // so the client's blind retry is disabled — never a uniform 3.
+    maxRetries: 0,
     messages,
     model,
     modelRoute: template.modelRoute,
@@ -124,5 +144,122 @@ export const getAgentStreamFromTemplate = (params: {
   // Pass agent's provider routing options to SDK
   aiSdkStreamParams.agentProviderOptions = template.providerOptions
 
-  return promptAiSdkStream(aiSdkStreamParams)
+  // FID-2026-1005-006: the policy is validated EAGERLY — a malformed shape
+  // fails at call time, loudly, before any request can observe a delay.
+  const policy = resolveRetryPolicy(params.retryPolicy)
+  const route = template.modelRoute
+  const connectionKey = route
+    ? `${route.providerId}:${route.authMode}:${route.configRevision ?? ''}:${route.accountRevision ?? ''}`
+    : `legacy:${clientSessionId}`
+  const breaker = params.circuitBreaker ?? providerCircuitBreakerFor(connectionKey)
+  const availabilityCallbacks = route ? {
+    onSuccess: () => recordModelAvailability(route.providerId, model,
+      classifyAvailabilityObservation({ bodyDecoded: true, httpStatus: 200, observedAt: Date.now() })),
+    onFailure: (verdict: { reason: string }, cause: unknown) => {
+      if (verdict.reason !== 'model-unavailable') return
+      const reason = explicitModelRejection(cause)
+      if (reason) recordModelAvailability(route.providerId, model,
+        classifyAvailabilityObservation({ bodyDecoded: true, rejected: { reason }, observedAt: Date.now() }))
+    },
+  } : {}
+  const startedAt = Date.now()
+  let physicalRequests = 0
+  const createPhysical = (request: ParamsOf<PromptAiSdkStreamFn>) => {
+    physicalRequests += 1
+    return promptAiSdkStream(request)
+  }
+
+  // Classify-then-decide at the boundary: the breaker gates every attempt
+  // and receives every classified outcome, and only zero-emission
+  // transient failures retry (429 at most once per turn).
+  const classifiedTurn = () =>
+    runWithClassifiedRetry({
+      policy: { ...policy, maxAttempts: Math.min(policy.maxAttempts, 2) },
+      breaker,
+      ...availabilityCallbacks,
+      create: () => createPhysical(aiSdkStreamParams),
+      onUnknownShape: (message) =>
+        logger.warn({ boundary: 'failure-class' }, message),
+    })
+
+  // FID-2026-1005-007: bounded stream recovery — exactly one recovery
+  // request for the reasoning-only truncation shape (checkpoint-seeded,
+  // tools disabled, hard budgets, physical/logical accounting).
+  return runTurnWithRecovery({
+    logicalTurnId: `${params.runId}:${params.userInputId}`,
+    originalInput: lastUserInput(params.messages),
+    create: classifiedTurn,
+    createRecovery: (request) =>
+      runWithClassifiedRetry({
+        policy: { ...policy, maxAttempts: 1 },
+        breaker,
+        ...availabilityCallbacks,
+        create: () =>
+          createPhysical({
+            ...aiSdkStreamParams,
+            signal: AbortSignal.any([
+              params.signal,
+              AbortSignal.timeout(request.segmentBudgetMs),
+            ]),
+            tools: {},
+            maxOutputTokens: request.outputCapTokens,
+            messages: [
+              ...aiSdkStreamParams.messages,
+              { role: 'user', content: [{ type: 'text', text: request.prompt }] },
+            ],
+          }),
+      }),
+    observeChunk: (turn, chunk) => accumulateChunk(turn, chunk),
+    closeKindOf: (error: unknown): StreamCloseKind => {
+      if (params.signal.aborted) return 'cancel'
+      if (error instanceof ClassifiedProviderError) {
+        if (error.cause instanceof Error && error.cause.name === 'AbortError')
+          return 'cancel'
+        return error.verdict.class === 'transient' ? 'thrown' : 'error'
+      }
+      return error instanceof Error && error.name === 'AbortError'
+        ? 'cancel'
+        : 'thrown'
+    },
+    onAccounting: (record) =>
+      logger.info(
+        {
+          logicalTurnId: record.logicalTurnId,
+          physicalRequestIndex: record.physicalRequestIndex,
+          recovered: record.recovered,
+          outcome: record.outcome,
+        },
+        'stream recovery accounting (physical requests vs logical turn)',
+      ),
+    // Conservative headroom: without a resolved output budget there is no
+    // proven headroom, so recovery stays off (the plan refuses to run).
+    canRecover: () => physicalRequests < 2,
+    physicalRequestCount: () => physicalRequests,
+    budget: (turn) => ({
+      elapsedMs: Date.now() - startedAt,
+      remainingTokenBudget: Math.min(
+        params.maxOutputTokens ?? 0,
+        Math.max(
+          0,
+          (params.contextWindow ?? 0) -
+            countTokens(JSON.stringify(aiSdkStreamParams.messages)) -
+            Math.ceil(turn.reasoning.length / 3),
+        ),
+      ),
+    }),
+  })
+}
+
+/** The turn's last user text — the recovery request's original input. */
+function lastUserInput(messages: Message[]): string {
+  for (let index = messages.length - 1; index >= 0; index--) {
+    const message = messages[index]
+    if (message?.role !== 'user') continue
+    const text = message.content
+      .filter((part) => part.type === 'text')
+      .map((part) => part.text)
+      .join('\n')
+    if (text) return text
+  }
+  return ''
 }

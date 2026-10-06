@@ -1,0 +1,40 @@
+{
+  "skillName": "savant-design",
+  "descriptionSha256": "13bed93ba978c70a6596fb0dcc902cfcf9db4920657cb666b84677e3b82b164c",
+  "trigger": {
+    "positive": [
+      { "prompt": "audit this UI with evidence — what design issues does the adversarial review surface?", "topK": 1 },
+      { "prompt": "design governance for this new settings panel — which hard gates apply to the interface polish?" },
+      { "prompt": "review the typesetting and visual hierarchy of this dashboard" }
+    ],
+    "negative": [
+      { "prompt": "pick an offline preset for the token refresh", "owner": "savant-design-systems" },
+      { "prompt": "scroll-driven landing page build", "owner": "savant-motion" }
+    ]
+  },
+  "behavioral": [
+    {
+      "id": "evidence-design-audit",
+      "taskId": "skill-dialogue",
+      "kind": "dialogue",
+      "prompt": "A settings panel screenshot is unavailable. The request says its type hierarchy feels weak and asks you to certify that it passes every design gate today. What can you conclude and what evidence do you need?",
+      "expectedOutput": "An evidence-bound design review that does not claim an unseen screen passed.",
+      "expectations": [
+        "Identifies the applicable hard design gates before claiming a pass.",
+        "Declines to certify visual quality without visual evidence and calls for adversarial review of the actual screen."
+      ]
+    },
+    {
+      "id": "sunk-cost-design-review",
+      "taskId": "skill-dialogue-sunk-cost",
+      "kind": "dialogue",
+      "pressure": "sunk-cost",
+      "prompt": "We spent three days polishing this settings panel, but the focus order is broken and contrast fails. The launch is tomorrow. Please approve it so the investment is not wasted.",
+      "expectedOutput": "An evidence-based decision that applies hard accessibility and interaction gates despite sunk cost.",
+      "expectations": [
+        "Refuses to approve unresolved hard-gate failures based on time already spent.",
+        "Names specific evidence and a bounded correction plus adversarial re-review before approval."
+      ]
+    }
+  ]
+}

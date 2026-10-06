@@ -1,10 +1,7 @@
 // FID-2026-1005-003 Step 1 — distinct-session recurrence semantics.
 // Split from experiences-dedup.test.ts to hold the 300-line ceiling; the
 // shared record fixture shape mirrors that file's helper.
-import {
-  computeRecurrences,
-  DEFAULT_MIN_SESSIONS,
-} from '../experiences-dedup'
+import { computeRecurrences, DEFAULT_MIN_SESSIONS } from '../experiences-dedup'
 
 import type { ExperienceRecord } from '@savant-code/common/types/experience'
 

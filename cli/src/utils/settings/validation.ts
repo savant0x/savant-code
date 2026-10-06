@@ -102,7 +102,7 @@ export const validateSettings = (parsed: JSONValue): Settings => {
 
   // Validate analyticsNoticeShown
   if (typeof obj.analyticsNoticeShown === 'boolean') {
-settings.analyticsNoticeShown = obj.analyticsNoticeShown
+    settings.analyticsNoticeShown = obj.analyticsNoticeShown
   }
 
   // Validate freeOptionsNoticeShown (FID-2026-1001-002)

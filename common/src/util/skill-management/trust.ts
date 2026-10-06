@@ -6,6 +6,8 @@
 import * as fs from 'node:fs'
 import * as path from 'node:path'
 
+import matter from 'gray-matter'
+
 import { readBaselineSha } from './baseline-sha'
 import { appendLedgerEntry, nextLedgerSeq, readSkillFile } from './helpers'
 import { currentVersionOf } from './mutations'
@@ -16,6 +18,8 @@ import {
 } from './paths'
 import { SKILL_FILE_NAME, isValidSkillName } from '../../constants/skills'
 import { hashChange } from '../../crypto/hash'
+import { SkillFrontmatterSchema } from '../../types/skill'
+import { descriptionSha256, skillCaseSchema } from '../skill-trigger-cases'
 
 import type { SkillManageResult } from './types'
 
@@ -79,13 +83,28 @@ export function rollbackDraft(params: {
 export function trustSkill(
   rootDir: string,
   name: string,
-  context: { sessionId?: string; reason?: string } = {},
+  context: { sessionId?: string; reason?: string; triggerCasesDir?: string } = {},
 ): SkillManageResult {
   if (!isValidSkillName(name))
     return { ok: false, error: `invalid skill name: ${name}` }
   const draftDir = skillQuarantineDir(rootDir, name)
   const draft = readSkillFile(draftDir)
   if (!draft) return { ok: false, error: `no quarantined draft '${name}'` }
+  if (context.triggerCasesDir !== undefined) {
+    const frontmatter = SkillFrontmatterSchema.safeParse(matter(draft.content).data)
+    if (!frontmatter.success) return { ok: false, error: `skill frontmatter invalid for '${name}'` }
+    const caseFile = path.join(context.triggerCasesDir, `${name}.json`)
+    let raw: unknown
+    try {
+      raw = JSON.parse(fs.readFileSync(caseFile, 'utf8'))
+    } catch {
+      return { ok: false, error: `trigger cases missing or unreadable for '${name}': ${caseFile}` }
+    }
+    const cases = skillCaseSchema.safeParse(raw)
+    if (!cases.success || cases.data.skillName !== name || cases.data.descriptionSha256 !== descriptionSha256(frontmatter.data.description)) {
+      return { ok: false, error: `trigger cases invalid for '${name}': require matching skillName and description hash, at least 3 positive and 2 negative prompts` }
+    }
+  }
   const liveDir = skillCanonicalDir(rootDir, name)
   const liveBefore = readSkillFile(liveDir)
 

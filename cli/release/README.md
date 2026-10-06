@@ -54,6 +54,7 @@ Or select one of the supported gateway providers directly:
 | Atria AI | `/provider atria` or `DIRECT_PROVIDER=atria` | `ATRIA_API_KEY` | Hosted gateway |
 | B.AI | `/provider bai` or `DIRECT_PROVIDER=bai` | `BAI_API_KEY` | OpenAI-compatible gateway with an authenticated live model catalog |
 | BazaarLink | `/provider bazaarlink` or `DIRECT_PROVIDER=bazaarlink` | `BAZAARLINK_API_KEY` | Hosted gateway |
+| ChatAnywhere | `/provider chatanywhere` or `DIRECT_PROVIDER=chatanywhere` | `CHATANYWHERE_API_KEY` | Hosted gateway |
 | Clean APIs | `/provider cleanapis` or `DIRECT_PROVIDER=cleanapis` | `CLEANAPIS_API_KEY` | Hosted gateway |
 | Cloudflare | `/provider cloudflare` or `DIRECT_PROVIDER=cloudflare` | `CLOUDFLARE_API_TOKEN` + `CLOUDFLARE_ACCOUNT_ID` | Workers AI gateway; the `/provider` flow prompts for the token, then the account id (env vars take precedence) |
 | CodeCraft API | `/provider codecraft` or `DIRECT_PROVIDER=codecraft` | `CODECRAFT_API_KEY` | Hosted gateway |
@@ -172,6 +173,7 @@ AI_GATEWAY_API_KEY=dummy-ai-gateway-key-replace-me
 CLEANAPIS_API_KEY=dummy-cleanapis-api-key-replace-me
 CODECRAFT_API_KEY=dummy-codecraft-api-key-replace-me
 XKIRO_API_KEY=dummy-xkiro-api-key-replace-me
+CHATANYWHERE_API_KEY=dummy-chatanywhere-api-key-replace-me
 # Cloudflare needs TWO credentials (token + account id):
 CLOUDFLARE_API_TOKEN=cloudflare-dummy-replace-me
 CLOUDFLARE_ACCOUNT_ID=cloudflare-account-dummy-replace-me
