@@ -1,10 +1,11 @@
 import {
   createSession,
-  getSession as _getSession,
+  getSession,
   updateSession,
   updateSessionModel,
   createMessage,
-  getMessagesBySessionId,
+  getInContextMessages,
+  getEntriesByKind,
   createCostRecord,
   getCostsBySessionId,
   getTotalCostBySessionId,
@@ -15,6 +16,11 @@ import {
   updateFidDocument,
 } from '@savant-code/database/service'
 
+import {
+  writeCompactionLabel,
+  writeModelChangeEntries,
+  writeSteeringOverrideAudits,
+} from './entry-writers'
 import { logger } from './logger'
 
 import type { ChatMessage } from '../types/chat'
@@ -59,6 +65,13 @@ export function saveChatStateToDb(
         session = existingSessions[0]
         updateSession(session.id, runState.sessionState)
         if (selectedModel) {
+          // FID-2026-1006-003 WP5: audit an ACTUAL change. This save runs after
+          // every turn, so writing unconditionally would stamp the unchanged
+          // model on every save instead of recording one mid-session change.
+          const previousModel = getSession(session.id)?.selected_model ?? ''
+          if (previousModel !== '' && previousModel !== selectedModel) {
+            writeModelChangeEntries(session.id, previousModel, selectedModel)
+          }
           updateSessionModel(session.id, selectedModel)
         }
       } else {
@@ -78,6 +91,33 @@ export function saveChatStateToDb(
     if (session && messages.length > 0) {
       for (const message of messages) {
         createMessage(session.id, message.variant, message.content, message.id)
+      }
+    }
+    // FID-2026-1006-003 WP5: the tool executor has no database access, so a
+    // steering override rides on agentState until this save drains it into a
+    // durable `custom` entry. The list clears only after the writes, so a
+    // failed write leaves the record for the next save instead of dropping it.
+    const mainAgentState = runState.sessionState?.mainAgentState
+    const auditedOverrides = mainAgentState?.pendingSteeringOverrideAudits
+    if (
+      session &&
+      mainAgentState &&
+      auditedOverrides &&
+      auditedOverrides.length > 0
+    ) {
+      writeSteeringOverrideAudits(session.id, auditedOverrides)
+      mainAgentState.pendingSteeringOverrideAudits = []
+    }
+    // FID-2026-1006-003 WP5: a `label` bookmark at each COMPLETED compaction
+    // boundary. The runtime already counts every completed compaction on
+    // `compactionMetrics.events`, so comparing that count against the labels
+    // this session already carries makes the write idempotent — a re-save
+    // records only the newly completed boundaries, never a duplicate.
+    const compactionEvents = mainAgentState?.compactionMetrics?.events ?? 0
+    if (session && compactionEvents > 0) {
+      const recorded = getEntriesByKind(session.id, 'label').length
+      for (let n = recorded + 1; n <= compactionEvents; n += 1) {
+        writeCompactionLabel(`compaction boundary ${n}`, session.id)
       }
     }
     // FID-006 DB2: persist only the delta over the session's previous total;
@@ -132,7 +172,11 @@ export function loadChatStateFromDb(chatId: string): DbChatState | null {
       return null
     }
     const session = sessions[0]
-    const rawMessages = getMessagesBySessionId(session.id)
+    // FID-2026-1006-003 WP5: load only what belongs in the LLM context. Now
+    // that the entry-class writers exist, an audit/custom/label row carries
+    // `exclude_from_context`, and mapping EVERY row here would re-inject those
+    // audit rows into a resumed chat as if they were conversation turns.
+    const rawMessages = getInContextMessages(session.id)
     const messages: ChatMessage[] = rawMessages.map((msg) => ({
       id: msg.id,
       variant: msg.role as ChatMessage['variant'],

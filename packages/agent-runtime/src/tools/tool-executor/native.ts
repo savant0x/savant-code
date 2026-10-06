@@ -96,8 +96,14 @@ export async function executeToolCall<T extends ToolName>(
       // FID-2026-1006-002 WP1: deterministic steering rules from the
       // project's `steering:` block, audited when a rule is overridden.
       getSteeringRules: () => getSteeringRules(hookProjectRoot),
+      // FID-2026-1006-003 WP5: an override is audited durably, not only to
+      // the log. This layer has no database access, so the record rides on
+      // agentState and the CLI's save path drains it into a `custom` entry.
       auditSteeringOverride: (record) => {
         logger.warn(record, 'steering: overridden by audited marker')
+        const audits = agentState.pendingSteeringOverrideAudits ?? []
+        audits.push({ ...record, at: Date.now() })
+        agentState.pendingSteeringOverrideAudits = audits
       },
     })
     for (const gate of gates) {

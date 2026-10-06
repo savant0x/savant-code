@@ -33,7 +33,10 @@ export {
 
 // FID-2026-0819-005 Loop 242: AgentState moved verbatim to
 // ./session-state-agent-state and re-exported — public surface unchanged.
-export type { AgentState } from './session-state-agent-state'
+export type {
+  AgentState,
+  SteeringOverrideAuditRecord,
+} from './session-state-agent-state'
 
 export const AgentOutputSchema = z.discriminatedUnion('type', [
   z.object({

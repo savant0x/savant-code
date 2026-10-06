@@ -21,6 +21,21 @@ import type {
 } from './session-state-records'
 import type { ProtocolVariant } from '../util/boot-contract'
 
+/**
+ * FID-2026-1006-003 WP5: one steering-rule override, as audited by the tool
+ * executor's steering gate. A structural twin of the runtime's
+ * `SteeringOverrideAudit` (common cannot import the runtime) with a capture
+ * time added, so the CLI can persist an orderable durable entry.
+ */
+export type SteeringOverrideAuditRecord = {
+  ruleId: string
+  reason: string
+  toolName: string
+  agentId: string
+  /** Capture time (ms) — orders the override against the session history. */
+  at: number
+}
+
 export type AgentState = {
   /**
    * @deprecated agentId is replaced by runId
@@ -186,6 +201,14 @@ export type AgentState = {
    * baked defaults (512 head / 256 tail chars).
    */
   digestCaps?: { headChars?: number; tailChars?: number }
+  /**
+   * FID-2026-1006-003 WP5: steering-rule overrides audited during this run,
+   * awaiting a durable entry. The tool executor has no database access, so it
+   * appends here and the CLI's save path drains the list into
+   * `createCustomEntry` rows (cli/src/utils/entry-writers.ts). The list is
+   * cleared on drain, so one override is recorded exactly once.
+   */
+  pendingSteeringOverrideAudits?: SteeringOverrideAuditRecord[]
   /**
    * FID-2026-0725-085: Resolved context window for this model.
    * Set by the CLI via CTX-007 wiring. Used by handleSteps to determine
