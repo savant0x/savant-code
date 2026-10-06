@@ -35,6 +35,7 @@ export {
 // ./session-state-agent-state and re-exported — public surface unchanged.
 export type {
   AgentState,
+  LoopStopReason,
   SteeringOverrideAuditRecord,
 } from './session-state-agent-state'
 

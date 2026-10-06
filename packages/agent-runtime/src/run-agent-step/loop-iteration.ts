@@ -66,7 +66,15 @@ export async function runLoopIteration(params: {
   loopParams: LoopAgentStepsParams
   state: LoopIterationState
   ctx: LoopIterationContext
-}): Promise<{ shouldContinue: boolean }> {
+}): Promise<{
+  shouldContinue: boolean
+  /**
+   * FID-2026-1006-003 WP3: the completed LLM step's tool-call signature, for
+   * the loop guard rails' `role:event` history. Absent when this iteration
+   * ended before an LLM step ran (nothing to record).
+   */
+  stepEvent?: string
+}> {
   const { loopParams, state, ctx } = params
   const {
     agentTemplate,
@@ -270,5 +278,11 @@ export async function runLoopIteration(params: {
 
   // FID-2026-0822-003: a hard post-terminal end must stop the caller even
   // if it only honors the returned flag.
-  return { shouldContinue: !boundary.hardEnd }
+  // FID-2026-1006-003 WP3: the step signature the runtime's anti-runaway
+  // guards already computed is reused as the guard rails' event, so "the same
+  // cycle repeating" means the same real tool calls repeating.
+  return {
+    shouldContinue: !boundary.hardEnd,
+    stepEvent: newAgentState.lastToolCallSignature ?? '',
+  }
 }

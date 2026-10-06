@@ -1,6 +1,12 @@
 import { isAbortError } from '@savant-code/common/util/error'
+import { userMessage } from '@savant-code/common/util/messages'
 
 import { createLoopContext } from './loop-context'
+import {
+  createLoopGuardState,
+  evaluateLoopGuard,
+  recordLoopEvent,
+} from './loop-guard-wiring'
 import {
   runLoopIteration,
   type LoopIterationContext,
@@ -9,7 +15,7 @@ import {
 import { getOrCreateEnforcement } from '../echo/enforcement'
 import { appendGroundingRefresh } from '../echo/grounding'
 import { fireMainAgentTerminalHook } from '../hooks/lifecycle-hooks'
-import { expireMessages } from '../util/messages'
+import { expireMessages, withSystemTags } from '../util/messages'
 import { finishCompletedTurn } from './loop/completed-turn'
 import {
   handleLoopAbort,
@@ -177,8 +183,52 @@ export async function loopAgentSteps(
   // is passed by reference so cleanup observes the post-run totalSteps.
   const exitDeps = { params, state, ctx: iterationCtx, initialAgentState }
 
+  // FID-2026-1006-003 WP3: the per-run guard state. The iteration budget is
+  // this run's initial `stepsRemaining` — the same cap the step layer already
+  // enforces — so the guard rails own the decision the loop used to make
+  // implicitly, and can NAME the reason they stopped.
+  const guardState = createLoopGuardState({
+    role: String(agentType),
+    iterationCap: initialAgentState.stepsRemaining,
+  })
+
   try {
     while (true) {
+      // FID-2026-1006-003 WP3: gate this iteration. A named stop ends the
+      // turn here and records WHY on agentState, so an auto-stopped turn is
+      // distinguishable from a completed one by the caller that holds the
+      // shared state reference.
+      const guardAction = evaluateLoopGuard({
+        state: guardState,
+        iteration: state.totalSteps,
+        now: Date.now(),
+        messages: initialAgentState.messageHistory,
+      })
+      if (guardAction.kind === 'stop') {
+        initialAgentState.loopStopReason = guardAction.reason
+        logger.warn(
+          { reason: guardAction.reason, iteration: state.totalSteps },
+          `loop guard rails: ending the turn (${guardAction.reason})`,
+        )
+        break
+      }
+      // A checklist is handed over ONE unchecked task at a time, and only
+      // when the task changed — so a model that has not yet checked it off is
+      // not told the same thing twice.
+      if (
+        guardAction.kind === 'inject-task' &&
+        guardState.lastInjectedTask !== guardAction.task
+      ) {
+        guardState.lastInjectedTask = guardAction.task
+        initialAgentState.messageHistory = [
+          ...initialAgentState.messageHistory,
+          userMessage(
+            withSystemTags(
+              `Next unchecked task from the plan checklist: ${guardAction.task}`,
+            ),
+          ),
+        ]
+      }
       const stepStartedAt = Date.now()
       recordRuntimeEvent(
         {
@@ -228,6 +278,11 @@ export async function loopAgentSteps(
         },
         params.traceWriter,
       )
+      // FID-2026-1006-003 WP3: one `role:event` entry per completed LLM
+      // step, so a repeating cycle is visible to the next decision.
+      if (iteration.stepEvent !== undefined) {
+        recordLoopEvent(guardState, iteration.stepEvent)
+      }
       if (!iteration.shouldContinue) {
         break
       }

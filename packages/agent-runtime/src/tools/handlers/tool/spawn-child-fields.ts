@@ -115,6 +115,8 @@ export const NOT_INHERITED_BY_DESIGN = {
     'children are exempt from the session-init gate (isAgentGrounded short-circuits on parentId); copying it would claim the root’s completed boot reads',
   pendingSteeringOverrideAudits:
     'override audits recorded by the owning run’s tool executor and drained by that run’s save; a child must not inherit a pending record',
+  loopStopReason:
+    'verdict of the owning run’s loop guard rails; a child’s own loop stamps its own reason',
 } as const satisfies Partial<Record<keyof AgentState, string>>
 
 export type InheritedAgentStateField = (typeof INHERITED_FROM_PARENT)[number]

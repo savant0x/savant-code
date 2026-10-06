@@ -36,6 +36,16 @@ export type SteeringOverrideAuditRecord = {
   at: number
 }
 
+/**
+ * FID-2026-1006-003 WP3: the loop guard rails' named stop reasons — the
+ * decision the step loop used to end the turn.
+ */
+export type LoopStopReason =
+  | 'stale-cycle'
+  | 'role-budget'
+  | 'iteration-cap'
+  | 'deadline'
+
 export type AgentState = {
   /**
    * @deprecated agentId is replaced by runId
@@ -209,6 +219,11 @@ export type AgentState = {
    * cleared on drain, so one override is recorded exactly once.
    */
   pendingSteeringOverrideAudits?: SteeringOverrideAuditRecord[]
+  /**
+   * FID-2026-1006-003 WP3: the named reason the loop guard rails ended the
+   * turn. Absent → the turn ended on its own. Per-run state, never inherited.
+   */
+  loopStopReason?: LoopStopReason
   /**
    * FID-2026-0725-085: Resolved context window for this model.
    * Set by the CLI via CTX-007 wiring. Used by handleSteps to determine
