@@ -262,3 +262,46 @@ erosion:
   enabled: true
   structural_threshold_pct: 5
   verbosity_threshold_pct: 25
+
+# FID-2026-1006-003 WP4 — the declared orchestration preset. Savant's canonical
+# ECHO roles wired by events, validated statically while `protocol.config.yaml`
+# is parsed (`common/src/util/orchestration-preset.ts`). This is a DECLARATION
+# ONLY: no preset runner is introduced, the roles are checked against the
+# contract but never executed from here.
+#   ERROR-severity findings (an inert role, an unreachable start event) throw
+#   from `readProtocolConfig` and so fail the repo gate.
+#   WARNING-severity findings (an unconsumed hand-off, no completion promise,
+#   no loop-back path) are reported on `config.orchestration.warnings`.
+orchestration:
+  # The event a user turn arrives as; every role below is reachable from it.
+  startEvent: 'user-request'
+  # Events that mean the declared work is done.
+  completionEvents: ['task-complete']
+  # One entry per role: `triggers` activates it, `publishes` hands work on, and
+  # `transitions` records which roles it may hand off to (loop-back evidence).
+  roles:
+    - role: 'orchestrator'
+      instructions: 'Route the request, enforce the protocol, and hand one slice at a time to the role that owns it.'
+      triggers: ['user-request', 'verification-failed', 'review-failed', 'documentation-required']
+      publishes: ['analysis-requested', 'implementation-requested', 'verification-requested', 'documentation-requested', 'task-complete']
+      transitions: ['detective']
+    - role: 'detective'
+      instructions: 'Map the call graph for the named slice and cite file-and-line evidence before any edit.'
+      triggers: ['analysis-requested']
+      publishes: ['implementation-requested']
+      transitions: ['forge']
+    - role: 'forge'
+      instructions: 'Implement the converged change in the named files, and only those files.'
+      triggers: ['implementation-requested', 'fix-required']
+      publishes: ['verification-requested']
+      transitions: ['verifier']
+    - role: 'verifier'
+      instructions: 'Re-run the declared gates and report pass or fail with pasted tool output.'
+      triggers: ['verification-requested']
+      publishes: ['verification-failed', 'fix-required', 'review-failed', 'documentation-requested', 'task-complete']
+      transitions: ['orchestrator']
+    - role: 'scribe'
+      instructions: 'Record the session summary and route durable lessons to the knowledge files.'
+      triggers: ['documentation-requested', 'documentation-required']
+      publishes: ['task-complete']
+      transitions: ['orchestrator']

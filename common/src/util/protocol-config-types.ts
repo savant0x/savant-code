@@ -1,3 +1,4 @@
+import type { PresetShape } from './orchestration-preset'
 import type { HookConfig } from '../types/hooks'
 import type { SteeringRuleSpec } from '../types/steering'
 
@@ -86,6 +87,15 @@ export interface ProtocolSteeringConfig {
   steering: SteeringRuleSpec[]
 }
 
+/** FID-2026-1006-003 WP4 — the declared `orchestration:` preset, validated
+ *  during parse. `warnings` carries the non-fatal `validatePreset` findings;
+ *  an ERROR-severity issue throws from `readProtocolConfig` instead of being
+ *  reported here, so a preset that cannot begin never reaches a consumer. */
+export interface ProtocolOrchestrationConfig {
+  preset: PresetShape
+  warnings: string[]
+}
+
 export interface ProtocolConfig {
   strictMode: boolean
   language: string | null
@@ -114,6 +124,9 @@ export interface ProtocolConfig {
    *  (default: none). Declared rules are evaluated by the tool executor's
    *  steering gate; a malformed rule is dropped fail-safe and reported. */
   steering: SteeringRuleSpec[]
+  /** FID-2026-1006-003 WP4 — declared orchestration preset (`orchestration:`),
+   *  validated during parse. Absent when the project declares none. */
+  orchestration?: ProtocolOrchestrationConfig
 }
 
 export const DEFAULT_COMPRESSION: ProtocolCompressionConfig = {

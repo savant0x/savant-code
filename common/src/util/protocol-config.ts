@@ -2,6 +2,10 @@ import fs from 'fs'
 import path from 'path'
 
 import {
+  parseOrchestrationPresetConfig,
+  validatePreset,
+} from './orchestration-preset'
+import {
   extractYamlSection,
   parseProtocolContract,
 } from './protocol-config-parser'
@@ -22,11 +26,13 @@ import {
   DEFAULT_YAGNI,
 } from './protocol-config-types'
 
+import type { PresetShape } from './orchestration-preset'
 import type {
   ProtocolCavemanConfig,
   ProtocolCompressionConfig,
   ProtocolConfig,
   ProtocolContractConfig,
+  ProtocolOrchestrationConfig,
   ProtocolProvenanceConfig,
   ProtocolTelemetryConfig,
   ProtocolYagniConfig,
@@ -42,6 +48,7 @@ export type {
   ProtocolConfig,
   ProtocolContractConfig,
   ProtocolHooksConfig,
+  ProtocolOrchestrationConfig,
   ProtocolProvenanceConfig,
   ProtocolSteeringConfig,
   ProtocolTelemetryConfig,
@@ -68,6 +75,8 @@ export function readProtocolConfig(cwd: string): ProtocolConfig {
   const provenance: ProtocolProvenanceConfig = { ...DEFAULT_PROVENANCE }
   const hooks: HookConfig[] = []
   const steering: SteeringRuleSpec[] = []
+  let orchestration: ProtocolOrchestrationConfig | undefined
+  let orchestrationPreset: PresetShape | null = null
 
   try {
     const configPath = path.join(cwd, 'protocol.config.yaml')
@@ -136,8 +145,31 @@ export function readProtocolConfig(cwd: string): ProtocolConfig {
     applyHooksSection(extractYamlSection(lines, 'hooks', 0), hooks)
     // FID-2026-1006-002 WP1: deterministic before-tool steering rules.
     applySteeringSection(extractYamlSection(lines, 'steering', 0), steering)
+    // FID-2026-1006-003 WP4: the declared orchestration preset. Parsed here
+    // but VALIDATED after the try/catch below, so an ERROR-severity issue
+    // fails the run instead of being swallowed by the read-failure fallback.
+    orchestrationPreset = parseOrchestrationPresetConfig(
+      extractYamlSection(lines, 'orchestration', 0),
+    )
   } catch {
     // File doesn't exist or can't be read — use defaults
+  }
+
+  // FID-2026-1006-003 WP4: validate the declaration. An ERROR-severity issue
+  // (a preset that cannot begin, or a role that can never be activated) is a
+  // defect in the declaration, so it fails here instead of at run time; the
+  // WARNING-severity findings are reported on the returned config.
+  if (orchestrationPreset) {
+    const issues = validatePreset(orchestrationPreset)
+    const errors = issues.filter((issue) => issue.severity === 'error')
+    if (errors.length > 0) {
+      const codes = errors.map((issue) => issue.code).join(', ')
+      throw new Error(`orchestration preset invalid: ${codes}`)
+    }
+    orchestration = {
+      preset: orchestrationPreset,
+      warnings: issues.map((issue) => issue.message),
+    }
   }
 
   const openFids = scanOpenFids(cwd)
@@ -157,6 +189,7 @@ export function readProtocolConfig(cwd: string): ProtocolConfig {
     provenance,
     hooks,
     steering,
+    ...(orchestration ? { orchestration } : {}),
   }
 }
 
