@@ -6,12 +6,15 @@ import {
   createWriteAndFsmGate,
   createSandboxGate,
 } from './pre-dispatch-gates'
+import { createSteeringGate } from './steering-rule-gate'
 import { formatValueForError } from '../../util/format-value'
 
 import type { GateStage } from './gate-context'
+import type { SteeringOverrideAudit } from './steering-rule-gate'
 import type { ToolName } from '@savant-code/common/tools/constants'
 import type { Logger } from '@savant-code/common/types/contracts/logger'
 import type { PrintModeEvent } from '@savant-code/common/types/print-mode'
+import type { SteeringRuleSpec } from '@savant-code/common/types/steering'
 
 /**
  * Gate-chain assembly (FID-2026-0905-001). The ORDER of this array is the
@@ -28,6 +31,8 @@ export function buildGateChain<T extends ToolName>(deps: {
   isCapabilityOverride: () => boolean
   isFsmOverride: () => boolean
   isSandboxOverride: () => boolean
+  getSteeringRules: () => readonly SteeringRuleSpec[]
+  auditSteeringOverride: (record: SteeringOverrideAudit) => void
 }): GateStage<T>[] {
   return [
     // 1. FID-2026-0802-005 C1: parse error precedes ANY input dereference.
@@ -70,7 +75,16 @@ export function buildGateChain<T extends ToolName>(deps: {
       onResponseChunk: deps.onResponseChunk,
       hookProjectRoot: () => deps.hookProjectRoot,
     }),
-    // 7. ZTAP enforce fail-closed pre-dispatch gate.
+    // 7. Deterministic steering rules (FID-2026-1006-002 WP1) — also an
+    // additional gate after EHEL, never a bypass: a violation treated by
+    // steering is a project policy, and EHEL laws already blocked above.
+    createSteeringGate<T>({
+      logger: deps.logger,
+      onResponseChunk: deps.onResponseChunk,
+      getRules: deps.getSteeringRules,
+      auditOverride: deps.auditSteeringOverride,
+    }),
+    // 8. ZTAP enforce fail-closed pre-dispatch gate.
     createProvenanceGate<T>({
       logger: deps.logger,
       onResponseChunk: deps.onResponseChunk,

@@ -1,14 +1,15 @@
 import crypto from 'crypto'
 
-import { parseStoredJson, prepare, requireRow } from './sqlite'
+import { runCommit } from './commit-journal'
+import { mapMessageHistory } from './entry-classes'
+import { prepare, requireRow } from './sqlite'
 
-export interface MessageHistory {
-  id: string
-  session_id: string
-  role: string
-  content: unknown
-  created_at: string
-}
+import type { MessageHistory } from './entry-classes'
+
+// FID-2026-1006-002 WP11: the session entry classes (their types, factory,
+// and queries) live in `entry-classes.ts` (file-size quality gate) and are
+// re-exported here — one import path for consumers.
+export * from './entry-classes'
 
 export interface CostTracking {
   id: string
@@ -30,11 +31,13 @@ export function createMessage(
   id?: string,
 ): MessageHistory {
   const messageId = id || crypto.randomUUID()
-  const stmt = prepare(`
+  runCommit(
+    `
     INSERT OR IGNORE INTO message_history (id, session_id, role, content)
     VALUES (?, ?, ?, ?)
-  `)
-  stmt.run(messageId, sessionId, role, JSON.stringify(content))
+  `,
+    [messageId, sessionId, role, JSON.stringify(content)],
+  )
   return requireRow(
     getMessage(messageId),
     `read back message ${messageId} after insert`,
@@ -44,12 +47,7 @@ export function createMessage(
 export function getMessage(id: string): MessageHistory | null {
   const stmt = prepare('SELECT * FROM message_history WHERE id = ?')
   const row = stmt.get(id) as Record<string, unknown> | null
-  if (row) {
-    return {
-      ...row,
-      content: parseStoredJson(row.content, null),
-    } as MessageHistory
-  }
+  if (row) return mapMessageHistory(row)
   return null
 }
 
@@ -58,10 +56,7 @@ export function getMessagesBySessionId(sessionId: string): MessageHistory[] {
     'SELECT * FROM message_history WHERE session_id = ? ORDER BY created_at ASC, rowid ASC',
   )
   const rows = stmt.all(sessionId) as Record<string, unknown>[]
-  return rows.map((row) => ({
-    ...row,
-    content: parseStoredJson(row.content, null),
-  })) as MessageHistory[]
+  return rows.map(mapMessageHistory)
 }
 
 // Cost Tracking operations
@@ -72,11 +67,13 @@ export function createCostRecord(
   directCreditsUsed: number,
 ): CostTracking {
   const id = crypto.randomUUID()
-  const stmt = prepare(`
+  runCommit(
+    `
     INSERT INTO cost_tracking (id, session_id, agent_id, credits_used, direct_credits_used)
     VALUES (?, ?, ?, ?, ?)
-  `)
-  stmt.run(id, sessionId, agentId, creditsUsed, directCreditsUsed)
+  `,
+    [id, sessionId, agentId, creditsUsed, directCreditsUsed],
+  )
   return requireRow(
     getCostRecord(id),
     `read back cost record ${id} after insert`,

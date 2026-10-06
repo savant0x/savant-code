@@ -61,6 +61,28 @@ export interface ReactiveCompactResult {
 }
 
 /**
+ * FID-2026-1006-002 WP5: cumulative file-tracking carried across successive
+ * compactions. Mirrors the file-op subset of the context-pruner's
+ * PreservedState block (readFiles / modifiedFiles / createdFiles) so the
+ * tracking ledger and the preserved-state JSON stay shape-compatible.
+ */
+export interface FileTracking {
+  /** File paths read (read_files / read_subtree). */
+  readFiles: string[]
+  /** File paths modified (str_replace / propose_str_replace). */
+  modifiedFiles: string[]
+  /** File paths created (write_file / propose_write_file). */
+  createdFiles: string[]
+}
+
+/**
+ * FID-2026-1006-002 WP5: hard cap per tracked-path list. The cumulative
+ * ledger must not defeat the compaction it rides in on — when the cap is
+ * exceeded the OLDEST entries drop (newest-first lists keep their head).
+ */
+export const MAX_CUMULATIVE_TRACKED_PATHS = 200
+
+/**
  * Circuit breaker states for compaction failures.
  */
 export type CircuitState = 'healthy' | 'degraded' | 'open' | 'half-open'

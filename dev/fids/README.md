@@ -5,6 +5,26 @@ operator decision, implementation, runtime review, or closure evidence.
 
 ## Current active FIDs
 
+**None — the active queue is empty (2026-10-06).**
+
+**2026-10-06 — `FID-2026-1006-002-pi-harness-adoption-program` is `closed`
+and archived to [`archive/`](archive/); register item T150 is complete.** It
+was the adoption record for T149's thirteen ranked pi-harness ideas: twelve
+work packages, each mapped to an existing seam with declared gates, plus one
+determined non-adoption (idea 13 miscellanies). All twelve work packages were
+implemented and verified: `fid:verify --check` 22/22 — 5 workspace typechecks,
+16 named test gates and `quality: PASS (1498 baselined files)` — receipt
+`sha256:b1a3f13c7fa33e485ca6bbffeb366226be2a1a3470d06341651d87c95b50a8c0`,
+root `bun run typecheck` (13 workspaces) exit 0, `validate:repository` PASS.
+No commit was executed — the path-scoped staging plan awaits the operator
+(G1/G2). **Renumbered from
+`-001` to `-002` at 03:31:** a concurrent session had allocated `-001` to
+`FID-2026-1006-001-codecraft-model-picker.md` (Created 03:29) while this
+record was being loop-passed, and `fid.metadata.duplicate-active-id` is a hard
+repo-gate failure. This record moved because the other file belongs to a live
+concurrent session; the chronological claim (03:15 vs 03:29) is recorded in
+that FID's Loop 4 so the operator can reverse the assignment deliberately.
+
 **2026-10-06 — six FIDs closed and archived in local batch commit
 `e229d9a1`; no push or release.** The verified skill-evaluation,
 provider-failure, stream-recovery, availability/quota, provider-evidence,
@@ -1145,11 +1165,17 @@ closed. See `archive/README.md` for the closure entries.
 - `converged` = document is complete and loop-passed, but implementation hasn't started
 - `closed` = implementation exists in codebase AND gates pass (requires evidence)
 
-Ledger admission note (2026-08-21): the validator (`scripts/fid-ledger.ts`)
-accepts only `created | analyzed | fixed | verified` for files living in
-`dev/fids/`. A loop-converged planning FID stays `analyzed` until its phase
-is implemented (2026-08-16 Ground-Truth lesson); `converged` documents the
-loop state, not an admissible active-queue status.
+Ledger admission note (**corrected 2026-10-06**): the validator
+(`scripts/fid-ledger.ts` → `ALLOWED_ACTIVE_STATUSES`) admits
+`created | analyzed | converged | fixed | verified` for files living in
+`dev/fids/`, and `closed` is not active-queue legal. **`converged` IS an
+admissible active-queue status** — the Perfection Loop has completed and
+implementation approval is pending — per the operator vocabulary ruling in
+`FID-2026-0915-004` (archived), which superseded the 2026-08-18 ruling that
+had forced loop-converged records to carry the legacy `analyzed` label. The
+earlier note here said the opposite and would have sent a reader to relabel a
+converged record; it was corrected while authoring `FID-2026-1006-002`.
+(`fixed` remains deprecated-but-accepted legacy language.)
 
 ### Closed records (historical)
 

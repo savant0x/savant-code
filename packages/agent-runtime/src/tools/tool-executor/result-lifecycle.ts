@@ -1,4 +1,10 @@
 import {
+  isRedispatchable,
+  markToolOutcomeReady,
+  resetToolOutcomes,
+  toolOutcomeState,
+} from './tool-outcome-state'
+import {
   hasCommandFailure,
   hasToolResultError,
   toolResultErrorLine,
@@ -12,8 +18,8 @@ import { getOrCreateProvenance } from '../../provenance'
 import { setActivity } from '../../util/activity-tracking'
 import { getSuccessfulFileContent } from '../handlers/tool/write-file'
 
-import type { GateContext } from './gate-context'
-import type { ToolTrace } from './trace'
+import type { ResultLifecycleDeps } from './result-rejection-lifecycle'
+import type { ToolOutcomeState } from './tool-outcome-state'
 import type { ToolName } from '@savant-code/common/tools/constants'
 import type { SavantCodeToolOutput } from '@savant-code/common/tools/list'
 import type { JSONValue } from '@savant-code/common/types/json'
@@ -29,12 +35,21 @@ import type { ToolMessage } from '@savant-code/common/types/messages/savant-code
  * Rejection path: error chunk → PostToolUseFailure hook. (FID-2026-0802-005
  * C2: rejections are converted into the retryable tool-error flow instead of
  * failing the run.)
+ *
+ * FID-2026-1006-002 WP3: both branches record the tool call's outcome state
+ * (`outcome_ready`) at the point the outcome is materialized —
+ * `docs/tool-outcome-durability.md`. The state model lives in
+ * `./tool-outcome-state` and is re-exported here, where the FID places it.
  */
-export type ResultLifecycleDeps<T extends ToolName> = {
-  ctx: GateContext<T>
-  trace: ToolTrace
-  hookProjectRoot: string
+export {
+  isRedispatchable,
+  markToolOutcomeReady,
+  resetToolOutcomes,
+  toolOutcomeState,
 }
+export type { ToolOutcomeState }
+export { runRejectionLifecycle } from './result-rejection-lifecycle'
+export type { ResultLifecycleDeps } from './result-rejection-lifecycle'
 
 export async function runSuccessLifecycle<T extends ToolName>(
   deps: ResultLifecycleDeps<T>,
@@ -89,6 +104,10 @@ export async function runSuccessLifecycle<T extends ToolName>(
   if (!params.excludeToolFromMessageHistory) {
     params.toolResultsToAddToMessageHistory.push(toolResult)
   }
+
+  // FID-2026-1006-002 WP3: the outcome is materialized. Everything below is
+  // auxiliary progress, and auxiliary progress never proves completion.
+  markToolOutcomeReady(toolCall.toolCallId)
 
   // `set_messages` is the mutation boundary used by context-pruner and
   // other history-replacement flows. Refresh only after the handler has
@@ -261,39 +280,6 @@ export async function runSuccessLifecycle<T extends ToolName>(
     params.logger.debug(
       { credits: creditsUsed, totalCredits: agentState.creditsUsed },
       `Added ${creditsUsed} credits from ${String(toolName)} to agent state`,
-    )
-  }
-}
-
-export async function runRejectionLifecycle<T extends ToolName>(
-  deps: ResultLifecycleDeps<T>,
-  error: unknown,
-): Promise<void> {
-  const { ctx, trace, hookProjectRoot } = deps
-  const { params, toolCall, toolName } = ctx
-  // FID-2026-0802-005 C2: rejections are caught here and converted into
-  // the same retryable tool-error flow instead of failing the run.
-  const errorMessage = error instanceof Error ? error.message : String(error)
-  params.onResponseChunk({
-    type: 'error',
-    message: `Tool \`${String(toolName)}\` failed: ${errorMessage}`,
-  })
-  params.logger.error(
-    { toolName, errorMessage },
-    `Tool \`${String(toolName)}\` failed: ${errorMessage}`,
-  )
-  trace.finishToolEvent('failed')
-  // FID-2026-0814-003: PostToolUseFailure from the rejection path.
-  if (hookProjectRoot) {
-    getHookEngine(hookProjectRoot).fireAndForgetTrigger(
-      buildHookInput({
-        event: 'PostToolUseFailure',
-        sessionId: params.agentState.runId ?? params.agentState.agentId,
-        cwd: hookProjectRoot,
-        toolName,
-        toolInput: toolCall.input as Record<string, JSONValue>,
-        errorMessage,
-      }),
     )
   }
 }

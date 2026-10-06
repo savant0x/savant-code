@@ -23,6 +23,7 @@ export const HOOK_EVENTS = [
   'Stop',
   'Interrupt',
   'Notification',
+  'ProjectTrust',
 ] as const
 
 export type HookEvent = (typeof HOOK_EVENTS)[number]
@@ -71,6 +72,7 @@ export const FIRED_HOOK_EVENTS = [
   'PreCompact', // tools/handlers/tool/spawn-agent-inline.ts — a compaction ATTEMPT begins
   'PostCompact', // tools/handlers/tool/spawn-agent-inline-pruner-outcome.ts — it had an EFFECT
   'Notification', // tools/handlers/tool/ask-user.ts — the runtime needs the operator
+  'ProjectTrust', // cli/src/utils/project-trust-gate.ts — workspace resources about to load (veto-only decider)
 ] as const satisfies readonly HookEvent[]
 
 /**

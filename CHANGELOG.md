@@ -4,6 +4,36 @@
 
 ### Added
 
+- **Pi-harness adoption program (FID-2026-1006-002, high; closed 2026-10-06; no commit executed — operator staging pending).**
+  Twelve adopted work packages from T149's deep pi-harness review, all implemented and
+  gate-verified: deterministic steering rules with an audited override; a durable-race catalog
+  with instrumented-storage test tiers and a write-order conformance check; tool-outcome
+  durability; the atomic transition rule plus a per-path file-mutation queue and a serialized
+  database mutation line; compaction cut points (never at a tool result, over-budget turns split
+  into two summaries that merge) with cumulative file tracking across successive compactions;
+  branch summarization; loop guard rails (stale-cycle detection, per-role activation budget,
+  single-task injection) with preset validation; pure decision functions with an injected clock;
+  project-trust gating with closest-parent-wins inheritance and a veto-only `ProjectTrust` hook
+  event; the adaptive publisher; session entry classes (`custom` vs `custom_message`, `label`
+  bookmarks, `model_change`/`thinking_level_change` audit entries, `excludeFromContext`); and
+  marker-based prompt isolation in evals. 22/22 declared gates pass (5 workspace typechecks +
+  16 named test gates + quality), receipt
+  `sha256:b1a3f13c7fa33e485ca6bbffeb366226be2a1a3470d06341651d87c95b50a8c0`; root typecheck across
+  13 workspaces, eslint `--max-warnings 0`, `lint:md` and `validate:repository` all exit 0.
+  Three modules (compaction cut points/file tracking, loop guard rails, session entry classes)
+  are library-complete with no production call path yet — recorded as a stated limitation.
+- **Zero-intervention provider catalog visibility (FID-2026-1006-001, high; closed 2026-10-06).**
+  The `/model` list now shows every authenticated live provider automatically, with
+  no operator step. One registry-driven resolver (`resolveProviderApiKey`: env →
+  stored `/provider` key → undefined) feeds all 8 live catalog wrappers, so a stored
+  key reaches the catalog fetch; the gateway warm start is coverage-validated, so a
+  stale snapshot missing a keyed provider self-heals (cooldown-gated, no-key never a
+  gap); `window-coverage:check` fails loud on register drift with an atomic `--fix`;
+  and `providers:parity` regenerates the committed census from the live catalog
+  assembly, so a future provider is auto-reconciled with no manual census edit. The
+  three originally-stale register entries (codecraft/cleanapis/xkiro) were corrected
+  by the mechanism itself. 31 tests across 5 suites; 9/9 declared gates pass
+  (typecheck cli/common, five suites, the live fan-out probe, quality).
 - **Savant Code landing page (T145; committed 2026-10-06, `cef88023`).** Added the standalone `website/index.html` project root with product overview, ECHO workflow, provider showcase, installation instructions, and responsive interactive presentation.
 - **Three-tier skill evaluation gates (FID-2026-1005-005; closed 2026-10-06, commit e229d9a1).** Added structural, trigger-routing, and behavioral evaluation for all 11 trusted skills; paired proof trials use constrained temp-workspace tools, description-hash trust checks, and a durable rejection impact ledger. Declared FID gates pass; live token-costed trials remain operator-invoked.
 - **Provider failure classification and circuit breaker (FID-2026-1005-006; closed 2026-10-06, commit e229d9a1).** Provider failures are classified before retry decisions; load-time retry policy validation and a per-provider closed/open/half-open breaker bound recovery probes. Five declared gates pass.

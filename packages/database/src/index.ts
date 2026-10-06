@@ -49,9 +49,21 @@ export function resolveBunSqliteDatabaseModule(
 // Database path. SAVANT_DB_PATH is an escape hatch for tests (e.g. ':memory:'
 // or a temp file) so the module can be imported against an isolated database
 // (FID-2026-0802-006 DB4/DB-tests).
-const DB_PATH =
-  process.env.SAVANT_DB_PATH ||
-  path.join(os.homedir(), '.savant-free', 'echo.db')
+//
+// FID-2026-1006-002 WP2: resolved PER CALL, and connections are cached per
+// resolved path. The escape hatch was process-global (a single import-time
+// constant), so two test files in one `bun test` process — which shares the
+// module registry — fought over it: whichever file imported first fixed the
+// path for both, and the other file's expectations silently ran against the
+// wrong database. Keying the connection to the resolved path makes each
+// caller's escape hatch actually apply to its own calls, in either file
+// order, without changing the production default.
+function resolveDbPath(): string {
+  return (
+    process.env.SAVANT_DB_PATH ||
+    path.join(os.homedir(), '.savant-free', 'echo.db')
+  )
+}
 
 function hasColumn(
   connection: Database,
@@ -86,6 +98,19 @@ function applySchemaMigrations(connection: Database): void {
   if (!hasColumn(connection, 'sessions', 'pinned')) {
     connection.exec(
       'ALTER TABLE sessions ADD COLUMN pinned INTEGER NOT NULL DEFAULT 0',
+    )
+  }
+  // FID-2026-1006-002 WP11 (T149 #11): session entry classes. Existing rows
+  // are plain in-context messages, so both columns get message-shaped
+  // defaults; the migration keeps existing installs idempotent.
+  if (!hasColumn(connection, 'message_history', 'entry_kind')) {
+    connection.exec(
+      "ALTER TABLE message_history ADD COLUMN entry_kind TEXT NOT NULL DEFAULT 'message'",
+    )
+  }
+  if (!hasColumn(connection, 'message_history', 'exclude_from_context')) {
+    connection.exec(
+      'ALTER TABLE message_history ADD COLUMN exclude_from_context INTEGER NOT NULL DEFAULT 0',
     )
   }
 }
@@ -142,6 +167,9 @@ function createSchema(connection: Database): void {
       session_id TEXT REFERENCES sessions(id),
       role TEXT NOT NULL,
       content TEXT NOT NULL,
+      -- FID-2026-1006-002 WP11 (T149 #11): session entry classes.
+      entry_kind TEXT NOT NULL DEFAULT 'message',
+      exclude_from_context INTEGER NOT NULL DEFAULT 0,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     );
 
@@ -221,18 +249,23 @@ function initDatabase(dbPath: string): Database {
 // in-memory database on open failure), so importing this module never touches
 // bun:sqlite. This keeps the package loadable under Node.js; only an actual
 // database call resolves bun:sqlite and throws a clear error outside Bun.
-let db: Database | undefined
+const connections = new Map<string, Database>()
 
 /**
- * Returns the lazily-opened database connection, initializing it (and the
- * schema) on first use. The open is guarded by initDatabase's fail-open
- * fallback.
+ * Returns the lazily-opened database connection for the currently resolved
+ * path, initializing it (and the schema) on first use. The open is guarded by
+ * initDatabase's fail-open fallback. Connections are cached per resolved path
+ * (see `resolveDbPath`) — see `prepare` in ./sqlite for how the prepared-
+ * statement cache follows a connection switch.
  */
 export function getDb(): Database {
-  if (db === undefined) {
-    db = initDatabase(DB_PATH)
+  const dbPath = resolveDbPath()
+  let connection = connections.get(dbPath)
+  if (connection === undefined) {
+    connection = initDatabase(dbPath)
+    connections.set(dbPath, connection)
   }
-  return db
+  return connection
 }
 
 /**

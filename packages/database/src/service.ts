@@ -1,5 +1,6 @@
 import crypto from 'crypto'
 
+import { runCommit } from './commit-journal'
 import { parseStoredJson, prepare, requireRow } from './sqlite'
 
 // Re-export the extracted domains so `@savant-code/database/service` keeps its
@@ -18,15 +19,45 @@ export {
 } from './sessions'
 export {
   createCostRecord,
+  createCustomEntry,
+  createCustomMessageEntry,
+  createEntry,
+  createLabelEntry,
   createMessage,
+  createModelChangeEntry,
+  createThinkingLevelChangeEntry,
+  getEntriesByKind,
   getCostsBySessionId,
+  getInContextMessages,
   getMessage,
   getMessagesBySessionId,
   getTotalCostBySessionId,
+  setEntryExcludeFromContext,
 } from './history'
 
+// FID-2026-1006-002 WP4 (database half): the serialized read-modify-write line
+// is part of the public surface, not an internal detail — a caller whose next
+// state depends on the stored state must read it inside the lane.
+export {
+  isSealed,
+  mutate,
+  mutateSessionState,
+  MutationLineSealedError,
+  pendingMutationKeys,
+  releaseSeal,
+  resetMutationLine,
+  seal,
+  sessionMutationKey,
+} from './mutation-line'
+export type { MutationTransform } from './mutation-line'
+
 export type { Session, SessionScopeType } from './sessions'
-export type { CostTracking, MessageHistory } from './history'
+export type {
+  CostTracking,
+  EntryKind,
+  MessageHistory,
+  SessionEntryInput,
+} from './history'
 
 export interface AgentTemplate {
   id: string
@@ -53,11 +84,13 @@ export function createAgentTemplate(
   const id =
     (typeof template.id === 'string' ? template.id : undefined) ||
     crypto.randomUUID()
-  const stmt = prepare(`
+  runCommit(
+    `
     INSERT INTO agent_templates (id, template)
     VALUES (?, ?)
-  `)
-  stmt.run(id, JSON.stringify(template))
+  `,
+    [id, JSON.stringify(template)],
+  )
   return requireRow(
     getAgentTemplate(id),
     `read back agent template ${id} after insert`,
@@ -80,12 +113,16 @@ export function updateAgentTemplate(
   id: string,
   template: Record<string, unknown>,
 ): boolean {
-  const stmt = prepare(`
+  return (
+    runCommit(
+      `
     UPDATE agent_templates 
     SET template = ?, version = version + 1, updated_at = CURRENT_TIMESTAMP
     WHERE id = ?
-  `)
-  return stmt.run(JSON.stringify(template), id).changes > 0
+  `,
+      [JSON.stringify(template), id],
+    ) > 0
+  )
 }
 
 // FID Document operations
@@ -95,11 +132,13 @@ export function createFidDocument(
   id?: string,
 ): FidDocument {
   const fidId = id || crypto.randomUUID()
-  const stmt = prepare(`
+  runCommit(
+    `
     INSERT INTO fid_documents (id, session_id, content)
     VALUES (?, ?, ?)
-  `)
-  stmt.run(fidId, sessionId, content)
+  `,
+    [fidId, sessionId, content],
+  )
   return requireRow(
     getFidDocument(fidId),
     `read back FID document ${fidId} after insert`,
@@ -117,10 +156,14 @@ export function updateFidDocument(
   status: string,
   perfectionLoopPhase: string,
 ): boolean {
-  const stmt = prepare(`
+  return (
+    runCommit(
+      `
     UPDATE fid_documents 
     SET content = ?, status = ?, perfection_loop_phase = ?, updated_at = CURRENT_TIMESTAMP
     WHERE id = ?
-  `)
-  return stmt.run(content, status, perfectionLoopPhase, id).changes > 0
+  `,
+      [content, status, perfectionLoopPhase, id],
+    ) > 0
+  )
 }

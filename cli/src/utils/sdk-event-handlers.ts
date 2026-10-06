@@ -1,12 +1,16 @@
 import { match } from 'ts-pattern'
 
 import { useChatStore } from '../state/chat-store'
-import { appendRootChunk, ensureStreaming } from './sdk-event-handlers/guards'
+import { ensureStreaming } from './sdk-event-handlers/guards'
 import {
   handleCompactionSummary,
   handleComplianceWarning,
   handleFinish,
 } from './sdk-event-handlers/misc'
+import {
+  flushRootStream,
+  markRootStreamDelta,
+} from './sdk-event-handlers/root-stream-publisher'
 import { handleToolResult } from './sdk-event-handlers/spawn-results'
 import {
   handleSubagentFinish,
@@ -18,6 +22,7 @@ import {
   processTextChunk,
 } from './stream-chunk-processor'
 
+import type { RootStreamTiming } from './sdk-event-handlers/root-stream-publisher'
 import type {
   EventHandlerState,
   StreamChunkEvent,
@@ -37,7 +42,8 @@ export type {
 } from './sdk-event-handlers/types'
 
 export const createStreamChunkHandler =
-  (state: EventHandlerState) => (event: StreamChunkEvent) => {
+  (state: EventHandlerState, timing: RootStreamTiming = {}) =>
+  (event: StreamChunkEvent) => {
     const destination = destinationFromChunkEvent(event)
     let text: string | undefined
     if (typeof event === 'string') {
@@ -58,7 +64,11 @@ export const createStreamChunkHandler =
         state.streaming.streamRefs.setters.appendRootStreamBuffer(text)
       }
       state.streaming.streamRefs.setters.setRootStreamSeen(true)
-      appendRootChunk(state, { type: destination.textType, text })
+      // FID-2026-1006-002 WP10: the delta is recorded now and published on the
+      // adaptive schedule. The tracker refs above stay immediate — they are
+      // consumed by the run's own bookkeeping (plan extraction reads the
+      // buffer), not by the render path the publisher throttles.
+      markRootStreamDelta(state, { type: destination.textType, text }, timing)
       return
     }
     state.message.updater.updateAiMessageBlocks((blocks) =>
@@ -67,6 +77,12 @@ export const createStreamChunkHandler =
   }
 export const createEventHandler =
   (state: EventHandlerState) => (event: SDKEvent) => {
+    // FID-2026-1006-002 WP10: an event is an ordering boundary. Events append
+    // to the same transcript the chunk stream is filling (compliance notices,
+    // compaction summaries, the finish marker), so text the stream still owes
+    // is published BEFORE the event is dispatched — otherwise a throttled
+    // delta would land after the notice that followed it.
+    flushRootStream(state)
     return (
       match(event)
         .with({ type: 'subagent_start' }, (e) => handleSubagentStart(state, e))

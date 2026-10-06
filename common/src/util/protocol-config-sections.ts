@@ -2,6 +2,7 @@ import {
   boolOr,
   extractYamlSection,
   parseHookConfigs,
+  parseSteeringRuleConfigs,
   parseYamlBool,
   parseYamlNumber,
   parseYamlString,
@@ -15,6 +16,7 @@ import type {
   ProtocolYagniConfig,
 } from './protocol-config-types'
 import type { HookConfig } from '../types/hooks'
+import type { SteeringRuleSpec } from '../types/steering'
 
 // FID-2026-0819-005 Loop 150: per-section config appliers, extracted
 // verbatim from protocol-config.ts. Each takes the section lines plus the
@@ -171,4 +173,14 @@ export function applyProvenanceSection(
 export function applyHooksSection(lines: string[], hooks: HookConfig[]): void {
   if (lines.length === 0) return
   hooks.push(...parseHookConfigs(lines))
+}
+
+/** FID-2026-1006-002 WP1 — deterministic before-tool steering rules from
+ *  `steering:`. Same fail-safe contract as hooks: malformed entries drop. */
+export function applySteeringSection(
+  lines: string[],
+  steering: SteeringRuleSpec[],
+): void {
+  if (lines.length === 0) return
+  steering.push(...parseSteeringRuleConfigs(lines))
 }

@@ -1,5 +1,6 @@
 import crypto from 'crypto'
 
+import { runCommit } from './commit-journal'
 import { parseStoredJson, prepare, requireRow } from './sqlite'
 
 // Types
@@ -52,7 +53,10 @@ export function createSession(
   scopeId: string = chatId,
 ): Session {
   const id = crypto.randomUUID()
-  const stmt = prepare(`
+  // FID-2026-1006-002 WP2: durable writes flow through the commit seam so
+  // their exact order is assertable (docs/durable-race-catalog.md).
+  runCommit(
+    `
     INSERT INTO sessions (
       id,
       chat_id,
@@ -63,15 +67,16 @@ export function createSession(
       scope_id
     )
     VALUES (?, ?, ?, ?, ?, ?, ?)
-  `)
-  stmt.run(
-    id,
-    chatId,
-    agentId,
-    stringifySessionState(sessionState),
-    selectedModel,
-    scopeType,
-    scopeId,
+  `,
+    [
+      id,
+      chatId,
+      agentId,
+      stringifySessionState(sessionState),
+      selectedModel,
+      scopeType,
+      scopeId,
+    ],
   )
   return requireRow(getSession(id), `read back session ${id} after insert`)
 }
@@ -96,12 +101,16 @@ export function updateSession(
   id: string,
   sessionState: Record<string, unknown>,
 ): boolean {
-  const stmt = prepare(`
+  return (
+    runCommit(
+      `
     UPDATE sessions 
     SET session_state = ?, updated_at = CURRENT_TIMESTAMP
     WHERE id = ?
-  `)
-  return stmt.run(stringifySessionState(sessionState), id).changes > 0
+  `,
+      [stringifySessionState(sessionState), id],
+    ) > 0
+  )
 }
 
 // FID-2026-0803-002 DB-2: `created_at` is second-granularity, so every
@@ -123,36 +132,48 @@ export function updateSessionScope(
   scopeType: SessionScopeType,
   scopeId: string,
 ): boolean {
-  const stmt = prepare(`
+  return (
+    runCommit(
+      `
     UPDATE sessions
     SET scope_type = ?, scope_id = ?, updated_at = CURRENT_TIMESTAMP
     WHERE id = ?
-  `)
-  return stmt.run(scopeType, scopeId, sessionId).changes > 0
+  `,
+      [scopeType, scopeId, sessionId],
+    ) > 0
+  )
 }
 
 export function updateSessionUnread(
   sessionId: string,
   unread: boolean,
 ): boolean {
-  const stmt = prepare(`
+  return (
+    runCommit(
+      `
     UPDATE sessions
     SET unread = ?, updated_at = CURRENT_TIMESTAMP
     WHERE id = ?
-  `)
-  return stmt.run(unread ? 1 : 0, sessionId).changes > 0
+  `,
+      [unread ? 1 : 0, sessionId],
+    ) > 0
+  )
 }
 
 export function updateSessionPinned(
   sessionId: string,
   pinned: boolean,
 ): boolean {
-  const stmt = prepare(`
+  return (
+    runCommit(
+      `
     UPDATE sessions
     SET pinned = ?, updated_at = CURRENT_TIMESTAMP
     WHERE id = ?
-  `)
-  return stmt.run(pinned ? 1 : 0, sessionId).changes > 0
+  `,
+      [pinned ? 1 : 0, sessionId],
+    ) > 0
+  )
 }
 
 export function getSessionsByChatId(chatId: string): Session[] {
@@ -166,12 +187,16 @@ export function getSessionsByChatId(chatId: string): Session[] {
 // FID-2026-0803-002 DB-6: UPDATEs report whether a row was actually changed
 // so callers can detect silent no-ops on a missing id.
 export function updateSessionModel(sessionId: string, model: string): boolean {
-  const stmt = prepare(`
+  return (
+    runCommit(
+      `
     UPDATE sessions 
     SET selected_model = ?, updated_at = CURRENT_TIMESTAMP
     WHERE id = ?
-  `)
-  return stmt.run(model, sessionId).changes > 0
+  `,
+      [model, sessionId],
+    ) > 0
+  )
 }
 
 // FID-2026-0803-002 DB-3: single read path — `getLatestModel(chatId?)` replaces

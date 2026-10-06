@@ -87,6 +87,7 @@ describe('readProtocolConfig', () => {
         mode: 'record',
       },
       hooks: [],
+      steering: [],
     })
   })
 
@@ -195,6 +196,7 @@ describe('readProtocolConfig', () => {
         mode: 'record',
       },
       hooks: [],
+      steering: [],
     })
   })
 

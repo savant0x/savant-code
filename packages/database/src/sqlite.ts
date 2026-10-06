@@ -9,10 +9,22 @@ export type SqliteStatement = ReturnType<ReturnType<typeof getDb>['prepare']>
 
 export const statementCache = new Map<string, SqliteStatement>()
 
+// FID-2026-1006-002 WP2: a prepared statement is bound to the connection that
+// prepared it, and `getDb()` can now return a different connection when the
+// resolved path changes (the SAVANT_DB_PATH escape hatch is resolved per
+// call). Track the bound connection so a switch rebuilds the cache instead of
+// handing out a statement that would write to the previous database.
+let boundConnection: ReturnType<typeof getDb> | undefined
+
 export function prepare(sql: string): SqliteStatement {
+  const connection = getDb()
+  if (connection !== boundConnection) {
+    statementCache.clear()
+    boundConnection = connection
+  }
   let stmt = statementCache.get(sql)
   if (!stmt) {
-    stmt = getDb().prepare(sql)
+    stmt = connection.prepare(sql)
     statementCache.set(sql, stmt)
   }
   return stmt

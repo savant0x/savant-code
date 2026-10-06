@@ -224,6 +224,43 @@ The Orchestrator owns a durable, budgeted goal record on `agentState`
 (`active | paused | blocked | complete`) driven by a continuation driver and
 the `update_goal`/`get_goal` tools. See `docs/design/goal-mode.md`.
 
+### Durable state discipline (FID-2026-1006-002)
+
+One sentence governs every durable mutation: **compute one complete next state
+in memory, then commit it atomically.** Two mechanisms enforce it.
+
+- **Single durable-write seam** — every domain write in `@savant-code/database`
+  (`sessions`, `message_history`, `cost_tracking`, `agent_templates`,
+  `fid_documents`) flows through `runCommit()` in
+  `packages/database/src/commit-journal.ts`, so the exact ordered write surface
+  of a transaction is observable and asserted against
+  `docs/durable-race-catalog.md` (`write-order-conformance.test.ts`).
+- **Mutation line** — a next state that depends on the *stored* state is
+  computed inside `mutateSessionState()` in
+  `packages/database/src/mutation-line.ts`: the read happens inside a per-key
+  lane, the transform's returned value is committed verbatim (never a
+  field-wise blend of two writers' snapshots), and a mutation that throws
+  seals its key — later mutations refuse with `MutationLineSealedError` rather
+  than build on a state the line cannot vouch for.
+
+Writing a whole snapshot with `updateSession()` is the *other* supported shape,
+and is only correct when the caller already holds a complete next state (the
+CLI's in-memory run state does; see `cli/src/utils/db-storage.ts`).
+
+### Pure decision functions with an injected clock (FID-2026-1006-002 WP8)
+
+Loop and orchestration decision logic is **one pure function of explicit
+inputs** that returns a discriminated action union, and the clock is one of
+those inputs (`now: number`) rather than something the module reads.
+`determineNextAction()` in
+`packages/agent-runtime/src/run-agent-step/loop-guard-rails.ts` is the
+reference: no `Date.now()`, no I/O, no module state, and the same context always
+yields the same action. The I/O shell that calls it stays thin — it supplies the
+clock, performs the action, and owns nothing else. The convention is pinned by
+`packages/agent-runtime/src/__tests__/pure-decision-convention.test.ts`, which
+asserts the behaviour AND, statically, that the decision module's source
+contains no clock read and no I/O access.
+
 ### Zero-Trust provenance (FID-2026-0813-001..010)
 
 Every write records a per-role Ed25519-signed receipt into an append-only

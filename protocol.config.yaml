@@ -189,6 +189,48 @@ provenance:
 #       command: node ./hooks/audit-write.js
 #       matcher: write_file|str_replace
 #       timeout: 10
+# ProjectTrust (FID-2026-1006-002 WP9) — veto-only: a hook for this event
+# (fired before workspace skills/config load) may DENY trust for the
+# directory by answering the block protocol (exit 2 or a deny decision);
+# it can never GRANT it (a repo must not be able to trust itself — the
+# grant side belongs to the operator: the store or --approve). Fail-open:
+# a hook that allows simply defers to the store and the default.
+#   hooks:
+#     - event: ProjectTrust
+#       command: node ./hooks/deny-untrusted-repo.js
+# Deterministic before-tool steering rules (FID-2026-1006-002 WP1, adopted
+# from the pi harness `pi-steering-hooks` design). Regex rules over the tool
+# name and the call's text surface block a violation with zero token cost,
+# instead of relying on a prompt the model may drift from.
+#   id          stable identity, quoted in the blocking error
+#   tool        RegExp over the tool name
+#   match       RegExp over the call's text surface (command / path+content)
+#   requires    optional, repeatable: fire only when ALL of these also match
+#   unless      optional, repeatable: exempt when ANY of these match
+#   noOverride  true = unconditional; no override marker can pass
+#   reason      operator-facing text surfaced in the block
+# A blocked call may be retried with `# steering-override: <id> — <reason>`
+# inside the command unless `noOverride` is set. Rules are fail-safe: a
+# malformed entry is dropped and a malformed regex is reported, never fatal.
+steering:
+  # AGENTS.md: "Do not force-push `main`" — prompt-enforced until now.
+  - id: no-force-push-main
+    tool: '^run_terminal_command$'
+    match: 'git\s+push\b.*(\s--force\b|\s-f\b).*\bmain\b|git\s+push\b.*\bmain\b.*(\s--force\b|\s-f\b)'
+    reason: 'Force-pushing main is forbidden (AGENTS.md); use a normal push or --force-with-lease on a branch.'
+  # Credential surfaces are never written by an agent (G-law: credential
+  # handling). Protected-path writes only; reading a template is fine.
+  - id: no-write-dotenv
+    tool: '^(write_file|str_replace|apply_patch)$'
+    match: '\.env(\.[a-zA-Z]+)?("|\x27|$|\s|,)'
+    reason: 'Writing .env credential files is forbidden; the operator owns credential placement.'
+  # `rm -rf /` is never recoverable — unconditional, override cannot pass.
+  - id: no-recursive-root-delete
+    tool: '^run_terminal_command$'
+    match: 'rm\s+-[a-zA-Z]*r[a-zA-Z]*f\s+(/|~|/\*|\$HOME)\s*$'
+    noOverride: true
+    reason: 'Recursive delete of a root/home path is unrecoverable and can never be overridden.'
+
 hooks:
   # FID-2026-0824-012 S1-B: deterministic tool-failure capture into
   # dev/experiences/raw-traces.jsonl. In-process (no spawn per event),

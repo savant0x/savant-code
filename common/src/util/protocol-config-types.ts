@@ -1,4 +1,5 @@
 import type { HookConfig } from '../types/hooks'
+import type { SteeringRuleSpec } from '../types/steering'
 
 export interface ProtocolContractConfig {
   version: string
@@ -79,6 +80,12 @@ export interface ProtocolHooksConfig {
   hooks: HookConfig[]
 }
 
+/** FID-2026-1006-002 WP1 — deterministic before-tool steering rules
+ *  from `steering:`. */
+export interface ProtocolSteeringConfig {
+  steering: SteeringRuleSpec[]
+}
+
 export interface ProtocolConfig {
   strictMode: boolean
   language: string | null
@@ -103,6 +110,10 @@ export interface ProtocolConfig {
   provenance: ProtocolProvenanceConfig
   /** FID-2026-0814-003 — project-scoped lifecycle hooks (default: none). */
   hooks: HookConfig[]
+  /** FID-2026-1006-002 WP1 — deterministic before-tool steering rules
+   *  (default: none). Declared rules are evaluated by the tool executor's
+   *  steering gate; a malformed rule is dropped fail-safe and reported. */
+  steering: SteeringRuleSpec[]
 }
 
 export const DEFAULT_COMPRESSION: ProtocolCompressionConfig = {

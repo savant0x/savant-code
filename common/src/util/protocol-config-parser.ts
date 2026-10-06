@@ -2,6 +2,7 @@ import { HOOK_BUILTIN_ACTIONS, HOOK_EVENTS } from '../types/hooks'
 
 import type { ProtocolContractConfig } from './protocol-config-types'
 import type { HookBuiltinAction, HookConfig, HookEvent } from '../types/hooks'
+import type { SteeringRuleSpec } from '../types/steering'
 
 export function parseProtocolContract(
   lines: string[],
@@ -117,6 +118,82 @@ export function parseHookConfigs(lines: string[]): HookConfig[] {
   }
   flush()
   return hooks
+}
+
+/**
+ * FID-2026-1006-002 WP1: parse the `steering:` block (a list of deterministic
+ * before-tool steering rules). Each entry starts with a `- id: ...` line;
+ * following indented `key: value` lines fill in the entry. `requires` and
+ * `unless` may repeat — each occurrence appends one conjunction regex.
+ *
+ * Invalid entries (missing id/tool/match/reason) are DROPPED fail-safe, the
+ * same contract as hooks: a malformed rule can never brick a session. Regex
+ * validity is NOT checked here — the agent-runtime engine compiles and
+ * reports invalid patterns without throwing, so a typo cannot silently
+ * weaken a guard at load time either.
+ */
+export function parseSteeringRuleConfigs(lines: string[]): SteeringRuleSpec[] {
+  const rules: SteeringRuleSpec[] = []
+  let current: Partial<SteeringRuleSpec> | null = null
+
+  const flush = () => {
+    if (!current) return
+    const nonEmpty = (value: string | undefined): value is string =>
+      typeof value === 'string' && value.trim() !== ''
+    if (
+      nonEmpty(current.id) &&
+      nonEmpty(current.tool) &&
+      nonEmpty(current.match) &&
+      nonEmpty(current.reason)
+    ) {
+      rules.push({
+        id: current.id.trim(),
+        tool: current.tool.trim(),
+        match: current.match.trim(),
+        reason: current.reason.trim(),
+        ...(current.noOverride === true ? { noOverride: true } : {}),
+        ...(current.requires && current.requires.length > 0
+          ? { requires: [...current.requires] }
+          : {}),
+        ...(current.unless && current.unless.length > 0
+          ? { unless: [...current.unless] }
+          : {}),
+      })
+    }
+    current = null
+  }
+
+  const parseValue = (raw: string): string =>
+    raw
+      .trim()
+      .replace(/^["']|["']$/g, '')
+      .split(/#/)[0]
+      .trim()
+
+  for (const line of lines) {
+    if (line.trim() === '') continue
+    const entryMatch = line.match(/^\s*-\s+id:\s*(.+)$/)
+    if (entryMatch) {
+      flush()
+      current = { id: parseValue(entryMatch[1]) }
+      continue
+    }
+    if (!current) continue
+    const fieldMatch = line.match(/^\s{4,}(\w+):\s*(.*)$/)
+    if (!fieldMatch) continue
+    const key = fieldMatch[1]
+    const value = parseValue(fieldMatch[2])
+    if (key === 'tool') current.tool = value
+    else if (key === 'match') current.match = value
+    else if (key === 'reason') current.reason = value
+    else if (key === 'noOverride') current.noOverride = value === 'true'
+    else if (key === 'requires')
+      current.requires = [...(current.requires ?? []), value]
+    else if (key === 'unless')
+      current.unless = [...(current.unless ?? []), value]
+  }
+  flush()
+  return rules
 }
 
 export function extractYamlSection(

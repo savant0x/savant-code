@@ -62,7 +62,14 @@
 
 ## Open items
 
-**One** item is open.
+**Five** items are open — three blocked pending operator input (T119,
+T62-followups, T122), one shelved on an operator ruling (T147), and one
+active implementation record: T151 (the CodeCraft `/model` picker, registered
+for coverage by the T150 session's compliance pass). (T149, the deep pi
+review, completed 2026-10-06 — its box below is closed. T150, the pi-harness
+adoption program, completed and closed 2026-10-06: all twelve work packages
+implemented, `fid:verify --check` 22/22, record archived to
+`dev/fids/archive/` — its box below is checked.)
 (2026-10-05 (in-pass fix, per "NOTHING IS EVER OUT OF SCOPE"): the
 `validate:repository` run during the FID-drafting pass returned 1 issue,
 none from the FIDs — `quality.ratchet`:
@@ -341,6 +348,139 @@ T90-F3 was resolved by the operator ruling "T90-F3 residual needs no code"
       **Blocker:** operator credits/keys — tokenharbor allowance reset and
       tokenrouter top-up, both external to the repository.
 
+- [x] **T146. Geaix/Excelnt probe stage — blank key sections, boundary
+      probe, universal probe script.** **Automation level: 3.** Operator
+      request 2026-10-06, verbatim: "i need to test a new provider.
+      https://excelnt.ai/dashboard, make a blank section for the key, then i
+      want to probe it before proceeding", corrected the same session to
+      "the correct provider is https://geaix.com/dashboard" and scoped to
+      both gateways ("Look, i have 2 providers"). Both are OpenAI-style
+      (`https://geaix.com/v1` / `https://excelnt.ai/v1`;
+      `Authorization: Bearer`; `GEAIX_API_KEY` / `EXCELNT_API_KEY`; keys
+      minted in each vendor's VS Code extension, shown once at creation).
+      Completed 2026-10-06: blank hand-maintained key sections in
+      `.env.example` (outside the generated block), the universal probe
+      `dev/scratchpad/active/gateway-catalog-probe.ts` (sends the key as
+      Bearer on its first request whenever one is present; `--chat` is the
+      single-completion leg), and the live boundary probe recorded in
+      `dev/session-summaries/2026-10-06-geaix-excelnt-probe.md` — public
+      catalogs on both hosts (byte-identical bodies; 40 rows at 01:07, 41 at
+      01:25 when `muse-spark-1.3` appeared — the roster is live-updating),
+      completions key-gated (401 `missing_api_key`), key minting
+      session-gated (`/api/keys` 401). The operator's "before proceeding"
+      pause holds: no registry integration until the keyed probe (T147)
+      runs.
+
+- [ ] **T147. Geaix/Excelnt keyed live probe, then registry integration.**
+      **Automation level: 1.** The keyed probe (T146's script with a live
+      key: catalog + one minimal completion on a chosen model) followed by
+      the provider-registry integration FID (catalog, window seams, docs
+      surfaces). Live state 2026-10-06: Geaix 0/25 active keys ("No keys
+      yet"); Excelnt 0/1 — the single key revoked (2 requests recorded
+      2026-10-06 02:14 UTC). **Blocker:** a live gateway key exists only
+      after the operator mints it in the vendor's VS Code extension (shown
+      once at creation); `/api/keys` is session-gated ("Sign in to manage
+      keys.") and `.env.local` is agent-read-blocked, so the operator
+      places the key on the prepared blank line. The keyed probe runs before
+      any integration work, per "then i want to probe it before
+      proceeding". **deferred::operator-approved 2026-10-06 — "let's
+      shelf that for now and i'll revisit it later"** (operator shelved the
+      provider work; the key-creation wall and the Oct 13 balance expiry
+      stay recorded above).
+
+- [x] **T148. Reference-project review: `resources/deepseek-harness` +
+      pi harness.** **Automation level: 3.** Operator request 2026-10-06,
+      verbatim: "i want you to review a few resources. Take a very deep look
+      at this - see if there are any ideas we can get from it" + "also pi
+      harness". Deep read-only review of the vendored reference harnesses
+      (architecture, agent governance, tooling, testing, docs) and an
+      evidence-cited,      ranked idea list for Savant-Code. **Completed
+      2026-10-06:** report delivered at
+      `dev/session-summaries/2026-10-06-reference-review-deepseek-pi.md` —
+      15 ranked ideas with cited evidence, prior-overlap check against
+      T138–T142, and stated read limits. Adopting any idea becomes its own
+      registered item.
+
+- [x] **T149. Deep pi-harness review: `resources/pi-main` internals +
+      `resources/pi-ralph` + `resources/pi-steering-hooks`.**
+      **Automation level: 3.** Operator request 2026-10-06, verbatim: "now
+      review pi" (follow-up to T148, whose pi coverage was README/AGENTS
+      level only and whose read limits named the package internals as
+      unread). Deep read-only review of pi's package sources and design
+      specs (harness durability model, tool durability, compaction,
+      concurrency primitives, session format, trust model), pi-ralph's
+      orchestration sources (`index.ts`, `lib.ts`, `presets/`, `skills/`),
+      and `pi-steering-hooks/src`, producing an evidence-cited ranked idea
+      list with a duplication check against T148's 15 ideas. **Completed
+      2026-10-06:** report delivered at
+      `dev/session-summaries/2026-10-06-pi-deep-review.md` — 13 ranked
+      ideas (top: deterministic steering hooks with audited override,
+      race catalog + instrumented-storage test tiers, tool outcome
+      durability `outcome_ready`/invocation memos, atomic transition rule,
+      compaction split-turn semantics), T148 overlap table, and stated read
+      limits (specs read as design docs; tui/ai/protocol/server packages
+      and pi tests not run). Adopting any idea becomes its own registered
+      item.
+
+- [x] **T150. Pi-harness adoption program (`FID-2026-1006-002`).**
+      **Automation level: 2.** Operator request 2026-10-06, verbatim: "write
+      a fid to implement all of the features found + run the full perfection
+      loop on the fid then present it" — author one FID covering the 13
+      ranked ideas in T149's report
+      (`dev/session-summaries/2026-10-06-pi-deep-review.md`), run the
+      Perfection Loop on the FID document to convergence, and present the
+      converged record. **Completed 2026-10-06:** all twelve adopted work
+      packages implemented and gate-verified — `fid:verify --check` 22/22
+      (5 workspace typechecks + 16 named test gates + `quality: PASS (1498
+      baselined files)`), receipt fingerprint
+      `sha256:b1a3f13c7fa33e485ca6bbffeb366226be2a1a3470d06341651d87c95b50a8c0`,
+      root `bun run typecheck` (13 workspaces) exit 0, `validate:repository`
+      PASS, `lint:md` exit 0, eslint `--max-warnings 0` exit 0 on the
+      changed surface. The record's status flips `verified` → `closed` in
+      the same session and it moves to `dev/fids/archive/` per the FID
+      Auto-Archive rule (CHANGELOG + session summary updated with it).
+      Three work packages (WP5 cut-point/file-tracking, WP7 loop guard
+      rails, WP11 entry classes) are library-complete modules with no
+      production call path yet — FID scope for WP5/WP7 (module + tests is
+      the declared deliverable) and the WP4-database-half precedent for
+      WP11; stated as a limitation in the record, not reported as
+      reachability. No commit was executed (G1/G2 — the operator owns
+      staging/commit); the path-scoped staging plan is prepared.
+      **Converged 2026-10-06:**
+      `dev/fids/archive/FID-2026-1006-002-pi-harness-adoption-program.md`
+      (status `closed`, automation level 2) carries twelve adopted work
+      packages
+      (steering rules with audited override; race catalog + write-order
+      conformance; tool-outcome durability design study; atomic transition
+      rule + per-path file-mutation queue; compaction cut-point/split-turn
+      semantics and cumulative file tracking; branch summarization; loop
+      guard rails incl. stale-cycle detection; pure decision functions with
+      injected clock; project-trust inheritance; adaptive publisher; session
+      entry classes; marker-based prompt isolation), one analysis-only
+      non-adoption (idea 13 miscellanies, re-routed to T147/T62 where they
+      belong), and per-idea de-duplication against existing Savant surfaces
+      (`tool-executor/steering.ts` = EHEL injection, not rule blocking;
+      `common/src/util/skill-management/trust.ts` = skills quarantine trust,
+      not workspace trust). **Blocker:** operator approval of the adoption
+      scope — implementation begins only after the operator rules on the
+      presented FID. The FID-authoring step itself is complete; this box
+      stays open because the adoption program is not implemented.
+
+- [ ] **T151. CodeCraft `/model` picker visibility (`FID-2026-1006-001`).**
+      **Automation level: 2.** Register line added 2026-10-06 by the T150
+      session's ECHO-compliance pass — **for coverage only, not scope
+      authorship**. That record was authored by a **concurrent session**
+      (`Created: 2026-10-06 03:29`) while this session's own FID was being
+      loop-passed, and `bun run validate:repository` refused the tree with
+      `scope.unregistered-item`: an active FID with no line here is invisible
+      in the register and droppable with no operator decision, so the tree was
+      red for *both* sessions until this line existed. Scope, evidence, and
+      the operator request live in that record
+      (`dev/fids/FID-2026-1006-001-codecraft-model-picker.md`, status
+      `analyzed`, automation level 2 as recorded there). If the authoring
+      session registers its own item for this work, that item supersedes this
+      coverage line.
+
 - [x] **T145. `website/` deliberate project root.** **Automation level: 3.**
       Operator ruling 2026-10-05 (structured
       question): "Leave as deliberate root" — the new top-level `website/`
@@ -484,6 +624,25 @@ operator-directed session. **Automation level: 1** (no agent action;
 - T62-followups: `dev/scratchpad/active/t62*.ts` (the catalog itself is
   gateway-side; the local write surface is the probe scripts — verified
   2026-10-02: no local catalog directory exists)
+- T146: `.env.example`, `dev/scratchpad/active/gateway-catalog-probe.ts`,
+  `dev/session-summaries/2026-10-06-geaix-excelnt-probe.md`
+- T147: `dev/scratchpad/active/gateway-catalog-probe.ts`,
+  `dev/session-summaries/2026-10-06-geaix-excelnt-probe.md`,
+  `dev/fids/**` (the integration FID)
+- T148: `dev/session-summaries/2026-10-06-reference-review-*.md`
+- T149: `dev/session-summaries/2026-10-06-pi-deep-review*.md`
+- T150: `dev/fids/**`, `dev/session-summaries/2026-10-06-pi-harness-adoption*.md`,
+  `packages/agent-runtime/src/**`, `packages/database/src/**`,
+  `common/src/**`, `cli/src/**`, `evals/v2/**`, `docs/**`,
+  `protocol.config.yaml`, `ARCHITECTURE.md`
+- T151: `dev/fids/**`, `cli/src/utils/provider-credentials.ts`,
+  `cli/src/utils/openrouter-models/**`, `cli/src/utils/__tests__/provider-credentials.test.ts`,
+  `common/src/constants/window-coverage-register.ts`,
+  `common/src/constants/provider-catalog-census.json`, `package.json`,
+  `scripts/window-coverage-check.ts`,
+  `scripts/provider-catalog-parity.ts`,
+  `scripts/__tests__/window-coverage-check.test.ts`,
+  `scripts/__tests__/provider-catalog-parity.test.ts`
 - T122: (no write surface — operator-owned)
 - T145: `website/index.html`
 - T144: `common/src/providers/**`, `common/src/constants/**`,

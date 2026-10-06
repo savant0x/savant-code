@@ -2,13 +2,15 @@ import { generateCompactId } from '@savant-code/common/util/string'
 
 import { createClientToolBridge } from './client-tool-bridge'
 import { recordEchoComplianceActivity } from './echo-record'
+import { withFileMutationQueue } from './file-mutation-queue'
 import { buildGateChain } from './gate-chain'
 import { resolvePolicyForContext } from './pre-dispatch-gates'
 import { runRejectionLifecycle, runSuccessLifecycle } from './result-lifecycle'
 import { validateSpawnAgentsInput } from './spawn-validation'
 import { createToolTrace } from './trace'
-import { recordLaw1Write } from './write-bookkeeping'
+import { isWriteToolName, recordLaw1Write } from './write-bookkeeping'
 import { getOrCreateEnforcement } from '../../echo/enforcement'
+import { getSteeringRules } from '../../steering/rules-source'
 import { toolActivity } from '../../util/activity-tracking'
 import { savantCodeToolHandlers } from '../handlers/list'
 import { parseRawToolCall } from '../tool-call-parse'
@@ -91,6 +93,12 @@ export async function executeToolCall<T extends ToolName>(
       isCapabilityOverride: () => ctx.executionPolicy.allowCapabilityOverride,
       isFsmOverride: () => ctx.executionPolicy.allowFsmOverride,
       isSandboxOverride: () => ctx.executionPolicy.allowSandboxOverride,
+      // FID-2026-1006-002 WP1: deterministic steering rules from the
+      // project's `steering:` block, audited when a rule is overridden.
+      getSteeringRules: () => getSteeringRules(hookProjectRoot),
+      auditSteeringOverride: (record) => {
+        logger.warn(record, 'steering: overridden by audited marker')
+      },
     })
     for (const gate of gates) {
       const verdict = await gate(ctx)
@@ -200,15 +208,31 @@ export async function executeToolCall<T extends ToolName>(
       userInputId,
       requestToolCall,
     })
-    let toolResultPromise: ReturnType<SavantCodeToolHandlerFunction<T>>
-    try {
-      toolResultPromise = handler({
+    const invokeHandler = () =>
+      handler({
         ...params,
         toolCall: finalToolCall,
         previousToolCallFinished,
         writeToClient: onResponseChunk,
         requestClientToolCall: bridge,
       })
+
+    let toolResultPromise: ReturnType<SavantCodeToolHandlerFunction<T>>
+    try {
+      // FID-2026-1006-002 WP4: serialize read-modify-write jobs per canonical
+      // path, so two parallel edits to ONE file cannot interleave (a
+      // whole-file rewrite can no longer land between another job's read and
+      // write). Only write tools carry a resolved path; every other tool is
+      // dispatched untouched. The three write handlers are async, so wrapping
+      // cannot change throw semantics — their rejections already flow through
+      // `runRejectionLifecycle` below.
+      const mutationTarget = ctx.resolvedWritePath
+      toolResultPromise =
+        isWriteToolName(toolName) && mutationTarget
+          ? (withFileMutationQueue(mutationTarget, invokeHandler) as ReturnType<
+              SavantCodeToolHandlerFunction<T>
+            >)
+          : invokeHandler()
     } catch (error) {
       const errorMessage =
         error instanceof Error ? error.message : String(error)

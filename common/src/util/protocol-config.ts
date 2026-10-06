@@ -10,6 +10,7 @@ import {
   applyCompressionSection,
   applyHooksSection,
   applyProvenanceSection,
+  applySteeringSection,
   applyTelemetrySection,
   applyYagniSection,
 } from './protocol-config-sections'
@@ -32,6 +33,7 @@ import type {
   SavantProtocolConfig,
 } from './protocol-config-types'
 import type { HookConfig } from '../types/hooks'
+import type { SteeringRuleSpec } from '../types/steering'
 
 // Re-export the protocol config contract + defaults from the original path.
 export type {
@@ -41,6 +43,7 @@ export type {
   ProtocolContractConfig,
   ProtocolHooksConfig,
   ProtocolProvenanceConfig,
+  ProtocolSteeringConfig,
   ProtocolTelemetryConfig,
   ProtocolYagniConfig,
   SavantProtocolConfig,
@@ -64,6 +67,7 @@ export function readProtocolConfig(cwd: string): ProtocolConfig {
   const telemetry: ProtocolTelemetryConfig = { ...DEFAULT_TELEMETRY }
   const provenance: ProtocolProvenanceConfig = { ...DEFAULT_PROVENANCE }
   const hooks: HookConfig[] = []
+  const steering: SteeringRuleSpec[] = []
 
   try {
     const configPath = path.join(cwd, 'protocol.config.yaml')
@@ -130,6 +134,8 @@ export function readProtocolConfig(cwd: string): ProtocolConfig {
       provenance,
     )
     applyHooksSection(extractYamlSection(lines, 'hooks', 0), hooks)
+    // FID-2026-1006-002 WP1: deterministic before-tool steering rules.
+    applySteeringSection(extractYamlSection(lines, 'steering', 0), steering)
   } catch {
     // File doesn't exist or can't be read — use defaults
   }
@@ -150,6 +156,7 @@ export function readProtocolConfig(cwd: string): ProtocolConfig {
     telemetry,
     provenance,
     hooks,
+    steering,
   }
 }
 

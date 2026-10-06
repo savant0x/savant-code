@@ -68,6 +68,23 @@ export class CompactionMessage_ {
       ECHO_CRITICAL_SENTINEL,
     )
   }
+
+  /**
+   * FID-2026-1006-002 WP5: the previous compaction's KEPT boundary — one past
+   * the last compaction-summary message in the array. Repeated compaction
+   * re-summarizes from here (not from the previous compaction entry), so
+   * already-summarized content is never re-summarized. Detection reuses the
+   * established preserve-set markers (<conversation_summary> /
+   * <structured_state> / <compaction-summary>); when none is present the
+   * boundary is 0 (no prior compaction).
+   */
+  static findPreviousKeptBoundary(messages: Message[]): number {
+    let boundary = 0
+    for (let i = 0; i < messages.length; i++) {
+      if (CompactionMessage_.hasPreservedState(messages[i])) boundary = i + 1
+    }
+    return boundary
+  }
 }
 
 /**
