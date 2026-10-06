@@ -36,11 +36,15 @@ type SemanticUpgradeParams = Parameters<typeof applySemanticSummaryUpgrade>[0]
 export function resolvePrunerSpawnParams(opts: {
   agentType: string
   digestCaps: AgentState['digestCaps']
+  cutPlan: AgentState['compactionCutPlan']
+  fileLedger: AgentState['compactionFileLedger']
   projectRoot: string | undefined
   spawnParams: Record<string, JSONValue> | undefined
 }): Record<string, JSONValue> | undefined {
-  const { agentType, digestCaps, projectRoot, spawnParams } = opts
-  return agentType === 'context-pruner' && (digestCaps || projectRoot)
+  const { agentType, digestCaps, cutPlan, fileLedger, projectRoot, spawnParams } =
+    opts
+  return agentType === 'context-pruner' &&
+    (digestCaps || cutPlan || fileLedger || projectRoot)
     ? {
         ...(spawnParams ?? {}),
         ...(digestCaps?.headChars !== undefined
@@ -49,6 +53,12 @@ export function resolvePrunerSpawnParams(opts: {
         ...(digestCaps?.tailChars !== undefined
           ? { digestTailChars: digestCaps.tailChars }
           : {}),
+        // FID-2026-1006-003 WP1/WP2: the runtime step boundary's cut plan and
+        // cumulative file ledger. Injected here (after validation, exactly
+        // like the digest caps) because the embedded pruner is serialized via
+        // `.toString()` and cannot import the runtime modules that own them.
+        ...(cutPlan ? { cutPlan } : {}),
+        ...(fileLedger ? { fileLedger } : {}),
         ...(projectRoot ? { projectRoot } : {}),
       }
     : spawnParams

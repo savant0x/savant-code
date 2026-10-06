@@ -117,6 +117,12 @@ export const NOT_INHERITED_BY_DESIGN = {
     'override audits recorded by the owning run’s tool executor and drained by that run’s save; a child must not inherit a pending record',
   loopStopReason:
     'verdict of the owning run’s loop guard rails; a child’s own loop stamps its own reason',
+  compactionCutPlan:
+    'cut plan computed from the owning run’s history at its own step boundary',
+  compactionFileLedger:
+    'cumulative file ledger of the owning run’s history; a child folds its own',
+  compactionFileLedgerWatermark:
+    'history watermark of the owning run’s ledger fold; a child counts its own history',
 } as const satisfies Partial<Record<keyof AgentState, string>>
 
 export type InheritedAgentStateField = (typeof INHERITED_FROM_PARENT)[number]

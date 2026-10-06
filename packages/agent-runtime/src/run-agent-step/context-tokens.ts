@@ -1,6 +1,11 @@
 import { shouldUseLocalTokenCount } from '@savant-code/common/constants/free-agents'
 
 import {
+  DEFAULT_TAIL_BUDGET_TOKENS,
+  foldFileOperations,
+  planCompactionCut,
+} from './compaction-plan'
+import {
   resolveCompactionStatus,
   runMicroCompactPass,
 } from './context-tokens-compaction'
@@ -163,6 +168,25 @@ export async function prepareStepContext(params: {
     autoCompactCheck,
     microResult,
   })
+
+  // FID-2026-1006-003 WP1/WP2: refresh the two compaction inputs the
+  // serialized context pruner consumes as DATA. The plan makes the cut legal
+  // (never at a tool result) and re-summarizes only from the previous kept
+  // boundary; the ledger accumulates every window's file operations so a path
+  // touched many compactions ago is still tracked. Both travel to the pruner
+  // as spawn params (see agents/savant/handle-steps-template-body-b.ts).
+  agentState.compactionCutPlan = planCompactionCut({
+    messages: agentState.messageHistory,
+    tailBudgetTokens:
+      loopParams.compression?.keepRecentTokens ?? DEFAULT_TAIL_BUDGET_TOKENS,
+  })
+  const ledgerUpdate = foldFileOperations({
+    ledger: agentState.compactionFileLedger,
+    messages: agentState.messageHistory,
+    watermark: agentState.compactionFileLedgerWatermark ?? 0,
+  })
+  agentState.compactionFileLedger = ledgerUpdate.ledger
+  agentState.compactionFileLedgerWatermark = ledgerUpdate.watermark
 
   emitCompactionStatus(agentState, contextCompactor, loopParams.onResponseChunk)
   return { stepPrompt, systemTokens }

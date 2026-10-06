@@ -8,7 +8,7 @@ import {
   FIXED_TAIL_BUDGET_TOKENS,
   USER_BUDGET,
 } from './constants'
-import { asNumber } from './helpers'
+import { asNumber, asObject, asStringArray } from './helpers'
 import {
   extractSummaryContent,
   isConversationSummary,
@@ -19,10 +19,28 @@ import {
 import type { AgentState } from '../types/agent-definition'
 import type { JSONValue, Message } from '../types/util-types'
 
+/**
+ * FID-2026-1006-003 WP2: the cumulative file ledger the runtime step boundary
+ * folds across compactions (plain data — this module is serialized).
+ */
+export type LedgerFiles = {
+  readFiles: string[]
+  modifiedFiles: string[]
+  createdFiles: string[]
+}
+
 export type SummarizationContext = {
   assistantToolBudget: number
   userBudget: number
   keepRecentTokens: number
+  /**
+   * FID-2026-1006-003 WP1: first index of the window the runtime planned to
+   * summarize (its previous kept boundary). Content before it is already in
+   * the carried summary, so it is never summarized a second time.
+   */
+  cutWindowStart: number
+  /** FID-2026-1006-003 WP2: file ops from windows that aged out of a summary. */
+  fileLedger: LedgerFiles | null
   digestCaps: { headChars?: number; tailChars?: number } | undefined
   previousSummaryContent: string
   previousSummaryEntries: ReturnType<typeof parseSummaryIntoEntries>
@@ -56,6 +74,24 @@ export function buildSummarizationContext(params: {
     asNumber(spawnParams.digestHeadChars) ?? undefined
   const digestTailCharsParam =
     asNumber(spawnParams.digestTailChars) ?? undefined
+  // FID-2026-1006-003 WP1/WP2: the compaction inputs the runtime computed at
+  // its step boundary, read defensively as DATA. The plan's window opens at
+  // the previous kept boundary; the ledger carries the file ops of windows
+  // that have aged out of any single summary.
+  const cutPlan = asObject(spawnParams.cutPlan ?? null)
+  const segments = cutPlan?.segments
+  const firstSegment = Array.isArray(segments)
+    ? asObject(segments[0] ?? null)
+    : undefined
+  const cutWindowStart = Math.max(0, asNumber(firstSegment?.start ?? null) ?? 0)
+  const ledgerRaw = asObject(spawnParams.fileLedger ?? null)
+  const fileLedger: LedgerFiles | null = ledgerRaw
+    ? {
+        readFiles: asStringArray(ledgerRaw.readFiles ?? null) ?? [],
+        modifiedFiles: asStringArray(ledgerRaw.modifiedFiles ?? null) ?? [],
+        createdFiles: asStringArray(ledgerRaw.createdFiles ?? null) ?? [],
+      }
+    : null
   const digestCaps =
     digestHeadCharsParam !== undefined || digestTailCharsParam !== undefined
       ? {
@@ -106,6 +142,8 @@ export function buildSummarizationContext(params: {
     assistantToolBudget,
     userBudget,
     keepRecentTokens,
+    cutWindowStart,
+    fileLedger,
     digestCaps,
     previousSummaryContent,
     previousSummaryEntries,

@@ -122,9 +122,14 @@ export const handleSpawnAgentInline = (async (
   // scope cannot read process/env) so preserved-state paths normalize
   // repo-relative instead of leaking absolute machine paths.
   const projectRoot = params.fileContext?.projectRoot
+  // FID-2026-1006-003 WP1/WP2: the compaction inputs the runtime step boundary
+  // computed (cut plan + cumulative file ledger) ride the same channel — the
+  // embedded pruner cannot import runtime modules, so both arrive as DATA.
   const effectiveSpawnParams = resolvePrunerSpawnParams({
     agentType,
     digestCaps,
+    cutPlan: parentAgentState.compactionCutPlan,
+    fileLedger: parentAgentState.compactionFileLedger,
     projectRoot,
     spawnParams,
   })

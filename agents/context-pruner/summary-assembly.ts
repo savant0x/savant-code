@@ -2,10 +2,12 @@ import { applyBudgets } from './apply-budgets'
 import { SUMMARY_DISCLAIMER, SUMMARY_HEADER } from './constants'
 import { getTextContent } from './helpers'
 import {
+  applyPreservedStateCaps,
   buildPreservedState,
   extractPreservedState,
   mergePreservedState,
   serializePreservedState,
+  unionNewestFirst,
 } from './preserved-state'
 import {
   buildStructuredSummary,
@@ -14,6 +16,7 @@ import {
 import { summarizeMessages } from './summarize-messages'
 import { isConversationSummary, shouldExcludeMessage } from './summary-parsing'
 
+import type { LedgerFiles } from './summarization-context'
 import type { SummaryEntry } from './summarize-messages'
 import type {
   FilePart,
@@ -29,6 +32,10 @@ type SummaryAssemblyContext = {
    *  result-digest caps forwarded to the summarizer. */
   digestCaps?: { headChars?: number; tailChars?: number }
   currentMessages: Message[]
+  /** FID-2026-1006-003 WP1: previous kept boundary (already summarized). */
+  cutWindowStart?: number
+  /** FID-2026-1006-003 WP2: cumulative file ledger from the step boundary. */
+  fileLedger?: LedgerFiles | null
   instructionsPromptMessage: Message | null
   isMidTurnPrune: boolean
   keepRecentTokens: number
@@ -61,6 +68,8 @@ export function buildFullSummary({
   assistantToolBudget,
   digestCaps,
   currentMessages,
+  cutWindowStart = 0,
+  fileLedger = null,
   instructionsPromptMessage,
   isMidTurnPrune,
   keepRecentTokens,
@@ -71,10 +80,15 @@ export function buildFullSummary({
   userBudget,
   projectRoot,
 }: SummaryAssemblyContext): SummaryAssemblyResult {
+  // FID-2026-1006-003 WP1: the runtime's plan opens the summarized window at
+  // the PREVIOUS kept boundary, so content that is already carried in the
+  // summary is never summarized a second time (repeated compaction used to
+  // re-summarize the whole history every pass).
   const messagesToSummarize = currentMessages
     .filter(
       (_message, index) =>
-        isMidTurnPrune || index !== latestLiveUserPromptIndex,
+        (isMidTurnPrune || index !== latestLiveUserPromptIndex) &&
+        index >= cutWindowStart,
     )
     .filter(
       (message) =>
@@ -114,11 +128,31 @@ export function buildFullSummary({
 
   const preservedState = buildPreservedState(currentMessages, projectRoot)
   const previousPreservedState = extractPreservedState(previousSummaryContent)
-  const mergedPreservedState = mergePreservedState(
+  const carriedPreservedState = mergePreservedState(
     previousPreservedState,
     preservedState,
     projectRoot,
   )
+  // FID-2026-1006-003 WP2: the runtime's cumulative ledger is merged as an
+  // additional previous file state, so a file touched several compactions ago
+  // is still tracked after its path aged out of any single window.
+  const mergedPreservedState = fileLedger
+    ? applyPreservedStateCaps({
+        ...carriedPreservedState,
+        readFiles: unionNewestFirst(
+          carriedPreservedState.readFiles,
+          fileLedger.readFiles,
+        ),
+        modifiedFiles: unionNewestFirst(
+          carriedPreservedState.modifiedFiles,
+          fileLedger.modifiedFiles,
+        ),
+        createdFiles: unionNewestFirst(
+          carriedPreservedState.createdFiles,
+          fileLedger.createdFiles,
+        ),
+      })
+    : carriedPreservedState
   const preservedStateJson = serializePreservedState(mergedPreservedState)
   const firstUserTurnPinned = findFirstUserTurnText(currentMessages) !== null
   const structuredBlock = buildStructuredSummary({

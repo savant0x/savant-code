@@ -37,6 +37,38 @@ export type SteeringOverrideAuditRecord = {
 }
 
 /**
+ * FID-2026-1006-003 WP1: the compaction cut plan computed at the runtime step
+ * boundary. A structural twin of the runtime's `CutPlan` (common cannot import
+ * the runtime) because the plan travels to the serialized context pruner as
+ * DATA — the embedded pruner cannot import runtime modules.
+ */
+export type CompactionCutPlan = {
+  /** First live (kept) message index; never sits on a tool result. */
+  cutIndex: number
+  /** Disjoint summary segments covering the summarized window, in order. */
+  segments: Array<{ start: number; end: number }>
+  /** True when the boundary moved from the requested index. */
+  adjusted: boolean
+  /**
+   * The split boundary turn, or null. Required-and-nullable (not optional) so
+   * the whole plan is a plain JSON value on its way to the pruner's spawn
+   * params — an optional property would carry `undefined`, which is not JSON.
+   */
+  splitTurn: { start: number; end: number; splitAt: number } | null
+}
+
+/**
+ * FID-2026-1006-003 WP2: the cumulative file-tracking ledger carried across
+ * successive compactions. Structural twin of the runtime's `FileTracking`,
+ * carried to the pruner as data for the same reason as the cut plan.
+ */
+export type CompactionFileLedger = {
+  readFiles: string[]
+  modifiedFiles: string[]
+  createdFiles: string[]
+}
+
+/**
  * FID-2026-1006-003 WP3: the loop guard rails' named stop reasons — the
  * decision the step loop used to end the turn.
  */
@@ -224,6 +256,25 @@ export type AgentState = {
    * turn. Absent → the turn ended on its own. Per-run state, never inherited.
    */
   loopStopReason?: LoopStopReason
+  /**
+   * FID-2026-1006-003 WP1: the compaction cut plan computed at the step
+   * boundary and forwarded to the context pruner as a spawn param (the
+   * embedded pruner cannot import runtime modules). Refreshed every step.
+   */
+  compactionCutPlan?: CompactionCutPlan
+  /**
+   * FID-2026-1006-003 WP2: the cumulative file-tracking ledger, folded from
+   * the history at each step boundary and forwarded to the pruner as its
+   * previous file state, so a file touched many compactions ago is still
+   * tracked after its path ages out of any single window.
+   */
+  compactionFileLedger?: CompactionFileLedger
+  /**
+   * FID-2026-1006-003 WP2: history index up to which file operations have
+   * already been folded into `compactionFileLedger`, so a re-count never
+   * double-counts a window.
+   */
+  compactionFileLedgerWatermark?: number
   /**
    * FID-2026-0725-085: Resolved context window for this model.
    * Set by the CLI via CTX-007 wiring. Used by handleSteps to determine

@@ -35,6 +35,8 @@ export {
 // ./session-state-agent-state and re-exported — public surface unchanged.
 export type {
   AgentState,
+  CompactionCutPlan,
+  CompactionFileLedger,
   LoopStopReason,
   SteeringOverrideAuditRecord,
 } from './session-state-agent-state'
