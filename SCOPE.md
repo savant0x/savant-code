@@ -62,9 +62,10 @@
 
 ## Open items
 
-**Four** items are open — three blocked pending operator input (T119,
-T62-followups, T122) and one shelved on an operator ruling (T147). No
-implementation record is open. (T149, the deep pi review, completed
+**Five** items are open — three blocked pending operator input (T119,
+T62-followups, T122), one shelved on an operator ruling (T147), and one
+active implementation record: T152 (wiring the uncalled adoption modules,
+`FID-2026-1006-003`). (T149, the deep pi review, completed
 2026-10-06 — its box below is closed. T150, the pi-harness adoption program,
 completed and closed 2026-10-06: all twelve work packages implemented,
 `fid:verify --check` 22/22, record archived to `dev/fids/archive/`, committed
@@ -467,6 +468,24 @@ T90-F3 was resolved by the operator ruling "T90-F3 residual needs no code"
       scope — implementation begins only after the operator rules on the
       presented FID. The FID-authoring step itself is complete; this box
       stays open because the adoption program is not implemented.
+
+- [ ] **T152. Wire the uncalled adoption modules (`FID-2026-1006-003`).**
+      **Automation level: 2.** Operator request 2026-10-06, verbatim: "make a
+      fid to fully wire all of those that have no caller, if the code is there
+      then the feature is not complete? also this '...WP5... WP7/WP8... WP11...
+      WP6...', i want everything completed". The ruling resolves the
+      "library-complete, no production call path yet" disposition recorded for
+      four deliverables of `FID-2026-1006-002`: a delivered-but-uncalled
+      module is not a complete feature. `dev/fids/FID-2026-1006-003-wire-uncalled-adoption-modules.md`
+      (status `converged`) carries six wiring work packages — compaction cut
+      points and the cumulative file ledger reaching the embedded pruner
+      through the agentState/spawn-param channel; the loop guard rails gating
+      the step loop; preset validation running at the config load seam; the
+      entry-class writers plus the in-context load path; and branch
+      summarization firing on the chat-switch navigation-away seam — each with
+      a wiring test that fails if the call is removed, plus per-package Law 4
+      grep evidence after implementation. Implementation is pending; this box
+      closes when the record moves to `closed`.
 
 - [x] **T151. CodeCraft `/model` picker visibility (`FID-2026-1006-001`).**
       **Automation level: 2.** Register line added 2026-10-06 by the T150
