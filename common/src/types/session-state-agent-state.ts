@@ -10,6 +10,12 @@ import type { Message } from './messages/savant-code-message'
 import type { ProvenanceSessionLike } from './provenance'
 import type { AgentTemplateType } from './session-state'
 import type {
+  CompactionCutPlan,
+  CompactionFileLedger,
+  LoopStopReason,
+  SteeringOverrideAuditRecord,
+} from './session-state-compaction-records'
+import type {
   AgentActivity,
   CompactionBlockReason,
   CompactionStatus,
@@ -22,58 +28,18 @@ import type {
 import type { ProtocolVariant } from '../util/boot-contract'
 
 /**
- * FID-2026-1006-003 WP5: one steering-rule override, as audited by the tool
- * executor's steering gate. A structural twin of the runtime's
- * `SteeringOverrideAudit` (common cannot import the runtime) with a capture
- * time added, so the CLI can persist an orderable durable entry.
+ * FID-2026-1006-003: the session record types this FID introduced — the cut
+ * plan, file ledger, loop stop reason, and steering override audit — live in
+ * ./session-state-compaction-records (quality-gate line ceiling); re-exported
+ * here so the public surface of this module is unchanged.
  */
-export type SteeringOverrideAuditRecord = {
-  ruleId: string
-  reason: string
-  toolName: string
-  agentId: string
-  /** Capture time (ms) — orders the override against the session history. */
-  at: number
-}
+export type {
+  CompactionCutPlan,
+  CompactionFileLedger,
+  LoopStopReason,
+  SteeringOverrideAuditRecord,
+} from './session-state-compaction-records'
 
-/**
- * FID-2026-1006-003 WP1: the compaction cut plan computed at the runtime step
- * boundary. A structural twin of the runtime's `CutPlan` (common cannot import
- * the runtime) because the plan travels to the serialized context pruner as
- * DATA — the embedded pruner cannot import runtime modules.
- */
-export type CompactionCutPlan = {
-  /** First live (kept) message index; never sits on a tool result. */
-  cutIndex: number
-  /** Disjoint summary segments covering the summarized window, in order. */
-  segments: Array<{ start: number; end: number }>
-  /** True when the boundary moved from the requested index. */
-  adjusted: boolean
-  /**
-   * The split boundary turn, or null. Required-and-nullable (not optional) so
-   * the whole plan is a plain JSON value on its way to the pruner's spawn
-   * params — an optional property would carry `undefined`, which is not JSON.
-   */
-  splitTurn: { start: number; end: number; splitAt: number } | null
-}
-
-/**
- * FID-2026-1006-003 WP2: the cumulative file-tracking ledger carried across
- * successive compactions. Structural twin of the runtime's `FileTracking`,
- * carried to the pruner as data for the same reason as the cut plan.
- */
-export type CompactionFileLedger = {
-  readFiles: string[]
-  modifiedFiles: string[]
-  createdFiles: string[]
-}
-
-/**
- * FID-2026-1006-003 WP3: the loop guard rails' named stop reasons — the
- * decision the step loop used to end the turn.
- */
-export type LoopStopReason =
-  'stale-cycle' | 'role-budget' | 'iteration-cap' | 'deadline'
 
 export type AgentState = {
   /**
@@ -142,24 +108,19 @@ export type AgentState = {
    */
   lastPrunerCompletionAt?: number
   /**
-   * FID-2026-0814-011: single trigger authority for auto-compaction. Set
-   * every step by `prepareStepContext` from the proven `shouldAutoCompact`
-   * verdict and consumed by the serialized savant handleSteps so the
-   * context-pruner spawn fires exactly when the warning path fires — the
-   * generator's own ratio arithmetic is only a fallback. Plain boolean so it
-   * survives the SDK JSON snapshot boundary; refreshed each step so it can
-   * never go stale.
+   * FID-2026-0814-011: single auto-compact trigger authority — stamped each
+   * step by `prepareStepContext` from the proven `shouldAutoCompact` verdict
+   * (the generator's ratio arithmetic is only a fallback) and consumed by the
+   * serialized savant handleSteps. Plain boolean so it survives the SDK JSON
+   * snapshot boundary; refreshed each step so it can never go stale.
    */
   autoCompactDue?: boolean
   /**
-   * FID-2026-0825-001: one-shot stamp set by the serialized savant
-   * handleSteps when a manual /compact takes the compact-and-stop path (the
-   * run intentionally ends without any assistant turn). Consumed and cleared
-   * by loopAgentSteps at output assembly so getAgentOutput's
-   * zero-assistant-history error ("No response from agent") never fires for
-   * an intentional stop, and stale pre-compaction turns are never echoed as
-   * the /compact response. Plain boolean; wiped at loop start so a stale
-   * persisted value can never mask a genuine error on a later run.
+   * FID-2026-0825-001: one-shot /compact stamp (run ends with no assistant
+   * turn) — consumed and cleared by loopAgentSteps at output assembly so
+   * getAgentOutput's zero-history error never fires for an intentional stop
+   * and stale pre-compaction turns are never echoed. Wiped at loop start so
+   * a stale persisted value can never mask a genuine error on a later run.
    */
   compactAndStop?: boolean
   /**
@@ -183,12 +144,10 @@ export type AgentState = {
    */
   lastProviderUsage?: { inputTokens: number; capturedAt: number }
   /**
-   * FID-2026-0818-007 step 5: set true by the drive loop after a COMPLETE
-   * archive — the FID boundary is the deterministic compaction *checkpoint*.
-   * Consumed (and cleared) by the next step's `prepareStepContext`, which
-   * treats the boundary as the safe moment to run the L0-L2 compaction pass
-   * when the context is over budget. Transient: refreshed each step, never
-   * stale, never serialized to the SDK snapshot.
+   * FID-2026-0818-007: set true by the drive loop after a COMPLETE archive —
+   * the FID boundary is the deterministic compaction checkpoint; consumed
+   * (and cleared) by the next step's `prepareStepContext` to run the L0-L2
+   * pass when over budget. Transient: refreshed each step, never serialized.
    */
   fidBoundaryDue?: boolean
   /**
@@ -240,37 +199,15 @@ export type AgentState = {
    * baked defaults (512 head / 256 tail chars).
    */
   digestCaps?: { headChars?: number; tailChars?: number }
-  /**
-   * FID-2026-1006-003 WP5: steering-rule overrides audited during this run,
-   * awaiting a durable entry. The tool executor has no database access, so it
-   * appends here and the CLI's save path drains the list into
-   * `createCustomEntry` rows (cli/src/utils/entry-writers.ts). The list is
-   * cleared on drain, so one override is recorded exactly once.
-   */
+  /** WP5: overrides awaiting the CLI's durable-entry drain (cleared on drain). */
   pendingSteeringOverrideAudits?: SteeringOverrideAuditRecord[]
-  /**
-   * FID-2026-1006-003 WP3: the named reason the loop guard rails ended the
-   * turn. Absent → the turn ended on its own. Per-run state, never inherited.
-   */
+  /** WP3: named guard-rails stop reason; absent → the turn ended on its own. */
   loopStopReason?: LoopStopReason
-  /**
-   * FID-2026-1006-003 WP1: the compaction cut plan computed at the step
-   * boundary and forwarded to the context pruner as a spawn param (the
-   * embedded pruner cannot import runtime modules). Refreshed every step.
-   */
+  /** WP1: cut plan computed per step, sent to the pruner as a JSON spawn param. */
   compactionCutPlan?: CompactionCutPlan
-  /**
-   * FID-2026-1006-003 WP2: the cumulative file-tracking ledger, folded from
-   * the history at each step boundary and forwarded to the pruner as its
-   * previous file state, so a file touched many compactions ago is still
-   * tracked after its path ages out of any single window.
-   */
+  /** WP2: cumulative file ledger so old windows are never forgotten. */
   compactionFileLedger?: CompactionFileLedger
-  /**
-   * FID-2026-1006-003 WP2: history index up to which file operations have
-   * already been folded into `compactionFileLedger`, so a re-count never
-   * double-counts a window.
-   */
+  /** WP2: fold watermark — a re-count never double-counts a window. */
   compactionFileLedgerWatermark?: number
   /**
    * FID-2026-0725-085: Resolved context window for this model.
