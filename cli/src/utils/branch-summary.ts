@@ -21,9 +21,9 @@ import {
   getSessionsByChatId,
 } from '@savant-code/database/service'
 
-import { useChatStore } from '../state/chat-store'
 import { abortActiveRun } from './active-run'
 import { logger } from './logger'
+import { useChatStore } from '../state/chat-store'
 import { resolveCurrentChatDir } from './run-state-storage/state'
 
 import type { ChatMessage, TextContentBlock } from '../types/chat'

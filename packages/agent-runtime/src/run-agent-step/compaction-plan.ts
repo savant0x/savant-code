@@ -10,21 +10,21 @@
  * the same channel `keepRecentTokens` already uses.
  */
 import {
-  capFileTracking,
-  mergeFileTracking,
-} from '../context-compactor/file-tracking'
-import {
   findCutPoint,
   findPreviousKeptBoundary,
   segmentTurns,
 } from '../context-compactor/cut-points'
+import {
+  capFileTracking,
+  mergeFileTracking,
+} from '../context-compactor/file-tracking'
 import { countTokensMessagesCached } from '../util/token-counter'
 
+import type { Message } from '@savant-code/common/types/messages/savant-code-message'
 import type {
   CompactionCutPlan,
   CompactionFileLedger,
 } from '@savant-code/common/types/session-state'
-import type { Message } from '@savant-code/common/types/messages/savant-code-message'
 
 /**
  * Pruner tail budget used when the project does not configure

@@ -29,10 +29,7 @@ const text: Message = {
   content: [{ type: 'text', text: 'working' }],
 }
 
-const call = (
-  toolName: string,
-  input: Record<string, JSONValue>,
-): Message => ({
+const call = (toolName: string, input: Record<string, JSONValue>): Message => ({
   role: 'assistant',
   content: [{ type: 'tool-call', toolCallId: 'c1', toolName, input }],
 })
@@ -55,9 +52,9 @@ describe('compaction cut plan wiring (FID-2026-1006-003 WP1)', () => {
       ),
     ).toContain('cutPlan: parentAgentState.compactionCutPlan')
     // The embedded pruner consumes the plan as data (it cannot import us).
-    expect(
-      source('agents/context-pruner/summarization-context.ts'),
-    ).toContain('spawnParams.cutPlan')
+    expect(source('agents/context-pruner/summarization-context.ts')).toContain(
+      'spawnParams.cutPlan',
+    )
     expect(source('agents/context-pruner/summary-assembly.ts')).toContain(
       'index >= cutWindowStart',
     )

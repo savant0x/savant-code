@@ -38,9 +38,9 @@ describe('compaction file ledger wiring (FID-2026-1006-003 WP2)', () => {
       ),
     ).toContain('fileLedger: parentAgentState.compactionFileLedger')
     // The embedded pruner consumes the ledger as data (it cannot import us).
-    expect(
-      source('agents/context-pruner/summarization-context.ts'),
-    ).toContain('spawnParams.fileLedger')
+    expect(source('agents/context-pruner/summarization-context.ts')).toContain(
+      'spawnParams.fileLedger',
+    )
     expect(source('agents/context-pruner/summary-assembly.ts')).toContain(
       'fileLedger.readFiles',
     )

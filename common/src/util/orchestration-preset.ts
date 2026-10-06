@@ -213,6 +213,34 @@ export function parseOrchestrationPresetConfig(
 ): PresetShape | null {
   if (lines.length === 0) return null
 
+  // Prettier wraps a long list onto several lines (`key:\n  [\n 'a',\n ]`),
+  // so continued lines are joined back into one logical line before parsing:
+  // bracket balance decides where a logical line ends, and a bare `key:` line
+  // is carried onto the bracket-wrapped value that follows it. The loader is
+  // hand-rolled, not a YAML engine: without this, a formatted declaration
+  // would silently parse as an empty list.
+  const logical: string[] = []
+  let pendingKey = ''
+  let joined = ''
+  for (const line of lines) {
+    const text = line.trim()
+    if (text === '') continue
+    joined = joined === '' ? text : `${joined} ${text}`
+    const opens = (joined.match(/\[/g) ?? []).length
+    const closes = (joined.match(/\]/g) ?? []).length
+    if (opens > closes) continue
+    if (pendingKey !== '') {
+      if (joined.startsWith('[')) joined = `${pendingKey} ${joined}`
+      else logical.push(pendingKey)
+      pendingKey = ''
+    }
+    if (/^\w+:$/.test(joined)) pendingKey = joined
+    else logical.push(joined)
+    joined = ''
+  }
+  if (pendingKey !== '') logical.push(pendingKey)
+  if (joined !== '') logical.push(joined)
+
   const strip = (raw: string): string =>
     raw
       .trim()
@@ -237,8 +265,7 @@ export function parseOrchestrationPresetConfig(
     transitions?: string[]
   } | null = null
 
-  for (const line of lines) {
-    if (line.trim() === '') continue
+  for (const line of logical) {
     const roleMatch = line.match(/^\s*-\s*role:\s*(.+)$/)
     if (roleMatch) {
       current = { role: strip(roleMatch[1]) }

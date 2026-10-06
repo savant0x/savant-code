@@ -10,6 +10,7 @@ import {
   recordLoopEvent,
 } from '../run-agent-step/loop-guard-wiring'
 
+import type { JSONValue } from '@savant-code/common/types/json'
 import type { Message } from '@savant-code/common/types/messages/savant-code-message'
 
 /**
@@ -24,14 +25,16 @@ function source(relativePath: string): string {
   return readFileSync(path.join(repoRoot, relativePath), 'utf8')
 }
 
-const toolCall = (toolName: string, input: unknown = {}): Message => ({
+const toolCall = (
+  toolName: string,
+  input: Record<string, JSONValue> = {},
+): Message => ({
   role: 'assistant',
   content: [{ type: 'tool-call', toolCallId: 'c1', toolName, input }],
 })
 
-const plan = (
-  todos: Array<{ task: string; completed: boolean }>,
-): Message => toolCall('write_todos', { todos })
+const plan = (todos: Array<{ task: string; completed: boolean }>): Message =>
+  toolCall('write_todos', { todos })
 
 describe('loop guard rails wiring (FID-2026-1006-003 WP3)', () => {
   test('the step loop consults the guard and records its verdict', () => {
@@ -61,8 +64,14 @@ describe('loop guard rails wiring (FID-2026-1006-003 WP3)', () => {
       iterationCap: 30,
       startedAt: 0,
     })
-    for (const event of ['read_files', 'str_replace', 'read_files',
-      'str_replace', 'read_files', 'str_replace']) {
+    for (const event of [
+      'read_files',
+      'str_replace',
+      'read_files',
+      'str_replace',
+      'read_files',
+      'str_replace',
+    ]) {
       recordLoopEvent(state, event)
     }
 
@@ -77,8 +86,14 @@ describe('loop guard rails wiring (FID-2026-1006-003 WP3)', () => {
       iterationCap: 30,
       startedAt: 0,
     })
-    for (const event of ['read_files', 'str_replace', 'read_files',
-      'str_replace', 'read_files', 'bun test']) {
+    for (const event of [
+      'read_files',
+      'str_replace',
+      'read_files',
+      'str_replace',
+      'read_files',
+      'bun test',
+    ]) {
       recordLoopEvent(state, event)
     }
 

@@ -73,10 +73,7 @@ export type CompactionFileLedger = {
  * decision the step loop used to end the turn.
  */
 export type LoopStopReason =
-  | 'stale-cycle'
-  | 'role-budget'
-  | 'iteration-cap'
-  | 'deadline'
+  'stale-cycle' | 'role-budget' | 'iteration-cap' | 'deadline'
 
 export type AgentState = {
   /**

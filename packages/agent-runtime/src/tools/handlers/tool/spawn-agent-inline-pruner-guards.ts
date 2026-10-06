@@ -41,8 +41,14 @@ export function resolvePrunerSpawnParams(opts: {
   projectRoot: string | undefined
   spawnParams: Record<string, JSONValue> | undefined
 }): Record<string, JSONValue> | undefined {
-  const { agentType, digestCaps, cutPlan, fileLedger, projectRoot, spawnParams } =
-    opts
+  const {
+    agentType,
+    digestCaps,
+    cutPlan,
+    fileLedger,
+    projectRoot,
+    spawnParams,
+  } = opts
   return agentType === 'context-pruner' &&
     (digestCaps || cutPlan || fileLedger || projectRoot)
     ? {

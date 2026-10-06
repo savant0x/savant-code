@@ -282,8 +282,21 @@ orchestration:
   roles:
     - role: 'orchestrator'
       instructions: 'Route the request, enforce the protocol, and hand one slice at a time to the role that owns it.'
-      triggers: ['user-request', 'verification-failed', 'review-failed', 'documentation-required']
-      publishes: ['analysis-requested', 'implementation-requested', 'verification-requested', 'documentation-requested', 'task-complete']
+      triggers:
+        [
+          'user-request',
+          'verification-failed',
+          'review-failed',
+          'documentation-required',
+        ]
+      publishes:
+        [
+          'analysis-requested',
+          'implementation-requested',
+          'verification-requested',
+          'documentation-requested',
+          'task-complete',
+        ]
       transitions: ['detective']
     - role: 'detective'
       instructions: 'Map the call graph for the named slice and cite file-and-line evidence before any edit.'
@@ -298,7 +311,14 @@ orchestration:
     - role: 'verifier'
       instructions: 'Re-run the declared gates and report pass or fail with pasted tool output.'
       triggers: ['verification-requested']
-      publishes: ['verification-failed', 'fix-required', 'review-failed', 'documentation-requested', 'task-complete']
+      publishes:
+        [
+          'verification-failed',
+          'fix-required',
+          'review-failed',
+          'documentation-requested',
+          'task-complete',
+        ]
       transitions: ['orchestrator']
     - role: 'scribe'
       instructions: 'Record the session summary and route durable lessons to the knowledge files.'
