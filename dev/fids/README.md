@@ -16,8 +16,8 @@ implemented and verified: `fid:verify --check` 22/22 — 5 workspace typechecks,
 16 named test gates and `quality: PASS (1498 baselined files)` — receipt
 `sha256:b1a3f13c7fa33e485ca6bbffeb366226be2a1a3470d06341651d87c95b50a8c0`,
 root `bun run typecheck` (13 workspaces) exit 0, `validate:repository` PASS.
-No commit was executed — the path-scoped staging plan awaits the operator
-(G1/G2). **Renumbered from
+Committed locally as `81733c16` (path-scoped, operator-approved); no push or
+release. **Renumbered from
 `-001` to `-002` at 03:31:** a concurrent session had allocated `-001` to
 `FID-2026-1006-001-codecraft-model-picker.md` (Created 03:29) while this
 record was being loop-passed, and `fid.metadata.duplicate-active-id` is a hard

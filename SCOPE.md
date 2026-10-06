@@ -444,8 +444,9 @@ T90-F3 was resolved by the operator ruling "T90-F3 residual needs no code"
       production call path yet — FID scope for WP5/WP7 (module + tests is
       the declared deliverable) and the WP4-database-half precedent for
       WP11; stated as a limitation in the record, not reported as
-      reachability. No commit was executed (G1/G2 — the operator owns
-      staging/commit); the path-scoped staging plan is prepared.
+      reachability. Committed locally as `81733c16` (path-scoped, after the
+      operator's "approve all work and local commits"); no push, tag or
+      release.
       **Converged 2026-10-06:**
       `dev/fids/archive/FID-2026-1006-002-pi-harness-adoption-program.md`
       (status `closed`, automation level 2) carries twelve adopted work

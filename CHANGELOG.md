@@ -4,7 +4,7 @@
 
 ### Added
 
-- **Pi-harness adoption program (FID-2026-1006-002, high; closed 2026-10-06; no commit executed — operator staging pending).**
+- **Pi-harness adoption program (FID-2026-1006-002, high; closed 2026-10-06; local commit `81733c16`).**
   Twelve adopted work packages from T149's deep pi-harness review, all implemented and
   gate-verified: deterministic steering rules with an audited override; a durable-race catalog
   with instrumented-storage test tiers and a write-order conformance check; tool-outcome

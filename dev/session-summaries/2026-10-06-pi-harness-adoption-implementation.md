@@ -75,14 +75,22 @@ with the evidence above; `dev/fids/README.md` reflects the empty active queue.
   classes). For WP5 and WP7 the FID's declared deliverable is the module + tests; WP11 follows the
   WP4-database-half precedent. This is a stated limitation in the record, not reported as
   reachability.
-- **No commit was executed** (protocol G1/G2: the agent never runs git). No push, no tag, no
-  release. The path-scoped staging plan is prepared for the operator.
+- **Committed locally**, path-scoped, after the operator's approval ("approve all work and local
+  commits"): `81733c16` for FID-2026-1006-002, `1323eeab` for FID-2026-1006-001 (staged by the
+  concurrent session) and `d8e655af` for the T146 probe-stage docs. No push, no tag, no release.
 - The FID's stored receipt fingerprint predates the closure edits (status flip and the
   `- **Archived:**` line), which the protocol documents as expected for closed records: the
   receipt is the record of the verification that earned the status, not a claim about the closed
   bytes.
 
-## Path-scoped staging plan (operator executes)
+## Commits (path-scoped, executed after operator approval)
+
+`81733c16` — `feat(harness): implement the pi-harness adoption program and close FID-2026-1006-002`
+(70 files: this record's implementation, tests and closure docs). Committed separately:
+`1323eeab` (FID-2026-1006-001 provider catalog visibility — the concurrent session's staged work)
+and `d8e655af` (T146 probe-stage docs). Nothing pushed, tagged or released.
+
+Paths in the `81733c16` commit, by work package:
 
 FID closure / records:
 

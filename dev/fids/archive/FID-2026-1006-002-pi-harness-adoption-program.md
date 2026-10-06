@@ -1061,6 +1061,11 @@ contract is machine-checked, and a self-audit is not that machine.
   edits this document after the final stamp, so the stored fingerprint is the
   record of the verification that earned the status, not a claim about the
   closed bytes.
+- **Commit:** `81733c16` — `feat(harness): implement the pi-harness adoption program and close
+  FID-2026-1006-002` (path-scoped, 70 files; the record's witness and the sibling commits
+  `1323eeab` for FID-2026-1006-001 and `d8e655af` for T146 are described in
+  `dev/session-summaries/2026-10-06-pi-harness-adoption-implementation.md`). Local only — no
+  push, tag or release.
 - **Archived:** `dev/fids/archive/FID-2026-1006-002-pi-harness-adoption-program.md`
 
 When status is set to **closed**, move this file to `dev/fids/archive/` and
