@@ -211,15 +211,15 @@ export const WINDOW_COVERAGE_REGISTER: ReadonlyMap<
   [
     'codecraft',
     {
-      disposition: 'no-runtime-rows',
-      note: 'Live catalog auth-gated: HTTP 401 keyless (probed 2026-10-04) — zero rows without CODECRAFT_API_KEY. Not dead; self-populates when a key is configured.',
+      disposition: 'runtime-published',
+      note: 'Reconciled from census 33 rows (FID-2026-1006-001, 2026-10-06); live catalog auth-gated — 401 keyless (probed 2026-10-04), self-populates when a key is configured.',
     },
   ],
   [
     'xkiro',
     {
-      disposition: 'no-runtime-rows',
-      note: 'Live catalog NOW KEYLESS: HTTP 200 with 129 rows carrying context_length (probed 2026-10-04 — the T119-era 403 lifted). Fetcher is wired in gateway.ts; the runtime snapshot predates the lift, so rows appear on the next catalog rebuild and self-correct thereafter.',
+      disposition: 'runtime-published',
+      note: 'Live catalog keyless: HTTP 200 with 129 rows carrying context_length (probed 2026-10-04 — the T119-era 403 lifted); reconfirmed 129 rows by the FID-2026-1006-001 census 2026-10-06.',
     },
   ],
   [
@@ -239,8 +239,8 @@ export const WINDOW_COVERAGE_REGISTER: ReadonlyMap<
   [
     'cleanapis',
     {
-      disposition: 'no-runtime-rows',
-      note: 'Live catalog auth-gated (401 keyless — registry comment probe reconfirmed by the 2026-10-04 census) — zero rows without CLEANAPIS_API_KEY. Not dead; self-populates when a key is configured.',
+      disposition: 'runtime-published',
+      note: 'Reconciled from census 33 rows (FID-2026-1006-001, 2026-10-06); live catalog auth-gated — 401 keyless (probed 2026-10-04), self-populates when a key is configured.',
     },
   ],
 ])

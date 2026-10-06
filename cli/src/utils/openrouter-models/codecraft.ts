@@ -2,6 +2,7 @@
 import { deriveLiveCatalogUrl } from '@savant-code/common/providers/derive'
 import { PROVIDER_REGISTRY } from '@savant-code/common/providers/registry'
 
+import { resolveProviderApiKey } from '../provider-credentials'
 import { parseChatCatalog } from './chat-catalog'
 import { createLiveCatalogFetcher } from './live-catalog'
 
@@ -15,7 +16,7 @@ const fetcher = createLiveCatalogFetcher({
   url,
   logLabel: 'CodeCraft API',
   parse: (json) => parseChatCatalog('codecraft', json),
-  resolveKey: () => process.env.CODECRAFT_API_KEY,
+  resolveKey: () => resolveProviderApiKey('codecraft'),
 })
 
 export const fetchCodecraftModels = fetcher.fetchModels

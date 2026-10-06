@@ -2,6 +2,7 @@
 import { deriveLiveCatalogUrl } from '@savant-code/common/providers/derive'
 import { PROVIDER_REGISTRY } from '@savant-code/common/providers/registry'
 
+import { resolveProviderApiKey } from '../provider-credentials'
 import {
   catalogLimit,
   catalogObject,
@@ -70,7 +71,7 @@ const fetcher = createLiveCatalogFetcher({
   url,
   logLabel: 'xKiro',
   parse: parseXkiroModelsForTest,
-  resolveKey: () => process.env.XKIRO_API_KEY,
+  resolveKey: () => resolveProviderApiKey('xkiro'),
 })
 
 export const fetchXkiroModels = fetcher.fetchModels

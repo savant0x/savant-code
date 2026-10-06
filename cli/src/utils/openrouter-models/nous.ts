@@ -18,6 +18,7 @@
 import { deriveLiveCatalogUrl } from '@savant-code/common/providers/derive'
 import { PROVIDER_REGISTRY } from '@savant-code/common/providers/registry'
 
+import { resolveProviderApiKey } from '../provider-credentials'
 import { createLiveCatalogFetcher } from './live-catalog'
 import { asOptionalNumber, asOptionalString } from './wire-guards'
 
@@ -110,7 +111,7 @@ const fetcher = createLiveCatalogFetcher<NousModelsResponse>({
   url: NOUS_MODELS_URL,
   logLabel: 'Nous Research',
   parse: parseNousCatalog,
-  resolveKey: () => process.env.NOUS_API_KEY,
+  resolveKey: () => resolveProviderApiKey('nous'),
 })
 
 export const fetchNousModels = fetcher.fetchModels

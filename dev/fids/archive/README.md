@@ -3,6 +3,20 @@
 This directory contains closed or historically completed FIDs. Files here are
 an audit record, not an active work queue.
 
+## 2026-10-06 closure — self-healing provider catalog visibility (FID-2026-1006-001)
+
+Closed on the operator's directive (all declared gates green); no push or
+release.
+
+- [`FID-2026-1006-001-codecraft-model-picker.md`](FID-2026-1006-001-codecraft-model-picker.md)
+  (high) — zero-intervention provider catalog visibility for `/model`: one
+  registry-driven key resolver feeds all 8 live catalog wrappers; the gateway warm
+  start is coverage-validated (a stale snapshot missing a keyed provider self-heals,
+  cooldown-gated); `window-coverage:check` fails loud on register drift with an
+  atomic `--fix`; and `providers:parity` regenerates the committed census from the
+  live catalog assembly so future providers auto-reconcile. 31 tests / 5 suites;
+  9/9 declared gates pass.
+
 ## 2026-10-06 closure — verified FID batch (`e229d9a1`)
 
 Six verified FIDs were committed locally, closed, and archived after the

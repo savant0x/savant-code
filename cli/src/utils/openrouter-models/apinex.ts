@@ -9,6 +9,7 @@
 import { deriveLiveCatalogUrl } from '@savant-code/common/providers/derive'
 import { PROVIDER_REGISTRY } from '@savant-code/common/providers/registry'
 
+import { resolveProviderApiKey } from '../provider-credentials'
 import { createLiveCatalogFetcher } from './live-catalog'
 import { asOptionalNumber, asOptionalString } from './wire-guards'
 
@@ -62,7 +63,7 @@ const fetcher = createLiveCatalogFetcher<ApinexModelsResponse>({
   url: APINEX_MODELS_URL,
   logLabel: 'APInex',
   parse: parseApinexCatalog,
-  resolveKey: () => process.env.APINEX_API_KEY,
+  resolveKey: () => resolveProviderApiKey('apinex'),
 })
 
 export const fetchApinexModels = fetcher.fetchModels

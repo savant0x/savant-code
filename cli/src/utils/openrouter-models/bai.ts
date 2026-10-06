@@ -12,6 +12,7 @@
 import { deriveLiveCatalogUrl } from '@savant-code/common/providers/derive'
 import { PROVIDER_REGISTRY } from '@savant-code/common/providers/registry'
 
+import { resolveProviderApiKey } from '../provider-credentials'
 import { createLiveCatalogFetcher } from './live-catalog'
 import { asOptionalNumber, asOptionalString } from './wire-guards'
 
@@ -67,7 +68,7 @@ const fetcher = createLiveCatalogFetcher<BaiModelsResponse>({
   url: BAI_MODELS_URL,
   logLabel: 'B.AI',
   parse: parseBaiCatalog,
-  resolveKey: () => process.env.BAI_API_KEY,
+  resolveKey: () => resolveProviderApiKey('bai'),
 })
 
 export const fetchBaiModels = fetcher.fetchModels

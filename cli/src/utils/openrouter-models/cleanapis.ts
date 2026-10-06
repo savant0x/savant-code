@@ -2,6 +2,7 @@
 import { deriveLiveCatalogUrl } from '@savant-code/common/providers/derive'
 import { PROVIDER_REGISTRY } from '@savant-code/common/providers/registry'
 
+import { resolveProviderApiKey } from '../provider-credentials'
 import { parseChatCatalog } from './chat-catalog'
 import { createLiveCatalogFetcher } from './live-catalog'
 
@@ -15,7 +16,7 @@ const fetcher = createLiveCatalogFetcher({
   url,
   logLabel: 'Clean APIs',
   parse: (json) => parseChatCatalog('cleanapis', json),
-  resolveKey: () => process.env.CLEANAPIS_API_KEY,
+  resolveKey: () => resolveProviderApiKey('cleanapis'),
 })
 
 export const fetchCleanApisModels = fetcher.fetchModels

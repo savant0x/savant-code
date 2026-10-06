@@ -1,0 +1,12 @@
+{
+  "generatedAt": "2026-10-06T07:55:00Z",
+  "probe": "scripts/provider-catalog-parity.ts",
+  "notes": "Measured via fetchGatewayModels(true) fan-out, 2026-10-06 (operator session). CodeCraft/CleanAPIs keyed via env; xkiro keyless. Any provider listed here with rows > 0 is a live runtime publisher.",
+  "rows": {
+    "codecraft": 33,
+    "cleanapis": 33,
+    "xkiro": 129,
+    "openai": 229,
+    "openrouter": 6
+  }
+}

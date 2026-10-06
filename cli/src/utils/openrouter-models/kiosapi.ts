@@ -13,6 +13,7 @@
 import { deriveLiveCatalogUrl } from '@savant-code/common/providers/derive'
 import { PROVIDER_REGISTRY } from '@savant-code/common/providers/registry'
 
+import { resolveProviderApiKey } from '../provider-credentials'
 import { createLiveCatalogFetcher } from './live-catalog'
 import { asOptionalNumber, asOptionalString } from './wire-guards'
 
@@ -74,7 +75,7 @@ const fetcher = createLiveCatalogFetcher<KiosapiModelsResponse>({
   url: KIOSAPI_MODELS_URL,
   logLabel: 'KiosAPI',
   parse: parseKiosapiCatalog,
-  resolveKey: () => process.env.KIOSAPI_API_KEY,
+  resolveKey: () => resolveProviderApiKey('kiosapi'),
 })
 
 export const fetchKiosapiModels = fetcher.fetchModels
