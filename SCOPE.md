@@ -62,14 +62,15 @@
 
 ## Open items
 
-**Five** items are open — three blocked pending operator input (T119,
-T62-followups, T122), one shelved on an operator ruling (T147), and one
-active implementation record: T151 (the CodeCraft `/model` picker, registered
-for coverage by the T150 session's compliance pass). (T149, the deep pi
-review, completed 2026-10-06 — its box below is closed. T150, the pi-harness
-adoption program, completed and closed 2026-10-06: all twelve work packages
-implemented, `fid:verify --check` 22/22, record archived to
-`dev/fids/archive/` — its box below is checked.)
+**Four** items are open — three blocked pending operator input (T119,
+T62-followups, T122) and one shelved on an operator ruling (T147). No
+implementation record is open. (T149, the deep pi review, completed
+2026-10-06 — its box below is closed. T150, the pi-harness adoption program,
+completed and closed 2026-10-06: all twelve work packages implemented,
+`fid:verify --check` 22/22, record archived to `dev/fids/archive/`, committed
+as `81733c16`. T151, the CodeCraft `/model` picker, completed 2026-10-06:
+record closed by operator directive and archived, code committed as
+`1323eeab`. Both boxes below are checked.)
 (2026-10-05 (in-pass fix, per "NOTHING IS EVER OUT OF SCOPE"): the
 `validate:repository` run during the FID-drafting pass returned 1 issue,
 none from the FIDs — `quality.ratchet`:
@@ -467,7 +468,7 @@ T90-F3 was resolved by the operator ruling "T90-F3 residual needs no code"
       presented FID. The FID-authoring step itself is complete; this box
       stays open because the adoption program is not implemented.
 
-- [ ] **T151. CodeCraft `/model` picker visibility (`FID-2026-1006-001`).**
+- [x] **T151. CodeCraft `/model` picker visibility (`FID-2026-1006-001`).**
       **Automation level: 2.** Register line added 2026-10-06 by the T150
       session's ECHO-compliance pass — **for coverage only, not scope
       authorship**. That record was authored by a **concurrent session**
@@ -475,12 +476,15 @@ T90-F3 was resolved by the operator ruling "T90-F3 residual needs no code"
       loop-passed, and `bun run validate:repository` refused the tree with
       `scope.unregistered-item`: an active FID with no line here is invisible
       in the register and droppable with no operator decision, so the tree was
-      red for *both* sessions until this line existed. Scope, evidence, and
-      the operator request live in that record
-      (`dev/fids/FID-2026-1006-001-codecraft-model-picker.md`, status
-      `analyzed`, automation level 2 as recorded there). If the authoring
-      session registers its own item for this work, that item supersedes this
-      coverage line.
+      red for *both* sessions until this line existed. **Completed
+      2026-10-06:** the record was closed by operator closure directive
+      (05:16 EDT) and archived to
+      `dev/fids/archive/FID-2026-1006-001-codecraft-model-picker.md`; its
+      declared gates passed per its own record (typecheck cli/common, five
+      suites, the live fan-out probe, quality); and its 22 code paths were
+      committed locally as `1323eeab` under the operator's "approve all work
+      and local commits" authorization. This coverage line is closed rather
+      than left open, which would have claimed unfinished work.
 
 - [x] **T145. `website/` deliberate project root.** **Automation level: 3.**
       Operator ruling 2026-10-05 (structured
