@@ -10,8 +10,8 @@ import { useChatStore } from '../../state/chat-store'
 import { IS_SAVANT_FREE } from '../../utils/constants'
 import { createEventHandlerState } from '../../utils/create-event-handler-state'
 import { createRunConfig } from '../../utils/create-run-config'
-import { isFidPath, saveFidDocumentToDb } from '../../utils/db-storage'
 import { getActiveDesignContract } from '../../utils/design-system-service'
+import { isFidPath, saveFidDocumentToDb } from '../../utils/fid-doc-storage'
 import {
   findGatewayModel,
   formatModelInfo,
