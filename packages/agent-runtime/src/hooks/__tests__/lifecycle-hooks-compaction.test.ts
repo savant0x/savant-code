@@ -185,7 +185,10 @@ describe('the census proves all five are reachable, not merely named (FID-2026-0
     )
     expect(helper).toContain("event: 'Stop' | 'Interrupt'")
     const callers = [
-      'packages/agent-runtime/src/run-agent-step/loop.ts',
+      // FID-2026-1006-003: the loop's setup-cancelled exit moved into
+      // loop/setup-cancelled.ts (quality-gate extraction), and that is where
+      // the terminal hook is fired from now.
+      'packages/agent-runtime/src/run-agent-step/loop/setup-cancelled.ts',
       'packages/agent-runtime/src/run-agent-step/loop/exit-paths.ts',
       'packages/agent-runtime/src/tools/handlers/tool/spawn-agent-inline-precompact.ts',
       'packages/agent-runtime/src/tools/handlers/tool/spawn-agent-inline-pruner-outcome.ts',

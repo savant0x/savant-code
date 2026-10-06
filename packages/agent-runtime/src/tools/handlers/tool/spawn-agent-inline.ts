@@ -22,52 +22,14 @@ import { loadRawEvidenceForSpawn } from '../../../evidence/spawn-evidence'
 import { filterToolSet } from '../../../tools/filter-tool-set'
 import { countTokensMessagesCached } from '../../../util/token-counter'
 
+import type { HandleSpawnAgentInlineParams } from './spawn-agent-inline-params'
 import type { SavantCodeToolHandlerFunction } from '../handler-function-type'
-import type {
-  SavantCodeToolCall,
-  SavantCodeToolOutput,
-} from '@savant-code/common/tools/list'
-import type { AgentTemplate } from '@savant-code/common/types/agent-template'
-import type { Logger } from '@savant-code/common/types/contracts/logger'
-import type { ParamsExcluding } from '@savant-code/common/types/function-params'
-import type { PrintModeEvent } from '@savant-code/common/types/print-mode'
+import type { SavantCodeToolOutput } from '@savant-code/common/tools/list'
 import type { AgentState } from '@savant-code/common/types/session-state'
-import type { ProjectFileContext } from '@savant-code/common/util/file'
-import type { ToolSet } from 'ai'
 
 type ToolName = 'spawn_agent_inline'
 export const handleSpawnAgentInline = (async (
-  params: {
-    previousToolCallFinished: Promise<void>
-    toolCall: SavantCodeToolCall<ToolName>
-
-    agentState: AgentState
-    agentTemplate: AgentTemplate
-    clientSessionId: string
-    fileContext: ProjectFileContext
-    fingerprintId: string
-    localAgentTemplates: Record<string, AgentTemplate>
-    logger: Logger
-    system: string
-    tools: ToolSet
-    userId: string | undefined
-    userInputId: string
-    writeToClient: (chunk: string | PrintModeEvent) => void
-  } & ParamsExcluding<
-    typeof executeSubagent,
-    | 'userInputId'
-    | 'prompt'
-    | 'spawnParams'
-    | 'agentTemplate'
-    | 'parentAgentState'
-    | 'agentState'
-    | 'parentSystemPrompt'
-    | 'parentTools'
-    | 'onResponseChunk'
-    | 'clearUserPromptMessagesAfterResponse'
-    | 'fingerprintId'
-    | 'propagation'
-  >,
+  params: HandleSpawnAgentInlineParams,
 ): Promise<{ output: SavantCodeToolOutput<ToolName> }> => {
   const {
     previousToolCallFinished,

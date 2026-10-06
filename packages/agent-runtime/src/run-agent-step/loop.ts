@@ -14,7 +14,6 @@ import {
 } from './loop-iteration'
 import { getOrCreateEnforcement } from '../echo/enforcement'
 import { appendGroundingRefresh } from '../echo/grounding'
-import { fireMainAgentTerminalHook } from '../hooks/lifecycle-hooks'
 import { expireMessages, withSystemTags } from '../util/messages'
 import { finishCompletedTurn } from './loop/completed-turn'
 import {
@@ -23,6 +22,7 @@ import {
   runLoopCleanup,
 } from './loop/exit-paths'
 import { recordRuntimeEvent } from './loop/runtime-events'
+import { handleSetupCancelled } from './loop/setup-cancelled'
 
 import type { LoopAgentStepsParams, LoopAgentStepsResult } from './types'
 
@@ -61,55 +61,10 @@ export async function loopAgentSteps(
     parentSystemPrompt,
   })
   if (!setupResult.ok) {
-    recordRuntimeEvent(
-      {
-        event: 'run_started',
-        runId: undefined,
-        agentId: setupResult.agentState.agentId,
-        agentType,
-        phase: 'setup',
-        messageCount: setupResult.agentState.messageHistory.length,
-      },
-      params.traceWriter,
-    )
-    recordRuntimeEvent(
-      {
-        event: 'terminal',
-        runId: undefined,
-        agentId: setupResult.agentState.agentId,
-        agentType,
-        phase: 'setup',
-        status: 'cancelled',
-        reason: 'setup_cancelled',
-      },
-      params.traceWriter,
-    )
-    recordRuntimeEvent(
-      {
-        event: 'cleanup_finished',
-        runId: undefined,
-        agentId: setupResult.agentState.agentId,
-        agentType,
-        phase: 'cleanup',
-      },
-      params.traceWriter,
-    )
-    // FID-2026-0919-031: a setup-phase cancellation IS a cancellation, so it
-    // reports as `Interrupt` — never `Stop` (nobody finished a turn).
-    fireMainAgentTerminalHook({
-      event: 'Interrupt',
-      agentState: setupResult.agentState,
-      fileContext: params.fileContext,
-      errorMessage: 'Run cancelled by user',
-    })
-
-    return {
-      agentState: setupResult.agentState,
-      output: {
-        type: 'error',
-        message: 'Run cancelled by user',
-      },
-    }
+    // FID-2026-0919-031: a setup-phase cancellation IS a cancellation, so the
+    // extracted path reports `Interrupt` — never `Stop` (nobody finished a
+    // turn).
+    return handleSetupCancelled({ setupResult, params })
   }
   const {
     agentTemplate,
