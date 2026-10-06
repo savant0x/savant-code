@@ -156,3 +156,37 @@ This catalog provides stable names for lessons that explain those authorities.
   its own rendered prefix, not a constant slice)
 - **Validation:** `scripts/__tests__/session-end-review.test.ts`
   (the line-length pin; `bun run lint:md` is the gate that caught it)
+
+## Rule: library-complete-needs-a-named-consumer
+
+- **Authority:** `dev/fids/archive/FID-2026-1006-003-wire-uncalled-adoption-modules.md`
+  (the wiring record a limitation-stating closure is required to produce)
+- **Validation:** `bun run validate:repository` (the disposition must be a register item
+  or an active FID, so a closed record cannot be its own follow-up)
+
+## Rule: call-graph-proof-asserts-the-caller
+
+- **Authority:** `ECHO.md` (Law 4 — Verify Call-Graph Reachability: compilation and a
+  green module suite are both silent about whether production calls the code)
+- **Validation:** the six wiring suites declared as gates on
+  `dev/fids/archive/FID-2026-1006-003-wire-uncalled-adoption-modules.md`, plus
+  `bun run fid:verify dev/fids/archive/FID-2026-1006-003-wire-uncalled-adoption-modules.md --check`
+
+## Rule: embedded-scopes-need-data-seams
+
+- **Authority:** `agents/context-pruner/summarization-context.ts` (`cutPlan` — read from
+  spawn params, because the pruner is serialized via `.toString()` and cannot import
+  runtime code)
+- **Validation:** `packages/agent-runtime/src/__tests__/compaction-cut-plan-wiring.test.ts`
+
+## Rule: config-loader-parses-the-formatted-file
+
+- **Authority:** `common/src/util/orchestration-preset.ts` (`parseOrchestrationPresetConfig`
+  — must read the prettier-wrapped shape the repository actually ships)
+- **Validation:** `common/src/util/__tests__/orchestration-preset.test.ts`
+
+## Rule: extractions-carry-their-census-pins
+
+- **Authority:** `scripts/hook-events-census.ts` (`hookEventSites` — a site is a call,
+  not a mention, so a moved call reds the census)
+- **Validation:** `bun run scripts/hook-events-check.ts`

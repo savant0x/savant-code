@@ -4,6 +4,28 @@
 
 ### Added
 
+- **Adoption wiring: every delivered module now has a production caller
+  (FID-2026-1006-003, high; closed 2026-10-06; local commits through
+  `6d5fbe48`).** All six surfaces FID-2026-1006-002 left library-complete are
+  wired: the compaction cut plan is computed at every step boundary
+  (`planCompactionCut` — never at a tool result, split turns merge) and
+  travels as a spawn param to the serialized context pruner, which honors
+  `cutWindowStart`; the cumulative file ledger folds across successive
+  compactions behind a watermark and merges into the pruner's preserved file
+  state; the loop guard rails gate every step iteration (named stop reason on
+  `AgentState.loopStopReason`; stale-cycle, per-role-budget and iteration-cap
+  rails; single-task checklist injection); `validatePreset` runs at config
+  parse against the new `orchestration:` declaration in `protocol.config.yaml`
+  and error-severity issues fail the gate; the session entry writers run on
+  the CLI save path (`model_change` plus `thinking_level_change` when the
+  effective reasoning level changes, steering-override `custom` entries,
+  idempotent compaction `label`) and a resumed chat loads only in-context rows
+  via `getInContextMessages`; a chat switch that aborts a mid-turn run renders
+  and persists a branch summary. Six wiring suites assert the caller, 19/19
+  declared gates pass with receipt
+  `sha256:ae0aacee30e602dbad18345c40dcb911fd83585b2d7082dbaf3b7593a168d330`;
+  root typecheck, eslint `--max-warnings 0`, `lint:md`, `quality:report`, and
+  `validate:repository` all exit 0.
 - **Pi-harness adoption program (FID-2026-1006-002, high; closed 2026-10-06; local commit `81733c16`).**
   Twelve adopted work packages from T149's deep pi-harness review, all implemented and
   gate-verified: deterministic steering rules with an audited override; a durable-race catalog

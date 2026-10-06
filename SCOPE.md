@@ -62,16 +62,18 @@
 
 ## Open items
 
-**Five** items are open — three blocked pending operator input (T119,
-T62-followups, T122), one shelved on an operator ruling (T147), and one
-active implementation record: T152 (wiring the uncalled adoption modules,
-`FID-2026-1006-003`). (T149, the deep pi review, completed
+**Four** items are open — three blocked pending operator input (T119,
+T62-followups, T122), one shelved on an operator ruling (T147). (T149, the
+deep pi review, completed
 2026-10-06 — its box below is closed. T150, the pi-harness adoption program,
 completed and closed 2026-10-06: all twelve work packages implemented,
 `fid:verify --check` 22/22, record archived to `dev/fids/archive/`, committed
 as `81733c16`. T151, the CodeCraft `/model` picker, completed 2026-10-06:
 record closed by operator directive and archived, code committed as
-`1323eeab`. Both boxes below are checked.)
+`1323eeab`. T152, the adoption wiring, completed 2026-10-06: all six work
+packages implemented and wired, `fid:verify --write` 19/19, record archived
+to `dev/fids/archive/`, code committed through `6d5fbe48`. All three boxes
+below are checked.)
 (2026-10-05 (in-pass fix, per "NOTHING IS EVER OUT OF SCOPE"): the
 `validate:repository` run during the FID-drafting pass returned 1 issue,
 none from the FIDs — `quality.ratchet`:
@@ -469,7 +471,7 @@ T90-F3 was resolved by the operator ruling "T90-F3 residual needs no code"
       presented FID. The FID-authoring step itself is complete; this box
       stays open because the adoption program is not implemented.
 
-- [ ] **T152. Wire the uncalled adoption modules (`FID-2026-1006-003`).**
+- [x] **T152. Wire the uncalled adoption modules (`FID-2026-1006-003`).**
       **Automation level: 2.** Operator request 2026-10-06, verbatim: "make a
       fid to fully wire all of those that have no caller, if the code is there
       then the feature is not complete? also this '...WP5... WP7/WP8... WP11...
@@ -484,8 +486,13 @@ T90-F3 was resolved by the operator ruling "T90-F3 residual needs no code"
       entry-class writers plus the in-context load path; and branch
       summarization firing on the chat-switch navigation-away seam — each with
       a wiring test that fails if the call is removed, plus per-package Law 4
-      grep evidence after implementation. Implementation is pending; this box
-      closes when the record moves to `closed`.
+      grep evidence after implementation. Completed 2026-10-06: all six work
+      packages implemented (commits `d08b7a62`, `e9bd8c81`, `927a4eb0`,
+      `286598c0`, `0238547a` + parser fix `988a2a66` + quality-gate
+      extractions `ed0ceaa3`/`6dadbd31`/`6d5fbe48`, local not pushed);
+      `fid:verify --write` 19/19 gates PASS with receipt
+      `sha256:ae0aacee…330`; record moved to `closed` and archived to
+      `dev/fids/archive/`.
 
 - [x] **T151. CodeCraft `/model` picker visibility (`FID-2026-1006-001`).**
       **Automation level: 2.** Register line added 2026-10-06 by the T150

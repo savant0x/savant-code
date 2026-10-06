@@ -1,5 +1,128 @@
 # LEARNINGS
 
+## Lesson: A library-complete hand-off needs a named consumer, not a readiness note
+
+- **Date:** 2026-10-06
+- **Failure:** `FID-2026-1006-002` closed six deliverables as "module + tests" and
+  reported "no production call path yet" as a *stated limitation* in the same pass that
+  closed it. No follow-on item was registered, so the limitation left the record with
+  the record — the same failure that record's own Lessons Learned had already named for
+  T148 and T149, where a review closed on its report and delegated adoption to "its own
+  registered item" that was never created. `FID-2026-1006-003` had to be authored from
+  the operator's ruling that a delivered-but-uncalled module is not a complete feature.
+- **Evidence:** dev/fids/archive/FID-2026-1006-002-pi-harness-adoption-program.md → heading:Lessons Learned,
+  dev/fids/archive/FID-2026-1006-003-wire-uncalled-adoption-modules.md → heading:Lessons Learned
+- **Invariant:** "Ready for the first consumer" is a hand-off, and a hand-off is complete
+  only when a live surface names the owner of the next step. A limitation stated inside
+  a record that then closes is invisible to every register-shaped check, because the
+  register holds open items and a closed record is no longer one.
+- **Guard:** Before closing a FID that leaves any artifact without a production caller,
+  create the wiring item in the same pass — a register line with its write targets, or
+  an active FID — and say in the closure text which one owns it.
+- **Verification:** the wiring record exists and closes on Law 4 grep evidence; the six
+  production callers are pasted under `### Code Verification Evidence` in
+  `dev/fids/archive/FID-2026-1006-003-wire-uncalled-adoption-modules.md`.
+- **Scope:** internal
+- **Owning FID:** FID-2026-1006-003 (closed + archived)
+- **Status:** active
+- **Canonical rule:** library-complete-needs-a-named-consumer
+
+## Lesson: Law 4 is satisfied by the caller, not by the test that imports the module
+
+- **Date:** 2026-10-06
+- **Failure:** The four surfaces `FID-2026-1006-002` left uncalled all had green module
+  suites — the cut-point planner, the file ledger, the guard rails and the preset
+  validator each tested their own behaviour and passed. Every test imported the module;
+  nothing asserted that production called it, so the features were inert for a user
+  while every gate stayed green. Law 4's own words — "Zero grep results = NOT wired" —
+  were the only signal, and no declared gate produced them.
+- **Evidence:** dev/fids/archive/FID-2026-1006-003-wire-uncalled-adoption-modules.md → heading:Code Verification Evidence,
+  packages/agent-runtime/src/run-agent-step/compaction-plan.ts → symbol:planCompactionCut
+- **Invariant:** A module suite proves the module; only a caller assertion proves the
+  feature. The two are not interchangeable, and a green suite is silent about which one
+  you have.
+- **Guard:** Every wiring work package ships a test that fails when the call is removed
+  (assert-the-caller), and the record carries the per-package production grep under a
+  Code Verification Evidence heading.
+- **Verification:** six wiring suites are declared gates on `FID-2026-1006-003`;
+  `bun run fid:verify … --check` reports 19/19 with the production greps pasted
+  alongside.
+- **Scope:** internal
+- **Owning FID:** FID-2026-1006-003 (closed + archived)
+- **Status:** active
+- **Canonical rule:** call-graph-proof-asserts-the-caller
+
+## Lesson: An embedded scope cannot import — give it data-shaped seams
+
+- **Date:** 2026-10-06
+- **Failure:** The context pruner is serialized into its own agent definition via
+  `.toString()`, so its source cannot import runtime code. That is why the compaction
+  cut plan and the file ledger had no route to reach it and stayed inert; designing the
+  module first and discovering the channel second cost a whole follow-on FID.
+- **Evidence:** agents/context-pruner/summarization-context.ts → symbol:cutPlan,
+  packages/agent-runtime/src/run-agent-step/compaction-plan.ts → symbol:planCompactionCut
+- **Invariant:** A module that runs inside an embedded, serialized scope has exactly one
+  honest integration channel — data. Inputs travel as `agentState` fields forwarded as
+  spawn params, never as imports, and the seam must be designed with that shape from the
+  start.
+- **Guard:** Before writing a module whose consumer is serialized, name the spawn param
+  it will read (`keepRecentTokens` is the precedent) and compute the value at the
+  runtime step boundary.
+- **Verification:** the pruner reads `cutPlan` and `fileLedger` off its spawn params and
+  honours `cutWindowStart`; the field partition gate (`spawn-child-fields.ts`) plus the
+  two wiring suites pin the channel.
+- **Scope:** internal
+- **Owning FID:** FID-2026-1006-003 (closed + archived)
+- **Status:** active
+- **Canonical rule:** embedded-scopes-need-data-seams
+
+## Lesson: A config loader must parse the repository's formatted file, not a hand-written sample
+
+- **Date:** 2026-10-06
+- **Failure:** The orchestration-preset parser silently read every list value as empty,
+  because prettier wraps long YAML lists across lines and the parser understood only the
+  single-line hand-written shape its author had in mind. The declaration and the
+  validator were both correct; the loader that reads the file the repository actually
+  ships was not. Only a repo-gate test over the real `protocol.config.yaml` caught it.
+- **Evidence:** common/src/util/protocol-config.ts → symbol:readProtocolConfig,
+  common/src/util/orchestration-preset.ts → symbol:parseOrchestrationPresetConfig
+- **Invariant:** A new section in a formatter-managed config file must be parsed in its
+  *formatted* shape, because that is the shape every gate and every future reader sees.
+  A fixture written by hand proves the intended case and is blind to wrapping.
+- **Guard:** Read the repository's own formatted file in the test rather than a synthetic
+  snippet, and pin the multi-line form explicitly for any wrapped list value.
+- **Verification:** the parser fix is pinned and the repo gate passes against the live
+  `orchestration:` declaration; `common/src/util/__tests__/orchestration-preset.test.ts`
+  is a declared gate on `FID-2026-1006-003`.
+- **Scope:** internal
+- **Owning FID:** FID-2026-1006-003 (closed + archived)
+- **Status:** active
+- **Canonical rule:** config-loader-parses-the-formatted-file
+
+## Lesson: A quality-gate extraction must carry its census pin to the new site
+
+- **Date:** 2026-10-06
+- **Failure:** Splitting the main loop to satisfy the 300-line ceiling moved the
+  terminal-hook call out of `loop.ts` into `run-agent-step/loop/setup-cancelled.ts`, and
+  FID-2026-0919-031's caller census failed — it had pinned the old call site, so the
+  extraction looked exactly like the wiring vanishing. The failure was correct
+  behaviour: the pin existed to catch a call that moved or disappeared.
+- **Evidence:** packages/agent-runtime/src/run-agent-step/loop/setup-cancelled.ts → symbol:handleSetupCancelled,
+  scripts/hook-events-census.ts → symbol:hookEventSites
+- **Invariant:** A census pins a call site, not a module. Any extraction that moves a
+  pinned call reds the gate until the pinned list names the new site, and that is the
+  gate working — not a false positive to route around.
+- **Guard:** Before extracting code that a census, manifest or drift checker pins, read
+  the checker and update the pin in the same change; never relax the checker to let an
+  extraction pass.
+- **Verification:** the census was updated with the moved site and
+  `bun run scripts/hook-events-check.ts` passes; the extraction then proceeded under the
+  quality gate.
+- **Scope:** internal
+- **Owning FID:** FID-2026-1006-003 (closed + archived)
+- **Status:** active
+- **Canonical rule:** extractions-carry-their-census-pins
+
 ## Lesson: A parser that reads prose must separate *describing* a convention from *using* one
 
 - **Date:** 2026-10-03
