@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-1005-010-chatanywhere-free-key-provider.md`
 **ID:** FID-2026-1005-010
 **Severity:** medium
-**Status:** verified
+**Status:** closed
 **Created:** 2026-10-05 17:45
 **Automation level:** 3
 **YAGNI-Compliance:** Verified
@@ -191,8 +191,8 @@ validate:repository`; live leg re-evidenced (HTTP 200 + "pong").
 
 ### Verification Receipt
 
-- fingerprint: sha256:6938b4013dd03b9afef5dfdc09d0a53c9f29e9f3a88a2c6bf3621440d46d480f
-- verified: 2026-10-06T04:02:45.880Z
+- fingerprint: sha256:ca038bc5014a7e4368222069ab8f00e4fc86a92d7288c2871bc071962cf7461c
+- verified: 2026-10-06T04:20:06.851Z
 - typecheck common: exit 0
 - typecheck cli: exit 0
 - test common/src/providers/__tests__/provider-registry.test.ts: exit 0
@@ -250,7 +250,7 @@ validate:repository`; live leg re-evidenced (HTTP 200 + "pong").
 
 ### Implementation Evidence (REQUIRED for `closed`)
 
-- [ ] **Commit SHA:** pending G2 commit authority (G1: nothing committed)
+- [x] **Commit SHA:** e229d9a1 (local batch commit; not pushed)
 - [x] **File:line ranges:** registry `common/src/providers/registry-partitioned-2.ts`
       (chatanywhere entry); marker `cli/src/utils/free-badge.ts:1-58`;
       grouping `cli/src/components/model-picker-grouping.ts` (`buildGroupedItems`
@@ -303,7 +303,7 @@ this record by the agent in this pass).
 
 ## Resolution
 
-- **Closed Date:** not closed — record is `verified` (operator archives)
+- **Closed Date:** 2026-10-06; commit e229d9a1 (local, not pushed)
 - **Fix Description:** ChatAnywhere registered + cataloged + window-covered;
   reusable free marker + FREE KEY section with blank key row on the model
   page; gpt-5.6-sol live-accepted
@@ -313,7 +313,7 @@ this record by the agent in this pass).
   chatanywhere pins in `common/src/providers/__tests__/provider-registry.test.ts`
 - **Verification Evidence:** the Code Verification Evidence block (live legs
   + static legs, exit statuses preserved)
-- **Archived:** set when moved to `dev/fids/archive/`
+- **Archived:** dev/fids/archive/FID-2026-1005-010-chatanywhere-free-key-provider.md
 
 ## Lessons Learned
 

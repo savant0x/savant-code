@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-1005-005-skill-eval-three-tier-gate.md`
 **ID:** FID-2026-1005-005
 **Severity:** high
-**Status:** verified
+**Status:** closed
 **Created:** 2026-10-05 17:14
 **Automation level:** 3
 **YAGNI-Compliance:** Verified — extends the existing skills-check
@@ -252,8 +252,8 @@ floor is established from a first measured run and ratcheted upward.
 
 ### Verification Receipt
 
-- fingerprint: sha256:bab85ca01e182a75e868de3539dff9ee5765ef0f45352ce355f3b063c7725492
-- verified: 2026-10-06T04:09:17.665Z
+- fingerprint: sha256:b43d8782923c31024f4e14921b7f1299eed751a549424471e8005f5b540c24d8
+- verified: 2026-10-06T04:18:56.212Z
 - typecheck evals: exit 0
 - typecheck common: exit 0
 - typecheck cli: exit 0
@@ -333,7 +333,7 @@ floor is established from a first measured run and ratcheted upward.
 
 ### Implementation Evidence (REQUIRED for `closed`)
 
-- [ ] **Commit SHA:** pending G2 commit authority
+- [x] **Commit SHA:** e229d9a1 (local batch commit; not pushed)
 - [x] **File:line ranges:** Tier 1/2 `evals/v2/src/skill-evals/run.ts`;
       cases `evals/v2/skill-cases/*.json`; proof runner
       `evals/v2/src/prove/production-trial-runner.ts`;
@@ -407,8 +407,7 @@ floor is established from a first measured run and ratcheted upward.
 
 ## Resolution
 
-- **Closed Date:** not closed — verified; awaiting G2 commit and archive
-  authority
+- **Closed Date:** 2026-10-06; commit e229d9a1 (local, not pushed)
 - **Fix Description:** implemented three-tier validation, case coverage for
   all 11 discovered trusted skills, description-hash trust enforcement,
   pressure rubrics, constrained execution trials, deterministic checks,
@@ -417,7 +416,7 @@ floor is established from a first measured run and ratcheted upward.
   and operator trust/rejection suites (all declared above).
 - **Verification Evidence:** all declared `fid:verify` gates pass; receipt
   fingerprint stamped above. Live token-costed trials remain on demand.
-- **Archived:** pending operator G2 lifecycle approval.
+- **Archived:** dev/fids/archive/FID-2026-1005-005-skill-eval-three-tier-gate.md
 
 ## Lessons Learned
 

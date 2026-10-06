@@ -5,6 +5,13 @@ operator decision, implementation, runtime review, or closure evidence.
 
 ## Current active FIDs
 
+**2026-10-06 — six FIDs closed and archived in local batch commit
+`e229d9a1`; no push or release.** The verified skill-evaluation,
+provider-failure, stream-recovery, availability/quota, provider-evidence,
+and ChatAnywhere records are now closed with refreshed receipts in
+[`archive/`](archive/). `website/` remains a separate deliberate root under
+T145 and is not part of this batch.
+
 **2026-10-05 — the all-FIDs session: five FIDs closed and archived; the active
 queue is empty.** Operator directive ("complete all open fids in full then
 properly close out the session", automation level 3, single-agent ECHO

@@ -62,7 +62,7 @@
 
 ## Open items
 
-**Eight** items are open.
+**Two** items are open.
 (2026-10-05 (in-pass fix, per "NOTHING IS EVER OUT OF SCOPE"): the
 `validate:repository` run during the FID-drafting pass returned 1 issue,
 none from the FIDs — `quality.ratchet`:
@@ -354,7 +354,7 @@ T90-F3 was resolved by the operator ruling "T90-F3 residual needs no code"
       `vendored.tree.foreign-root` issue — attributable to T145, not to the
       T144 work.
 
-- [ ] **T144. ChatAnywhere provider + free-key star marking.**
+- [x] **T144. ChatAnywhere provider + free-key star marking.**
       **Automation level: 3.** `FID-2026-1005-010` drafted at `created`
       2026-10-05 (now `verified`) per operator directive "Read over
       adding a provider. I want
@@ -372,10 +372,10 @@ T90-F3 was resolved by the operator ruling "T90-F3 residual needs no code"
       window seam (13 cross-gateway rows), `cli/src/utils/free-badge.ts`
       marker, FREE KEY section with blank key row on the model page, 13
       hand-maintained doc surfaces synced (`generate:provider-docs:check`
-      clean). All gates green. Awaiting operator archive/closure (G1:
-      nothing committed).
+      clean). All gates green; closed and archived 2026-10-06 in local commit
+      `e229d9a1` after operator G2 authorization.
 
-- [ ] **T139. Provider failure classification + bounded-probe circuit
+- [x] **T139. Provider failure classification + bounded-probe circuit
       breaker.** **Automation level: 3.** `FID-2026-1005-006` converged
       2026-10-05 (drafted at `created` same day) from the
       reference-project review: classify every
@@ -389,9 +389,10 @@ T90-F3 was resolved by the operator ruling "T90-F3 residual needs no code"
       policy-shape failures). Perfection Loop converged 2026-10-05
       (GREEN design grounded in the live retry/quota seams; audit corrected
       the `quotaEpisode` overclaim); implementation verified 2026-10-06
-      (5/5 declared gates pass). Awaiting G2 commit authority and archive.
+      (5/5 declared gates pass); closed and archived 2026-10-06 in local commit
+      `e229d9a1` after operator G2 authorization.
 
-- [ ] **T141. Availability verdict taxonomy + truthful quota states.**
+- [x] **T141. Availability verdict taxonomy + truthful quota states.**
       **Automation level: 3.** `FID-2026-1005-008` verified 2026-10-05 (converged,
       then implemented + receipt stamped same day)
       from the reference-project review: separate provider
@@ -405,10 +406,10 @@ T90-F3 was resolved by the operator ruling "T90-F3 residual needs no code"
       `resources/OmniRoute-v3.8.51/docs/OMNIROUTE_QUOTA_TELEMETRY.md`.
       Perfection Loop converged 2026-10-05 (source-absent → `unknown` vs
       source-down → `unavailable` split recorded); implementation verified
-      2026-10-06 (10/10 declared gates pass). Awaiting G2 commit authority
-      and archive.
+      2026-10-06 (10/10 declared gates pass); closed and archived 2026-10-06
+      in local commit `e229d9a1` after operator G2 authorization.
 
-- [ ] **T142. Evidence-classed provider facts + docs-count drift gate.**
+- [x] **T142. Evidence-classed provider facts + docs-count drift gate.**
       **Automation level: 3.** `FID-2026-1005-009` verified 2026-10-05 (converged,
       then implemented + receipt stamped same day)
       from the reference-project review: provenance metadata
@@ -420,7 +421,8 @@ T90-F3 was resolved by the operator ruling "T90-F3 residual needs no code"
       (`// evidence:` classes + `check:docs-counts`). Perfection Loop
       converged 2026-10-05 (baseline-diff rule proven against edited
       entries); implementation verified 2026-10-06 (7/7 declared gates pass,
-      including the live drift probe). Awaiting G2 commit authority and archive.
+      including the live drift probe); closed and archived 2026-10-06 in local
+      commit `e229d9a1` after operator G2 authorization.
 
 ### Harness and process
 
@@ -440,15 +442,16 @@ T90-F3 was resolved by the operator ruling "T90-F3 residual needs no code"
 operator-directed session. **Automation level: 1** (no agent action;
       the e2e failures are known and operator-owned until then).
 
-- [ ] **T138. Three-tier skill evals — structural, trigger-routing,
+- [x] **T138. Three-tier skill evals — structural, trigger-routing,
       behavioral.** **Automation level: 3.** `FID-2026-1005-005` implemented
       and verified 2026-10-06: all 11 trusted skills have behavioral rubrics;
       structural and routing tiers pass offline; paired behavioral trials
       support dialogue and constrained file execution; description hashes
       gate trust; rejected changes record paired scores. All 11 declared
-      gates pass. Awaiting G2 commit authority and archive.
+      gates pass; closed and archived 2026-10-06 in local commit `e229d9a1`
+      after operator G2 authorization.
 
-- [ ] **T140. Bounded stream recovery for truncated long-reasoning turns.**
+- [x] **T140. Bounded stream recovery for truncated long-reasoning turns.**
       **Automation level: 3.** `FID-2026-1005-007` converged 2026-10-05 (drafted at `created` same day)
       from the reference-project review: when a gateway cuts a
       stream mid-reasoning, one bounded recovery request (checkpoint-seeded,
@@ -459,7 +462,8 @@ operator-directed session. **Automation level: 1** (no agent action;
       Loop converged 2026-10-05 (caps as named constants beside
       `native-strikes.ts` precedent; accounting seams grounded to
       `reconcile-token-count.ts`); implementation verified 2026-10-06
-      (4/4 declared gates pass). Awaiting G2 commit authority and archive.
+      (4/4 declared gates pass); closed and archived 2026-10-06 in local commit
+      `e229d9a1` after operator G2 authorization.
 
 ## Machine-readable scope targets
 

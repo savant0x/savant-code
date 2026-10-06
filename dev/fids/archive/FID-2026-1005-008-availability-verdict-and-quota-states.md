@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-1005-008-availability-verdict-and-quota-states.md`
 **ID:** FID-2026-1005-008
 **Severity:** medium
-**Status:** verified
+**Status:** closed
 **Created:** 2026-10-05 17:14
 **Automation level:** 3
 **YAGNI-Compliance:** Verified
@@ -217,8 +217,8 @@ never yields `exhausted` or `quota-recovered`; a no-endpoint provider is
 
 ### Verification Receipt
 
-- fingerprint: sha256:16c097057c8c2ea091a36b3f6a8623a1d074d8140d972a8deca07f8724125cf3
-- verified: 2026-10-06T04:02:09.133Z
+- fingerprint: sha256:b605b2b2267492825e5c95d7c3b66a078096160a04d5ddc5dd7e8d3eb6309fb1
+- verified: 2026-10-06T04:19:34.261Z
 - typecheck common: exit 0
 - typecheck cli: exit 0
 - typecheck packages/agent-runtime: exit 0
@@ -345,8 +345,7 @@ All seams below were read or grep-proven live at convergence (Law 1/Law 7).
 
 ### Implementation Evidence (REQUIRED for `closed`)
 
-- [x] **Commit SHA:** pending G2 commit authority (git remains operator-
-      owned — G1/G2; worktree state is the ground truth)
+- [x] **Commit SHA:** e229d9a1 (local batch commit; not pushed)
 - [x] **File:line ranges:**
   - `common/src/providers/availability-verdict.ts:29` (`GatewayFaultKind`,
     incl. the 006-shared mapping at `:32`), `:41` (`AvailabilityVerdict`),
@@ -465,7 +464,7 @@ FID-bound execution.
 
 ## Resolution
 
-- **Closed Date:** not closed — record is `verified` (awaiting operator
+- **Closed Date:** 2026-10-06; commit e229d9a1 (local, not pushed)
   archive per the Auto-Archive rule)
 - **Fix Description:** Introduced the availability-verdict taxonomy
   (body-shape-first; faults never verdicts) and the truthful five-state
@@ -479,7 +478,7 @@ FID-bound execution.
   restart transition pin in `cli`.
 - **Verification Evidence:** receipt stamped by `bun run fid:verify --write`
   below; gate output recorded in Implementation Evidence
-- **Archived:** set when moved to `dev/fids/archive/`
+- **Archived:** dev/fids/archive/FID-2026-1005-008-availability-verdict-and-quota-states.md
 
 ## Lessons Learned
 

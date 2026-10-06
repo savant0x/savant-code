@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-1005-006-failure-classification-and-circuit-breaker.md`
 **ID:** FID-2026-1005-006
 **Severity:** high
-**Status:** verified
+**Status:** closed
 **Created:** 2026-10-05 17:14
 **Automation level:** 3
 **YAGNI-Compliance:** Verified
@@ -183,8 +183,8 @@ measurement.
 
 ### Verification Receipt
 
-- fingerprint: sha256:ad6850c25187dcad1a320163206a180a61e5af11ef61075f882e59ab026db394
-- verified: 2026-10-06T04:01:38.038Z
+- fingerprint: sha256:68eb65800df83d79afc7486d71811093f98ba0a95d51b632ecd8cf8e801a6f1e
+- verified: 2026-10-06T04:19:06.164Z
 - typecheck packages/agent-runtime: exit 0
 - typecheck common: exit 0
 - test packages/agent-runtime/src/__tests__/failure-classification.test.ts: exit 0
@@ -307,7 +307,7 @@ All seams below were read or grep-proven live at convergence (Law 1/Law 7).
 
 ### Implementation Evidence (REQUIRED for `closed`)
 
-- [ ] **Commit SHA:** pending G2 commit authority (G1: nothing committed)
+- [x] **Commit SHA:** e229d9a1 (local batch commit; not pushed)
 - [x] **File:line ranges:** `packages/agent-runtime/src/provider-boundary/`
       — `failure-class.ts`, `retry-policy.ts`,
       `provider-circuit-breaker.ts`, `classified-stream-retry.ts`; wiring at
@@ -369,7 +369,7 @@ FID-bound execution.
 
 ## Resolution
 
-- **Closed Date:** not closed — record is `verified` (operator archives)
+- **Closed Date:** 2026-10-06; commit e229d9a1 (local, not pushed)
 - **Fix Description:** Classify-then-decide at the provider boundary:
   `failure-class.ts` taxonomy, `retry-policy.ts` load-time shape validation
   (the measured nested-`backoff` defect now fails loudly at call time),
@@ -383,7 +383,7 @@ FID-bound execution.
   policy-driven `maxRetries: 0` with a new malformed-policy case
 - **Verification Evidence:** the Code Verification Evidence block + the
   stamped Verification Receipt below
-- **Archived:** set when moved to `dev/fids/archive/`
+- **Archived:** dev/fids/archive/FID-2026-1005-006-failure-classification-and-circuit-breaker.md
 
 ## Lessons Learned
 

@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-1005-009-provider-fact-evidence-and-doc-drift-gate.md`
 **ID:** FID-2026-1005-009
 **Severity:** low
-**Status:** verified
+**Status:** closed
 **Created:** 2026-10-05 17:14
 **Automation level:** 3
 **YAGNI-Compliance:** Verified
@@ -193,8 +193,8 @@ render into `docs/providers.md` and the pin suite covers them.
 
 ### Verification Receipt
 
-- fingerprint: sha256:b1840942cae178a80ad065d498242e4f7f183ddb5793440d845b85f9ecf1d161
-- verified: 2026-10-06T04:02:29.026Z
+- fingerprint: sha256:5b32765004d82269f4393c66aaaaa204b7b83df5dd2a2f68df87c979a1785008
+- verified: 2026-10-06T04:19:52.484Z
 - typecheck common: exit 0
 - typecheck cli: exit 0
 - test common/src/providers/__tests__/provider-fact-evidence.test.ts: exit 0
@@ -312,8 +312,7 @@ All seams below were read or grep-proven live at convergence (Law 1/Law 7).
 
 ### Implementation Evidence (REQUIRED for `closed`)
 
-- [x] **Commit SHA:** pending G2 commit authority (git remains operator-
-      owned — G1/G2; worktree state is the ground truth)
+- [x] **Commit SHA:** e229d9a1 (local batch commit; not pushed)
 - [x] **File:line ranges:**
   - `common/src/providers/types.ts` — `FactEvidenceClass` + `FactEvidence`
     (closed enum; console-verified requires date + witness), attached as
@@ -418,7 +417,7 @@ is NOT started: FID-bound execution.
 
 ## Resolution
 
-- **Closed Date:** not closed — record is `verified` (awaiting operator
+- **Closed Date:** 2026-10-06; commit e229d9a1 (local, not pushed)
   archive per the Auto-Archive rule)
 - **Fix Description:** Introduced typed evidence provenance beside provider
   facts (closed class enum; console-verified requires date + witness), the
@@ -433,7 +432,7 @@ is NOT started: FID-bound execution.
   11 tests incl. the live-repo integration legs)
 - **Verification Evidence:** receipt stamped by `bun run fid:verify
   --write` below; gate output recorded in Implementation Evidence
-- **Archived:** set when moved to `dev/fids/archive/`
+- **Archived:** dev/fids/archive/FID-2026-1005-009-provider-fact-evidence-and-doc-drift-gate.md
 
 ## Lessons Learned
 

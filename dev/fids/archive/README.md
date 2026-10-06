@@ -3,6 +3,19 @@
 This directory contains closed or historically completed FIDs. Files here are
 an audit record, not an active work queue.
 
+## 2026-10-06 closure — verified FID batch (`e229d9a1`)
+
+Six verified FIDs were committed locally, closed, and archived after the
+operator's G2 authorization. Receipts were refreshed at the archived paths.
+No push or release was performed.
+
+- [`FID-2026-1005-005-skill-eval-three-tier-gate.md`](FID-2026-1005-005-skill-eval-three-tier-gate.md) — three-tier skill evaluation.
+- [`FID-2026-1005-006-failure-classification-and-circuit-breaker.md`](FID-2026-1005-006-failure-classification-and-circuit-breaker.md) — provider failure classification and bounded breaker.
+- [`FID-2026-1005-007-bounded-stream-recovery.md`](FID-2026-1005-007-bounded-stream-recovery.md) — bounded truncated-stream recovery.
+- [`FID-2026-1005-008-availability-verdict-and-quota-states.md`](FID-2026-1005-008-availability-verdict-and-quota-states.md) — availability and quota truth.
+- [`FID-2026-1005-009-provider-fact-evidence-and-doc-drift-gate.md`](FID-2026-1005-009-provider-fact-evidence-and-doc-drift-gate.md) — provider fact evidence and docs drift gate.
+- [`FID-2026-1005-010-chatanywhere-free-key-provider.md`](FID-2026-1005-010-chatanywhere-free-key-provider.md) — ChatAnywhere free-key provider.
+
 ## 2026-09-28 closure — archived-FID closure guard (FID-2026-0928-013)
 
 - [`FID-2026-0928-013-archived-fid-closure-guard.md`](FID-2026-0928-013-archived-fid-closure-guard.md)

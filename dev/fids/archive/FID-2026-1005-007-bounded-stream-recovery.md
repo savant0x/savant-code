@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-1005-007-bounded-stream-recovery.md`
 **ID:** FID-2026-1005-007
 **Severity:** medium
-**Status:** verified
+**Status:** closed
 **Created:** 2026-10-05 17:14
 **Automation level:** 3
 **YAGNI-Compliance:** Verified
@@ -172,8 +172,8 @@ Accounting tests assert the physical/logical split.
 
 ### Verification Receipt
 
-- fingerprint: sha256:46b582d3c568d9696f01f6f5bb9a4a4f18bfda27f482cfeae801f1d2849e53e9
-- verified: 2026-10-06T04:01:46.853Z
+- fingerprint: sha256:50561c06d514446bc905f59b61f625ed49ab5efc0f22bf6de9b76bbaa34c24c8
+- verified: 2026-10-06T04:19:13.429Z
 - typecheck packages/agent-runtime: exit 0
 - test packages/agent-runtime/src/__tests__/stream-outcome-classification.test.ts: exit 0
 - test packages/agent-runtime/src/__tests__/stream-recovery.test.ts: exit 0
@@ -284,7 +284,7 @@ All seams below were read or grep-proven live at convergence (Law 1/Law 7).
 
 ### Implementation Evidence (REQUIRED for `closed`)
 
-- [ ] **Commit SHA:** pending G2 commit authority (G1: nothing committed)
+- [x] **Commit SHA:** e229d9a1 (local batch commit; not pushed)
 - [x] **File:line ranges:** `packages/agent-runtime/src/stream-recovery/` —
       `outcome.ts`, `recovery-plan.ts`, `recovery-executor.ts`; wiring at
       `packages/agent-runtime/src/prompt-agent-stream.ts` (`runTurnWithRecovery`
@@ -344,7 +344,7 @@ Implementation is NOT started: FID-bound execution.
 
 ## Resolution
 
-- **Closed Date:** not closed — record is `verified` (operator archives)
+- **Closed Date:** 2026-10-06; commit e229d9a1 (local, not pushed)
 - **Fix Description:** Bounded stream recovery: `stream-recovery/` — the
   structural reasoning-only-truncation classifier, the hard-numbered
   recovery plan (2 physical requests max, tail-first checkpoint cap,
@@ -359,7 +359,7 @@ Implementation is NOT started: FID-bound execution.
   the accounting channel
 - **Verification Evidence:** the Code Verification Evidence block + the
   stamped Verification Receipt below
-- **Archived:** set when moved to `dev/fids/archive/`
+- **Archived:** dev/fids/archive/FID-2026-1005-007-bounded-stream-recovery.md
 
 ## Lessons Learned
 
