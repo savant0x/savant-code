@@ -62,7 +62,7 @@
 
 ## Open items
 
-**Two** items are open.
+**One** item is open.
 (2026-10-05 (in-pass fix, per "NOTHING IS EVER OUT OF SCOPE"): the
 `validate:repository` run during the FID-drafting pass returned 1 issue,
 none from the FIDs — `quality.ratchet`:
@@ -341,18 +341,14 @@ T90-F3 was resolved by the operator ruling "T90-F3 residual needs no code"
       **Blocker:** operator credits/keys — tokenharbor allowance reset and
       tokenrouter top-up, both external to the repository.
 
-- [ ] **T145. `website/` deliberate project root — awaiting operator
-      commit.** **Automation level: 3** (registration only; the git action
-      is operator-owned, G1). Operator ruling 2026-10-05 (structured
+- [x] **T145. `website/` deliberate project root.** **Automation level: 3.**
+      Operator ruling 2026-10-05 (structured
       question): "Leave as deliberate root" — the new top-level `website/`
       tree (one 48 KB `index.html`, created 2026-10-05 18:47) is intended
       project work, not a vendored foreign tree. `scripts/audit-vendored-tree.ts`
       accepts any root once it carries tracked content — the check is
-      self-maintaining by design (no allowlist exists or is wanted).
-      **Blocker:** the operator's deliberate `git add`/commit of `website/`;
-      until then `bun run validate:repository` reports exactly this one
-      `vendored.tree.foreign-root` issue — attributable to T145, not to the
-      T144 work.
+      self-maintaining by design (no allowlist exists or is wanted). Committed
+      locally as `cef88023` on 2026-10-06; `bun run validate:repository` passes.
 
 - [x] **T144. ChatAnywhere provider + free-key star marking.**
       **Automation level: 3.** `FID-2026-1005-010` drafted at `created`
@@ -489,7 +485,7 @@ operator-directed session. **Automation level: 1** (no agent action;
   gateway-side; the local write surface is the probe scripts — verified
   2026-10-02: no local catalog directory exists)
 - T122: (no write surface — operator-owned)
-- T145: (no write surface — operator-owned git action)
+- T145: `website/index.html`
 - T144: `common/src/providers/**`, `common/src/constants/**`,
   `cli/src/components/model-picker*`, `cli/src/utils/free-badge.ts`,
   `cli/src/utils/openrouter-models/**`, `docs/providers.md`, `README.md`,

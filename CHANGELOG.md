@@ -4,6 +4,7 @@
 
 ### Added
 
+- **Savant Code landing page (T145; committed 2026-10-06, `cef88023`).** Added the standalone `website/index.html` project root with product overview, ECHO workflow, provider showcase, installation instructions, and responsive interactive presentation.
 - **Three-tier skill evaluation gates (FID-2026-1005-005; closed 2026-10-06, commit e229d9a1).** Added structural, trigger-routing, and behavioral evaluation for all 11 trusted skills; paired proof trials use constrained temp-workspace tools, description-hash trust checks, and a durable rejection impact ledger. Declared FID gates pass; live token-costed trials remain operator-invoked.
 - **Provider failure classification and circuit breaker (FID-2026-1005-006; closed 2026-10-06, commit e229d9a1).** Provider failures are classified before retry decisions; load-time retry policy validation and a per-provider closed/open/half-open breaker bound recovery probes. Five declared gates pass.
 - **Bounded stream recovery (FID-2026-1005-007; closed 2026-10-06, commit e229d9a1).** Added one checkpoint-seeded, tools-disabled recovery request for eligible truncated reasoning turns, with physical-request accounting and hard bounds. Four declared gates pass.
