@@ -149,12 +149,28 @@ bun run fid:verify ...FID-2026-1007-003 --write  5/5 gates green
    release and tag mutations remain outside this session's authority, and the
    pre-push credential scan and hook battery have not been exercised against these
    two commits.
-5. **The root typecheck chain, the full root `bun test` chain, `eslint
-   --max-warnings 0` and the sdk/desktop/evals/database/knowledge-graph/connectors/
-   code-map suites were NOT re-run in this pass.** Stated as limits, not as passes.
-   What was run is listed above; the affected workspaces were exercised through the
-   declared gates (`typecheck packages/agent-runtime`, `quality`) and the scripts
-   tree through its own leg.
+5. **The full root `bun test` chain and the sdk/desktop/evals/database/
+   knowledge-graph/connectors/code-map suites were NOT re-run in this pass.**
+   Stated as limits, not as passes. What WAS run on the final tree: the root
+   `typecheck` chain across 13 workspaces plus the scripts leg (exit 0), `eslint .
+   --max-warnings 0` (exit 0 — see the post-summary note), `lint:md`,
+   `quality:report`, `generate:protocol-bundle:check`, `fid:verify --check`, and the
+   `common` (813 / 0), `cli` (3962 / 0) and `packages/agent-runtime` (1873 / 0)
+   suites.
+6. **Post-summary note (commits landed after this summary was written).** The two
+   items this summary listed as unowned were committed in the same pass:
+   `1f9084a5` injects the reconcile budget in
+   `packages/agent-runtime/src/echo/__tests__/worktree-reconcile.test.ts` — the
+   first application of the injected-budget guard, which is why it carries
+   FID-2026-1007-003 — and `0838799e` lands the idea-shelf note as housekeeping.
+   `5689b523` then cleared the four `import/order` warnings the repo-wide eslint
+   gate rejected in files this session touched (three files, `eslint --fix`, no
+   suppressions); the gate is exit 0 after it, and `common` / `cli` were re-run
+   green rather than assumed unchanged. Still untracked and left that way on
+   purpose: `docs/design/Savant_ECHO Cache Optimization Research.md` (the record's
+   Missed Question 7 states the position), `docs/archive/reports/echo-astra-review-2026-10-06.md`
+   and `website/index-2.html` — parked third-party inputs this pass did not author
+   and whose disposition is an operator call rather than a housekeeping commit.
 
 ## Closure
 
@@ -175,17 +191,16 @@ lists the three closed records; `dev/fids/archive/README.md` gained a
 
 ## Continuation note
 
-Three things are left in the tree that this pass did not own:
+Three untracked inputs are left in the tree, none of them ours to dispose of:
 
-- `dev/idea-shelf/free-llm-api-directory-2026-10.md` + the shelf index edit — a
-  SHELVED reference artifact. The shelf explicitly carries "not a commitment, a FID,
-  or a registered task", so it needs a housekeeping commit rather than a register
-  item.
-- `packages/agent-runtime/src/echo/__tests__/worktree-reconcile.test.ts`
-  (modified) — a pin-hardening change belonging to T153's stream, whose record is
-  already closed.
-- `docs/archive/reports/echo-astra-review-2026-10-06.md` and `website/index-2.html`
-  (untracked) — a parked review report and a stray site artifact.
+- `docs/archive/reports/echo-astra-review-2026-10-06.md` — a parked third-party
+  review of `ECHO.md`, sitting in the archive-report location that already carries
+  a markdownlint exemption.
+- `website/index-2.html` — a 92 KB stray copy of the public site page with no
+  inbound reference found.
+- `docs/design/Savant_ECHO Cache Optimization Research.md` — deliberately
+  untracked; the record's Missed Question 7 states the position and the
+  `.markdownlintignore` entry says how to re-evaluate it if that changes.
 
 **Next:** T155 step 11 (the locator gap, whose invariants are already specified),
 then step 8 and step 10 once a live endpoint and provider billing exist. T119, the
