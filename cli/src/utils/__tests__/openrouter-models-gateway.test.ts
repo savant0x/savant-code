@@ -1,8 +1,11 @@
-// Openrouter-models test family — combined gateway catalog (Nous,
-// TokenHarbor, CommandCode). Sibling of the Loop-338 decomposition (shared
-// lifecycle in ./openrouter-models-test-harness). The KiosAPI + Zen
-// provider-cluster tests live in openrouter-models-gateway-providers.test.ts
-// (FID-2026-0905-006 ceiling split).
+// Openrouter-models test family — the Nous/KiosAPI parsers, the static
+// TokenHarbor/CommandCode builders, and the empty-catalog fallback. Sibling of
+// the Loop-338 decomposition (shared lifecycle in
+// ./openrouter-models-test-harness). Two ceiling splits have moved out of this
+// file: the provider-cluster catalogs and the combined-catalog membership pins
+// (FID-2026-0905-006) live in openrouter-models-gateway-providers.test.ts, and
+// the shared-cache publish contract (FID-2026-1007-006) lives in
+// openrouter-models-gateway-cache.test.ts.
 
 import fs from 'fs'
 import os from 'os'
@@ -258,41 +261,5 @@ describe('openrouter-models', () => {
       ]),
     )
     expect(models.some((model) => model.id.startsWith('nous/'))).toBe(false)
-  })
-
-  test('includes TokenHarbor models in the combined gateway catalog', async () => {
-    // @ts-expect-error - mock fetch
-    globalThis.fetch = mock(() =>
-      Promise.resolve(makeJsonResponse({ data: [] })),
-    )
-
-    const models = await fetchGatewayModels(true)
-
-    expect(models).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({
-          id: 'tokenharbor/th-orchestra',
-          provider: 'tokenharbor',
-        }),
-      ]),
-    )
-  })
-
-  test('includes CommandCode models in the combined gateway catalog', async () => {
-    // @ts-expect-error - mock fetch
-    globalThis.fetch = mock(() =>
-      Promise.resolve(makeJsonResponse({ data: [] })),
-    )
-
-    const models = await fetchGatewayModels(true)
-
-    expect(models).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({
-          id: 'commandcode/deepseek/deepseek-v4-pro',
-          provider: 'commandcode',
-        }),
-      ]),
-    )
   })
 })

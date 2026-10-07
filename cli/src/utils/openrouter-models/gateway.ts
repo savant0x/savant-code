@@ -10,14 +10,12 @@ import fs from 'node:fs'
 import { modelRequestLimits } from '@savant-code/common/util/model-request-limits'
 
 import { logger } from '../logger'
-import { __resetApinexCacheForTest, fetchApinexModels } from './apinex'
-import { __resetBaiCacheForTest, fetchBaiModels } from './bai'
-import { __resetCleanApisCacheForTest, fetchCleanApisModels } from './cleanapis'
-import { __resetCodecraftCacheForTest, fetchCodecraftModels } from './codecraft'
-import {
-  __resetCustomCatalogsForTest,
-  fetchAllCustomModels,
-} from './custom-catalog'
+import { __resetApinexCacheForTest } from './apinex'
+import { __resetBaiCacheForTest } from './bai'
+import { __resetCleanApisCacheForTest } from './cleanapis'
+import { __resetCodecraftCacheForTest } from './codecraft'
+import { __resetCustomCatalogsForTest } from './custom-catalog'
+import { assembleGatewayCatalog } from './gateway-catalog-merge'
 import {
   computeCatalogGaps,
   gatewayRefreshCooledDown,
@@ -29,42 +27,35 @@ import {
   loadGatewayCatalogFromDisk,
   writeGatewayCatalogToDisk,
 } from './gateway-disk-cache'
-import { resolveGatewayLiveCatalogs } from './gateway-live-results'
-import { __resetKiosapiCacheForTest, fetchKiosapiModels } from './kiosapi'
-import { __resetNousCacheForTest, fetchNousModels } from './nous'
-import { __resetNvidiaCacheForTest, fetchNvidiaModels } from './nvidia'
-import { __resetOpenAiCacheForTest, fetchOpenAiModels } from './openai'
 import {
-  __resetOpenRouterCacheForTest,
-  fetchOpenRouterModels,
-} from './openrouter'
-import {
-  __resetOrcarouterCacheForTest,
-  fetchOrcarouterModels,
-} from './orcarouter'
-import {
-  fetchCommandCodeModels,
-  fetchHcnsecModels,
-  fetchTokenBomModels,
-  fetchTokenRouterModels,
-  getTokenHarborModels,
-} from './static-catalogs'
-import {
-  fetchAtriaModels,
-  fetchBazaarlinkModels,
-  fetchInfronModels,
-  fetchInternModels,
-  fetchUnorouterModels,
-} from './static-catalogs-gateways'
+  fetchGatewayLiveCatalogs,
+  resolveGatewayLiveCatalogs,
+} from './gateway-live-results'
+import { __resetKiosapiCacheForTest } from './kiosapi'
+import { __resetNousCacheForTest } from './nous'
+import { __resetNvidiaCacheForTest } from './nvidia'
+import { __resetOpenAiCacheForTest } from './openai'
+import { __resetOpenRouterCacheForTest } from './openrouter'
+import { __resetOrcarouterCacheForTest } from './orcarouter'
 import { CATALOG_TTL_MS } from './types'
-import { __resetVercelCacheForTest, fetchVercelModels } from './vercel'
-import { __resetXkiroCacheForTest, fetchXkiroModels } from './xkiro'
+import { __resetVercelCacheForTest } from './vercel'
+import { __resetXkiroCacheForTest } from './xkiro'
 
 import type { OpenRouterModel } from './types'
 
 let gatewayCache: OpenRouterModel[] | null = null
 let gatewayCacheAt = 0
 let gatewayInflight: Promise<OpenRouterModel[]> | null = null
+/**
+ * FID-2026-1007-006: the owner of the catalog cache. Every path that PUBLISHES
+ * a catalog (the warm-start snapshot and the full rebuild) claims this token
+ * first; a build whose token is no longer current still returns its own
+ * catalog to its caller but must not write the process-wide cache. Without it,
+ * a slow build from an earlier caller overwrote a later one — measured as a
+ * cross-file leak in this workspace's suite, where one test file's assertion
+ * read a catalog assembled by another file (the `bun run test` red).
+ */
+let gatewayBuildToken = 0
 const gatewayCatalogListeners = new Set<(catalog: OpenRouterModel[]) => void>()
 
 /**
@@ -118,6 +109,7 @@ function notifyGatewayCatalogListeners(catalog: OpenRouterModel[]): void {
  * - B.AI (live API, authenticated)
  * - HCNSec / TokenBom / Infron / UnoRouter / BazaarLink / Atria AI /
  *   Intern InkStone (static audited catalogs)
+ * - ChatAnywhere (static audited catalog — FID-2026-1007-005)
  * - Vercel AI Gateway (live API, public)
  *
  * Fetches live sources in parallel via Promise.allSettled(). If a source fails,
@@ -135,6 +127,10 @@ export async function fetchGatewayModels(
   if (fresh && gatewayCache) return gatewayCache
   if (gatewayInflight) return gatewayInflight
 
+  // FID-2026-1007-006: claim the cache and supersede every build before this
+  // one, so a later publish always wins.
+  const buildToken = ++gatewayBuildToken
+
   // FID-2026-0815-007 (F-09): warm-start disk cache. When the in-memory cache
   // is cold, a fresh on-disk catalog is loaded synchronously so the model
   // picker + model-info block have metadata without paying the network RTT.
@@ -146,9 +142,11 @@ export async function fetchGatewayModels(
     if (disk && disk.catalog.length > 0) {
       const gaps = await computeCatalogGaps(disk.catalog)
       if (gaps.length === 0) {
-        gatewayCache = disk.catalog
-        gatewayCacheAt = disk.savedAt
-        notifyGatewayCatalogListeners(disk.catalog)
+        if (buildToken === gatewayBuildToken) {
+          gatewayCache = disk.catalog
+          gatewayCacheAt = disk.savedAt
+          notifyGatewayCatalogListeners(disk.catalog)
+        }
         return disk.catalog
       }
       if (gatewayRefreshCooledDown()) {
@@ -158,9 +156,11 @@ export async function fetchGatewayModels(
           { providers: gaps },
           'Gateway warm-start snapshot has coverage gaps; serving snapshot (refresh cooled down)',
         )
-        gatewayCache = disk.catalog
-        gatewayCacheAt = disk.savedAt
-        notifyGatewayCatalogListeners(disk.catalog)
+        if (buildToken === gatewayBuildToken) {
+          gatewayCache = disk.catalog
+          gatewayCacheAt = disk.savedAt
+          notifyGatewayCatalogListeners(disk.catalog)
+        }
         return disk.catalog
       }
       markGatewayRefreshAttempt()
@@ -172,79 +172,18 @@ export async function fetchGatewayModels(
     }
   }
 
-  gatewayInflight = (async () => {
-    const [orResult, nvidiaResult, ...restResults] = await Promise.allSettled([
-      fetchOpenRouterModels(forceRefresh),
-      fetchNvidiaModels(forceRefresh),
-      fetchNousModels(forceRefresh),
-      fetchKiosapiModels(forceRefresh),
-      fetchApinexModels(forceRefresh),
-      fetchOpenAiModels(forceRefresh),
-      fetchOrcarouterModels(forceRefresh),
-      fetchBaiModels(forceRefresh),
-      fetchVercelModels(forceRefresh),
-      fetchCleanApisModels(forceRefresh),
-      fetchCodecraftModels(forceRefresh),
-      fetchXkiroModels(forceRefresh),
-      // FID-2026-0910-004 Step 9 remainder: custom catalogs (live + inline)
-      // merge here; per-provider failures degrade to [] (D10 ladder).
-      fetchAllCustomModels(forceRefresh),
-    ])
-    // FID-2026-1001-001: the fulfilled/cache ladder is shared with the
-    // 300-line-cap split (gateway-live-results.ts); the positional contract
-    // of restResults is documented there.
-    const {
-      orModels,
-      nvidiaModels,
-      nousModels,
-      kiosapiModels,
-      apinexModels,
-      openAiModels,
-      orcarouterModels,
-      baiModels,
-      vercelModels,
-      cleanApisModels,
-      codecraftModels,
-      xkiroModels,
-      customModels,
-    } = resolveGatewayLiveCatalogs(orResult, nvidiaResult, restResults)
-    const tokenrouterModels = fetchTokenRouterModels()
-    const tokenharborModels = getTokenHarborModels()
-    const commandCodeModels = fetchCommandCodeModels()
-    const hcnsecCatalog = fetchHcnsecModels()
-    const tokenbomCatalog = fetchTokenBomModels()
-    const infronCatalog = fetchInfronModels()
-    const unorouterCatalog = fetchUnorouterModels()
-    const bazaarlinkCatalog = fetchBazaarlinkModels()
-    const atriaCatalog = fetchAtriaModels()
-    const internCatalog = fetchInternModels()
-
-    const combined = [
-      ...orModels,
-      ...tokenrouterModels,
-      ...tokenharborModels,
-      ...nvidiaModels,
-      ...nousModels,
-      ...kiosapiModels,
-      ...apinexModels,
-      ...openAiModels,
-      ...orcarouterModels,
-      ...baiModels,
-      ...vercelModels,
-      ...cleanApisModels,
-      ...codecraftModels,
-      ...xkiroModels,
-      ...commandCodeModels,
-      ...hcnsecCatalog,
-      ...tokenbomCatalog,
-      ...infronCatalog,
-      ...unorouterCatalog,
-      ...bazaarlinkCatalog,
-      ...atriaCatalog,
-      ...internCatalog,
-      ...customModels,
-    ]
-    combined.sort((a, b) => a.id.localeCompare(b.id))
+  const inflight = (async () => {
+    const { orResult, nvidiaResult, restResults } =
+      await fetchGatewayLiveCatalogs(forceRefresh)
+    // FID-2026-1001-001: the settled ladder and the merge order live in their
+    // own 300-line-cap modules (gateway-live-results.ts,
+    // gateway-catalog-merge.ts); each documents its own positional contract.
+    const combined = assembleGatewayCatalog(
+      resolveGatewayLiveCatalogs(orResult, nvidiaResult, restResults),
+    )
+    // FID-2026-1007-006: a superseded build returns its own catalog but
+    // publishes nothing — neither the cache, nor the listeners, nor the disk.
+    if (buildToken !== gatewayBuildToken) return combined
     gatewayCache = combined
     gatewayCacheAt = Date.now()
     notifyGatewayCatalogListeners(combined)
@@ -260,7 +199,15 @@ export async function fetchGatewayModels(
     return combined
   })()
 
-  return gatewayInflight
+  gatewayInflight = inflight
+  try {
+    return await inflight
+  } finally {
+    // FID-2026-1007-006: clear the slot on settle. It used to hold a completed
+    // promise for the rest of the process, so the post-TTL path returned the
+    // stale catalog instead of rebuilding — CATALOG_TTL_MS never took effect.
+    if (buildToken === gatewayBuildToken) gatewayInflight = null
+  }
 }
 
 /**
@@ -286,6 +233,9 @@ export function __resetOpenRouterModelsCacheForTest(): void {
   modelRequestLimits.replaceCatalog([])
   gatewayCacheAt = 0
   gatewayInflight = null
+  // FID-2026-1007-006: supersede any build still in flight, so a promise
+  // started before this reset cannot publish into the cache afterwards.
+  gatewayBuildToken += 1
   // FID-2026-0815-007: also clear the on-disk warm-start cache so tests start
   // from a known state.
   try {

@@ -9,29 +9,31 @@
  * CodeCraft, xKiro, custom catalogs. Fulfilled values win; rejected sources degrade to their
  * per-provider cache — custom catalogs degrade to [] (lazily-built custom
  * fetchers have no cache, FID-2026-0910-004 D10).
+ *
+ * FID-2026-1007-006: the fan-out array itself also lives here. The array and
+ * the ladder are one contract, and splitting them was how the 300-line cap
+ * turned a positional list into two places to edit.
  */
-import { getCachedApinexModels } from './apinex'
-import { getCachedBaiModels } from './bai'
-import { getCachedCleanApisModels } from './cleanapis'
-import { getCachedCodecraftModels } from './codecraft'
-import { getCachedKiosapiModels } from './kiosapi'
-import { getCachedNousModels } from './nous'
-import { getCachedNvidiaModels } from './nvidia'
-import { getCachedOpenAiModels } from './openai'
-import { getCachedOpenRouterModels } from './openrouter'
-import { getCachedOrcarouterModels } from './orcarouter'
-import { getCachedVercelModels } from './vercel'
-import { getCachedXkiroModels } from './xkiro'
+import { fetchApinexModels, getCachedApinexModels } from './apinex'
+import { fetchBaiModels, getCachedBaiModels } from './bai'
+import { fetchCleanApisModels, getCachedCleanApisModels } from './cleanapis'
+import { fetchCodecraftModels, getCachedCodecraftModels } from './codecraft'
+import { fetchAllCustomModels } from './custom-catalog'
+import { fetchKiosapiModels, getCachedKiosapiModels } from './kiosapi'
+import { fetchNousModels, getCachedNousModels } from './nous'
+import { fetchNvidiaModels, getCachedNvidiaModels } from './nvidia'
+import { fetchOpenAiModels, getCachedOpenAiModels } from './openai'
+import { fetchOpenRouterModels, getCachedOpenRouterModels } from './openrouter'
+import { fetchOrcarouterModels, getCachedOrcarouterModels } from './orcarouter'
+import { fetchVercelModels, getCachedVercelModels } from './vercel'
+import { fetchXkiroModels, getCachedXkiroModels } from './xkiro'
 
 import type { OpenRouterModel } from './types'
 
 type SettledCatalog = PromiseSettledResult<OpenRouterModel[]>
 
-export function resolveGatewayLiveCatalogs(
-  orResult: SettledCatalog,
-  nvidiaResult: SettledCatalog,
-  restResults: readonly SettledCatalog[],
-): {
+/** The settled live legs of the combined gateway catalog. */
+export interface GatewayLiveCatalogs {
   orModels: OpenRouterModel[]
   nvidiaModels: OpenRouterModel[]
   nousModels: OpenRouterModel[]
@@ -45,7 +47,43 @@ export function resolveGatewayLiveCatalogs(
   codecraftModels: OpenRouterModel[]
   xkiroModels: OpenRouterModel[]
   customModels: OpenRouterModel[]
-} {
+}
+
+/**
+ * The live-provider fan-out behind `fetchGatewayModels` (FID-2025-1001-001 / M0
+ * extraction): every live fetcher, settled so one provider's failure cannot
+ * fail the catalog. Order is the POSITIONAL CONTRACT above, verbatim.
+ */
+export async function fetchGatewayLiveCatalogs(forceRefresh: boolean): Promise<{
+  orResult: SettledCatalog
+  nvidiaResult: SettledCatalog
+  restResults: SettledCatalog[]
+}> {
+  const [orResult, nvidiaResult, ...restResults] = await Promise.allSettled([
+    fetchOpenRouterModels(forceRefresh),
+    fetchNvidiaModels(forceRefresh),
+    fetchNousModels(forceRefresh),
+    fetchKiosapiModels(forceRefresh),
+    fetchApinexModels(forceRefresh),
+    fetchOpenAiModels(forceRefresh),
+    fetchOrcarouterModels(forceRefresh),
+    fetchBaiModels(forceRefresh),
+    fetchVercelModels(forceRefresh),
+    fetchCleanApisModels(forceRefresh),
+    fetchCodecraftModels(forceRefresh),
+    fetchXkiroModels(forceRefresh),
+    // FID-2026-0910-004 Step 9 remainder: custom catalogs (live + inline)
+    // merge here; per-provider failures degrade to [] (D10 ladder).
+    fetchAllCustomModels(forceRefresh),
+  ])
+  return { orResult, nvidiaResult, restResults }
+}
+
+export function resolveGatewayLiveCatalogs(
+  orResult: SettledCatalog,
+  nvidiaResult: SettledCatalog,
+  restResults: readonly SettledCatalog[],
+): GatewayLiveCatalogs {
   const [
     nousResult,
     kiosapiResult,

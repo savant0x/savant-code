@@ -1,6 +1,8 @@
-// Openrouter-models test family — provider-cluster catalogs (KiosAPI). Split from
-// openrouter-models-gateway.test.ts (FID-2026-0905-006 ceiling split; verbatim
-// moves), sharing the family lifecycle in ./openrouter-models-test-harness.
+// Openrouter-models test family — provider-cluster catalogs (KiosAPI) and the
+// combined catalog's membership pins (ChatAnywhere, TokenHarbor, CommandCode).
+// Split from openrouter-models-gateway.test.ts (FID-2026-0905-006 ceiling
+// split; FID-2026-1006-005 follow-up moved the membership pins here too),
+// sharing the family lifecycle in ./openrouter-models-test-harness.
 // (The FID-2026-0906-008 gateway cluster was removed by operator direction —
 // see that FID's Resolution for the live-test findings.)
 
@@ -151,5 +153,41 @@ describe('openrouter-models provider clusters', () => {
       if (originalKiosapiKey === undefined) delete process.env.KIOSAPI_API_KEY
       else process.env.KIOSAPI_API_KEY = originalKiosapiKey
     }
+  })
+
+  test('includes TokenHarbor models in the combined gateway catalog', async () => {
+    // @ts-expect-error - mock fetch
+    globalThis.fetch = mock(() =>
+      Promise.resolve(makeJsonResponse({ data: [] })),
+    )
+
+    const models = await fetchGatewayModels(true)
+
+    expect(models).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: 'tokenharbor/th-orchestra',
+          provider: 'tokenharbor',
+        }),
+      ]),
+    )
+  })
+
+  test('includes CommandCode models in the combined gateway catalog', async () => {
+    // @ts-expect-error - mock fetch
+    globalThis.fetch = mock(() =>
+      Promise.resolve(makeJsonResponse({ data: [] })),
+    )
+
+    const models = await fetchGatewayModels(true)
+
+    expect(models).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: 'commandcode/deepseek/deepseek-v4-pro',
+          provider: 'commandcode',
+        }),
+      ]),
+    )
   })
 })
