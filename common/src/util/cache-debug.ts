@@ -36,11 +36,15 @@ function normalizeForJson(value: unknown): SerializableValue {
   }
 
   if (typeof value === 'object') {
+    // FID-2026-1006-005 step 6 (Phase 1b): canonical (code-unit) key order, so
+    // the serialized form depends only on the payload and not on insertion
+    // order. Byte-identical twin of the agent-runtime copy of this primitive —
+    // keep the two in step. Integer-like keys enumerate numerically first in
+    // every insertion order, so they are canonical without a special case.
+    const entries = Object.entries(value as SerializableRecord)
+    entries.sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))
     return Object.fromEntries(
-      Object.entries(value as SerializableRecord).map(([key, entryValue]) => [
-        key,
-        normalizeForJson(entryValue),
-      ]),
+      entries.map(([key, entryValue]) => [key, normalizeForJson(entryValue)]),
     )
   }
 

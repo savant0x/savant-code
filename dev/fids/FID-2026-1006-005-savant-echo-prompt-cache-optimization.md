@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-1006-005-savant-echo-prompt-cache-optimization.md`
 **ID:** FID-2026-1006-005
 **Severity:** medium
-**Status:** converged
+**Status:** fixed
 **Created:** 2026-10-06 23:05
 **Automation level:** 3
 **YAGNI-Compliance:** Pending
@@ -39,6 +39,11 @@ record also folds in the T154 gate defect: the same document was the sole cause 
 `bun run lint:md` exiting 1 (108 MD013 + 1 MD001), now fixed in-pass by an
 operator-ruled `.markdownlintignore` exemption plus a new `scripts/lint-md-check.ts`
 probe that finally makes the markdown gate declarable in a FID.
+
+**Phase 1 (steps 5-6) landed 2026-10-07** — the model-facing tool payload is
+canonical at its single assembly seam behind a real rollback flag, and
+`normalizeForJson`/`stableHash` are order-canonical, so `toolsHash` moves only
+when the tool set really changes. See Loop 4 for the measured before/after.
 
 ## Environment
 
@@ -317,12 +322,25 @@ created before any phase claims to be reversible.
    set across `trimming.ts` and `cache-control.ts`, and either implement or delete
    the dangling `// Cache up to the last message!` comment. This is a
    prerequisite for steps 6-8, not a cleanup.
-5. Phase 1a — make the model-facing tool payload canonical at its single assembly
-   seam (Law 4: locate the one production assembly site first, then sort there),
-   behind a rollback flag that must actually be created.
-6. Phase 1b — make `normalizeForJson`/`stableHash` canonical (sort object keys
-   recursively) so `toolsHash` changes only on a real payload change. Measurement
-   prerequisite for steps 7-9, not cosmetics.
+5. **DONE (this pass, 2026-10-07).** Phase 1a — the model-facing tool payload is
+   canonical at its single assembly seam. Law 4 discharged: the seam is
+   `run-agent-step/loop-context.ts` (`modelFacingToolSet(applyDriveDirectives(...))`),
+   the one production site that both the provider call (`ctx.tools`, consumed by
+   `loop-iteration.ts` → `step.ts` → `prompt-agent-stream.ts`) and
+   `agentState.toolDefinitions` derive from. The second, independently ordered
+   copy of the payload in `run-agent-step/cache-debug.ts` was deleted: it now
+   calls the shared `tools/canonical-tool-set.ts#toToolDefinitions`, so
+   `toolsHash` hashes what the provider actually received. Rollback flag
+   `CANONICAL_TOOL_PAYLOAD` created in `packages/agent-runtime/src/constants.ts`
+   (shipped `true`); the report's own `features.deterministic_compiler` still
+   does not exist and nothing depends on it.
+6. **DONE (this pass, 2026-10-07).** Phase 1b — `normalizeForJson` emits object
+   keys in canonical (code-unit) order recursively, in BOTH twins
+   (`packages/agent-runtime/src/util/cache-debug-serialize.ts` and
+   `common/src/util/cache-debug.ts`), so `stableHash` is order-canonical and
+   `toolsHash` changes only on a real payload change. Integer-like keys are
+   canonical without a special case (JavaScript enumerates them numerically
+   first in every insertion order).
 7. Phase 3a — add TTL control at the breakpoint seam, with the mode-to-TTL policy
    (the report proposes 5m for Hybrid, 1h for FID-bound) recorded as an operator
    decision before implementation, since it changes spend.
@@ -343,11 +361,16 @@ created before any phase claims to be reversible.
 
 - **P1** `bun run scripts/lint-md-check.ts` exits 0, and the gate is proven
   load-bearing by the planted-file negative leg (before removal and after).
-- **P2** Two tool sets differing only in key insertion order serialize to
-  byte-identical payloads through the production assembly seam. RED first: today
-  they do not.
-- **P3** `stableHash` of a reordered tool set equals the original; `stableHash` of
-  a genuinely changed tool set differs. RED first: today both differ.
+- **P2** MET. Two tool sets differing only in key insertion order serialize to
+  byte-identical payloads through the production assembly seam
+  (`toToolDefinitions(modelFacingToolSet(x))` — the seam code itself, not a
+  mirror). RED proven first on the unmodified tree: the same comparison returned
+  `false` (see Loop 4).
+- **P3** MET. `stableHash` of a reordered tool set equals the original
+  (recursively, including nested schema keys); `stableHash` of a genuinely changed
+  tool set — description edit or a dropped tool — still differs, so the detector
+  is order-blind, not change-blind. RED proven first on the unmodified tree: both
+  reorder cases produced different hashes (see Loop 4).
 - **P4** The cache-control seam is single-spelled and its provider sets agree
   across writer and trim; a test asserts that a written marker is the marker the
   trim path acts on (RED first: today the trim deletes a spelling nothing writes).
@@ -368,13 +391,19 @@ and it must never be extended to run `validate:repository`.
 
 ## Verification Gates
 
+- gate: typecheck packages/agent-runtime
+- gate: typecheck common
+- gate: test packages/agent-runtime/src/__tests__/tool-payload-canonical.test.ts
 - gate: probe scripts/lint-md-check.ts
 - gate: quality
 
 ### Verification Receipt
 
-- fingerprint: sha256:ae29f663f7b44b0bf65a61987e522c5f4e1d37fc20a0f7c8fc8aaeebb931eb67
-- verified: 2026-10-07T03:18:42.039Z
+- fingerprint: sha256:5fe4b557fd587721790008edb2e07582387f70ffb520fb03db6c7399e4d04d1e
+- verified: 2026-10-07T05:08:10.108Z
+- typecheck packages/agent-runtime: exit 0
+- typecheck common: exit 0
+- test packages/agent-runtime/src/__tests__/tool-payload-canonical.test.ts: exit 0
 - probe scripts/lint-md-check.ts: exit 0
 - quality: exit 0
 
@@ -441,30 +470,60 @@ and it must never be extended to run `validate:repository`.
 7. **Should the report be committed?** Out of this record's decision: it is
    untracked, and the exemption is written to be re-evaluated with the per-file
    header route if it is committed and becomes governed documentation.
+8. **Is there really a "single assembly seam" for the model-facing tool payload?**
+   The step-5 wording assumed it. Law 4 was discharged at implementation and the
+   answer was *no*: `loop-context.ts` recorded `toolDefinitions` while
+   `run-agent-step/cache-debug.ts` rebuilt its own copy from the same `ToolSet`.
+   The seam is the point where `effectiveTools` is finalized; both derivations now
+   go through one function, and the second copy is deleted rather than sorted in
+   parallel.
+9. **Was there any snapshot corpus to measure from?** No, and the step was written
+   as though there was. `debug/cache-debug/` does not exist, no committed file
+   carries a hash pair, and `CACHE_DEBUG_FULL_LOGGING` is `false`. The measurement
+   was therefore run against a corpus this pass generated with the production
+   writer, and reported as such — an instrument measurement, not a live cache-hit
+   ratio.
+10. **Does canonicalizing the hash input cost a cache?** Yes, once. Every recorded
+    `toolsHash` changes at rollout (`de7cf68e` → `005c1a82` on the fixture) because
+    the serialized bytes change. Stated so the one-time prefix invalidation is not
+    later misread as a regression the monitor should have caught.
 
 ### Implementation Evidence (REQUIRED for `closed`)
 
-> Not closable: the program steps are planned and preconditioned, not built.
-> Steps 1-2 are complete; steps 3-10 are unstarted, several behind operator
-> approval points.
+> Not closable: Phase 1 (steps 5-6) is built and verified, but the program is not
+> complete — steps 3, 4 and 7-10 remain, several behind operator approval points.
 
-- [ ] **Commit SHA:** none (G2 withheld; the gate fix is uncommitted)
-- [ ] **File:line ranges:** see Loop 3 for the landed lines
-- [ ] **Gate output:** probe + quality stamped at first verify
-- [ ] **Reproducibility:** `grep -n 'Savant_ECHO Cache Optimization Research' .markdownlintignore`
-- [ ] **Step statuses:** steps 1-2 `implemented`; steps 3-10 `blocked` on operator
-      approval points (TTL policy, ECHO amendments, live endpoint tests)
+- [ ] **Commit SHA:** none (G2 withheld; this change set is uncommitted)
+- [x] **File:line ranges:** see Loop 4 and the Code Verification Evidence block
+- [x] **Gate output:** both declared typechecks, the declared test at
+      `packages/agent-runtime/src/__tests__/tool-payload-canonical.test.ts`, the
+      lint-md probe, and quality all exit 0 at the stamped receipt
+- [x] **Reproducibility:** `grep -n 'Savant_ECHO Cache Optimization Research' .markdownlintignore`
+      and `bun run dev/scratchpad/active/cache-prefix-stability-measure.ts`
+      (gitignored harness; reproduces the Loop 4 before/after table)
+- [ ] **Step statuses:** steps 1-2 and 5-6 `implemented`/verified; steps 3, 4 and
+      7-10 `blocked` on operator approval points (TTL policy, ECHO amendments,
+      live endpoint tests)
 
 ### Code Verification Evidence
 
 - [x] Files referenced in Affected Components exist
-- [x] Implementation matches the Proposed Solution (steps 1-2 only)
-- [x] Typecheck/tests/lint pass with pasted tool output (probe + quality gates)
-- [ ] Production call-graph evidence is present for new or repaired wiring (the
-      assembly seam of step 5 is not yet located — Law 4 applies at implementation)
-- [x] FID status reflects the actual implementation state (`converged`: the plan is
-      grounded and independently adjudicated, the gate fix is landed, the program
-      is not built)
+- [x] Implementation matches the Proposed Solution (steps 1-2 and 5-6)
+- [x] Typecheck/tests/lint pass with pasted tool output (`typecheck
+      packages/agent-runtime`, `typecheck common`, the new
+      `tool-payload-canonical.test.ts`, the `lint-md-check.ts` probe, quality —
+      all exit 0 at the stamped receipt; `bun run --cwd=packages/agent-runtime
+      test` 1861 pass / 0 fail, `--cwd=common` 813 pass / 0 fail, `--cwd=sdk`
+      664 pass / 0 fail, and the root `test` chain exit 0)
+- [x] Production call-graph evidence is present for new or repaired wiring. The
+      seam is `loop-context.ts` → `tools/canonical-tool-set.ts`; the provider leg
+      is `ctx.tools` → `loop-iteration.ts:43` → `llm-step-phase.ts:50` →
+      `step.ts:121` → `prompt-agent-stream.ts` (`tools: ToolSet`), and the
+      recorded leg is `initialAgentState.toolDefinitions` (`loop-context.ts`),
+      with the cache-debug snapshot reading through the same derivation
+      (`run-agent-step/cache-debug.ts`). No second assembly site remains.
+- [x] FID status reflects the actual implementation state (`fixed`: Phase 1 is
+      built and verified; the rest of the program is not built and stays blocked)
 
 ### Loop 2 — Independent audit and self-correction
 
@@ -540,17 +599,80 @@ and it must never be extended to run `validate:repository`.
   `blocked`, and none of them is claimed as ready.
 - **CHANGE DELTA:** see Loop 2 (~35% across Loops 1-2 combined).
 
+### Loop 4 — Phase 1a/1b implementation (steps 5-6), 2026-10-07
+
+- **RED (measured on the unmodified tree, before any edit in this pass):** a
+  harness drove the PRODUCTION path — `createCacheDebugSnapshot` →
+  `loadCacheDebugSnapshotHashPair` → `CacheHitRateMonitor.onPrefixStability` —
+  over three fixture pairs: two tool sets differing only in key insertion order,
+  two differing only in nested schema-key order, and one genuinely changed
+  (description edited). Result: `toolsHash` changed in 2/2 reorder-only cases and
+  the live consumer raised the prefix-stability warning in both, indistinguishable
+  from the genuine change. The seam comparison
+  (`JSON.stringify(derivedPayload(a)) === JSON.stringify(derivedPayload(b))`)
+  returned `false` for both reorder-only cases.
+- **GREEN (measured after the change, same harness, same fixtures):** 0/2
+  reorder-only cases move `toolsHash`, 0 warnings; the genuine change still moves
+  the hash and still warns (1/1) — the detector lost its false positives, not its
+  teeth. The seam payloads are byte-identical for the reorder-only tool-set case.
+- **AUDIT:** the Loop 4 numbers were produced by the same script run twice against
+  the real modules, not by two hand-written expectations. `stableHash` of the
+  ordered fixture moved `de7cf68e` → `005c1a82`: canonicalizing the hash input
+  changes every recorded `toolsHash` exactly once, at rollout, which is the
+  expected one-time prefix change and worth knowing before it appears in a diff.
+  Suite covers: agent-runtime 1861 pass / 0 fail (was 1852, +9 new tests), common
+  813 pass / 0 fail, sdk 664 pass / 0 fail, root `test` chain exit 0 — reordering
+  the model-facing tool set broke no request-body or prompt assertion in the tree.
+- **ADVERSARIAL (limits stated, not papered over):**
+  1. **The measured corpus did not exist.** `debug/cache-debug/` is absent, no
+     committed artifact contains a `systemHash`/`toolsHash` pair,
+     `CACHE_DEBUG_FULL_LOGGING` is `false`, and the `scripts/compare-cache-debug.ts`
+     referenced by `constants.ts` was never written. So "measure from the existing
+     snapshots" had no corpus to read: this pass GENERATED one with the production
+     writer into a temp projectRoot. The numbers above are therefore a controlled
+     before/after of the instrument, not a measurement of cached-token ratios on a
+     real multi-turn run — those remain step 10 and still need live traffic.
+  2. **Nested schema-key order is canonicalized at the HASH layer only.** The seam
+     sorts tool NAMES; keys inside a tool's `inputSchema` are hashed canonically
+     (step 6) but are not rewritten in the model-facing bytes. That is the right
+     boundary — schemas come from the deterministic Zod→JSON-Schema conversion, and
+     at this seam `inputSchema` is frequently a Zod instance that must not be
+     key-sorted — but it is a real asymmetry and the harness row records it
+     (`payloadIdentical` false for that case).
+  3. **The reorder this fixes is not a known live incident.** No evidence was
+     produced that production assembly actually reorders tools today; the defect is
+     that the instrument could not tell reorder from change, and the payload had no
+     canonical form. Step 5's practical value is the guarantee, not an observed
+     outage.
+- **CHANGE DELTA:** Phase 1 rows of Steps, Verification P2/P3, the gates block,
+  Loop 4, the two Evidence blocks, Missed Questions 8-10 and Resolution. Steps 3,
+  4 and 7-10 are untouched.
+
 ## Resolution
 
 - **Closed Date:** not closed
 - **Fix Description:** partial — the T154 markdown-gate defect is fixed in-pass
-  (`.markdownlintignore` entry + `scripts/lint-md-check.ts`); the cache
-  optimization program is re-scoped, independently adjudicated, and preconditioned
-  but not implemented.
-- **Tests Added:** No (a probe was added, not a test suite)
+  (`.markdownlintignore` entry + `scripts/lint-md-check.ts`), and Phase 1 of the
+  cache program is now built: the model-facing tool payload is canonical at its
+  single assembly seam behind a real rollback flag, and `normalizeForJson` /
+  `stableHash` are order-canonical in both twins, so `toolsHash` moves only on a
+  real payload change. Steps 3, 4 and 7-10 remain: a coverage audit, the split
+  cache-control seam, TTL policy, the Anthropic tool-mutation betas and the live
+  measurements.
+- **Tests Added:** Yes — `packages/agent-runtime/src/__tests__/tool-payload-canonical.test.ts`
+  (9 tests): canonical seam ordering, byte-identical payloads across insertion
+  orders, recursive `stableHash` order-insensitivity, a still-detects-real-change
+  negative leg, and two snapshot-level cases through
+  `createCacheDebugSnapshot` → `loadCacheDebugSnapshotHashPair` →
+  `CacheHitRateMonitor.onPrefixStability`.
 - **Verification Evidence:** `bun run lint:md` exit 0 (was exit 1 with 108 MD013 +
-  1 MD001), `scripts/lint-md-check.ts` exit 0, and a negative leg proving the gate
-  still reports a planted wrappable violation. Program steps 3-10 are unstarted.
+  1 MD001), `scripts/lint-md-check.ts` exit 0 with a negative leg proving the gate
+  still reports a planted wrappable violation; `typecheck packages/agent-runtime`
+  and `typecheck common` exit 0; the new test 9 pass / 0 fail; agent-runtime 1861
+  pass / 0 fail (was 1852); common 813 / 0; sdk 664 / 0; root `test` chain exit 0;
+  prettier/eslint clean on all touched files. Before/after harness numbers are in
+  Loop 4: 2/2 spurious `toolsHash` fractures and warnings removed, the genuine
+  change still detected. Steps 3, 4 and 7-10 are unstarted.
 - **Archived:** not archived
 
 ## Lessons Learned

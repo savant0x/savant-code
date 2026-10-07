@@ -32,10 +32,17 @@ export function normalizeForJson(
   }
 
   if (typeof value === 'object') {
+    // FID-2026-1006-005 step 6 (Phase 1b): object keys are emitted in canonical
+    // (code-unit) order so the serialized form depends only on the payload, not
+    // on insertion order. A tool set re-serialized in a different order used to
+    // produce a different `toolsHash`, making a reorder indistinguishable from
+    // a real tool change. Integer-like keys need no special case: JavaScript
+    // enumerates them numerically first, in ascending order, for every
+    // insertion order — canonical either way.
+    const entries = Object.entries(value as Record<string, JSONValue>)
+    entries.sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))
     return Object.fromEntries(
-      Object.entries(value as Record<string, JSONValue>).map(
-        ([key, entryValue]) => [key, normalizeForJson(entryValue)],
-      ),
+      entries.map(([key, entryValue]) => [key, normalizeForJson(entryValue)]),
     )
   }
 

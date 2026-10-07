@@ -6,6 +6,19 @@
  */
 export const CACHE_DEBUG_FULL_LOGGING = false
 
+/**
+ * FID-2026-1006-005 step 5 (Phase 1a) rollback flag. When true, the
+ * model-facing tool payload is emitted in canonical name order at its single
+ * assembly seam (`tools/canonical-tool-set.ts`), so an assembly that inserts
+ * the same tools in a different order emits identical prefix bytes and cannot
+ * fracture the provider's prompt cache.
+ *
+ * Set to `false` to roll back to the historical insertion-ordered tool set.
+ * This changes the bytes sent to the provider (and `toolsHash` once, when
+ * flipped), so flip it only with an operator ruling.
+ */
+export const CANONICAL_TOOL_PAYLOAD = true
+
 // When true, reasoning chunks emitted by the model are appended to the
 // assistant message history so they replay on the next turn. Consecutive
 // reasoning chunks are consolidated into a single message.

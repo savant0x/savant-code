@@ -1,6 +1,7 @@
 import { systemMessage } from '@savant-code/common/util/messages'
 
 import { CACHE_DEBUG_FULL_LOGGING } from '../constants'
+import { toToolDefinitions } from '../tools/canonical-tool-set'
 import {
   createCacheDebugSnapshot,
   enrichCacheDebugSnapshotWithProviderRequest,
@@ -81,20 +82,13 @@ export function createCacheDebugSetup(params: {
       cacheDebugCorrelation = createCacheDebugSnapshot({
         agentType: String(agentType),
         system,
+        // FID-2026-1006-005 step 5: the SAME derivation the seam records on
+        // `agentState.toolDefinitions`, so `toolsHash` describes the
+        // model-facing payload rather than a second, independently ordered
+        // copy of it.
         toolDefinitions: (tools
-          ? Object.fromEntries(
-              Object.entries(tools).map(([name, tool]) => [
-                name,
-                {
-                  description: tool.description,
-                  inputSchema: tool.inputSchema as unknown as Record<
-                    string,
-                    JSONValue
-                  >,
-                },
-              ]),
-            )
-          : {}) as Record<string, JSONValue>,
+          ? toToolDefinitions(tools)
+          : {}) as unknown as Record<string, JSONValue>,
         messages: [systemMessage(system), ...messageHistory],
         logger,
         projectRoot,

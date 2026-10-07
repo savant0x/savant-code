@@ -3,8 +3,6 @@
 // (initial history build), loop-context-goals.ts (goal directives). This
 // module keeps the core setup: template resolution, run start, prompt/tool
 // assembly, token-count shaping, and the ContextCompactor.
-import { mapValues } from 'lodash'
-
 import { ContextCompactor } from '../context-compactor'
 import { applyDriveDirectives } from './loop-context-drive'
 import { applyGoalDirectives } from './loop-context-goals'
@@ -14,6 +12,10 @@ import { additionalToolDefinitions } from './tool-definitions'
 import { getAgentTemplate } from '../templates/agent-registry'
 import { buildAgentToolSet } from '../templates/prompts'
 import { getAgentPrompt } from '../templates/strings'
+import {
+  modelFacingToolSet,
+  toToolDefinitions,
+} from '../tools/canonical-tool-set'
 import { filterToolSet } from '../tools/filter-tool-set'
 import { getToolSet } from '../tools/prompts'
 
@@ -167,10 +169,13 @@ export async function createLoopContext(params: {
   // FID-2026-0818-002/-007: drive-lock and drive-control directives
   // (extracted verbatim to loop-context-drive.ts). Returns the effective
   // tool set — interactive tools stripped when a drive locks.
-  const effectiveTools = applyDriveDirectives(
-    loopParams,
-    initialAgentState,
-    tools,
+  // FID-2026-1006-005 step 5 (Phase 1a): this is the single production
+  // assembly seam for the model-facing tool payload — `ctx.tools` (the
+  // provider call) and `toolDefinitions` (the recorded/hashed payload) both
+  // derive from here — so canonical name order is applied here and nowhere
+  // else. See `tools/canonical-tool-set.ts` for the rollback flag.
+  const effectiveTools = modelFacingToolSet(
+    applyDriveDirectives(loopParams, initialAgentState, tools),
   )
 
   // Initial message history (extracted verbatim to
@@ -186,13 +191,10 @@ export async function createLoopContext(params: {
   // toTokenCountInputSchema, which handles Zod + JSON Schema + garbage); the
   // AI SDK JSONSchema → JSONValue conversion is an honest trust-boundary
   // assertion (tracked in the FID-029 ledger), not a cast-to-nothing.
-  const toolDefinitions: Record<
-    string,
-    { description: string | undefined; inputSchema: JSONValue }
-  > = mapValues(effectiveTools, (tool) => ({
-    description: tool.description,
-    inputSchema: tool.inputSchema as unknown as JSONValue,
-  }))
+  // FID-2026-1006-005 step 5: the derivation is shared with the cache-debug
+  // snapshot (run-agent-step/cache-debug.ts) so `toolsHash` hashes exactly the
+  // payload recorded on the agent state.
+  const toolDefinitions = toToolDefinitions(effectiveTools)
 
   const additionalToolDefinitionsWithCache = buildAdditionalToolDefinitions
 
