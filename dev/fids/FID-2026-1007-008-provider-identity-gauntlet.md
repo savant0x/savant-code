@@ -21,7 +21,8 @@ verified. Keep the existing capability-quality score separate. An unavailable en
 ## Environment and ground truth
 
 - Windows workspace, Bun TypeScript monorepo; current tree includes other active work.
--  Source report: `dev/build-orders/LLM API Fraud Detection Research.md`, read in full on 2026-10-07. It
+-  Source report: `docs/archive/reports/LLM API Fraud Detection Research.md`,
+   parked out of the linted tree on 2026-10-07 and read in full the same day. It
   proposes tokenizer, behavioral, context, and throughput probes plus an automatic 0.85 quarantine threshold.
   These are hypotheses to test, not proven local acceptance criteria.
 -  `docs/provider-identity-audit-2026-09-13.md:79` records `hcnsec/kimi-k3` with a `moonshotai/kimi-k3` served
