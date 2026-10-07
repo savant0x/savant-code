@@ -234,6 +234,10 @@ audit that keeps that map honest — exactly how `intern` is built and pinned.
   `common/src/providers/__tests__/provider-registry.test.ts` (the `modelsRef` surface)
   and enforced by the census leg in `scripts/provider-catalog-parity.ts`.
 - `typecheck cli`, `typecheck common` and `quality` gate the change.
+- The census gate reaches the network (it calls `fetchGatewayModels(true)` against the
+  live endpoints), so it reports provider coverage only when the keyed providers are
+  reachable. That boundary is stated here rather than hidden, and the offline proof of
+  the same property is the account-level rows pinned in the three suites.
 
 ## Verification Gates
 
@@ -245,11 +249,6 @@ audit that keeps that map honest — exactly how `intern` is built and pinned.
 - gate: test common/src/providers/__tests__/provider-registry.test.ts
 - gate: probe scripts/provider-catalog-parity.ts
 - gate: quality
-
-> The census probe reaches the network (it calls `fetchGatewayModels(true)` against the
-> live endpoints) and therefore reports provider coverage only when the keyed providers
-> are reachable; that boundary is stated here rather than hidden, and the offline proof
-> of the same property is the account-level rows the record pins in the three suites.
 
 ## Perfection Loop
 

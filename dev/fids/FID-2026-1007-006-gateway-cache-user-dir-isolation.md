@@ -190,6 +190,9 @@ existing per-file harness kept as the finer-grained seam.
 - `bun run test` from the repo root must reach the end of the chain with 0 fail — the
   gate this record exists to restore.
 - `typecheck cli` and `quality` gate the change.
+- The workspace chain itself cannot be a declared gate: the vocabulary admits a single
+  `test <path>`, and `validate:repository` can never be one (C3 recursion), so
+  `bun run test` is proven by hand and quoted in the Resolution.
 
 ## Verification Gates
 
@@ -197,10 +200,6 @@ existing per-file harness kept as the finer-grained seam.
 - gate: test cli/src/utils/__tests__/openrouter-models-lookup.test.ts
 - gate: test cli/src/utils/__tests__/openrouter-models-gateway.test.ts
 - gate: quality
-
-> `bun run test` itself cannot be a declared gate: the gate vocabulary admits a single
-> `test <path>`, and `validate:repository` can never be one (C3 recursion). The
-> workspace chain is therefore proven by hand and quoted in the Resolution.
 
 ## Perfection Loop
 
