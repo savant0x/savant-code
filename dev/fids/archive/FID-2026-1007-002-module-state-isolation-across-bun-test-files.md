@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-1007-002-module-state-isolation-across-bun-test-files.md`
 **ID:** FID-2026-1007-002
 **Severity:** high
-**Status:** fixed
+**Status:** closed
 **Created:** 2026-10-07 06:20
 **Automation level:** 3
 **YAGNI-Compliance:** Verified
@@ -39,8 +39,8 @@ path's own store factory (Loop 3), so it is wired rather than exempted.
 - **OS:** win32 (Git Bash)
 - **Language/Runtime:** TypeScript (strict), Bun 1.3.14
 - **Tool Versions:** tsc, eslint, prettier, markdownlint, bun test
-- **Commit/State:** HEAD `d035e09b`; the change set is uncommitted (G2 withheld —
-  no commit was requested)
+- **Commit/State:** HEAD `d035e09b` at intake. The change set is committed as `5299af25`
+  (121 files, path-scoped; G2 granted 2026-10-07), closed and archived in the same session.
 
 ## Detailed Description
 
@@ -352,11 +352,9 @@ suites arbitrate every boundary decision.
 
 ### Implementation Evidence (REQUIRED for `closed`)
 
-> Operator ruling 2026-10-07: "approve, grant automation level 3" — G2 granted.
+> Closed 2026-10-07 on the operator's ruling: "approve, grant automation level 3" (G2).
 
-- [x] **Commit SHA:** the implementation commit this record lands with; the
-      closure tail (the following docs commit) records the literal hash in the
-      archived copy
+- [x] **Commit SHA:** `5299af25`
 - [x] **File:line ranges:** see Evidence and the gate list above
 - [x] **Gate output:** all fifteen declared gates exit 0 at the stamped receipt
 - [x] **Reproducibility:** `bun scripts/module-state-check.ts` on a clean tree
@@ -437,7 +435,7 @@ suites arbitrate every boundary decision.
 
 ## Resolution
 
-- **Closed Date:** not closed
+- **Closed Date:** 2026-10-07
 - **Fix Description:** the class behind FID-2026-1007-001 was enumerated
   repository-wide: 144 module-scope mutable bindings across 98 files had no
   reset, and six workspaces had no preload to call one. All 144 are cured (96
@@ -464,7 +462,8 @@ suites arbitrate every boundary decision.
   TypeScript files. Loop 3 adds: `cli/src/hooks/__tests__/use-theme-reset.test.ts`
   2 pass / 0 fail, `bun run --cwd=cli test` 3960 pass / 0 fail / 18 skip, and the
   audit at 182 of 187 wired with a 5-binding reach list.
-- **Archived:** not archived
+- **Archived:** `dev/fids/archive/FID-2026-1007-002-module-state-isolation-across-bun-test-files.md`
+  (moved at closure; its Loop 3 addition — the theme store — rides in the same commit)
 
 ## Lessons Learned
 

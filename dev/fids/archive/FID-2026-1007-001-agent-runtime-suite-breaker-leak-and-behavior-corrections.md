@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-1007-001-agent-runtime-suite-breaker-leak-and-behavior-corrections.md`
 **ID:** FID-2026-1007-001
 **Severity:** high
-**Status:** fixed
+**Status:** closed
 **Created:** 2026-10-07 05:40
 **Automation level:** 3
 **YAGNI-Compliance:** Verified
@@ -38,8 +38,8 @@ record.
 - **OS:** win32 (Git Bash)
 - **Language/Runtime:** TypeScript (strict), Bun 1.3.14
 - **Tool Versions:** git, bun test, eslint, markdownlint, prettier (repo-pinned)
-- **Commit/State:** HEAD `d035e09b`; the change set is uncommitted (G2 withheld — no commit
-  was requested)
+- **Commit/State:** HEAD `d035e09b` at intake. The change set is committed as `228156da`
+  (path-scoped, G2 granted 2026-10-07); this record was archived with it.
 
 ## Detailed Description
 
@@ -305,9 +305,9 @@ each is a production behaviour change that the earlier pass landed without a rec
 
 ### Implementation Evidence (REQUIRED for `closed`)
 
-> Not closable: the change set is uncommitted (G2 withheld; no commit was requested).
+> Closed 2026-10-07 on the operator's ruling: "approve, grant automation level 3" (G2).
 
-- [ ] **Commit SHA:** none (G2 withheld; uncommitted working tree)
+- [x] **Commit SHA:** `228156da`
 - [x] **File:line ranges:** see Evidence and the gate list above
 - [x] **Gate output:** all seven declared gates exit 0 at the stamped receipt
 - [x] **Reproducibility:** the two-file repro pair in both orders, plus
@@ -358,7 +358,7 @@ each is a production behaviour change that the earlier pass landed without a rec
 
 ## Resolution
 
-- **Closed Date:** not closed
+- **Closed Date:** 2026-10-07
 - **Fix Description:** the 76-failure suite was one defect — a process-lifetime breaker
   registry leaking an OPEN circuit across test files that share the key
   `legacy:test-session` — fixed by two exported resets called from a test preload. Removing
@@ -379,7 +379,8 @@ each is a production behaviour change that the earlier pass landed without a rec
   `ProviderBoundaryBlockedError`; common 813 pass / 4 skip / 0 fail, sdk 664/1/0, cli
   3960 pass / 18 skip / 0 fail; both typechecks exit 0; the four declared test gates exit 0;
   `quality:report` PASS; `validate:repository` PASS.
-- **Archived:** not archived
+- **Archived:** `dev/fids/archive/FID-2026-1007-001-agent-runtime-suite-breaker-leak-and-behavior-corrections.md`
+  (moved at closure; the record's own commit is the one it describes)
 
 ## Lessons Learned
 

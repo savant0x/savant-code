@@ -1,5 +1,243 @@
 # LEARNINGS
 
+## Lesson: A gate that cannot be declared cannot be proven
+
+- **Date:** 2026-10-07
+- **Failure:** Twelve repository gates were enforced and un-recordable at the same
+  time. The FID gate executor accepts four shapes and nothing else
+  (`typecheck <workspace>`, `test <path>`, `probe <path>`, `quality`,
+  FID-2026-0823-009), so `eslint`, `prettier`, the frozen lockfile install, the SDK
+  build, the CLI bundle resolution, the version sync, the provider census, the
+  design-system token freshness, the release pre-audit, the eval-tier rehearsal, the
+  CI build chain and the governance smoke had no declaration in that vocabulary —
+  which means a record whose subject was any of them could not declare the check
+  that proved it. The route out was documented, and it had been used exactly once:
+  make the check independently runnable and declare it as a `probe`. It was applied
+  as a one-off fix to the markdown gate (T154) instead of as the answer to a class,
+  and nothing enumerated the rest, so the class stayed open — green every day and
+  unusable at the one moment a record needed it.
+- **Evidence:** scripts/probe-runner.ts → symbol:runProbe,
+  scripts/gate-declarability.ts → symbol:collectGateDeclarabilityIssues,
+  scripts/gate-declarability-registry.ts → symbol:auditedGates,
+  scripts/gate-declarability-registry.ts → symbol:INTENTIONALLY_NON_DECLARABLE,
+  scripts/validation-gates.ts → symbol:repositoryValidationGates
+- **Invariant:** "The gate passed" and "the gate can be recorded" are different
+  properties. The second is set by the record contract's vocabulary, not by the
+  gate, so a gate outside that vocabulary is invisible until a FID's subject IS that
+  gate — and then the record cannot be written at all, which is a defect in the gate
+  surface rather than in the record.
+- **Guard:** When a check cannot be expressed in the record contract's vocabulary,
+  make it independently runnable (exit 0 clean / 1 with issues) and declare it as a
+  probe — and spawn through `process.execPath` with argv ARRAYS and an INHERITED
+  env, or the probe reintroduces the runtime-name and environment class the release
+  gates exist to catch. Then audit the pairing rather than the prose: verify each
+  declaration with the SAME allowlist the executor uses, and drive the audit from
+  the gate contract so a newly added gate is found without anyone remembering to
+  add it to the audit.
+- **Verification:** 29 repository gates are audited with the declaration that proves
+  each, 16 of them thin `scripts/probe-runner.ts` probes; `validate:repository`
+  fails on an unaudited contract gate, on a declaration the real allowlist rejects,
+  and on an undeclarable gate with no stated and permitted reason; 19 tests pass
+  across the audit's two pin files and the scripts tree typechecks.
+- **Scope:** internal
+- **Owning FID:** FID-2026-1007-003
+- **Status:** active
+
+## Lesson: A marker that names a possibility is not a locator
+
+- **Date:** 2026-10-07
+- **Failure:** The tool-output truncation pre-pass reads as if it retains the full
+  value behind a pointer, and it does not. Measured on the shipped functions: a
+  60,000-char string returns a 500-char quoted preview whose marker's `fullOutput`
+  is the fixed string `'[See cache-debug snapshot / rerun the tool for full
+  output]'` — two possibilities, neither a location, and cache-debug is off; a
+  3,000-item array returns 2,000 `keptItems` with no pointer to the rest; and the
+  two other model-facing simplifiers (`simplifyReadFileResults`,
+  `simplifyTerminalCommandResults`) each emit their own boolean
+  (`contentOmittedForLength`, `stdoutOmittedForLength`) with no count and no
+  pointer. Three markers, three vocabularies, zero locators. The one place the raw
+  bytes actually survive — the per-run evidence spill at
+  `.savant/evidence/<runId>.jsonl`, bounded at 512 KiB/record and 8 MiB/file — is
+  unreachable from any of them and is spliced back only for
+  `requiresRawEvidence` agents.
+- **Evidence:** packages/agent-runtime/src/util/simplify-tool-results.ts →
+  symbol:truncateToolOutputValue, packages/agent-runtime/src/evidence/spill.ts →
+  symbol:recordEvidence, packages/agent-runtime/src/util/messages/trimming.ts →
+  symbol:trimMessagesToFitTokenLimit
+- **Invariant:** A replacement payload and a retention claim are two different
+  things, and only one of them is testable inside the process. A marker that
+  cannot name where the omitted bytes are is a hopeful comment with a type: the
+  reader has no way to distinguish "retained elsewhere" from "gone".
+- **Guard:** When a destructive path replaces a value, the marker must name a
+  location the caller can actually COMPUTE (a path plus a key), not a possibility —
+  and the retention mechanism's own caps must be reported where they truncate,
+  because a bounded store that silently stops recording is the same as no store.
+  Audit such paths by measuring the shipped functions over payload shapes, never by
+  reading the code and the comment above it: the comment here says "retains the
+  pre-truncation value on disk" about a file that is not written unless cache-debug
+  is enabled.
+- **Verification:** `dev/scratchpad/active/step3-truncation-audit.ts` drove the
+  shipped truncation functions over a 60,000-char string, a 3,000-item array, a
+  3,000-line string, an over-cap object and a nested search-shape object; the
+  measured numbers are in FID-2026-1006-005 step 3, and the locator gap it found is
+  recorded there as step 11 rather than reported as parity.
+- **Scope:** internal
+- **Owning FID:** FID-2026-1006-005
+- **Status:** active
+
+## Lesson: A leak class is enumerated, not inferred from the instance that hurt
+
+- **Date:** 2026-10-07
+- **Failure:** Repairing the one registry that caused 76 failures (the provider
+  breaker, FID-2026-1007-001) left the class it belonged to invisible: module-scope
+  state that `bun test` shares across files. Reasoning about "probably more of these"
+  produced no action; enumerating them produced 144 bindings across 98 files with no
+  way back to their start state, plus six workspaces that had NO test preload at all
+  (Bun does not walk up for `[test] preload` — measured, not assumed). The first
+  scanner was also wrong in both directions and would have made the repair worse: a
+  matcher that accepted only `reset*` names reported covered bindings as gaps, and it
+  could not see a declaration wrapped across lines (`const listToolsCache: Record<`
+  with the initializer several lines below). Acting on that list would have minted a
+  second reset for the same state in dozens of files.
+- **Evidence:** scripts/audit-module-state.ts → symbol:collectModuleStateAudit,
+  scripts/module-state-scan.ts → symbol:scanModuleState,
+  scripts/__tests__/module-state-audit.test.ts →
+  test:a declaration wrapped across lines is still a candidate
+- **Invariant:** A defect that appears in one place is usually the visible member of a
+  class, and the class is only actionable once it is a list. A guard that produces that
+  list must be validated in both directions first — a false POSITIVE spends effort on
+  work that is already done, and a false NEGATIVE leaves the class unenumerated, which
+  is the state the enumeration exists to end.
+- **Guard:** Before repairing a second instance of a class, build the enumerator and
+  measure the class size; before acting on the enumerator's output, check its
+  state/no-state boundary and its coverage-name vocabulary against the repository's
+  real conventions (`reset*`, `clear*`, `__reset*`) with fixture pins.
+- **Verification:** the audit went from 144 findings to 0 over 2481 scanned files
+  (`bun scripts/module-state-check.ts` exit 0), and the pins in
+  `scripts/__tests__/module-state-audit.test.ts` are 11/11, including the read-only
+  constant (not state), the nested binding (not module scope), the wrapped declaration
+  (a candidate) and the `__reset*`/`clear*` seams (coverage).
+- **Scope:** internal
+- **Owning FID:** FID-2026-1007-002
+- **Status:** active
+
+## Lesson: A reset has no value until a preload calls it, and a boundary has two levels
+
+- **Date:** 2026-10-07
+- **Failure:** Coverage is not isolation. A module can expose a perfect reset that no
+  test process ever calls — so the audit grew a wiring leg (a preload's imported reset
+  must still exist AND still be called) and a reach leg (which resettable modules no
+  preload loads, named with a reason). Wiring then produced two failures that showed the
+  boundary is not one level: clearing the database connection cache before every case
+  handed a later case a different in-memory database than the handle its file had
+  captured (`FOREIGN KEY constraint failed`), and resetting the CLI theme store broke
+  122 component tests that render without initializing it. State a case must be able to
+  observe belongs to the FILE boundary; state that must not leak between cases belongs
+  to the case. And a leak can be load-bearing: 122 tests depended on it, which makes
+  removing it a change to those tests rather than a wiring detail.
+- **Evidence:** scripts/module-state-wiring.ts → symbol:wiringIssues,
+  scripts/module-state-exemptions.ts → symbol:UNWIRED_MODULE_REASONS,
+  packages/database/src/sqlite.ts → symbol:resetSqliteState,
+  cli/src/hooks/use-theme.tsx → symbol:resetUseThemeState
+- **Invariant:** "It is resettable" and "it is isolated" are different claims: a reset
+  needs a caller, a caller needs a safe import, and a safe import needs the right
+  boundary. Clearing state at the wrong level breaks the very tests it was meant to
+  stabilize — a shared in-memory handle, a store a suite initializes once — so the
+  boundary is chosen by what a single case must be able to observe, not by which line
+  is convenient to add.
+- **Guard:** When adding an isolation reset, wire it and run the workspace suite; put
+  per-case state in `beforeEach` and state that a case owns its handle in `afterAll`;
+  and when a reset cannot be wired, record the module and the reason where the audit
+  can enforce it (an unreached module with no reason fails, and a reason that no longer
+  describes anything fails too).
+- **Verification:** 180 of 187 resettable bindings are wired across ten preload
+  surfaces, the database suite is 51/51 with the connection caches at the file
+  boundary, the CLI suite is 3960 pass / 0 fail with the theme store unwired and its
+  reason recorded, and all 13 workspace legs are green (8389 pass / 0 fail / 23 skip).
+- **Scope:** internal
+- **Owning FID:** FID-2026-1007-002
+- **Status:** active
+
+## Lesson: A process-lifetime registry plus a reused fixture key is deterministic test-order dependence
+
+- **Date:** 2026-10-07
+- **Failure:** 76 failures across four unrelated families (`run-agent-step`, `web_search`,
+  `read-docs`, the hook-event suites) all threw the same provider-boundary error, and the
+  only signal that mattered was that `getLlmCallCount()` read 0: the turns were refused
+  before any physical request existed. One module-level `Map` of circuit breakers with no
+  reset caused all 76 — `bun test` runs every file in a single process, the shared fixtures
+  reuse the literal `clientSessionId: 'test-session'`, and three transient failures in one
+  suite (`PROVIDER_BREAKER_MAX_FAILURES = 3`, 30-minute cooldown base) left the circuit
+  OPEN on the key `legacy:test-session` for the rest of the run, so one suite's verdicts
+  silently became every later suite's. The count was the distraction: 76 failures read as
+  rot rather than as one defect. A second registry of the same class (the process-lifetime
+  `DEFAULT_SEEN_SHAPES` set) suppressed an unknown shape already logged by an earlier file
+  and was the last order-dependent failure.
+- **Evidence:** packages/agent-runtime/src/provider-boundary/provider-circuit-breaker.ts →
+  symbol:resetProviderCircuitBreakers,
+  packages/agent-runtime/src/provider-boundary/classified-stream-retry.ts →
+  symbol:resetUnknownShapeLog,
+  packages/agent-runtime/src/__tests__/provider-breaker-test-isolation.test.ts →
+  test:an open circuit on the shared key survives into a later case
+- **Invariant:** Mutable module-level state is shared by every suite, because the runner
+  loads all test files into one process, and a fixture that reuses one literal id turns that
+  sharing from an accident into a deterministic ordering dependency: a test's verdict then
+  depends on which files were loaded first, not on the test. Resetting such state at the test
+  boundary is not the same change as relaxing the production contract — the registry stays
+  process-wide and shared across turns in production, and neither reset has a production
+  caller.
+- **Guard:** Before accepting that a red suite has N causes, count the mechanism: when
+  failing cases share a singleton, a registry or a fixed key, reduce the evidence to the
+  smallest repro pair and run it together and alone in BOTH orders. Every module-level
+  `Map`/`Set`/`let` that accumulates gets an exported reset called from a test preload, plus
+  a pin showing the reset clears state an earlier case left behind.
+- **Verification:** the two-file repro went from 4 pass / 5 fail in both orders to 9 pass /
+  0 fail in both orders with zero `ProviderBoundaryBlockedError` lines;
+  `bun run --cwd=packages/agent-runtime test` is 1868 pass / 0 fail across 292 files, and
+  the new isolation suite is 4/4.
+- **Scope:** internal
+- **Owning FID:** FID-2026-1007-001
+- **Status:** active
+
+## Lesson: Removing shared-state noise is the start of the diagnosis, not the end of the repair
+
+- **Date:** 2026-10-07
+- **Failure:** The 76 failures were not the whole finding. Three production behaviour defects
+  had no failing test of their own, because the suites that exercise those paths were refused
+  at the provider boundary before the code under test ran — so the red run was equally
+  silent about them as the green one would have been. With the leak isolated: `isAbortError`
+  did not read through an error's `cause` chain, so a boundary-wrapped abort was treated as a
+  failure; the loop's fallback message reported the wrapper's `provider call failed (…)`
+  label instead of the provider's own error; and the stale-cycle guard — newer than the
+  operator-mandated AUTONOMY CARVE-OUT documented in `post-terminal-breaker.ts` — auto-ended
+  autonomous runs at exactly six identical steps
+  (`STALE_CYCLE_REPEATS=3` × `MIN_STALE_CYCLE_LENGTH=2`), which is what Auto Drive does by
+  design. A mandate with no test is advice: the guard never re-read the carve-out it was
+  written under.
+- **Evidence:** common/src/util/error/abort.ts → symbol:isAbortError,
+  packages/agent-runtime/src/run-agent-step/error-output.ts → symbol:innermostError,
+  packages/agent-runtime/src/run-agent-step/loop-guard-wiring.ts → symbol:evaluateLoopGuard,
+  packages/agent-runtime/src/run-agent-step/post-terminal-breaker.ts →
+  symbol:isAutonomousContinuation,
+  packages/agent-runtime/src/__tests__/loop-guard-rails-wiring.test.ts →
+  test:an autonomous run is not ended by the stale-cycle diagnosis
+- **Invariant:** A defect is visible only to a test that runs. When an infrastructure fault
+  blocks a suite before the code under test executes, both the red run and the green run that
+  replaces it say nothing about that code, so "the suite is green now" is not evidence that
+  the newly-running paths are correct — it is the first state in which it is possible to
+  obtain such evidence.
+- **Guard:** After removing noise that masked failures, enumerate what the now-running suites
+  exercise for the first time and name every behaviour path that has no pin; write the pins
+  before calling the repair complete. Before shipping a new mechanism, check it against the
+  operator mandates that predate it, and pin each mandate it could override.
+- **Verification:** the loop-guard suite pins both legs (an autonomous run survives a
+  stale-cycle diagnosis; the iteration cap still ends it), `error-output-innermost.test.ts` is
+  3/3, the abort suite carries four cause-chain cases, and all four fixes carry production
+  call-graph evidence in `dev/fids/FID-2026-1007-001-agent-runtime-suite-breaker-leak-and-behavior-corrections.md`.
+- **Scope:** internal
+- **Owning FID:** FID-2026-1007-001
+- **Status:** active
+
 ## Lesson: A cost model outgrown twice needs every site enumerated, not the constant retuned
 
 - **Date:** 2026-10-06

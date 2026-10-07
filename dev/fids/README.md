@@ -6,7 +6,7 @@ operator decision, implementation, runtime review, or closure evidence.
 ## Current active FIDs
 
 **One — `FID-2026-1006-005-savant-echo-prompt-cache-optimization`
-(2026-10-06, status `converged`, automation level 3; register item T155, with
+(2026-10-06, status `fixed`, automation level 3; register item T155, with
 T154 now complete).** The operator asked for a record of the untracked research
 document `docs/design/Savant_ECHO Cache Optimization Research.md`, which was also
 the sole cause of `bun run lint:md` exiting 1. The record does both jobs. It folds
@@ -25,9 +25,22 @@ the record's own central hazard claim: the cache-control seam is **split** (the
 trim path deletes camelCase `cacheControl` while production writes snake_case
 `cache_control`, against different provider sets, under a comment describing
 re-tagging nobody implemented), and the correction is recorded rather than
-smoothed over. Steps 3-10 are blocked on operator approval points (the
-mode-to-TTL spend policy, the report's two proposed ECHO amendments, and
-live-endpoint certification for two pins).
+smoothed over. **Under the operator ruling of 2026-10-07** (verbatim: "approve,
+grant automation level 3") the approval points this item was held at are clear,
+and the landable steps are done: Phase 1 (steps 5-6) is committed `ba4dee65`,
+**step 4** gave the cache-control breakpoint one spelling, one provider set and
+one clearer (`f0d365fa`), **step 7** routes the approved mode-to-TTL policy from
+the run's own enforcement axis — Hybrid `5m`, FID-bound `1h` (`7901568f`),
+**step 3** audited Phase-2 coverage and produced a measured finding rather than
+the parity the report assumed, and **step 9** landed both approved ECHO
+amendments (`70cec07c`). Three steps stay open and none of them is waiting on a
+decision: **step 8** (the Anthropic `tool_addition`/`tool_removal` evaluation)
+and **step 10** (the live `>75%` hit-ratio measurement) are blocked on a real
+endpoint and provider billing, and **step 11**, opened by step 3's audit, is the
+locator gap — every model-facing destructive path drops the payload and names no
+location, in three different marker vocabularies, while the one place the raw
+bytes survive (`.savant/evidence/<runId>.jsonl`) is unreachable from all of
+them.
 
 **Closed 2026-10-06 — `FID-2026-1006-004-law15-capture-budget-refusal`
 (status `closed`; register item T153; implementation committed as `ba38c548`).**
@@ -1228,6 +1241,22 @@ converged record; it was corrected while authoring `FID-2026-1006-002`.
 (`fixed` remains deprecated-but-accepted legacy language.)
 
 ### Closed records (historical)
+
+`FID-2026-1007-003` (gate declarability and the probe runner — every repository
+gate paired with the allowlisted declaration that proves it, medium) —
+**closed + archived 2026-10-07** in local commit `0620e143` after 5/5 declared
+gates stamped; see [`archive/README.md`](archive/README.md) for the closure
+entry.
+
+`FID-2026-1007-002` (module-scope state is shared by every Bun test file — 144
+bindings across 98 files with no reset, medium) — **closed + archived
+2026-10-07** in local commit `5299af25`; see
+[`archive/README.md`](archive/README.md) for the closure entry.
+
+`FID-2026-1007-001` (agent-runtime suite breaker leak and three behaviour
+corrections — 76 failures, one cause, medium) — **closed + archived 2026-10-07**
+in local commit `228156da`; see [`archive/README.md`](archive/README.md) for the
+closure entry.
 
 `FID-2026-0827-001` (sidebar context readout stall near zero — `dampTokenCount`
 small-count floor `CONTEXT_TOKEN_SMALL_COUNT_FLOOR = 10_000`, medium) —

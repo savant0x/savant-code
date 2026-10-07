@@ -3,6 +3,60 @@
 This directory contains closed or historically completed FIDs. Files here are
 an audit record, not an active work queue.
 
+## 2026-10-07 closure — suite isolation, module-state isolation, and gate declarability (3 FIDs archived)
+
+Closed under the operator ruling of 2026-10-07 (verbatim: "approve, grant
+automation level 3"), which supplied the G2 commit authority these records were
+waiting on, after each implementation landed as its own path-scoped local commit;
+no push and no release. The first two are one class found twice — module-scope
+state that a single `bun test` process shares across files — and the third closes
+the class T154 was one instance of, a repository gate with no declarable form on
+a FID.
+
+- [`FID-2026-1007-001-agent-runtime-suite-breaker-leak-and-behavior-corrections.md`](FID-2026-1007-001-agent-runtime-suite-breaker-leak-and-behavior-corrections.md)
+  (medium) — the agent-runtime suite was red with 76 failures across four
+  unrelated families, and they were ONE defect: `providerBreakers` is a
+  process-lifetime `Map` with no reset, every test file shares the single `bun
+  test` process, and the fixtures reuse the literal `clientSessionId:
+  'test-session'`, so three transient failures left the circuit OPEN on
+  `legacy:test-session` for the rest of the run (a second registry,
+  `DEFAULT_SEEN_SHAPES`, was the last order-dependent failure). Repaired at the
+  test boundary — two exported resets called from a `bunfig.toml` preload — and
+  removing that noise unmasked three production behaviour defects the noise had
+  been hiding: abort detection did not read through an error's `cause` chain, the
+  loop's fallback message named the wrapper instead of the provider's own error,
+  and a guard newer than the operator-mandated AUTONOMY CARVE-OUT auto-ended
+  autonomous runs on a repeated step shape. Landed as local commit `228156da`;
+  13 files.
+- [`FID-2026-1007-002-module-state-isolation-across-bun-test-files.md`](FID-2026-1007-002-module-state-isolation-across-bun-test-files.md)
+  (medium) — the class-level answer to the record above. A new mechanical audit
+  enumerated it instead of inferring it: **144 bindings across 98 files** with no
+  way back to their start state, and **six workspaces with no test preload at
+  all** (Bun does not walk up for `[test] preload` — measured). All 144 are cured
+  (96 new `reset*`/`clear*` seams, 9 weak-container declaration flips, no reset
+  performing I/O) and 182 of the 187 resettable bindings are wired into a
+  preload, with the remaining five in two modules carrying reasons the audit
+  enforces in both directions. Wiring exposed two regressions, both fixed at the
+  boundary the failure named: an in-memory database's connection cache resets at
+  the FILE boundary, and the CLI theme store is reset AND re-initialized per case
+  so a case starts from an initialized default. Landed as local commit
+  `5299af25`; 121 files, 2,832 insertions.
+- [`FID-2026-1007-003-gate-declarability-and-probe-runner.md`](FID-2026-1007-003-gate-declarability-and-probe-runner.md)
+  (medium) — the FID gate executor admits four shapes
+  (`typecheck`/`test`/`probe`/`quality`), so a gate that is a binary, a
+  package-manager invocation, a build, or a flag-gated script had NO declaration
+  in that vocabulary and a record whose subject was that gate could not prove
+  itself. One shared probe body (`scripts/probe-runner.ts`: argv arrays only,
+  spawned through `process.execPath`, env inherited) now backs sixteen thin gate
+  probes, and `scripts/gate-declarability.ts` fails `validate:repository` when a
+  contract gate has no audited entry, when a declaration is rejected by the real
+  allowlist, or when a gate is undeclarable with no stated and permitted reason
+  (only C3 recursion and the pushed-range credential scan qualify). The
+  injected-budget guard added to the same validator ships with its own probe. The
+  workstream was found complete but UNREGISTERED in the working tree and is
+  registered as `SCOPE.md` item T158. Landed as local commit `0620e143`; 5/5
+  declared gates stamped.
+
 ## 2026-10-06 closure — the Law 15 worktree backstop (FID-2026-1006-004)
 
 Closed on operator G2 authorization after the implementation landed as local

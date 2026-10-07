@@ -4,6 +4,74 @@
 
 ### Added
 
+- **Every repository gate is now declarable on a FID (FID-2026-1007-003, medium;
+  closed 2026-10-07; local commit `0620e143`).** The FID gate executor admits
+  four shapes — `typecheck <workspace>`, `test <path>`, `probe <path>`,
+  `quality` — so a gate that is a binary (`eslint`, `prettier`), a
+  package-manager invocation, a build, or a script that only checks under a flag
+  had no declaration in that vocabulary, and a record whose subject was that
+  gate could not declare the check that proved it (T154 was the worked example,
+  treated as a one-off until this pass enumerated the rest). One shared probe
+  body (`scripts/probe-runner.ts`: argv arrays only, never shell text, spawned
+  through `process.execPath` so a bare runtime name cannot ENOENT through the
+  Windows PATH, env inherited so a probe behaves identically under `fid:verify`
+  and by hand) now backs sixteen thin gate probes, and
+  `scripts/gate-declarability.ts` audits all 29 repository gates against the
+  **real** allowlist (`resolveGate`), failing `validate:repository` when a
+  contract gate has no audited entry, when a declaration the executor rejects is
+  tabled, or when a gate is left undeclarable with no stated and permitted
+  reason — only `repository-validation` (C3 recursion) and `credential-scan`
+  (scoped to a pushed commit range) qualify. The injected-budget guard added to
+  the same validator ships with its own probe
+  (`scripts/test-budget-injection-check.ts`). The workstream was found complete
+  and green but unregistered in the working tree and is registered as `SCOPE.md`
+  item T158; 19 tests pass across its two pin files, scripts typecheck and
+  `quality` exit 0, `validate:repository` clean.
+- **Module-scope test state is isolated, and the class is enumerated rather than
+  inferred (FID-2026-1007-002, medium; closed 2026-10-07; local commit
+  `5299af25`).** `bun test` loads every file of a workspace into ONE process, so
+  a module-scope `Map`/`Set`/array/`let` that accumulates is state every suite
+  inherits and a suite's verdict depends on file order — the class behind
+  FID-2026-1007-001's 76 failures. A new mechanical audit
+  (`scripts/audit-module-state.ts` over a scan/analyze/wiring/exemptions split,
+  probe `scripts/module-state-check.ts`) enumerated it: **144 bindings across 98
+  files** with no way back to their start state, and **six workspaces with no
+  test preload at all** (Bun does not walk up for `[test] preload` — measured,
+  not assumed). All 144 are cured — 96 new `reset*`/`clear*` seams, 9
+  weak-container declaration flips, no reset performing I/O — across 121 files
+  and ten preload surfaces, and the audit now reports **182 of 187** resettable
+  bindings wired, with the remaining five in two modules carrying reasons it
+  enforces in both directions (an unreached module with no reason fails; a
+  reason that no longer describes anything fails too). Wiring exposed two real
+  regressions, both repaired at the boundary the failure named: an in-memory
+  database's connection IS the database, so its caches reset at the FILE
+  boundary (`afterAll`), and resetting the CLI theme store broke 122 component
+  tests that depended on the leak — the store is now reset AND re-initialized
+  per case, so a case starts from an initialized default instead of inheriting
+  whatever an earlier file left behind. The suite's first scanner was also wrong
+  in both directions (a `reset*`-only matcher, and a blind spot for a
+  declaration wrapped across lines); it was validated against fixtures before its
+  output was acted on.
+- **The agent-runtime suite is green, and removing the noise unmasked three
+  production defects (FID-2026-1007-001, medium; closed 2026-10-07; local commit
+  `228156da`).** The suite was red with 76 failures across four unrelated
+  families (`run-agent-step`, `web_search`, `read-docs`, hook-event) and they
+  were ONE cause: `providerBreakers`
+  (`src/provider-boundary/provider-circuit-breaker.ts`) is a process-lifetime
+  `Map` with no reset, every test file shares the single `bun test` process, and
+  the fixtures reuse the literal `clientSessionId: 'test-session'` — so three
+  transient failures (`PROVIDER_BREAKER_MAX_FAILURES = 3`) left the circuit OPEN
+  on `legacy:test-session` for the rest of the run. A second registry of the same
+  class (`DEFAULT_SEEN_SHAPES` in `classified-stream-retry.ts`) was the last
+  order-dependent failure. The repair is test-boundary only (two exported resets
+  called from a `bunfig.toml` preload, documented as test-only, plus a dedicated
+  isolation suite), and removing that noise unmasked **three production
+  behaviour defects** it had been hiding, each fixed at its own seam and pinned:
+  abort detection did not read through an error's `cause` chain; the loop's
+  fallback message named the wrapper instead of the provider's own error; and a
+  guard newer than the operator-mandated AUTONOMY CARVE-OUT
+  (`run-agent-step/post-terminal-breaker.ts`) auto-ended autonomous runs on a
+  repeated step shape.
 - **Adoption wiring: every delivered module now has a production caller
   (FID-2026-1006-003, high; closed 2026-10-06; local commits through
   `6d5fbe48`).** All six surfaces FID-2026-1006-002 left library-complete are

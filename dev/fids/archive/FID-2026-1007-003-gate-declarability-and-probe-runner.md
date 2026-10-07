@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-1007-003-gate-declarability-and-probe-runner.md`
 **ID:** FID-2026-1007-003
 **Severity:** medium
-**Status:** fixed
+**Status:** closed
 **Created:** 2026-10-07 14:10
 **Automation level:** 3
 **YAGNI-Compliance:** Verified
@@ -334,7 +334,8 @@ proves the whole scripts tree typechecks (it is the chain's 14th leg, since
 
 ### Implementation Evidence (REQUIRED for `closed`)
 
-- [ ] **Commit SHA:** this pass's path-scoped commit (recorded at closure)
+- [x] **Commit SHA:** `0620e143` (implementation + this record, one path-scoped
+      commit)
 - [x] **File:line ranges:** `scripts/probe-runner.ts` (the body and its contract),
       `scripts/gate-declarability.ts` (`collectGateDeclarabilityIssues`),
       `scripts/gate-declarability-registry.ts` (`auditedGates`,
@@ -362,12 +363,13 @@ proves the whole scripts tree typechecks (it is the chain's 14th leg, since
       `scripts/validate-repository.ts` and `scripts/__tests__/gate-declarability.test.ts`;
       `runProbe`/`runProbeMain` are referenced from the sixteen probe files;
       `collectTestBudgetIssues` is referenced from `scripts/validate-repository.ts`
-- [x] FID status reflects the actual implementation state (`fixed`: implemented
-      and verified; the closure ceremony runs in the same pass)
+- [x] FID status reflects the actual implementation state (`closed`: the
+      implementation is in the codebase, the gates pass, and the commit is named
+      above)
 
 ## Resolution
 
-- **Closed Date:** this pass (2026-10-07)
+- **Closed Date:** 2026-10-07 14:40
 - **Fix Description:** the probe route became the repository's general answer to
   an undeclarable gate — one shared body (`scripts/probe-runner.ts`) with sixteen
   thin gate probes over it — and the pairing between every enforced gate and the
@@ -390,7 +392,7 @@ proves the whole scripts tree typechecks (it is the chain's 14th leg, since
   `bun run scripts/scripts-typecheck-check.ts` → PASS; `bun run
   validate:repository` → clean with both audits wired; the declared gates on this
   record all exit 0 at the stamped receipt.
-- **Archived:** this pass (2026-10-07)
+- **Archived:** 2026-10-07 14:40 (moved to `dev/fids/archive/`)
 
 ## Lessons Learned
 
