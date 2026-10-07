@@ -201,8 +201,11 @@
 
 ### Priority Tasks
 
-1. [ ] Operator G2: commit the verified tree path-scoped, flip the record to `closed`, archive
-       it to `dev/fids/archive/`, and add the CHANGELOG entry.
+1. [x] Operator G2: commit the verified tree path-scoped, flip the record to `closed`, archive
+       it to `dev/fids/archive/`, and add the CHANGELOG entry. — **Completed 2026-10-06** in
+       the follow-on segment; see
+       `dev/session-summaries/2026-10-06-2345-law15-closure-and-cache-record.md` and local
+       commits `ba38c548` (the change set) and `d7cd1836` (the closure tail).
 2. [ ] Consider the whole-workspace agent-runtime failures (Issue 3) as their own item.
 
 ### Blockers
