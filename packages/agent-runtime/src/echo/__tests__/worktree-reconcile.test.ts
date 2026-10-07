@@ -35,6 +35,18 @@ import {
   type ReconcileOutcome,
 } from '../enforcement/worktree-reconcile'
 
+/**
+ * FID-2026-1006-004's pin-hardening rule: a pin never inherits a production
+ * budget. `RECONCILE_BUDGET_MS` is 500 ms, so a call that omits `budgetMs`
+ * races that wall clock — the flake-by-construction the record's Loop 2 named
+ * ("any pin asserting 'deletion detected' is timing-dependent unless the
+ * budget is injectable"). A HELPER is the worst place to omit it: this one
+ * imposed the race on every test in the file at once. The sibling deletion
+ * suite already injects; `scripts/audit-test-budget-injection.ts` now fails
+ * the build when a helper does not.
+ */
+const PIN_BUDGET_MS = 30_000
+
 function reconcile(
   enf: ReturnType<typeof enforcementForCheckpoint>,
   repoRoot: string,
@@ -43,6 +55,7 @@ function reconcile(
     checkpoint: enf.agentState?.groundingCheckpoint,
     repoRoot,
     dirtyFiles: enf.state.dirtyFiles,
+    budgetMs: PIN_BUDGET_MS,
   })
 }
 
@@ -188,6 +201,9 @@ describe('turn-end integration (evaluateTurnEndImpl)', () => {
       checkpoint,
       repoRoot: root,
       dirtyFiles: enf.state.dirtyFiles,
+      // Same rule as the helper above: never race the 500 ms production
+      // default, even from inside a test body.
+      budgetMs: PIN_BUDGET_MS,
     })
     expect(outcome.changed.length).toBe(1)
     // The merged dirty file makes Law 15 block (no verification credit).
