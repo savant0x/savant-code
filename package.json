@@ -38,6 +38,7 @@
     "providers:custats": "bun scripts/providers/harvest-custats.ts",
     "providers:propose": "bun scripts/providers/propose-provider.ts",
     "providers:quality": "bun scripts/providers/quality-gauntlet.ts",
+    "providers:identity": "bun scripts/providers/identity-gauntlet.ts",
     "providers:parity": "bun scripts/provider-catalog-parity.ts",
     "providers:parity:check": "bun scripts/provider-catalog-parity.ts --check",
     "window-coverage:check": "bun scripts/window-coverage-check.ts",
