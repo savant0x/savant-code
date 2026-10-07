@@ -82,6 +82,15 @@ export type CacheDebugUsageData = {
   outputTokens: number
   cachedInputTokens: number
   totalTokens: number
+  /**
+   * FID-2026-1007-009: whether the provider actually reported a cached-token
+   * count. `cachedInputTokens` is coerced to 0 for shape stability, so without
+   * this flag an omitted field and a reported zero are indistinguishable — and
+   * a provider that does not report caching must never be rendered as a cache
+   * miss. Absent means "unknown to the emitter", which the consumer resolves
+   * with the legacy R3 rule (see `isCachedTokenCountKnown`).
+   */
+  cachedInputTokensReported?: boolean
 }
 
 export type PromptAiSdkStreamFn = (

@@ -92,6 +92,8 @@ export const NOT_INHERITED_BY_DESIGN = {
   fidBoundaryDue:
     'one-shot FID-boundary compaction checkpoint of the drive loop',
   lastProviderUsage: 'provider usage observed on the owning run’s stream',
+  cacheUsage:
+    'reported cache usage observed on the owning run’s stream; a child folds its own',
   consecutiveToolErrorSteps: 'anti-runaway counter, reset per run',
   lastToolCallSignature: 'anti-runaway counter, reset per run',
   consecutiveIdenticalToolSignatures: 'anti-runaway counter, reset per run',

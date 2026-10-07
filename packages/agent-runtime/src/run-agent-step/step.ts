@@ -15,8 +15,12 @@ import { finalizeStep } from './step/finalize-step'
 import { prepareStepHistory } from './step/prepare-step-history'
 import { processStream } from '../tools/stream-parser'
 import { setActivity } from '../util/activity-tracking'
+// FID-2026-1007-009: always-on session cache-hit telemetry (the sidebar's
+// source). Deliberately NOT the debug-gated CacheHitRateMonitor.
+import { accumulateCacheUsage } from '../util/cache-session-telemetry'
 import { withSystemTags, expireMessages } from '../util/messages'
 import { countTokens } from '../util/token-counter'
+import { isCachedTokenCountKnown } from '../util/token-telemetry'
 
 import type { RunAgentStepParams, RunAgentStepResult } from './types'
 import type { ToolMessage } from '@savant-code/common/types/messages/savant-code-message'
@@ -139,6 +143,21 @@ export const runAgentStep = async (
         inputTokens: usage.inputTokens,
         capturedAt: Date.now(),
       }
+      // FID-2026-1007-009: fold the same always-on usage into the session
+      // cache summary the sidebar reads. `isCachedTokenCountKnown` distinguishes
+      // a provider-reported zero from an unreported field, so the row can say
+      // "not reported" instead of inventing a cache miss. `observationKey`
+      // names this step so a re-finalized response of the same turn is not
+      // counted twice; a route/model change starts a fresh bucket.
+      agentState.cacheUsage = accumulateCacheUsage(agentState.cacheUsage, {
+        provider: agentTemplate.modelRoute?.providerId ?? 'unknown',
+        model: String(agentTemplate.model),
+        inputTokens: usage.inputTokens,
+        cachedInputTokens: isCachedTokenCountKnown(usage)
+          ? usage.cachedInputTokens
+          : null,
+        observationKey: `${agentState.runId}:${agentStepId}:${iterationNum}`,
+      })
     },
   })
 

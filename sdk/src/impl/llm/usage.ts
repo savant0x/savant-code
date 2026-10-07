@@ -160,6 +160,7 @@ export function emitCacheDebugUsage(params: {
     outputTokens: number
     cachedInputTokens: number
     totalTokens: number
+    cachedInputTokensReported?: boolean
   }) => void
   usage: {
     inputTokens?: number
@@ -174,6 +175,12 @@ export function emitCacheDebugUsage(params: {
     inputTokens: params.usage.inputTokens ?? 0,
     outputTokens: params.usage.outputTokens ?? 0,
     cachedInputTokens: params.usage.cachedInputTokens ?? 0,
+    // FID-2026-1007-009: preserve presence. The `?? 0` above keeps the shape
+    // stable for existing consumers, but it also erased the difference
+    // between "the provider reported no cache reuse" and "the provider does
+    // not report caching at all" — the two are rendered differently in the
+    // sidebar, so the fact has to survive normalization.
+    cachedInputTokensReported: params.usage.cachedInputTokens !== undefined,
     totalTokens: params.usage.totalTokens ?? 0,
   })
 }

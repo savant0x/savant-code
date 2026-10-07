@@ -9,6 +9,7 @@ import type { JSONValue } from './json'
 import type { Message } from './messages/savant-code-message'
 import type { ProvenanceSessionLike } from './provenance'
 import type { AgentTemplateType } from './session-state'
+import type { CacheUsageSummary } from './session-state-cache-usage'
 import type {
   CompactionCutPlan,
   CompactionFileLedger,
@@ -41,9 +42,7 @@ export type {
 } from './session-state-compaction-records'
 
 export type AgentState = {
-  /**
-   * @deprecated agentId is replaced by runId
-   */
+  /** @deprecated agentId is replaced by runId */
   agentId: string
   agentType: AgentTemplateType | null
   agentContext: Record<string, Subgoal>
@@ -142,6 +141,7 @@ export type AgentState = {
    * when it arrived AFTER the most recent history replacement.
    */
   lastProviderUsage?: { inputTokens: number; capturedAt: number }
+  /** FID-2026-1007-009: reported cache usage. */ cacheUsage?: CacheUsageSummary
   /**
    * FID-2026-0818-007: set true by the drive loop after a COMPLETE archive —
    * the FID boundary is the deterministic compaction checkpoint; consumed

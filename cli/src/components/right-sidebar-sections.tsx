@@ -1,6 +1,7 @@
 import React from 'react'
 
 import {
+  formatCacheUsage,
   formatCost,
   formatToolHistoryEvent,
   formatTokens,
@@ -15,6 +16,8 @@ import { Timeline } from './savant-ui/data-display/timeline'
 import { FidList, type FidData } from './savant-ui/echo/fid-list'
 import { KeyValueRow } from './savant-ui/primitives/key-value-row'
 import { SidebarSection } from './savant-ui/primitives/sidebar-section'
+
+import type { CacheUsageSummary } from '@savant-code/common/types/session-state-cache-usage'
 
 /** Active Agents section — only active agents, or the main agent while
  *  streaming/waiting; hidden when there is nothing to show. */
@@ -155,6 +158,7 @@ export const SidebarSession = ({
   windowSource,
   compactionStatus,
   compactionCount,
+  cacheUsage,
 }: {
   agent: string
   cost: number
@@ -166,6 +170,8 @@ export const SidebarSession = ({
   windowSource: 'catalog' | 'fallback-table' | 'default'
   compactionStatus: ReturnType<typeof formatCompactionStatus> | null
   compactionCount: number
+  /** FID-2026-1007-009: reported provider cache reuse for the active route. */
+  cacheUsage?: CacheUsageSummary
 }) => {
   const theme = useTheme()
   const compactionLabel = compactionStatus
@@ -227,6 +233,14 @@ export const SidebarSession = ({
       {compactionCount > 0 && (
         <KeyValueRow label="Compactions" value={compactionCount.toString()} />
       )}
+      {/* FID-2026-1007-009: reported provider cache reuse. Always rendered,
+          including before any data exists, because the point of the row is to
+          distinguish "the provider does not report this" from "no cache
+          reuse" — a row that appears only once there is good news cannot do
+          that. `—` = nothing usable observed, `Not reported` = the provider
+          omitted the field, `0%` = a reported miss. No pricing claim is made:
+          this is reported token reuse on one route, not a bill. */}
+      <KeyValueRow label="Cache" value={formatCacheUsage(cacheUsage)} />
     </SidebarSection>
   )
 }

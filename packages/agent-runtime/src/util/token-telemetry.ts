@@ -51,8 +51,18 @@ export function estimateCostUsd(
   )
 }
 
-/** R3 fallback: a usage record whose cached-token field is absent/unreliable. */
+/**
+ * R3 fallback: a usage record whose cached-token field is absent/unreliable.
+ *
+ * FID-2026-1007-009: when the emitter reports presence explicitly, that wins —
+ * a provider-reported `0` is a known value (a real cache miss) and an omitted
+ * field is unknown. Without the flag the legacy heuristic stands unchanged
+ * (`> 0` means known), so records that predate the flag keep their behavior.
+ */
 export function isCachedTokenCountKnown(usage: CacheDebugUsageData): boolean {
+  if (usage.cachedInputTokensReported !== undefined) {
+    return usage.cachedInputTokensReported
+  }
   return (
     typeof usage.cachedInputTokens === 'number' && usage.cachedInputTokens > 0
   )

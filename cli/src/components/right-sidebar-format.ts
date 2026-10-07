@@ -1,4 +1,5 @@
 import type { CompactionStatus } from '@savant-code/common/types/session-state'
+import type { CacheUsageSummary } from '@savant-code/common/types/session-state-cache-usage'
 
 export interface ToolCall {
   name: string
@@ -16,6 +17,36 @@ export interface FilesChanged {
   created: number
   added: number
   deleted: number
+}
+
+/**
+ * FID-2026-1007-009 — the sidebar's Cache value.
+ *
+ * The three states are kept distinct on purpose, because collapsing any two of
+ * them is the defect this row exists to prevent:
+ *
+ * - `—`            nothing usable was observed yet (no turn, or only rejected
+ *                  samples) — we have no basis for a number either way;
+ * - `Not reported` the provider omitted the cache field, so "no reuse" would be
+ *                  an invention, not a measurement;
+ * - `0%`           the provider REPORTED zero cached tokens — a real cache miss.
+ *
+ * A percentage always carries the token sample it came from, and a non-zero
+ * rejected-sample count is surfaced rather than hidden, so the operator can see
+ * both the denominator and what was thrown away.
+ */
+export function formatCacheUsage(summary?: CacheUsageSummary): string {
+  if (summary === undefined) return '—'
+  if (summary.cacheHitRatio === null) {
+    return summary.unreportedTurns > 0 ? 'Not reported' : '—'
+  }
+  const percent = `${Math.round(summary.cacheHitRatio * 100)}%`
+  const sample = `(${formatTokens(summary.cachedInputTokens)}/${formatTokens(
+    summary.eligibleInputTokens,
+  )})`
+  const rejected =
+    summary.invalidTurns > 0 ? ` +${summary.invalidTurns} invalid` : ''
+  return `${percent} ${sample}${rejected}`
 }
 
 /**

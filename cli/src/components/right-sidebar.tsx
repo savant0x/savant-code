@@ -119,6 +119,12 @@ export const RightSidebar = React.memo(function RightSidebar({
   const teacherState = useChatStore((s) => s.teacherState)
   const compactionStatus = useChatStore((s) => s.compactionStatus)
   const compactionCount = useChatStore((s) => s.compactionCount)
+  // FID-2026-1007-009: the reported cache summary is read straight off the run
+  // snapshot — the same transport `driveStatus` and `goal` use — rather than
+  // mirrored into a second store slice, so there is exactly one copy.
+  const cacheUsage = useChatStore(
+    (s) => s.runState?.sessionState?.mainAgentState?.cacheUsage,
+  )
 
   // Reactive trust surface (operator feedback 2026-08-16, two rounds): the
   // section mounts only while at least one receipt is still `pending` (signed,
@@ -240,6 +246,7 @@ export const RightSidebar = React.memo(function RightSidebar({
             windowSource={windowSource}
             compactionStatus={compactionLabel}
             compactionCount={compactionCount}
+            cacheUsage={cacheUsage}
           />
           {teacherState !== null && teacherState.challenge !== null && (
             <SidebarSection title="Teacher">
