@@ -163,4 +163,26 @@ describe('helpers', () => {
     )
     expect(isCachedTokenCountKnown(usage({ cachedInputTokens: 0 }))).toBe(false)
   })
+
+  // FID-2026-1007-009: the R3 heuristic is right about legacy records and wrong
+  // about a provider that reports presence, so presence wins when it is there.
+  // A reported zero is a real cache miss; an omitted field is not.
+  test('an explicit presence flag overrides the zero-means-unknown heuristic', () => {
+    expect(
+      isCachedTokenCountKnown(
+        usage({ cachedInputTokens: 0, cachedInputTokensReported: true }),
+      ),
+    ).toBe(true)
+    expect(
+      isCachedTokenCountKnown(
+        usage({ cachedInputTokens: 0, cachedInputTokensReported: false }),
+      ),
+    ).toBe(false)
+    // A reported positive stays known either way.
+    expect(
+      isCachedTokenCountKnown(
+        usage({ cachedInputTokens: 900, cachedInputTokensReported: true }),
+      ),
+    ).toBe(true)
+  })
 })
