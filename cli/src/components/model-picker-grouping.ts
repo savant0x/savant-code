@@ -5,7 +5,8 @@ import { deriveProviderOrder } from '@savant-code/common/providers/derive'
 import {
   FREE_BADGE,
   FREE_KEY_PROVIDERS,
-  isFreeTierEntry,
+  hasFreeToken,
+  isFreeKeyProvider,
 } from '../utils/free-badge'
 
 import type { OpenRouterModel } from '../utils/openrouter-models'
@@ -54,9 +55,17 @@ export function getProviderOrder(provider: ModelProvider): number {
   return deriveProviderOrder(getEffectiveProviderRegistry(), provider)
 }
 
-/** The blank key-slot rows for the free-key section (one per free key). */
-function freeKeyItems(): KeyItem[] {
-  return FREE_KEY_PROVIDERS.map(({ envVar }) => ({
+/**
+ * The blank key-slot rows for the free-key section — one per free key whose
+ * provider ACTUALLY contributed rows to this list (FID-2026-1007-005). A key
+ * lane names a slot the operator can fill, so rendering one for a provider with
+ * no rows was a promise with nothing behind it: the list asked for
+ * `CHATANYWHERE_API_KEY` while containing no chatanywhere model at all.
+ */
+function freeKeyItems(presentProviders: ReadonlySet<string>): KeyItem[] {
+  return FREE_KEY_PROVIDERS.filter(({ provider }) =>
+    presentProviders.has(provider),
+  ).map(({ envVar }) => ({
     type: 'key' as const,
     envVar,
     ready: (process.env[envVar] ?? '').length > 0,
@@ -64,12 +73,21 @@ function freeKeyItems(): KeyItem[] {
 }
 
 export function buildGroupedItems(models: OpenRouterModel[]): ListItem[] {
+  // FID-2026-1007-005: the FREE KEY section hoists the entries that carry the
+  // free token THEMSELVES (FID-2026-1005-010's original rule for free-named
+  // ids, unchanged), and never relocates a whole provider roster: a row from a
+  // free-key provider stays in its own provider group and is starred there by
+  // `freeBadgeFor`. The key slot is emitted only for a free-key provider that
+  // contributed rows, so the section can no longer advertise a lane with
+  // nothing behind it.
   const free: ModelItem[] = []
+  const presentKeyProviders = new Set<string>()
   const byProvider = new Map<ModelProvider, OpenRouterModel[]>()
   for (const model of models) {
     const provider = getProvider(model)
     if (!advertisedModelVisible(provider, model.id)) continue
-    if (isFreeTierEntry(model)) {
+    if (isFreeKeyProvider(provider)) presentKeyProviders.add(provider)
+    if (hasFreeToken(model)) {
       free.push({ type: 'model', model, provider })
       continue
     }
@@ -79,11 +97,11 @@ export function buildGroupedItems(models: OpenRouterModel[]): ListItem[] {
   }
 
   const items: ListItem[] = []
-  // FREE KEY section first (FID-2026-1005-010): every free-related entry
-  // ("free" in the name/id, or from a free-key provider) hoisted here with
-  // the blank key placeholder row. Absent when nothing is free-related, so
-  // provider-group ordering is untouched for non-free input.
-  if (free.length > 0) {
+  const keyItems = freeKeyItems(presentKeyProviders)
+  // Section first, when it has anything to say — either hoisted free-token
+  // entries or a free-key slot whose provider is present. Absent otherwise, so
+  // provider-group ordering is untouched for input with neither.
+  if (free.length > 0 || keyItems.length > 0) {
     free.sort((a, b) =>
       a.provider === b.provider
         ? a.model.id.localeCompare(b.model.id)
@@ -94,7 +112,7 @@ export function buildGroupedItems(models: OpenRouterModel[]): ListItem[] {
       provider: null,
       label: `${FREE_BADGE} FREE KEY`,
     })
-    items.push(...freeKeyItems())
+    items.push(...keyItems)
     items.push(...free)
   }
 

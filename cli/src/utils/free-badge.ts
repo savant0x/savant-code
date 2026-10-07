@@ -4,6 +4,10 @@
  * same rule can apply to every free-options surface (model page, picker,
  * digests) without re-deriving it per screen.
  *
+ * FID-2026-1007-005 splits the marker rule from the hoisting rule: the ⭐ comes
+ * from `isFreeTierEntry` (unchanged, per row), while the picker's synthetic
+ * section may only hoist `hasFreeToken` rows.
+ *
  * Operator rule (verbatim): "add the everything free related, so if it has
  * free in the name or is from this provider, add the star. Make it a
  * function so it can quickly apply to all free options."
@@ -31,14 +35,38 @@ export interface FreeTierCandidate {
 }
 
 /**
+ * True when the entry's OWN name or id carries the free token.
+ *
+ * FID-2026-1007-005: this is the hoisting rule — the one the picker may use to
+ * move a row into the synthetic free section. It is deliberately narrower than
+ * `isFreeTierEntry`, which also covers "everything from a free-key provider":
+ * hoisting a whole provider's roster out of its own group is what made
+ * ChatAnywhere the only provider whose models could not be found under its own
+ * header, while the operator's rule was about the MARKER ("if it has free in
+ * the name or is from this provider, add the star"), not about placement.
+ */
+export function hasFreeToken(entry: FreeTierCandidate): boolean {
+  return /free/i.test(entry.name ?? '') || /free/i.test(entry.id ?? '')
+}
+
+/** True when the provider is declared as a free-key provider. */
+export function isFreeKeyProvider(
+  provider: string | null | undefined,
+): boolean {
+  return FREE_KEY_PROVIDERS.some((p) => p.provider === (provider ?? ''))
+}
+
+/**
  * True when the entry is free-related: flagged `freeTier`, "free" in the
- * name or id, or from a free-key provider. Case-insensitive.
+ * name or id, or from a free-key provider. Case-insensitive. This is the ⭐
+ * predicate and is applied per row everywhere it is rendered.
  */
 export function isFreeTierEntry(entry: FreeTierCandidate): boolean {
-  if (entry.freeTier === true) return true
-  const provider = entry.provider ?? ''
-  if (FREE_KEY_PROVIDERS.some((p) => p.provider === provider)) return true
-  return /free/i.test(entry.name ?? '') || /free/i.test(entry.id ?? '')
+  return (
+    entry.freeTier === true ||
+    isFreeKeyProvider(entry.provider) ||
+    hasFreeToken(entry)
+  )
 }
 
 /**

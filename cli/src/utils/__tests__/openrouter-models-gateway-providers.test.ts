@@ -13,6 +13,7 @@ import path from 'path'
 import { describe, expect, mock, test } from 'bun:test'
 
 import {
+  fetchChatanywhereModels,
   fetchGatewayModels,
   fetchKiosapiModels,
   hasKiosapiCatalog,
@@ -25,6 +26,38 @@ import {
 
 describe('openrouter-models provider clusters', () => {
   registerGatewayCatalogLifecycle()
+
+  test('includes ChatAnywhere models in the combined gateway catalog (FID-2026-1007-005)', async () => {
+    // @ts-expect-error - mock fetch
+    globalThis.fetch = mock(() =>
+      Promise.resolve(makeJsonResponse({ data: [] })),
+    )
+
+    const models = await fetchGatewayModels(true)
+
+    // The defect: the gateway was registered and catalogued, and every fetch
+    // returned [] (no live source), so these rows can only come from the
+    // static builder this record added.
+    expect(models).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: 'chatanywhere/gpt-5.6-sol',
+          provider: 'chatanywhere',
+        }),
+      ]),
+    )
+    // The builder derives the roster from the checked-in map, keeps the
+    // vendor's bare upstream id as the display name, and takes its window from
+    // the fallback seam rather than inventing one.
+    const rows = fetchChatanywhereModels()
+    expect(rows).toHaveLength(27)
+    expect(rows.find((row) => row.id === 'chatanywhere/gpt-5.6-sol')).toEqual({
+      id: 'chatanywhere/gpt-5.6-sol',
+      name: 'gpt-5.6-sol',
+      provider: 'chatanywhere',
+      contextLength: 1_050_000,
+    })
+  })
 
   test('includes KiosAPI models in the combined gateway catalog', async () => {
     const originalKiosapiKey = process.env.KIOSAPI_API_KEY

@@ -9,6 +9,7 @@
  * `findGatewayModel`. The order below is the historical one, byte for byte;
  * do not reorder it as a tidy-up.
  */
+import { fetchChatanywhereModels } from './chatanywhere'
 import {
   fetchCommandCodeModels,
   fetchHcnsecModels,
@@ -59,6 +60,9 @@ export function assembleGatewayCatalog(
     ...fetchBazaarlinkModels(),
     ...fetchAtriaModels(),
     ...fetchInternModels(),
+    // FID-2026-1007-005: the provider was registered, catalogued and window-
+    // covered, and this fan-out never asked for it — the picker had no rows.
+    ...fetchChatanywhereModels(),
     ...live.customModels,
   ]
   combined.sort((a, b) => a.id.localeCompare(b.id))

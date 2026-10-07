@@ -63,6 +63,7 @@ export {
   fetchInternModels,
   fetchUnorouterModels,
 } from './openrouter-models/static-catalogs-gateways'
+export { fetchChatanywhereModels } from './openrouter-models/chatanywhere'
 export {
   findGatewayModel,
   formatModelInfo,

@@ -23,6 +23,8 @@
 import { readFileSync, renameSync, writeFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 
+import { MODEL_CATALOGS } from '@savant-code/common/providers/model-catalogs'
+
 import { fetchGatewayModels } from '../cli/src/utils/openrouter-models/gateway'
 
 const ROOT = resolve(import.meta.dir, '..')
@@ -60,6 +62,51 @@ export function censusFromCatalog(
   }
 }
 
+/**
+ * Providers whose catalog is a checked-in map (`ProviderConfig.catalog.modelsRef`)
+ * but which are audited as NOT contributing picker rows yet, each with its
+ * reason (FID-2026-1007-005). `chatanywhere` was the defect this check exists
+ * for: it was registered, catalogued, window-covered and documented, and the
+ * `/model` fan-out never asked for it.
+ *
+ * The check is two-directional: an entry here that STARTS contributing rows is
+ * itself reported, so a stale exception cannot hide a provider that has since
+ * been wired.
+ */
+export const CATALOG_PAIRING_EXCEPTIONS: Record<string, string> = {
+  cloudflare:
+    'no cli-side builder: the roster is served through the SDK routed path ' +
+    '(cli/src/utils/openrouter-models/types.ts names cloudflare as SDK-routed) ' +
+    'and the picker would need the account-id credential shape plus window-' +
+    'register coverage — its own change, audited here rather than assumed.',
+}
+
+/**
+ * Pairing issues between the checked-in catalog maps and the assembled picker
+ * catalog (FID-2026-1007-005 step 5): every provider whose registry entry
+ * declares a `modelsRef` must contribute rows, and every audited exception must
+ * still be absent, so the gap cannot reopen silently.
+ */
+export function catalogPairingIssues(catalog: Array<{ id: string }>): string[] {
+  const rows = censusFromCatalog(catalog).rows
+  const issues: string[] = []
+  for (const provider of Object.keys(MODEL_CATALOGS)) {
+    const count = rows[provider] ?? 0
+    const exception = CATALOG_PAIRING_EXCEPTIONS[provider]
+    if (count === 0 && !exception)
+      issues.push(
+        `${provider}: declares catalog.modelsRef but contributes 0 picker rows — ` +
+          'wire a cli-side builder (the intern/atria precedent) or record an audited exception',
+      )
+    if (count > 0 && exception)
+      issues.push(
+        `${provider}: audited as not contributing rows, but now contributes ${count} — ` +
+          'remove the stale CATALOG_PAIRING_EXCEPTIONS entry',
+      )
+  }
+  return issues
+}
+
 /** Sort rows by provider id for stable diffs. */
 export function sortedRows(
   rows: Record<string, number>,
@@ -87,9 +134,22 @@ async function main(): Promise<void> {
     console.log(`  ${id}: ${rows}`)
   }
 
+  // FID-2026-1007-005 step 5: the census is also the place the registry/catalog
+  // pairing is checked, because it is the only surface that measures what the
+  // picker actually receives per provider.
+  const pairingIssues = catalogPairingIssues(catalog)
+  if (pairingIssues.length > 0) {
+    console.error('Registry/catalog pairing issues:')
+    for (const issue of pairingIssues) console.error(`  - ${issue}`)
+  } else {
+    console.log(
+      'Registry/catalog pairing: every modelsRef provider contributes rows.',
+    )
+  }
+
   if (checkOnly) {
     console.log('Parity probe (--check): report only; census not modified.')
-    process.exit(0)
+    process.exit(pairingIssues.length > 0 ? 1 : 0)
   }
 
   const path = resolve(ROOT, DEFAULT_CENSUS_PATH)
@@ -115,7 +175,7 @@ async function main(): Promise<void> {
   console.log(
     'Re-run `bun run window-coverage:check` to reconcile the register.',
   )
-  process.exit(0)
+  process.exit(pairingIssues.length > 0 ? 1 : 0)
 }
 
 // Guarded so the pure helpers stay importable by the declared gate suite.
