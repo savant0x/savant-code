@@ -62,11 +62,16 @@
 
 ## Open items
 
-**Five** items are open — three blocked pending operator input (T119,
-T62-followups, T122), one shelved on an operator ruling (T147), and one awaiting
+**Seven** items are open — three blocked pending operator input (T119,
+T62-followups, T122), one shelved on an operator ruling (T147), and three awaiting
 work: T155 (the prompt-cache optimization program, `FID-2026-1006-005`, `fixed`
 with a stamped receipt; steps 8, 10 and 11 stay open on a live endpoint, provider
-billing, and the locator gap its step-3 audit measured). **T159 completed in this
+billing, and the locator gap its step-3 audit measured), T160 (the ChatAnywhere
+`/model` gap, `FID-2026-1007-005`, `converged` with its plan measured on the
+shipped functions and no code written) and T161 (the `cli` suite reads the
+operator's real gateway cache — the one red test that stops the root `bun run test`
+chain before eleven workspaces, `FID-2026-1007-006`, `analyzed` with the signature
+traced to the cache file). **T159 completed in this
 pass** — the lossless tool-output retention, `FID-2026-1007-004`, **all seven steps
 implemented and verified** (`e9322b38` for the seam, `eb2ee0f3` for steps 3-7,
 `49c7bab4` for the ceiling splits the quality gate required), receipt stamped
@@ -799,6 +804,54 @@ T90-F3 was resolved by the operator ruling "T90-F3 residual needs no code"
       `bun run scripts/scripts-typecheck-check.ts` exit 0, `validate:repository`
       clean.
 
+- [ ] **T161. The `cli` test suite reads the operator's real gateway cache
+      (`FID-2026-1007-006`).** **Automation level: 3.** Registered 2026-10-07 from the
+      full-battery run this session owed the retention closure: `bun run test` is RED
+      at the `cli` leg — **3961 pass / 18 skip / 1 fail** — so the `&&` chain stops
+      there and `common`, `agents`, `evals`, `packages/agent-runtime`,
+      `packages/design-systems`, `packages/code-map`, `packages/database`,
+      `packages/knowledge-graph`, `packages/llm-providers`, `packages/connectors` and
+      `desktop` were not exercised. The single failure is
+      `cli/src/utils/__tests__/openrouter-models-lookup.test.ts:34`, which mocks
+      `{ id: 'openai/gpt-5', name: 'GPT-5' }` and receives **`'OpenAI: GPT-5'`** — a
+      string no fixture in the repository contains, and one the operator's own cache at
+      `~/.savant-code/gateway-catalog.json` carries byte for byte
+      (`"id":"openai/gpt-5","name":"OpenAI: GPT-5",…,"contextLength":400000`). The
+      file passes alone (3 pass / 0 fail) and fails in the workspace run, so the seam is
+      module-scope `gatewayCache` in `gateway.ts` plus an isolation that is **opt-in**
+      (only files calling `registerGatewayCatalogLifecycle()` get the temp
+      `SAVANT_CODE_CONFIG_DIR`; `gateway-disk-cache.ts:23` resolves that path through
+      `getConfigDir()`). Pre-existing: this session's whole diff ahead of the record is
+      documentation plus one blank line in
+      `packages/agent-runtime/src/util/trimming.ts`. **Status `analyzed`** — the leaking
+      file is not yet named (step 1 of the plan distinguishes a stale in-flight promise
+      from a real user-dir read), so no fix or gate is claimed. **Blocker:** none;
+      identification is the next action.
+
+- [ ] **T160. ChatAnywhere is missing from the `/model` list (`FID-2026-1007-005`).**
+      **Automation level: 3.** Registered 2026-10-07 on the operator's report, verbatim:
+      "looking at the /model list, the 'chatanywhere' list seems to be designed wrong
+      and not matching the rest of the list too -- we need to review it, open a fid for
+      a fix". **Measured, not inferred:** the shipped `fetchGatewayModels(true)` returns
+      **166 rows from 21 providers and `[]` for chatanywhere** (gitignored probe
+      `dev/scratchpad/active/probe-model-list-chatanywhere.ts`), because the fan-out at
+      `gateway.ts:180-198` and the merge list at `:224-243` name every other provider
+      and not this one; outside tests `cli/src` names chatanywhere exactly once, in the
+      free-key list at `free-badge.ts:23`. So the picker's only chatanywhere surface is
+      a blank `CHATANYWHERE_API_KEY` lane inside the synthetic `⭐ FREE KEY` section,
+      which appears for an unrelated reason — other providers' `:free` ids satisfy the
+      same predicate (`tokenharbor/…:free`, `unorouter/…:free`, `infron/…:free`) — and
+      the shipped `buildGroupedItems` shows that a correct wiring would still render the
+      roster under `⭐ FREE KEY` instead of a `CHATANYWHERE` group. Root cause: the
+      provider was registered along the registry/catalog/window/docs axes but the
+      cli-side builder every other `modelsRef` provider has (`intern` is the close
+      precedent at `static-catalogs-gateways.ts:186-217`) was never written, and nothing
+      enforces that pairing. **Status `converged`** — six planned steps (builder →
+      fan-out → section rule → honest key lane → registry/catalog census in
+      `scripts/provider-catalog-parity.ts` → registry-derived docs), eight declared
+      gates, no production edit yet. **Blocker:** none; implementation is the next
+      action.
+
 - [x] **T159. Every discarded payload needs a durable record and a locator it can
       prove (`FID-2026-1007-004`).** **Automation level: 3.** Registered 2026-10-07
       on the operator's directive, verbatim: "i want this fixed with echo compliance
@@ -988,6 +1041,21 @@ operator-directed session. **Automation level: 1** (no agent action;
   `common/src/util/messages/**`, `common/src/util/redact.ts`,
   `common/src/types/**`,
   `packages/agent-runtime/src/__tests__/**`
+- T160: `dev/fids/**`, `SCOPE.md`, `cli/src/utils/openrouter-models/**`,
+  `cli/src/utils/free-badge.ts`, `cli/src/components/model-picker*.tsx`,
+  `cli/src/components/model-picker-grouping.ts`,
+  `cli/src/components/__tests__/model-picker-free-section.test.ts`,
+  `cli/src/utils/__tests__/openrouter-models*.ts`,
+  `common/src/providers/registry-partitioned-2.ts`,
+  `common/src/providers/model-catalogs.ts`,
+  `common/src/providers/__tests__/provider-registry.test.ts`,
+  `common/src/constants/model-config/**`,
+  `common/src/constants/context-window-table-chatanywhere.ts`,
+  `scripts/provider-catalog-parity.ts`, `scripts/provider-docs-counts-drift.ts`
+- T161: `dev/fids/**`, `SCOPE.md`, `cli/src/utils/openrouter-models/**`,
+  `cli/src/utils/openrouter-models/__tests__/**`,
+  `cli/src/utils/__tests__/openrouter-models*.ts`, `cli/bunfig.toml`,
+  `cli/src/test-setup.ts`
 
 <!-- 2026-10-07 (T159 implementation): three surfaces were ADDED to the T159 line
      because the work needed them and the original line omitted them —
