@@ -62,13 +62,17 @@
 
 ## Open items
 
-**Six** items are open — three blocked pending operator input (T119,
-T62-followups, T122), one shelved on an operator ruling (T147), and two awaiting
+**Five** items are open — three blocked pending operator input (T119,
+T62-followups, T122), one shelved on an operator ruling (T147), and one awaiting
 work: T155 (the prompt-cache optimization program, `FID-2026-1006-005`, `fixed`
 with a stamped receipt; steps 8, 10 and 11 stay open on a live endpoint, provider
-billing, and the locator gap its step-3 audit measured) and T159 (the lossless
-tool-output retention, `FID-2026-1007-004`, `fixed` — steps 1-2 of 7 landed as
-`e9322b38`, and steps 3-7 are open). **T156, T157 and T158 completed in this pass** (`FID-2026-1007-001`,
+billing, and the locator gap its step-3 audit measured). **T159 completed in this
+pass** — the lossless tool-output retention, `FID-2026-1007-004`, **all seven steps
+implemented and verified** (`e9322b38` for the seam, `eb2ee0f3` for steps 3-7,
+`49c7bab4` for the ceiling splits the quality gate required), receipt stamped
+2026-10-07 with all eleven declared gates exit 0; its box below is checked, and its
+record is the CHANGELOG, the archived FID, and the session summary.
+**T156, T157 and T158 completed in this pass** (`FID-2026-1007-001`,
 `-002` and `-003`: all three closed and archived with their path-scoped commits);
 their boxes below are checked, and their record is the CHANGELOG, the archived
 FID, and the session summary.
@@ -795,7 +799,7 @@ T90-F3 was resolved by the operator ruling "T90-F3 residual needs no code"
       `bun run scripts/scripts-typecheck-check.ts` exit 0, `validate:repository`
       clean.
 
-- [ ] **T159. Every discarded payload needs a durable record and a locator it can
+- [x] **T159. Every discarded payload needs a durable record and a locator it can
       prove (`FID-2026-1007-004`).** **Automation level: 3.** Registered 2026-10-07
       on the operator's directive, verbatim: "i want this fixed with echo compliance
       AND fully working properly without data loss". Savant discards model-facing
@@ -815,15 +819,21 @@ T90-F3 was resolved by the operator ruling "T90-F3 residual needs no code"
       transforms receive only the value), readable only by `requiresRawEvidence`
       roles (Verifier and Adversary), spliceable only over a `[compacted]` sentinel
       the trim pass never writes, silently ceilinged (512 KiB/record, 8 MiB/file) at
-      a `void` call site that discards the verdict, and unredacted. **Implemented so
-      far:** steps 1-2 of 7 landed 2026-10-07 in commit `e9322b38` — `retainOriginal`
-      returns a handle or a named refusal, and the verdict travels from the tool-result
-      boundary to the synchronous transforms through an in-process registry whose reset
-      is wired into the workspace preload (module-state 183 of 188, up from 182 of
-      187). **Steps 3-7 are open**, and the honest reading of that commit is
-      infrastructure, not repair: nothing consumes the verdict yet, so no discard
-      behaviour has changed and the marker still advertises a location it cannot
-      compute. **Blocker:** none; the remaining steps are ready to implement.
+      a `void` call site that discards the verdict, and unredacted. **All seven steps
+      implemented and verified.** Steps 1-2 landed 2026-10-07 in `e9322b38` —
+      `retainOriginal` returns a handle or a named refusal, and the verdict travels from
+      the tool-result boundary to the synchronous transforms through an in-process
+      registry whose reset is wired into the workspace preload (module-state 183 of
+      188, up from 182 of 187). Steps 3-7 landed in `eb2ee0f3`, with the ceiling splits
+      the quality gate required in `49c7bab4`: the transforms refuse to drop a payload
+      no store provably kept, one `omitted` marker carries a real locator or a named
+      refusal, the trim pass writes the `layer: 'trim'` row the other compaction layers
+      write (pinned from the real find-files entry point, not only at the unit), the
+      store resolves for whoever holds the handle, credentials are redacted before they
+      reach disk with the policy stated in the module contract, and the store rotates
+      shards so its ceilings are a reported bound instead of a silent `false`. Receipt
+      stamped 2026-10-07 with all eleven declared gates exit 0. **Blocker:** none;
+      closed and archived.
 
 - [ ] **T122. Savant-free feature disposition (operator-owned).** Operator
       ruling 2026-10-03, verbatim: "i think it might be smarter to leave
@@ -966,10 +976,24 @@ operator-directed session. **Automation level: 1** (no agent action;
 - T159: `dev/fids/**`, `dev/session-summaries/2026-10-07-*.md`, `SCOPE.md`,
   `CHANGELOG.md`, `dev/LEARNINGS.md`,
   `packages/agent-runtime/src/evidence/**`,
+  `packages/agent-runtime/src/util/omission-marker.ts`,
   `packages/agent-runtime/src/util/simplify-tool-results.ts`,
   `packages/agent-runtime/src/util/messages/**`,
+  `packages/agent-runtime/src/util/__tests__/**`,
   `packages/agent-runtime/src/tools/tool-executor/**`,
+  `packages/agent-runtime/src/tools/handlers/tool/**`,
+  `packages/agent-runtime/src/find-files/**`,
   `packages/agent-runtime/src/context-compactor/**`,
   `packages/agent-runtime/src/run-agent-step/**`,
-  `common/src/util/messages/**`, `common/src/types/**`,
+  `common/src/util/messages/**`, `common/src/util/redact.ts`,
+  `common/src/types/**`,
   `packages/agent-runtime/src/__tests__/**`
+
+<!-- 2026-10-07 (T159 implementation): three surfaces were ADDED to the T159 line
+     because the work needed them and the original line omitted them —
+     `tools/handlers/tool/**` (the boundary's find-files wiring and the summariser's
+     redactor import), `find-files/**` (the trim pass's only production entry point,
+     which this FID's own measurement located before it was touched), and
+     `common/src/util/redact.ts` (step 6 promoted the redactor to the canonical
+     utility tier). None of the three is a reclassification; each was already named
+     in the record's Affected Components. -->

@@ -3,10 +3,10 @@
 **Filename:** `FID-2026-1007-004-lossless-tool-output-retention-and-verified-locators.md`
 **ID:** FID-2026-1007-004
 **Severity:** high
-**Status:** fixed
+**Status:** verified
 **Created:** 2026-10-07 16:05
 **Automation level:** 3
-**YAGNI-Compliance:** Pending
+**YAGNI-Compliance:** Verified
 
 ---
 
@@ -44,10 +44,14 @@ This record is the design for a single retention contract:
 location it cannot compute.** When retention fails, the payload is not dropped.
 **Steps 1-2 of 7 landed 2026-10-07** (`e9322b38`): the retention seam returns a
 handle or a named refusal, and its verdict travels from the tool-result boundary to
-the synchronous transforms. **That is infrastructure, not repair** — nothing consumes
-the verdict yet, so no discard behaviour has changed and the marker still lies.
-Steps 3-7 are unstarted, and the record states that rather than implying the defect
-is cured.
+the synchronous transforms. **That was infrastructure, not repair** — nothing consumed
+the verdict, so no discard behaviour had changed and the marker still lied. **Steps 3-7
+landed the same day**, in the implementation commit named under `### Implementation
+Evidence`: the four transforms now refuse to drop a payload they cannot prove was
+stored, one `omitted` marker replaces the three spellings and names the handle that
+authorises the drop, the trim pass writes the ledger row the other layers write, the
+store resolves for whoever holds the handle, credentials are redacted before they
+reach disk, and the shard ceilings are reported instead of swallowed.
 
 ## Environment
 
@@ -311,25 +315,72 @@ nobody reads.
    into the workspace preload as FID-2026-1007-002's audit requires, and a resumed
    run that never hit the boundary has no handle — which reads as "cannot prove" and
    therefore keeps the payload.
-3. **Make the four transforms refuse to drop what was not retained.** One shared
-   marker shape replaces the three spellings:
+3. **DONE (2026-10-07).** The four transforms refuse to drop what was not retained.
+   One shared marker shape replaces the three spellings:
    `omitted: { reason, originalChars, keptChars, omittedChars, preview,
-   retained: { file, toolCallId, sha256, bytes } | { ok: false, why } }`.
-   `fullOutput` is deleted (measured: no consumer reads it).
-4. **Ledger the trim pass.** `trimMessagesToFitTokenLimit` writes one
+   retained: { file, toolCallId, sha256, bytes } | { ok: false, why } }`, implemented
+   as `OmissionRetention` in `util/simplify-tool-results.ts` with `ok: true` added to
+   the retained branch so the union discriminates. `fullOutput` is deleted (measured:
+   no consumer reads it). **One correction, made against this record's own plan:** the
+   plan said one marker replaces all three spellings, but two of the three booleans
+   are load-bearing — `contentOmittedForLength` and `stdoutOmittedForLength` are
+   members of the `read_files` and `run_terminal_command` output zod unions, and
+   `util/messages/history.ts` type-guards on the first. They stay as the boolean VIEW
+   of the marker (Law 13: one truth, two shapes); deleting them would have widened a
+   correctness fix into the tool-output schemas. A third decision is stated in the
+   module contract: the OBJECT branch attaches its marker without a handle, because it
+   preserves every field — attaching a marker there discards nothing — while every
+   branch that REPLACES bytes with a marker requires the handle.
+4. **DONE (2026-10-07).** `trimMessagesToFitTokenLimit` writes one
    `appendCompactionInventory` row (`layer: 'trim'`, added to `CompactionLayer`)
-   naming the dropped `toolCallId`s and byte sizes, via the `diffRemovedSpans`
-   helper the other layers already use.
-5. **Make the store readable by the agent that owns the payload.** Generalise the
-   read path so a marker's handle resolves for the running agent, not only for
-   `requiresRawEvidence` roles; keep the audit-roles-only *bulk* splice exactly as it
-   is.
-6. **Decide and pin the redaction policy (Law 12).** The store persists raw tool
-   output unredacted today. Whatever is decided, it is stated in the module contract
-   and pinned, and the added message-level retention from step 4 does not silently
-   widen it.
-7. **Report the ceilings instead of swallowing them**, and shard or rotate the store
-   so a long run does not reach `store-full` in the first place.
+   naming the dropped `toolCallId`s and byte sizes, via the `diffRemovedSpans` helper
+   the other layers already use. The diff is taken over the SIMPLIFIED pre-drop array,
+   not over the caller's original history: this pass also REPLACES messages (the
+   verbose/terminal pre-pass builds new message objects), so a reference-identity diff
+   against the original array would have counted every replaced-but-kept message as
+   removed. The simplified array is index-aligned with the caller's, so the recorded
+   `regions` are still coordinates of the history the caller handed in. The run
+   context is threaded from the find-files handler through `requestRelevantFiles` →
+   `getRelevantFiles` → `getMessagesSubset`, and the wiring (not merely the unit) is
+   pinned from the real entry point.
+5. **DONE (2026-10-07).** Three parts, each pinned. `resolveRetainedPayload(handle)`
+   in `evidence/spill.ts` resolves a handle with NO role gate, fail-closed: bytes that
+   no longer match the handle's `sha256` are not returned at all. The
+   `loadRawEvidenceForSpawn` gate is now scoped by NEED rather than role — an audit
+   role keeps the full union of the run chain (the bulk splice, unchanged), while any
+   other agent gets exactly the records its own inherited history names as omitted,
+   and an agent with nothing omitted still does no IO. And `spliceRawEvidence`
+   recognises the `omitted` marker, not only the `[compacted]` sentinel, so a stored
+   original can be restored over the marker that took its place. **Boundary, stated
+   rather than implied:** the root agent inside its own turn still has no first-class
+   retrieval call — the marker names an absolute `file` and the `toolCallId`, and step
+   3 guarantees the alternative to a locator is keeping the bytes, so nothing is lost;
+   a dedicated model-facing retrieval tool is a separate surface and is not in this
+   record.
+6. **DONE (2026-10-07) — the decision is: redact before writing.** `redactSecrets` was
+   promoted to the canonical utility tier (`common/src/util/redact.ts`, Law 13) and the
+   spill applies it inside `retainOriginal` before hashing or appending, so the STORED
+   form is the redacted form and `sha256`/`byteSize` describe what is on disk — a handle
+   always verifies against it. The record and the handle carry `redacted: true` when it
+   changed anything, and the module contract states the consequence: a payload whose
+   secret was redacted is not recoverable in its original form BY DESIGN. The
+   alternative — keep the store unredacted and declare it — was rejected: this is the
+   widest persistence surface a run has, and `.savant/` being gitignored bounds the
+   exposure without removing it. Note the direction of the trade: redaction removes
+   bytes from the STORE, never from the model's context, so it cannot re-introduce the
+   loss this record exists to stop.
+7. **DONE (2026-10-07).** The store rotates: a shard at `EVIDENCE_MAX_FILE_BYTES` is
+   closed and the next record opens `<runId>.part-N.jsonl`, with shard 1 keeping the
+   canonical name so every existing reader is untouched, and
+   `EVIDENCE_MAX_SHARDS = 64` making `store-full` a stated ceiling (512 MiB per run)
+   rather than the ordinary outcome of a long run. The ceilings are overridable per
+   call (`maxRecordBytes`/`maxShardBytes`/`maxShards`), which is also what finally made
+   `store-full` pinnable — the record previously listed it as the one refusal with no
+   pin "because producing it honestly needs an 8 MiB fixture". Reporting is at the
+   boundary: a refusal that means a CEILING was hit (`record-too-large`, `store-full`,
+   `io-error`) now logs, where the boundary used to discard the verdict outright; the
+   structural refusals (`no-project-root`, `no-tool-call-id`) stay silent, so a rootless
+   run does not warn on every tool result.
 
 ### Verification
 
@@ -352,19 +403,33 @@ edit):
 - a negative leg proving the store is still doing its original job: an audit-role
   spawn still splices pre-compaction originals over `[compacted]` sentinels.
 
-Scope of the declared gates: the block below covers the part that IS implemented
-(steps 1-2), which is why it is five gates rather than the whole battery — the
-remaining steps declare their own when they land, and a gate naming a file that does
-not exist would be a fiction. Two of the five are chosen for what they would CATCH
-rather than for what they prove: `evidence-splice.test.ts` is the evidence that
-delegating `recordEvidence` to `retainOriginal` preserved the store's existing
-behaviour (the one regression this seam could have introduced), and the
-`module-state-check` probe is FID-2026-1007-002's audit confirming the new registry is
-both enumerated and wired rather than merely claimed.
+Scope of the declared gates: eleven, one per behaviour that would go red if the
+contract regressed, chosen for what they would CATCH rather than for what they prove.
+`retention.test.ts` and `retention-hardening.test.ts` are the seam (a handle or a named
+refusal; redaction, rotation, and the now-pinned `store-full`), and
+`simplify-tool-results-omission.test.ts` drives the four SHIPPED transforms through
+both legs of the property, the first leg resolving a real handle out of a real store.
+`messages-trim-inventory.test.ts` proves the trim ledger at the unit, and
+`request-files-prompt.test.ts` proves it again from the REAL find-files entry point —
+because this repository's own lesson (FID-2026-1006-003) is that a wired module whose
+wiring is only typechecked is not wired. `spawn-evidence.test.ts` and
+`evidence-splice.test.ts` are the step-5 pair, and the latter still carries the
+negative leg that the store does its ORIGINAL job: an audit-role spawn still splices
+pre-compaction originals over `[compacted]` sentinels. `messages-trim.test.ts` is the
+suite that was passing because of the defect (see Loop 3). `module-state-check` is
+FID-2026-1007-002's audit — it confirms the registry this work drives is enumerated and
+wired rather than merely claimed. `typecheck` and `quality` are the two repo-wide gates
+the change could plausibly break.
 
 ## Verification Gates
 
 - gate: test packages/agent-runtime/src/evidence/__tests__/retention.test.ts
+- gate: test packages/agent-runtime/src/evidence/__tests__/retention-hardening.test.ts
+- gate: test packages/agent-runtime/src/util/__tests__/simplify-tool-results-omission.test.ts
+- gate: test packages/agent-runtime/src/util/__tests__/messages-trim-inventory.test.ts
+- gate: test packages/agent-runtime/src/util/__tests__/messages-trim.test.ts
+- gate: test packages/agent-runtime/src/find-files/__tests__/request-files-prompt.test.ts
+- gate: test packages/agent-runtime/src/evidence/__tests__/spawn-evidence.test.ts
 - gate: test packages/agent-runtime/src/evidence/__tests__/evidence-splice.test.ts
 - gate: probe scripts/module-state-check.ts
 - gate: typecheck packages/agent-runtime
@@ -372,9 +437,15 @@ both enumerated and wired rather than merely claimed.
 
 ### Verification Receipt
 
-- fingerprint: sha256:e22078461fcf0e26a28e5b3b920a7860ee2fe8ae8c2196b973a82a635d45bf6b
-- verified: 2026-10-07T18:23:46.622Z
+- fingerprint: sha256:cc4dfd18748a8af45beea2f47cdd45c084210f7b1eeb90168d225eb0dd23ed7f
+- verified: 2026-10-07T19:17:44.325Z
 - test packages/agent-runtime/src/evidence/__tests__/retention.test.ts: exit 0
+- test packages/agent-runtime/src/evidence/__tests__/retention-hardening.test.ts: exit 0
+- test packages/agent-runtime/src/util/__tests__/simplify-tool-results-omission.test.ts: exit 0
+- test packages/agent-runtime/src/util/__tests__/messages-trim-inventory.test.ts: exit 0
+- test packages/agent-runtime/src/util/__tests__/messages-trim.test.ts: exit 0
+- test packages/agent-runtime/src/find-files/__tests__/request-files-prompt.test.ts: exit 0
+- test packages/agent-runtime/src/evidence/__tests__/spawn-evidence.test.ts: exit 0
 - test packages/agent-runtime/src/evidence/__tests__/evidence-splice.test.ts: exit 0
 - probe scripts/module-state-check.ts: exit 0
 - typecheck packages/agent-runtime: exit 0
@@ -461,29 +532,47 @@ both enumerated and wired rather than merely claimed.
 
 ### Implementation Evidence (REQUIRED for `closed`)
 
-> PARTIAL. Steps 1-2 of 7 are implemented and gated; steps 3-7 are not written, so
-> this record is **not** eligible for `closed` and does not claim to be.
+> COMPLETE. All seven steps are implemented and gated; the SHAs below are the
+> steps 1-2 seam and the commit that consumes it.
 
-- [ ] **Commit SHA:** partial — `e9322b38` (steps 1-2); the record stays open until
-      steps 3-7 land
-- [x] **File:line ranges:** `evidence/spill.ts` (`retainOriginal`,
-      `RetentionHandle`, `RetentionRefusal`), `evidence/retention-registry.ts`
-      (`rememberRetention` / `lookupRetention` / `resetRetentionRegistry`),
-      `tools/tool-executor/result-lifecycle.ts` (the boundary call site),
-      `test/setup-test-isolation.ts` (the reset wiring)
-- [x] **Gate output:** all five declared gates exit 0 at the stamped receipt
-- [x] **Reproducibility:** `bun test src/evidence/__tests__/retention.test.ts` and
-      `bun scripts/module-state-check.ts` both name the behaviour (183 of 188 wired),
-      and the RED measurement is reproducible via
+- [x] **Commit SHA:** `49c7bab4` (the ceiling splits the quality gate required — the
+      tree the stamped receipt was taken against) and `eb2ee0f3` (steps 3-7), on top
+      of `e9322b38` (steps 1-2)
+- [x] **File:line ranges:** `evidence/spill.ts` (`retainOriginal` with the redaction
+      and shard policy), `evidence/spill-contract.ts` (the record shape, the caps,
+      the shard paths, `RetentionHandle` / `RetentionRefusal`), `evidence/spill-read.ts`
+      (`loadEvidenceRecords`, `resolveRetainedPayload`), `evidence/omission.ts` (the
+      shared marker readers), `evidence/retention-registry.ts` (`rememberRetention` /
+      `lookupRetention` / `resetRetentionRegistry`), `evidence/splice.ts`
+      (`isRestorableLoss`), `evidence/spawn-evidence.ts` (the need-based gate),
+      `evidence/inventory.ts` (`CompactionLayer`, `InventoryContext`),
+      `util/omission-marker.ts` (`OmissionMarker`, `retentionProof`),
+      `util/simplify-tool-results.ts` (the four transforms),
+      `util/messages/trimming.ts` (`ledgerTrimPass`),
+      `tools/tool-executor/evidence-capture.ts` (the boundary's capture and the
+      ceiling report), `tools/tool-executor/result-lifecycle.ts` (the call site),
+      `find-files/request-files-prompt.ts` (`evidenceContext`),
+      `find-files/request-files-training.ts` (the training picker),
+      `tools/handlers/tool/find-files.ts` (the wiring), `common/util/redact.ts` (the
+      canonical redactor), `test/setup-test-isolation.ts` (the reset wiring)
+- [x] **Gate output:** all eleven declared gates exit 0 at the stamped receipt
+- [x] **Reproducibility:** `bun test src/util/__tests__/simplify-tool-results-omission.test.ts`
+      fails on the parent of the implementation commit and passes on it;
+      `bun scripts/module-state-check.ts` names the registry (183 of 188 wired); the
+      original RED measurement is reproducible via
       `bun run dev/scratchpad/active/step3-truncation-audit.ts`
-- [ ] **Step statuses:** steps 1-2 `implemented`/verified; **steps 3, 4, 5, 6 and 7
-      `not started`**
+- [x] **Step statuses:** steps 1-2 `implemented`/verified (`e9322b38`); **steps 3, 4,
+      5, 6 and 7 `implemented`/verified** (`eb2ee0f3`)
 
 ### Code Verification Evidence
 
 - [x] Files referenced in Affected Components exist (verified by read in this pass)
-- [ ] Implementation matches the Proposed Solution — no implementation yet
-- [ ] Typecheck/tests/lint pass with pasted tool output — nothing to verify yet
+- [x] Implementation matches the Proposed Solution, with two deviations stated against
+      it rather than silently taken: the `ok: true` discriminant on the marker's
+      retained branch, and the two schema-bound booleans that stay as the marker's
+      boolean view (both in `### Steps` step 3 and Loop 3's AUDIT)
+- [x] Typecheck/tests/lint pass, with the counts and exit codes pasted in Loop 3 and
+      in the Resolution's Verification Evidence
 - [x] Production call-graph evidence is present for the claims made:
       `recordEvidence` ← `tools/tool-executor/result-lifecycle.ts:74`;
       `loadRawEvidenceForSpawn` ← `spawn-agent-inline.ts`,
@@ -531,30 +620,117 @@ both enumerated and wired rather than merely claimed.
 - **CHANGE DELTA:** a new loop, the step statuses, the gate block, and the reach
   correction in the AUDIT above.
 
+### Loop 3 — steps 3-7 implemented (2026-10-07)
+
+- **RED:** the pins were written and run BEFORE any production edit, and the
+  unmodified tree failed them — 5 failed plus 2 module-resolution errors (`Export
+  named 'resolveRetainedPayload' not found …`, `Cannot find module
+  '../retention-registry'`), exit 1. These were the real absences, not rewritten
+  expectations, and they included `store-full`: the previous loop had recorded that
+  refusal as unpinnable.
+- **GREEN:** the four transforms refuse to drop without a handle; one `omitted` marker
+  carries a locator or a refusal; the trim pass writes the `layer: 'trim'` row; the
+  store redacts, rotates, and resolves for whoever holds the handle; the ceilings are
+  reported.
+- **AUDIT (mechanical, and it found something):** the gate battery separates "the new
+  thing works" from "nothing else moved". `packages/agent-runtime` is **1905 pass / 0
+  fail** across 297 files (was 1880 / 294); root `typecheck` exit 0; `eslint .
+  --max-warnings 0` exit 0 after fixing three `import/order` warnings AT THE CAUSE;
+  prettier clean; `module-state-check` PASS at 183 of 188 — unchanged, because this
+  work adds no module-scope state, which is the check passing rather than a gap. Two
+  deviations from this record's own plan were found and are written down in `###
+  Steps` where the plan was: (a) step 3 planned to delete all three marker spellings,
+  but `contentOmittedForLength` and `stdoutOmittedForLength` are members of the
+  `read_files` / `run_terminal_command` output zod unions and the first is type-guarded
+  in `util/messages/history.ts`, so deleting them would have widened a correctness fix
+  into the tool-output schemas — they stay as the marker's boolean view (Law 13); and
+  (b) the trim ledger's diff must run against the SIMPLIFIED pre-drop array, because
+  this pass also REPLACES messages and a reference-identity diff against the caller's
+  array would have reported every replaced-but-kept message as deleted. The quality
+  gate also did its job: five files this work had grown past the 300-line absolute
+  maximum were rejected, and each was split at a REAL seam (`49c7bab4`) rather than
+  trimmed to fit — the write policy, the store contract, the read side, the marker
+  machinery, the boundary capture and the training picker each became their own
+  module, with every origin re-exporting what moved so no caller changed.
+- **AUDIT (the finding that was worth the loop):** `util/__tests__/messages-trim.test.ts`
+  was passing PARTLY BECAUSE OF THE DEFECT. Its terminal fixtures were bare JSON
+  strings — a shape `run_terminal_command`'s output schema cannot produce — so the old
+  transform threw into its `{ command: '', stdoutOmittedForLength: true }` fallback,
+  collapsing a 2,018-char result to roughly 40 characters and satisfying that suite's
+  own token-budget assertion. Making the transform refuse to process a shape it cannot
+  faithfully represent (instead of inventing a lossy result) turned the assertion red,
+  and the honest repair was to the FIXTURE: it now carries the shape the tool returns,
+  it states its precondition (the boundary has retained these payloads, so the fixture
+  registers the handles), and the assertion is unchanged. A test that passes because
+  data was silently destroyed is not evidence.
+- **ADVERSARIAL:** the strongest objection is unchanged from Loop 1 — "refuse to drop"
+  is unbounded token pressure: with no verdict the trim pass can no longer make a
+  find-files request fit its budget. Two things bound it. The verdict exists for every
+  tool result in production, because the boundary retains before any layer sees the
+  result, so `no-retention-verdict` needs BOTH an async write to lose its race and the
+  find-files path to run inside that window; and the failure the contract chooses is a
+  prompt that is too big, which fails loudly and cheaply, over a finding that is gone,
+  which fails silently and permanently. On step 6 the objection is different and is
+  answered rather than deflected: redacting at the store means the retained bytes are
+  a summary, so "lossless" is not literal. That is the Law 12 decision, it is stated in
+  the module contract, it is carried on the record and the handle as `redacted: true`,
+  and it removes bytes only from the STORE — never from the model's context — so it
+  cannot re-introduce the loss this record exists to stop.
+- **CHANGE DELTA:** the Summary's status paragraph, all five Steps marked DONE with
+  their deviations, the Verification scope paragraph and the gate block (5 -> 11
+  gates), the Implementation Evidence, this loop, and the Resolution; the introduced
+  limit from Loop 2 (`store-full` unpinned) is closed.
+
 ## Resolution
 
-- **Closed Date:** not closed
-- **Fix Description:** **partial — steps 1-2 of 7 implemented** (`e9322b38`). The
-  retention seam exists and returns a handle or a named refusal, and its verdict
-  travels from the tool-result boundary to the synchronous transforms. Nothing
-  consumes it yet, so **no discard behaviour has changed**: the marker still names a
-  fixed placeholder, the read and terminal transforms still drop with no locator, and
-  the trim pass still deletes whole messages with no inventory row. Steps 3-7 remain
-  unstarted and are listed in `### Steps`.
-- **Tests Added:** Yes — `packages/agent-runtime/src/evidence/__tests__/retention.test.ts`
-  (7 tests): the handle's `sha256` and byte count against the stored record, the
-  handle resolving through `loadEvidenceRecords`, three named refusals (one of which
-  proves a refusal writes nothing), append-not-replace across two payloads, the
-  registry's round-trip and reset, and its refusal to invent an outcome for a missing
-  identity.
-- **Verification Evidence:** RED is recorded from the unmodified tree (`Cannot find
-  module '../retention-registry'`, exit 1) and reproducible for the rest through
-  `dev/scratchpad/active/step3-truncation-audit.ts` (five payload shapes, five paths,
-  the table in `Problem`). GREEN for steps 1-2: the declared gates all exit 0 at the
-  stamped receipt, `packages/agent-runtime` is 1880 pass / 0 fail, and
-  `module-state-check` reports 183 of 188 wired. **No evidence is claimed for steps
-  3-7, because none of them is written.**
-- **Archived:** not archived
+- **Closed Date:** 2026-10-07
+- **Fix Description:** All seven steps implemented (`eb2ee0f3`, on top of the steps 1-2
+  seam in `e9322b38`). The defect is cured at the level it was found: **no path
+  discards model-facing bytes it has not provably stored, and no marker claims a
+  location it cannot compute.** Concretely — the four
+  `util/simplify-tool-results.ts` transforms read the boundary's verdict by
+  `toolCallId` and return the payload UNTOUCHED when there is no handle, so the
+  truncate/verbose/read/terminal paths can no longer take bytes nobody kept; the one
+  marker they leave behind carries `retained: { file, toolCallId, sha256, bytes,
+  redacted }` (a real locator) or a named refusal; `fullOutput`'s fixed placeholder is
+  deleted; `trimMessagesToFitTokenLimit` writes a `layer: 'trim'` inventory row naming
+  the `toolCallId`s it deleted; `resolveRetainedPayload` resolves a handle with no role
+  gate, the spawn read gate is scoped by need, and `spliceRawEvidence` restores over
+  omission markers as well as `[compacted]` sentinels; the store redacts credentials
+  before writing and states that policy in its module contract; and the store rotates
+  into shards, so its ceilings are a stated bound — reported when hit — rather than a
+  silent `false` nobody reads.
+- **Tests Added:** Yes — 25 new pins across six files, plus four suites updated to
+  the contract they were written against. `evidence/__tests__/retention.test.ts` (7,
+  from steps 1-2): the handle's `sha256` and byte count against the stored record, the
+  handle resolving through `loadEvidenceRecords`, three named refusals (one proving a
+  refusal writes nothing), append-not-replace across two payloads, the registry's
+  round-trip and reset, and its refusal to invent an outcome for a missing identity.
+  `evidence/__tests__/retention-hardening.test.ts` (9): redaction at the store with the
+  handle describing the STORED form, shard rotation, the pinned `store-full`, the
+  record cap measured against stored bytes, and the resolver's found / tampered /
+  absent / unreadable legs. `util/__tests__/simplify-tool-results-omission.test.ts`
+  (9): both legs of the property through the four shipped transforms, the first leg
+  resolving a real handle out of a real store, plus `fullOutput`'s absence and the
+  object branch's honest `omittedChars: 0`.
+  `util/__tests__/messages-trim-inventory.test.ts` (3): the row, no row without a run
+  context, and the under-budget early return by reference.
+  `find-files/__tests__/request-files-prompt.test.ts` (+1): the row again, from the real
+  entry point, so the wiring is exercised rather than typechecked.
+  `evidence/__tests__/evidence-splice.test.ts` (+1) and
+  `evidence/__tests__/spawn-evidence.test.ts` (+1): the step-5 pair, and
+  `util/__tests__/simplify-tool-results-verbose.test.ts` (+1) adds the string-payload
+  leg. Updated: `util/__tests__/simplify-tool-results{,-truncation,-terminal}.test.ts`
+  and `util/__tests__/messages-trim.test.ts`.
+- **Verification Evidence:** RED is recorded from the unmodified tree before any
+  production edit — 5 failures plus 2 module-resolution errors, exit 1 (the new seams
+  did not exist) — and is reproducible by running
+  `bun test src/util/__tests__/simplify-tool-results-omission.test.ts` on the parent of
+  the implementation commit. GREEN: `packages/agent-runtime` is **1905 pass / 0 fail**
+  across 297 files, root `typecheck` exit 0, `eslint . --max-warnings 0` exit 0,
+  prettier clean, `module-state-check` PASS (183 of 188 wired), and all eleven declared
+  gates exit 0 at the stamped receipt.
+- **Archived:** archived 2026-10-07
 
 ## Lessons Learned
 
@@ -574,3 +750,10 @@ both enumerated and wired rather than merely claimed.
 4. A read gate written for one purpose silently becomes a permission model. The flag
    that lets two audit roles reconstruct a transcript is the only switch governing who
    may recover their own output, and it was never intended to be.
+5. A suite can be passing because of the defect it is named after. The heaviest
+   evidence here was not a new failing test but an existing one going red: the trim
+   suite's token-budget assertion was satisfied partly by the data the old transform
+   silently destroyed. When a fix turns an old test red, the first question is not "how
+   do I restore it" but "which of the two was lying" — repairing the fixture and
+   keeping the assertion is the move that turns a decorative test into evidence, and
+   rewriting the assertion to match the code is the move that hides the defect again.
