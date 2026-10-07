@@ -5,10 +5,16 @@ operator decision, implementation, runtime review, or closure evidence.
 
 ## Current active FIDs
 
-**None.** All three records that were open on 2026-10-07 are closed, receipted
-and archived under the operator's standing ruling (verbatim: "approve, work until
-everything is completed, no more blockers and all fixed with echo compliance").
-Their closure sections are in [`archive/README.md`](archive/README.md):
+**One: `FID-2026-1007-008` (T163, provider identity gauntlet) — status `fixed`.**
+The implementation is complete and receipted 7/7, and the record is held open on
+its own rule: step 7's live HCNSec `kimi-k3` re-audit is a named gate requiring
+the operator's credential and spend authority, so the route stays **inconclusive**
+and nothing about its identity is claimed. Everything else that was open on
+2026-10-07 is closed, receipted and archived under the operator's standing ruling
+(verbatim: "approve, work until everything is completed, no more blockers and all
+fixed with echo compliance") — including `FID-2026-1007-007` and
+`FID-2026-1007-009`, added later the same day. Their closure sections are in
+[`archive/README.md`](archive/README.md):
 
 - **`FID-2026-1006-005` (T155, cache program)** — all eleven steps resolved. Four
   implementation commits (`ba4dee65`, `f0d365fa`, `7901568f`, `70cec07c`), step 11
