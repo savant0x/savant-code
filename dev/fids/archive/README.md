@@ -3,6 +3,54 @@
 This directory contains closed or historically completed FIDs. Files here are
 an audit record, not an active work queue.
 
+## 2026-10-07 closure — lossless tool-output retention and verified locators (FID-2026-1007-004)
+
+Closed under the operator ruling of 2026-10-07 (verbatim: "approve, work until
+everything is completed, no more blockers and all fixed with echo compliance"),
+after the implementation landed as its own path-scoped local commits — the
+retention seam (`e9322b38`), steps 3-7 (`eb2ee0f3`) and the ceiling splits the
+quality gate required (`49c7bab4`); no push and no release.
+
+- [`FID-2026-1007-004-lossless-tool-output-retention-and-verified-locators.md`](FID-2026-1007-004-lossless-tool-output-retention-and-verified-locators.md)
+  (high) — Savant discarded model-facing tool output in five places and in every
+  one of them told the model the bytes were available somewhere it could not
+  reach: `truncateToolOutputValue`'s marker carried a fixed
+  `fullOutput: '[See cache-debug snapshot / rerun the tool for full output]'`
+  naming two *possibilities* while the cache-debug feature it names is disabled by
+  default, and the other four (`simplifyVerboseToolResults`,
+  `simplifyReadFileResults`, `simplifyTerminalCommandResults`, and the trim pass in
+  `trimMessagesToFitTokenLimit`) dropped the payload with no locator at all — the
+  trim pass deleting **whole messages** with no inventory row, the only destructive
+  path accountable to no ledger. The store that could answer all of it
+  (`.savant/evidence/<runId>.jsonl`) was unreachable from every marker, its read
+  side gated behind `requiresRawEvidence` (Verifier and Adversary only), its splice
+  firing only on a `[compacted]` sentinel the trim pass never produces, and it
+  persisted raw output unredacted behind two silently-refusing ceilings. All seven
+  steps landed: the seam returns a handle or a named refusal, the four transforms
+  return the payload **untouched** when there is no handle, one `omitted` marker
+  carries `retained: { file, toolCallId, sha256, bytes, redacted }` or the refusal
+  reason (and `fullOutput` is deleted), the trim pass writes a `layer: 'trim'`
+  ledger row, the store resolves for whoever holds the handle with the spawn gate
+  scoped by need, credentials are redacted **before** hashing and appending (the
+  stored form IS the redacted form, stated on the record and the handle), and the
+  store shards so its ceilings are a stated, reported bound. 25 new pins across six
+  files; `packages/agent-runtime` 1905 pass / 0 fail across 297 files (was
+  1880 / 294); five files the work had grown past the 300-line maximum were split
+  at real seams with every origin re-exporting what moved, so no caller changed.
+  Two deviations from the record's own plan were written down rather than smoothed
+  over, and the loop's heaviest finding ran the other way: an existing suite
+  (`util/__tests__/messages-trim.test.ts`) was passing **partly because of the
+  defect** — bare-JSON-string fixtures no `run_terminal_command` schema can produce
+  threw the old transform into a lossy fallback and collapsed ~2,018 chars to ~40,
+  which is what satisfied its own token-budget assertion. The fixture was repaired
+  to the real shape (and registers the handles it now requires); the assertion was
+  kept unchanged. Landed as local commits `e9322b38` + `eb2ee0f3` + `49c7bab4`;
+  11/11 declared gates stamped exit 0 (`sha256:cc4dfd18748a8af45beea2f47cdd45c084210f7b1eeb90168d225eb0dd23ed7f`
+  at the active path), re-stamped LIVE here after the status flip
+  (`sha256:f28729c2885c8320eaf9b912c2b737a8be013168f7a5690a70bba91e7e3aebcb`,
+  2026-10-07T19:29:45.892Z) so the closed record is byte-consistent with its final
+  content.
+
 ## 2026-10-07 closure — suite isolation, module-state isolation, and gate declarability (3 FIDs archived)
 
 Closed under the operator ruling of 2026-10-07 (verbatim: "approve, grant

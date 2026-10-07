@@ -1242,6 +1242,14 @@ converged record; it was corrected while authoring `FID-2026-1006-002`.
 
 ### Closed records (historical)
 
+`FID-2026-1007-004` (lossless tool-output retention and verified locators — every
+path that discards model-facing bytes must have stored them first, and every marker
+must name a location it can compute, high) — **closed + archived 2026-10-07** after
+all seven steps landed (`e9322b38` for the seam, `eb2ee0f3` for steps 3-7,
+`49c7bab4` for the ceiling splits the quality gate required) and all eleven declared
+gates stamped exit 0; the register item is T159. See
+[`archive/README.md`](archive/README.md) for the closure entry.
+
 `FID-2026-1007-003` (gate declarability and the probe runner — every repository
 gate paired with the allowlisted declaration that proves it, medium) —
 **closed + archived 2026-10-07** in local commit `0620e143` after 5/5 declared

@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-1007-004-lossless-tool-output-retention-and-verified-locators.md`
 **ID:** FID-2026-1007-004
 **Severity:** high
-**Status:** verified
+**Status:** closed
 **Created:** 2026-10-07 16:05
 **Automation level:** 3
 **YAGNI-Compliance:** Verified
@@ -437,8 +437,8 @@ the change could plausibly break.
 
 ### Verification Receipt
 
-- fingerprint: sha256:cc4dfd18748a8af45beea2f47cdd45c084210f7b1eeb90168d225eb0dd23ed7f
-- verified: 2026-10-07T19:17:44.325Z
+- fingerprint: sha256:f28729c2885c8320eaf9b912c2b737a8be013168f7a5690a70bba91e7e3aebcb
+- verified: 2026-10-07T19:29:45.892Z
 - test packages/agent-runtime/src/evidence/__tests__/retention.test.ts: exit 0
 - test packages/agent-runtime/src/evidence/__tests__/retention-hardening.test.ts: exit 0
 - test packages/agent-runtime/src/util/__tests__/simplify-tool-results-omission.test.ts: exit 0
@@ -683,7 +683,7 @@ the change could plausibly break.
 
 ## Resolution
 
-- **Closed Date:** 2026-10-07
+- **Closed Date:** 2026-10-07 15:35
 - **Fix Description:** All seven steps implemented (`eb2ee0f3`, on top of the steps 1-2
   seam in `e9322b38`). The defect is cured at the level it was found: **no path
   discards model-facing bytes it has not provably stored, and no marker claims a
@@ -730,7 +730,7 @@ the change could plausibly break.
   across 297 files, root `typecheck` exit 0, `eslint . --max-warnings 0` exit 0,
   prettier clean, `module-state-check` PASS (183 of 188 wired), and all eleven declared
   gates exit 0 at the stamped receipt.
-- **Archived:** archived 2026-10-07
+- **Archived:** 2026-10-07 15:35 (moved to `dev/fids/archive/`)
 
 ## Lessons Learned
 
