@@ -1,3 +1,7 @@
+import fs from 'node:fs'
+import os from 'node:os'
+import path from 'node:path'
+
 // Must evaluate before any module that imports common/env (analytics below):
 // pins NEXT_PUBLIC_CB_ENVIRONMENT away from prod so the config-dir override
 // stays effective even when tests run under the release-gate profile.
@@ -88,6 +92,25 @@ import { resetAsyncWriteQueues } from './utils/write-file-atomic'
  * uninitialized telemetry client — while analytics-focused tests still control
  * their own state via `resetAnalyticsState`/`initAnalytics`.
  */
+/**
+ * FID-2026-1007-006: own the config directory for the whole CLI test process.
+ *
+ * Isolation used to be opt-in — a per-file harness set
+ * `SAVANT_CODE_CONFIG_DIR` for the cases that remembered to, and every other
+ * file resolved the operator's own `~/.savant-code-dev` (the suffix
+ * `getConfigDir()` appends at `NEXT_PUBLIC_CB_ENVIRONMENT=dev`). The preload is
+ * the only place every file inherits, so the override is set once, here, before
+ * any test file loads. `registerGatewayCatalogLifecycle()` still narrows it per
+ * case and restores whatever this set. The directory is removed on exit.
+ */
+const testConfigDir = fs.mkdtempSync(
+  path.join(os.tmpdir(), 'savant-cli-test-config-'),
+)
+process.env.SAVANT_CODE_CONFIG_DIR = testConfigDir
+process.on('exit', () => {
+  fs.rmSync(testConfigDir, { recursive: true, force: true })
+})
+
 beforeEach(() => {
   process.env.DIRECT_PROVIDER = ''
   process.env.INFERENCE_BASE_URL = ''
