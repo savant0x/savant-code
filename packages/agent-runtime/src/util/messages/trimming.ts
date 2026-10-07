@@ -28,7 +28,6 @@ import type { Logger } from '@savant-code/common/types/contracts/logger'
 import type { ToolResultOutput } from '@savant-code/common/types/messages/content-part'
 import type { Message } from '@savant-code/common/types/messages/savant-code-message'
 
-
 /**
  * Token-budget trimming: simplify verbose tool outputs and trim old messages
  * to fit within the model context window.
