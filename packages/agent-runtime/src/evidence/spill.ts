@@ -54,27 +54,73 @@ export async function loadEvidenceRecords(
 }
 
 /**
- * Append one record. Best-effort: resolves false on any failure instead of
- * throwing, so the hot tool-result path is never blocked by evidence IO.
+ * Why a retention attempt failed. A refusal is data, not a swallowed error
+ * (FID-2026-1007-004): the transform that wanted to drop the payload reads this
+ * and keeps the payload instead of discarding bytes nobody stored.
  */
-export async function recordEvidence(params: {
+export type RetentionRefusal =
+  | 'no-project-root'
+  | 'no-tool-call-id'
+  | 'record-too-large'
+  | 'store-full'
+  | 'io-error'
+
+/**
+ * A PROVEN retention — the identity a reader needs to get the bytes back. Emitted
+ * only after the append resolved, so a marker carrying one is never a promise
+ * about a write that did not happen.
+ */
+export type RetentionHandle = {
+  file: string
+  toolCallId: string
+  sha256: string
+  bytes: number
+}
+
+export type RetentionResult =
+  | { retained: true; handle: RetentionHandle }
+  | { retained: false; reason: RetentionRefusal }
+
+type RetentionParams = {
   projectRoot: string
   runId: string
   agentId: string
   toolCallId: string
   toolName: string
   raw: string
-}): Promise<boolean> {
+}
+
+/**
+ * Store a payload and RETURN the verdict (FID-2026-1007-004 step 1).
+ *
+ * This is the seam the record's contract turns on: a transform may discard
+ * model-facing bytes only on the strength of a handle it received from here, and
+ * a refusal means the bytes stay in context. It reuses the existing store —
+ * `evidenceFilePath`, `sha256Hex`, the append-only JSONL format and both caps —
+ * rather than introducing a second spill mechanism, which FID-2026-1006-005 step
+ * 3 forbids.
+ *
+ * Never throws: every failure mode returns a named refusal.
+ */
+export async function retainOriginal(
+  params: RetentionParams,
+): Promise<RetentionResult> {
+  if (!params.projectRoot) return { retained: false, reason: 'no-project-root' }
+  if (!params.toolCallId) return { retained: false, reason: 'no-tool-call-id' }
+  if (params.raw.length > EVIDENCE_MAX_RECORD_BYTES) {
+    return { retained: false, reason: 'record-too-large' }
+  }
+  const file = evidenceFilePath(params.projectRoot, params.runId)
   try {
-    if (!params.projectRoot) return false
-    if (params.raw.length > EVIDENCE_MAX_RECORD_BYTES) return false
-    const file = evidenceFilePath(params.projectRoot, params.runId)
     try {
       const st = await stat(file)
-      if (st.size > EVIDENCE_MAX_FILE_BYTES) return false
+      if (st.size > EVIDENCE_MAX_FILE_BYTES) {
+        return { retained: false, reason: 'store-full' }
+      }
     } catch {
       // File does not exist yet — first record.
     }
+    const sha256 = sha256Hex(params.raw)
     const record: EvidenceSpillRecord = {
       ts: Date.now(),
       runId: params.runId,
@@ -82,15 +128,35 @@ export async function recordEvidence(params: {
       toolCallId: params.toolCallId,
       toolName: params.toolName,
       byteSize: params.raw.length,
-      sha256: sha256Hex(params.raw),
+      sha256,
       raw: params.raw,
     }
     await mkdir(path.dirname(file), { recursive: true })
     await appendFile(file, `${JSON.stringify(record)}\n`, 'utf8')
-    return true
+    return {
+      retained: true,
+      handle: {
+        file,
+        toolCallId: params.toolCallId,
+        sha256,
+        bytes: params.raw.length,
+      },
+    }
   } catch {
-    return false
+    return { retained: false, reason: 'io-error' }
   }
+}
+
+/**
+ * The boolean view of `retainOriginal`, kept for callers that only need a
+ * verdict. Best-effort by contract: never throws, so the hot tool-result path is
+ * never blocked by evidence IO. One truth, two shapes (Law 13).
+ */
+export async function recordEvidence(
+  params: RetentionParams,
+): Promise<boolean> {
+  const result = await retainOriginal(params)
+  return result.retained
 }
 
 /** Parse a spill file; malformed lines are skipped (crash-safe reads). */

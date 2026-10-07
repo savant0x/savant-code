@@ -12,7 +12,8 @@ import {
 import { extractFailingPathsFromContent } from './verification-failure-paths'
 import { isWriteToolName, resolveFidIdForWrite } from './write-bookkeeping'
 import { appendGroundingRefresh } from '../../echo/grounding'
-import { recordEvidence } from '../../evidence/spill'
+import { rememberRetention } from '../../evidence/retention-registry'
+import { retainOriginal } from '../../evidence/spill'
 import { buildHookInput, getHookEngine } from '../../hooks/engine'
 import { getOrCreateProvenance } from '../../provenance'
 import { setActivity } from '../../util/activity-tracking'
@@ -71,14 +72,21 @@ export async function runSuccessLifecycle<T extends ToolName>(
 
   // FID-2026-0824-026: fail-open evidence capture BEFORE any compaction
   // layer can clear this result. Never blocks tool execution.
-  void recordEvidence({
+  //
+  // FID-2026-1007-004 step 2: this is the seam where retention is DECIDED — it
+  // is already async, and it is ordered before every compaction layer. The
+  // verdict is stored so a later, synchronous transform can either prove the
+  // bytes are recoverable or keep the payload. Deliberately not awaited on the
+  // hot path: an unproven lookup is the safe direction, because a transform that
+  // cannot prove retention does not drop. Never blocks tool execution.
+  void retainOriginal({
     projectRoot: params.fileContext?.projectRoot ?? '',
     runId: agentState.runId ?? agentState.agentId,
     agentId: agentState.agentId,
     toolCallId: toolCall.toolCallId,
     toolName,
     raw: JSON.stringify(output),
-  })
+  }).then((result) => rememberRetention(toolCall.toolCallId, result))
 
   // FID-2026-0718-009: M2 — on tool completion, model reasoning resumes.
   // P19: carry the effective model id (parity with step.ts thinking emit).
