@@ -87,3 +87,12 @@ export function submitActiveWizardStep(
 export function cancelWizardSession(): void {
   activeSession = undefined
 }
+
+/**
+ * Test isolation: drops the active wizard session — process-lifetime state
+ * `bun test` shares across files (FID-2026-1007-002). Same effect as
+ * `cancelWizardSession`, under the reset-named seam the audit looks for.
+ */
+export function resetWizardSession(): void {
+  activeSession = undefined
+}

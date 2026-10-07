@@ -30,3 +30,12 @@ export function abortActiveRun(): boolean {
   activeRun.abort()
   return true
 }
+
+/**
+ * Test isolation: forgets the registered in-flight run aborter —
+ * process-lifetime state `bun test` shares across files (FID-2026-1007-002).
+ * Drops the reference only; it never aborts the run.
+ */
+export function resetActiveRun(): void {
+  activeRun = null
+}

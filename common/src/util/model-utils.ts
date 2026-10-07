@@ -23,3 +23,12 @@ function getExplicitlyDefinedModels(): Set<string> {
 export function isExplicitlyDefinedModel(model: Model): boolean {
   return getExplicitlyDefinedModels().has(model as string)
 }
+
+/**
+ * Test isolation: resets the lazily built model set to its declared initial
+ * value — process-lifetime state that `bun test` shares across files
+ * (FID-2026-1007-002).
+ */
+export function resetExplicitlyDefinedModels(): void {
+  explicitlyDefinedModels = null
+}

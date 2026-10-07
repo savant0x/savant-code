@@ -163,3 +163,17 @@ export function enableManualThemeRefresh() {
     recomputeSystemTheme()
   })
 }
+
+/**
+ * Test isolation: clears the watcher's process-lifetime wiring and cached
+ * detections — the debounce timer is cleared before its reference is dropped
+ * — so no case inherits another's theme state (FID-2026-1007-002).
+ */
+export function resetWatcherState(): void {
+  if (pendingRecomputeTimer) clearTimeout(pendingRecomputeTimer)
+  pendingRecomputeTimer = null
+  themeStoreUpdater = null
+  oscDetectedTheme = null
+  themeResolver = null
+  lastDetectedTheme = null
+}

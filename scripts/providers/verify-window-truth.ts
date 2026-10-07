@@ -225,3 +225,13 @@ for (const line of censusCounts) console.log(`census ${line}`)
 console.log(
   `\nwindow-truth probe PASS: ${SAMPLES.length} sampled rows match vendor rosters`,
 )
+
+/** Test isolation: clears the loaded keys and the drift accumulators —
+ * process-lifetime state that `bun test` shares across files
+ * (FID-2026-1007-002). Nothing here touches the network or the disk. */
+export function resetVerifyWindowTruthState(): void {
+  for (const key of Object.keys(keys)) delete keys[key]
+  failures.length = 0
+  censusUnregistered.length = 0
+  censusCounts.length = 0
+}

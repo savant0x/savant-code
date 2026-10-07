@@ -110,3 +110,11 @@ function normalizeCandidate(value?: string | null): ShellName | null {
 
   return null
 }
+
+/**
+ * Test isolation: clears the memoized shell name — process-lifetime state
+ * `bun test` shares across files (FID-2026-1007-002).
+ */
+export function resetCachedShell(): void {
+  cachedShell = null
+}

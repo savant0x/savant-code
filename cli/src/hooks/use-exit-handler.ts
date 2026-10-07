@@ -39,6 +39,12 @@ function setupExitMessageHandler() {
   })
 }
 
+/** Test isolation: forgets that the exit-message handler was registered —
+ *  process-lifetime state `bun test` shares across files (FID-2026-1007-002). */
+export function resetExitHandlerRegistered(): void {
+  exitHandlerRegistered = false
+}
+
 function exitCli(): void {
   if (IS_SAVANT_FREE) {
     void exitSavantFreeCleanly()

@@ -24,7 +24,18 @@ export function modelAvailability(
   return observed.get(keyFor(providerId, modelId))
 }
 
-export function advertisedModelVisible(providerId: string, modelId: string): boolean {
+export function advertisedModelVisible(
+  providerId: string,
+  modelId: string,
+): boolean {
   const verdict = modelAvailability(providerId, modelId)
   return verdict === undefined || isVisibleInAdvertisedLists(verdict)
+}
+
+/**
+ * Test isolation: drops every in-process availability observation — the
+ * process-lifetime map `bun test` shares across files (FID-2026-1007-002).
+ */
+export function resetObservedAvailability(): void {
+  observed.clear()
 }

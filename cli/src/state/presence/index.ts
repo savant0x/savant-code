@@ -81,3 +81,15 @@ export function bootPresence(
 export async function shutdownPresence(): Promise<void> {
   await Promise.all([...services.values()].map((service) => service.stop()))
 }
+
+/**
+ * Test isolation: drops the store subscription and clears the service registry
+ * — process-lifetime state `bun test` shares across files (FID-2026-1007-002).
+ * Unlike `shutdownPresence` this performs no I/O: it only forgets the services
+ * so a later file cannot inherit a live one.
+ */
+export function resetPresenceState(): void {
+  activeSubscription?.()
+  activeSubscription = null
+  services.clear()
+}

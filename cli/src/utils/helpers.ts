@@ -45,3 +45,11 @@ export function formatQueuedPreview(
 
   return `${prefix}${messagePreview}${countSuffix}${suffix}`
 }
+
+/**
+ * Test isolation: clears the memoized timestamp formatter — process-lifetime
+ * state `bun test` shares across files (FID-2026-1007-002).
+ */
+export function resetTimestampFormatter(): void {
+  timestampFormatter = null
+}

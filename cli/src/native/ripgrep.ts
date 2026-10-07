@@ -74,9 +74,10 @@ export const getRgPath = (): Promise<string> => {
 }
 
 /**
- * Reset the cached ripgrep path promise.
- * Used primarily for testing to force re-extraction.
+ * Test isolation: clears the cached ripgrep path promise — process-lifetime
+ * state `bun test` shares across files (FID-2026-1007-002). The next
+ * `getRgPath()` re-resolves/re-extracts; no extraction is triggered here.
  */
-export const resetRgPathCache = (): void => {
+export function resetRgPathCache(): void {
   rgPathPromise = null
 }

@@ -230,3 +230,11 @@ export async function getLanguageConfig(
     return undefined
   }
 }
+
+/** Test isolation: clears the custom WASM directory and the one-time
+ *  init-failure diagnostic — process-lifetime state `bun test` shares across
+ *  files (FID-2026-1007-002). */
+export function resetLanguagesState(): void {
+  customWasmDir = undefined
+  warnedInitFailure = false
+}

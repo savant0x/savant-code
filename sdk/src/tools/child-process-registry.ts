@@ -102,3 +102,11 @@ function installExitSweep() {
     }
   })
 }
+
+/** Test isolation: clears the live-child registry and its sweep flag —
+ * process-lifetime state that `bun test` shares across files
+ * (FID-2026-1007-002). Drops references only: it never kills a child. */
+export function resetChildProcessRegistryState(): void {
+  liveChildren.clear()
+  exitSweepInstalled = false
+}

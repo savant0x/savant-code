@@ -165,3 +165,13 @@ export async function fetchAllCustomModels(
 export function __resetCustomCatalogsForTest(): void {
   customFetchers.clear()
 }
+
+/**
+ * Test isolation: drops the lazily-built per-custom-id fetchers —
+ * process-lifetime state `bun test` shares across files (FID-2026-1007-002).
+ * Same seam as `__resetCustomCatalogsForTest`, under the reset name the
+ * module-state audit recognizes.
+ */
+export function resetCustomCatalogState(): void {
+  customFetchers.clear()
+}

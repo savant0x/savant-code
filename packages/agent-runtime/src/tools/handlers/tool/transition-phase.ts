@@ -26,6 +26,14 @@ function getMaxIterations(cwd: string): number {
   return cached
 }
 
+/**
+ * Test isolation: clears the per-cwd protocol-config cache — process-lifetime
+ * state `bun test` shares across files (FID-2026-1007-002).
+ */
+export function resetMaxIterationsCache(): void {
+  maxIterationsCache.clear()
+}
+
 const VALID_TRANSITIONS: Record<string, string[]> = {
   idle: ['red', 'green'],
   red: ['green', 'idle'], // abort from red

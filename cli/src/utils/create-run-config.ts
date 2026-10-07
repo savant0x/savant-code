@@ -245,3 +245,11 @@ export const createRunConfig = (params: CreateRunConfigParams) => {
     }) satisfies FileFilter,
   }
 }
+
+/**
+ * Test isolation: drops the memoized active-FID path cache — process-lifetime
+ * state `bun test` shares across files (FID-2026-1007-002).
+ */
+export function resetFidPathsCache(): void {
+  fidPathsCache = undefined
+}

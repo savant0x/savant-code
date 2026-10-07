@@ -100,6 +100,19 @@ try {
 }
 
 /**
+ * Test isolation: rebuilds the cached empty `SyntaxStyle` fallback exactly the
+ * way module load does, so a case that drops it cannot change a later case's
+ * fallback (FID-2026-1007-002).
+ */
+export function resetEmptySyntaxStyleFallback(): void {
+  try {
+    emptySyntaxStyleFallback = SyntaxStyle.create()
+  } catch {
+    emptySyntaxStyleFallback = null
+  }
+}
+
+/**
  * Create an OpenTUI `SyntaxStyle` from a Savant `ChatTheme`.
  *
  * Consumers (Phase C `CodeRenderable` / `DiffRenderable` wrappers) call this

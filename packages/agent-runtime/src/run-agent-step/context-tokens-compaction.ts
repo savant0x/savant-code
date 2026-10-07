@@ -32,7 +32,7 @@ const WARNING_CLEAR_HYSTERESIS = 0.9
  * emission, mirroring the `lastEmittedCompactionStatus` WeakMap pattern in
  * context-tokens.ts. Keyed by agentState so parallel agents never collide.
  */
-const lastEmittedMicroSummary = new WeakMap<AgentState, string>()
+let lastEmittedMicroSummary = new WeakMap<AgentState, string>()
 
 /**
  * FID-2026-0725-085: Run micro-compact before each API call to clear stale tool results.
@@ -282,4 +282,12 @@ export function resolveCompactionStatus(params: {
     }
   }
   return percentOfWindow
+}
+
+/**
+ * Test isolation: drops the micro-compact emission dedupe keys —
+ * process-lifetime state `bun test` shares across files (FID-2026-1007-002).
+ */
+export function resetLastEmittedMicroSummary(): void {
+  lastEmittedMicroSummary = new WeakMap<AgentState, string>()
 }

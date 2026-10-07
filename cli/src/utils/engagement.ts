@@ -53,3 +53,14 @@ export function stopEngagementTracking(): void {
   tracker?.stop()
   tracker = undefined
 }
+
+/**
+ * Test isolation: stops and drops the tracker and its activity subscription —
+ * process-lifetime state `bun test` shares across files (FID-2026-1007-002).
+ */
+export function resetEngagementState(): void {
+  tracker?.stop()
+  tracker = undefined
+  unsubscribeActivity?.()
+  unsubscribeActivity = undefined
+}

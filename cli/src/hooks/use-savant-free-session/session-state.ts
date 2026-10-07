@@ -38,6 +38,12 @@ let controller: PollController | null = null
 export function setPollController(next: PollController | null): void {
   controller = next
 }
+/** Test isolation: drops the registered poll controller so a later file starts
+ *  with no live poll loop — process-lifetime state `bun test` shares across
+ *  files (FID-2026-1007-002). */
+export function resetPollController(): void {
+  controller = null
+}
 /** Read the current instance id for outgoing chat requests. Defined via
  *  `holdsLiveSavantFreeSlot` so the two can't drift: an id exists exactly while
  *  we hold a live slot (active, or `ended` inside the server-side grace

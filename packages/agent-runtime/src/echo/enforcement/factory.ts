@@ -12,7 +12,7 @@ import { resolveEnforcementMode } from './helpers'
 import type { DesignContract } from '@savant-code/common/types/design-system'
 import type { AgentState } from '@savant-code/common/types/session-state'
 
-const enforcementInstances = new WeakMap<object, EchoEnforcement>()
+let enforcementInstances = new WeakMap<object, EchoEnforcement>()
 
 export interface EchoEnforcementOptions {
   /** Protocol file the session-init gate requires (default `ECHO.md`). */
@@ -54,4 +54,12 @@ export function getOrCreateEnforcement(
   )
   enforcementInstances.set(agentState, enforcement)
   return enforcement
+}
+
+/**
+ * Test isolation: drops every cached enforcement instance — process-lifetime
+ * state `bun test` shares across files (FID-2026-1007-002).
+ */
+export function resetEnforcementInstances(): void {
+  enforcementInstances = new WeakMap<object, EchoEnforcement>()
 }

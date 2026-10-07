@@ -137,6 +137,14 @@ export function writeFileAtomic(
  */
 const asyncWriteQueues = new Map<string, Promise<AtomicWriteResult>>()
 
+/**
+ * Test isolation: clears the per-path async write lanes — process-lifetime
+ * state `bun test` shares across files (FID-2026-1007-002).
+ */
+export function resetAsyncWriteQueues(): void {
+  asyncWriteQueues.clear()
+}
+
 async function renameAsyncWithWindowsReplacement(
   sourcePath: string,
   targetPath: string,

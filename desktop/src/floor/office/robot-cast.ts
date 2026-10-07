@@ -279,3 +279,12 @@ export function loadCastTemplate(url: string): Promise<RobotTemplate | null> {
   templateCache.set(url, promise)
   return promise
 }
+
+/**
+ * Test isolation: clears the per-URL template-promise cache — process-lifetime
+ * state `bun test` shares across files (FID-2026-1007-002). No load is
+ * cancelled; the entries are dropped so a later file starts uncached.
+ */
+export function resetTemplateCache(): void {
+  templateCache.clear()
+}

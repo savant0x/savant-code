@@ -205,3 +205,13 @@ export async function detectOllamaAndConfigureDirectProvider(
     'Auto-configured Ollama direct-provider mode',
   )
 }
+
+/**
+ * Test isolation: clears the module-scope auto-config flag — process-lifetime
+ * state `bun test` shares across files (FID-2026-1007-002).
+ * `__resetOllamaAutoConfigured` is the older helper for the same flag; this is
+ * the name the module-state audit recognizes as a reset seam.
+ */
+export function resetOllamaOnboardingState(): void {
+  ollamaAutoConfigured = false
+}

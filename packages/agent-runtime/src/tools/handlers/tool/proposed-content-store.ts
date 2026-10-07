@@ -62,3 +62,11 @@ export function clearProposedContentForRun(runId: string): void {
 export function clearAllProposedContent(): void {
   proposedContentByRunId.clear()
 }
+
+/**
+ * Test isolation: drops every run's proposed content — process-lifetime state
+ * `bun test` shares across files (FID-2026-1007-002).
+ */
+export function resetProposedContentByRunId(): void {
+  proposedContentByRunId.clear()
+}

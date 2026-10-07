@@ -147,3 +147,11 @@ export {
   setThemeResolver,
   setupFileWatchers,
 }
+
+/**
+ * Test isolation: clears the memoized truecolor probe — process-lifetime state
+ * `bun test` shares across files (FID-2026-1007-002).
+ */
+export function resetTruecolorSupport(): void {
+  _truecolorSupport = null
+}

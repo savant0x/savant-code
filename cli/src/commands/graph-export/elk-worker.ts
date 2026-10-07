@@ -78,3 +78,10 @@ export function getElkWorkerClass(): Promise<new () => GwtWorkerLike> {
   })()
   return workerClassPromise
 }
+
+/** Test isolation: drops the memoized elk worker-class promise so the next
+ *  caller evaluates the bundle afresh — process-lifetime state `bun test`
+ *  shares across files (FID-2026-1007-002). */
+export function resetWorkerClassPromise(): void {
+  workerClassPromise = null
+}

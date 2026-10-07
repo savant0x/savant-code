@@ -146,3 +146,12 @@ export const useToast = () => {
   const dismissToast = useToastStore((s) => s.dismissToast)
   return { addToast, dismissToast }
 }
+
+/** Test isolation: cancels pending auto-dismiss timers and restarts the id
+ *  counter — process-lifetime state `bun test` shares across files
+ *  (FID-2026-1007-002). The store queue itself is left to its own reset. */
+export function resetUseToastState(): void {
+  for (const handle of activeTimeouts.values()) clearTimeout(handle)
+  activeTimeouts.clear()
+  toastIdCounter = 0
+}

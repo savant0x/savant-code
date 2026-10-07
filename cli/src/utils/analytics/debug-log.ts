@@ -16,6 +16,14 @@ const loadLogger = () => {
   return loggerModulePromise
 }
 
+/**
+ * Test isolation: clears the memoized logger import — process-lifetime state
+ * `bun test` shares across files (FID-2026-1007-002).
+ */
+export function resetLoggerModulePromise(): void {
+  loggerModulePromise = null
+}
+
 export function logAnalyticsDebug(
   message: string,
   data: Record<string, JSONValue>,

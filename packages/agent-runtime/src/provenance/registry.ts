@@ -12,7 +12,7 @@ export type ProvenanceSessionOptions = {
   projectRoot: string
 }
 
-const sessionInstances = new WeakMap<object, ProvenanceSession>()
+let sessionInstances = new WeakMap<object, ProvenanceSession>()
 
 /** Resolve the operating mode: AgentState field, default `record`. */
 export function resolveProvenanceMode(agentState: AgentState): ProvenanceMode {
@@ -59,4 +59,12 @@ export function createOffSession(): ProvenanceSession {
     mode: 'off',
     projectRoot: '.',
   })
+}
+
+/**
+ * Test isolation: drops every cached provenance session — process-lifetime
+ * state `bun test` shares across files (FID-2026-1007-002).
+ */
+export function resetSessionInstances(): void {
+  sessionInstances = new WeakMap<object, ProvenanceSession>()
 }

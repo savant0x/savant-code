@@ -4,7 +4,67 @@
 import './test-env'
 import { beforeEach } from 'bun:test'
 
+import { resetLogoCache } from './branding/constants'
+import { resetRefreshInFlight } from './chat/provider-notification-lifecycle'
+import { resetWorkerClassPromise } from './commands/graph-export/elk-worker'
+import { resetToolComponentRegistry } from './components/tools/registry'
+import { resetActivityQueryCache } from './hooks/activity-query/cache'
+import { resetRetryState } from './hooks/activity-query/retry-state'
+import { resetHintedErrors } from './hooks/helpers/send-message/fallback-hints'
+import { resetExitHandlerRegistered } from './hooks/use-exit-handler'
+import { resetUseThemeState } from './hooks/use-theme'
+import { resetPollController } from './hooks/use-savant-free-session/session-state'
+import { resetUseToastState } from './hooks/use-toast'
+import { resetRgPathCache } from './native/ripgrep'
+import { resetProjectFilesState } from './project-files'
+import { resetPresenceState } from './state/presence'
+import { resetTeacherOverrides } from './teacher/runtime'
+import { resetActiveRun } from './utils/active-run'
+import { resetActivityTracker } from './utils/activity-tracker'
 import { disableAnalytics } from './utils/analytics'
+import { resetLoggerModulePromise } from './utils/analytics/debug-log'
+import { resetAnalyticsErrorLogger } from './utils/analytics/errors'
+import { resetAnalyticsConsentListener } from './utils/analytics/state'
+import { resetAnonymousIdCache } from './utils/anonymous-id'
+import { resetThinkingIdCounter } from './utils/block-operations/thinking-id'
+import { resetChatgptOauthState } from './utils/chatgpt-oauth'
+import { resetClipboardState } from './utils/clipboard'
+import { resetRegisteredRenderer } from './utils/clipboard-renderer'
+import { resetFidPathsCache } from './utils/create-run-config'
+import { resetCachedShell } from './utils/detect-shell'
+import { resetEngagementState } from './utils/engagement'
+import { resetFingerprintState } from './utils/fingerprint'
+import { resetRefreshInFlight as resetFreeOptionsRefresh } from './utils/free-options'
+import { resetTimestampFormatter } from './utils/helpers'
+import { resetLogShipperState } from './utils/log-shipper'
+import { resetFileSinkState } from './utils/logger/file-sink'
+import { resetOllamaOnboardingState } from './utils/ollama-onboarding'
+import { resetCustomCatalogState } from './utils/openrouter-models/custom-catalog'
+import { __resetOpenRouterModelsCacheForTest } from './utils/openrouter-models/gateway'
+import { resetGatewayCoverageState } from './utils/openrouter-models/gateway-coverage'
+import { resetPendingAttachmentsState } from './utils/pending-attachments'
+import { resetProviderMonitoringState } from './utils/provider-monitoring'
+import { resetProviderMonitoringEventsState } from './utils/provider-monitoring-events'
+import { resetProviderOffersState } from './utils/provider-offers'
+import { resetProviderSetupState } from './utils/provider-setup'
+import { resetWizardSession } from './utils/provider-wizard'
+import { resetWizardReplayGuard } from './utils/provider-wizard-replay'
+import { resetRendererCleanupState } from './utils/renderer-cleanup'
+import { resetActiveResearchKeyService } from './utils/research-key-store'
+import { resetApiClient } from './utils/savant-code-api/singleton'
+import { resetSavantCodeClient } from './utils/savant-code-client'
+import { resetLastKnownReferral } from './utils/savant-free-referral-cache'
+import { resetRootStreamPublisherState } from './utils/sdk-event-handlers/root-stream-publisher'
+import { __resetSkillRegistryForTests } from './utils/skill-registry'
+import { resetEmptySyntaxStyleFallback } from './utils/syntax-theme'
+import { resetReturnKeySeenForTests } from './utils/terminal-enter-detection'
+import { resetCachedProtocol } from './utils/terminal-images'
+import { resetTerminalWatchdogState } from './utils/terminal-watchdog'
+import { resetThemeConfig } from './utils/theme-config'
+import { resetTruecolorSupport } from './utils/theme-system'
+import { resetWatcherState } from './utils/theme-system/watcher'
+import { resetCachedVersion } from './utils/version'
+import { resetAsyncWriteQueues } from './utils/write-file-atomic'
 
 /**
  * Global test setup for the CLI workspace.
@@ -32,4 +92,64 @@ beforeEach(() => {
   process.env.DIRECT_PROVIDER = ''
   process.env.INFERENCE_BASE_URL = ''
   disableAnalytics()
+  resetUseToastState()
+  resetLogoCache()
+  resetRefreshInFlight()
+  resetFreeOptionsRefresh()
+  resetWorkerClassPromise()
+  resetToolComponentRegistry()
+  resetHintedErrors()
+  resetExitHandlerRegistered()
+  resetPollController()
+  resetRgPathCache()
+  resetProjectFilesState()
+  resetPresenceState()
+  resetTeacherOverrides()
+  resetActiveRun()
+  resetActivityTracker()
+  resetActivityQueryCache()
+  resetRetryState()
+  resetLoggerModulePromise()
+  resetAnalyticsErrorLogger()
+  resetAnalyticsConsentListener()
+  resetAnonymousIdCache()
+  resetThinkingIdCounter()
+  resetChatgptOauthState()
+  resetRegisteredRenderer()
+  resetClipboardState()
+  resetFidPathsCache()
+  resetCachedShell()
+  resetEngagementState()
+  resetFingerprintState()
+  resetTimestampFormatter()
+  resetLogShipperState()
+  resetFileSinkState()
+  resetOllamaOnboardingState()
+  resetCustomCatalogState()
+  resetGatewayCoverageState()
+  __resetOpenRouterModelsCacheForTest()
+  resetRootStreamPublisherState()
+  resetPendingAttachmentsState()
+  resetProviderMonitoringEventsState()
+  resetProviderMonitoringState()
+  resetProviderOffersState()
+  resetProviderSetupState()
+  resetWizardReplayGuard()
+  resetWizardSession()
+  resetRendererCleanupState()
+  resetActiveResearchKeyService()
+  resetApiClient()
+  resetSavantCodeClient()
+  resetLastKnownReferral()
+  __resetSkillRegistryForTests()
+  resetEmptySyntaxStyleFallback()
+  resetReturnKeySeenForTests()
+  resetCachedProtocol()
+  resetTerminalWatchdogState()
+  resetThemeConfig()
+  resetUseThemeState()
+  resetWatcherState()
+  resetTruecolorSupport()
+  resetCachedVersion()
+  resetAsyncWriteQueues()
 })

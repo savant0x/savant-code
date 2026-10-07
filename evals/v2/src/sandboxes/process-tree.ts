@@ -17,6 +17,13 @@ export type TeardownMechanism = 'taskkill-tree' | 'process-group' | 'single'
 
 let cachedMechanism: TeardownMechanism | undefined
 
+/** Test isolation: clears the cached teardown-mechanism probe so the next
+ * call re-probes — process-lifetime state that `bun test` shares across
+ * files (FID-2026-1007-002). */
+export function resetCachedMechanism(): void {
+  cachedMechanism = undefined
+}
+
 /** Probe (once) which tree-teardown mechanism this platform supports. */
 export function probeTeardownMechanism(): TeardownMechanism {
   if (cachedMechanism !== undefined) {

@@ -200,3 +200,12 @@ export function getSharedDeckDriver(): DeckLiveDriver {
   }
   return sharedDriver
 }
+
+/**
+ * Test isolation: drops the process-lifetime shared driver reference —
+ * `bun test` shares module state across files (FID-2026-1007-002). Dropping
+ * the reference only; teardown of a live driver stays with its owner.
+ */
+export function resetSharedDriver(): void {
+  sharedDriver = null
+}

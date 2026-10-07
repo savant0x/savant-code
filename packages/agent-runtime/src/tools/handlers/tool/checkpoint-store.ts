@@ -292,3 +292,8 @@ export function forkFrom(params: {
 export function clearOpenTurnsForTesting(): void {
   openTurns.clear()
 }
+/** Test isolation: clears both checkpoint buffers (FID-2026-1007-002). */
+export function resetCheckpointStoreState(): void {
+  openTurns.clear()
+  inFlightCaptures.clear()
+}

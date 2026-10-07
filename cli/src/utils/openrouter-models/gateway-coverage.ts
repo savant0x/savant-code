@@ -130,3 +130,13 @@ export async function staleWindowCoverageLiveProviders(
   }
   return stale.sort()
 }
+
+/**
+ * Test isolation: clears the module-scope rebuild cooldown timestamp —
+ * process-lifetime state `bun test` shares across files (FID-2026-1007-002).
+ * Same seam as `__resetGatewayRefreshCooldownForTest`, under the reset name the
+ * module-state audit recognizes.
+ */
+export function resetGatewayCoverageState(): void {
+  lastRefreshAttemptAt = undefined
+}

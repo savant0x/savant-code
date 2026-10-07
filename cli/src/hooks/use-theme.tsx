@@ -86,6 +86,41 @@ export const detectSystemTheme = (): ThemeName => {
   return resolved
 }
 
+/**
+ * Builds the theme for a resolved name. One truth for the construction, so the
+ * boot path and the test-isolation reset cannot drift (FID-2026-1007-002).
+ */
+const themeFor = (name: ThemeName): ChatTheme =>
+  buildTheme(
+    cloneChatTheme(chatThemes[name]),
+    name,
+    themeConfig.customColors,
+    themeConfig.plugins,
+  )
+
+/**
+ * Creates the store over an initial theme. Extracted from
+ * `initializeThemeStore` so the reset installs a store through the SAME factory
+ * the boot path uses, instead of handing later cases a throwing stub.
+ */
+const createThemeStore = (
+  initialTheme: ChatTheme,
+): UseBoundStore<StoreApi<ThemeStore>> =>
+  create<ThemeStore>((set, get) => ({
+    theme: initialTheme,
+
+    setThemeName: (name: ThemeName) => {
+      const currentTheme = get().theme
+
+      // Skip if theme name hasn't changed
+      if (currentTheme.name === name) {
+        return
+      }
+
+      set({ theme: themeFor(name) })
+    },
+  }))
+
 export function initializeThemeStore() {
   if (themeStoreInitialized) {
     return
@@ -97,34 +132,7 @@ export function initializeThemeStore() {
 
   const initialThemeName = detectSystemTheme()
   setLastDetectedTheme(initialThemeName)
-  const initialTheme = buildTheme(
-    cloneChatTheme(chatThemes[initialThemeName]),
-    initialThemeName,
-    themeConfig.customColors,
-    themeConfig.plugins,
-  )
-
-  useThemeStore = create<ThemeStore>((set, get) => ({
-    theme: initialTheme,
-
-    setThemeName: (name: ThemeName) => {
-      const currentTheme = get().theme
-
-      // Skip if theme name hasn't changed
-      if (currentTheme.name === name) {
-        return
-      }
-
-      const baseTheme = cloneChatTheme(chatThemes[name])
-      const theme = buildTheme(
-        baseTheme,
-        name,
-        themeConfig.customColors,
-        themeConfig.plugins,
-      )
-      set({ theme })
-    },
-  }))
+  useThemeStore = createThemeStore(themeFor(initialThemeName))
 
   // Set up the theme watcher for reactive updates when system theme changes
   initializeThemeWatcher((name: ThemeName) => {
@@ -133,6 +141,26 @@ export function initializeThemeStore() {
 
   // Note: OSC detection is done earlier in index.tsx before OpenTUI starts,
   // so the result is already available via getOscDetectedTheme()
+}
+
+/**
+ * Test isolation: installs a FRESH store built through the boot path's factory,
+ * so a case starts from the theme the process would have initialized with rather
+ * than inheriting whatever an earlier file left behind — process-lifetime state
+ * `bun test` shares across files (FID-2026-1007-002).
+ *
+ * It deliberately does NOT restore the throwing pre-init stub. 122 CLI
+ * component tests render without calling `initializeThemeStore()` and relied on
+ * an earlier file having created the store (measured: 122 failures,
+ * `useThemeStore not initialized`), so a bare clear would have made those files
+ * the fix. Rebuilding through the same factory gives the isolation that matters
+ * here — a `setThemeName` mutation cannot leak across cases — without changing
+ * what a case starts from. It performs no I/O: no watcher, resolver or file
+ * watcher is re-armed (only `initializeThemeStore` owns those).
+ */
+export function resetUseThemeState(): void {
+  themeStoreInitialized = false
+  useThemeStore = createThemeStore(themeFor(detectSystemTheme()))
 }
 
 export const useTheme = (): ChatTheme => {

@@ -52,6 +52,15 @@ export function startNewChat() {
 }
 
 /**
+ * Test isolation: clears the project root and chat id — process-lifetime state
+ * `bun test` shares across files (FID-2026-1007-002). Performs no I/O.
+ */
+export function resetProjectFilesState(): void {
+  projectRoot = undefined
+  currentChatId = undefined
+}
+
+/**
  * Stable, collision-free namespace key for a project root (FID-2026-1003-003,
  * audit D7): `<basename>-<sha256-8>` over the normalized resolved root.
  *

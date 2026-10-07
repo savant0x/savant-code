@@ -46,7 +46,9 @@ export function countTokensJson(value: JSONValue): number {
   return countTokens(JSON.stringify(value) ?? '')
 }
 
-const JSON_TOKEN_COUNT_CACHE = new WeakMap<object, number>()
+// `let`: the reset below re-keys it, so a later test file cannot inherit an
+// entry memoized by an earlier one (FID-2026-1007-002).
+let JSON_TOKEN_COUNT_CACHE = new WeakMap<object, number>()
 
 /**
  * Memoize a JSON token count by object identity. `countTokensJson` re-runs
@@ -129,7 +131,8 @@ export function countTokensMessages(messages: Message[]): number {
  * countTokensMessages), so rare in-place mutations may drift the total
  * slightly — acceptable per the H2 design decision.
  */
-const MESSAGE_TOKEN_COUNT_CACHE = new WeakMap<object, number>()
+// `let`: see the note above — the reset re-keys this memo too.
+let MESSAGE_TOKEN_COUNT_CACHE = new WeakMap<object, number>()
 
 export function countTokensMessagesCached(messages: Message[]): number {
   let total = 0
@@ -154,4 +157,14 @@ export function countTokensForFiles(
     tokenCounts[filePath] = content ? countTokens(content) : 0
   }
   return tokenCounts
+}
+
+/**
+ * Test isolation: re-keys the two identity-keyed token memos —
+ * process-lifetime state `bun test` shares across files (FID-2026-1007-002).
+ * Only memoized work is dropped; every count is a pure function of its key.
+ */
+export function resetTokenCounterState(): void {
+  JSON_TOKEN_COUNT_CACHE = new WeakMap<object, number>()
+  MESSAGE_TOKEN_COUNT_CACHE = new WeakMap<object, number>()
 }

@@ -109,3 +109,12 @@ export function getCavemanRulesBlockForAgent(
   if (!isCavemanTargetAgent(agentId)) return ''
   return buildCavemanRulesBlock(getCavemanConfig(projectRoot))
 }
+
+/**
+ * Test isolation: clears the per-cwd Caveman config cache — process-lifetime
+ * state `bun test` shares across files (FID-2026-1007-002). Same clear as
+ * `__resetCavemanConfigCacheForTests`, under the conventional reset name.
+ */
+export function resetCavemanConfigCache(): void {
+  cavemanConfigCache.clear()
+}

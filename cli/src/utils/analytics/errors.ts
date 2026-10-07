@@ -29,6 +29,14 @@ export function setAnalyticsErrorLogger(loggerFn: AnalyticsErrorLogger) {
   analyticsErrorLogger = loggerFn
 }
 
+/**
+ * Test isolation: clears the pluggable error logger — process-lifetime state
+ * `bun test` shares across files (FID-2026-1007-002).
+ */
+export function resetAnalyticsErrorLogger(): void {
+  analyticsErrorLogger = undefined
+}
+
 export function logAnalyticsError(
   error: unknown,
   context: AnalyticsErrorContext,

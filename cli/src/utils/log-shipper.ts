@@ -114,3 +114,20 @@ export async function flushClientLogs(): Promise<void> {
     flushing = false
   }
 }
+
+/**
+ * Test isolation: clears the shipped-record buffer, its flush interval, the
+ * shutdown flag, the consent generation and the in-flight flush controller —
+ * process-lifetime state `bun test` shares across files (FID-2026-1007-002).
+ */
+export function resetLogShipperState(): void {
+  buffer = []
+  if (timer) {
+    clearInterval(timer)
+    timer = null
+  }
+  flushing = false
+  shutdownRegistered = false
+  consentGeneration = 0
+  activeFlushController = null
+}

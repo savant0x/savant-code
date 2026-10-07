@@ -283,3 +283,12 @@ export function getSchemaVersion(): number {
 // FID-2026-0803-002 DB-4: `getDatabase`/`closeDatabase` had zero callers and
 // duplicated the `db` export; removed.
 export type DatabaseType = Database
+
+/** Test isolation: drops the memoized per-path connections so a later test
+ *  file opens from the path it resolves, not the one an earlier file cached —
+ *  process-lifetime state `bun test` shares across files (FID-2026-1007-002).
+ *  Handles are dropped, never closed: closing a shared database is I/O this
+ *  reset must not perform. */
+export function resetDatabaseConnections(): void {
+  connections.clear()
+}

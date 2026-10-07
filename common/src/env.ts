@@ -120,3 +120,16 @@ export const IS_CI = process.env.SAVANT_CODE_GITHUB_ACTIONS === 'true'
 // Debug flag for logging analytics events in dev mode
 // Set to true when actively debugging analytics - affects both CLI and backend
 export const DEBUG_ANALYTICS = false
+
+/**
+ * Test isolation: re-snapshots `rawEnv` from the process environment with the
+ * same expression the module initializer uses — process-lifetime state that
+ * `bun test` shares across files (FID-2026-1007-002).
+ */
+export function resetRawEnv(): void {
+  for (const key of clientEnvVars) {
+    rawEnv[key] =
+      process.env[key] ??
+      (developmentDefaultsAllowed ? DEV_DEFAULTS[key] : undefined)
+  }
+}

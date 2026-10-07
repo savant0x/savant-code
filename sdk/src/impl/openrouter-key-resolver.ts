@@ -43,6 +43,7 @@ function getEnvironmentSignature(): string {
 export function resetOpenRouterApiKeyCache(): void {
   cachedKey = undefined
   cachedEnvironmentSignature = undefined
+  resolvingKey = null
 }
 
 export async function resolveOpenRouterApiKey(): Promise<string | undefined> {

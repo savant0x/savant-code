@@ -41,3 +41,11 @@ export function providerAccountRevision(config: ProviderConfig): string {
   accounts.set(accountKey(config.id), { values, revision })
   return revision
 }
+
+/**
+ * Test isolation: drops every remembered account revision — process-lifetime
+ * state that `bun test` shares across files (FID-2026-1007-002).
+ */
+export function resetProviderAccountRevisions(): void {
+  accounts.clear()
+}

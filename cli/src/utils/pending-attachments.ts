@@ -246,3 +246,16 @@ export function capturePendingAttachments(): PendingAttachment[] {
   }
   return pendingAttachments
 }
+
+/**
+ * Test isolation: clears the clipboard placeholder counter and every pending
+ * auto-remove timer — process-lifetime state `bun test` shares across files
+ * (FID-2026-1007-002).
+ */
+export function resetPendingAttachmentsState(): void {
+  clipboardPlaceholderCounter = 0
+  for (const timer of errorImageTimers.values()) {
+    clearTimeout(timer)
+  }
+  errorImageTimers.clear()
+}

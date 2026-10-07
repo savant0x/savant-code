@@ -181,3 +181,12 @@ export function enforceCanExecuteWrite(sql: string, allowWrite: boolean): void {
     )
   }
 }
+
+/**
+ * Test isolation: forgets the lazily-resolved bun:sqlite constructor —
+ * process-lifetime state `bun test` shares across files (FID-2026-1007-002).
+ * No connection is closed; the reference is simply dropped.
+ */
+export function resetSqliteDatabaseCtor(): void {
+  sqliteDatabaseCtor = undefined
+}

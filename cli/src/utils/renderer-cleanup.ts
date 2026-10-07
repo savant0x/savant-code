@@ -179,3 +179,16 @@ export function createEarlyFatalHandler(): (error: unknown) => void {
     process.exit(1)
   }
 }
+
+/**
+ * Test isolation: drops the renderer and installer bookkeeping, including the
+ * one-shot terminal-state latch — process-lifetime state `bun test` shares
+ * across files (FID-2026-1007-002). The process-level handlers this module
+ * installs stay registered; they are idempotent and checked by
+ * `handlersInstalled`.
+ */
+export function resetRendererCleanupState(): void {
+  renderer = null
+  handlersInstalled = false
+  terminalStateReset = false
+}

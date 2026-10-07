@@ -275,3 +275,12 @@ export function useGateway(): UseGatewayResult {
     haltRun,
   }
 }
+
+/**
+ * Test isolation: drops the page-level shared gateway client —
+ * process-lifetime state `bun test` shares across files (FID-2026-1007-002).
+ * Dropping the reference only; the next accessor call builds a fresh client.
+ */
+export function resetSharedClient(): void {
+  sharedClient = null
+}

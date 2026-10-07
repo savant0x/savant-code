@@ -31,3 +31,11 @@ export function registerClipboardRenderer(renderer: ClipboardRenderer): void {
 export function unregisterClipboardRenderer(): void {
   registeredRenderer = null
 }
+
+/**
+ * Test isolation: drops the registered renderer — process-lifetime state
+ * `bun test` shares across files (FID-2026-1007-002).
+ */
+export function resetRegisteredRenderer(): void {
+  registeredRenderer = null
+}

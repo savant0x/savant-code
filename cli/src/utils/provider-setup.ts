@@ -230,3 +230,13 @@ export function getProviderSetupGuidance(info: MissingProviderSetup): string {
     `For automation, set ${info.envVar} in your shell before starting Savant-Code.`,
   ].join(' ')
 }
+
+/**
+ * Test isolation: restores the interactive setup selection to its default and
+ * drops the staged extra-credential prompts — process-lifetime state
+ * `bun test` shares across files (FID-2026-1007-002).
+ */
+export function resetProviderSetupState(): void {
+  activeProvider = PROVIDER_SETUP_DEFAULT
+  pendingExtraCredentials = []
+}

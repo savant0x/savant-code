@@ -156,3 +156,12 @@ export function createActivityOverlay(
     },
   }
 }
+
+/**
+ * Test isolation: resets the mounted-overlay refcount — process-lifetime state
+ * `bun test` shares across files (FID-2026-1007-002). Without it a leaked
+ * count keeps style release from ever running in a later file.
+ */
+export function resetActiveInstances(): void {
+  activeInstances = 0
+}

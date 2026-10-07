@@ -193,3 +193,9 @@ export function normalizeFnSource(src: string): string {
   cache.set(src, compacted)
   return compacted
 }
+
+/** Test isolation: clears the fn-source normalization memo — process-lifetime
+ *  state `bun test` shares across files (FID-2026-1007-002). */
+export function resetNormalizeCache(): void {
+  cache.clear()
+}

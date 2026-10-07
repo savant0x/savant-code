@@ -67,3 +67,12 @@ export async function withFileMutationQueue<T>(
 export function pendingFileMutationLanes(): number {
   return lanes.size
 }
+
+/**
+ * Test isolation: drops every mutation lane — process-lifetime state `bun test`
+ * shares across files (FID-2026-1007-002). A queued job still settles; only the
+ * serialization bookkeeping is forgotten.
+ */
+export function resetFileMutationLanes(): void {
+  lanes.clear()
+}

@@ -195,6 +195,12 @@ export const isChatGptOAuthValid = (clientEnv: ClientEnv = env): boolean => {
 
 let chatGptRefreshPromise: Promise<ChatGptOAuthCredentials | null> | null = null
 
+/** Test isolation: drops the in-flight refresh promise — process-lifetime
+ * state that `bun test` shares across files (FID-2026-1007-002). */
+export function resetChatGptRefreshPromise(): void {
+  chatGptRefreshPromise = null
+}
+
 export const refreshChatGptOAuthToken = async (
   clientEnv: ClientEnv = env,
 ): Promise<ChatGptOAuthCredentials | null> => {

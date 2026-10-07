@@ -22,6 +22,12 @@ export function refreshProviderNotifications(): Promise<void> {
     })
   return refreshInFlight
 }
+
+/** Test isolation: drops the in-flight provider-notification refresh —
+ *  process-lifetime state `bun test` shares across files (FID-2026-1007-002). */
+export function resetRefreshInFlight(): void {
+  refreshInFlight = undefined
+}
 export function mountProviderNotifications(
   coordinator: ProviderNotificationCoordinator = providerNotifications,
   startMonitoring = startProviderMonitoring,

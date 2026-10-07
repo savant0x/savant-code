@@ -41,3 +41,14 @@ export function clearAllThoughtSessionsForTests(): void {
   }
   sessions.clear()
 }
+
+/**
+ * Test isolation: tears down and clears every thought session —
+ * process-lifetime state `bun test` shares across files (FID-2026-1007-002).
+ */
+export function resetThoughtSessions(): void {
+  for (const session of sessions.values()) {
+    session.cleanup()
+  }
+  sessions.clear()
+}

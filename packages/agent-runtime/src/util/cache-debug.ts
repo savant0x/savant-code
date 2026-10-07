@@ -259,3 +259,11 @@ export function enrichCacheDebugSnapshotWithProviderRequest(params: {
     logger.warn({ error: err }, '[Cache Debug] Failed to enrich snapshot')
   }
 }
+
+/**
+ * Test isolation: restarts snapshot numbering at 000 — process-lifetime state
+ * `bun test` shares across files (FID-2026-1007-002).
+ */
+export function resetCacheDebugCounter(): void {
+  cacheDebugCounter = 0
+}

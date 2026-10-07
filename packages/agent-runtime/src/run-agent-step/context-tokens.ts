@@ -26,7 +26,7 @@ import type { PrintModeCompactionStatus } from '@savant-code/common/types/print-
 import type { AgentState } from '@savant-code/common/types/session-state'
 import type { CustomToolDefinitions } from '@savant-code/common/util/file'
 
-const lastEmittedCompactionStatus = new WeakMap<AgentState, string>()
+let lastEmittedCompactionStatus = new WeakMap<AgentState, string>()
 
 function emitCompactionStatus(
   agentState: AgentState,
@@ -190,4 +190,12 @@ export async function prepareStepContext(params: {
 
   emitCompactionStatus(agentState, contextCompactor, loopParams.onResponseChunk)
   return { stepPrompt, systemTokens }
+}
+
+/**
+ * Test isolation: drops the compaction-status emission dedupe keys —
+ * process-lifetime state `bun test` shares across files (FID-2026-1007-002).
+ */
+export function resetLastEmittedCompactionStatus(): void {
+  lastEmittedCompactionStatus = new WeakMap<AgentState, string>()
 }

@@ -51,3 +51,11 @@ export function requireRow<T>(row: T | null, label: string): T {
   }
   return row
 }
+
+/** Test isolation: clears the memoized prepared statements and the connection
+ *  they were bound to — process-lifetime state `bun test` shares across files
+ *  (FID-2026-1007-002). Statements are dropped, never finalized. */
+export function resetSqliteState(): void {
+  statementCache.clear()
+  boundConnection = undefined
+}

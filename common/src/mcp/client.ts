@@ -248,3 +248,15 @@ export async function callMCPTool(
     } satisfies ToolResultOutput
   })
 }
+
+/**
+ * Test isolation: empties the MCP client registry, its per-client tool-call
+ * timeouts and the cached `listTools` promises — process-lifetime state that
+ * `bun test` shares across files (FID-2026-1007-002). References are dropped,
+ * never closed: a reset performs no I/O.
+ */
+export function resetClientState(): void {
+  for (const key of Object.keys(runningClients)) delete runningClients[key]
+  for (const key of Object.keys(clientTimeouts)) delete clientTimeouts[key]
+  for (const key of Object.keys(listToolsCache)) delete listToolsCache[key]
+}

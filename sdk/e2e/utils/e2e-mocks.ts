@@ -37,3 +37,10 @@ export function setupE2eMocks(): void {
     promptAiSdkStructuredMock as typeof llmModule.promptAiSdkStructured,
   )
 }
+
+/** Test isolation: clears the installed-mocks flag so a later test file can
+ * install them again — process-lifetime state that `bun test` shares across
+ * files (FID-2026-1007-002). */
+export function resetE2eMocks(): void {
+  mocksApplied = false
+}

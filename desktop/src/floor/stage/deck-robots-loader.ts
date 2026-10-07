@@ -87,3 +87,13 @@ export function loadRobotTemplate(
   }
   return templatePromise
 }
+
+/**
+ * Test isolation: clears the cached load promise and the last reported outcome
+ * — process-lifetime state `bun test` shares across files (FID-2026-1007-002).
+ * A later file then loads from `pending`, exactly as a fresh process does.
+ */
+export function resetDeckRobotsLoaderState(): void {
+  templatePromise = null
+  lastOutcome = 'pending'
+}

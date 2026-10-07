@@ -11,3 +11,11 @@ export function notifyProviderSelectionChanged(): void {
     for (const listener of listeners) listener()
   })
 }
+
+/**
+ * Test isolation: drops every provider-selection subscriber — process-lifetime
+ * state `bun test` shares across files (FID-2026-1007-002).
+ */
+export function resetProviderMonitoringEventsState(): void {
+  listeners.clear()
+}

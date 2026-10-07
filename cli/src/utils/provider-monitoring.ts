@@ -145,3 +145,16 @@ function releaseMonitoring(): void {
 export function refreshQuotaAfterRefusal(providerId?: string): void {
   void monitor?.refresh(true, providerId).catch(() => {})
 }
+
+/**
+ * Test isolation: tears down the active monitor and clears the release
+ * counter — process-lifetime state `bun test` shares across files
+ * (FID-2026-1007-002). The teardown is the module's own local `stop` (abort,
+ * unsubscribe, clearInterval); only the references are dropped here.
+ */
+export function resetProviderMonitoringState(): void {
+  stop?.()
+  stop = undefined
+  monitor = undefined
+  releases = 0
+}

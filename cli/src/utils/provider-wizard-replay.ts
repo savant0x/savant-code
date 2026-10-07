@@ -61,3 +61,13 @@ export function isWizardSubmissionReplayed(
 export function clearWizardReplayGuard(): void {
   consumedSubmissions.clear()
 }
+
+/**
+ * Test isolation: clears every replay tombstone — the same clear as
+ * `clearWizardReplayGuard`, exposed under the reset-named seam the
+ * module-state audit looks for (FID-2026-1007-002). Process-lifetime state
+ * `bun test` shares across files.
+ */
+export function resetWizardReplayGuard(): void {
+  clearWizardReplayGuard()
+}

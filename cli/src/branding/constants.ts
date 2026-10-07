@@ -38,6 +38,12 @@ function getLogoFromArt(): string {
   return _logoCache
 }
 
+/** Test isolation: clears the memoized art-file logo — process-lifetime state
+ *  `bun test` shares across files (FID-2026-1007-002). */
+export function resetLogoCache(): void {
+  _logoCache = null
+}
+
 const LOGO_SAVANT_CODE = getLogoFromArt()
 const LOGO_SMALL_SAVANT_CODE = getLogoFromArt()
 const LOGO_SAVANT_FREE = getLogoFromArt()

@@ -221,3 +221,11 @@ export function getImageSupportDescription(): string {
       return 'No inline image support'
   }
 }
+
+/**
+ * Test isolation: clears the detected protocol — process-lifetime state
+ * `bun test` shares across files (FID-2026-1007-002).
+ */
+export function resetCachedProtocol(): void {
+  cachedProtocol = null
+}

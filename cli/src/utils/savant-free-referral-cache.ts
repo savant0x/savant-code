@@ -29,7 +29,15 @@ export function getCachedReferral(): SavantFreeReferralInfo | undefined {
   return lastKnownReferral
 }
 
+/**
+ * Test isolation: clears the cached referral block — process-lifetime state
+ * `bun test` shares across files (FID-2026-1007-002).
+ */
+export function resetLastKnownReferral(): void {
+  lastKnownReferral = undefined
+}
+
 /** Test-only: clear the cache so cases start from a known-empty state. */
 export function __resetReferralCacheForTest(): void {
-  lastKnownReferral = undefined
+  resetLastKnownReferral()
 }

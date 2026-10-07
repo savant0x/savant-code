@@ -261,3 +261,14 @@ export function getFingerprintType(
   }
   return 'unknown'
 }
+
+/**
+ * Test isolation: clears the lazily imported identity modules and the memoized
+ * fingerprint promise — process-lifetime state `bun test` shares across files
+ * (FID-2026-1007-002).
+ */
+export function resetFingerprintState(): void {
+  machineIdModule = null
+  systeminformationModule = null
+  cachedFingerprintPromise = null
+}

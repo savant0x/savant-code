@@ -94,3 +94,11 @@ export function trackEvent({
     logger.error({ error }, 'Failed to track event')
   }
 }
+
+/**
+ * Test isolation: drops the lazily created PostHog client — process-lifetime
+ * state that `bun test` shares across files (FID-2026-1007-002).
+ */
+export function resetAnalyticsClient(): void {
+  client = undefined
+}

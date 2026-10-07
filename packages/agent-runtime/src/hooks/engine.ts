@@ -165,3 +165,11 @@ export function getHookEngine(
   }
   return engine
 }
+
+/**
+ * Test isolation: clears the per-cwd hook-engine cache — process-lifetime
+ * state `bun test` shares across files (FID-2026-1007-002).
+ */
+export function resetEngineCache(): void {
+  engineCache.clear()
+}

@@ -67,3 +67,14 @@ export function clearLogFile(): void {
   logPath = undefined
   pinoLogger = undefined
 }
+
+/**
+ * Test isolation: drops the cached debug-log path and its pino logger —
+ * process-lifetime state `bun test` shares across files (FID-2026-1007-002).
+ * `clearLogFile()` clears the same two bindings but also deletes log files;
+ * this seam touches no filesystem state.
+ */
+export function resetFileSinkState(): void {
+  logPath = undefined
+  pinoLogger = undefined
+}

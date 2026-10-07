@@ -244,3 +244,13 @@ export function stopTerminalWatchdog(): void {
     }
   }
 }
+
+/**
+ * Test isolation: drops the watchdog bookkeeping WITHOUT touching the child —
+ * a reset performs no I/O, so a leaked fixture process is left to the test
+ * that started it (FID-2026-1007-002).
+ */
+export function resetTerminalWatchdogState(): void {
+  watchdog = null
+  disarmFilePath = null
+}

@@ -48,7 +48,7 @@ type RootStreamRuntime = {
   timing: RootStreamTiming
 }
 
-const runtimes = new WeakMap<EventHandlerState, RootStreamRuntime>()
+let runtimes = new WeakMap<EventHandlerState, RootStreamRuntime>()
 
 function runtimeFor(
   state: EventHandlerState,
@@ -121,4 +121,15 @@ export function disposeRootStreamPublisher(state: EventHandlerState): void {
   if (!runtime) return
   runtime.publisher.flush()
   runtimes.delete(state)
+}
+
+/**
+ * Test isolation: drops every publisher this process holds — process-lifetime
+ * state `bun test` shares across files (FID-2026-1007-002). Entries die with
+ * their state object, but a state the suites share carries a pending delta
+ * buffer and a publisher's timing into the next file. Reassignment is the only
+ * way to clear a WeakMap.
+ */
+export function resetRootStreamPublisherState(): void {
+  runtimes = new WeakMap<EventHandlerState, RootStreamRuntime>()
 }

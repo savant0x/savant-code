@@ -72,6 +72,16 @@ export function resetAnalyticsState(deps?: AnalyticsDeps) {
   identified = false
 }
 
+/**
+ * Test isolation: clears the registered consent listener — process-lifetime
+ * state `bun test` shares across files (FID-2026-1007-002). Separate from
+ * `resetAnalyticsState` so a test that asserts listener notification keeps
+ * controlling the listener itself.
+ */
+export function resetAnalyticsConsentListener(): void {
+  consentChangeListener = undefined
+}
+
 /** Disable remote analytics and clear any buffered remote events. */
 export function disableAnalytics(): void {
   // Close the synchronous consent boundary before touching the SDK. This

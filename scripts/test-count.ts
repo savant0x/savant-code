@@ -32,3 +32,9 @@ for (const rel of files) {
 if (files.length > 1) {
   console.log(`${total}\ttotal`)
 }
+
+/** Test isolation: clears the running count — process-lifetime state that
+ * `bun test` shares across files (FID-2026-1007-002). */
+export function resetTestCountState(): void {
+  total = 0
+}

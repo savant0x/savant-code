@@ -249,3 +249,9 @@ export function probeRipgrepAvailability(
   probeCache.set(cacheKey, probe)
   return probe
 }
+
+/** Test isolation: clears the memoized availability probes — process-lifetime
+ * state that `bun test` shares across files (FID-2026-1007-002). */
+export function resetProbeCache(): void {
+  probeCache.clear()
+}

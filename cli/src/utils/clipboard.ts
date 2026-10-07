@@ -281,3 +281,15 @@ export async function copyToClipboard(text: string): Promise<boolean> {
     return false
   }
 }
+
+/**
+ * Test isolation: clears the pending clipboard message, its dismissal timer and
+ * every subscriber — process-lifetime state `bun test` shares across files
+ * (FID-2026-1007-002).
+ */
+export function resetClipboardState(): void {
+  if (clearTimer) clearTimeout(clearTimer)
+  clearTimer = null
+  currentMessage = null
+  listeners.clear()
+}

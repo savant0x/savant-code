@@ -116,3 +116,10 @@ export async function withGraphOperationLock<T>(
     if (graphOperationTails.get(key) === queued) graphOperationTails.delete(key)
   }
 }
+
+/** Test isolation: clears the in-process operation lock tails that no
+ *  in-flight operation is holding — process-lifetime state `bun test` shares
+ *  across files (FID-2026-1007-002). */
+export function resetGraphOperationTails(): void {
+  graphOperationTails.clear()
+}

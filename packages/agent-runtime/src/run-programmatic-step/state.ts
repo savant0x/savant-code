@@ -37,3 +37,14 @@ export function clearProgrammaticRunState(runId: string): void {
   runIdToStepAll.delete(runId)
   clearProposedContentForRun(runId)
 }
+
+/**
+ * Test isolation: clears every run's generator handle and STEP_ALL flag —
+ * process-lifetime state `bun test` shares across files (FID-2026-1007-002).
+ */
+export function resetRunProgrammaticStepState(): void {
+  for (const key in runIdToGenerator) {
+    delete runIdToGenerator[key]
+  }
+  runIdToStepAll.clear()
+}

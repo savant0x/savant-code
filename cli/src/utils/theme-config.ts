@@ -153,3 +153,15 @@ export const buildTheme = (
 
   return theme
 }
+
+/**
+ * Test isolation: restores the active config and undoes any plugin a test
+ * pushed into the shared default object (the initial `themeConfig` IS
+ * `defaultThemeConfig`, so a registration mutates both) — process-lifetime
+ * state `bun test` shares across files (FID-2026-1007-002).
+ */
+export function resetThemeConfig(): void {
+  themeConfig = defaultThemeConfig
+  defaultThemeConfig.customColors = {}
+  defaultThemeConfig.plugins = []
+}

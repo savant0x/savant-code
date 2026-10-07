@@ -286,3 +286,14 @@ export function cancelTeacherExercise(): void {
 export function exitTeacherExercise(): void {
   resetTeacherSession()
 }
+
+/**
+ * Test isolation: clears the injected teacher seams — process-lifetime state
+ * `bun test` shares across files (FID-2026-1007-002), deliberately separate
+ * from `resetTeacherSession`, which `startTeacherExercise` calls.
+ */
+export function resetTeacherOverrides(): void {
+  forgeOverride = null
+  sandboxOverride = null
+  storeOverride = null
+}

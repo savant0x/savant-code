@@ -119,7 +119,14 @@ export function buildFreeOptionsReport(
   return {
     fetchedAt: catalog?.fetchedAt ?? null,
     stale: catalog !== null && !isCacheFresh(catalog.fetchedAt, context.nowMs),
-    ...(catalog ? { catalogEvidence: { class: 'api-public' as const, source: CATALOG_URL } } : {}),
+    ...(catalog
+      ? {
+          catalogEvidence: {
+            class: 'api-public' as const,
+            source: CATALOG_URL,
+          },
+        }
+      : {}),
     quotaReading: { state: 'unknown', source: 'none' },
     wiredFree,
     notWired,
@@ -222,4 +229,12 @@ export function readCachedFreeCatalog(): FreeCatalogEnvelope | null {
   } catch {
     return null
   }
+}
+
+/**
+ * Test isolation: drops the in-flight refresh promise — process-lifetime state
+ * `bun test` shares across files (FID-2026-1007-002).
+ */
+export function resetRefreshInFlight(): void {
+  refreshInFlight = undefined
 }

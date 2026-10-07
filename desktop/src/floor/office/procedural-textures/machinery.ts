@@ -98,3 +98,12 @@ export const cached = (
   textureCache.set(key, built)
   return built
 }
+
+/**
+ * Test isolation: clears the process-lifetime texture cache — `bun test`
+ * shares module state across files (FID-2026-1007-002). Drops the cached
+ * entries only; GPU resources stay owned by their figures.
+ */
+export function resetTextureCache(): void {
+  textureCache.clear()
+}

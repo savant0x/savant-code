@@ -105,3 +105,12 @@ export function saveResearchApiKey(
     process.env[config.envVar] = trimmedKey
   }
 }
+
+/**
+ * Test isolation: restores the active research-key service to its default —
+ * process-lifetime state `bun test` shares across files (FID-2026-1007-002).
+ * No I/O; stored keys and env are untouched.
+ */
+export function resetActiveResearchKeyService(): void {
+  activeResearchKeyService = 'serper'
+}

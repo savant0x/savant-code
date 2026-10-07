@@ -26,3 +26,11 @@ export function getSteeringRules(
   cache.set(cwd, rules)
   return rules
 }
+
+/**
+ * Test isolation: clears the per-cwd steering-rule cache — process-lifetime
+ * state `bun test` shares across files (FID-2026-1007-002).
+ */
+export function resetRulesSourceCache(): void {
+  cache.clear()
+}

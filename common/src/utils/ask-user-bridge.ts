@@ -48,3 +48,13 @@ export const AskUserBridge = {
 function notifyListeners() {
   listeners.forEach((l) => l(pendingRequest))
 }
+
+/**
+ * Test isolation: drops the queued question and every subscriber — the
+ * process-lifetime bridge state `bun test` shares across files
+ * (FID-2026-1007-002). A pending promise is abandoned, never resolved here.
+ */
+export function resetAskUserBridgeState(): void {
+  pendingRequest = null
+  listeners.length = 0
+}

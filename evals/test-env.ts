@@ -3,6 +3,14 @@
 // bun only auto-loads .env files from the cwd — so the evals suite supplies
 // test-scoped placeholders for the required NEXT_PUBLIC_* client env vars.
 // Real values already present in process.env always win.
+//
+// FID-2026-1007-002: this file is also the evals suite's isolation preload, so
+// the module-scope state the suite can inherit (the sandbox teardown mechanism
+// probe) is reset before every case here rather than in a second preload entry.
+import { beforeEach } from 'bun:test'
+
+import { resetCachedMechanism } from './v2/src/sandboxes/process-tree'
+
 process.env.NEXT_PUBLIC_CB_ENVIRONMENT = 'dev'
 
 const evalsTestDefaults: Record<string, string> = {
@@ -21,3 +29,7 @@ for (const [key, value] of Object.entries(evalsTestDefaults)) {
     process.env[key] = value
   }
 }
+
+beforeEach(() => {
+  resetCachedMechanism()
+})

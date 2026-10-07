@@ -256,3 +256,14 @@ export function getChatGptOAuthStatus(): {
     connectedAt: credentials.connectedAt,
   }
 }
+
+/**
+ * Test isolation: clears the pending PKCE verifier/state and drops the
+ * callback-server reference (dropped, never closed — a reset performs no I/O)
+ * — process-lifetime state `bun test` shares across files (FID-2026-1007-002).
+ */
+export function resetChatgptOauthState(): void {
+  pendingCodeVerifier = null
+  pendingState = null
+  callbackServer = null
+}

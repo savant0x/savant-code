@@ -1,0 +1,5 @@
+# Test preload only (FID-2026-1007-002): `bun run --cwd=packages/database test`
+# runs with this directory as the working directory, and Bun does not walk up for
+# a `[test] preload`, so the root `bunfig.toml` preload never reached this suite.
+[test]
+preload = ["./test/setup-test-isolation.ts"]

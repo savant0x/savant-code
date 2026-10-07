@@ -11,7 +11,14 @@ import {
 import { readProviderAlternatives } from '../../../utils/provider-alternatives'
 import { refreshQuotaAfterRefusal } from '../../../utils/provider-monitoring'
 
-const hintedErrors = new WeakSet<object>()
+let hintedErrors = new WeakSet<object>()
+
+/** Test isolation: forgets which errors already carried a rate-limit hint —
+ *  process-lifetime state `bun test` shares across files (FID-2026-1007-002).
+ *  A WeakSet has no `clear()`, so the binding is reassigned. */
+export function resetHintedErrors(): void {
+  hintedErrors = new WeakSet<object>()
+}
 function status(error: unknown): unknown {
   if (!error || typeof error !== 'object') return undefined
   const e = error as { statusCode?: unknown; status?: unknown }

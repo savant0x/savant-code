@@ -21,3 +21,11 @@ export function getVersion(): string {
   }
   return cachedVersion
 }
+
+/**
+ * Test isolation: clears the memoized version — process-lifetime state
+ * `bun test` shares across files (FID-2026-1007-002).
+ */
+export function resetCachedVersion(): void {
+  cachedVersion = null
+}

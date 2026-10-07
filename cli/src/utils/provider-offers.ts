@@ -162,3 +162,15 @@ export function readProviderOfferDiscovery(now = Date.now()): string[] {
     return []
   }
 }
+
+/**
+ * Test isolation: clears the in-flight promise, the per-file attempt clock
+ * and the parsed-offer memory cache — process-lifetime state `bun test`
+ * shares across files (FID-2026-1007-002). No I/O; the persisted cache file
+ * is left alone.
+ */
+export function resetProviderOffersState(): void {
+  running = undefined
+  recentAttempts.clear()
+  memoryCaches.clear()
+}

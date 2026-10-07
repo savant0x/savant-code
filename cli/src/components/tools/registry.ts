@@ -107,6 +107,11 @@ const toolComponentRegistry = new Map<ToolName, ToolComponent>([
   ['browser_logs', OutputResultComponent],
 ])
 
+/** The built-in entries, captured before any runtime registration. */
+const INITIAL_TOOL_COMPONENT_ENTRIES: ReadonlyArray<
+  readonly [ToolName, ToolComponent]
+> = [...toolComponentRegistry]
+
 /**
  * Register a new tool component.
  * This allows plugins or extensions to add custom tool renderers.
@@ -170,4 +175,14 @@ export function renderToolComponent(
  */
 export function getRegisteredToolNames(): ToolName[] {
   return Array.from(toolComponentRegistry.keys())
+}
+
+/** Test isolation: restores the built-in entries a `registerToolComponent`
+ *  call in an earlier file would otherwise leave behind — process-lifetime
+ *  state `bun test` shares across files (FID-2026-1007-002). */
+export function resetToolComponentRegistry(): void {
+  toolComponentRegistry.clear()
+  for (const [toolName, component] of INITIAL_TOOL_COMPONENT_ENTRIES) {
+    toolComponentRegistry.set(toolName, component)
+  }
 }
