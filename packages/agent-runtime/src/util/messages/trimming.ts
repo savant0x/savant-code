@@ -1,6 +1,9 @@
 import { AssertionError } from 'assert'
 
-import { userMessage } from '@savant-code/common/util/messages'
+import {
+  clearCacheControlInPlace,
+  userMessage,
+} from '@savant-code/common/util/messages'
 import { cloneDeep, isEqual } from 'lodash'
 
 import {
@@ -175,20 +178,26 @@ export function getMessagesSubset(params: {
     logger,
   })
 
-  // Remove cache_control from all messages
+  // Strip every cache-control breakpoint from the trimmed subset: the subset is
+  // a different prefix than the caller's history, so a marker placed against the
+  // full history would describe a boundary that no longer exists.
+  //
+  // FID-2026-1006-005 step 4: this used to delete camelCase `cacheControl` over
+  // anthropic|openrouter|savant-code — a spelling nothing in this repository
+  // writes, and a set missing `openaiCompatible`, the provider the writer
+  // actually tags — so it was dead against the real marker while reading as if
+  // it flushed the cache. It now calls the same clearer every other caller uses,
+  // over the one spelling and one provider set.
+  //
+  // The `// Cache up to the last message!` comment that used to sit here
+  // promised a re-tag the function never performed. Placement is owned by
+  // `convertCbToModelMessages`, which applies its own breakpoints to the
+  // messages it emits, so re-tagging here would be a second, drifting truth.
   for (const message of messagesSubset) {
-    for (const provider of [
-      'anthropic',
-      'openrouter',
-      'savant-code',
-    ] as const) {
-      delete message.providerOptions?.[provider]?.cacheControl
-    }
+    clearCacheControlInPlace(message)
   }
 
-  // Cache up to the last message!
-  const lastMessage = messagesSubset[messagesSubset.length - 1]
-  if (!lastMessage) {
+  if (messagesSubset.length === 0) {
     logger.debug(
       {
         messages,

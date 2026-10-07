@@ -4,7 +4,12 @@ export {
   filterInternalEchoMessages,
   isInternalEchoMessage,
 } from './messages/internal'
-export { withCacheControl, withoutCacheControl } from './messages/cache-control'
+export {
+  CACHE_CONTROL_PROVIDERS,
+  clearCacheControlInPlace,
+  withCacheControl,
+  withoutCacheControl,
+} from './messages/cache-control'
 export type { SavantModelMessage } from './messages/types'
 export { convertCbToModelMessages } from './messages/aggregate'
 export type {
