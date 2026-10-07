@@ -62,16 +62,17 @@
 
 ## Open items
 
-**Nine** items are open — three blocked pending operator input (T119,
-T62-followups, T122), one shelved on an operator ruling (T147), and four
-implementation records: T155 (the prompt-cache optimization program,
-`FID-2026-1006-005`, `fixed` with a stamped receipt; steps 8, 10 and 11 stay
-open on a live endpoint, provider billing, and the locator gap its step-3 audit
-measured), T156 (the agent-runtime suite repair, `FID-2026-1007-001`, closed and
-archived this pass) and T157 (the module-state isolation program,
-`FID-2026-1007-002`, closed and archived this pass), plus T158 (the repository
-gate declarability program, `FID-2026-1007-003`, registered and verified this
-pass).
+**Six** items are open — three blocked pending operator input (T119,
+T62-followups, T122), one shelved on an operator ruling (T147), and two awaiting
+work: T155 (the prompt-cache optimization program, `FID-2026-1006-005`, `fixed`
+with a stamped receipt; steps 8, 10 and 11 stay open on a live endpoint, provider
+billing, and the locator gap its step-3 audit measured) and T159 (the lossless
+tool-output retention design, `FID-2026-1007-004`, `converged` — the Perfection
+Loop ran, no code is written, and implementation waits on the operator's
+go-ahead). **T156, T157 and T158 completed in this pass** (`FID-2026-1007-001`,
+`-002` and `-003`: all three closed and archived with their path-scoped commits);
+their boxes below are checked, and their record is the CHANGELOG, the archived
+FID, and the session summary.
 T153 and T154 both completed 2026-10-06 — T153's record
 is closed and archived, its implementation landed as local commit `ba38c548`,
 and T154's gate fix landed in the same pass; both boxes below are checked. (T149, the
@@ -712,7 +713,7 @@ T90-F3 was resolved by the operator ruling "T90-F3 residual needs no code"
       need a real endpoint and provider billing — the repo holds no
       `debug/cache-debug/` corpus to read a historical ratio from.
 
-- [ ] **T156. Agent-runtime suite repair — breaker-leak isolation and three
+- [x] **T156. Agent-runtime suite repair — breaker-leak isolation and three
       behaviour corrections (`FID-2026-1007-001`).** **Automation level: 3.**
       Registered 2026-10-07 with the record, in the same pass that verified the
       work. The suite was red with 76 failures spread across four unrelated
@@ -737,7 +738,7 @@ T90-F3 was resolved by the operator ruling "T90-F3 residual needs no code"
       "approve, grant automation level 3" — G2 granted, so this record closes
       and archives with its path-scoped commit in this pass. No blocker remains.
 
-- [ ] **T157. Module-scope state is shared by every Bun test file
+- [x] **T157. Module-scope state is shared by every Bun test file
       (`FID-2026-1007-002`).** **Automation level: 3.** Registered 2026-10-07
       with the record, in the same pass that verified the work — the
       class-level answer to T156's instance. `bun test` loads every file of a
@@ -766,7 +767,7 @@ T90-F3 was resolved by the operator ruling "T90-F3 residual needs no code"
       whatever an earlier file left behind, and the audit's reach report moves
       to 181 of 187 wired.
 
-- [ ] **T158. Every repository gate must be declarable on a FID
+- [x] **T158. Every repository gate must be declarable on a FID
       (`FID-2026-1007-003`).** **Automation level: 3.** Registered 2026-10-07 in
       the pass that verified the work — it was found in the tree as an
       unregistered workstream and is registered rather than left unowned. The FID
