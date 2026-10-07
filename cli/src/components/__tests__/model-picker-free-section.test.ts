@@ -8,8 +8,8 @@
 import { recordModelAvailability } from '@savant-code/common/providers/availability-state'
 import { describe, expect, test } from 'bun:test'
 
-import { buildGroupedItems } from '../model-picker-grouping'
 import { freeBadgeFor } from '../../utils/free-badge'
+import { buildGroupedItems } from '../model-picker-grouping'
 
 import type { OpenRouterModel } from '../../utils/openrouter-models'
 
