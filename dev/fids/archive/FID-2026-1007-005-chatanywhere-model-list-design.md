@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-1007-005-chatanywhere-model-list-design.md`
 **ID:** FID-2026-1007-005
 **Severity:** medium
-**Status:** fixed
+**Status:** closed
 **Created:** 2026-10-07 15:55
 **Automation level:** 3
 **YAGNI-Compliance:** Verified
@@ -314,8 +314,8 @@ the internal `chatanywhere/` prefix is added once for routing and
 
 ### Verification Receipt
 
-- fingerprint: sha256:946d7f3fd948a82147a2d025783de5dcee75222a022016d19da00722142b5e77
-- verified: 2026-10-07T20:36:42.660Z
+- fingerprint: sha256:6f39d9822629db8ba237c78819c6ac09958f38b3d4593d8ee012d856120ec31b
+- verified: 2026-10-07T20:47:05.431Z
 - typecheck cli: exit 0
 - typecheck common: exit 0
 - test cli/src/utils/__tests__/openrouter-models-gateway-providers.test.ts: exit 0
@@ -472,7 +472,7 @@ the internal `chatanywhere/` prefix is added once for routing and
   function, `providers:parity --check` exits 0 with "every modelsRef provider contributes
   rows", the cli suite is `3969 pass / 18 skip / 0 fail` across 482 files, and all eight
   declared gates exit 0 at the stamped receipt.
-- **Archived:** 2026-10-07 16:33 (moved to `dev/fids/archive/`)
+- **Archived:** 2026-10-07 16:42 (moved to `dev/fids/archive/`)
 
 ## Lessons Learned
 

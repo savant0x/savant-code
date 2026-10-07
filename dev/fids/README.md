@@ -5,42 +5,22 @@ operator decision, implementation, runtime review, or closure evidence.
 
 ## Current active FIDs
 
-**One — `FID-2026-1006-005-savant-echo-prompt-cache-optimization`
-(2026-10-06, status `fixed`, automation level 3; register item T155, with
-T154 now complete).** The operator asked for a record of the untracked research
-document `docs/design/Savant_ECHO Cache Optimization Research.md`, which was also
-the sole cause of `bun run lint:md` exiting 1. The record does both jobs. It folds
-in the T154 gate fix — an operator-ruled `.markdownlintignore` exemption plus a
-new `scripts/lint-md-check.ts` probe, so the markdown gate is finally declarable
-in a FID (it had no allowlisted gate kind, which is why this item could not be
-recorded before) — and it reconciles the document's three-phase cache program
-against the shipped tree. Reconciliation: `evidence/spill.ts` and
-`util/simplify-tool-results.ts` already implement the deterministic truncation
-its Phase 2 asks to build (so Phase 2 was re-scoped from build to audit); a
-provider cache-breakpoint TTL and the Anthropic
-`tool_addition`/`tool_removal` directives are genuinely absent; and `stableHash`
-is order-sensitive, so the one existing cache-bust detector cannot tell a
-reordered tool set from a changed one. An independent read-only audit overturned
-the record's own central hazard claim: the cache-control seam is **split** (the
-trim path deletes camelCase `cacheControl` while production writes snake_case
-`cache_control`, against different provider sets, under a comment describing
-re-tagging nobody implemented), and the correction is recorded rather than
-smoothed over. **Under the operator ruling of 2026-10-07** (verbatim: "approve,
-grant automation level 3") the approval points this item was held at are clear,
-and the landable steps are done: Phase 1 (steps 5-6) is committed `ba4dee65`,
-**step 4** gave the cache-control breakpoint one spelling, one provider set and
-one clearer (`f0d365fa`), **step 7** routes the approved mode-to-TTL policy from
-the run's own enforcement axis — Hybrid `5m`, FID-bound `1h` (`7901568f`),
-**step 3** audited Phase-2 coverage and produced a measured finding rather than
-the parity the report assumed, and **step 9** landed both approved ECHO
-amendments (`70cec07c`). Three steps stay open and none of them is waiting on a
-decision: **step 8** (the Anthropic `tool_addition`/`tool_removal` evaluation)
-and **step 10** (the live `>75%` hit-ratio measurement) are blocked on a real
-endpoint and provider billing, and **step 11**, opened by step 3's audit, is the
-locator gap — every model-facing destructive path drops the payload and names no
-location, in three different marker vocabularies, while the one place the raw
-bytes survive (`.savant/evidence/<runId>.jsonl`) is unreachable from all of
-them.
+**None.** All three records that were open on 2026-10-07 are closed, receipted
+and archived under the operator's standing ruling (verbatim: "approve, work until
+everything is completed, no more blockers and all fixed with echo compliance").
+Their closure sections are in [`archive/README.md`](archive/README.md):
+
+- **`FID-2026-1006-005` (T155, cache program)** — all eleven steps resolved. Four
+  implementation commits (`ba4dee65`, `f0d365fa`, `7901568f`, `70cec07c`), step 11
+  landed by `FID-2026-1007-004`, and steps 8 and 10 re-scoped to offline evidence
+  under the operator's ruling that the live/paid leg was never a requirement.
+- **`FID-2026-1007-005` (T160, ChatAnywhere `/model` gap)** — `edc761a8`. The
+  provider's 27 rows reach the picker (live census: `chatanywhere: 27`), the
+  free-key section hoists free-**token** entries only, and
+  `catalogPairingIssues` fails a `modelsRef` provider with no picker rows.
+- **`FID-2026-1007-006` (T161, suite isolation)** — `d396d091` + `8c92d087`. The
+  root `bun run test` chain's `cli` leg is green again, publish authority is
+  explicit, and the config dir is suite-owned.
 
 **Closed 2026-10-06 — `FID-2026-1006-004-law15-capture-budget-refusal`
 (status `closed`; register item T153; implementation committed as `ba38c548`).**

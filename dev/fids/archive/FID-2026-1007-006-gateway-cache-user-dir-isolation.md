@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-1007-006-gateway-cache-user-dir-isolation.md`
 **ID:** FID-2026-1007-006
 **Severity:** medium
-**Status:** fixed
+**Status:** closed
 **Created:** 2026-10-07 16:20
 **Automation level:** 3
 **YAGNI-Compliance:** Verified
@@ -321,8 +321,8 @@ existing per-file harness kept as the finer-grained seam.
 
 ### Verification Receipt
 
-- fingerprint: sha256:5724e698149b29b83e4714c3e0e0731c017fde7bafc5ec2be8d7c492e195c6a1
-- verified: 2026-10-07T20:35:13.625Z
+- fingerprint: sha256:004c3c8a3ad883a654767df4c8d8ce133a4ade50bde768026f9d7d60256abd6e
+- verified: 2026-10-07T20:47:23.457Z
 - typecheck cli: exit 0
 - test cli/src/utils/__tests__/openrouter-models-gateway-cache.test.ts: exit 0
 - test cli/src/utils/__tests__/config-dir-isolation.test.ts: exit 0
@@ -446,7 +446,7 @@ existing per-file harness kept as the finer-grained seam.
   is `3969 pass / 18 skip / 0 fail` across 482 files, exit 0. The instrumented run that
   named the leaking file counted 82 claims against 37 suppressed publishes. All five
   declared gates exit 0 at the stamped receipt.
-- **Archived:** 2026-10-07 16:33 (moved to `dev/fids/archive/`)
+- **Archived:** 2026-10-07 16:42 (moved to `dev/fids/archive/`)
 
 ## Lessons Learned
 

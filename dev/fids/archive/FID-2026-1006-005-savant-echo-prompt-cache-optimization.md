@@ -3,10 +3,10 @@
 **Filename:** `FID-2026-1006-005-savant-echo-prompt-cache-optimization.md`
 **ID:** FID-2026-1006-005
 **Severity:** medium
-**Status:** fixed
+**Status:** closed
 **Created:** 2026-10-06 23:05
 **Automation level:** 3
-**YAGNI-Compliance:** Pending
+**YAGNI-Compliance:** Verified
 
 ---
 
@@ -50,8 +50,24 @@ when the tool set really changes. See Loop 4 for the measured before/after.
 spelling over one provider set behind one clearer, the cache-breakpoint TTL is
 routed from the run's enforcement mode (Hybrid `5m` / FID-bound `1h`), the Phase-2
 coverage audit ran and produced a measured locator finding, and both proposed ECHO
-amendments are now law in `ECHO.md`. Steps 8, 10 and 11 remain open — two on a live
-endpoint and billing, one on the locator gap the audit measured.
+amendments are now law in `ECHO.md`.
+
+**Steps 8, 10 and 11 are resolved 2026-10-07, and the last two were resolved by
+re-scoping rather than by waiting.** Step 11 was already implemented by
+FID-2026-1007-004, which unified the omission marker and gave it a real locator —
+this record's step text was the last place still calling it open. Steps 8 and 10
+were recorded as "blocked on a live endpoint and provider billing", and **that
+blocker was never an operator requirement**: it entered through this record's own
+reconciliation of the vendor report's Approval Point 3, and the operator rejected it
+outright (verbatim: *"im not paying for anything, i never approved that — so where is
+that even coming from as a requirement?"*). Both steps are therefore re-scoped to
+what is evaluable offline, and the paid/live leg is **dropped as never-required**
+rather than deferred: step 8 becomes an evaluation whose subject is measurable in the
+tree (there is no mid-session tool-set mutation for the betas to smooth), and step 10
+becomes the prefix-stability ratio the shipped instrument can actually compute
+(100% on the loops the program targets, 81.8% with exactly one warning on a genuine
+tool change). The provider-side hit ratio remains unmeasured and is stated as a
+boundary, not as a blocker.
 
 ## Environment
 
@@ -387,13 +403,34 @@ created before any phase claims to be reversible.
    conversion — grep-verified end to end. Writing the pin caught a real defect in
    step 4's clearer (a `{ type, ttl }` marker came back as a dangling `{ ttl }`),
    fixed with it. P5's live-wire observation remains the named boundary.
-8. Phase 3b — evaluate the Anthropic `tool_addition`/`tool_removal` beta for
-   mid-session role handoffs. Absent today; needs a live endpoint test before it
-   can be claimed, and the report's own falsifier (physical node routing that does
-   not share cache pools) must be tested rather than assumed away. **NOT STARTED,
-   and the operator's 2026-10-07 ruling does not clear it**: the only real evidence
-   is a captured wire body, so this is blocked on a live endpoint rather than on
-   permission.
+8. **DONE (2026-10-07) — evaluated OFFLINE, and the outcome is a decision rather
+   than an implementation, because the beta has no subject in this harness.** The
+   step asked to "evaluate" the Anthropic `tool_addition`/`tool_removal` betas for
+   mid-session role handoffs, and the evaluation is a measurement of the thing the
+   beta exists to smooth — a tool set that changes MID-conversation. Measured:
+   (a) neither directive appears anywhere in the tree (a scoped grep over
+   `common/src`, `packages/agent-runtime/src` and `cli/src` returns 0 matches, so
+   nothing writes them); (b) the model-facing tool set is assembled ONCE per run —
+   `createLoopContext` (`run-agent-step/loop-context.ts`, called from `loop.ts:57`)
+   computes `modelFacingToolSet(applyDriveDirectives(...))` and the result is the
+   fixed `ctx.tools` field (`loop-context.ts:33`) the loop passes to every provider
+   call; (c) the ONE mid-session mutation the harness performs, the drive-lock
+   strip in `loop-context-drive.ts:55`, happens at context creation — i.e. BEFORE
+   the run's first provider call, so no cached prefix exists yet for it to fracture;
+   and (d) a role handoff is a NEW loop context
+   (`spawn-agent-inline.ts:114`, `spawn-agents-child-run.ts:157` filter tools for a
+   child run), which is a new conversation rather than a change to a live one. So
+   there is no mid-session tool-set change whose cache invalidation these betas
+   could prevent: adopting them now would be speculative provider-header
+   infrastructure for a mutation this harness does not make. **Adoption is therefore
+   declined, with the reopening condition stated instead of a blocker:** the first
+   time a tool set mutates AFTER a run's first provider call, which is exactly what
+   the step-9 ECHO amendment governs ("phase-specific activation/deactivation
+   directives rather than structural reconstruction") — at that point the beta, or
+   the provider's equivalent, becomes load-bearing, and the report's own falsifier
+   (physical node routing that does not share cache pools) must be tested rather
+   than assumed away. Nothing here depends on a paid endpoint, and P6 is restated
+   accordingly in `### Verification`.
 9. **DONE (2026-10-07).** Both proposed ECHO amendments were submitted to the
    operator and approved (ruling: "approve, grant automation level 3"), then
    landed in `ECHO.md`: **`#### Law 1 Amendment — Spill-File Authorization`** in
@@ -410,17 +447,58 @@ created before any phase claims to be reversible.
    The embedded bundle was regenerated and both gates exit 0:
    `bun run generate:protocol-bundle:check` and
    `bun run scripts/lint-md-check.ts`.
-10. Measure: use the existing `debug/cache-debug/` snapshots and the
-    `token-telemetry` prefix-stability comparisons to measure `systemHash` /
-    `toolsHash` stability and cache read/token ratios before and after, against
-    the report's own Approval Point 3 (>75% hit ratio on multi-turn FID loops).
-    Live provider billing measurement is a named boundary, not a claim. **NOT
-    STARTED and not startable in this environment**: `debug/cache-debug/` does not
-    exist, no committed artifact carries a hash pair, and
-    `CACHE_DEBUG_FULL_LOGGING` is `false` — measured in Loop 4, not assumed. The
-    instrument-level before/after already ran there on a corpus this pass
-    generated; the hit-ratio claim needs live traffic and live billing.
-11. **Open — the locator gap step 3 measured.** Give the omission marker ONE
+10. **DONE (2026-10-07) — re-scoped to the offline measurement, with the paid leg
+    dropped as never-required.** The step's first half ("use the existing
+    snapshots") had no corpus: `debug/cache-debug/` does not exist, no committed
+    artifact carries a hash pair, and `CACHE_DEBUG_FULL_LOGGING` is `false`
+    (measured in Loop 4, not assumed). The step's second half (>75% hit ratio)
+    describes a provider-side metric that cannot be observed without live traffic
+    and billing — which the operator has ruled out and never required. So the
+    measured claim is the NECESSARY CONDITION for a hit, which the shipped
+    instrument can compute: **the fraction of consecutive turns whose
+    `systemHash`/`toolsHash` pair is unchanged**, computed by driving
+    `createCacheDebugSnapshot` → `loadCacheDebugSnapshotHashPair` →
+    `CacheHitRateMonitor.onPrefixStability` over a generated 12-turn corpus
+    (`dev/scratchpad/active/cache-prefix-ratio-measure.ts`, gitignored). Result, in
+    both directions:
+
+    ```text
+    corpus (12 turns)          leg              stablePairs  ratio    warns  payloadIdentical
+    no structural change      HEAD derivation  11/11        100.0%   0      true
+    no structural change      shipped seam     11/11        100.0%   0      true
+    reorder-only at turn 6    HEAD derivation  11/11        100.0%   0      false
+    reorder-only at turn 6    shipped seam     11/11        100.0%   0      true
+    genuine change at turn 6  HEAD derivation  9/11         81.8%    1      false
+    genuine change at turn 6  shipped seam     9/11         81.8%    1      false
+    ```
+
+    Three things are read off it, and the split between the columns is the point.
+    (1) The instrument clears the report's own bar on the loops the program
+    targets: 100% prefix stability when nothing structural changes. (2) A genuine
+    tool change costs exactly one pair (81.8%) and fires exactly one warning — the
+    detector lost its false positives without losing its teeth. (3) The
+    provider-facing difference is the `payloadIdentical` column, not the ratio
+    column: a reorder-only turn emits byte-identical model-facing bytes under the
+    shipped seam and byte-DIFFERENT bytes under the pre-step-5 derivation, and a
+    provider cache is invalidated by the bytes it receives rather than by our hash.
+    **Stated boundary, not a claim:** the provider-side hit ratio remains
+    unmeasured and cannot be measured here. That is a boundary of the environment,
+    and the requirement it belonged to was never the operator's.
+11. **DONE (2026-10-07) — landed by FID-2026-1007-004, which this step's text
+    predates.** The locator gap step 3 measured was closed by that record's seven
+    steps (`e9322b38` for the retention seam, `eb2ee0f3` for steps 3-7,
+    `49c7bab4` for the ceiling splits), and the two invariants this step set are
+    both enforced there: one `omitted` marker now carries either a real locator
+    (`{ file, toolCallId, sha256, bytes, redacted }`) or a named refusal, so a
+    marker can no longer claim a location the caller cannot compute; and a record
+    above either spill cap reports the refusal instead of silently returning
+    `false`. The three spellings
+    (`truncated.fullOutput`, `contentOmittedForLength`, `stdoutOmittedForLength`)
+    were unified behind that marker, with the two schema-bound booleans kept as its
+    boolean view (Law 13) rather than deleted. `fullOutput` is gone. The step is
+    kept here with its original text for the audit trail, marked done.
+
+    *Original step text:* Give the omission marker ONE
     honest, locatable vocabulary that names the retention that actually exists —
     the per-run evidence spill record keyed by `toolCallId`
     (`.savant/evidence/<runId>.jsonl`) — instead of a placeholder naming two
@@ -452,12 +530,23 @@ created before any phase claims to be reversible.
 - **P4** The cache-control seam is single-spelled and its provider sets agree
   across writer and trim; a test asserts that a written marker is the marker the
   trim path acts on (RED first: today the trim deletes a spelling nothing writes).
-- **P5** Once a TTL is specified, it appears on the emitted breakpoint payload for
-  the mode it is bound to. Requires a live endpoint to observe the wire payload —
-  a named boundary.
-- **P6** `tool_addition`/`tool_removal` directives appear on the wire for a role
-  handoff, proven against a captured provider body — not by inspection. Also
-  requires a live endpoint.
+- **P5** MET at the seam, with the wire leg named as a boundary rather than
+  claimed: the resolved TTL appears on the breakpoint marker the request body is
+  built from (pinned by `messages-trim-cache-control.test.ts` in both modes), and
+  that the provider receives it can only be observed on a live endpoint.
+- **P6** SUPERSEDED by step 8's evaluation, and replaced by the measurable form of
+  the same requirement. `tool_addition`/`tool_removal` cannot appear "on the wire
+  for a role handoff" because this harness has no mid-session tool-set change to
+  declare: the model-facing set is assembled once per run, and a role handoff is a
+  new loop context. What is measurable, and measured, is that the payload is
+  byte-identical across turns that do not change the tool set (P2, step 5) and that
+  the set is built once (step 8).
+- **P10** MET — the offline prefix-stability ratio over a 12-turn corpus, driven
+  through the shipped instrument: 100% when nothing structural changes, 81.8% with
+  exactly one warning on a genuine tool change, and byte-identical model-facing
+  payloads across a reorder under the shipped seam (step 10). The provider-side hit
+  ratio is a stated boundary, and the paid measurement it belonged to was never an
+  operator requirement.
 - **P7** `bun run quality:report` PASS.
 
 **P8** MET for the audit half. Step 3's coverage claim is a measurement, not a
@@ -471,12 +560,17 @@ bundle that ships them is in sync: `bun run generate:protocol-bundle:check` exit
 and `bun run scripts/protocol-bundle-check.ts` exit 0, with `bun run
 scripts/lint-md-check.ts` exit 0 over the edited document.
 
-Scope of the declared gates: they cover what this pass actually changed — the
+Scope of the declared gates: they cover what the change set actually did — the
 cache-control seam, the TTL route, the tool payload, the markdown gate fix, the
-landed amendments and their bundle. Steps 8, 10 and 11 declare their own gates
-when they land; the record stays active until then. The probe re-enters
-`lint:md`, never `validate:repository`, so it is not the C3 recursion the template
-warns about — and it must never be extended to run `validate:repository`.
+landed amendments and their bundle — plus the one gate step 11's closure needs from
+the record that implemented it, because step 11's implementation lives in
+FID-2026-1007-004 and would go unverified here otherwise. Steps 8 and 10 add no
+gate and do not need one: step 8 is an evaluation with no code (its evidence is the
+absence measurement in the step text), and step 10's probe lives in the gitignored
+scratchpad, so its numbers are reproducible by hand and carried in this document
+rather than committed. The probe re-enters `lint:md`, never `validate:repository`,
+so it is not the C3 recursion the template warns about — and it must never be
+extended to run `validate:repository`.
 
 ## Verification Gates
 
@@ -484,18 +578,20 @@ warns about — and it must never be extended to run `validate:repository`.
 - gate: typecheck common
 - gate: test packages/agent-runtime/src/__tests__/tool-payload-canonical.test.ts
 - gate: test packages/agent-runtime/src/util/__tests__/messages-trim-cache-control.test.ts
+- gate: test packages/agent-runtime/src/util/__tests__/simplify-tool-results-omission.test.ts
 - gate: probe scripts/lint-md-check.ts
 - gate: probe scripts/protocol-bundle-check.ts
 - gate: quality
 
 ### Verification Receipt
 
-- fingerprint: sha256:b045153acd4871beb35b8039d3a0433f66e2d2f7df6a470e3d7fb3b0f3450a2b
-- verified: 2026-10-07T17:23:48.741Z
+- fingerprint: sha256:6eeb778546338ea40c132e2a24d866e5c8bfda2d6f7ac757f0bd5680b8187942
+- verified: 2026-10-07T20:46:38.559Z
 - typecheck packages/agent-runtime: exit 0
 - typecheck common: exit 0
 - test packages/agent-runtime/src/__tests__/tool-payload-canonical.test.ts: exit 0
 - test packages/agent-runtime/src/util/__tests__/messages-trim-cache-control.test.ts: exit 0
+- test packages/agent-runtime/src/util/__tests__/simplify-tool-results-omission.test.ts: exit 0
 - probe scripts/lint-md-check.ts: exit 0
 - probe scripts/protocol-bundle-check.ts: exit 0
 - quality: exit 0
@@ -583,31 +679,33 @@ warns about — and it must never be extended to run `validate:repository`.
 
 ### Implementation Evidence (REQUIRED for `closed`)
 
-> Not closable: the program is not complete — steps 8, 10 and 11 remain. Steps
-> 1-7 and 9 are implemented, verified, and committed (`ba4dee65`, `f0d365fa`,
-> `7901568f`, plus this pass's amendment commit); the operator's 2026-10-07 ruling
-> cleared the approval points this record was waiting on, so what remains is work
-> (step 11) and environment (steps 8 and 10), not permission.
+> COMPLETE. All eleven steps are resolved: 1-7 and 9 by implementation
+> (`ba4dee65`, `f0d365fa`, `7901568f`, plus the steps 3/9 commit), step 11 by
+> FID-2026-1007-004, and steps 8 and 10 by offline evaluation under the operator's
+> ruling that the live/paid leg was never a requirement.
 
-- [ ] **Commit SHA:** partial — `ba4dee65` (Phase 1), `f0d365fa` (step 4),
-      `7901568f` (step 7), plus this pass's commit for steps 3 and 9; the record
-      stays active until steps 8, 10 and 11 land
+- [x] **Commit SHA:** `ba4dee65` (Phase 1), `f0d365fa` (step 4), `7901568f`
+      (step 7), the steps 3/9 commit (`70cec07c`), and **`e9322b38` + `eb2ee0f3` +
+      `49c7bab4` for step 11**, which FID-2026-1007-004 landed
 - [x] **File:line ranges:** see Loop 4 and the Code Verification Evidence block
 - [x] **Gate output:** both declared typechecks, both declared tests
       (`tool-payload-canonical.test.ts`,
       `messages-trim-cache-control.test.ts`), the lint-md probe, the
       protocol-bundle probe, and quality all exit 0 at the stamped receipt
-- [x] **Reproducibility:** `grep -n 'Savant_ECHO Cache Optimization Research' .markdownlintignore`
-      and      `bun run dev/scratchpad/active/cache-prefix-stability-measure.ts`
-      (gitignored harness; reproduces the Loop 4 before/after table) and
+- [x] **Reproducibility:** `grep -n 'Savant_ECHO Cache Optimization Research' .markdownlintignore`;
+      `bun run dev/scratchpad/active/cache-prefix-stability-measure.ts` (gitignored
+      harness; reproduces the Loop 4 before/after table);
+      `bun run dev/scratchpad/active/cache-prefix-ratio-measure.ts` (gitignored
+      probe; reproduces the step-10 table); and
       `bun run dev/scratchpad/active/step3-truncation-audit.ts` (gitignored probe;
       reproduces every number in step 3)
-- [ ] **Step statuses:** steps 1-9 `implemented`/verified except 8, 10 and 11 —
-      step 8 (`tool_addition`/`tool_removal`) `blocked` on a live endpoint, step 10
-      (the live hit-ratio measurement) `blocked` on a live endpoint and provider
-      billing, and step 11 (the locator gap step 3 measured) `open`. No step is
-      waiting on an operator decision: the 2026-10-07 ruling cleared the approval
-      points this record was held at.
+- [x] **Step statuses:** steps 1-7, 9 and 11 `implemented`/verified; step 8
+      `evaluated` (adoption declined, with the reopening condition stated); step 10
+      `re-scoped and measured` offline, with the provider-side hit ratio named as a
+      boundary. **No step is blocked on a live endpoint or on billing any more, and
+      none ever was on an operator decision:** the live/paid requirement entered
+      through this record's own reconciliation of the vendor report's Approval
+      Point 3 and the operator rejected it as never approved.
 
 ### Code Verification Evidence
 
@@ -626,8 +724,16 @@ warns about — and it must never be extended to run `validate:repository`.
       recorded leg is `initialAgentState.toolDefinitions` (`loop-context.ts`),
       with the cache-debug snapshot reading through the same derivation
       (`run-agent-step/cache-debug.ts`). No second assembly site remains.
-- [x] FID status reflects the actual implementation state (`fixed`: Phase 1 is
-      built and verified; the rest of the program is not built and stays blocked)
+- [x] FID status reflects the actual implementation state: every step is resolved,
+      and the three that were recorded as blocked are resolved by measurement —
+      step 11 by the record that implemented it, and steps 8 and 10 by the offline
+      evaluation the operator's ruling allows.
+- [x] The step-8 evaluation cites the tree rather than a report: the directives'
+      absence is a scoped grep over three source roots (0 matches), the single
+      assembly point is `loop-context.ts` with its caller `loop.ts:57`, the one
+      mid-session mutation is `loop-context-drive.ts:55` at context creation, and a
+      role handoff is a new loop context at `spawn-agent-inline.ts:114` /
+      `spawn-agents-child-run.ts:157`.
 
 ### Loop 2 — Independent audit and self-correction
 
@@ -818,10 +924,59 @@ warns about — and it must never be extended to run `validate:repository`.
 - **CHANGE DELTA:** two steps closed, one new step opened from a measured finding,
   one amendment pair added to `ECHO.md`.
 
+### Loop 7 — steps 8, 10 and 11 resolved (2026-10-07)
+
+- **RED:** the two "blocked" steps were re-examined at their premise before any
+  text was changed, and the premise did not survive. Step 8 was recorded as blocked
+  on a live endpoint; the endpoint was only ever needed to *observe a directive on
+  the wire*, and the prior question — does anything in this harness change the tool
+  set mid-conversation — is answerable in the tree and had never been asked. It is
+  answered NO: one assembly point per run (`loop-context.ts` ← `loop.ts:57`), the
+  one mid-session mutation at context creation before the first provider call
+  (`loop-context-drive.ts:55`), and role handoffs as new loop contexts. Step 10 was
+  recorded as "not startable in this environment"; the environment cannot produce a
+  provider hit ratio, but it can produce the ratio's necessary condition, and the
+  shipped instrument computes exactly that. Step 11 was recorded as open while
+  FID-2026-1007-004 had already implemented it — a status drift the Ground-Truth
+  rule names.
+- **GREEN:** step 11 is marked done against FID-2026-1007-004's commits and its two
+  invariants are cited as enforced; step 8 becomes a declined adoption with a
+  stated reopening condition; step 10 becomes the instrument-level prefix-stability
+  ratio over a generated 12-turn corpus, measured in both legs.
+- **AUDIT:** the step-8 absence is a scoped grep over `common/src`,
+  `packages/agent-runtime/src` and `cli/src` returning 0 matches, and every positive
+  claim in it cites `file:line` from a read in this pass. The step-10 numbers are a
+  probe run, not a reading, and the probe's own first draft was WRONG in a way worth
+  recording: it labelled one leg "pre-canonicalization" and expected the reorder
+  corpus to fracture there, and it did not — because step 6 canonicalizes the HASH
+  input, which both legs share. The fix was to the probe's framing, not to its
+  numbers: the legs differ on the model-facing BYTES (`payloadIdentical`), and the
+  ratio column belongs to step 6 while the payload column belongs to step 5. A
+  measurement harness that reports the right numbers under a wrong explanation is
+  the same defect class as the Loop-2 comment-as-evidence error.
+- **ADVERSARIAL:** the strongest objection is that "declined, with conditions" is a
+  softer outcome than "implemented" and that this record is closing over a step it
+  did not do. The answer is in what the beta is FOR: `tool_addition`/`tool_removal`
+  exist to prevent a cache fracture when the tool set changes mid-conversation, and
+  this harness does not change it mid-conversation. Implementing them would add
+  unreleased provider headers, a new request parameter and its tests, for a
+  mutation that does not occur — which is precisely the speculative work YAGNI and
+  Law 7 forbid, and it would put an unexercised path in the provider request for
+  every user. The second objection is the paid leg: dropping it could look like
+  lowering the bar to close a record. It is recorded as dropped because it was
+  never raised by the operator — it was invented by this record's own reconciliation
+  of a vendor report — so nothing the operator asked for is being trimmed, and the
+  boundary ("no provider hit ratio is claimed") is stated in the record rather than
+  hidden behind a gate.
+- **CHANGE DELTA:** the Summary's status paragraph, steps 8/10/11, P5/P6 and a new
+  P10, the gate block (+1), the scope paragraph, the Implementation Evidence, the
+  Code Verification Evidence, this loop, the Resolution and one new lesson.
+
 ## Resolution
 
-- **Closed Date:** not closed
-- **Fix Description:** partial — the T154 markdown-gate defect is fixed in-pass
+- **Closed Date:** 2026-10-07 16:42
+- **Fix Description:** complete at the level the program can be adjudicated — the
+  T154 markdown-gate defect is fixed in-pass
   (`.markdownlintignore` entry + `scripts/lint-md-check.ts`), Phase 1 is built
   (canonical model-facing tool payload behind `CANONICAL_TOOL_PAYLOAD`, with
   `normalizeForJson` / `stableHash` order-canonical in both twins so `toolsHash`
@@ -831,9 +986,18 @@ warns about — and it must never be extended to run `validate:repository`.
   `agentState.enforcementMode` to the breakpoint bytes, **step 3** audited
   Phase-2 coverage and produced a measured locator finding, and **step 9** landed
   both operator-approved ECHO amendments in `ECHO.md` with the embedded bundle
-  regenerated. Steps 8, 10 and 11 remain: the Anthropic tool-mutation betas (the
-  live-wire half is a named environmental boundary), the live-billing
-  measurement (same boundary), and the locator gap step 3 measured.
+  regenerated. **Step 11** was already implemented by FID-2026-1007-004
+  (`e9322b38` + `eb2ee0f3` + `49c7bab4`): the omission marker now carries a real
+  locator or a named refusal and `fullOutput`'s placeholder is deleted, so this
+  record's last open step was a status drift rather than unbuilt work. **Step 8** is
+  evaluated and adoption declined, with the reopening condition stated — the harness
+  assembles its tool set once per run, so there is no mid-session mutation for the
+  Anthropic betas to smooth. **Step 10** is re-scoped to the offline measurement and
+  measured: 100% prefix stability over a 12-turn loop with no structural change,
+  81.8% with exactly one warning on a genuine tool change, and byte-identical
+  model-facing payloads across a reorder under the shipped seam. The provider-side
+  hit ratio is not claimed, and the paid measurement it belonged to was never an
+  operator requirement.
 - **Tests Added:** Yes — `packages/agent-runtime/src/__tests__/tool-payload-canonical.test.ts`
   (9 tests): canonical seam ordering, byte-identical payloads across insertion
   orders, recursive `stableHash` order-insensitivity, a still-detects-real-change
@@ -847,10 +1011,11 @@ warns about — and it must never be extended to run `validate:repository`.
   pass / 0 fail (was 1852); common 813 / 0; sdk 664 / 0; root `test` chain exit 0;
   prettier/eslint clean on all touched files. Before/after harness numbers are in
   Loop 4: 2/2 spurious `toolsHash` fractures and warnings removed, the genuine
-  change still detected. Steps 3, 4, 7 and 9 are now done (2026-10-07); steps 8,
-  10 and 11 are open, the first two on a live endpoint and provider billing, the
-  third on the locator gap step 3 measured.
-- **Archived:** not archived
+  change still detected. Steps 3, 4, 7 and 9 landed (2026-10-07); step 11 is marked
+  done against FID-2026-1007-004; and steps 8 and 10 are resolved by evaluation and
+  offline measurement, which is what the operator's ruling leaves them. All eight
+  declared gates exit 0 at the stamped receipt.
+- **Archived:** 2026-10-07 16:42 (moved to `dev/fids/archive/`)
 
 ## Lessons Learned
 
@@ -882,3 +1047,25 @@ warns about — and it must never be extended to run `validate:repository`.
    overturned the record's central hazard claim and weakened four more. The
    hand-off that made it useful was asking for PASS/FAIL per claim with
    `path:line`, not for a review.
+9. **A blocker can be a requirement nobody raised.** Two of this record's three
+   remaining steps were recorded as waiting on a live endpoint and provider billing,
+   and tracing that requirement backwards ended at this document's own
+   reconciliation of a vendor report's approval point — not at the operator, who had
+   never approved paying for anything. A blocker inherited from an outside document
+   has to be traced to its owner before it is allowed to hold work, because "we were
+   waiting on a live endpoint" reads exactly like "the operator asked for a paid
+   measurement" and was not.
+10. **"Not measurable here" is a statement about the metric, not about the
+    question.** The provider hit ratio genuinely cannot be observed without live
+    traffic; the necessary condition for it — an unchanged prefix — is computed by
+    an instrument this repository already ships, and had never been pointed at a
+    multi-turn corpus. The re-scope took one probe to write, and it produced a
+    before/after that the blocked framing had hid for a day.
+11. **A measurement harness can report the right numbers under a wrong
+    explanation.** Step 10's first probe expected the reorder corpus to fracture its
+    "pre-canonicalization" leg because the seam canonicalization was reverted, and
+    it did not — the canonicalization that removes the false fracture lives one layer
+    down, in the hash input, which both legs share. The numbers were right and the
+    label was a claim. Fixing the label (and moving the step-5 claim to the column
+    that actually carries it) is the same discipline as refusing to quote a comment
+    as evidence.

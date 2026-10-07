@@ -3,6 +3,76 @@
 This directory contains closed or historically completed FIDs. Files here are
 an audit record, not an active work queue.
 
+## 2026-10-07 closure — the cache program, the `/model` gap and the suite leak (3 FIDs archived)
+
+Closed under the operator's standing ruling of 2026-10-07 (verbatim: "approve, work
+until everything is completed, no more blockers and all fixed with echo
+compliance"), after each record's implementation landed as its own path-scoped
+local commits. No push and no release. The active queue is now empty.
+
+**`FID-2026-1006-005-savant-echo-prompt-cache-optimization`** (register item T155,
+severity medium, automation level 3). An externally sourced 324-line research
+report was reconciled against the shipped tree rather than implemented from, and
+all eleven steps are resolved: the markdown-gate defect it also owned is fixed
+(`.markdownlintignore` + `scripts/lint-md-check.ts`), Phase 1 is a canonical
+model-facing tool payload behind `CANONICAL_TOOL_PAYLOAD` with `normalizeForJson`
+/ `stableHash` order-canonical in both twins (`ba4dee65`), the split cache-control
+seam is one spelling over one provider set behind one clearer (`f0d365fa`), the
+mode-to-TTL policy routes Hermetic from the run's enforcement axis (`7901568f`),
+and both operator-approved ECHO amendments are law (`70cec07c`). **Step 11** —
+the locator gap the step-3 audit measured — was already implemented by
+`FID-2026-1007-004`, so it was a status drift rather than open work. **Steps 8 and
+10 were re-scoped, not deferred:** the operator ruled the live-endpoint and
+provider-billing requirement was never approved (*"im not paying for anything, i
+never approved that — so where is that even coming from as a requirement?"*), and
+it had in fact entered through the record's own reconciliation of the vendor
+report's Approval Point 3. Step 8 is an offline evaluation whose subject is
+measurable in the tree (the tool set is assembled once per run, and the one
+mid-session mutation happens before the run's first provider call, so the
+Anthropic `tool_addition`/`tool_removal` betas have nothing to smooth — adoption
+declined with its reopening condition stated); step 10 is the offline
+prefix-stability ratio the shipped instrument can compute (100% over a 12-turn
+loop with no structural change, 81.8% with exactly one warning on a genuine tool
+change, byte-identical model-facing bytes across a reorder under the shipped
+seam), with the provider-side hit ratio named as an environment boundary rather
+than a claim. Receipt: 8/8 declared gates exit 0 at the archived path.
+
+**`FID-2026-1007-005-chatanywhere-model-list-design`** (register item T160,
+severity medium, automation level 3). Opened on the operator's report —
+*"looking at the /model list, the 'chatanywhere' list seems to be designed wrong
+and not matching the rest of the list too"* — and both halves were real.
+ChatAnywhere was registered, catalogued, window-covered and documented while the
+`fetchGatewayModels` fan-out never asked for it (166 rows from 21 providers, `[]`
+for chatanywhere), so a synchronous builder off the checked-in 27-model map now
+feeds the merge list (`edc761a8`), and the live census reads
+`chatanywhere: 27`. The `⭐ FREE KEY` section hoisted every free-RELATED row,
+which meant a correct wiring would still have relocated the whole roster out of a
+`CHATANYWHERE` group; the hoisting rule is now `hasFreeToken` (the operator's rule
+was about the marker, not the placement), the per-row ⭐ is unchanged, and the key
+lane renders only for a provider that contributed rows. The class is closed
+mechanically: `catalogPairingIssues` fails a provider declaring
+`catalog.modelsRef` with zero picker rows, or an audited exception that starts
+contributing — with `cloudflare` (SDK-routed, no CLI builder) as the one recorded
+exception. Receipt: 8/8 declared gates exit 0 at the archived path.
+
+**`FID-2026-1007-006-gateway-cache-user-dir-isolation`** (register item T161,
+severity medium, automation level 3). The root `bun run test` chain was red at the
+`cli` leg (3961 pass / 1 fail) and that one line hid eleven workspaces. Step 1
+named the leaking file by instrumenting the new publish guard for a single suite
+run — 82 claims against 37 suppressed publishes — and the answer corrected the
+record's own draft: **`server/gateway.ts:114`**, the fire-and-forget
+`void fetchGatewayModels()` boot warm, claimed 36 times per run by the server test
+harness. No test reads the operator's cache (the suite's config dir holds no
+catalog); the build went to the LIVE upstream and published into shared module
+state after another file's reset. Two defects, one owner: publication is now an
+authority (`d396d091`, a build token, so a superseded build writes neither
+memory, listeners nor disk) and the in-flight slot is released on settle, which
+repaired `CATALOG_TTL_MS` — dead code in production until then. The config dir is
+owned by the workspace preload rather than by whichever file remembered
+(`8c92d087`), so no `cli` test can resolve the user's directory for settings,
+credentials, history, project data or the disk cache. Three pins, all RED-first.
+Receipt: 5/5 declared gates exit 0 at the archived path.
+
 ## 2026-10-07 closure — lossless tool-output retention and verified locators (FID-2026-1007-004)
 
 Closed under the operator ruling of 2026-10-07 (verbatim: "approve, work until

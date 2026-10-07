@@ -62,16 +62,38 @@
 
 ## Open items
 
-**Seven** items are open — three blocked pending operator input (T119,
-T62-followups, T122), one shelved on an operator ruling (T147), and three awaiting
-work: T155 (the prompt-cache optimization program, `FID-2026-1006-005`, `fixed`
-with a stamped receipt; steps 8, 10 and 11 stay open on a live endpoint, provider
-billing, and the locator gap its step-3 audit measured), T160 (the ChatAnywhere
-`/model` gap, `FID-2026-1007-005`, `converged` with its plan measured on the
-shipped functions and no code written) and T161 (the `cli` suite reads the
-operator's real gateway cache — the one red test that stops the root `bun run test`
-chain before eleven workspaces, `FID-2026-1007-006`, `analyzed` with the signature
-traced to the cache file). **T159 completed in this
+**Four** items are open — three blocked pending operator input (T119,
+T62-followups, T122) and one shelved on an operator ruling (T147).
+**T155, T160 and T161 completed in this pass** — all three FIDs closed, receipted
+and archived, so `dev/fids/` carries no active record:
+
+- **T155** (`FID-2026-1006-005`, cache program) — all eleven steps resolved. Four
+  implementation commits plus step 11 landed by `FID-2026-1007-004`, and steps 8
+  and 10 **re-scoped to offline evidence** after the operator ruled the live/paid
+  leg was never approved (it had entered through the record's own reconciliation of
+  the vendor report's Approval Point 3, not through an operator decision). Step 8's
+  evaluation measures in the tree: the tool set is assembled once per run and its
+  one mid-session mutation happens before the first provider call, so the Anthropic
+  betas have nothing to smooth (adoption declined, reopening condition stated). Step
+  10 measures the prefix-stability ratio the shipped instrument computes — 100% on a
+  12-turn loop with no structural change, 81.8% with one warning on a genuine tool
+  change — with the provider-side hit ratio named as an environment boundary rather
+  than a claim. Receipt 8/8.
+- **T160** (`FID-2026-1007-005`, ChatAnywhere `/model` gap) — `edc761a8`. The 27
+  rows reach the picker through the shipped function (live census
+  `chatanywhere: 27`), the free-key section hoists free-**token** entries only so a
+  free-key provider keeps its own group, its key lane renders only when its provider
+  contributed rows, and `catalogPairingIssues` now fails a `modelsRef` provider with
+  no picker rows. Receipt 8/8.
+- **T161** (`FID-2026-1007-006`, suite isolation) — `d396d091` + `8c92d087`. The
+  leaking file is named (`server/gateway.ts:114`, the fire-and-forget boot warm,
+  claimed 36 times per suite run) rather than inferred, publication is now an
+  authority so a superseded build writes nothing, the in-flight slot is released on
+  settle (repairing `CATALOG_TTL_MS`, dead code until then), and the config dir is
+  owned by the workspace preload. The root `bun run test` chain's `cli` leg is green
+  again. Receipt 5/5.
+
+**T159 completed in this
 pass** — the lossless tool-output retention, `FID-2026-1007-004`, **all seven steps
 implemented and verified** (`e9322b38` for the seam, `eb2ee0f3` for steps 3-7,
 `49c7bab4` for the ceiling splits the quality gate required), receipt stamped
@@ -687,7 +709,7 @@ T90-F3 was resolved by the operator ruling "T90-F3 residual needs no code"
       MD001 defect is silenced rather than repaired — recorded, not hidden. The
       program this document proposes is a separate open item: **T155**.
 
-- [ ] **T155. Prompt-cache optimization program (`FID-2026-1006-005`).**
+- [x] **T155. Prompt-cache optimization program (`FID-2026-1006-005`).**
       **Automation level: 3.** Registered 2026-10-06 on the operator's
       directive that the cache research document needed its own record. The
       record is `fixed` — the Perfection Loop is complete, was independently
@@ -697,6 +719,34 @@ T90-F3 was resolved by the operator ruling "T90-F3 residual needs no code"
       `stableHash` are order-canonical in both twins, so `toolsHash` moves only
       when the tool set really changes (measured before/after in the record's
       Loop 4) — and it folds in the T154 gate fix rather than losing it.
+
+      **COMPLETED 2026-10-07 — receipt 8/8 at the archived path; all eleven steps
+      resolved.** Beyond the Phase 1 work above: **step 4** (`f0d365fa`) unified the
+      split cache-control seam to one spelling, one provider set and one clearer;
+      **step 7** (`7901568f`) routes the approved mode-to-TTL policy from the run's
+      own enforcement axis (Hybrid `5m`, FID-bound `1h`); **step 3** audited Phase-2
+      coverage and produced a measured finding instead of the parity the report
+      assumed; **step 9** (`70cec07c`) landed both approved ECHO amendments and
+      regenerated the embedded bundle. **Step 11** was already implemented by
+      `FID-2026-1007-004` (`e9322b38` + `eb2ee0f3` + `49c7bab4`) — one marker that
+      carries a real locator or a named refusal — so it was a status drift rather
+      than open work. **Steps 8 and 10 were re-scoped, not deferred:** the operator
+      ruled the live-endpoint / provider-billing requirement was never approved
+      (*"im not paying for anything, i never approved that — so where is that even
+      coming from as a requirement?"*), and it had entered through the record's own
+      reconciliation of the vendor report's Approval Point 3 rather than through an
+      operator decision. Step 8 is now an offline evaluation whose subject is
+      measurable in the tree — the tool set is assembled once per run
+      (`loop-context.ts` ← `loop.ts:57`), its one mid-session mutation happens at
+      context creation before the first provider call
+      (`loop-context-drive.ts:55`), and a role handoff is a new loop context — so the
+      Anthropic `tool_addition`/`tool_removal` betas have nothing to smooth: adoption
+      declined, with the reopening condition stated. Step 10 is the offline
+      prefix-stability ratio the shipped instrument computes: 100% over a 12-turn
+      loop with no structural change, 81.8% with exactly one warning on a genuine
+      tool change, byte-identical model-facing bytes across a reorder under the
+      shipped seam. The provider-side hit ratio is an environment boundary, not a
+      claim — and the paid measurement it belonged to was never a requirement.
       Reconciliation findings against the shipped tree: two of the
       report's three phases are substantially already implemented
       (`evidence/spill.ts`, `util/simplify-tool-results.ts`,
@@ -804,7 +854,7 @@ T90-F3 was resolved by the operator ruling "T90-F3 residual needs no code"
       `bun run scripts/scripts-typecheck-check.ts` exit 0, `validate:repository`
       clean.
 
-- [ ] **T161. The `cli` test suite reads the operator's real gateway cache
+- [x] **T161. The `cli` test suite reads the operator's real gateway cache
       (`FID-2026-1007-006`).** **Automation level: 3.** Registered 2026-10-07 from the
       full-battery run this session owed the retention closure: `bun run test` is RED
       at the `cli` leg — **3961 pass / 18 skip / 1 fail** — so the `&&` chain stops
@@ -828,7 +878,24 @@ T90-F3 was resolved by the operator ruling "T90-F3 residual needs no code"
       from a real user-dir read), so no fix or gate is claimed. **Blocker:** none;
       identification is the next action.
 
-- [ ] **T160. ChatAnywhere is missing from the `/model` list (`FID-2026-1007-005`).**
+      **COMPLETED 2026-10-07 — `d396d091` + `8c92d087`; receipt 5/5 at the archived
+      path.** Step 1 named the file by instrumenting the new publish guard for one
+      `bun test src/` run (82 claims, 37 suppressed publishes):
+      **`cli/src/server/gateway.ts:114`**, the fire-and-forget
+      `void fetchGatewayModels()` boot warm, reached from `startGateway` by the server
+      test harness (`gateway-test-harness.ts:210`) 36 times per run. **That measurement
+      corrected this item's own premise:** no test reads the operator's cache — the
+      suite's config dir resolves to `~/.savant-code-dev`, which holds no catalog — the
+      value the assertion received came from the LIVE upstream that also wrote the
+      operator's cache. Two defects, one owner: publication is now an authority (a
+      build token, so a superseded build writes neither `gatewayCache`, nor the
+      listeners, nor the disk) and the in-flight slot is released on settle, which
+      repaired `CATALOG_TTL_MS` — a production bug found while tracing the red. The
+      config dir is owned by the workspace preload, so no `cli` test can resolve the
+      user's directory for settings, credentials, history, project data or the disk
+      cache. Pre-fix the suite was `3964 pass / 4 fail`; post-fix `3969 pass / 0 fail`.
+
+- [x] **T160. ChatAnywhere is missing from the `/model` list (`FID-2026-1007-005`).**
       **Automation level: 3.** Registered 2026-10-07 on the operator's report, verbatim:
       "looking at the /model list, the 'chatanywhere' list seems to be designed wrong
       and not matching the rest of the list too -- we need to review it, open a fid for
@@ -851,6 +918,21 @@ T90-F3 was resolved by the operator ruling "T90-F3 residual needs no code"
       `scripts/provider-catalog-parity.ts` → registry-derived docs), eight declared
       gates, no production edit yet. **Blocker:** none; implementation is the next
       action.
+
+      **COMPLETED 2026-10-07 — `edc761a8`; receipt 8/8 at the archived path.** The
+      builder landed in its own module (`openrouter-models/chatanywhere.ts`, deriving
+      the 27 rows from the checked-in map with the bare upstream id as the display
+      name) and is merged before the custom catalogs; the **live census through the
+      shipped function now reports `chatanywhere: 27`**, and `providers:parity --check`
+      exits 0 with "every modelsRef provider contributes rows". The section rule was
+      narrowed to the operator's own marker rule — `hasFreeToken` hoists, so a
+      free-key provider's roster keeps its own group and keeps the per-row ⭐ — and the
+      key lane renders only for a provider that contributed rows. The class is closed
+      two-directionally in `catalogPairingIssues` (a `modelsRef` provider with zero
+      rows fails; an audited exception that starts contributing fails), with
+      `cloudflare` recorded as the one SDK-routed exception and four offline pins in
+      `scripts/__tests__/provider-catalog-parity.test.ts` because the live probe needs
+      the keyed endpoints.
 
 - [x] **T159. Every discarded payload needs a durable record and a locator it can
       prove (`FID-2026-1007-004`).** **Automation level: 3.** Registered 2026-10-07
