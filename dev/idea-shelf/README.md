@@ -1,4 +1,8 @@
-# Idea Shelf
+# Idea-Shelf
+
+Index of shelf notes. New entries go here as one line.
+
+- [free-llm-api-directory-2026-10.md](free-llm-api-directory-2026-10.md) — verified URL directory for Spencer's 72-item free-API list + stealth shelf status (Pixel Canary live, Space Bunny withdrawn) + meta-directory pointers. SHELVED.
 
 Shelved ideas, explorations, and design references — **not active work**.
 Nothing here is a commitment, a FID, or a registered task; active work lives
