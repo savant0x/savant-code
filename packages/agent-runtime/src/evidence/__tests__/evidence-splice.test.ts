@@ -93,6 +93,66 @@ describe('evidence spill + splice (FID-2026-0824-026)', () => {
     expect(JSON.stringify(out[2]?.content)).toContain('exitCode')
   })
 
+  test('splice restores an omission-marked message, not only a sentinel', () => {
+    // FID-2026-1007-004 step 5: the trim pass and the four transforms never
+    // write a `[compacted]` sentinel — they replace the payload with a bounded
+    // kept value plus an `omitted` marker. Before this pin the splice skipped
+    // every one of them, so a stored original could not be restored over the
+    // marker that had taken its place.
+    const messages = [
+      {
+        role: 'tool',
+        toolName: 'code_search',
+        toolCallId: 't9',
+        content: [
+          {
+            type: 'json',
+            value: {
+              omitted: {
+                reason: 'output exceeded 50000 bytes',
+                originalChars: 60_000,
+                keptChars: 500,
+                omittedChars: 59_500,
+                preview: 'x',
+                retained: {
+                  ok: true,
+                  file: 'f',
+                  toolCallId: 't9',
+                  sha256: 'h',
+                  bytes: 60_000,
+                  redacted: false,
+                },
+              },
+            },
+          },
+        ],
+      },
+    ]
+    const records = new Map([
+      [
+        't9',
+        {
+          ts: 1,
+          runId: 'r',
+          agentId: 'a',
+          toolCallId: 't9',
+          toolName: 'code_search',
+          byteSize: 17,
+          sha256: 'h',
+          raw: '{"body":"all of it"}',
+        },
+      ],
+    ])
+
+    const { messages: out, restoredToolCallIds } = spliceRawEvidence(
+      messages,
+      records,
+    )
+
+    expect(restoredToolCallIds).toEqual(['t9'])
+    expect(JSON.stringify(out[0]?.content)).toContain('all of it')
+  })
+
   test('restored-evidence note is bounded and null when empty', () => {
     expect(buildRestoredEvidenceNote(['t1', 't9'])).toContain('count="2"')
     expect(buildRestoredEvidenceNote([])).toBeNull()

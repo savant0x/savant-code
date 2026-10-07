@@ -2,7 +2,16 @@
  * Evidence splice (FID-2026-0824-026): restore raw tool results from the
  * evidence spill into a child's inherited history, replacing compaction
  * sentinels. Pure + deterministic; no runtime imports.
+ *
+ * FID-2026-1007-004 step 5 widened the shape it recognises. `[compacted]` is
+ * only what the COMPACTION layers write; the four transforms and the trim pass
+ * replace a payload with a bounded kept value plus an `omitted` marker, and the
+ * splice skipped every one of those — so a stored original could not be put back
+ * over the marker that had taken its place. The shapes now live in
+ * `./omission.ts` and are read from one place.
  */
+import { isRestorableLoss } from './omission'
+
 import type { EvidenceSpillRecord } from './spill'
 
 type ToolLikeMessage = {
@@ -10,23 +19,6 @@ type ToolLikeMessage = {
   toolName?: unknown
   toolCallId?: unknown
   content?: unknown
-}
-
-function isCompactedSentinel(content: unknown): boolean {
-  if (!Array.isArray(content)) return false
-  return content.some((part) => {
-    if (typeof part !== 'object' || part === null) return false
-    const p = part as Record<string, unknown>
-    if (p.value === '[compacted]') return true
-    if (
-      typeof p.value === 'object' &&
-      p.value !== null &&
-      (p.value as Record<string, unknown>).compacted === true
-    ) {
-      return true
-    }
-    return false
-  })
 }
 
 export function spliceRawEvidence<T extends ToolLikeMessage>(
@@ -39,7 +31,7 @@ export function spliceRawEvidence<T extends ToolLikeMessage>(
       message.role !== 'tool' ||
       typeof message.toolCallId !== 'string' ||
       !records.has(message.toolCallId) ||
-      !isCompactedSentinel(message.content)
+      !isRestorableLoss(message.content)
     ) {
       return message
     }

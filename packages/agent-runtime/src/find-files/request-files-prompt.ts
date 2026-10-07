@@ -23,6 +23,7 @@ import {
 } from './request-files-prompt/prompts'
 import { validateFilePaths } from './request-files-prompt/validate'
 
+import type { InventoryContext } from '../evidence/inventory'
 import type { TextBlock } from '../llm-api/claude'
 import type { PromptAiSdkFn } from '@savant-code/common/types/contracts/llm'
 import type { Logger } from '@savant-code/common/types/contracts/logger'
@@ -45,6 +46,8 @@ export async function requestRelevantFiles(
     userId: string | undefined
     repoId: string | undefined
     logger: Logger
+    /** FID-2026-1007-004 step 4: where the trim pass ledgers what it takes. */
+    evidenceContext?: InventoryContext
   } & ParamsExcluding<
     typeof getRelevantFiles,
     'messages' | 'userPrompt' | 'requestType' | 'modelId'
@@ -105,6 +108,7 @@ export async function requestRelevantFilesForTraining(
     fileContext: ProjectFileContext
     assistantPrompt: string | null
     logger: Logger
+    evidenceContext?: InventoryContext
   } & ParamsExcluding<
     typeof getRelevantFilesForTraining,
     'messages' | 'userPrompt' | 'requestType'
@@ -173,6 +177,7 @@ async function getRelevantFiles(
     repoId: string | undefined
     modelId?: FinetunedVertexModel
     logger: Logger
+    evidenceContext?: InventoryContext
   } & ParamsExcluding<
     typeof promptFlashWithFallbacks,
     'messages' | 'model' | 'useFinetunedModel'
@@ -191,12 +196,14 @@ async function getRelevantFiles(
     repoId: _repoId,
     modelId,
     logger,
+    evidenceContext,
   } = params
   const bufferTokens = 100_000
   const messagesWithPrompt = getMessagesSubset({
     messages: [...messages, userMessage(userPrompt)],
     otherTokens: bufferTokens,
     logger,
+    inventory: evidenceContext,
   })
   const start = performance.now()
   let savantCodeMessages = [systemMessage(system), ...messagesWithPrompt]
@@ -249,6 +256,7 @@ async function getRelevantFilesForTraining(
     repoId: string | undefined
     promptAiSdk: PromptAiSdkFn
     logger: Logger
+    evidenceContext?: InventoryContext
   } & ParamsExcluding<PromptAiSdkFn, 'messages' | 'model' | 'chargeUser'>,
 ) {
   const {
@@ -264,12 +272,14 @@ async function getRelevantFilesForTraining(
     repoId: _repoId,
     promptAiSdk,
     logger,
+    evidenceContext,
   } = params
   const bufferTokens = 100_000
   const messagesWithPrompt = getMessagesSubset({
     messages: [...messages, userMessage(userPrompt)],
     otherTokens: bufferTokens,
     logger,
+    inventory: evidenceContext,
   })
   const start = performance.now()
   const response = unwrapPromptResult(

@@ -8,7 +8,16 @@ import path from 'node:path'
  * Shares the `.savant/evidence/` directory with the -026 spill. Fail-open.
  */
 
-export type CompactionLayer = 'micro' | 'auto' | 'reactive'
+/**
+ * Which layer did the removing. `trim` is the token-budget pass in
+ * `util/messages/trimming.ts` (FID-2026-1007-004 step 4): it deletes whole
+ * messages and, before this, wrote no row at all — the only destructive path
+ * with no ledger entry.
+ */
+export type CompactionLayer = 'micro' | 'auto' | 'reactive' | 'trim'
+
+/** Where a ledger row and the retention store live: one run, one root. */
+export type InventoryContext = { projectRoot: string; runId: string }
 
 export type CompactionInventoryRecord = {
   ts: number
@@ -122,6 +131,11 @@ export function inventoryFilePath(projectRoot: string, runId: string): string {
 }
 
 /** Fixed-template model-facing notice (bounded; never carries payloads). */
+/**
+ * The model-facing notice for a compaction event. The trim pass reuses it so a
+ * trimmed history is announced the same way a compacted one is, rather than
+ * silently losing turns the model can no longer see.
+ */
 export function buildCompactionModelNotice(layer: CompactionLayer): string {
   return `<compaction-notice layer="${layer}">Earlier tool responses in this conversation were compacted to bounded digests. Re-read files or re-run commands if exact contents matter.</compaction-notice>`
 }

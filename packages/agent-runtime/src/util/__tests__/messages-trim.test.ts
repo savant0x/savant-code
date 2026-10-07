@@ -13,6 +13,7 @@ import {
   spyOn,
 } from 'bun:test'
 
+import { rememberRetention } from '../../evidence/retention-registry'
 import { trimMessagesToFitTokenLimit } from '../../util/messages'
 import * as tokenCounter from '../token-counter'
 
@@ -34,6 +35,23 @@ describe('trimMessagesToFitTokenLimit', () => {
       // Make token count high enough to trigger simplification
       return JSON.stringify(text).length
     })
+    // FID-2026-1007-004 step 3: in production the tool-result boundary has
+    // already retained these payloads and handed the transform a handle, which
+    // is what authorises the simplification this suite asserts. The fixture now
+    // states that precondition instead of relying on a transform that used to
+    // drop first and never ask.
+    for (let i = 0; i < 8; i++) {
+      rememberRetention(`test-id-${i}`, {
+        retained: true,
+        handle: {
+          file: `test-id-${i}.jsonl`,
+          toolCallId: `test-id-${i}`,
+          sha256: 'e'.repeat(64),
+          bytes: 1,
+          redacted: false,
+        },
+      })
+    }
   })
 
   afterEach(() => {
@@ -51,38 +69,63 @@ describe('trimMessagesToFitTokenLimit', () => {
     ),
     {
       // Terminal output 0 (oldest) - should be simplified
-
+      // FID-2026-1007-004 step 3: these fixtures carry the SHAPE the tool
+      // actually returns. They used to be bare JSON strings, a shape
+      // `run_terminal_command`'s output schema cannot produce, and the old
+      // transform failed on them into `{ command: '', stdoutOmittedForLength:
+      // true }` — the token assertion below was partly satisfied by that silent
+      // loss.
       role: 'tool',
       toolName: 'run_terminal_command',
       toolCallId: 'test-id-0',
-      content: jsonToolResult(`Terminal output 0${'.'.repeat(2000)}`),
+      content: jsonToolResult({
+        command: 'echo 0',
+        stdout: `Terminal output 0${'.'.repeat(2000)}`,
+        exitCode: 0,
+      }),
     },
     {
-      // Terminal output 1 - should be preserved (shorter than '[Output omitted]')
+      // Terminal output 1 - should be preserved (5th most recent)
       role: 'tool',
       toolName: 'run_terminal_command',
       toolCallId: 'test-id-1',
-      content: jsonToolResult(`Short output 1`),
+      content: jsonToolResult({
+        command: 'echo 1',
+        stdout: 'Short output 1',
+        exitCode: 0,
+      }),
     },
     {
       // Terminal output 2 - should be simplified
       role: 'tool',
       toolName: 'run_terminal_command',
       toolCallId: 'test-id-2',
-      content: jsonToolResult(`Terminal output 2${'.'.repeat(2000)}`),
+      content: jsonToolResult({
+        command: 'echo 2',
+        stdout: `Terminal output 2${'.'.repeat(2000)}`,
+        exitCode: 0,
+      }),
     },
     {
-      // Terminal output 3 - should be preserved (5th most recent)
+      // Terminal output 3 - should be preserved (4th most recent)
       role: 'tool',
       toolName: 'run_terminal_command',
       toolCallId: 'test-id-3',
-      content: jsonToolResult(`Terminal output 3`),
+      content: jsonToolResult({
+        command: 'echo 3',
+        stdout: 'Terminal output 3',
+        exitCode: 0,
+      }),
     },
     {
       role: 'tool',
       toolName: 'run_terminal_command',
       toolCallId: 'test-id-4',
-      content: jsonToolResult(`Terminal output 4`),
+      content: jsonToolResult({
+        command: 'echo 4',
+        stdout: 'Terminal output 4',
+        exitCode: 0,
+      }),
     },
     // Regular message - should never be shortened
     userMessage({
@@ -95,21 +138,33 @@ describe('trimMessagesToFitTokenLimit', () => {
       role: 'tool',
       toolName: 'run_terminal_command',
       toolCallId: 'test-id-5',
-      content: jsonToolResult(`Terminal output 5`),
+      content: jsonToolResult({
+        command: 'echo 5',
+        stdout: 'Terminal output 5',
+        exitCode: 0,
+      }),
     },
     {
       // Terminal output 6 - should be preserved (2nd most recent)
       role: 'tool',
       toolName: 'run_terminal_command',
       toolCallId: 'test-id-6',
-      content: jsonToolResult(`Terminal output 6`),
+      content: jsonToolResult({
+        command: 'echo 6',
+        stdout: 'Terminal output 6',
+        exitCode: 0,
+      }),
     },
     {
       // Terminal output 7 - should be preserved (most recent)
       role: 'tool',
       toolName: 'run_terminal_command',
       toolCallId: 'test-id-7',
-      content: jsonToolResult(`Terminal output 7`),
+      content: jsonToolResult({
+        command: 'echo 7',
+        stdout: 'Terminal output 7',
+        exitCode: 0,
+      }),
     },
     // Regular message - should never be shortened
     assistantMessage(

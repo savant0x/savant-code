@@ -7,6 +7,11 @@ import {
 import { cloneDeep, isEqual } from 'lodash'
 
 import {
+  appendCompactionInventory,
+  describeRemovedToolItem,
+  diffRemovedSpans,
+} from '../../evidence/inventory'
+import {
   simplifyTerminalCommandResults,
   simplifyVerboseToolResults,
   VERBOSE_TOOL_NAMES,
@@ -14,6 +19,7 @@ import {
 import { countTokensMessages } from '../token-counter'
 import { withSystemTags } from './framing'
 
+import type { InventoryContext } from '../../evidence/inventory'
 import type {
   SavantCodeToolMessage,
   SavantCodeToolOutput,
@@ -21,6 +27,7 @@ import type {
 import type { Logger } from '@savant-code/common/types/contracts/logger'
 import type { ToolResultOutput } from '@savant-code/common/types/messages/content-part'
 import type { Message } from '@savant-code/common/types/messages/savant-code-message'
+
 
 /**
  * Token-budget trimming: simplify verbose tool outputs and trim old messages
@@ -35,11 +42,13 @@ function simplifyTerminalHelper(params: {
   toolResult: SavantCodeToolOutput<'run_terminal_command'>
   numKept: number
   logger: Logger
+  toolCallId?: string
 }): { result: SavantCodeToolOutput<'run_terminal_command'>; numKept: number } {
-  const { toolResult, numKept, logger } = params
+  const { toolResult, numKept, logger, toolCallId } = params
   const simplified = simplifyTerminalCommandResults({
     messageContent: toolResult,
     logger,
+    toolCallId,
   })
 
   // Keep the full output for the N most recent commands
@@ -68,9 +77,16 @@ const replacementMessage = userMessage(
  * 2. Simplifies terminal command outputs after keeping N most recent ones
  * 3. Stops adding messages when approaching token limit
  *
+ * FID-2026-1007-004 step 4: this pass deletes whole messages — tool results and
+ * conversation turns alike — and was the only destructive path that wrote no
+ * row anywhere about what it took. Given `inventory`, it now writes the same
+ * `appendCompactionInventory` row the compaction layers write, with
+ * `layer: 'trim'`, the removed positions and the removed tool-result identity.
+ *
  * @param messages - Array of messages to trim
  * @param systemTokens - Number of tokens used by system prompt
  * @param maxTotalTokens - Maximum total tokens allowed, defaults to 200k
+ * @param inventory - Where the ledger row goes (omitted ⇒ no ledger, as before)
  * @returns Trimmed array of messages that fits within token limit
  */
 export function trimMessagesToFitTokenLimit(params: {
@@ -78,6 +94,7 @@ export function trimMessagesToFitTokenLimit(params: {
   systemTokens: number
   maxTotalTokens?: number
   logger: Logger
+  inventory?: InventoryContext
 }): Message[] {
   const { messages, systemTokens, maxTotalTokens = 190_000, logger } = params
   const maxMessageTokens = maxTotalTokens - systemTokens
@@ -106,6 +123,7 @@ export function trimMessagesToFitTokenLimit(params: {
           ...m,
           content: simplifyVerboseToolResults({
             messageContent: m.content as ToolResultOutput[],
+            toolCallId: m.toolCallId,
           }),
         })
         continue
@@ -123,6 +141,7 @@ export function trimMessagesToFitTokenLimit(params: {
         toolResult: terminalResultMessage.content,
         numKept,
         logger,
+        toolCallId: m.toolCallId,
       })
       terminalResultMessage.content = result.result
       numKept = result.numKept
@@ -146,12 +165,16 @@ export function trimMessagesToFitTokenLimit(params: {
 
   const placeholder = 'deleted'
   const filteredMessages: (Message | typeof placeholder)[] = []
+  // Which messages this pass actually deletes, by identity — the ledger below
+  // names exactly these and nothing else.
+  const removed = new Set<Message>()
   for (const message of shortenedMessages) {
     if (removedTokens >= tokensToRemove || message.keepDuringTruncation) {
       filteredMessages.push(message)
       continue
     }
     removedTokens += countTokensMessages([message])
+    removed.add(message)
     if (
       filteredMessages.length === 0 ||
       filteredMessages[filteredMessages.length - 1] !== placeholder
@@ -161,21 +184,76 @@ export function trimMessagesToFitTokenLimit(params: {
     }
   }
 
-  return filteredMessages.map((m) =>
+  const result = filteredMessages.map((m) =>
     m === placeholder ? replacementMessage : m,
   )
+
+  if (params.inventory) {
+    ledgerTrimPass({
+      // `shortenedMessages` is index-aligned with the caller's array: the pass
+      // above maps one input message to exactly one entry, so a region here is
+      // a region of the history the caller handed in.
+      prev: shortenedMessages,
+      next: shortenedMessages.filter((message) => !removed.has(message)),
+      inventory: params.inventory,
+      tokensSaved: initialTokens - countTokensMessages(result),
+    })
+  }
+
+  return result
+}
+
+/**
+ * FID-2026-1007-004 step 4 — the trim pass's ledger write.
+ *
+ * The row is the one the compaction layers already write (`diffRemovedSpans` +
+ * `describeRemovedToolItem` + the bounded `items` cap), keyed to the same
+ * `.savant/evidence/<runId>.inventory.jsonl` file, so an audit can ask "what did
+ * this run take?" once instead of once per layer. Fire-and-forget on purpose:
+ * the write is observable on disk and nothing on the find-files request path
+ * waits on it, which is also how the other three callers behave. Fail-open, like
+ * the store it reports to.
+ */
+function ledgerTrimPass(params: {
+  prev: readonly Message[]
+  next: readonly Message[]
+  inventory: InventoryContext
+  tokensSaved: number
+}): void {
+  const { regions, items } = diffRemovedSpans({
+    prev: params.prev,
+    next: params.next,
+    describeItem: describeRemovedToolItem,
+  })
+  const removedMessages = regions.reduce(
+    (total, region) => total + (region.end - region.start),
+    0,
+  )
+  if (removedMessages === 0) return
+
+  void appendCompactionInventory({
+    projectRoot: params.inventory.projectRoot,
+    runId: params.inventory.runId,
+    layer: 'trim',
+    removedMessages,
+    tokensSaved: Math.max(0, params.tokensSaved),
+    regions,
+    items,
+  })
 }
 
 export function getMessagesSubset(params: {
   messages: Message[]
   otherTokens: number
   logger: Logger
+  inventory?: InventoryContext
 }): Message[] {
-  const { messages, otherTokens, logger } = params
+  const { messages, otherTokens, logger, inventory } = params
   const messagesSubset = trimMessagesToFitTokenLimit({
     messages,
     systemTokens: otherTokens,
     logger,
+    inventory,
   })
 
   // Strip every cache-control breakpoint from the trimmed subset: the subset is

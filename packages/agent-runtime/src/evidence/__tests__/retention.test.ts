@@ -115,6 +115,7 @@ describe('retention registry — the in-process transport for a handle', () => {
         toolCallId: 'call-9',
         sha256: 'abc',
         bytes: 3,
+        redacted: false,
       },
     })
     expect(lookupRetention('call-9')?.retained).toBe(true)

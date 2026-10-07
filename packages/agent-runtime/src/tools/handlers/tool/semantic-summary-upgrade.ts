@@ -13,6 +13,8 @@
  * (degraded mode is still strictly better than the pre-fix transcriber).
  * User aborts propagate (never swallowed, common/util/error contract).
  */
+import { redactSecrets } from '@savant-code/common/util/redact'
+
 import {
   buildSemanticSummaryPrompt,
   estimateSummaryTokens,
@@ -36,21 +38,11 @@ export type SemanticSummaryUpgradeResult = {
   excerpt: string
 }
 
-/** Secret-looking strings (API keys, bearer tokens) never enter memory. */
-const SECRET_PATTERNS: RegExp[] = [
-  /\bsk-[A-Za-z0-9_-]{8,}\b/g,
-  /\bsk-or-v1-[A-Za-z0-9_-]{8,}\b/g,
-  /\b(?:ghp|gho|ghu|ghs)_[A-Za-z0-9]{20,}\b/g,
-  /\bBearer\s+[A-Za-z0-9._-]{16,}\b/gi,
-]
-
-export function redactSecrets(text: string): string {
-  let redacted = text
-  for (const pattern of SECRET_PATTERNS) {
-    redacted = redacted.replace(pattern, '[REDACTED]')
-  }
-  return redacted
-}
+// FID-2026-1007-004 step 6: the pattern list moved to the canonical utility
+// tier (`@savant-code/common/util/redact`) so the evidence spill redacts with
+// the same truth this module does. Re-exported to keep this module's public
+// surface — and its unit suite's single import — unchanged.
+export { redactSecrets }
 
 /** Tool-call syntax that must never appear in stored memory. */
 const TOOL_CALL_LEAK_PATTERNS: RegExp[] = [

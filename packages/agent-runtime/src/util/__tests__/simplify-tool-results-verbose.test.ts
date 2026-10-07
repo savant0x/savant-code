@@ -1,8 +1,11 @@
 // simplify-tool-results — verbose tool pre-pass (P2c).
-// Sibling of the Loop 327 decomposition.
+// Sibling of the Loop 327 decomposition. FID-2026-1007-004 step 3: the marker
+// is `omitted` and a drop needs a retaining handle, so an object payload keeps
+// its fields and states that it omitted nothing.
 
 import { describe, expect, it } from 'bun:test'
 
+import { rememberRetention } from '../../evidence/retention-registry'
 import {
   TOOL_OUTPUT_LIMITS,
   VERBOSE_TOOL_NAMES,
@@ -12,7 +15,7 @@ import {
 import type { JSONValue } from '@savant-code/common/types/json'
 
 describe('simplifyVerboseToolResults (P2c pre-pass)', () => {
-  it('truncates the JSON part of a verbose tool message', () => {
+  it('attaches the omission marker to an over-limit verbose message', () => {
     const content = [
       {
         type: 'json' as const,
@@ -28,7 +31,39 @@ describe('simplifyVerboseToolResults (P2c pre-pass)', () => {
     expect(result).not.toBe(content) // changed -> new array
     expect(result[0].type).toBe('json')
     const value = result[0] as { value: Record<string, JSONValue> }
-    expect(value.value.truncated).toBeDefined()
+    expect(value.value.omitted).toBeDefined()
+    expect(value.value.matches).toBeDefined()
+  })
+
+  it('takes a string payload only when the tool call has a handle', () => {
+    const content = [
+      {
+        type: 'json' as const,
+        value: 'x'.repeat(TOOL_OUTPUT_LIMITS.maxBytes + 100),
+      },
+    ]
+
+    expect(simplifyVerboseToolResults({ messageContent: content })).toBe(
+      content,
+    )
+
+    rememberRetention('call-verbose', {
+      retained: true,
+      handle: {
+        file: 'call-verbose.jsonl',
+        toolCallId: 'call-verbose',
+        sha256: 'b'.repeat(64),
+        bytes: 1,
+        redacted: false,
+      },
+    })
+    const result = simplifyVerboseToolResults({
+      messageContent: content,
+      toolCallId: 'call-verbose',
+    })
+    expect(result).not.toBe(content)
+    const value = result[0] as { value: Record<string, JSONValue> }
+    expect(value.value.omitted).toBeDefined()
   })
 
   it('returns the original content by reference when no truncation needed', () => {

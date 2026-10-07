@@ -90,6 +90,13 @@ export const handleFindFiles = (async (
     messages: agentState.messageHistory,
     system,
     assistantPrompt: prompt,
+    // FID-2026-1007-004 step 4: the file-picking prompt runs the token-budget
+    // trim pass over the history, and that pass deletes whole messages. It gets
+    // the run's ledger location here so what it takes is recorded.
+    evidenceContext: {
+      projectRoot: fileContext.projectRoot,
+      runId: agentState.runId ?? agentState.agentId,
+    },
   })
 
   if (requestedFiles && requestedFiles.length > 0) {

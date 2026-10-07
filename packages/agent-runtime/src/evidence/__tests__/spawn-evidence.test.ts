@@ -133,6 +133,70 @@ describe('spawn-boundary raw evidence transport (FID-2026-0919-027)', () => {
     expect(evidenceFilePath(root, 'run-parent')).toContain('run-parent')
   })
 
+  it('lets a non-audit agent recover the payload its own history names', async () => {
+    // FID-2026-1007-004 step 5: the read gate was scoped by ROLE, so the agent
+    // that actually owns a truncated payload could not reach it. It is now
+    // scoped by NEED — the history says which records the agent is missing —
+    // while the audit roles keep the full union of the run chain.
+    const root = await freshRoot()
+    await recordEvidence({
+      projectRoot: root,
+      runId: 'run-1',
+      agentId: 'a',
+      toolCallId: 'call-owned',
+      toolName: 'code_search',
+      raw: '{"owned":true}',
+    })
+    await recordEvidence({
+      projectRoot: root,
+      runId: 'run-1',
+      agentId: 'a',
+      toolCallId: 'call-not-mine',
+      toolName: 'code_search',
+      raw: '{"other":true}',
+    })
+
+    const state = getInitialAgentState()
+    state.runId = 'run-1'
+    state.messageHistory = [
+      {
+        role: 'tool',
+        toolName: 'code_search',
+        toolCallId: 'call-owned',
+        content: [
+          {
+            type: 'json',
+            value: {
+              omitted: {
+                reason: 'output exceeded 50000 bytes',
+                originalChars: 60_000,
+                keptChars: 500,
+                omittedChars: 59_500,
+                preview: 'x',
+                retained: {
+                  ok: true,
+                  file: 'f',
+                  toolCallId: 'call-owned',
+                  sha256: 'h',
+                  bytes: 60_000,
+                  redacted: false,
+                },
+              },
+            },
+          },
+        ],
+      },
+    ]
+
+    const records = await loadRawEvidenceForSpawn({
+      agentTemplate: { ...template, requiresRawEvidence: false },
+      spawningAgentState: state,
+      projectRoot: root,
+    })
+
+    expect(records?.map((record) => record.toolCallId)).toEqual(['call-owned'])
+  })
+
   it('returns undefined when the run chain has no spilled records', async () => {
     const root = await freshRoot()
     const state = getInitialAgentState()

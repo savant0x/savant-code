@@ -21,6 +21,7 @@ import { getSuccessfulFileContent } from '../handlers/tool/write-file'
 
 import type { ResultLifecycleDeps } from './result-rejection-lifecycle'
 import type { ToolOutcomeState } from './tool-outcome-state'
+import type { RetentionRefusal } from '../../evidence/spill'
 import type { ToolName } from '@savant-code/common/tools/constants'
 import type { SavantCodeToolOutput } from '@savant-code/common/tools/list'
 import type { JSONValue } from '@savant-code/common/types/json'
@@ -51,6 +52,22 @@ export {
 export type { ToolOutcomeState }
 export { runRejectionLifecycle } from './result-rejection-lifecycle'
 export type { ResultLifecycleDeps } from './result-rejection-lifecycle'
+
+/**
+ * The refusals that mean a CEILING was hit, as opposed to "this run has no store
+ * configured" (`no-project-root` / `no-tool-call-id`, which are structural and
+ * would otherwise warn on every tool result of a rootless run).
+ *
+ * FID-2026-1007-004 step 7: the ceilings used to be swallowed — the boundary
+ * called `void recordEvidence(...)` and discarded the boolean, so a full or
+ * oversized store was indistinguishable from a working one. A hit ceiling is now
+ * reported once per refusal, on the lineage the operator already reads.
+ */
+const REPORTABLE_RETENTION_REFUSALS: ReadonlySet<RetentionRefusal> = new Set([
+  'record-too-large',
+  'store-full',
+  'io-error',
+])
 
 export async function runSuccessLifecycle<T extends ToolName>(
   deps: ResultLifecycleDeps<T>,
@@ -86,7 +103,15 @@ export async function runSuccessLifecycle<T extends ToolName>(
     toolCallId: toolCall.toolCallId,
     toolName,
     raw: JSON.stringify(output),
-  }).then((result) => rememberRetention(toolCall.toolCallId, result))
+  }).then((result) => {
+    rememberRetention(toolCall.toolCallId, result)
+    if (!result.retained && REPORTABLE_RETENTION_REFUSALS.has(result.reason)) {
+      params.logger.warn(
+        { toolName, toolCallId: toolCall.toolCallId, reason: result.reason },
+        'Evidence retention refused — the payload stays in context',
+      )
+    }
+  })
 
   // FID-2026-0718-009: M2 — on tool completion, model reasoning resumes.
   // P19: carry the effective model id (parity with step.ts thinking emit).

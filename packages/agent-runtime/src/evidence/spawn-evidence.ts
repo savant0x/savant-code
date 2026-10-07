@@ -1,3 +1,4 @@
+import { retainedToolCallIds } from './omission'
 import { loadEvidenceRecords } from './spill'
 
 import type { EvidenceSpillRecord } from './spill'
@@ -27,16 +28,31 @@ import type { AgentState } from '@savant-code/common/types/session-state'
  * its ancestors'). So the correct source is the UNION of the run chain, with
  * the spawning agent's own run winning on a duplicate `toolCallId`.
  *
- * Returns `undefined` when nothing applies — a non-audit agent (no spill read at
- * all, so no IO on the hot spawn path), no project root, or an empty union —
- * keeping the "absent spill ⇒ never worse than today" contract of the loader.
+ * FID-2026-1007-004 step 5 — the gate was scoped by ROLE, not by need. It is now
+ * `requiresRawEvidence === true` OR the spawning history naming a payload whose
+ * bytes are gone: an audit role keeps the full union of the run chain (the bulk
+ * splice, unchanged), while any other agent gets exactly the records its own
+ * inherited history says it is missing. An agent that owns a truncated tool
+ * result can recover it; an agent that does not own one still does no IO.
+ *
+ * Returns `undefined` when nothing applies — a non-audit agent with nothing
+ * omitted in its history (no spill read at all, so no IO on the hot spawn path),
+ * no project root, or an empty union — keeping the "absent spill ⇒ never worse
+ * than today" contract of the loader.
  */
 export async function loadRawEvidenceForSpawn(params: {
   agentTemplate: AgentTemplate
   spawningAgentState: AgentState
   projectRoot: string | undefined
 }): Promise<EvidenceSpillRecord[] | undefined> {
-  if (params.agentTemplate.requiresRawEvidence !== true) return undefined
+  const requiresAll = params.agentTemplate.requiresRawEvidence === true
+  const ownedToolCallIds = new Set(
+    params.agentTemplate.includeMessageHistory
+      ? retainedToolCallIds(params.spawningAgentState.messageHistory)
+      : [],
+  )
+  if (!requiresAll && ownedToolCallIds.size === 0) return undefined
+
   const projectRoot = params.projectRoot ?? ''
   if (!projectRoot) return undefined
 
@@ -54,5 +70,9 @@ export async function loadRawEvidenceForSpawn(params: {
     }
   }
 
-  return byToolCallId.size > 0 ? [...byToolCallId.values()] : undefined
+  const records = [...byToolCallId.values()]
+  const scoped = requiresAll
+    ? records
+    : records.filter((record) => ownedToolCallIds.has(record.toolCallId))
+  return scoped.length > 0 ? scoped : undefined
 }
