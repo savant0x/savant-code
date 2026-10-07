@@ -91,6 +91,51 @@ describe('RunState transport serialization', () => {
     ).toBe('')
   })
 
+  it('FID-2026-1006-004: preserves the split-baseline Law 15 checkpoint fields', () => {
+    // A serializer that silently dropped these optional fields would re-disarm
+    // the Law 15 deletion leg with every suite still green, so the transport is
+    // asserted rather than inspected.
+    const state = makeRunState()
+    const mainAgent = state.sessionState!.mainAgentState
+    mainAgent.groundingCheckpoint = {
+      schemaVersion: 1,
+      gateArmed: true,
+      protocolVariant: 'harness',
+      protocolFile: 'echo.md',
+      protocolSource: 'local',
+      protocolVersion: '0.1.2-single-agent',
+      groundingSetFingerprint: 'fingerprint',
+      requiredPaths: ['echo.md'],
+      completedPaths: ['echo.md'],
+      fullGroundingCompleted: true,
+      logicalUserTurnCount: 1,
+      lastFullGroundingTurn: 1,
+      lastRefreshTurn: null,
+      lastRefreshReason: null,
+      lastRefreshEpoch: null,
+      completionGateRetries: 0,
+      completionGateDisarmed: false,
+      worktreeBaseline: { 'dirty.ts': 'deadbeef' },
+      worktreeBaselinePaths: ['clean.ts', 'dirty.ts'],
+      worktreeBaselineRoot: '/repo',
+      worktreeBaselineMethod: 'git',
+      worktreeBaselineCapturedAt: 1,
+      worktreeBaselineSkipped: [],
+      worktreeBaselineDirtyPaths: ['dirty.ts'],
+      worktreeBaselineFailure: 'dirty-set',
+      worktreeBaselineRetries: 1,
+    }
+
+    const restored = deserializeRunState(serializeRunState(state))
+    const checkpoint = restored.sessionState?.mainAgentState.groundingCheckpoint
+    expect(checkpoint?.worktreeBaselinePaths).toEqual(['clean.ts', 'dirty.ts'])
+    expect(checkpoint?.worktreeBaselineDirtyPaths).toEqual(['dirty.ts'])
+    expect(checkpoint?.worktreeBaselineFailure).toBe('dirty-set')
+    expect(checkpoint?.worktreeBaselineRetries).toBe(1)
+    expect(checkpoint?.worktreeBaseline).toEqual({ 'dirty.ts': 'deadbeef' })
+    expect(checkpoint?.worktreeBaselineRoot).toBe('/repo')
+  })
+
   it('rejects unsupported schema versions and malformed output', () => {
     const state = makeRunState()
     const payload = JSON.parse(serializeRunState(state)) as Record<

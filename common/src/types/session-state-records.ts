@@ -54,26 +54,62 @@ export type GroundingCheckpoint = {
    */
   readLedger?: Record<string, number>
   /**
-   * FID-2026-1001-003 step 2: Law 15 worktree-reconciliation baseline —
-   * repo-relative posix path → sha256 of content, for the complete captured
-   * inventory. Deliberately NOT on `EnforcementState` (Adversary
-   * finding: that object demonstrably loses state, and a lost baseline there
-   * fails open invisibly); the grounding checkpoint is the session-keyed
-   * durable store this step names. An empty captured baseline fails CLOSED:
-   * current porcelain paths absent from it and from `dirtyFiles` are
-   * unaccounted mutations.
+   * Law 15 worktree-reconciliation content record — repo-relative posix path
+   * → sha256 of content. FID-2026-1001-003 step 2 placed the baseline on the
+   * grounding checkpoint because it is the session-keyed durable store;
+   * FID-2026-1006-004 split it from the inventory, so under a git capture this
+   * map holds ONLY the initially-dirty set (`worktreeBaselineDirtyPaths`) plus
+   * paths `advanceWorktreeBaseline` later accounted. Detection for every other
+   * path rides on the change enumeration: a candidate absent from this map is
+   * unaccounted. Deliberately NOT on `EnforcementState` (Adversary finding:
+   * that object demonstrably loses state, and a lost baseline there fails open
+   * invisibly). An empty captured baseline fails CLOSED.
    */
   worktreeBaseline?: Record<string, string>
+  /**
+   * FID-2026-1006-004 step 1: the captured inventory (repo-relative posix),
+   * separated from the content record. This is the cheap, per-file-IO-free
+   * half of the baseline: it is what lets a vanished path be noticed without
+   * stat-ing every key. Absent on a legacy (pre-split) checkpoint, whose map
+   * still covers its own inventory the old way.
+   */
+  worktreeBaselinePaths?: string[]
   /** Absolute repo root the baseline paths are relative to. */
   worktreeBaselineRoot?: string
   /** Capture/scan method actually used ('git' | 'walk' | 'unavailable'). */
   worktreeBaselineMethod?: 'git' | 'walk' | 'unavailable'
   /** Wall-clock ms when the baseline was captured; null = never captured. */
   worktreeBaselineCapturedAt?: number | null
-  /** Paths present but not hashed (oversized) — never flagged, per the
-   *  accepted-limits statement in FID-2026-1001-003 step 2. */
+  /**
+   * FID-2026-1006-004 step 2: which capture leg refused, so the turn-end
+   * advisory names it instead of one catch-all sentence. `enumerate` — no
+   * inventory could be listed (git failed and the walk failed); `dirty-set` —
+   * the changed set could not be read; `hash-budget` — the content-hash leg
+   * (git capture) had no budget; `walk-budget` — same, on the walk capture.
+   */
+  worktreeBaselineFailure?:
+    'enumerate' | 'dirty-set' | 'hash-budget' | 'walk-budget'
+  /**
+   * FID-2026-1006-004 step 7: consecutive refused capture attempts, so a
+   * transient refusal triggers a bounded recapture instead of disarming the
+   * backstop for the life of the session. Reset to 0 by a successful capture.
+   */
+  worktreeBaselineRetries?: number
+  /**
+   * Paths present but not hashed (oversized), per the accepted-limits
+   * statement in FID-2026-1001-003 step 2. Restated by FID-2026-1006-004
+   * step 9: a skipped path that is later modified out of band arrives as a
+   * status candidate absent from the map and IS flagged unaccounted (this
+   * matches the pre-split behaviour — the earlier "never flagged" wording
+   * described only the turn it was skipped on).
+   */
   worktreeBaselineSkipped?: string[]
-  /** Initially dirty Git paths remain candidates even after becoming clean. */
+  /**
+   * Initially dirty Git paths remain candidates even after becoming clean;
+   * FID-2026-1006-004 makes this the ONLY content-hash seed of a git capture
+   * (and therefore the reason deletion term (ii) exists — a vanished
+   * untracked file leaves no status entry and is visible only through it).
+   */
   worktreeBaselineDirtyPaths?: string[]
 }
 

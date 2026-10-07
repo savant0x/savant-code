@@ -28,14 +28,24 @@ import {
 import { reconcileWorktree } from '../enforcement/worktree-reconcile'
 
 describe('git enumeration contract (ls-files basis)', () => {
-  it('a CLEAN repo yields a NON-empty baseline (status-porcelain would yield none)', () => {
+  // FID-2026-1006-004 step 8: this pin used to assert a ONE-KEY full-inventory
+  // map on a clean repo. Under the split baseline that shape is the defect — the
+  // content record holds only the initially-dirty set, while the INVENTORY is
+  // what covers the file (and is what makes a vanished path visible). The pin is
+  // moved deliberately, and its new contract is stated here.
+  it('a CLEAN repo reports a full inventory with an EMPTY content record (split baseline)', () => {
     const { root } = tempGitRepo()
     const checkpoint = groundedAgentState().groundingCheckpoint!
     captureWorktreeBaseline({ checkpoint, repoRoot: root })
     expect(checkpoint.worktreeBaselineMethod).toBe('git')
-    expect(Object.keys(checkpoint.worktreeBaseline ?? {})).toEqual([
-      'tracked.ts',
-    ])
+    // The inventory covers the file (status-porcelain would yield none).
+    expect(checkpoint.worktreeBaselinePaths).toEqual(['tracked.ts'])
+    // The content record stays empty until something is dirty: hashing clean
+    // files is the repository-size cost model this FID removes.
+    expect(Object.keys(checkpoint.worktreeBaseline ?? {})).toEqual([])
+    expect(checkpoint.worktreeBaselineDirtyPaths).toEqual([])
+    expect(checkpoint.worktreeBaselineFailure).toBeUndefined()
+    expect(checkpoint.worktreeBaselineRetries).toBe(0)
   })
 
   it('untracked non-ignored files are enumerated; gitignored files are not', () => {
@@ -48,6 +58,9 @@ describe('git enumeration contract (ls-files basis)', () => {
     const baseline = checkpoint.worktreeBaseline ?? {}
     expect(baseline['untracked.ts']).toBeDefined()
     expect(baseline['ignored.ts']).toBeUndefined()
+    // The inventory follows the same basis: untracked-not-ignored in, ignored out.
+    expect(checkpoint.worktreeBaselinePaths).toContain('untracked.ts')
+    expect(checkpoint.worktreeBaselinePaths).not.toContain('ignored.ts')
   })
 })
 
