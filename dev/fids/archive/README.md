@@ -3,6 +3,29 @@
 This directory contains closed or historically completed FIDs. Files here are
 an audit record, not an active work queue.
 
+## 2026-10-07 closure — truthful cache telemetry in the sidebar (1 FID archived)
+
+Closed on the operator's report that cache reuse was simply invisible. Three layers had
+each destroyed the fact the row needs: `emitCacheDebugUsage` coerced an absent cache
+field to `0`, `isCachedTokenCountKnown` then treated every `0` as unknown, and the only
+cache monitor was per-step and gated behind `CACHE_DEBUG_FULL_LOGGING` — so an ordinary
+run accumulated nothing and the sidebar had no consumer at all. Implementation commits
+`8c528f12` and `07fbbbd9`, receipt 9/9 live at the archived path.
+
+**`FID-2026-1007-009-sidebar-cache-hit-tracker`** (register item T164, severity medium,
+automation level 2). Presence now travels from the provider field through the SDK
+normalization boundary (`cachedInputTokensReported`) to a new pure accumulator on
+`agentState.cacheUsage`, weighted by input tokens so a 100-token call cannot speak for
+a 900-token one, bucketed by provider route and model so unlike traffic never blends,
+and accounting unreported, invalid and deduped observations separately. The Session
+section renders one always-present `Cache` row that keeps `—`, `Not reported` and a
+known `0%` apart, with the token sample beside any percentage and rejected samples
+visible rather than hidden; no pricing claim is made. Two corrections are recorded in
+the record rather than left implicit: its declared `typecheck root` gate is not in the
+permitted vocabulary and became four workspace typechecks, and adding an `AgentState`
+field tripped the exhaustive classification gate in `spawn-child-fields.ts` —
+`cacheUsage` is now declared not-inherited-by-design, exactly like `lastProviderUsage`.
+
 ## 2026-10-07 closure — the user-call breaker bypass (1 FID archived)
 
 Closed on the operator's ruling of 2026-10-07, verbatim: "it should NEVER stop a user

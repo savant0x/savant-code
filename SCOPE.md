@@ -70,13 +70,7 @@
       bounded active probes, controls, and an explicit inconclusive state.
       User model calls remain available; no uncalibrated 0.85 auto-failover.
       The live HCNSec re-audit requires credential and quota authority.
-- [ ] **T164. Show truthful provider cache-hit telemetry in the CLI sidebar
-      (`FID-2026-1007-009`).** **Automation level: 2.** Preserve reported
-      zero versus missing cache usage, aggregate eligible input tokens by
-      session/provider/model, carry the summary through SDK and CLI state,
-      and render an unavailable state when the provider does not report it.
-
-**Six** items are open — T163 and T164 are in progress; three are
+**Five** items are open — T163 is in progress; three are
 blocked pending operator input (T119, T62-followups, T122) and one is shelved
 on an operator ruling (T147).
 **T155, T160 and T161 completed in this pass** — all three FIDs closed, receipted
@@ -976,6 +970,31 @@ T90-F3 was resolved by the operator ruling "T90-F3 residual needs no code"
       retained as tested FSM surface with their class comment updated, and the exact
       upstream sequence that opened the KiosAPI circuit remains unproven from the saved
       chat.
+
+- [x] **T164. Show truthful provider cache-hit telemetry in the CLI sidebar
+      (`FID-2026-1007-009`).** **Automation level: 2.** Registered 2026-10-07 with
+      the identity-gauntlet record, from the operator's report that cache reuse was
+      invisible. Three separate layers each destroyed the fact the row needs: the SDK
+      emitter coerced an absent cache field to `0`, `isCachedTokenCountKnown` then
+      treated every `0` as unknown, and the only cache monitor was per-step and gated
+      behind `CACHE_DEBUG_FULL_LOGGING`, so an ordinary run accumulated nothing and the
+      sidebar had no consumer at all. **Status `converged`** — five planned steps, six
+      declared gates.
+
+      **COMPLETED 2026-10-07 — `8c528f12` + `07fbbbd9`; receipt 9/9 at the archived
+      path.** Presence is carried from the provider field to the UI: the SDK reports
+      `cachedInputTokensReported`, the R3 seam lets presence win while the legacy
+      `> 0` heuristic stands for records without the flag, and a new pure accumulator
+      folds each completed usage into `agentState.cacheUsage` for the always-on
+      `onUsage` callback — weighted by input tokens, bucketed by provider route and
+      model, with unreported, invalid and deduped observations accounted separately.
+      The Session section renders one always-present `Cache` row that keeps `—`,
+      `Not reported` and a known `0%` apart, carries the token sample beside any
+      percentage, shows rejected samples rather than hiding them, and makes no pricing
+      claim. Two corrections are recorded: the record's `typecheck root` gate was not
+      declarable and became four workspace typechecks, and adding an `AgentState`
+      field tripped the exhaustive classification gate in `spawn-child-fields.ts`,
+      which now carries `cacheUsage` as not-inherited-by-design.
 
 - [x] **T159. Every discarded payload needs a durable record and a locator it can
       prove (`FID-2026-1007-004`).** **Automation level: 3.** Registered 2026-10-07

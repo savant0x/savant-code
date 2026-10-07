@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-1007-009-sidebar-cache-hit-tracker.md`
 **ID:** FID-2026-1007-009
 **Severity:** medium
-**Status:** converged
+**Status:** closed
 **Created:** 2026-10-07
 **Automation level:** 2
 **YAGNI-Compliance:** Verified
@@ -82,8 +82,25 @@ turns with a clear denominator.
 - gate: test packages/agent-runtime/src/util/__tests__/cache-session-telemetry.test.ts
 - gate: test cli/src/components/__tests__/right-sidebar-cache.test.tsx
 - gate: test packages/agent-runtime/src/util/__tests__/token-telemetry.test.ts
-- gate: typecheck root
+- gate: typecheck common
+- gate: typecheck sdk
+- gate: typecheck cli
+- gate: typecheck packages/agent-runtime
 - gate: quality
+
+### Verification Receipt
+
+- fingerprint: sha256:bc3a3581194fb85c109ea69df07de8e587fe9138de1de1a0af4629ef77ca9daa
+- verified: 2026-10-07T22:57:35.907Z
+- test sdk/src/__tests__/cache-usage-presence.test.ts: exit 0
+- test packages/agent-runtime/src/util/__tests__/cache-session-telemetry.test.ts: exit 0
+- test cli/src/components/__tests__/right-sidebar-cache.test.tsx: exit 0
+- test packages/agent-runtime/src/util/__tests__/token-telemetry.test.ts: exit 0
+- typecheck common: exit 0
+- typecheck sdk: exit 0
+- typecheck cli: exit 0
+- typecheck packages/agent-runtime: exit 0
+- quality: exit 0
 
 ## Perfection Loop
 
@@ -118,7 +135,7 @@ turns with a clear denominator.
   guaranteed bill discount.
 - **CHANGE DELTA:** Final semantics and gate alignment.
 
-### Missed questions
+### Missed Questions
 
 1. Does zero mean miss or unsupported? Preserve the provider field's presence at origin.
 2. What does the percentage divide by? Eligible provider-reported input tokens in the defined recent window.
@@ -126,6 +143,112 @@ turns with a clear denominator.
 4.  Should cache savings be shown? No; provider-specific prices and bill accounting are not established by
    this telemetry.
 
+### Loop 4 — implementation and the corrections it forced
+
+- **RED:** The declared gate list was not declarable. `typecheck root` is
+  rejected by `scripts/fid-verify.ts` (`unsafe typecheck workspace "root" — not
+  in VALIDATION_WORKSPACE_POLICY`), because the permitted vocabulary is
+  `typecheck <workspace>`. The list is corrected to the four workspaces this
+  change actually touches — `common`, `sdk`, `cli`, `packages/agent-runtime` —
+  and the receipt below is the machine's, not a hand-written claim. This is the
+  same defect class T158 exists to catch: a record may only declare gates the
+  executor admits.
+- **GREEN:** Implemented as specified. The SDK emitter now reports
+  `cachedInputTokensReported`; `isCachedTokenCountKnown` lets presence win and
+  keeps the legacy `> 0` heuristic when no flag is present, so records that
+  predate the flag behave exactly as before (its existing R3 pin still passes
+  untouched). A new pure accumulator folds each completed usage into
+  `agentState.cacheUsage`, weighted by input tokens, bucketed by provider route
+  and model, with unreported / invalid / deduped observations accounted
+  separately. The sidebar renders one always-present `Cache` row.
+- **AUDIT (call graph):** `run-agent-step/step.ts:151-160` is the only
+  production producer of `agentState.cacheUsage`, reached from the always-on
+  `onUsage` callback that `createCacheDebugSetup` defines unconditionally
+  (`cache-debug.ts:139-145`) — i.e. not behind `CACHE_DEBUG_FULL_LOGGING`, which
+  is what the old monitor required. `cli/src/components/right-sidebar.tsx:120-
+  123` is the only consumer, selecting
+  `runState.sessionState.mainAgentState.cacheUsage`, and passes it into
+  `SidebarSession` (`right-sidebar-sections.tsx`), which renders it through
+  `formatCacheUsage` (`right-sidebar-format.ts`).
+- **ADVERSARIAL:** Three things are recorded rather than smoothed over. (1)
+  Adding a field to `AgentState` is not a free edit: the exhaustive
+  classification gate in `tools/handlers/tool/spawn-child-fields.ts` failed
+  `typecheck` with `Type 'string' does not satisfy the constraint 'never'`
+  until `cacheUsage` was classified, and it is classified as
+  **not inherited by design** — a child folds its own stream, exactly like
+  `lastProviderUsage`. (2) `common/src/types/session-state-agent-state.ts`
+  already sat at the 300-line ceiling the quality gate enforces, so the summary
+  type lives in its own module (`session-state-cache-usage.ts`) and this file
+  needed one line freed for the import; the `@deprecated` marker on `agentId`
+  was compacted to one line to pay for it, which loses no information. A
+  re-export from the agent-state module was **not** added for the same reason —
+  consumers import the new module path directly. (3) The row states
+  *reported* reuse on one route and makes no pricing claim; the token
+  accounting shape is normalized per provider at the point where presence is
+  read, so a provider that counts cached tokens inside `inputTokens` still
+  yields a well-formed ratio, but the two conventions are not reconciled into a
+  single billing model.
+- **CHANGE DELTA:** Gate list corrected from a non-declarable `typecheck root`
+  to four workspace typechecks; the presence flag threaded instead of inferring
+  support from a model name; the sidebar reads the existing run snapshot rather
+  than gaining a second store slice.
+
+### Code Verification Evidence
+
+- [x] Files referenced exist, verified by read:
+      `common/src/types/session-state-cache-usage.ts`,
+      `common/src/types/session-state-agent-state.ts`,
+      `common/src/types/contracts/llm.ts`, `sdk/src/impl/llm/usage.ts`,
+      `packages/agent-runtime/src/util/cache-session-telemetry.ts`,
+      `packages/agent-runtime/src/util/token-telemetry.ts`,
+      `packages/agent-runtime/src/run-agent-step/step.ts`,
+      `packages/agent-runtime/src/tools/handlers/tool/spawn-child-fields.ts`,
+      `cli/src/components/right-sidebar.tsx`,
+      `cli/src/components/right-sidebar-sections.tsx`,
+      `cli/src/components/right-sidebar-format.ts`
+- [x] The failure output is pasted from the actual command, with its exit
+      status: the non-declarable gate is the executor's own message, and the
+      reverts below are the test runner's
+- [x] The RED is reproduced rather than asserted: checking the two seam files
+      (`packages/agent-runtime/src/util/token-telemetry.ts` and
+      `sdk/src/impl/llm/usage.ts`) out to their pre-fix revisions fails the new
+      pins — `9 pass / 1 fail` at the R3 seam and `1 pass / 3 fail` at the SDK
+      boundary — and restoring them returns 10 pass and 4 pass
+- [x] The received value is traced: the sidebar's `0%`/`Not reported` split is
+      decided by `isCachedTokenCountKnown`, which reads the flag the emitter at
+      `sdk/src/impl/llm/usage.ts:172-176` now sets from the provider's own field
+- [x] Production call-graph evidence: the producer
+      (`run-agent-step/step.ts:151-160`) and the single consumer
+      (`cli/src/components/right-sidebar.tsx:120-123`) are both named above,
+      and the accumulator has no module scope for one chat to leak into another
+- [x] The wider suites agree: sdk 597 pass / 0 fail, agent-runtime 1914 pass /
+      0 fail, cli 3975 pass / 0 fail, with `bun run typecheck`,
+      `bun x eslint . --max-warnings 0`, `bun x prettier --check .`,
+      `bun run lint:md` and `quality:report` all exit 0
+- [x] FID status reflects reality (`closed`: implemented, the four test gates
+      and four workspace typechecks receipted, the gate-list correction and the
+      two ceiling-driven decisions recorded rather than left implicit)
+
 ## Resolution
 
-Open. This FID specifies the work and verification; no implementation or sidebar behavior is claimed.
+- **Closed Date:** 2026-10-07.
+- **Fix Description:** Reported provider cache reuse now reaches the CLI
+  sidebar truthfully. Presence is carried from the provider field through the
+  SDK normalization boundary, a pure always-on accumulator folds it into
+  `agentState.cacheUsage` keyed by route and model, and the Session section
+  renders `—` / `Not reported` / `N%` for the three meaningfully different
+  states, with the token sample and a visible count of rejected samples.
+  Implementation commits `8c528f12` and `07fbbbd9`.
+- **Tests Added:** `sdk/src/__tests__/cache-usage-presence.test.ts` (4 pins at
+  the normalization boundary),
+  `packages/agent-runtime/src/util/__tests__/cache-session-telemetry.test.ts`
+  (8 pins: weighting, reported zero, unreported, invalid, route/model switch,
+  dedupe, unknown-id bucket),
+  `cli/src/components/__tests__/right-sidebar-cache.test.tsx` (6 pins,
+  including the run-snapshot propagation path), plus one new pin in
+  `token-telemetry.test.ts`.
+- **Verification Evidence:** The declared gates below, receipted by
+  `fid:verify`; the wider suites and repository gates listed in the evidence
+  section.
+- **Archived:** 2026-10-07 →
+  `dev/fids/archive/FID-2026-1007-009-sidebar-cache-hit-tracker.md`.

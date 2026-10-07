@@ -1,5 +1,79 @@
 # LEARNINGS
 
+## Lesson: A telemetry value's absence and its zero are different facts
+
+- **Date:** 2026-10-07
+- **Failure:** The CLI had no cache-reuse row, and the reason was not a missing
+  component: the fact itself had been destroyed twice on the way up. The SDK
+  emitter normalized `cachedInputTokens: params.usage.cachedInputTokens ?? 0` to
+  keep the shape stable, and the runtime then applied an R3 heuristic —
+  `cachedInputTokens > 0` means "known" — which read that coerced `0` as
+  "unknown". So a provider that reports no caching and a provider reporting a
+  genuine cache miss were indistinguishable, in opposite directions: absent data
+  could not be shown as unknown, and a real miss could not be shown as a miss.
+  Rendering either one would have been an invention about what the provider
+  sent, and the operator's whole ask was that the number not lie. The fix is a
+  presence flag carried from the provider's own field to the UI, not a smarter
+  inference at the bottom of the stack.
+- **Evidence:** common/src/types/session-state-cache-usage.ts → symbol:CacheUsageSummary,
+  packages/agent-runtime/src/util/cache-session-telemetry.ts → symbol:accumulateCacheUsage,
+  packages/agent-runtime/src/util/token-telemetry.ts → symbol:isCachedTokenCountKnown
+- **Invariant:** Absence and zero are different observations and must stay
+  different all the way to the point of display. Normalization that improves
+  shape stability by substituting a default destroys exactly the bit a truthful
+  UI needs, and no downstream heuristic can recover it — a default is
+  indistinguishable from a measured value once it is written. Presence must be
+  recorded where the provider's field is read, and carried as its own fact.
+- **Guard:** Any boundary that coerces a missing field to a default must emit
+  presence alongside the value in the same object, or be forbidden from
+  defaulting at all. Any consumer that interprets a numeric default as
+  meaningful (a `> 0` test, a threshold, a ratio) must be taught to prefer
+  explicit presence and must keep its old behavior only for records that carry
+  no flag — so pre-existing callers do not silently change meaning.
+- **Verification:** Checking the two seam files out to their pre-fix revisions
+  fails the new pins (`9 pass / 1 fail` at the R3 seam, `1 pass / 3 fail` at the
+  SDK boundary) and restoring them returns 10 pass and 4 pass; the sidebar pins
+  read the row's own text node, because a bare `toContain('0%')` passes against
+  every row's `width="100%"` without the Cache row existing at all.
+- **Scope:** internal
+- **Owning FID:** FID-2026-1007-009
+- **Status:** active
+
+## Lesson: A new AgentState field is not a free edit — the compiler makes you classify it
+
+- **Date:** 2026-10-07
+- **Failure:** Adding `cacheUsage` to `AgentState` broke `typecheck` in a file
+  nobody would think to open, with a message that names nothing:
+  `spawn-child-fields.ts(210,15): error TS2344: Type 'string' does not satisfy
+  the constraint 'never'`. The module holds a compile-time exhaustiveness gate —
+  `Exclude<keyof AgentState, Inherited | ChildOwn | ByDesign>` asserted `never` —
+  so every field must be *declared* as copied from the spawning parent,
+  constructed for the child, or deliberately absent with a written reason. The
+  gate is right and the error is the gate working; the half hour is spent
+  re-deriving the error rather than fighting the design. Reading the gate first
+  turns an alarming opaque failure into one line of work.
+- **Evidence:** packages/agent-runtime/src/tools/handlers/tool/spawn-child-fields.ts → symbol:NOT_INHERITED_BY_DESIGN,
+  common/src/types/session-state-agent-state.ts → symbol:AgentState,
+  dev/fids/archive/FID-2026-1007-009-sidebar-cache-hit-tracker.md → heading:Code Verification Evidence
+- **Invariant:** New per-run state belongs to exactly one of three
+  classifications, and "not inherited by design" is not an escape hatch — its
+  entries must carry the reason the child is safe without the field. The reason
+  is the artifact; the list membership is bookkeeping. A child that silently
+  inherits per-run telemetry pollutes the parent's accounting with another
+  run's traffic.
+- **Guard:** When a field is appended to `AgentState`, classify it in the same
+  change: append to `INHERITED_FROM_PARENT` or `CHILD_OWN`, or add an entry to
+  `NOT_INHERITED_BY_DESIGN` with a sentence naming why the child does not need
+  it. Treat `Type 'string' does not satisfy the constraint 'never'` as "open
+  spawn-child-fields.ts", not as a compiler mystery.
+- **Verification:** `bun run typecheck` fails at that line before the entry is
+  added and exits 0 after; the added reason sits beside `lastProviderUsage`,
+  the closest precedent (provider usage observed on the owning run's stream);
+  the FID records the classification rather than the compile error alone.
+- **Scope:** internal
+- **Owning FID:** FID-2026-1007-009
+- **Status:** active
+
 ## Lesson: A health breaker may throttle background traffic but must never deny a user action
 
 - **Date:** 2026-10-07

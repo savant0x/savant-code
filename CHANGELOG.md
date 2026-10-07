@@ -4,6 +4,33 @@
 
 ### Added
 
+- **The sidebar reports provider cache reuse truthfully (FID-2026-1007-009, medium;
+  closed 2026-10-07; local commits `8c528f12` + `07fbbbd9`; register item T164).**
+  Cache reuse was invisible in the CLI, and three layers had each destroyed the fact
+  the row needs: `emitCacheDebugUsage` coerced an absent cache field to `0`,
+  `isCachedTokenCountKnown` then treated every `0` as unknown, and the only cache
+  monitor was constructed per step and fed only under `CACHE_DEBUG_FULL_LOGGING` — so
+  an ordinary run accumulated nothing and no CLI code consumed it at all. Presence
+  now travels end to end: the emitter reports `cachedInputTokensReported`, the R3 seam
+  lets presence win while the legacy `> 0` heuristic stands unchanged for records
+  without the flag, and a new pure accumulator folds every completed usage into
+  `agentState.cacheUsage` from the always-on `onUsage` callback. The aggregate is
+  input-token weighted (`sum(cached) / sum(eligible input)`) so a 100-token call
+  cannot speak for a 900-token one, is bucketed by provider route and model so
+  switching models never blends unlike traffic, excludes unreported records from the
+  ratio instead of diluting it, rejects negative and cached-over-input counts as
+  invalid rather than clamping them into a plausible number, and ignores a repeated
+  observation key so a re-finalized response is not counted twice. The Session
+  section renders one always-present `Cache` row that keeps three meaningfully
+  different states apart — `—` when nothing usable was observed, `Not reported` when
+  the provider omitted the field, and `0%` for a reported cache miss — with the token
+  sample beside any percentage and the rejected-sample count visible. No pricing claim
+  is made. Two corrections are recorded in the record itself: its declared
+  `typecheck root` gate is not in the permitted vocabulary and became four workspace
+  typechecks, and adding an `AgentState` field tripped the exhaustive classification
+  gate in `spawn-child-fields.ts`, so `cacheUsage` is declared
+  not-inherited-by-design like `lastProviderUsage`. Receipt 9/9 live at the archived
+  path.
 - **Every repository gate is now declarable on a FID (FID-2026-1007-003, medium;
   closed 2026-10-07; local commit `0620e143`).** The FID gate executor admits
   four shapes — `typecheck <workspace>`, `test <path>`, `probe <path>`,
