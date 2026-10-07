@@ -2,11 +2,10 @@ import { modelMessageSchema } from 'ai'
 import { isEqual } from 'lodash'
 
 import { withCacheControl } from './cache-control'
-
-import type { CacheBreakpointTtl } from './cache-control'
 import { convertToolMessages } from './convert'
 import { toWellFormedString, wellFormStringsInPlace } from './well-formed'
 
+import type { CacheBreakpointTtl } from './cache-control'
 import type { SavantModelMessage } from './types'
 import type { Logger } from '../../types/contracts/logger'
 import type { Message } from '../../types/messages/savant-code-message'
