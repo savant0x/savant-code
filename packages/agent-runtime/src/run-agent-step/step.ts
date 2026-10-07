@@ -1,7 +1,11 @@
 import { AnalyticsEvent } from '@savant-code/common/constants/analytics-events'
 import { supportsCacheControl } from '@savant-code/common/old-constants'
 import { serializeCacheDebugCorrelation } from '@savant-code/common/util/cache-debug'
-import { systemMessage, userMessage } from '@savant-code/common/util/messages'
+import {
+  resolveCacheBreakpointTtl,
+  systemMessage,
+  userMessage,
+} from '@savant-code/common/util/messages'
 
 import { getAgentStreamFromTemplate } from '../prompt-agent-stream'
 import { createCacheDebugSetup } from './cache-debug'
@@ -206,6 +210,13 @@ export const runAgentStep = async (
       ? serializeCacheDebugCorrelation(cacheDebugCorrelation)
       : undefined,
     includeCacheControl: supportsCacheControl(agentTemplate.model),
+    // FID-2026-1006-005 step 7: the operator-approved mode-to-TTL policy. STRICT
+    // is ECHO's FID-bound execution — a record per change, many turns against
+    // one prefix — so its breakpoints are written for the 1h cache; HYBRID
+    // resolves to undefined and emits the provider default (5m), which leaves
+    // today's request bytes unchanged. Read from the run's own enforcement axis,
+    // never from a caller's argument.
+    cacheBreakpointTtl: resolveCacheBreakpointTtl(agentState.enforcementMode),
     messages: [systemMessage(system), ...agentState.messageHistory],
     onCacheDebugProviderRequestBuilt,
     onCacheDebugUsageReceived,

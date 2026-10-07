@@ -2,6 +2,8 @@ import { modelMessageSchema } from 'ai'
 import { isEqual } from 'lodash'
 
 import { withCacheControl } from './cache-control'
+
+import type { CacheBreakpointTtl } from './cache-control'
 import { convertToolMessages } from './convert'
 import { toWellFormedString, wellFormStringsInPlace } from './well-formed'
 
@@ -12,10 +14,14 @@ import type { Message } from '../../types/messages/savant-code-message'
 export function convertCbToModelMessages({
   messages,
   includeCacheControl = true,
+  cacheBreakpointTtl,
   logger,
 }: {
   messages: Message[]
   includeCacheControl?: boolean
+  /** FID-2026-1006-005 step 7: breakpoint TTL resolved from the run's
+   *  enforcement mode. Absent = the provider's own default (5m). */
+  cacheBreakpointTtl?: CacheBreakpointTtl
   logger?: Logger
 }): SavantModelMessage[] {
   const toolMessagesConverted: SavantModelMessage[] =
@@ -130,7 +136,10 @@ export function convertCbToModelMessages({
 
       if (typeof contentBlock === 'string') {
         // This must be a system message
-        aggregated[index] = withCacheControl(aggregated[index])
+        aggregated[index] = withCacheControl(
+          aggregated[index],
+          cacheBreakpointTtl,
+        )
         break
       }
 
@@ -149,13 +158,14 @@ export function convertCbToModelMessages({
         if (lastContentPart.type !== 'text') {
           contentBlock[lastContentIndex] = withCacheControl(
             contentBlock[lastContentIndex],
+            cacheBreakpointTtl,
           )
           break addCacheControlLoop
         }
 
         prevMessage.content = [
           ...contentBlock.slice(0, lastContentIndex),
-          withCacheControl(lastContentPart),
+          withCacheControl(lastContentPart, cacheBreakpointTtl),
           ...contentBlock.slice(lastContentIndex + 1),
         ] as typeof contentBlock
 

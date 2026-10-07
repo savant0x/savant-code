@@ -9,6 +9,7 @@ import type {
 import type { ParamsExcluding } from '../function-params'
 import type { JSONValue } from '../json'
 import type { Logger } from './logger'
+import type { CacheBreakpointTtl } from '../../util/messages/cache-control'
 import type { Model } from '../../old-constants'
 import type { Message } from '../messages/savant-code-message'
 import type { generateText, streamText, ToolCallPart } from 'ai'
@@ -106,6 +107,9 @@ export type PromptAiSdkStreamFn = (
     }) => void
     onCacheDebugUsageReceived?: (usage: CacheDebugUsageData) => void
     includeCacheControl?: boolean
+    /** FID-2026-1006-005 step 7: breakpoint TTL for this request, resolved from
+     *  the run's enforcement mode. Absent = the provider's own default (5m). */
+    cacheBreakpointTtl?: CacheBreakpointTtl
     cacheDebugCorrelation?: string
     agentProviderOptions?: OpenRouterProviderRoutingOptions
     /** List of agents that can be spawned - used to transform agent tool calls */
@@ -144,6 +148,9 @@ export type PromptAiSdkFn = (
     }) => void
     onCacheDebugUsageReceived?: (usage: CacheDebugUsageData) => void
     includeCacheControl?: boolean
+    /** FID-2026-1006-005 step 7: breakpoint TTL for this request, resolved from
+     *  the run's enforcement mode. Absent = the provider's own default (5m). */
+    cacheBreakpointTtl?: CacheBreakpointTtl
     cacheDebugCorrelation?: string
     agentProviderOptions?: OpenRouterProviderRoutingOptions
     maxRetries?: number

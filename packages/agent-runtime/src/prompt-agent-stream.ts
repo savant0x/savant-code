@@ -24,6 +24,7 @@ import type { Logger } from '@savant-code/common/types/contracts/logger'
 import type { ParamsOf } from '@savant-code/common/types/function-params'
 import type { JSONValue } from '@savant-code/common/types/json'
 import type { Message } from '@savant-code/common/types/messages/savant-code-message'
+import type { CacheBreakpointTtl } from '@savant-code/common/util/messages'
 import type { ToolSet } from 'ai'
 
 export const getAgentStreamFromTemplate = (params: {
@@ -32,6 +33,9 @@ export const getAgentStreamFromTemplate = (params: {
   extraSavantCodeMetadata?: Record<string, string>
   fingerprintId: string
   includeCacheControl?: boolean
+  /** FID-2026-1006-005 step 7: the run's resolved cache-breakpoint TTL,
+   *  forwarded to the SDK verbatim so the breakpoint bytes carry it. */
+  cacheBreakpointTtl?: CacheBreakpointTtl
   localAgentTemplates: Record<string, AgentTemplate>
   /** FID-2026-0909-008 Step 4: the run's resolved output budget
    *  (max_completion_tokens from the model catalog). Forwarded to the SDK
@@ -72,6 +76,7 @@ export const getAgentStreamFromTemplate = (params: {
     extraSavantCodeMetadata,
     fingerprintId,
     includeCacheControl,
+    cacheBreakpointTtl,
     localAgentTemplates,
     logger,
     messages,
@@ -104,6 +109,7 @@ export const getAgentStreamFromTemplate = (params: {
     extraSavantCodeMetadata,
     fingerprintId,
     includeCacheControl,
+    cacheBreakpointTtl,
     logger,
     localAgentTemplates,
     maxOutputTokens: params.maxOutputTokens,
