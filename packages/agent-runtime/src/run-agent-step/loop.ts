@@ -23,6 +23,7 @@ import {
 } from './loop/exit-paths'
 import { recordRuntimeEvent } from './loop/runtime-events'
 import { handleSetupCancelled } from './loop/setup-cancelled'
+import { isAutonomousContinuation } from './post-terminal-breaker'
 
 import type { LoopAgentStepsParams, LoopAgentStepsResult } from './types'
 
@@ -158,6 +159,10 @@ export async function loopAgentSteps(
         iteration: state.totalSteps,
         now: Date.now(),
         messages: initialAgentState.messageHistory,
+        // FID-2026-0822-003 AUTONOMY CARVE-OUT (operator-mandated): an Auto
+        // Drive / active-goal run is never auto-ended by the stale-cycle
+        // diagnosis; the iteration cap below remains its backstop.
+        autonomous: isAutonomousContinuation(initialAgentState),
       })
       if (guardAction.kind === 'stop') {
         initialAgentState.loopStopReason = guardAction.reason

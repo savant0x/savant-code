@@ -1,2 +1,5 @@
 [test]
-preload = ["../../sdk/test/setup-env.ts"]
+preload = [
+  "../../sdk/test/setup-env.ts",
+  "./test/setup-test-isolation.ts",
+]

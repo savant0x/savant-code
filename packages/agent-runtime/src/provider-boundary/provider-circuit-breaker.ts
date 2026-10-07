@@ -103,11 +103,32 @@ export class ProviderCircuitBreaker {
 /** One breaker per serving connection, shared across turns in this process. */
 const providerBreakers = new Map<string, ProviderCircuitBreaker>()
 
-export function providerCircuitBreakerFor(connectionKey: string): ProviderCircuitBreaker {
+export function providerCircuitBreakerFor(
+  connectionKey: string,
+): ProviderCircuitBreaker {
   let breaker = providerBreakers.get(connectionKey)
   if (breaker === undefined) {
     breaker = new ProviderCircuitBreaker()
     providerBreakers.set(connectionKey, breaker)
   }
   return breaker
+}
+
+/**
+ * Test isolation: drop every cached breaker.
+ *
+ * The registry is process-lifetime by design (one breaker per serving
+ * connection, shared across turns), but `bun test` runs every file in a
+ * single process, so an OPEN breaker leaks from one suite into the next. A
+ * suite that drives three transient failures on the shared
+ * `legacy:<clientSessionId>` key — tests reuse one `clientSessionId`, unlike
+ * production's per-session ids — leaves the circuit open for 30 minutes, and
+ * every later turn then blocks at the boundary before any physical request
+ * (`ProviderBoundaryBlockedError`; observed as 76 failures across the
+ * loop-agent-steps, read-docs and web-search families). Production never
+ * calls this; the agent-runtime test preload resets between cases so each one
+ * starts from a closed circuit.
+ */
+export function resetProviderCircuitBreakers(): void {
+  providerBreakers.clear()
 }

@@ -123,6 +123,14 @@ export function evaluateLoopGuard(params: {
   iteration: number
   now: number
   messages: Message[]
+  /**
+   * FID-2026-0822-003 AUTONOMY CARVE-OUT (operator-mandated): an
+   * operator-sanctioned autonomous run — Auto Drive (active/paused/blocked) or
+   * an active goal — is never auto-ended by an anti-runaway guard, because long
+   * unattended turns are legitimate product behavior there. The iteration cap
+   * still ends it, so the carve-out cannot unbound the loop.
+   */
+  autonomous?: boolean
 }): LoopAction {
   const { state, iteration, now, messages } = params
   const roleBudget: RoleBudget = {
@@ -130,7 +138,7 @@ export function evaluateLoopGuard(params: {
     activations: iteration,
   }
   const checklist = checklistFromHistory(messages)
-  return determineNextAction({
+  const action = determineNextAction({
     now,
     startedAt: state.startedAt,
     iteration,
@@ -140,4 +148,15 @@ export function evaluateLoopGuard(params: {
     history: state.history,
     ...(checklist === undefined ? {} : { checklist }),
   })
+  // Only the stale-cycle diagnosis is suppressed: it is a statement about the
+  // plan's shape, and an autonomous run repeats its step shape by design. The
+  // run's own hard limits (`iteration-cap`, `deadline`) are never carved out.
+  if (
+    params.autonomous === true &&
+    action.kind === 'stop' &&
+    action.reason === 'stale-cycle'
+  ) {
+    return { kind: 'continue' }
+  }
+  return action
 }

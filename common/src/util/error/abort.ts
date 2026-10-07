@@ -23,24 +23,39 @@ export class AbortError extends Error {
  * Detects both:
  * - Errors with message starting with 'Request aborted' (thrown by our code via AbortError)
  * - Native AbortError (thrown by fetch/AI SDK when AbortSignal is triggered)
+ *
+ * Walks the `cause` chain, matching the sibling predicates that already do so
+ * (`isTransientNetworkError`, `isFetchIdleTimeoutError`): the provider
+ * boundary wraps every failure — a user abort included — in a
+ * `ClassifiedProviderError` whose own name is not `AbortError`, so a
+ * top-level-only check turns every cancellation into an opaque provider
+ * failure. Only `Error` instances are considered at each level, and a
+ * caller-supplied non-Error is still never a match.
  */
 export function isAbortError(error: unknown): boolean {
   if (!(error instanceof Error)) {
     return false
   }
-  // Check for our custom abort error message:
-  // - Exact match: 'Request aborted'
-  // - With reason: 'Request aborted: <reason>' (from AbortError class)
-  if (
-    error.message === ABORT_ERROR_MESSAGE ||
-    error.message.startsWith(`${ABORT_ERROR_MESSAGE}: `)
-  ) {
-    return true
-  }
-  // Check for native AbortError (DOMException or Error with name 'AbortError')
-  // This is thrown by fetch, AI SDK, and other web APIs when AbortSignal is triggered
-  if (error.name === 'AbortError') {
-    return true
+  const seen = new Set<Error>()
+  let current: Error | undefined = error
+  while (current !== undefined && !seen.has(current)) {
+    seen.add(current)
+    // Check for our custom abort error message:
+    // - Exact match: 'Request aborted'
+    // - With reason: 'Request aborted: <reason>' (from AbortError class)
+    if (
+      current.message === ABORT_ERROR_MESSAGE ||
+      current.message.startsWith(`${ABORT_ERROR_MESSAGE}: `)
+    ) {
+      return true
+    }
+    // Check for native AbortError (DOMException or Error with name 'AbortError')
+    // This is thrown by fetch, AI SDK, and other web APIs when AbortSignal is triggered
+    if (current.name === 'AbortError') {
+      return true
+    }
+    const cause: unknown = (current as { cause?: unknown }).cause
+    current = cause instanceof Error ? cause : undefined
   }
   return false
 }

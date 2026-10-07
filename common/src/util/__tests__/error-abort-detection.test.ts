@@ -159,4 +159,38 @@ describe('isAbortError edge cases', () => {
       expect(isAbortError(() => ABORT_ERROR_MESSAGE)).toBe(false)
     })
   })
+
+  describe('wrapped aborts (cause chain)', () => {
+    it('returns true for an AbortError wrapped as the cause', () => {
+      // The provider boundary wraps every failure — a user abort included — in
+      // a ClassifiedProviderError, so cancellation is only visible through the
+      // cause chain (the sibling network/timeout predicates walk it too).
+      const wrapped = new Error('provider call failed (unknown/unrecognized)', {
+        cause: new AbortError('User pressed Ctrl+C'),
+      })
+      expect(isAbortError(wrapped)).toBe(true)
+    })
+
+    it('returns true for a native AbortError nested several levels deep', () => {
+      const wrapped = new Error('outer', {
+        cause: new Error('inner', {
+          cause: new DOMException('The operation was aborted', 'AbortError'),
+        }),
+      })
+      expect(isAbortError(wrapped)).toBe(true)
+    })
+
+    it('returns false when nothing in the cause chain is an abort', () => {
+      const wrapped = new Error('outer', {
+        cause: new Error('Network connection failed'),
+      })
+      expect(isAbortError(wrapped)).toBe(false)
+    })
+
+    it('terminates on a self-referential cause chain', () => {
+      const looped = new Error('looped')
+      ;(looped as { cause?: unknown }).cause = looped
+      expect(isAbortError(looped)).toBe(false)
+    })
+  })
 })

@@ -12,6 +12,27 @@ import {
  * from — payment-required (402) propagation and finishAgentRun stay in the
  * caller.
  */
+/**
+ * The deepest Error in the `cause` chain. The provider boundary wraps every
+ * failure in a `ClassifiedProviderError` whose own message is a
+ * machine-readable class label (`provider call failed (…)`); the provider's
+ * real message lives on the error it wrapped. The sibling extractors
+ * (`extractApiErrorDetails`, `isFetchIdleTimeoutError`) already read through
+ * the chain, so the user-facing fallback must too — otherwise every wrapped
+ * failure is reported as the wrapper's label.
+ */
+function innermostError(error: Error): Error {
+  const seen = new Set<Error>()
+  let current: Error = error
+  while (!seen.has(current)) {
+    seen.add(current)
+    const cause = (current as { cause?: unknown }).cause
+    if (!(cause instanceof Error)) break
+    current = cause
+  }
+  return current
+}
+
 export function buildLoopErrorOutput(params: {
   error: unknown
   signal: AbortSignal
@@ -41,8 +62,11 @@ export function buildLoopErrorOutput(params: {
   } else if (isNetworkError) {
     fallbackMessage = TRANSIENT_NETWORK_ERROR_USER_MESSAGE
   } else if (error instanceof Error) {
-    const includeStack = apiErrorDetails.statusCode === undefined && error.stack
-    fallbackMessage = error.message + (includeStack ? `\n\n${error.stack}` : '')
+    const source = innermostError(error)
+    const includeStack =
+      apiErrorDetails.statusCode === undefined && source.stack
+    fallbackMessage =
+      source.message + (includeStack ? `\n\n${source.stack}` : '')
   } else {
     fallbackMessage = String(error)
   }

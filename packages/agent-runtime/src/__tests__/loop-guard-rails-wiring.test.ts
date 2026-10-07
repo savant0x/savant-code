@@ -80,6 +80,56 @@ describe('loop guard rails wiring (FID-2026-1006-003 WP3)', () => {
     ).toEqual({ kind: 'stop', reason: 'stale-cycle' })
   })
 
+  test('an autonomous run is not ended by the stale-cycle diagnosis', () => {
+    // FID-2026-0822-003 AUTONOMY CARVE-OUT (operator-mandated): Auto Drive /
+    // active-goal runs repeat their step shape by design and must never be
+    // auto-ended by an anti-runaway guard.
+    const state = createLoopGuardState({
+      role: 'savant',
+      iterationCap: 30,
+      startedAt: 0,
+    })
+    for (const event of [
+      'end_turn',
+      'end_turn',
+      'end_turn',
+      'end_turn',
+      'end_turn',
+      'end_turn',
+    ]) {
+      recordLoopEvent(state, event)
+    }
+
+    expect(
+      evaluateLoopGuard({
+        state,
+        iteration: 6,
+        now: 0,
+        messages: [],
+        autonomous: true,
+      }),
+    ).toEqual({ kind: 'continue' })
+  })
+
+  test('the iteration cap still ends an autonomous run', () => {
+    // The carve-out must not unbounded the loop: the run's own hard limit wins.
+    const state = createLoopGuardState({
+      role: 'savant',
+      iterationCap: 3,
+      startedAt: 0,
+    })
+
+    expect(
+      evaluateLoopGuard({
+        state,
+        iteration: 3,
+        now: 0,
+        messages: [],
+        autonomous: true,
+      }),
+    ).toEqual({ kind: 'stop', reason: 'iteration-cap' })
+  })
+
   test('a broken cycle keeps the loop going', () => {
     const state = createLoopGuardState({
       role: 'savant',

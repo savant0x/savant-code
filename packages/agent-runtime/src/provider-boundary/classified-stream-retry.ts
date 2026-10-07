@@ -43,6 +43,19 @@ export interface ClassifiedStreamRetryParams<C, R> {
 /** Process-lifetime bound: each distinct unknown shape logs once. */
 const DEFAULT_SEEN_SHAPES = new Set<string>()
 
+/**
+ * Test isolation: drop the default seen-shape memory.
+ *
+ * Same process-lifetime hazard as the breaker registry — `bun test` shares
+ * one process, so a shape logged by an earlier file is suppressed for every
+ * later file, and a suite asserting "logged once per distinct shape" sees
+ * fewer entries than it produced. Tests that assert on the log pass their own
+ * `seenShapes` set; this reset covers the ones that rely on the default.
+ */
+export function resetUnknownShapeLog(): void {
+  DEFAULT_SEEN_SHAPES.clear()
+}
+
 const defaultSleep = (ms: number): Promise<void> =>
   new Promise((resolve) => setTimeout(resolve, ms))
 
@@ -81,8 +94,7 @@ export async function* runWithClassifiedRetry<C, R>(
       if (verdict.class === 'unknown' && params.onUnknownShape) {
         logUnknownShapeOnce(params.onUnknownShape, error, seenShapes)
       }
-      const rateLimitOnce =
-        verdict.reason !== 'rate-limit' || attempt < 2 // 429: one retry max
+      const rateLimitOnce = verdict.reason !== 'rate-limit' || attempt < 2 // 429: one retry max
       const mayRetry =
         !emitted &&
         verdict.retryable &&
