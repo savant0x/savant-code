@@ -4,6 +4,41 @@
 
 ### Added
 
+- **An evidence-calibrated provider identity gauntlet, offline (FID-2026-1007-008,
+  high; implemented 2026-10-07; local commits `7e661983` + `66abdcfa`; register item
+  T163; record status `fixed`, still open on its live gate).** The audit of HCNSec
+  `kimi-k3` had stopped at a fingerprint timeout, and the shipped capability runner
+  scores task success, which is not provenance — so the route had no dated answer
+  about what it serves. Two halves land. The **passive seam**
+  (`packages/agent-runtime/src/provider-boundary/identity-observation.ts`) records
+  only what a completed call already returned — route, requested and served model
+  ids, usage, non-sensitive request ids — and replays the newest dated verdict as
+  advisory context; it performs no request, so a user's turn can never be delayed or
+  rerouted to satisfy an audit, and a pin reads its own source and fails if it ever
+  grows `fetch(`, a spawn, a node http client or a WebSocket. A verdict is bound to a
+  manifest version and a timestamp, so an old or unparseable date becomes an
+  explicitly stale advisory instead of quietly describing an endpoint that may have
+  changed. The **active gauntlet** (`scripts/providers/lib/identity-core.ts` +
+  `identity-runner.ts`, reachable as `bun run providers:identity -- --provider <slug>
+  --model <id> --base-url <url>`) is a pure, budget-bounded, control-required engine
+  behind a thin transport. What it refuses to conclude is the design: no control, an
+  unavailable control, or fewer than two completed probes all end `inconclusive`, so
+  one probe never decides; absent token usage is `no-signal` rather than a tokenizer
+  breach; an exhausted run names the dimension that ended it instead of being
+  silently truncated into a pass; credentials are redacted from headers, text and
+  failure messages; and the research's hypotheses stay hypotheses — the tokenizer
+  band reports a breach as inconsistent evidence, latency is recorded as operational
+  data that does not identify hardware, and **no numeric decision threshold is applied
+  anywhere** (an invariant pin strips comments and proves the addendum's 0.85
+  auto-failover appears nowhere in the code). Three defects were caught by the pins
+  rather than by reasoning: a control that *failed* was being counted as *separated*
+  (six refused probes read as evidence of a different model), the 0.85 pin failed
+  against the modules' own comments until it scanned code only, and the CLI's first
+  draft defaulted `--base-url` to a placeholder host so a misconfigured run spent
+  quota against a name nobody chose. Receipt 7/7. The record is **not closed**: its
+  step 7 makes the live HCNSec re-audit a named gate requiring the operator's
+  credential and spend authority, and until it runs the route stays `inconclusive`
+  with nothing claimed about its identity.
 - **The sidebar reports provider cache reuse truthfully (FID-2026-1007-009, medium;
   closed 2026-10-07; local commits `8c528f12` + `07fbbbd9`; register item T164).**
   Cache reuse was invisible in the CLI, and three layers had each destroyed the fact

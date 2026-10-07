@@ -1,5 +1,42 @@
 # LEARNINGS
 
+## Lesson: A control that fails is not a control that disagrees
+
+- **Date:** 2026-10-07
+- **Failure:** The identity gauntlet's first draft counted a comparison
+  control's *attempts* as its denominator and its *matches* as its numerator, so
+  a control that never answered scored zero matches out of three attempts and
+  was classified `separated` — "this control is a different model" — when the
+  truth was "this control did not respond". That single confusion would have
+  converted six connection refusals into evidence that the target route serves
+  something other than the model it claims, which is precisely the fabrication
+  the whole audit program exists to prevent. The pin asserting
+  `controls.sameModel === 'unavailable'` failed with `Received: "separated"`
+  and found it. A control's verdict and its liveness are separate facts, and
+  only the first may feed a comparison.
+- **Evidence:** scripts/providers/lib/identity-runner.ts → symbol:verdictFor,
+  scripts/providers/__tests__/identity-gauntlet.test.ts → test:an unavailable control means inconclusive,
+  dev/fids/FID-2026-1007-008-provider-identity-gauntlet.md → heading:Code Verification Evidence
+- **Invariant:** A comparison needs three outcomes, not two: agrees, disagrees,
+  and did not answer. Collapsing "did not answer" into "disagrees" turns an
+  infrastructure failure into a substantive finding, and the more the
+  infrastructure fails the stronger the false finding looks. When a control is
+  required for a verdict, an absent control must force the weakest conclusion,
+  never the strongest.
+- **Guard:** Any comparison against a baseline must count completed baseline
+  observations separately from matching ones, and must branch on the completed
+  count first. If the baseline produced nothing, the result is `unavailable` — a
+  third state that can only widen the uncertainty, never narrow it. Prefer a
+  `no-signal` status over a default verdict in every per-vector summary too.
+- **Verification:** The gauntlet pins drive an invoker that throws for the
+  control and completes for the target: the verdict falls to `inconclusive`,
+  `controls.sameModel` reads `unavailable`, and a target probe that times out
+  leaves its vector `no-signal` with the failure class named in the evidence;
+  absent token usage is pinned as `no-signal` rather than a tokenizer breach.
+- **Scope:** internal
+- **Owning FID:** FID-2026-1007-008
+- **Status:** active
+
 ## Lesson: A telemetry value's absence and its zero are different facts
 
 - **Date:** 2026-10-07

@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-1007-008-provider-identity-gauntlet.md`
 **ID:** FID-2026-1007-008
 **Severity:** high
-**Status:** converged
+**Status:** fixed
 **Created:** 2026-10-07
 **Automation level:** 2
 **YAGNI-Compliance:** Verified
@@ -112,10 +112,24 @@ a decision that says exactly which claim was tested.
 ## Verification Gates
 
 - gate: test scripts/providers/__tests__/identity-gauntlet.test.ts
+- gate: test scripts/providers/__tests__/identity-gauntlet-invariants.test.ts
 - gate: test packages/agent-runtime/src/__tests__/provider-identity-observation.test.ts
 - gate: test scripts/providers/__tests__/quality-gauntlet.test.ts
-- gate: typecheck root
+- gate: typecheck packages/agent-runtime
+- gate: probe scripts/scripts-typecheck-check.ts
 - gate: quality
+
+### Verification Receipt
+
+- fingerprint: sha256:cb67736d7745cf69600ebce30f46563a87df5e75ae651e571facde7385de3c8f
+- verified: 2026-10-07T23:29:49.803Z
+- test scripts/providers/__tests__/identity-gauntlet.test.ts: exit 0
+- test scripts/providers/__tests__/identity-gauntlet-invariants.test.ts: exit 0
+- test packages/agent-runtime/src/__tests__/provider-identity-observation.test.ts: exit 0
+- test scripts/providers/__tests__/quality-gauntlet.test.ts: exit 0
+- typecheck packages/agent-runtime: exit 0
+- probe scripts/scripts-typecheck-check.ts: exit 0
+- quality: exit 0
 
 ## Perfection Loop
 
@@ -153,7 +167,7 @@ a decision that says exactly which claim was tested.
   cite real gate and live evidence.
 - **CHANGE DELTA:** Final wording and gate alignment only.
 
-### Missed questions
+### Missed Questions
 
 1. What is the exact claim? The route's model identity and service promises are separate; score them separately.
 2.  Who supplies a trusted baseline? Use an independent same-version reference and a different-model control;
@@ -163,6 +177,83 @@ a decision that says exactly which claim was tested.
 4.  Can this block user traffic? No. This operator audit produces evidence; any routing action needs a
    separate reviewed decision.
 
+### Loop 4 — implementation, and what the pins forced
+
+- **RED:** The declared gate list was not declarable. `typecheck root` is
+  rejected by `scripts/fid-verify.ts` (`unsafe typecheck workspace "root" — not
+  in VALIDATION_WORKSPACE_POLICY`); it becomes `typecheck packages/agent-runtime`
+  plus the existing `probe scripts/scripts-typecheck-check.ts` for the `scripts`
+  leg, and the split invariant file is declared so every promised test has its
+  own gate. Every promise below has a pin rather than a claim.
+- **GREEN:** Two halves, both committed. The passive seam
+  (`packages/agent-runtime/src/provider-boundary/identity-observation.ts`, commit
+  `7e661983`) records only what a completed call already returned and replays the
+  newest dated verdict as advisory context. The active gauntlet
+  (`scripts/providers/lib/identity-core.ts` + `identity-runner.ts` +
+  `identity-gauntlet.ts`, commit `66abdcfa`) is a pure engine behind a thin
+  transport, reachable as `bun run providers:identity`.
+- **AUDIT:** The two test files read the engine's own sources and prove it cannot
+  reach the network, spawn a process, read `process.env` or write a file, so
+  "no additional request on the user path" is structural rather than reviewed.
+  The capability runner stays independent — `quality-gauntlet.test.ts` still
+  passes 6/6, so a task-success score cannot be mistaken for provenance.
+- **ADVERSARIAL:** Three findings were produced by the pins rather than by
+  reasoning. (1) The engine's first draft counted a control that FAILED as
+  `separated` — six refused probes read as evidence of a different model. The
+  pin caught it and a control with no completed sample is now `unavailable`,
+  which forces `inconclusive`. (2) The '0.85 is not applied' pin failed against
+  the modules' own comments, which document that they reject the threshold; the
+  pin now strips comments before scanning code. (3) The CLI's first draft
+  defaulted `--base-url` to a placeholder host, so a misconfigured run spent
+  probes against a name nobody chose and could only ever be `inconclusive` for
+  the wrong reason; the target is now explicit and required.
+- **CHANGE DELTA:** Gate list corrected to declarable shapes; the engine's
+  unavailable-control rule fixed; absent token usage reclassified from a
+  tokenizer breach to `no-signal`; an explicit required `--base-url`.
+
+### Code Verification Evidence
+
+- [x] Files referenced exist, verified by read:
+      `packages/agent-runtime/src/provider-boundary/identity-observation.ts`,
+      `packages/agent-runtime/src/__tests__/provider-identity-observation.test.ts`,
+      `scripts/providers/lib/identity-core.ts`,
+      `scripts/providers/lib/identity-runner.ts`,
+      `scripts/providers/identity-gauntlet.ts`,
+      `scripts/providers/__tests__/identity-gauntlet.test.ts`,
+      `scripts/providers/__tests__/identity-gauntlet-invariants.test.ts`,
+      `package.json`
+- [x] The failure output is pasted from the actual command, with its exit
+      status: the non-declarable gate is the executor's own message, and the
+      credential refusal prints
+      `no credential for hcnsec: set HCNSEC_API_KEY or IDENTITY_API_KEY (nothing
+      was sent)` at exit 1
+- [x] The received value is traced rather than inferred: the control-bug pin
+      failed `Expected: "unavailable" / Received: "separated"` against the
+      engine's first draft, which is how the failure-to-signal confusion was
+      found and fixed
+- [x] Production call-graph evidence: the passive seam is imported by nothing on
+      a user path yet — it is a new seam, and the record says so rather than
+      implying adoption; the gauntlet's only network call is inside
+      `createInvoker` in `scripts/providers/identity-gauntlet.ts`, and the
+      invariant pin proves the two engine modules contain none
+- [x] The record's own boundary is honoured: **this record stays OPEN.** Step 7
+      makes the live HCNSec re-audit a named gate that requires the operator's
+      credential and spend authority, and the record's own Loop 3 says an
+      unavailable live leg reports `inconclusive` and keeps the FID open. No
+      live HCNSec verdict is asserted here, and no `.env.local` credential was
+      used to obtain one
+- [x] FID status reflects reality (`fixed`: implementation complete and gated,
+      receipt stamped; `closed` is withheld until the live leg runs or the
+      operator retires it)
+
 ## Resolution
 
-Open. No code has been written for this FID and no live HCNSec identity verdict is asserted.
+Open (implementation complete, live leg pending). The offline program is
+implemented and gated: a passive seam that makes no request, and an
+operator-run, budget-bounded, control-required gauntlet whose verdicts are
+advisory and whose 0.85 auto-failover is not implemented anywhere. What remains
+is step 7's live HCNSec `kimi-k3` re-audit, which needs the operator's
+credential and spend authority; until it runs, this route remains
+**inconclusive** and nothing about its model identity is claimed. A mismatch
+from that run would trigger human review and a separate FID — never an
+automatic routing change.

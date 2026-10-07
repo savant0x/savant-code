@@ -70,6 +70,18 @@
       bounded active probes, controls, and an explicit inconclusive state.
       User model calls remain available; no uncalibrated 0.85 auto-failover.
       The live HCNSec re-audit requires credential and quota authority.
+
+      **IMPLEMENTED 2026-10-07 — `7e661983` + `66abdcfa`; receipt 7/7 at the active
+      path; record status `fixed`, deliberately NOT closed.** The offline program is
+      complete: a passive seam that records only what a completed call already
+      returned and makes no request at all, plus an operator-run, budget-bounded
+      gauntlet (`bun run providers:identity`) whose verdict requires both controls and
+      whose 0.85 auto-failover is implemented nowhere. **The record stays open on its
+      own rule** — step 7 makes the live HCNSec `kimi-k3` re-audit a named gate needing
+      the operator's credential and spend authority, and until it runs the route is
+      **inconclusive** and nothing about its identity is claimed. See the FID's Loop 4
+      and Code Verification Evidence for the three findings the pins produced.
+
 **Five** items are open — T163 is in progress; three are
 blocked pending operator input (T119, T62-followups, T122) and one is shelved
 on an operator ruling (T147).
