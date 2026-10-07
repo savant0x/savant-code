@@ -45,6 +45,14 @@ canonical at its single assembly seam behind a real rollback flag, and
 `normalizeForJson`/`stableHash` are order-canonical, so `toolsHash` moves only
 when the tool set really changes. See Loop 4 for the measured before/after.
 
+**Steps 3, 4, 7 and 9 landed 2026-10-07 under the operator ruling** (verbatim:
+"approve, grant automation level 3"): the split cache-control seam is now one
+spelling over one provider set behind one clearer, the cache-breakpoint TTL is
+routed from the run's enforcement mode (Hybrid `5m` / FID-bound `1h`), the Phase-2
+coverage audit ran and produced a measured locator finding, and both proposed ECHO
+amendments are now law in `ECHO.md`. Steps 8, 10 and 11 remain open — two on a live
+endpoint and billing, one on the locator gap the audit measured.
+
 ## Environment
 
 - **OS:** win32 (Git Bash)
@@ -313,15 +321,42 @@ created before any phase claims to be reversible.
    changes the serialized string) rather than accepting the report's word, and
    record that the report's stated rollback flag `features.deterministic_compiler`
    does not exist in this codebase.
-3. Audit Phase 2 coverage: enumerate every destructive-truncation path in the
-   runtime and determine, per path, whether the full value is actually
-   recoverable. Expect a finding, not parity — the tool-output marker's
-   `fullOutput` is a placeholder and retention is conditional on cache-debug. Any
-   genuine gap becomes a step here; no second spill mechanism is to be added.
-4. Resolve the split cache-control seam: settle on one spelling and one provider
-   set across `trimming.ts` and `cache-control.ts`, and either implement or delete
-   the dangling `// Cache up to the last message!` comment. This is a
-   prerequisite for steps 6-8, not a cleanup.
+3. **DONE (2026-10-07).** Audited Phase 2 coverage: every destructive-truncation
+   path in the runtime was enumerated and, per path, MEASURED for recoverability
+   (probe: `dev/scratchpad/active/step3-truncation-audit.ts`, gitignored). Outcome
+   — a finding, not parity. Every model-facing destructive path drops the payload
+   and names no location, in three different marker vocabularies. Measured: a
+   60,000-char string returns a 500-char quoted preview with `fullOutput` set to
+   the fixed string `'[See cache-debug snapshot / rerun the tool for full
+   output]'` — a placeholder naming two possibilities, and cache-debug is off;
+   a 3,000-item array returns 2,000 `keptItems` (27,000 chars omitted) and no
+   locator; `simplifyReadFileResults` emits `{path, contentOmittedForLength:
+   true}` and `simplifyTerminalCommandResults` emits `stdoutOmittedForLength:
+   true`, neither carrying a count or a pointer; Layer 4 reactive compact drops
+   the middle band beyond the first 10% while preserving first message, last 20%,
+   images, preserved-state and protocol-refresh messages. The one place the raw
+   bytes actually survive — `evidence/spill.ts` →
+   `.savant/evidence/<runId>.jsonl`, bounded at 512 KiB per record and 8 MiB per
+   file, fail-open, spliced back only for `requiresRawEvidence` agents — is
+   unreachable from any of those markers. Two limits are recorded rather than
+   smoothed: the object-shape branch keeps every field by PINNED intent
+   (`simplify-tool-results-truncation.test.ts`: "The original object keys are
+   preserved alongside the marker"), so a 60,026-char object came back at 60,727
+   chars with `omittedChars: 0` alongside `reason: 'output exceeded 50000
+   bytes'` — truthful about the input, contradictory-looking as a pair, left as
+   pinned rather than rewritten inside this pass; and the `read_subtree` /
+   `process-str-replace.ts:25` paths already name their own caps, so they are
+   not gaps. The locator gap is the genuine gap and becomes step 11. No second
+   spill mechanism is added.
+4. **DONE (2026-10-07, commit `f0d365fa`).** Resolved the split cache-control
+   seam: one spelling (`cache_control`), one provider set
+   (`anthropic|openrouter|openaiCompatible`), one clearer shared by the trim path
+   (`clearCacheControlInPlace`, in place) and the clone path
+   (`withoutCacheControl`), and the dangling `// Cache up to the last message!`
+   comment deleted with its owner named (`convertCbToModelMessages` places the
+   breakpoints). RED first: a marker written by the production writer survived the
+   trim (exit 1); GREEN after. P4 met by
+   `packages/agent-runtime/src/util/__tests__/messages-trim-cache-control.test.ts`.
 5. **DONE (this pass, 2026-10-07).** Phase 1a — the model-facing tool payload is
    canonical at its single assembly seam. Law 4 discharged: the seam is
    `run-agent-step/loop-context.ts` (`modelFacingToolSet(applyDriveDirectives(...))`),
@@ -341,21 +376,64 @@ created before any phase claims to be reversible.
    `toolsHash` changes only on a real payload change. Integer-like keys are
    canonical without a special case (JavaScript enumerates them numerically
    first in every insertion order).
-7. Phase 3a — add TTL control at the breakpoint seam, with the mode-to-TTL policy
-   (the report proposes 5m for Hybrid, 1h for FID-bound) recorded as an operator
-   decision before implementation, since it changes spend.
+7. **DONE (2026-10-07, commit `7901568f`).** Phase 3a — TTL control at the
+   breakpoint seam, with the mode-to-TTL policy approved by the operator ruling
+   ("approve, grant automation level 3"): STRICT = ECHO's FID-bound execution →
+   `1h`; HYBRID → undefined, leaving today's bytes exactly as they were. The
+   report assumed a mode seam that does not exist: `convertCbToModelMessages`
+   receives no execution-mode input, so the policy resolves where the mode lives
+   (`step.ts` → `resolveCacheBreakpointTtl(agentState.enforcementMode)`) and
+   travels as `cacheBreakpointTtl` through `prompt-agent-stream.ts` into the
+   conversion — grep-verified end to end. Writing the pin caught a real defect in
+   step 4's clearer (a `{ type, ttl }` marker came back as a dangling `{ ttl }`),
+   fixed with it. P5's live-wire observation remains the named boundary.
 8. Phase 3b — evaluate the Anthropic `tool_addition`/`tool_removal` beta for
    mid-session role handoffs. Absent today; needs a live endpoint test before it
    can be claimed, and the report's own falsifier (physical node routing that does
-   not share cache pools) must be tested rather than assumed away.
-9. Submit the report's two proposed ECHO amendments (Law 1 spill-file
-   authorization; deterministic tool-array serialization) to the operator as
-   explicit approval items. No code may depend on an unapproved amendment.
+   not share cache pools) must be tested rather than assumed away. **NOT STARTED,
+   and the operator's 2026-10-07 ruling does not clear it**: the only real evidence
+   is a captured wire body, so this is blocked on a live endpoint rather than on
+   permission.
+9. **DONE (2026-10-07).** Both proposed ECHO amendments were submitted to the
+   operator and approved (ruling: "approve, grant automation level 3"), then
+   landed in `ECHO.md`: **`#### Law 1 Amendment — Spill-File Authorization`** in
+   the Laws 1-4 section authorizes offloading a bulk system output to a local spill
+   file behind an explicit marker, names its boundaries (the marker substitutes for
+   the spilled payload only; the spill file is itself read 0-EOF once it is acted on
+   rather than cited; every other file still requires Law 1) and records that the
+   spill is append-only and fail-open at
+   `packages/agent-runtime/src/evidence/spill.ts`; **`#### Tool-Array Serialization
+   is Deterministic`** in the Separation of Duties section requires the model-facing
+   tool array to keep ONE canonical form at ONE seam behind `CANONICAL_TOOL_PAYLOAD`
+   and requires mid-session tool restriction to happen by phase-specific
+   activation/deactivation rather than by reconstructing the core registry array.
+   The embedded bundle was regenerated and both gates exit 0:
+   `bun run generate:protocol-bundle:check` and
+   `bun run scripts/lint-md-check.ts`.
 10. Measure: use the existing `debug/cache-debug/` snapshots and the
     `token-telemetry` prefix-stability comparisons to measure `systemHash` /
     `toolsHash` stability and cache read/token ratios before and after, against
     the report's own Approval Point 3 (>75% hit ratio on multi-turn FID loops).
-    Live provider billing measurement is a named boundary, not a claim.
+    Live provider billing measurement is a named boundary, not a claim. **NOT
+    STARTED and not startable in this environment**: `debug/cache-debug/` does not
+    exist, no committed artifact carries a hash pair, and
+    `CACHE_DEBUG_FULL_LOGGING` is `false` — measured in Loop 4, not assumed. The
+    instrument-level before/after already ran there on a corpus this pass
+    generated; the hit-ratio claim needs live traffic and live billing.
+11. **Open — the locator gap step 3 measured.** Give the omission marker ONE
+    honest, locatable vocabulary that names the retention that actually exists —
+    the per-run evidence spill record keyed by `toolCallId`
+    (`.savant/evidence/<runId>.jsonl`) — instead of a placeholder naming two
+    possibilities, and unify the three spellings (`truncated.fullOutput`,
+    `contentOmittedForLength`, `stdoutOmittedForLength`) behind it. The marker
+    function receives only the VALUE today, so this is a wiring change (the
+    `toolCallId` lives on the message in `util/messages/trimming.ts`), not a
+    string change, and it re-keys a contract pinned across the whole verbose tool
+    set — which is why it is specified here as its own step rather than folded
+    into step 3's audit. **No second spill mechanism is introduced**: the fix
+    points at the spill that ships. Two invariants for whoever lands it: a marker
+    must never claim a location the caller cannot compute, and a record above
+    either spill cap must say so rather than silently returning `false`.
 
 ### Verification
 
@@ -382,29 +460,44 @@ created before any phase claims to be reversible.
   requires a live endpoint.
 - **P7** `bun run quality:report` PASS.
 
+**P8** MET for the audit half. Step 3's coverage claim is a measurement, not a
+reading: `dev/scratchpad/active/step3-truncation-audit.ts` drove the SHIPPED
+truncation functions over five payload shapes, and every number in step 3 is that
+probe's output. The locator gap it found stays open as step 11 rather than being
+reported as parity.
+
+**P9** MET. Both operator-approved amendments are in `ECHO.md`, and the embedded
+bundle that ships them is in sync: `bun run generate:protocol-bundle:check` exit 0
+and `bun run scripts/protocol-bundle-check.ts` exit 0, with `bun run
+scripts/lint-md-check.ts` exit 0 over the edited document.
+
 Scope of the declared gates: they cover what this pass actually changed — the
-markdown gate fix and its probe. Steps 4-9 add their own test gates at
-implementation time; a `converged` record is pre-implementation, so that battery
-is declared then rather than now. The probe re-enters `lint:md`, never
-`validate:repository`, so it is not the C3 recursion the template warns about —
-and it must never be extended to run `validate:repository`.
+cache-control seam, the TTL route, the tool payload, the markdown gate fix, the
+landed amendments and their bundle. Steps 8, 10 and 11 declare their own gates
+when they land; the record stays active until then. The probe re-enters
+`lint:md`, never `validate:repository`, so it is not the C3 recursion the template
+warns about — and it must never be extended to run `validate:repository`.
 
 ## Verification Gates
 
 - gate: typecheck packages/agent-runtime
 - gate: typecheck common
 - gate: test packages/agent-runtime/src/__tests__/tool-payload-canonical.test.ts
+- gate: test packages/agent-runtime/src/util/__tests__/messages-trim-cache-control.test.ts
 - gate: probe scripts/lint-md-check.ts
+- gate: probe scripts/protocol-bundle-check.ts
 - gate: quality
 
 ### Verification Receipt
 
-- fingerprint: sha256:5fe4b557fd587721790008edb2e07582387f70ffb520fb03db6c7399e4d04d1e
-- verified: 2026-10-07T05:08:10.108Z
+- fingerprint: sha256:b045153acd4871beb35b8039d3a0433f66e2d2f7df6a470e3d7fb3b0f3450a2b
+- verified: 2026-10-07T17:23:48.741Z
 - typecheck packages/agent-runtime: exit 0
 - typecheck common: exit 0
 - test packages/agent-runtime/src/__tests__/tool-payload-canonical.test.ts: exit 0
+- test packages/agent-runtime/src/util/__tests__/messages-trim-cache-control.test.ts: exit 0
 - probe scripts/lint-md-check.ts: exit 0
+- probe scripts/protocol-bundle-check.ts: exit 0
 - quality: exit 0
 
 ## Perfection Loop
@@ -490,20 +583,31 @@ and it must never be extended to run `validate:repository`.
 
 ### Implementation Evidence (REQUIRED for `closed`)
 
-> Not closable: Phase 1 (steps 5-6) is built and verified, but the program is not
-> complete — steps 3, 4 and 7-10 remain, several behind operator approval points.
+> Not closable: the program is not complete — steps 8, 10 and 11 remain. Steps
+> 1-7 and 9 are implemented, verified, and committed (`ba4dee65`, `f0d365fa`,
+> `7901568f`, plus this pass's amendment commit); the operator's 2026-10-07 ruling
+> cleared the approval points this record was waiting on, so what remains is work
+> (step 11) and environment (steps 8 and 10), not permission.
 
-- [ ] **Commit SHA:** none (G2 withheld; this change set is uncommitted)
+- [ ] **Commit SHA:** partial — `ba4dee65` (Phase 1), `f0d365fa` (step 4),
+      `7901568f` (step 7), plus this pass's commit for steps 3 and 9; the record
+      stays active until steps 8, 10 and 11 land
 - [x] **File:line ranges:** see Loop 4 and the Code Verification Evidence block
-- [x] **Gate output:** both declared typechecks, the declared test at
-      `packages/agent-runtime/src/__tests__/tool-payload-canonical.test.ts`, the
-      lint-md probe, and quality all exit 0 at the stamped receipt
+- [x] **Gate output:** both declared typechecks, both declared tests
+      (`tool-payload-canonical.test.ts`,
+      `messages-trim-cache-control.test.ts`), the lint-md probe, the
+      protocol-bundle probe, and quality all exit 0 at the stamped receipt
 - [x] **Reproducibility:** `grep -n 'Savant_ECHO Cache Optimization Research' .markdownlintignore`
-      and `bun run dev/scratchpad/active/cache-prefix-stability-measure.ts`
-      (gitignored harness; reproduces the Loop 4 before/after table)
-- [ ] **Step statuses:** steps 1-2 and 5-6 `implemented`/verified; steps 3, 4 and
-      7-10 `blocked` on operator approval points (TTL policy, ECHO amendments,
-      live endpoint tests)
+      and      `bun run dev/scratchpad/active/cache-prefix-stability-measure.ts`
+      (gitignored harness; reproduces the Loop 4 before/after table) and
+      `bun run dev/scratchpad/active/step3-truncation-audit.ts` (gitignored probe;
+      reproduces every number in step 3)
+- [ ] **Step statuses:** steps 1-9 `implemented`/verified except 8, 10 and 11 —
+      step 8 (`tool_addition`/`tool_removal`) `blocked` on a live endpoint, step 10
+      (the live hit-ratio measurement) `blocked` on a live endpoint and provider
+      billing, and step 11 (the locator gap step 3 measured) `open`. No step is
+      waiting on an operator decision: the 2026-10-07 ruling cleared the approval
+      points this record was held at.
 
 ### Code Verification Evidence
 
@@ -648,17 +752,88 @@ and it must never be extended to run `validate:repository`.
   Loop 4, the two Evidence blocks, Missed Questions 8-10 and Resolution. Steps 3,
   4 and 7-10 are untouched.
 
+### Loop 5 — steps 4 and 7 under the operator's ruling (2026-10-07)
+
+- **RED:** the operator's ruling ("approve, grant automation level 3") cleared
+  the two approval points this record was gated on, so steps 4 and 7 were
+  actioned. Step 4's RED was measured first on the unmodified tree: a marker
+  written by `withCacheControl` survived `getMessagesSubset` untouched
+  (`{ type: 'ephemeral' }` where `undefined` was expected), which is the split
+  seam reproducing as a test failure rather than as a reading.
+- **GREEN:** one provider set and one clearer (`clearCacheControlInPlace` / the
+  clone path / the writer all read the same list); the trim path calls the shared
+  clearer instead of deleting a spelling nothing writes; the dangling comment is
+  gone with its owner named. Then the TTL: the policy resolves in `step.ts` from
+  the run's own enforcement axis and travels the stream-params chain into the
+  conversion, HYBRID emitting no `ttl` key at all so an existing request body is
+  unchanged by the step.
+- **AUDIT:** the pins are the audit here, and they found something: the TTL case
+  exposed that the new clearer deleted only the marker's `type` key, returning a
+  `{ type: 'ephemeral', ttl: '1h' }` marker as a dangling `{ ttl: '1h' }` — a
+  partially-cleared breakpoint that still reaches the provider. Fixed, then
+  re-pinned. Live battery this pass: typecheck common / packages/agent-runtime /
+  sdk / cli exit 0; the pin file 5 pass / 0 fail; common 813 pass / 4 skip / 0
+  fail; packages/agent-runtime 1873 pass / 0 fail (was 1868);
+  `module-state: PASS`; `scope-register PASS`; `validate:repository` PASS.
+- **ADVERSARIAL:** two limits are stated rather than smoothed. (1) P5 is still
+  unproven: that the 1h TTL reaches the wire can only be observed on a live
+  endpoint, so what is verified here is that the resolved value reaches the
+  marker the request body is built from. (2) The three auxiliary call sites that
+  pass `includeCacheControl` for structured prompts do not yet thread the TTL, so
+  those requests keep the provider default — a smaller surface than the main
+  loop, named here rather than implied to be covered.
+- **CHANGE DELTA:** two seams settled, one defect found by the pin that was
+  written to guard the first, and the record's step statuses.
+
+### Loop 6 — steps 3 and 9 under the same ruling (2026-10-07)
+
+- **RED:** the two remaining landable steps were both audits, not builds, so the
+  RED phase is the measurement that preceded any conclusion. Step 3's premise ("the
+  marker's `fullOutput` is a placeholder") was re-tested against the shipped
+  functions instead of re-read: a 60,000-char string, a 3,000-item array, a
+  3,000-line string, an over-cap object and a nested search-shape object. Step 9's
+  premise was that the report's two amendments do not exist in `ECHO.md` — they did
+  not.
+- **GREEN:** the amendments landed in `ECHO.md` and the embedded bundle was
+  regenerated. Step 3's audit closed with the finding written down INSTEAD of the
+  parity the report assumed, and the one genuine gap it found became step 11 with
+  its invariants stated, rather than a silent note.
+- **AUDIT:** the audit numbers are the probe's output, and the amendment landing is
+  checked by gates rather than by reading: `generate:protocol-bundle:check` exit 0,
+  `scripts/protocol-bundle-check.ts` exit 0, `scripts/lint-md-check.ts` exit 0,
+  `prettier --check ECHO.md` exit 0, and the condensation validator inside the
+  generator (`validateCondensedCopies`) still anchors every condensed line to its
+  `ECHO.md` source, so adding two subsections did not drift the copies that ship in
+  prompts.
+- **ADVERSARIAL (limits stated, not smoothed):** three are recorded rather than
+  argued away. (1) Step 3's audit found that the object-shape branch reports
+  `omittedChars: 0` alongside a byte-cap reason — but that branch's field-preserving
+  behaviour is PINNED by an existing test, so it is recorded as a
+  contradictory-looking truthful pair rather than rewritten inside an audit step; a
+  reviewer who disagrees with the pin has the test to argue with. (2) The step-3
+  probe lives in the gitignored scratchpad, so its numbers are reproducible but not
+  committed evidence — the FID carries the numbers and the probe's path. (3) The
+  `tool_addition`/`tool_removal` half of step 8 and the whole of step 10 remain
+  unobservable here; the amendments landing does not move either.
+- **CHANGE DELTA:** two steps closed, one new step opened from a measured finding,
+  one amendment pair added to `ECHO.md`.
+
 ## Resolution
 
 - **Closed Date:** not closed
 - **Fix Description:** partial — the T154 markdown-gate defect is fixed in-pass
-  (`.markdownlintignore` entry + `scripts/lint-md-check.ts`), and Phase 1 of the
-  cache program is now built: the model-facing tool payload is canonical at its
-  single assembly seam behind a real rollback flag, and `normalizeForJson` /
-  `stableHash` are order-canonical in both twins, so `toolsHash` moves only on a
-  real payload change. Steps 3, 4 and 7-10 remain: a coverage audit, the split
-  cache-control seam, TTL policy, the Anthropic tool-mutation betas and the live
-  measurements.
+  (`.markdownlintignore` entry + `scripts/lint-md-check.ts`), Phase 1 is built
+  (canonical model-facing tool payload behind `CANONICAL_TOOL_PAYLOAD`, with
+  `normalizeForJson` / `stableHash` order-canonical in both twins so `toolsHash`
+  moves only on a real payload change), **step 4** unified the split
+  cache-control seam to one spelling, one provider set and one clearer, **step 7**
+  routes the operator-approved mode-to-TTL policy from
+  `agentState.enforcementMode` to the breakpoint bytes, **step 3** audited
+  Phase-2 coverage and produced a measured locator finding, and **step 9** landed
+  both operator-approved ECHO amendments in `ECHO.md` with the embedded bundle
+  regenerated. Steps 8, 10 and 11 remain: the Anthropic tool-mutation betas (the
+  live-wire half is a named environmental boundary), the live-billing
+  measurement (same boundary), and the locator gap step 3 measured.
 - **Tests Added:** Yes — `packages/agent-runtime/src/__tests__/tool-payload-canonical.test.ts`
   (9 tests): canonical seam ordering, byte-identical payloads across insertion
   orders, recursive `stableHash` order-insensitivity, a still-detects-real-change
@@ -672,7 +847,9 @@ and it must never be extended to run `validate:repository`.
   pass / 0 fail (was 1852); common 813 / 0; sdk 664 / 0; root `test` chain exit 0;
   prettier/eslint clean on all touched files. Before/after harness numbers are in
   Loop 4: 2/2 spurious `toolsHash` fractures and warnings removed, the genuine
-  change still detected. Steps 3, 4 and 7-10 are unstarted.
+  change still detected. Steps 3, 4, 7 and 9 are now done (2026-10-07); steps 8,
+  10 and 11 are open, the first two on a live endpoint and provider billing, the
+  third on the locator gap step 3 measured.
 - **Archived:** not archived
 
 ## Lessons Learned

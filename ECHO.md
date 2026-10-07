@@ -86,6 +86,21 @@ another agent's role.
 | Thinker must use sequential thinking for all non-trivial reasoning | Tool mandate |
 | Scout/Researcher are read-only | No write tools at all |
 
+#### Tool-Array Serialization is Deterministic *(amended 2026-10-07, FID-2026-1006-005)*
+
+To preserve provider-side KV-cache integrity, the tool array is serialized
+deterministically: the model-facing tool set has ONE canonical form assembled at ONE
+seam (`packages/agent-runtime/src/run-agent-step/loop-context.ts` →
+`packages/agent-runtime/src/tools/canonical-tool-set.ts`, behind the
+`CANONICAL_TOOL_PAYLOAD` rollback flag), so an unchanged tool set emits byte-identical
+bytes across turns.
+
+Mid-session restriction of tools between specialized agents — stripping
+`run_terminal_command` from the Verifier, for example — must therefore occur via
+phase-specific activation/deactivation directives rather than structural reconstruction
+of the core tool registry array: a rebuild changes the serialized prefix and discards the
+provider's cached prefix for every later turn.
+
 ### EHEL Integration (ECHO Harness Enforcement Layer)
 
 The Savant harness enforces ECHO laws mechanically at the tool-executor level.
@@ -165,6 +180,21 @@ enforced mechanically (write-time block + `validate:repository`'s `scope.prohibi
 FID-2026-0919-024); the single-agent protocol — `dev/echo-v0.1.2-single-agent.md` → Scope Boundary — carries the full
 elaboration, including the measured history of why the previous labels were removed. This does not replace the 10-agent
 roster's Adversary override; it hardens the solo case where that override does not exist.
+
+#### Law 1 Amendment — Spill-File Authorization *(amended 2026-10-07, FID-2026-1006-005)*
+
+When a bulk system output — a full test-suite log, a repository-wide grep — exceeds the
+safe context threshold, the harness is authorized to offload the payload to a local spill
+file and leave an explicit marker in the context in its place. An agent is permitted to
+act on the marker without reading the spill file 0-EOF, provided the action does not
+modify the target files referenced within the spill.
+
+**Boundaries.** The authorization covers the reading it names and nothing else: the
+marker substitutes for the spilled payload, the spill file is itself read 0-EOF like any
+other file once it is acted on rather than cited, and every other file the work touches
+still requires Law 1. The spill is append-only and fail-open
+(`packages/agent-runtime/src/evidence/spill.ts`), so an unreadable spill degrades to the
+un-pruned payload rather than to a lost one.
 
 ### Laws 5-15: The Extended Code Laws
 
