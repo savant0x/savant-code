@@ -394,6 +394,33 @@
 
 ### Fixed
 
+- **A local circuit breaker no longer refuses a user's model turn (FID-2026-1007-007,
+  high; closed 2026-10-07; local commit `7a7f5dee`; register item T162).** The
+  operator hit this twice in one session and could not place it — "i don't even
+  know what caused it, the model was working perfetly fine?" — and it was entirely
+  local. `runWithClassifiedRetry` gated the top of every attempt on
+  `breaker.checkCooldown()` before `params.create()` and threw
+  `ProviderBoundaryBlockedError`, so three transient failures across as few as two
+  turns opened a 30-minute gate: the saved chat shows KiosAPI refused at 16:15,
+  16:22 and again at 16:38 with 14 minutes still remaining, and Unorouter refused
+  at 16:46 after a 16:40 upstream rate limit. Because the breaker is keyed per
+  provider *connection*, changing models on one connection could not escape it
+  while separate providers each opened their own — which is why it looked random
+  and why "the model was working perfectly fine" was true of every model that had
+  not tripped its own gate. The pre-request refusal is removed; an open breaker now
+  suppresses only an optional automatic retry, so every user turn's first physical
+  request runs and what the user sees on failure is the provider's own verdict,
+  never a local lockout. Failure classification, the bounded retry budget, the
+  429 one-retry rule and success-closes-the-breaker are unchanged. The operator's
+  ruling is the acceptance criterion, verbatim: "it should NEVER stop a user from
+  using a model." The closure pass re-reproduced the defect rather than trusting
+  the earlier run — reverting `classified-stream-retry.ts` alone restores
+  `0 pass / 2 fail` with the operator's exact message, and restoring it returns
+  2 pass and 6 pass. Receipt 5/5 live at the archived path. Two limits are recorded
+  rather than hidden: `checkCooldown()` and `ProviderBoundaryBlockedError` now have
+  no production caller and are retained as tested FSM surface with their comments
+  updated, and the upstream sequence that opened the KiosAPI circuit is still
+  unproven from the saved chat.
 - **ChatAnywhere reaches the `/model` picker, and the free-key lane stops
   advertising a provider with nothing behind it (FID-2026-1007-005, medium; closed
   2026-10-07; local commit `edc761a8`; register item T160).** The operator's report

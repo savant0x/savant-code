@@ -76,20 +76,7 @@
       session/provider/model, carry the summary through SDK and CLI state,
       and render an unavailable state when the provider does not report it.
 
-- [ ] **T162. User-initiated model calls must never be blocked by the local
-      provider circuit breaker (`FID-2026-1007-007`).** **Automation level: 3.**
-      Operator ruling 2026-10-07: "it should NEVER stop a user from using a
-      model." The saved 2026-10-07 chat shows KiosAPI blocked at 16:15 and
-      16:22 (14 minutes still remaining at 16:38) and Unorouter blocked at
-      16:46 after a 16:40 upstream rate limit. The boundary threw
-      `ProviderBoundaryBlockedError` before a physical request. The verified
-      fix preserves transient failure classification and bounded automatic
-      retry while sending every user-initiated turn's first physical request
-      regardless of breaker state. Open-breaker and production-call regression
-      tests, the agent-runtime suite, and the root gates pass. **Blocker:**
-      ECHO G2 local commit authorization is pending.
-
-**Seven** items are open — T162, T163, and T164 are in progress; three are
+**Six** items are open — T163 and T164 are in progress; three are
 blocked pending operator input (T119, T62-followups, T122) and one is shelved
 on an operator ruling (T147).
 **T155, T160 and T161 completed in this pass** — all three FIDs closed, receipted
@@ -954,13 +941,41 @@ T90-F3 was resolved by the operator ruling "T90-F3 residual needs no code"
       shipped function now reports `chatanywhere: 27`**, and `providers:parity --check`
       exits 0 with "every modelsRef provider contributes rows". The section rule was
       narrowed to the operator's own marker rule — `hasFreeToken` hoists, so a
-      free-key provider's roster keeps its own group and keeps the per-row ⭐ — and the
-      key lane renders only for a provider that contributed rows. The class is closed
+      free-key provider's roster keeps its own group and keeps the per-row ⭐ — and      the key lane renders only for a provider that contributed rows. The class is closed
       two-directionally in `catalogPairingIssues` (a `modelsRef` provider with zero
       rows fails; an audited exception that starts contributing fails), with
       `cloudflare` recorded as the one SDK-routed exception and four offline pins in
       `scripts/__tests__/provider-catalog-parity.test.ts` because the live probe needs
       the keyed endpoints.
+
+- [x] **T162. User-initiated model calls must never be blocked by the local
+      provider circuit breaker (`FID-2026-1007-007`).** **Automation level: 3.**
+      Registered 2026-10-07 on the operator's ruling, verbatim: "it should NEVER stop
+      a user from using a model." The saved chat shows KiosAPI refused at 16:15 and
+      16:22 with 14 minutes still remaining at 16:38, and Unorouter refused at 16:46
+      after a 16:40 upstream rate limit — all of them the same local message,
+      `ProviderBoundaryBlockedError: provider call blocked: Circuit breaker open —
+      30min cooldown remaining`. Root cause: `runWithClassifiedRetry` gated the top of
+      every attempt on `breaker.checkCooldown()` before `params.create()`, so three
+      transient failures across as few as two turns opened a 30-minute gate, and the
+      breaker key is per provider *connection*, so switching models on one connection
+      could not escape it. **Status `converged`** — three planned steps, five declared
+      gates.
+
+      **COMPLETED 2026-10-07 — `7a7f5dee`; receipt 5/5 re-stamped live at the archived
+      path.** The pre-request refusal is removed from the boundary and an open breaker
+      now suppresses only the optional automatic retry, so the user's first physical
+      request always runs and the provider's own verdict is what the user sees;
+      classification, the bounded retry budget, the 429 one-retry rule and
+      success-closes-the-breaker are unchanged. The closure pass re-reproduced the
+      defect rather than trusting the earlier run: reverting
+      `classified-stream-retry.ts` alone restores `0 pass / 2 fail` on the new pins
+      with the operator's message verbatim, and restoring it returns 2 pass plus
+      6 pass on the production entry point. Two limits are recorded, not hidden: the
+      now-production-dead `checkCooldown()`/`ProviderBoundaryBlockedError` pair are
+      retained as tested FSM surface with their class comment updated, and the exact
+      upstream sequence that opened the KiosAPI circuit remains unproven from the saved
+      chat.
 
 - [x] **T159. Every discarded payload needs a durable record and a locator it can
       prove (`FID-2026-1007-004`).** **Automation level: 3.** Registered 2026-10-07

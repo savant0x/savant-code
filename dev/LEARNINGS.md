@@ -1,5 +1,88 @@
 # LEARNINGS
 
+## Lesson: A health breaker may throttle background traffic but must never deny a user action
+
+- **Date:** 2026-10-07
+- **Failure:** The operator was refused their own model turns twice in one session,
+  for 30 minutes at a time, and could not tell what had happened because every model
+  that had not tripped its own gate still worked: *"i don't even know what caused it,
+  the model was working perfetly fine?"* The cause was a provider-reachability
+  circuit breaker doing exactly what it was designed to do — three transient failures
+  open a 30-minute cooldown — but it was wired where it had no business being: at the
+  top of `runWithClassifiedRetry`, before `params.create()`, so it refused the turn
+  instead of pacing a retry. Two properties made it look random: the breaker is keyed
+  per provider *connection*, so switching models on one connection could not escape
+  it, while separate providers each opened independently; and the refusal arrived as a
+  local error that masked the real upstream verdict. The operator's ruling supplied
+  the missing acceptance criterion, verbatim: *"it should NEVER stop a user from using
+  a model."* A breaker's legitimate job is to stop *automatic* traffic — retries,
+  background probes, scheduled work. A user action is not automatic traffic, and the
+  cost of throttling it (a silent 30-minute denial) is not the cost the breaker was
+  calibrated to trade against.
+- **Evidence:** packages/agent-runtime/src/prompt-agent-stream.ts → symbol:getAgentStreamFromTemplate,
+  packages/agent-runtime/src/provider-boundary/provider-circuit-breaker.ts → symbol:ProviderCircuitBreaker,
+  dev/fids/archive/FID-2026-1007-007-user-model-calls-bypass-provider-breaker.md → heading:Code Verification Evidence
+- **Invariant:** A circuit breaker may suppress retries; it may never suppress the
+  first request of a decision a human just made. Whatever gates a user action must be
+  able to name the response it is denying — if no request was attempted, there is no
+  provider health to report, only a local implementation choice being presented as a
+  provider verdict. Corollary: never let a local refusal wear the provider's clothes.
+  If the gate fires, the user must still be able to distinguish "the provider said no"
+  from "we never asked."
+- **Guard:** Before placing any breaker, rate limiter or health gate on a path, ask
+  who initiates that path. Human-initiated work gets at most retry suppression, never
+  a preflight refusal, and the failure it finally reports must be the provider's own
+  classified error. When a user-visible refusal is added anywhere, the record must
+  state which physical request it prevented.
+- **Verification:** The closure pass re-reproduced the defect rather than trusting the
+  earlier run — reverting only `classified-stream-retry.ts` restores `0 pass / 2 fail`
+  printing `ProviderBoundaryBlockedError: provider call blocked: Circuit breaker open
+  — 30min cooldown remaining`, and restoring it returns 2 pass and 6 pass — with
+  `typecheck packages/agent-runtime` and all five declared gates at exit 0, receipt 5/5
+  live at the archived path. `grep -rn checkCooldown packages/agent-runtime/src cli/src
+  common/src` shows the provider breaker's cooldown gate now has no production caller.
+- **Scope:** internal
+- **Owning FID:** FID-2026-1007-007
+- **Status:** active
+
+## Lesson: Removing a gate from its only caller leaves production-dead code behind
+
+- **Date:** 2026-10-07
+- **Failure:** FID-2026-1007-007's fix was correct and complete against its stated
+  steps — "remove the pre-request cooldown refusal from `runWithClassifiedRetry`" — and
+  it silently left two pieces of production-dead surface behind:
+  `ProviderCircuitBreaker.checkCooldown()`, the very method whose call site was
+  removed, and `ProviderBoundaryBlockedError`, the error the removed line threw. Both
+  still compile, both are still unit-tested, and both still read as live API: the
+  breaker's own class comment described `checkCooldown` as the way to "gate one call."
+  A future author wiring a new call site would have found a method with a
+  gate-one-call docstring and three passing tests, and would have re-armed the exact
+  defect this record cured. Deleting them blindly was equally wrong — they are the FSM's
+  tested public surface, and `checkCooldown` is the only thing that exercises the
+  `half_open` admission rule directly.
+- **Evidence:** packages/agent-runtime/src/provider-boundary/provider-circuit-breaker.ts → symbol:ProviderCircuitBreaker,
+  packages/agent-runtime/src/provider-boundary/failure-class.ts → symbol:ProviderBoundaryBlockedError,
+  dev/fids/archive/FID-2026-1007-007-user-model-calls-bypass-provider-breaker.md → heading:Code Verification Evidence
+- **Invariant:** A repair that removes a call site must account for what the call site
+  was the only user of. "No production caller remains" is a finding to record in the
+  same breath as the fix, and the surviving surface must say so in its own docstring —
+  dead code that still advertises the old contract is a re-arming instruction, and the
+  next author cannot be expected to rediscover the removal.
+- **Guard:** After any change that deletes a call site, grep the removed symbol's
+  callee across every production workspace and state the result. If the callee
+  survives, either delete it or update its docstring to say that it has no production
+  caller and why it is retained — and record the choice and its limits in the record's
+  Code Verification Evidence rather than leaving it to be inferred.
+- **Verification:** `grep -rn ProviderBoundaryBlockedError packages/agent-runtime/src
+  cli/src common/src` returns only its definition plus one test that constructs it,
+  and `grep -rn checkCooldown` returns the provider-breaker definition, the separate
+  context-compactor breaker (a real production caller) and the two breaker test files;
+  both limits are written into FID-2026-1007-007's Loop 3 ADVERSARIAL and Code
+  Verification Evidence.
+- **Scope:** internal
+- **Owning FID:** FID-2026-1007-007
+- **Status:** active
+
 ## Lesson: A blocker inherited from an outside document must be traced to its owner
 
 - **Date:** 2026-10-07

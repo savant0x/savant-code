@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-1007-007-user-model-calls-bypass-provider-breaker.md`
 **ID:** FID-2026-1007-007
 **Severity:** high
-**Status:** verified
+**Status:** closed
 **Created:** 2026-10-07 17:00
 **Automation level:** 3
 **YAGNI-Compliance:** Verified
@@ -128,8 +128,8 @@ user-turn and user-turn recovery call sites in production.
 
 ### Verification Receipt
 
-- fingerprint: sha256:8e895c472147ba3040485f814d222f5e25d727fdb11ec8c87bcf7cc11e940a8d
-- verified: 2026-10-07T21:30:47.468Z
+- fingerprint: sha256:494d0db6ba72a0da2aea4fb3435db90f3590bd3228f8f00b29f3ffdad970c407
+- verified: 2026-10-07T22:02:34.390Z
 - typecheck packages/agent-runtime: exit 0
 - test packages/agent-runtime/src/__tests__/provider-circuit-breaker.test.ts: exit 0
 - test packages/agent-runtime/src/__tests__/provider-breaker-user-calls.test.ts: exit 0
@@ -186,17 +186,81 @@ user-turn and user-turn recovery call sites in production.
 3. Does this weaken the automatic retry budget? No; opening the breaker
    disables optional retry while preserving the first user attempt.
 
+### Loop 3 — closure re-verification (2026-10-07)
+
+- **RED:** The defect was re-reproduced instead of taken on trust. Reverting
+  `provider-boundary/classified-stream-retry.ts` alone, with every test in
+  place, makes the new pins fail `0 pass / 2 fail` and prints the operator's
+  own symptom verbatim: `ProviderBoundaryBlockedError: provider call blocked:
+  Circuit breaker open — 30min cooldown remaining`. The production entry point
+  fails the same way where it now expects the provider's own error
+  (`prompt-agent-stream-forwarding.test.ts:1 fail`).
+- **GREEN:** With the boundary restored, the declared gates are re-run from
+  their workspace roots: `typecheck packages/agent-runtime` exit 0,
+  `provider-circuit-breaker.test.ts` 15 pass / 0 fail,
+  `provider-breaker-user-calls.test.ts` 2 pass / 0 fail,
+  `prompt-agent-stream-forwarding.test.ts` 6 pass / 0 fail, and
+  `quality:report` PASS.
+- **AUDIT:** The full repository chain was run with this implementation in the
+  tree: root `bun run test` exit 0 (8436 pass / 0 fail across all thirteen
+  workspaces), plus `bun run typecheck`, `bun x eslint . --max-warnings 0`,
+  `bun x prettier --check .` and `bun run lint:md` all exit 0.
+- **ADVERSARIAL:** Two limits are recorded rather than hidden, and neither is
+  repaired blind in this record. (1) Removing the pre-request gate leaves
+  `ProviderCircuitBreaker.checkCooldown()` and `ProviderBoundaryBlockedError`
+  with no production caller — a repository search over `packages/`, `cli/src`
+  and `common/src` finds only their definitions and their unit tests. They are
+  retained because they are tested public surface of the FSM, and the class
+  comment now records that user turns bypass the gate; deleting them is a
+  separate, reviewed change. (2) The exact upstream failure sequence that
+  opened the KiosAPI circuit is still unproven from the saved chat, so this
+  record proves the local refusal path and its removal, not what the upstream
+  served.
+- **CHANGE DELTA:** No new design change in this loop; it converts the
+  implementation from "gates pass" to "the defect reproduces when reverted and
+  disappears when restored", and states the two accepted limits above.
+
+### Code Verification Evidence
+
+- [x] Files referenced exist, verified by read:
+      `packages/agent-runtime/src/provider-boundary/classified-stream-retry.ts`,
+      `.../provider-boundary/provider-circuit-breaker.ts`,
+      `.../prompt-agent-stream.ts`,
+      `.../__tests__/provider-breaker-user-calls.test.ts`,
+      `.../__tests__/provider-circuit-breaker.test.ts`,
+      `.../__tests__/prompt-agent-stream-forwarding.test.ts`
+- [x] The failure output is pasted from the actual command, with its exit
+      status: the revert run exits 1 with `0 pass / 2 fail`
+- [x] The received value is traced to its source: the refusal is a local
+      `ProviderBoundaryBlockedError` raised by `checkCooldown()` before
+      `params.create()`, not a provider response — the same message the
+      operator's saved chat shows at 16:15, 16:22, 16:38 and 16:46
+- [x] Production call-graph evidence: `grep -rn checkCooldown` across
+      `packages/agent-runtime/src`, `cli/src` and `common/src` returns only the
+      provider-breaker definition, the separate context-compactor breaker
+      (still a real production caller), and the two breaker test files — so no
+      production path gates a user turn on the cooldown any more
+- [x] The fix is proven to be the cause of the green, not correlated with it:
+      reverting one file restores the red and restoring it returns the green
+- [x] FID status reflects reality (`closed`: implemented, gates re-verified by
+      the closure pass, receipt stamped live at the archived path)
+
 ## Resolution
 
-- **Closed Date:** Pending local commit authorization.
+- **Closed Date:** 2026-10-07.
 - **Fix Description:** Every user model turn makes its first provider request;
   an open breaker only prevents an optional automatic retry and preserves the
-  upstream error.
-- **Tests Added:** `provider-breaker-user-calls.test.ts` (two cases); updated
-  production stream integration assertion in
-  `prompt-agent-stream-forwarding.test.ts`.
-- **Verification Evidence:** Local gates above, with a machine receipt below.
-- **Archived:** Pending.
+  upstream error. Implementation committed as `7a7f5dee`.
+- **Tests Added:** `provider-breaker-user-calls.test.ts` (two cases, asserting
+  that an open breaker admits the next user attempt, that success resets it,
+  and that an upstream rejection is reported as the provider's own failure
+  rather than a local lockout); the production stream integration assertion in
+  `prompt-agent-stream-forwarding.test.ts` now expects a fourth physical
+  request after the breaker opens.
+- **Verification Evidence:** Local gates above, with a machine receipt below,
+  re-stamped live after the closure edits at the archived path.
+- **Archived:** 2026-10-07 →
+  `dev/fids/archive/FID-2026-1007-007-user-model-calls-bypass-provider-breaker.md`.
 
 ## Lessons Learned
 

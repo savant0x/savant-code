@@ -3,6 +3,34 @@
 This directory contains closed or historically completed FIDs. Files here are
 an audit record, not an active work queue.
 
+## 2026-10-07 closure — the user-call breaker bypass (1 FID archived)
+
+Closed on the operator's ruling of 2026-10-07, verbatim: "it should NEVER stop a user
+from using a model." The operator hit the defect twice in one session and reported it
+as a mystery — "i don't even know what caused it, the model was working perfetly
+fine?" — and it was purely local: KiosAPI refused at 16:15 and 16:22 with 14 minutes
+still remaining at 16:38, and Unorouter refused at 16:46 after a 16:40 upstream rate
+limit. Implementation committed as `7a7f5dee`, receipt re-stamped live at the archived
+path (5/5).
+
+**`FID-2026-1007-007-user-model-calls-bypass-provider-breaker`** (register item T162,
+severity high, automation level 3). `runWithClassifiedRetry` called
+`breaker.checkCooldown()` at the top of every attempt and threw
+`ProviderBoundaryBlockedError` before `params.create()`, so three transient failures
+across as few as two turns opened a 30-minute gate; the breaker is keyed per provider
+*connection*, so switching models did not escape it, while separate providers each
+opened their own. The pre-request refusal is removed and an open breaker now suppresses
+only an optional automatic retry — the user's first physical request always runs, and
+what they see is the provider's own verdict when it fails. Classification, the bounded
+retry budget, the 429 one-retry rule and success-closes-the-breaker are unchanged. The
+closure pass re-reproduced the defect instead of trusting the earlier run: reverting
+`classified-stream-retry.ts` alone restores `0 pass / 2 fail` with the operator's
+exact message, and restoring it returns 2 pass and 6 pass. Two limits are recorded
+rather than hidden — `checkCooldown()` and `ProviderBoundaryBlockedError` now have no
+production caller and are retained as tested FSM surface with their comments updated,
+and the upstream sequence that opened the KiosAPI circuit is still unproven from the
+saved chat.
+
 ## 2026-10-07 closure — the cache program, the `/model` gap and the suite leak (3 FIDs archived)
 
 Closed under the operator's standing ruling of 2026-10-07 (verbatim: "approve, work
