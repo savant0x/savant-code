@@ -64,7 +64,7 @@ export const getAgentStreamFromTemplate = (params: {
   onCostCalculated?: (credits: number) => Promise<void>
   /** FID-2026-1005-006: validated at call time (throws on shape mismatch). */
   retryPolicy?: unknown
-  /** FID-2026-1005-006: per-provider breaker gating this boundary. */
+  /** Per-provider breaker for retry suppression; user calls always proceed. */
   circuitBreaker?: ProviderCircuitBreaker
   promptAiSdkStream: PromptAiSdkStreamFn
   sendAction: SendActionFn
@@ -157,17 +157,36 @@ export const getAgentStreamFromTemplate = (params: {
   const connectionKey = route
     ? `${route.providerId}:${route.authMode}:${route.configRevision ?? ''}:${route.accountRevision ?? ''}`
     : `legacy:${clientSessionId}`
-  const breaker = params.circuitBreaker ?? providerCircuitBreakerFor(connectionKey)
-  const availabilityCallbacks = route ? {
-    onSuccess: () => recordModelAvailability(route.providerId, model,
-      classifyAvailabilityObservation({ bodyDecoded: true, httpStatus: 200, observedAt: Date.now() })),
-    onFailure: (verdict: { reason: string }, cause: unknown) => {
-      if (verdict.reason !== 'model-unavailable') return
-      const reason = explicitModelRejection(cause)
-      if (reason) recordModelAvailability(route.providerId, model,
-        classifyAvailabilityObservation({ bodyDecoded: true, rejected: { reason }, observedAt: Date.now() }))
-    },
-  } : {}
+  const breaker =
+    params.circuitBreaker ?? providerCircuitBreakerFor(connectionKey)
+  const availabilityCallbacks = route
+    ? {
+        onSuccess: () =>
+          recordModelAvailability(
+            route.providerId,
+            model,
+            classifyAvailabilityObservation({
+              bodyDecoded: true,
+              httpStatus: 200,
+              observedAt: Date.now(),
+            }),
+          ),
+        onFailure: (verdict: { reason: string }, cause: unknown) => {
+          if (verdict.reason !== 'model-unavailable') return
+          const reason = explicitModelRejection(cause)
+          if (reason)
+            recordModelAvailability(
+              route.providerId,
+              model,
+              classifyAvailabilityObservation({
+                bodyDecoded: true,
+                rejected: { reason },
+                observedAt: Date.now(),
+              }),
+            )
+        },
+      }
+    : {}
   const startedAt = Date.now()
   let physicalRequests = 0
   const createPhysical = (request: ParamsOf<PromptAiSdkStreamFn>) => {
@@ -175,9 +194,9 @@ export const getAgentStreamFromTemplate = (params: {
     return promptAiSdkStream(request)
   }
 
-  // Classify-then-decide at the boundary: the breaker gates every attempt
-  // and receives every classified outcome, and only zero-emission
-  // transient failures retry (429 at most once per turn).
+  // Classify-then-decide at the boundary: the breaker receives every
+  // classified outcome without blocking a user attempt.
+  // Only zero-emission transient failures retry (429 at most once per turn).
   const classifiedTurn = () =>
     runWithClassifiedRetry({
       policy: { ...policy, maxAttempts: Math.min(policy.maxAttempts, 2) },
@@ -211,7 +230,10 @@ export const getAgentStreamFromTemplate = (params: {
             maxOutputTokens: request.outputCapTokens,
             messages: [
               ...aiSdkStreamParams.messages,
-              { role: 'user', content: [{ type: 'text', text: request.prompt }] },
+              {
+                role: 'user',
+                content: [{ type: 'text', text: request.prompt }],
+              },
             ],
           }),
       }),

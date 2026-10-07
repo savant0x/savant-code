@@ -123,7 +123,7 @@ describe('getAgentStreamFromTemplate output-budget forwarding (FID-2026-0909-008
     ).toThrow(/retryPolicy\.backoff/)
   })
 
-  test('production stream calls share the breaker across turns', async () => {
+  test('production stream calls still reach the provider after the breaker opens', async () => {
     let calls = 0
     const stream: PromptAiSdkStreamFn = async function* () {
       calls++
@@ -143,9 +143,9 @@ describe('getAgentStreamFromTemplate output-budget forwarding (FID-2026-0909-008
       ).rejects.toThrow()
     }
     await expect(
-      getAgentStreamFromTemplate({ ...base, runId: 'blocked' }).next(),
-    ).rejects.toThrow(/Circuit breaker open/)
-    expect(calls).toBe(3)
+      getAgentStreamFromTemplate({ ...base, runId: 'user-retry' }).next(),
+    ).rejects.toThrow(/provider call failed \(transient\/server\)/)
+    expect(calls).toBe(4)
   })
 
   test('an explicit model refusal hides it and a later success restores it', async () => {

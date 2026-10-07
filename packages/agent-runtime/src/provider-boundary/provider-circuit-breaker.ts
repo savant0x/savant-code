@@ -9,6 +9,8 @@
  *
  * Measured schedule (dsh): cooldown base 30 min, exponential to a 120 min
  * cap on repeated probe failure; manual reprobe/startup never throttled.
+ * User model turns do not call the cooldown gate; an open state only
+ * suppresses their optional automatic retry.
  * Breaker state is purely reachability: only TRANSIENT failures count;
  * `administrative` and `unknown` verdicts neither trip nor reset.
  */
@@ -31,9 +33,9 @@ export class ProviderCircuitBreaker {
   constructor(private readonly clock: () => number = Date.now) {}
 
   /**
-   * Gate one call. `half_open` admits exactly ONE bounded probe at a time;
-   * an elapsed `open` cooldown transitions to `half_open` and the caller's
-   * next attempt IS the probe.
+   * Legacy cooldown gate retained for callers that explicitly need it.
+   * User model turns bypass this method. `half_open` admits one probe;
+   * an elapsed `open` cooldown transitions to `half_open`.
    */
   checkCooldown(): { allowed: boolean; reason?: string } {
     if (this.state === 'closed') return { allowed: true }
@@ -119,15 +121,10 @@ export function providerCircuitBreakerFor(
  *
  * The registry is process-lifetime by design (one breaker per serving
  * connection, shared across turns), but `bun test` runs every file in a
- * single process, so an OPEN breaker leaks from one suite into the next. A
- * suite that drives three transient failures on the shared
- * `legacy:<clientSessionId>` key — tests reuse one `clientSessionId`, unlike
- * production's per-session ids — leaves the circuit open for 30 minutes, and
- * every later turn then blocks at the boundary before any physical request
- * (`ProviderBoundaryBlockedError`; observed as 76 failures across the
- * loop-agent-steps, read-docs and web-search families). Production never
- * calls this; the agent-runtime test preload resets between cases so each one
- * starts from a closed circuit.
+ * single process, so an OPEN breaker can affect later test retry behavior.
+ * Tests reuse a `legacy:<clientSessionId>` key, unlike production's
+ * per-session ids. Production never calls this; the agent-runtime test
+ * preload resets between cases so each one starts from a closed circuit.
  */
 export function resetProviderCircuitBreakers(): void {
   providerBreakers.clear()

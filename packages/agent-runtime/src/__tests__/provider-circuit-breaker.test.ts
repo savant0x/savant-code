@@ -6,10 +6,7 @@
 import { describe, expect, test } from 'bun:test'
 
 import { runWithClassifiedRetry } from '../provider-boundary/classified-stream-retry'
-import {
-  ClassifiedProviderError,
-  ProviderBoundaryBlockedError,
-} from '../provider-boundary/failure-class'
+import { ClassifiedProviderError } from '../provider-boundary/failure-class'
 import {
   PROVIDER_BREAKER_COOLDOWN_BASE_MS,
   PROVIDER_BREAKER_COOLDOWN_MAX_MS,
@@ -24,9 +21,21 @@ import {
 
 import type { FailureVerdict } from '../provider-boundary/failure-class'
 
-const TRANSIENT: FailureVerdict = { class: 'transient', reason: 'server', retryable: true }
-const ADMIN: FailureVerdict = { class: 'administrative', reason: 'auth', retryable: false }
-const UNKNOWN: FailureVerdict = { class: 'unknown', reason: 'unrecognized', retryable: false }
+const TRANSIENT: FailureVerdict = {
+  class: 'transient',
+  reason: 'server',
+  retryable: true,
+}
+const ADMIN: FailureVerdict = {
+  class: 'administrative',
+  reason: 'auth',
+  retryable: false,
+}
+const UNKNOWN: FailureVerdict = {
+  class: 'unknown',
+  reason: 'unrecognized',
+  retryable: false,
+}
 
 function makeBreaker() {
   let now = 1_000_000
@@ -34,7 +43,10 @@ function makeBreaker() {
   return { breaker, advance: (ms: number) => (now += ms) }
 }
 
-function failingStream(error: unknown, emitted: string[] = []): AsyncGenerator<string, string> {
+function failingStream(
+  error: unknown,
+  emitted: string[] = [],
+): AsyncGenerator<string, string> {
   return (async function* () {
     for (const chunk of emitted) yield chunk
     throw error
@@ -127,13 +139,24 @@ describe('retry-policy shape validation (FID-2026-1005-006)', () => {
   })
 
   test('non-finite or inverted timing values fail at load', () => {
-    expect(() => validateRetryPolicy({ ...DEFAULT_RETRY_POLICY, baseDelayMs: NaN })).toThrow(/baseDelayMs/)
-    expect(() => validateRetryPolicy({ ...DEFAULT_RETRY_POLICY, maxDelayMs: 10 })).toThrow(/maxDelayMs/)
-    expect(() => validateRetryPolicy({ ...DEFAULT_RETRY_POLICY, maxAttempts: 0 })).toThrow(/maxAttempts/)
+    expect(() =>
+      validateRetryPolicy({ ...DEFAULT_RETRY_POLICY, baseDelayMs: NaN }),
+    ).toThrow(/baseDelayMs/)
+    expect(() =>
+      validateRetryPolicy({ ...DEFAULT_RETRY_POLICY, maxDelayMs: 10 }),
+    ).toThrow(/maxDelayMs/)
+    expect(() =>
+      validateRetryPolicy({ ...DEFAULT_RETRY_POLICY, maxAttempts: 0 }),
+    ).toThrow(/maxAttempts/)
   })
 
   test('flat valid policy passes; every producible delay is finite', () => {
-    const policy = resolveRetryPolicy({ maxAttempts: 4, baseDelayMs: 100, maxDelayMs: 900, retryableClasses: ['transient'] })
+    const policy = resolveRetryPolicy({
+      maxAttempts: 4,
+      baseDelayMs: 100,
+      maxDelayMs: 900,
+      retryableClasses: ['transient'],
+    })
     for (let attempt = 1; attempt <= 10; attempt++) {
       const delay = retryDelayMs(attempt, policy)
       expect(Number.isFinite(delay)).toBe(true)
@@ -158,7 +181,8 @@ describe('classified stream-retry boundary (FID-2026-1005-006)', () => {
       runWithClassifiedRetry({
         policy: DEFAULT_RETRY_POLICY,
         sleep,
-        create: () => (calls++ === 0 ? failingStream({ status: 503 }) : okStream('done')),
+        create: () =>
+          calls++ === 0 ? failingStream({ status: 503 }) : okStream('done'),
       }),
     )
     expect(result).toBe('done')
@@ -184,15 +208,17 @@ describe('classified stream-retry boundary (FID-2026-1005-006)', () => {
 
   test('a synchronous stream-construction failure is classified too', async () => {
     let calls = 0
-    const result = await drain(runWithClassifiedRetry({
-      policy: DEFAULT_RETRY_POLICY,
-      sleep,
-      create: () => {
-        calls++
-        if (calls === 1) throw { status: 503 }
-        return okStream('constructed')
-      },
-    }))
+    const result = await drain(
+      runWithClassifiedRetry({
+        policy: DEFAULT_RETRY_POLICY,
+        sleep,
+        create: () => {
+          calls++
+          if (calls === 1) throw { status: 503 }
+          return okStream('constructed')
+        },
+      }),
+    )
     expect(result).toBe('constructed')
     expect(calls).toBe(2)
   })
@@ -208,16 +234,23 @@ describe('classified stream-retry boundary (FID-2026-1005-006)', () => {
         return failingStream({ status: 503 }, ['partial-answer'])
       },
     })
-    await expect((async () => {
-      for await (const chunk of gen) chunks.push(chunk)
-    })()).rejects.toBeInstanceOf(ClassifiedProviderError)
+    await expect(
+      (async () => {
+        for await (const chunk of gen) chunks.push(chunk)
+      })(),
+    ).rejects.toBeInstanceOf(ClassifiedProviderError)
     expect(chunks).toEqual(['partial-answer'])
     expect(calls).toBe(1)
   })
 
   test('429 is retried at most once even with a larger policy', async () => {
     let calls = 0
-    const wide = validateRetryPolicy({ maxAttempts: 5, baseDelayMs: 1, maxDelayMs: 2, retryableClasses: ['transient'] })
+    const wide = validateRetryPolicy({
+      maxAttempts: 5,
+      baseDelayMs: 1,
+      maxDelayMs: 2,
+      retryableClasses: ['transient'],
+    })
     await expect(
       drain(
         runWithClassifiedRetry({
@@ -233,26 +266,13 @@ describe('classified stream-retry boundary (FID-2026-1005-006)', () => {
     expect(calls).toBe(2) // initial + one retry, then surfaced
   })
 
-  test('the breaker gates attempts and receives outcomes', async () => {
-    const { breaker } = makeBreaker()
-    for (let i = 0; i < 3; i++) breaker.recordOutcome(TRANSIENT)
-    await expect(
-      drain(
-        runWithClassifiedRetry({
-          policy: DEFAULT_RETRY_POLICY,
-          breaker,
-          sleep,
-          create: () => okStream('never'),
-        }),
-      ),
-    ).rejects.toBeInstanceOf(ProviderBoundaryBlockedError)
-    breaker.recordSuccess() // probe path: a success closes the circuit
-    expect(await drain(runWithClassifiedRetry({ policy: DEFAULT_RETRY_POLICY, breaker, sleep, create: () => okStream('ok') }))).toBe('ok')
-  })
-
   test('unknown shapes are logged once per distinct shape', async () => {
     const logged: string[] = []
-    for (const error of [new Error('odd-a'), new Error('odd-b'), { detail: 'odd-c' }]) {
+    for (const error of [
+      new Error('odd-a'),
+      new Error('odd-b'),
+      { detail: 'odd-c' },
+    ]) {
       await expect(
         drain(
           runWithClassifiedRetry({

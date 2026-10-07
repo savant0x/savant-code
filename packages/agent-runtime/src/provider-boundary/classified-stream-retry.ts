@@ -11,13 +11,14 @@
  *   risk).
  * - 429 (rate-limit) is retried at most ONCE per logical turn (measured
  *   dsh rule), regardless of policy.maxAttempts.
- * - The breaker gates every attempt and receives every classified outcome.
+ * - User-initiated turns always reach the provider. An open breaker suppresses
+ *   only an optional automatic retry; it never rejects the first attempt.
+ *   The breaker still receives every classified outcome.
  * - Unknown shapes are logged once per distinct shape (bounded).
  */
 
 import {
   ClassifiedProviderError,
-  ProviderBoundaryBlockedError,
   classifyFailure,
   logUnknownShapeOnce,
 } from './failure-class'
@@ -71,10 +72,6 @@ export async function* runWithClassifiedRetry<C, R>(
   let attempt = 0
   for (;;) {
     attempt++
-    const gate = params.breaker?.checkCooldown()
-    if (gate && !gate.allowed) {
-      throw new ProviderBoundaryBlockedError(gate.reason ?? 'breaker open')
-    }
     let emitted = false
     try {
       const stream = params.create()
@@ -100,7 +97,8 @@ export async function* runWithClassifiedRetry<C, R>(
         verdict.retryable &&
         params.policy.retryableClasses.includes(verdict.class) &&
         attempt < params.policy.maxAttempts &&
-        rateLimitOnce
+        rateLimitOnce &&
+        params.breaker?.getState() !== 'open'
       if (!mayRetry) {
         throw new ClassifiedProviderError(verdict, error)
       }
