@@ -3,10 +3,10 @@
 **Filename:** `FID-2026-1007-005-chatanywhere-model-list-design.md`
 **ID:** FID-2026-1007-005
 **Severity:** medium
-**Status:** converged
+**Status:** fixed
 **Created:** 2026-10-07 15:55
 **Automation level:** 3
-**YAGNI-Compliance:** Pending
+**YAGNI-Compliance:** Verified
 
 ---
 
@@ -29,6 +29,15 @@ that `FREE_KEY_PROVIDERS` hoists a whole provider roster out of its provider gro
 even a correct wiring would render chatanywhere's 27 rows inside `⭐ FREE KEY` while
 every other provider keeps a `PROVIDER` group — measured with the shipped
 `buildGroupedItems`, not inferred.
+
+**Status: fixed and gated (2026-10-07, commit `edc761a8`).** All six steps are
+implemented. The provider has a builder off the checked-in map and is in the merge list;
+the `⭐ FREE KEY` section hoists free-TOKEN entries only and never relocates a roster out
+of its own provider group; the key lane renders only for a free-key provider that actually
+contributed rows; and the class is closed mechanically — `catalogPairingIssues` fails when
+a provider declaring `catalog.modelsRef` contributes zero picker rows, or when an audited
+exception starts contributing. Measured live through the shipped `fetchGatewayModels`:
+the census now reports `chatanywhere: 27`, and `provider-parity-check` PASSES.
 
 ## Environment
 
@@ -150,6 +159,45 @@ predicate matches other providers' `:free` ids, e.g.
 `infron/qwen/qwen3.8-27b:free` (`static-catalogs.ts:84-85`,
 `static-catalogs-gateways.ts:26-75`), so `free.length > 0` holds without chatanywhere.
 
+**(e) The same measurement after the fix, through the SHIPPED production function**
+(`bun scripts/provider-catalog-parity.ts --check`, which calls
+`fetchGatewayModels(true)` against the live endpoints):
+
+```text
+$ bun scripts/provider-catalog-parity.ts --check
+Parity census 2026-10-07T20:28:07.295Z — 2220 rows:
+  atria: 1          bai: 59         bazaarlink: 12   chatanywhere: 27
+  cleanapis: 33     codecraft: 33  commandcode: 33  hcnsec: 7
+  infron: 9         intern: 10      kiosapi: 2      nous: 2 …
+Registry/catalog pairing: every modelsRef provider contributes rows.
+exit 0
+```
+
+**(f) The class check is two-directional, and its offline legs were run RED first.** The
+live probe above needs the keyed endpoints to say anything, so the property itself is
+pinned offline in `scripts/__tests__/provider-catalog-parity.test.ts` (8 pass / 0 fail):
+a `modelsRef` provider with zero rows is reported, an audited exception that starts
+contributing is reported, and a census where every non-exception provider contributes is
+silent. Before step 5 the module exported no such helper, so the pin could not exist at
+all — the RED here is an absence, which is why the live probe is quoted above as the
+end-to-end proof.
+
+**(g) The section rule, after the fix** (`buildGroupedItems`, shipped):
+
+```text
+input: chatanywhere/gpt-5.6-sol + openai/kept + tokenharbor/free-mini
+HEADER  ⭐ FREE KEY [null]          ← section: the lane for a present free-key provider
+KEY     CHATANYWHERE_API_KEY ready=true
+MODEL   tokenharbor/free-mini      ← hoisted: its OWN id carries the free token
+HEADER  OPENROUTER [openrouter]
+MODEL   openai/kept
+HEADER  CHATANYWHERE [chatanywhere] ← the roster keeps its own group, starred in place
+MODEL   chatanywhere/gpt-5.6-sol
+
+input: tokenharbor/free-mini only  →  zero `type: 'key'` rows (pre-fix: one, for a
+                                       provider with no rows in the list at all)
+```
+
 ## Impact Assessment
 
 ### Affected Components
@@ -193,30 +241,44 @@ audit that keeps that map honest — exactly how `intern` is built and pinned.
 
 ### Steps
 
-1. Add the CLI catalog builder for `chatanywhere` beside `fetchInternModels` /
-   `fetchAtriaModels` in `cli/src/utils/openrouter-models/static-catalogs-gateways.ts`,
-   deriving ids and names from `chatanywhereModels` with `id_transform: 'strip'`
-   semantics (the internal `chatanywhere/` prefix is the routing prefix, never the wire
-   id). No second store and no second catalog: the map already exists.
-2. Wire it into `fetchGatewayModels` — the merge list, the `resolveGatewayLiveCatalogs`
-   positional contract where static catalogs are joined, and
-   `__resetOpenRouterModelsCacheForTest` (module-scope state, FID-2026-1007-002 class).
-3. Change the hoisting rule in `buildGroupedItems`: keep the per-row ⭐ from
-   `freeBadgeFor` for every free-related entry, but stop relocating a whole **provider**
-   roster — a provider that has a group keeps its group, and the synthetic section
-   collects the free-key slots plus the free-named entries that belong to no group. The
-   operator's rule is about the marker, not the placement.
-4. Make a free-key lane honest: emit the key row only where the section can say what it
-   is for, and never for a provider that contributed no rows (or state that the provider
-   is unreachable, which is the honest version of the same row).
-5. Close the class in `scripts/provider-catalog-parity.ts` — it already measures
-   per-provider row counts through the production function, so extend it with the
-   assertion: every active provider whose registry entry declares `catalog.modelsRef`
-   must contribute rows (or carry a stated, checked reason), which is the condition that
-   was false here and true for nothing else.
-6. Keep the documented surfaces registry-derived: the provider tables, the model counts
-   and the `chatanywhere.catalog.model-count` fact are already generated, so re-run the
-   generators rather than editing prose.
+1. **DONE (2026-10-07, commit `edc761a8`) — at a different seam than planned, and the
+deviation is stated rather than hidden.** The builder exists as
+`cli/src/utils/openrouter-models/chatanywhere.ts` rather than as an entry appended to
+`static-catalogs-gateways.ts`. The plan's site was chosen for proximity to
+`fetchInternModels`/`fetchAtriaModels`; the implemented module is prose-documented
+(vendor prefix, the no-window-fields finding, why the display name is the vendor's bare
+id) and keeps that provenance in one auditable place, which is the same reasoning that
+gave every live provider its own module. `id_transform: 'strip'` semantics are preserved:
+the internal `chatanywhere/` prefix is added once for routing and
+`name` is the bare upstream id. No second store and no second catalog — the rows come from
+`chatanywhereModels`.
+2. **DONE (2026-10-07).** Wired into the merge list (which now lives in
+   `gateway-catalog-merge.ts`) immediately after `intern`, before the custom catalogs, and
+   re-exported from `cli/src/utils/openrouter-models.ts`. **One planned item is
+   deliberately absent:** there is nothing to add to `__resetOpenRouterModelsCacheForTest`.
+   The builder is synchronous and derives from a compile-time map, so it holds no
+   module-scope state — the FID-2026-1007-002 audit requirement applies to caches, and
+   this has none. `bun scripts/module-state-check.ts` confirms no new binding appears.
+3. **DONE (2026-10-07).** `buildGroupedItems` hoists on `hasFreeToken` (the entry's own
+   name or id) and never on `isFreeKeyProvider`, so a free-key provider's row stays in its
+   own group and is starred there by `freeBadgeFor`. `isFreeTierEntry` is unchanged, which
+   is what keeps the ⭐ the operator asked for on every row of the provider.
+4. **DONE (2026-10-07).** `freeKeyItems(presentProviders)` emits a lane only for a
+   free-key provider that contributed rows to this list, and the section is emitted when
+   `hoisted.length > 0 || presentProviders.size > 0` — so the section and its lane can no
+   longer disagree with their own contents.
+5. **DONE (2026-10-07).** `catalogPairingIssues` in `scripts/provider-catalog-parity.ts`
+   asserts the pairing in BOTH directions: a `modelsRef` provider contributing zero rows
+   is an issue, and an audited exception that starts contributing rows is also an issue
+   (so a stale excuse cannot hide a provider that has since been wired). One exception is
+   recorded with its reason: `cloudflare`, which is SDK-routed and has no CLI builder.
+   `providers:parity --check` now exits non-zero on either kind. The offline pin is in
+   `scripts/__tests__/provider-catalog-parity.test.ts` (4 new cases), because the live
+   probe needs the keyed endpoints to say anything at all.
+6. **DONE (2026-10-07) — and nothing needed regenerating.** The fix feeds the same
+   `chatanywhereModels` map the count was derived from, so
+   `chatanywhere.catalog.model-count = 27` stays true and
+   `bun scripts/provider-docs-counts-drift.ts` is green. No prose was hand-edited.
 
 ### Verification
 
@@ -247,8 +309,21 @@ audit that keeps that map honest — exactly how `intern` is built and pinned.
 - gate: test cli/src/utils/openrouter-models/__tests__/window-truth-chatanywhere.test.ts
 - gate: test cli/src/components/__tests__/model-picker-free-section.test.ts
 - gate: test common/src/providers/__tests__/provider-registry.test.ts
-- gate: probe scripts/provider-catalog-parity.ts
+- gate: probe scripts/provider-parity-check.ts
 - gate: quality
+
+### Verification Receipt
+
+- fingerprint: sha256:946d7f3fd948a82147a2d025783de5dcee75222a022016d19da00722142b5e77
+- verified: 2026-10-07T20:36:42.660Z
+- typecheck cli: exit 0
+- typecheck common: exit 0
+- test cli/src/utils/__tests__/openrouter-models-gateway-providers.test.ts: exit 0
+- test cli/src/utils/openrouter-models/__tests__/window-truth-chatanywhere.test.ts: exit 0
+- test cli/src/components/__tests__/model-picker-free-section.test.ts: exit 0
+- test common/src/providers/__tests__/provider-registry.test.ts: exit 0
+- probe scripts/provider-parity-check.ts: exit 0
+- quality: exit 0
 
 ## Perfection Loop
 
@@ -309,15 +384,34 @@ audit that keeps that map honest — exactly how `intern` is built and pinned.
 
 ### Implementation Evidence (REQUIRED for `closed`)
 
-> NOT STARTED. This record converges the plan; no production edit has been made for it.
+> COMPLETE. All six steps are implemented and gated; `edc761a8` is the implementation
+> commit and its parent is the pre-fix tree.
 
-- [ ] **Commit SHA:** —
-- [ ] **File:line ranges:** —
-- [ ] **Gate output:** —
-- [ ] **Reproducibility:** the measurement is reproducible today with
-      `bun run dev/scratchpad/active/probe-model-list-chatanywhere.ts` (gitignored) and
-      the greps in `### Evidence`
-- [ ] **Step statuses:** steps 1-6 planned; none started
+- [x] **Commit SHA:** `edc761a8`
+- [x] **File:line ranges:** `cli/src/utils/openrouter-models/chatanywhere.ts` (the builder
+      and its provenance note), `cli/src/utils/openrouter-models/gateway-catalog-merge.ts`
+      (the merge row), `cli/src/utils/openrouter-models.ts` (the re-export),
+      `cli/src/utils/free-badge.ts` (`hasFreeToken`, `isFreeKeyProvider`, and the doc that
+      separates the marker rule from the hoisting rule),
+      `cli/src/components/model-picker-grouping.ts` (`freeKeyItems(presentProviders)`, the
+      hoisting rule, the section condition),
+      `cli/src/components/__tests__/model-picker-free-section.test.ts` (the rewritten
+      hoisting pin plus three new pins),
+      `cli/src/utils/__tests__/openrouter-models-gateway-providers.test.ts` (the
+      ChatAnywhere rows, pinned from the production entry point),
+      `scripts/provider-catalog-parity.ts` (`catalogPairingIssues`,
+      `CATALOG_PAIRING_EXCEPTIONS`, the `--check` exit code),
+      `scripts/__tests__/provider-catalog-parity.test.ts` (four offline cases)
+- [x] **Gate output:** all eight declared gates exit 0 at the stamped receipt
+- [x] **Reproducibility:** the RED is reproducible with
+      `bun run dev/scratchpad/active/probe-model-list-chatanywhere.ts` (gitignored; drives
+      the shipped `fetchGatewayModels` and `buildGroupedItems`) and reverting
+      `gateway-catalog-merge.ts` removes the provider again; the GREEN is the same probe's
+      post-fix reading plus `bun scripts/provider-catalog-parity.ts --check`, which
+      reports `chatanywhere: 27`
+- [x] **Step statuses:** steps 1-6 `implemented`/verified (`edc761a8`); step 1 landed at a
+      different seam than planned and step 2's reset item is deliberately absent, both
+      stated in `### Steps`
 
 ### Code Verification Evidence
 
@@ -335,16 +429,50 @@ audit that keeps that map honest — exactly how `intern` is built and pinned.
       evidence for this record: `fetchGatewayModels` ← `model-provider-commands.ts:66`
       (`/model`) and `cli/src/index.tsx:188` (boot prefetch), and neither reaches any
       chatanywhere parser because none exists
-- [x] FID status reflects the actual implementation state (`converged`: the plan is
-      complete and measured, no code has been written)
+- [x] FID status reflects the actual implementation state (`fixed`: all six steps are in
+      the codebase and gated)
+- [x] The production call graph is evidenced for the new wiring, not merely typechecked:
+      `fetchGatewayModels` ← `model-provider-commands.ts:66` (`/model`) and
+      `index.tsx:188` (boot prefetch), and the census above is the per-provider count that
+      the same function now produces — the exact measurement whose absence was the defect
 
 ## Resolution
 
-- **Closed Date:** —
-- **Fix Description:** —
-- **Tests Added:** —
-- **Verification Evidence:** —
-- **Archived:** —
+- **Closed Date:** 2026-10-07 16:33
+- **Fix Description:** Both halves of the operator's report are cured
+  (`edc761a8`). **The provider reaches the picker:**
+  `cli/src/utils/openrouter-models/chatanywhere.ts` derives the 27 rows from the
+  checked-in `chatanywhereModels` map (the gateway publishes no window fields on its keyed
+  `/v1/models`, so the map is the source of truth and the live endpoint stays the audit),
+  and `gateway-catalog-merge.ts` merges them before the custom catalogs. Measured live
+  through the shipped function: `chatanywhere: 27`. **The section is honest:** the
+  `⭐ FREE KEY` section hoists entries whose OWN name or id carries the free token
+  (`hasFreeToken`) instead of every free-RELATED row, so a free-key provider's roster
+  stays in its own `CHATANYWHERE` group and keeps the per-row ⭐ from `freeBadgeFor`; and
+  the key lane renders only for a free-key provider that contributed rows, so the lane can
+  no longer ask for `CHATANYWHERE_API_KEY` inside a list containing no chatanywhere model.
+  **The class is closed:** `catalogPairingIssues` fails when a provider declaring
+  `catalog.modelsRef` contributes zero picker rows, or when an audited exception
+  (`cloudflare`, SDK-routed) starts contributing, and `providers:parity --check` exits
+  non-zero on either.
+- **Tests Added:** Yes — the census pin in
+  `cli/src/utils/__tests__/openrouter-models-gateway-providers.test.ts` (the provider's
+  rows plus the builder's 27-row contract and one full row shape, driven through
+  `fetchGatewayModels(true)`), three new pins in
+  `cli/src/components/__tests__/model-picker-free-section.test.ts` (a free-key row is
+  starred inside its own group and never relocated; no key lane for a provider with no
+  rows; the lane appears only when its provider contributed), one rewritten pin in the
+  same file (the old hoisting expectation described the defect), and four offline cases in
+  `scripts/__tests__/provider-catalog-parity.test.ts` for the pairing rule in both
+  directions.
+- **Verification Evidence:** RED is measured before any edit — the shipped
+  `fetchGatewayModels(true)` returned 166 rows from 21 providers and `[]` for chatanywhere,
+  and a synthetic chatanywhere row landed in `⭐ FREE KEY` under a key lane for a provider
+  whose rows did not exist. GREEN: the census reports `chatanywhere: 27` through the same
+  function, `providers:parity --check` exits 0 with "every modelsRef provider contributes
+  rows", the cli suite is `3969 pass / 18 skip / 0 fail` across 482 files, and all eight
+  declared gates exit 0 at the stamped receipt.
+- **Archived:** 2026-10-07 16:33 (moved to `dev/fids/archive/`)
 
 ## Lessons Learned
 
@@ -359,3 +487,42 @@ audit that keeps that map honest — exactly how `intern` is built and pinned.
 3. A derived-pairing check is worth more than the pairing itself: `modelsRef` is
    type-checked into the catalog registry and nothing checked it out to the picker,
    which is why this survived a closed record with green gates.
+4. **A marker rule and a placement rule are different rules, and one function can hide
+   that they were conflated.** `isFreeTierEntry` was correct for what the operator asked
+   (which rows get a ⭐) and wrong for what the picker used it for (which rows leave their
+   provider group). Splitting the predicate made the difference visible; until then the
+   only symptom was "this provider does not look like the others".
+5. **A green gate proves the property it asserts, not the property you meant.** The
+   census could already count rows per provider; what it could not do was care whether a
+   provider was missing. The count was right and the conclusion was absent, which is why
+   the fix is a two-directional assertion rather than a threshold.
+
+### Loop 2 — fixed (2026-10-07)
+
+- **RED:** measured through the SHIPPED functions before any edit — 166 rows from 21
+  providers, `[]` for chatanywhere, and the synthetic-row layout that put a correct
+  wiring's roster under `⭐ FREE KEY`. The RED also included the class's absence: nothing
+  in the tree could fail on a `modelsRef` provider with no picker rows.
+- **GREEN:** the builder, the merge row, the narrowed hoisting rule, the present-provider
+  key lane, and the two-directional pairing assertion.
+- **AUDIT:** the claim that the failure was invisible to every gate is checked rather than
+  asserted — the pairing helper did not exist, `provider-docs-counts-drift` was green
+  because the count is derived from the same map, and the picker's own suite pinned the
+  hoisting behaviour as CORRECT. The one test that had to change is named in the
+  Resolution: the old expectation in `model-picker-free-section.test.ts` was a pin on the
+  defect, and it was rewritten to the contract rather than deleted. The audit also
+  separated "the new thing works" from "nothing else moved": cli suite
+  `3969 pass / 18 skip / 0 fail`, `typecheck cli` and `typecheck common` exit 0,
+  `quality:report` PASS after the 300-line splits, eslint `--max-warnings 0` exit 0,
+  prettier clean, and `module-state-check` PASS with no new module-scope binding (the
+  builder is synchronous and stateless).
+- **ADVERSARIAL:** the strongest objection is that this reverses a decision the operator
+  asked for — the free-key lane. It does not: the request was for the MARKER ("if it has
+  free in the name or is from this provider, add the star"), the star still lands on every
+  row of the provider, and the only thing removed is the relocation the request never
+  mentioned. The second objection is that the pairing exception for cloudflare is a
+  loophole; it is a stated, audited, two-directional one — an entry that starts
+  contributing rows fails the check, so it cannot be used to hide a wired provider.
+- **CHANGE DELTA:** the status line, the Summary's status paragraph, all six step statuses,
+  Evidence (e)-(g), the Implementation Evidence, the Code Verification Evidence, the
+  Resolution, two new lessons and this loop.
