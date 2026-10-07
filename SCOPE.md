@@ -62,7 +62,7 @@
 
 ## Open items
 
-**Eight** items are open — three blocked pending operator input (T119,
+**Nine** items are open — three blocked pending operator input (T119,
 T62-followups, T122), one shelved on an operator ruling (T147), and four
 implementation records: T155 (the prompt-cache optimization program,
 `FID-2026-1006-005`, `fixed` with a stamped receipt; steps 8, 10 and 11 stay
@@ -795,6 +795,33 @@ T90-F3 was resolved by the operator ruling "T90-F3 residual needs no code"
       `bun run scripts/scripts-typecheck-check.ts` exit 0, `validate:repository`
       clean.
 
+- [ ] **T159. Every discarded payload needs a durable record and a locator it can
+      prove (`FID-2026-1007-004`).** **Automation level: 3.** Registered 2026-10-07
+      on the operator's directive, verbatim: "i want this fixed with echo compliance
+      AND fully working properly without data loss". Savant discards model-facing
+      payloads in five places, and in four of them it tells the model the bytes are
+      available somewhere it cannot reach: `simplifyReadFileResults` and
+      `simplifyTerminalCommandResults` drop the payload with no locator at all
+      (`contentOmittedForLength`, `stdoutOmittedForLength`);
+      `truncateToolOutputValue` names a fixed placeholder string in `fullOutput`
+      (`simplify-tool-results.ts:119`) whose named feature is disabled by default;
+      and the trim pass deletes **whole messages**, collapsing each run of
+      deletions into one `Previous message(s) omitted due to length` placeholder
+      with **no inventory row and no list of what it took** — the only destructive
+      path with no ledger entry, found by enumerating the paths rather than by
+      taking the report. The store that could answer all of it exists —
+      `.savant/evidence/<runId>.jsonl`, written at the tool-result boundary — but it
+      is unreachable from every marker (the identity lives on the message, the
+      transforms receive only the value), readable only by `requiresRawEvidence`
+      roles (Verifier and Adversary), spliceable only over a `[compacted]` sentinel
+      the trim pass never writes, silently ceilinged (512 KiB/record, 8 MiB/file) at
+      a `void` call site that discards the verdict, and unredacted. The record is
+      `converged`: the Perfection Loop ran and the RED measurement is reproducible
+      (`dev/scratchpad/active/step3-truncation-audit.ts`, five shapes across five
+      paths), but **no code is written** — implementation waits on the operator's
+      go-ahead per Law 2. **Blocker:** none; this item is ready to implement on
+      approval.
+
 - [ ] **T122. Savant-free feature disposition (operator-owned).** Operator
       ruling 2026-10-03, verbatim: "i think it might be smarter to leave
       savant-free alone, just fix the problems you found and i'll address it
@@ -933,3 +960,13 @@ operator-directed session. **Automation level: 1** (no agent action;
   `scripts/gate-declarability-registry.ts`,
   `scripts/audit-test-budget-injection.ts`, `scripts/test-budget-*.ts`,
   `scripts/__tests__/**`
+- T159: `dev/fids/**`, `dev/session-summaries/2026-10-07-*.md`, `SCOPE.md`,
+  `CHANGELOG.md`, `dev/LEARNINGS.md`,
+  `packages/agent-runtime/src/evidence/**`,
+  `packages/agent-runtime/src/util/simplify-tool-results.ts`,
+  `packages/agent-runtime/src/util/messages/**`,
+  `packages/agent-runtime/src/tools/tool-executor/**`,
+  `packages/agent-runtime/src/context-compactor/**`,
+  `packages/agent-runtime/src/run-agent-step/**`,
+  `common/src/util/messages/**`, `common/src/types/**`,
+  `packages/agent-runtime/src/__tests__/**`
