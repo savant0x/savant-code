@@ -4,28 +4,21 @@ import {
   type FinetunedVertexModel,
 } from '@savant-code/common/old-constants'
 import { captureModelRoute } from '@savant-code/common/providers/model-route'
-import {
-  isAbortError,
-  unwrapPromptResult,
-} from '@savant-code/common/util/error'
+import { isAbortError } from '@savant-code/common/util/error'
 import { systemMessage, userMessage } from '@savant-code/common/util/messages'
 import { uniq } from 'lodash'
 
 import { promptFlashWithFallbacks } from '../llm-api/gemini-with-fallbacks'
-import {
-  castAssistantMessage,
-  messagesWithSystem,
-  getMessagesSubset,
-} from '../util/messages'
+import { castAssistantMessage, getMessagesSubset } from '../util/messages'
 import {
   generateKeyRequestFilesPrompt,
   generateNonObviousRequestFilesPrompt,
 } from './request-files-prompt/prompts'
 import { validateFilePaths } from './request-files-prompt/validate'
+import { getRelevantFilesForTraining } from './request-files-training'
 
 import type { InventoryContext } from '../evidence/inventory'
 import type { TextBlock } from '../llm-api/claude'
-import type { PromptAiSdkFn } from '@savant-code/common/types/contracts/llm'
 import type { Logger } from '@savant-code/common/types/contracts/logger'
 import type { ParamsExcluding } from '@savant-code/common/types/function-params'
 import type { Message } from '@savant-code/common/types/messages/savant-code-message'
@@ -237,66 +230,5 @@ async function getRelevantFiles(
   return { files, duration, requestType, response }
 }
 
-/**
- * Gets relevant files for training using Claude Sonnet.
- *
- * @throws {Error} When the request is aborted by user. Check with `isAbortError()`.
- */
-async function getRelevantFilesForTraining(
-  params: {
-    messages: Message[]
-    system: string | Array<TextBlock>
-    userPrompt: string
-    requestType: string
-    agentStepId: string
-    clientSessionId: string
-    fingerprintId: string
-    userInputId: string
-    userId: string | undefined
-    repoId: string | undefined
-    promptAiSdk: PromptAiSdkFn
-    logger: Logger
-    evidenceContext?: InventoryContext
-  } & ParamsExcluding<PromptAiSdkFn, 'messages' | 'model' | 'chargeUser'>,
-) {
-  const {
-    messages,
-    system,
-    userPrompt,
-    requestType,
-    agentStepId: _agentStepId,
-    clientSessionId: _clientSessionId,
-    fingerprintId: _fingerprintId,
-    userInputId: _userInputId,
-    userId: _userId,
-    repoId: _repoId,
-    promptAiSdk,
-    logger,
-    evidenceContext,
-  } = params
-  const bufferTokens = 100_000
-  const messagesWithPrompt = getMessagesSubset({
-    messages: [...messages, userMessage(userPrompt)],
-    otherTokens: bufferTokens,
-    logger,
-    inventory: evidenceContext,
-  })
-  const start = performance.now()
-  const response = unwrapPromptResult(
-    await promptAiSdk({
-      ...params,
-      messages: messagesWithSystem({ messages: messagesWithPrompt, system }),
-      model: models.openrouter_claude_sonnet_4,
-      modelRoute: captureModelRoute('openrouter'),
-      contextWindow: undefined,
-      maxOutputTokens: undefined,
-      chargeUser: false,
-    }),
-  )
-  const end = performance.now()
-  const duration = end - start
-
-  const files = validateFilePaths(response.split('\n'))
-
-  return { files, duration, requestType, response }
-}
+// The training-only picker lives in `./request-files-training` (300-line ceiling
+// split); `requestRelevantFilesForTraining` below is its only caller.

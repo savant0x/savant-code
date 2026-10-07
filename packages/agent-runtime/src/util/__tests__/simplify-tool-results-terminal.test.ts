@@ -197,29 +197,27 @@ describe('simplifyTerminalCommandResults', () => {
     expect(result).toBe(input)
   })
 
-  it('returns a payload it cannot process untouched instead of a lossy fallback', () => {
-    // This used to substitute `{ command: '', stdoutOmittedForLength: true }`,
-    // deleting the command outright — itself a silent loss.
+  it('returns a payload it cannot process untouched, instead of a lossy fallback', () => {
+    // A shape the output schema cannot produce. This used to substitute
+    // `{ command: '', stdoutOmittedForLength: true }`, deleting the command
+    // outright — itself a silent loss.
     const input = [
       { type: 'json', value: 'raw string output' },
     ] as unknown as SavantCodeToolOutput<'run_terminal_command'>
+    expect(
+      simplifyTerminalCommandResults({
+        messageContent: input,
+        logger,
+        toolCallId: HANDLE_ID,
+      }),
+    ).toBe(input)
 
-    const result = simplifyTerminalCommandResults({
-      messageContent: input,
-      logger,
-      toolCallId: HANDLE_ID,
-    })
-
-    expect(result).toBe(input)
-  })
-
-  it('never throws on a malformed call', () => {
-    const malformedInput = {
+    // ...and a malformed CALL is refused rather than thrown on.
+    const malformed = {
       invalidStructure: true,
       logger,
     } as unknown as Parameters<typeof simplifyTerminalCommandResults>[0]
-
-    expect(() => simplifyTerminalCommandResults(malformedInput)).not.toThrow()
+    expect(() => simplifyTerminalCommandResults(malformed)).not.toThrow()
   })
 
   it('should not mutate the original input', () => {

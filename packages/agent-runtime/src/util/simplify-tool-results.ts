@@ -1,9 +1,9 @@
 import { getErrorObject } from '@savant-code/common/util/error'
 import { cloneDeep } from 'lodash'
 
-import { lookupRetention } from '../evidence/retention-registry'
+import { buildOmissionMarker, retentionProof } from './omission-marker'
 
-import type { RetentionRefusal } from '../evidence/spill'
+import type { OmissionMarker } from './omission-marker'
 import type { SavantCodeToolOutput } from '@savant-code/common/tools/list'
 import type { Logger } from '@savant-code/common/types/contracts/logger'
 import type { JSONValue } from '@savant-code/common/types/json'
@@ -24,23 +24,20 @@ import type { ToolResultOutput } from '@savant-code/common/types/messages/conten
 // Every destructive branch in this module used to tell the model that the bytes
 // were available somewhere it could not reach: `truncateToolOutputValue` named a
 // cache-debug snapshot that is disabled by default, and the other three branches
-// named nothing at all. One marker shape replaces all of it, and one rule
-// governs it:
-//
-//   A transform may discard model-facing bytes ONLY on the strength of a
-//   retention handle the tool-result boundary proved it wrote.
-//
-// The handle arrives through `evidence/retention-registry.ts` (the boundary is
-// async and runs first; these transforms are sync and run later, in the same
-// process). No handle ⇒ the payload is returned untouched, because a refusal is
-// not a loss: a bigger prompt is a cost, a silently dropped finding is a defect.
+// named nothing at all. One marker shape replaces all of it
+// (`./omission-marker`), and one rule governs it: a transform may discard
+// model-facing bytes ONLY on the strength of a retention handle the tool-result
+// boundary proved it wrote. The handle arrives through
+// `evidence/retention-registry.ts` (the boundary is async and runs first; these
+// transforms are sync and run later, in the same process). No handle ⇒ the
+// payload is returned UNTOUCHED, because a refusal is not a loss.
 //
 // `fullOutput` is deleted. It was a fixed string naming two possibilities,
 // neither of them a location, and no consumer read it (measured repo-wide).
 //
 // One deliberate asymmetry: the OBJECT branch attaches its marker without a
 // handle, because it preserves every field — attaching a marker there discards
-// nothing. Every branch that replaces bytes with a marker requires the handle.
+// nothing. Every branch that REPLACES bytes with a marker requires the handle.
 // ===========================================================================
 
 export const TOOL_OUTPUT_LIMITS = {
@@ -72,74 +69,10 @@ export type ToolOutputLimits = {
   previewChars: number
 }
 
-/**
- * Where the bytes that were taken went — a verified handle, or the reason there
- * is none. A reader must never have to guess which of the two it is holding.
- */
-export type OmissionRetention =
-  | {
-      ok: true
-      file: string
-      toolCallId: string
-      sha256: string
-      bytes: number
-      redacted: boolean
-    }
-  | { ok: false; why: RetentionRefusal | 'no-retention-verdict' }
-
-/** The one marker shape every destructive path in this module leaves behind. */
-export type OmissionMarker = {
-  /** Which cap was hit — or that nothing was actually taken. */
-  reason: string
-  originalChars: number
-  keptChars: number
-  omittedChars: number
-  preview: string
-  retained: OmissionRetention
-}
-
-/**
- * The only thing that authorises a drop. Reads the boundary's verdict for this
- * tool call; an absent verdict is `no-retention-verdict`, which is NOT the same
- * as a refusal and is never read as "then drop it".
- */
-export function retentionProof(
-  toolCallId: string | undefined,
-): OmissionRetention {
-  const verdict = lookupRetention(toolCallId)
-  if (!verdict || !verdict.retained) {
-    return { ok: false, why: verdict ? verdict.reason : 'no-retention-verdict' }
-  }
-  return { ok: true, ...verdict.handle }
-}
-
-/**
- * "Nothing was taken" — the honest reason for a marker that accompanies a
- * payload which is still whole. The old marker reported a byte-cap truncation
- * alongside `omittedChars: 0` (measured: a 60,026-char object returned 60,727
- * chars with `reason: 'output exceeded 50000 bytes'`), which is a marker that
- * contradicts itself.
- */
-const NOTHING_OMITTED_REASON =
-  'nothing omitted: the payload keeps all of its own fields'
-
-function buildOmissionMarker(params: {
-  limitReason: string
-  originalChars: number
-  keptChars: number
-  preview: string
-  retained: OmissionRetention
-}): OmissionMarker {
-  const omittedChars = Math.max(0, params.originalChars - params.keptChars)
-  return {
-    reason: omittedChars > 0 ? params.limitReason : NOTHING_OMITTED_REASON,
-    originalChars: params.originalChars,
-    keptChars: params.keptChars,
-    omittedChars,
-    preview: params.preview,
-    retained: params.retained,
-  }
-}
+// The marker's shape and the proof lookup live in `./omission-marker` (ceiling
+// split); re-exported so this module keeps its public surface.
+export { buildOmissionMarker, retentionProof } from './omission-marker'
+export type { OmissionMarker, OmissionRetention } from './omission-marker'
 
 /**
  * Truncates a tool-result JSON value to the deterministic limits. Returns the

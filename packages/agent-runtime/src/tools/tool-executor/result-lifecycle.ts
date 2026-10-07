@@ -1,3 +1,4 @@
+import { captureToolResultEvidence } from './evidence-capture'
 import {
   isRedispatchable,
   markToolOutcomeReady,
@@ -12,8 +13,6 @@ import {
 import { extractFailingPathsFromContent } from './verification-failure-paths'
 import { isWriteToolName, resolveFidIdForWrite } from './write-bookkeeping'
 import { appendGroundingRefresh } from '../../echo/grounding'
-import { rememberRetention } from '../../evidence/retention-registry'
-import { retainOriginal } from '../../evidence/spill'
 import { buildHookInput, getHookEngine } from '../../hooks/engine'
 import { getOrCreateProvenance } from '../../provenance'
 import { setActivity } from '../../util/activity-tracking'
@@ -21,7 +20,6 @@ import { getSuccessfulFileContent } from '../handlers/tool/write-file'
 
 import type { ResultLifecycleDeps } from './result-rejection-lifecycle'
 import type { ToolOutcomeState } from './tool-outcome-state'
-import type { RetentionRefusal } from '../../evidence/spill'
 import type { ToolName } from '@savant-code/common/tools/constants'
 import type { SavantCodeToolOutput } from '@savant-code/common/tools/list'
 import type { JSONValue } from '@savant-code/common/types/json'
@@ -53,22 +51,6 @@ export type { ToolOutcomeState }
 export { runRejectionLifecycle } from './result-rejection-lifecycle'
 export type { ResultLifecycleDeps } from './result-rejection-lifecycle'
 
-/**
- * The refusals that mean a CEILING was hit, as opposed to "this run has no store
- * configured" (`no-project-root` / `no-tool-call-id`, which are structural and
- * would otherwise warn on every tool result of a rootless run).
- *
- * FID-2026-1007-004 step 7: the ceilings used to be swallowed — the boundary
- * called `void recordEvidence(...)` and discarded the boolean, so a full or
- * oversized store was indistinguishable from a working one. A hit ceiling is now
- * reported once per refusal, on the lineage the operator already reads.
- */
-const REPORTABLE_RETENTION_REFUSALS: ReadonlySet<RetentionRefusal> = new Set([
-  'record-too-large',
-  'store-full',
-  'io-error',
-])
-
 export async function runSuccessLifecycle<T extends ToolName>(
   deps: ResultLifecycleDeps<T>,
   output: SavantCodeToolOutput<T>,
@@ -87,30 +69,18 @@ export async function runSuccessLifecycle<T extends ToolName>(
     content: output,
   }
 
-  // FID-2026-0824-026: fail-open evidence capture BEFORE any compaction
-  // layer can clear this result. Never blocks tool execution.
-  //
-  // FID-2026-1007-004 step 2: this is the seam where retention is DECIDED — it
-  // is already async, and it is ordered before every compaction layer. The
-  // verdict is stored so a later, synchronous transform can either prove the
-  // bytes are recoverable or keep the payload. Deliberately not awaited on the
-  // hot path: an unproven lookup is the safe direction, because a transform that
-  // cannot prove retention does not drop. Never blocks tool execution.
-  void retainOriginal({
-    projectRoot: params.fileContext?.projectRoot ?? '',
-    runId: agentState.runId ?? agentState.agentId,
+  // FID-2026-0824-026 / FID-2026-1007-004: this is the seam where retention is
+  // DECIDED — it is already async, and it is ordered before every compaction
+  // layer. `./evidence-capture` owns the capture, the verdict transport and the
+  // ceiling report; the boundary only calls it. Never blocks tool execution.
+  captureToolResultEvidence({
+    logger: params.logger,
+    projectRoot: params.fileContext?.projectRoot,
+    runId: agentState.runId,
     agentId: agentState.agentId,
     toolCallId: toolCall.toolCallId,
     toolName,
-    raw: JSON.stringify(output),
-  }).then((result) => {
-    rememberRetention(toolCall.toolCallId, result)
-    if (!result.retained && REPORTABLE_RETENTION_REFUSALS.has(result.reason)) {
-      params.logger.warn(
-        { toolName, toolCallId: toolCall.toolCallId, reason: result.reason },
-        'Evidence retention refused — the payload stays in context',
-      )
-    }
+    output,
   })
 
   // FID-2026-0718-009: M2 — on tool completion, model reasoning resumes.
