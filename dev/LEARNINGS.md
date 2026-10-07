@@ -1,5 +1,116 @@
 # LEARNINGS
 
+## Lesson: A blocker inherited from an outside document must be traced to its owner
+
+- **Date:** 2026-10-07
+- **Failure:** Two steps of `FID-2026-1006-005` were recorded as blocked on a live
+  provider endpoint and provider billing, and the record stayed open on that basis
+  across several passes and a full gate battery. Tracing the requirement backwards
+  ended at the record's OWN reconciliation of a vendor report's Approval Point 3 — not
+  at the operator, who had never approved paying for anything and said so when asked
+  (verbatim: *"im not paying for anything, i never approved that — so where is that
+  even coming from as a requirement?"*). "We were waiting on a live endpoint" reads
+  exactly like "the operator asked for a paid measurement", and the difference was
+  one look at who raised it. Once the requirement was re-scoped to what is evaluable
+  offline, both steps closed the same day: the tool set turns out to be assembled once
+  per run, so the Anthropic betas have nothing to smooth, and the prefix-stability
+  ratio the shipped instrument computes is 100% on the loop the program targets.
+- **Evidence:** packages/agent-runtime/src/run-agent-step/loop-context.ts → symbol:createLoopContext,
+  packages/agent-runtime/src/run-agent-step/loop-context-drive.ts → symbol:applyDriveDirectives,
+  SCOPE.md → heading:Open items
+- **Invariant:** A blocker is a claim about WHO is holding the work. Trace every
+  blocker to its owner before it is allowed to hold anything — and when the owner is a
+  document the work is adjudicating, the requirement does not exist until the operator
+  raises it. A blocker with no owner is not a blocker; it is unexamined work, and the
+  honest disposition is to make it measurable rather than to wait on it.
+- **Guard:** Before recording any blocker, name the person or artifact holding the
+  work and the sentence that put it there. If the answer is "a document we are
+  adjudicating", the step is not blocked — it is unexamined, and the fix is to reduce
+  it to something the environment can measure. The live leg may stay a stated boundary
+  ("no provider hit ratio is claimed here"), but a boundary is not a blocker and must
+  never hold a record open.
+- **Verification:** `git log -S"not startable in this environment"` finds the old step
+  text; the re-scoped steps' evidence is in the record's Loop 7 and its step 8/step 10
+  text; `bun run dev/scratchpad/active/cache-prefix-ratio-measure.ts` reproduces the
+  step-10 table, and the step-8 absence is a scoped grep returning 0 matches; all
+  eight declared gates exit 0 at the stamped receipt.
+- **Scope:** internal
+- **Owning FID:** FID-2026-1006-005
+- **Status:** active
+
+## Lesson: Opt-in isolation is not isolation, and a reset is not an authority
+
+- **Date:** 2026-10-07
+- **Failure:** The `cli` suite's one red test passed alone and failed in the
+  workspace run, receiving the operator's own cached provider naming for a row its
+  mock never produced. Two readings were available and the first was wrong: the suite
+  does not read the user's config directory (the dir it resolves holds no catalog) — it
+  FETCHES, from a fire-and-forget boot warm that the server test harness raises 36
+  times per run. The per-file isolation that existed was opt-in (only the files that
+  called the harness got a temp config dir), and the module-scope catalog was published
+  by whichever build settled last, including builds whose caller had already finished.
+  Instrumenting the new guard named the file in one run: 82 claims against 37
+  suppressed publishes.
+- **Evidence:** cli/src/utils/openrouter-models/gateway.ts → symbol:fetchGatewayModels,
+  cli/src/server/gateway.ts → symbol:startGateway,
+  cli/src/utils/__tests__/openrouter-models-test-harness.ts → symbol:registerGatewayCatalogLifecycle
+- **Invariant:** Isolation a file must remember to opt into protects the files that
+  remember, so it belongs in the preload every file inherits. And when shared state is
+  written by an un-awaited promise, widening the reset cannot fix it — a reset can only
+  null state it can reach, so the repair is an AUTHORITY rule (only the current build
+  may publish), which is also the only shape that survives a caller that has moved on.
+- **Guard:** Set the environment override in the workspace preload, not in a per-file
+  helper, so a file that forgets is still isolated; and treat any un-awaited shared-state
+  write as an authority question rather than a cleanup question — ask which build may
+  publish, not what state should be cleared. When a suite failure names a value no
+  fixture contains, instrument the writer and run it once: the stack names the file.
+- **Verification:** `cli/src/utils/__tests__/openrouter-models-gateway-cache.test.ts`
+  (2 pins) and `cli/src/utils/__tests__/config-dir-isolation.test.ts` (1 pin) all fail
+  on the pre-fix tree — reverting `gateway.ts` alone restores `3964 pass / 4 fail`, and
+  reverting `test-setup.ts` alone fails the config-dir pin; the full `cli` suite is
+  `3969 pass / 18 skip / 0 fail` across 482 files.
+- **Scope:** internal
+- **Owning FID:** FID-2026-1007-006
+- **Status:** active
+
+## Lesson: A marker rule and a placement rule are different rules
+
+- **Date:** 2026-10-07
+- **Failure:** One predicate, `isFreeTierEntry`, answered two questions that look
+  alike and are not: which rows deserve the ⭐ (the operator's actual request — "if it
+  has free in the name or is from this provider, add the star") and which rows leave
+  their provider group. Because a free-key provider's every row satisfies the marker
+  rule, a correct wiring of ChatAnywhere would still have relocated its whole roster
+  out of its own `CHATANYWHERE` group into the synthetic section — the "doesn't match
+  the rest of the list" half of the operator's report, and invisible to every gate
+  because the count was right and the placement was untested. The same pass found the
+  class behind it: the registry/catalog pairing was derived in ONE direction only, so a
+  provider whose registry entry declared `modelsRef` and which contributed zero picker
+  rows failed nothing.
+- **Evidence:** cli/src/components/model-picker-grouping.ts → symbol:buildGroupedItems,
+  cli/src/utils/free-badge.ts → symbol:isFreeTierEntry,
+  scripts/provider-catalog-parity.ts → symbol:catalogPairingIssues
+- **Invariant:** When one predicate answers two questions, they will eventually be
+  answered the same way and the wrong one will win. Split the marker rule from the
+  presentation rule and let each be pinned separately — and make a derived pairing
+  check BOTH directions, so a stale exception cannot hide a provider that has since
+  been wired.
+- **Guard:** Before reusing a predicate, read it as a sentence about the QUESTION it
+  answers, not the intent it was written with; if one name answers both "is it marked"
+  and "where does it live", split it. And when a registry declares a pairing
+  (`modelsRef` → a catalogue), assert the pairing's REACH, not just its types — a
+  compile-time key check proves the reference resolves and says nothing about whether
+  anything consumes it.
+- **Verification:** `cli/src/components/__tests__/model-picker-free-section.test.ts`
+  (the rewritten hoisting pin plus three new ones), the ChatAnywhere rows in
+  `cli/src/utils/__tests__/openrouter-models-gateway-providers.test.ts`, and four
+  offline pairing cases in `scripts/__tests__/provider-catalog-parity.test.ts`; the
+  live census through the shipped function reads `chatanywhere: 27` and
+  `provider-parity-check` exits 0.
+- **Scope:** internal
+- **Owning FID:** FID-2026-1007-005
+- **Status:** active
+
 ## Lesson: A suite can be passing because of the defect it is named after
 
 - **Date:** 2026-10-07

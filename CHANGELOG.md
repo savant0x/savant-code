@@ -394,6 +394,76 @@
 
 ### Fixed
 
+- **ChatAnywhere reaches the `/model` picker, and the free-key lane stops
+  advertising a provider with nothing behind it (FID-2026-1007-005, medium; closed
+  2026-10-07; local commit `edc761a8`; register item T160).** The operator's report
+  — "the 'chatanywhere' list seems to be designed wrong and not matching the rest of
+  the list too" — described two defects and both were real. The provider was
+  registered, catalogued, window-covered and documented, and the `fetchGatewayModels`
+  fan-out never asked for it: **166 rows from 21 providers and `[]` for
+  chatanywhere**. A synchronous builder now derives the 27 rows from the checked-in
+  `chatanywhereModels` map (the gateway publishes no window fields on its keyed
+  `/v1/models`, which is the same finding that made `intern` static) and is merged
+  before the custom catalogs; the live census through the shipped function reads
+  `chatanywhere: 27`. The second defect was the `⭐ FREE KEY` section: it hoisted every
+  free-RELATED row, and `isFreeTierEntry` covers every row of a free-key provider, so
+  a correct wiring would still have relocated the whole roster out of a
+  `CHATANYWHERE` group — which is what "not matching the rest of the list" meant. The
+  operator's rule was about the marker, not the placement, so `hasFreeToken` is now
+  the hoisting rule, `freeBadgeFor` still stars every free-key row in place, and the
+  key lane renders only for a provider that actually contributed rows (it used to ask
+  for `CHATANYWHERE_API_KEY` in a list containing no chatanywhere model at all). The
+  class is closed two-directionally: `catalogPairingIssues` fails when a provider
+  declaring `catalog.modelsRef` contributes zero picker rows, or when an audited
+  exception starts contributing — with `cloudflare` (SDK-routed, no CLI builder) as
+  the one recorded exception. `providers:parity --check` exits non-zero on either.
+  Gates: cli suite 0 fail, typecheck cli 0, quality PASS, provider-parity-check PASS,
+  receipt 8/8.
+- **A superseded gateway-catalog build can no longer publish, and the CLI suite owns
+  its own config directory (FID-2026-1007-006, medium; closed 2026-10-07; local
+  commits `d396d091`, `8c92d087`; register item T161).** `bun run test` was red at the
+  `cli` leg — 3961 pass / 1 fail — so the `&&` chain stopped there and eleven
+  workspaces were never exercised. The failing assertion received `"OpenAI: GPT-5"`
+  while asserting a mocked `"GPT-5"`, and **tracing it corrected the record's own
+  draft**: no test reads the operator's cache (the suite's config dir resolves to
+  `~/.savant-code-dev`, which holds no catalog), so the suite was doing something
+  worse — fetching live and publishing the result into shared module state. Step 1
+  named the file by instrumenting the new guard for one `bun test src/` run: **82
+  claims against 37 suppressed publishes**, 36 of the claims from
+  `cli/src/server/gateway.ts:114`, the fire-and-forget `void fetchGatewayModels()`
+  boot warm that the server test harness raises 36 times per run. Every publishing
+  path now claims a build token first, so a build whose caller has moved on returns
+  its own catalog while writing neither the cache, nor the listeners, nor the disk —
+  and the in-flight slot is released on settle, which repaired `CATALOG_TTL_MS`, dead
+  code in production until then. Separately, the config-dir override moved out of the
+  opt-in per-file harness and into the workspace preload, so no `cli` test can resolve
+  the user's directory for settings, credentials, `message-history.json`, project data
+  or the gateway disk cache. Three pins, all RED-first; the pre-fix suite was `3964
+  pass / 4 fail` and is `3969 pass / 0 fail`. Receipt 5/5.
+- **The prompt-cache program is reconciled, implemented and closed — one step landed
+  by another record, two re-scoped to offline evidence (FID-2026-1006-005, medium;
+  closed 2026-10-07; local commits `ba4dee65`, `f0d365fa`, `7901568f`, `70cec07c`;
+  register item T155).** An externally sourced 324-line research report was
+  adjudicated against the shipped tree rather than implemented from, and all eleven
+  steps are resolved. Phase 1 makes the model-facing tool payload canonical at its
+  single assembly seam behind `CANONICAL_TOOL_PAYLOAD` and `normalizeForJson` /
+  `stableHash` order-canonical in both twins, so `toolsHash` moves only on a real
+  payload change; the split cache-control seam became one spelling over one provider
+  set behind one clearer; the mode-to-TTL policy routes from the run's own enforcement
+  axis (Hybrid `5m`, FID-bound `1h`); both operator-approved ECHO amendments are law.
+  **Step 11 was not open work** — `FID-2026-1007-004` had already implemented it, so
+  the record was carrying a status drift. **Steps 8 and 10 are re-scoped rather than
+  deferred:** the live-endpoint and provider-billing requirement they were blocked on
+  was never approved by the operator, and had entered through this record's own
+  reconciliation of the vendor report's Approval Point 3. Step 8's evaluation is
+  measured in the tree (the tool set is assembled once per run, its one mid-session
+  mutation happens before the run's first provider call, so the Anthropic
+  `tool_addition`/`tool_removal` betas have nothing to smooth — adoption declined
+  with its reopening condition stated); step 10 measures the prefix-stability ratio
+  the shipped instrument computes (100% over a 12-turn loop with no structural
+  change, 81.8% with one warning on a genuine tool change, byte-identical
+  model-facing bytes across a reorder under the shipped seam). The provider-side hit
+  ratio is an environment boundary rather than a claim. Receipt 8/8.
 - **No path discards model-facing bytes it has not provably stored, and no marker
   claims a location it cannot compute (FID-2026-1007-004, high; closed 2026-10-07;
   local commits `e9322b38`, `eb2ee0f3`, `49c7bab4`; register item T159).** Savant
