@@ -62,8 +62,36 @@
 
 ## Open items
 
-**Four** items are open — three blocked pending operator input (T119,
-T62-followups, T122) and one shelved on an operator ruling (T147).
+- [ ] **T163. Build and run the provider identity verification gauntlet
+      (`FID-2026-1007-008`).** **Automation level: 2.** The HCNSec
+      `kimi-k3` fingerprint timed out in the prior audit. Implement the
+      evidence-calibrated, tiered identity and service-integrity audit from
+      the operator's research and addendum, with passive routing observations,
+      bounded active probes, controls, and an explicit inconclusive state.
+      User model calls remain available; no uncalibrated 0.85 auto-failover.
+      The live HCNSec re-audit requires credential and quota authority.
+- [ ] **T164. Show truthful provider cache-hit telemetry in the CLI sidebar
+      (`FID-2026-1007-009`).** **Automation level: 2.** Preserve reported
+      zero versus missing cache usage, aggregate eligible input tokens by
+      session/provider/model, carry the summary through SDK and CLI state,
+      and render an unavailable state when the provider does not report it.
+
+- [ ] **T162. User-initiated model calls must never be blocked by the local
+      provider circuit breaker (`FID-2026-1007-007`).** **Automation level: 3.**
+      Operator ruling 2026-10-07: "it should NEVER stop a user from using a
+      model." The saved 2026-10-07 chat shows KiosAPI blocked at 16:15 and
+      16:22 (14 minutes still remaining at 16:38) and Unorouter blocked at
+      16:46 after a 16:40 upstream rate limit. The boundary threw
+      `ProviderBoundaryBlockedError` before a physical request. The verified
+      fix preserves transient failure classification and bounded automatic
+      retry while sending every user-initiated turn's first physical request
+      regardless of breaker state. Open-breaker and production-call regression
+      tests, the agent-runtime suite, and the root gates pass. **Blocker:**
+      ECHO G2 local commit authorization is pending.
+
+**Seven** items are open — T162, T163, and T164 are in progress; three are
+blocked pending operator input (T119, T62-followups, T122) and one is shelved
+on an operator ruling (T147).
 **T155, T160 and T161 completed in this pass** — all three FIDs closed, receipted
 and archived, so `dev/fids/` carries no active record:
 
@@ -1010,6 +1038,22 @@ operator-directed session. **Automation level: 1** (no agent action;
       `e229d9a1` after operator G2 authorization.
 
 ## Machine-readable scope targets
+
+- T163: `dev/fids/**`, `scripts/providers/**`,
+  `packages/agent-runtime/src/provider-boundary/**`,
+  `packages/agent-runtime/src/__tests__/provider-identity-observation.test.ts`,
+  `docs/provider-identity-audit-2026-09-13.md`, `SCOPE.md`, `CHANGELOG.md`,
+  `dev/session-summaries/2026-10-07-*.md`
+- T164: `dev/fids/**`, `sdk/src/**`, `common/src/types/**`,
+  `packages/agent-runtime/src/run-agent-step/**`,
+  `packages/agent-runtime/src/util/**`, `cli/src/**`, `SCOPE.md`,
+  `CHANGELOG.md`, `dev/session-summaries/2026-10-07-*.md`
+- T162: `dev/fids/**`, `packages/agent-runtime/src/provider-boundary/**`,
+  `packages/agent-runtime/src/prompt-agent-stream.ts`,
+  `packages/agent-runtime/src/__tests__/provider-circuit-breaker.test.ts`,
+  `packages/agent-runtime/src/__tests__/provider-breaker-user-calls.test.ts`,
+  `packages/agent-runtime/src/__tests__/prompt-agent-stream-forwarding.test.ts`,
+  `SCOPE.md`, `CHANGELOG.md`, `dev/session-summaries/2026-10-07-*.md`
 
 <!-- 2026-10-05 (all-FIDs session): T131, T137, T134, T135, T136, T132
      completed and left the register on the standing rule; T133's FID is
