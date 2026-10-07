@@ -5,7 +5,57 @@ operator decision, implementation, runtime review, or closure evidence.
 
 ## Current active FIDs
 
-**None — the active queue is empty (2026-10-06).**
+**One — `FID-2026-1006-005-savant-echo-prompt-cache-optimization`
+(2026-10-06, status `converged`, automation level 3; register item T155, with
+T154 now complete).** The operator asked for a record of the untracked research
+document `docs/design/Savant_ECHO Cache Optimization Research.md`, which was also
+the sole cause of `bun run lint:md` exiting 1. The record does both jobs. It folds
+in the T154 gate fix — an operator-ruled `.markdownlintignore` exemption plus a
+new `scripts/lint-md-check.ts` probe, so the markdown gate is finally declarable
+in a FID (it had no allowlisted gate kind, which is why this item could not be
+recorded before) — and it reconciles the document's three-phase cache program
+against the shipped tree. Reconciliation: `evidence/spill.ts` and
+`util/simplify-tool-results.ts` already implement the deterministic truncation
+its Phase 2 asks to build (so Phase 2 was re-scoped from build to audit); a
+provider cache-breakpoint TTL and the Anthropic
+`tool_addition`/`tool_removal` directives are genuinely absent; and `stableHash`
+is order-sensitive, so the one existing cache-bust detector cannot tell a
+reordered tool set from a changed one. An independent read-only audit overturned
+the record's own central hazard claim: the cache-control seam is **split** (the
+trim path deletes camelCase `cacheControl` while production writes snake_case
+`cache_control`, against different provider sets, under a comment describing
+re-tagging nobody implemented), and the correction is recorded rather than
+smoothed over. Steps 3-10 are blocked on operator approval points (the
+mode-to-TTL spend policy, the report's two proposed ECHO amendments, and
+live-endpoint certification for two pins).
+
+**Closed 2026-10-06 — `FID-2026-1006-004-law15-capture-budget-refusal`
+(status `closed`; register item T153; implementation committed as `ba38c548`).**
+The Law 15 worktree
+backstop was inert in this repository: capture content-hashed the full
+5,455-path / 27.1 MB inventory inside a 5,000 ms budget, the blow was refused by
+design and stamped `worktreeBaselineMethod = 'unavailable'`, and
+`reconcileWorktree` treats that as an unconditional cannot-verify, so no
+out-of-band mutation was detected for the life of the session. A second budget
+defect sat behind it in the reconcile deletion leg (one `statSync` per baseline
+key inside a 500 ms budget). **Implemented and verified 2026-10-06:** the
+split-baseline capture (a path inventory plus content hashes for only the
+initially-dirty set), the leg-named refusal, the change-bounded deletion source
+(four terms), the unknown rule for walk-sourced candidates, the honest spawn
+classification with a retry-once policy, and a bounded recapture — in two new
+modules (`worktree-git.ts`, `worktree-scan.ts`) plus rewrites of
+`worktree-capture.ts` / `worktree-reconcile.ts`, pinned by ten deterministic
+pins and one moved pin across two new suites and an sdk transport leg.
+`bun run fid:verify <record> --check` is 10/10 exit 0; the live probe on this
+repository measures capture 244-254 ms / 18 hashes / 5,464 paths (was
+956-1,128 ms / 5,454 hashes) and a reconcile that now VERIFIES (`degraded:
+false`). **Closed and archived the same day** on operator G2 authorization: the
+record moved to [`archive/`](archive/), its CHANGELOG entry landed under
+Unreleased/`### Fixed`, and its three lessons were promoted to
+`dev/LEARNINGS.md`. Its deletion-suite pins were hardened after the first stamp
+(an injected budget), and the amendment is recorded in the record's Loop 3.
+
+**2026-10-06 (earlier) — the active queue was empty.**
 
 **2026-10-06 — `FID-2026-1006-002-pi-harness-adoption-program` is `closed`
 and archived to [`archive/`](archive/); register item T150 is complete.** It

@@ -62,8 +62,12 @@
 
 ## Open items
 
-**Four** items are open — three blocked pending operator input (T119,
-T62-followups, T122), one shelved on an operator ruling (T147). (T149, the
+**Five** items are open — three blocked pending operator input (T119,
+T62-followups, T122), one shelved on an operator ruling (T147), and one
+active implementation record: T155 (the prompt-cache optimization program,
+`FID-2026-1006-005`). T153 and T154 both completed 2026-10-06 — T153's record
+is closed and archived, its implementation landed as local commit `ba38c548`,
+and T154's gate fix landed in the same pass; both boxes below are checked. (T149, the
 deep pi review, completed
 2026-10-06 — its box below is closed. T150, the pi-harness adoption program,
 completed and closed 2026-10-06: all twelve work packages implemented,
@@ -471,6 +475,56 @@ T90-F3 was resolved by the operator ruling "T90-F3 residual needs no code"
       presented FID. The FID-authoring step itself is complete; this box
       stays open because the adoption program is not implemented.
 
+- [x] **T153. Law 15 worktree-capture budget refusal (`FID-2026-1006-004`).**
+      **Automation level: 2.** Operator request 2026-10-06, verbatim: "write the
+      fid to solve it, then run perfection loop on it then present it". The
+      finding: `captureWorktreeBaseline` content-hashes the full candidate
+      inventory (5,455 paths / 27.1 MB measured at HEAD `43f436b0`) inside
+      `CAPTURE_BUDGET_MS = 5_000`; the blow is refused by design and recorded as
+      `worktreeBaselineMethod = 'unavailable'`, which `reconcileWorktree` turns
+      into an unconditional cannot-verify — so the Law 15 backstop is disarmed
+      for the whole session and its only symptom is a turn-end advisory that
+      names no files. A second budget defect sits behind it: the reconcile
+      deletion leg is one `statSync` per baseline key (5,455 stats) inside
+      `RECONCILE_BUDGET_MS = 500`, so repairing capture alone would convert the
+      advisory rather than restore verification.
+      `dev/fids/FID-2026-1006-004-law15-capture-budget-refusal.md` carries the
+      split-baseline fix (a cheap path inventory plus content hashes for only
+      the initially-dirty set), the change-bounded deletion source, the legacy
+      checkpoint read-site union, and ten deterministic pins. **Implemented and
+      verified 2026-10-06, closed 2026-10-06:** the record's status is `closed`, its Perfection
+      Loop converged through Loop 3 (including the adversarial pass), and
+      `bun run fid:verify <record> --check` is 10/10 exit 0 — typecheck common /
+      packages/agent-runtime / sdk, five agent-runtime suites 39 tests / 0 fail
+      (six new), the sdk transport round-trip leg, and
+      `quality: PASS (1498 baselined files)`; `validate:repository` PASS and
+      `scope-register-check` PASS (0 issues). Live post-fix probe on this
+      repository through the production functions: capture 244-254 ms with 18
+      content hashes over a 5,464-path inventory (was 956-1,128 ms over 5,454
+      hashes), reconcile 110-114 ms with `degraded: false` (was 289-344 ms with
+      a 5,459-stat deletion leg), and the durable checkpoint shrank from a
+      663,482 B pre-split equivalent to 301,304 B. **Completed 2026-10-06** on
+      operator G2 authorization: the implementation landed as local commit
+      `ba38c548` (path-scoped to the Law 15 change set), the record closed and
+      moved to `dev/fids/archive/`, the CHANGELOG entry added under
+      Unreleased/`### Fixed`, and its three lessons promoted to
+      `dev/LEARNINGS.md`. One post-verification amendment is recorded in the
+      record's Loop 3 rather than smoothed over: the deletion suite's pins now
+      inject an explicit budget so they pin behaviour rather than machine load,
+      after a loaded `validate:repository` re-run exposed that they inherited
+      the production 500 ms default.
+      (2026-10-06 (in-pass fix, per "NOTHING IS EVER OUT OF SCOPE"): the
+      `validate:repository` run during this implementation pass returned 1
+      issue — `vendored.tree.foreign-root` for a top-level `.ohmyagent/`
+      holding one 4-line `settings.json` (`permission_rules[].tool: Glob`) with
+      no tracked files. It is another agent CLI's local state, not project
+      source, and the repository already ignores the identical artifact class
+      (`.commandcode/`, `.codex`, `.qwen/`). **Automation level: 3.** Completed
+      in the same pass by one ignore entry following the `.commandcode/`
+      precedent; the gate returned to PASS. The item is completed, so it holds
+      no open box here — its evidence is this note and the two gate outputs
+      (1 issue → PASS).)
+
 - [x] **T152. Wire the uncalled adoption modules (`FID-2026-1006-003`).**
       **Automation level: 2.** Operator request 2026-10-06, verbatim: "make a
       fid to fully wire all of those that have no caller, if the code is there
@@ -593,6 +647,53 @@ T90-F3 was resolved by the operator ruling "T90-F3 residual needs no code"
 
 ### Harness and process
 
+- [x] **T154. A foreign untracked research doc fails the `lint:md` gate.**
+      **Automation level: 1 → 3.** In-pass finding 2026-10-06, while verifying
+      this session's documents: `bun run lint:md` (the repository's markdown
+      gate) exited 1 on exactly one file — `docs/design/Savant_ECHO Cache
+      Optimization Research.md`, untracked and never committed, carrying 108
+      `MD013/line-length` violations **plus one `MD001/heading-increment`
+      defect** (a `####` directly under a `##` at line 243 — the original note
+      counted only the MD013 set). It was deliberately not touched then: the
+      file is another session's in-flight work, an edit to an untracked file is
+      invisible in `git diff` to its author, and the invariants reserve changes
+      to work this agent did not author to the operator.
+      **Completed 2026-10-06** on the operator's ruling: the document is
+      **exempted** in `.markdownlintignore`, the entry carrying its own
+      justification per the 2026-10-03 withdrawal note and following the
+      design-research-scratch-docs precedent. No other session's file was
+      edited; the gate returns exit 0. The missing mechanism that made this item
+      un-FID-able is fixed too: `bun run lint:md` has no allowlisted
+      `fid:verify` gate kind, so `scripts/lint-md-check.ts` now expresses it as a
+      probe. A planted-violation negative leg proves the gate still fails on a
+      real violation (a root-level 199-character prose line → exit 1, naming the
+      file). **Stated limit:** ignoring a file skips every rule, so the one
+      MD001 defect is silenced rather than repaired — recorded, not hidden. The
+      program this document proposes is a separate open item: **T155**.
+
+- [ ] **T155. Prompt-cache optimization program (`FID-2026-1006-005`).**
+      **Automation level: 3.** Registered 2026-10-06 on the operator's
+      directive that the cache research document needed its own record. The
+      record is `converged` — the Perfection Loop is complete and was
+      independently adjudicated — and it folds in the T154 gate fix rather than
+      losing it. Reconciliation findings against the shipped tree: two of the
+      report's three phases are substantially already implemented
+      (`evidence/spill.ts`, `util/simplify-tool-results.ts`,
+      `common/src/util/messages/cache-control.ts`); genuinely absent are a
+      provider cache-breakpoint TTL and the Anthropic
+      `tool_addition` / `tool_removal` directives; and the one cache-bust
+      detector (`stableHash` feeding `systemHash` / `toolsHash`) is
+      order-sensitive, so it cannot distinguish a reordered tool set from a
+      changed one — the exact fracture class the program targets. The audit also
+      overturned the record's own first hazard claim and found a split
+      cache-control seam instead (the trim path deletes camelCase
+      `cacheControl` while production writes snake_case `cache_control`, against
+      different provider sets, under a comment describing re-tagging nobody
+      implemented). **Blocker:** steps 3-10 are unstarted and sit behind
+      operator approval points — the mode-to-TTL spend policy, the report's two
+      proposed ECHO amendments, and live-endpoint certification for the two pins
+      that cannot be observed in this environment.
+
 - [ ] **T122. Savant-free feature disposition (operator-owned).** Operator
       ruling 2026-10-03, verbatim: "i think it might be smarter to leave
       savant-free alone, just fix the problems you found and i'll address it
@@ -705,3 +806,6 @@ operator-directed session. **Automation level: 1** (no agent action;
   `package.json`, `scripts/provider-docs-counts-drift.ts`,
   `cli/src/utils/free-options-types.ts`, `cli/src/utils/free-options.ts`,
   `cli/src/utils/free-options-render.ts`, `cli/src/utils/__tests__/free-options.test.ts`
+- T153: `dev/fids/**`, `packages/agent-runtime/src/echo/**`,
+  `common/src/types/session-state-records.ts`,
+  `dev/session-summaries/2026-10-06-*.md`

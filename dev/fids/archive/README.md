@@ -3,6 +3,39 @@
 This directory contains closed or historically completed FIDs. Files here are
 an audit record, not an active work queue.
 
+## 2026-10-06 closure — the Law 15 worktree backstop (FID-2026-1006-004)
+
+Closed on operator G2 authorization after the implementation landed as local
+commit `ba38c548`; no push or release.
+
+- [`FID-2026-1006-004-law15-capture-budget-refusal.md`](FID-2026-1006-004-law15-capture-budget-refusal.md)
+  (high) — the Law 15 backstop was inert at this repository's size: capture
+  content-hashed the full 5,455-path / 27.1 MB inventory inside a 5,000 ms budget
+  and a blown budget was refused by design, which reconcile turned into an
+  unconditional cannot-verify that disarmed the control for the rest of the
+  session while naming no files. Capture now inventories every path but hashes
+  only the initially-dirty set, the refusal records its failed leg, a refused
+  baseline is retried under a cooldown, spawn failures are classified honestly,
+  and the deletion leg is change-bounded across four terms that each preserve a
+  class no other term can see. 10/10 declared gates; capture 956-1,128 ms to
+  244-254 ms, reconcile 289-344 ms to 110-114 ms `degraded: false`, checkpoint
+  663,482 B to 301,304 B.
+
+## 2026-10-06 closure — archive-index back-fill (FID-2026-1006-002, FID-2026-1006-003)
+
+Both records were archived on 2026-10-06 but neither received an index entry, so
+this index did not match the directory it describes. Back-filled during the
+FID-2026-1006-004 closure pass.
+
+- [`FID-2026-1006-002-pi-harness-adoption-program.md`](FID-2026-1006-002-pi-harness-adoption-program.md)
+  (high) — twelve adopted work packages from the deep pi-harness review plus one
+  determined non-adoption; 22/22 declared gates, receipt `sha256:b1a3f13c…`,
+  local commit `81733c16`.
+- [`FID-2026-1006-003-wire-uncalled-adoption-modules.md`](FID-2026-1006-003-wire-uncalled-adoption-modules.md)
+  (high) — the six wiring work packages that gave every module FID-2026-1006-002
+  left library-complete a production caller; 19/19 declared gates, local commits
+  through `6d5fbe48` with the closure recorded in `43f436b0`.
+
 ## 2026-10-06 closure — self-healing provider catalog visibility (FID-2026-1006-001)
 
 Closed on the operator's directive (all declared gates green); no push or

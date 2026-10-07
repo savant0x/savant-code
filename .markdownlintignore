@@ -92,6 +92,22 @@ dev/provider-candidates/**
 # provider-candidates.
 dev/wiki/**
 
+# Deep-research report (2026-10-06, operator ruling on register item T154) —
+# an independently sourced Savant/ECHO prompt-cache optimization study whose
+# long cited prose and wide capability/pricing tables are intentionally kept
+# in source form, exactly like the design-research scratch docs above
+# (Savant-Code Keyless Search Research, Free LLM API Aggregator Research).
+# It carried 108 MD013 violations, all of them wrappable prose; the file's 24
+# base64 figure definitions were never flagged, because MD013 does not report
+# a line it cannot wrap. Per the 2026-10-03 withdrawal note this entry carries
+# its own justification rather than borrowing a dead file's.
+# NOTE: ignoring a file skips EVERY rule, so this also silences one MD001
+# heading-increment defect (line 243, a `####` directly under a `##`) —
+# recorded as an accepted limit in FID-2026-1006-005, not repaired blind.
+# The file is untracked today; re-evaluate with the per-file MD013 header
+# route if it is committed and becomes governed documentation.
+docs/design/Savant_ECHO Cache Optimization Research.md
+
 # Operator-pasted session transcript (2026-10-03) — docs/trash/lastsession.md,
 # a re-pasted Codex session dump (~93k lines) parked in the operator's scratch
 # trash directory for grounding reads; untracked, never shipped. MD013 on a raw

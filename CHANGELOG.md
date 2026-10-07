@@ -326,6 +326,27 @@
 
 ### Fixed
 
+- **Law 15 baseline capture refused its own baseline on a large repository
+  (FID-2026-1006-004, high; closed 2026-10-06; local commit `ba38c548`).** The worktree
+  backstop was inert at this repository's size: `captureWorktreeBaseline` content-hashed
+  the full 5,455-path / 27.1 MB inventory inside `CAPTURE_BUDGET_MS = 5_000`, and a blown
+  budget was refused by design — which `reconcileWorktree` turned into an unconditional
+  cannot-verify, disarming Law 15 for the rest of the session while the only symptom was an
+  advisory naming no files. Capture now inventories every path but content-hashes only the
+  initially-dirty set, the refusal records which leg failed (`enumerate`, `dirty-set`,
+  `hash-budget`, `walk-budget`), and a refused baseline is retried under a bounded cooldown
+  instead of staying permanent. Two further defects sat behind it: the reconcile deletion
+  leg ran one `statSync` per baseline key (5,459 stats) inside a 500 ms budget, and both
+  git spawn helpers reported any spawn error as "git failed" — including a measured 13 ms
+  spurious `ETIMEDOUT` against a 500 ms budget. The deletion leg is now change-bounded
+  across four terms that each cover a class no other term can see. Measured on this
+  repository through the production functions: capture 956-1,128 ms over 5,454 hashes to
+  244-254 ms over a 5,464-path inventory with 18 hashes; reconcile 289-344 ms to 110-114 ms
+  with `degraded: false`; the durable checkpoint shrank from a 663,482 B pre-split
+  equivalent to 301,304 B. Two new modules (`worktree-git.ts`, `worktree-scan.ts`),
+  rewrites of `worktree-capture.ts` and `worktree-reconcile.ts`, ten deterministic pins
+  plus one moved pin, two new suites and one sdk transport leg; `fid:verify` 10/10 exit 0.
+
 - **kiosapi roster context windows (FID-2026-1003-008, high; closed
   2026-10-04).** Every kiosapi id missing from the fallback table resolved
   to the 200k default, steering compaction with a 5x-too-small denominator

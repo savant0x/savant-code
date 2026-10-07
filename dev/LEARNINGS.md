@@ -1,5 +1,74 @@
 # LEARNINGS
 
+## Lesson: A cost model outgrown twice needs every site enumerated, not the constant retuned
+
+- **Date:** 2026-10-06
+- **Failure:** This subsystem had already recorded one correction of the same class — the
+  reconcile scan was fixed for a 610-file tree on 2026-10-02 — and the fix was applied to
+  one of its two hashing legs. The un-fixed sibling was then outgrown by the same growth
+  that prompted the first fix, and the deletion leg's per-key `statSync` scan (5,459 calls)
+  sat inside the same 500 ms budget, so a capture repair alone would have converted the
+  advisory rather than restored verification.
+- **Evidence:** packages/agent-runtime/src/echo/enforcement/worktree-capture.ts → symbol:captureWorktreeBaseline,
+  packages/agent-runtime/src/echo/enforcement/worktree-scan.ts → symbol:collectDeletions
+- **Invariant:** A size-dependent cost model is rarely one site. Finding a scale defect is
+  a mandate to enumerate every site that shares the cost model, because the un-fixed
+  sibling will be outgrown by the same growth that produced the finding.
+- **Guard:** Before closing a budget or scale defect, grep for the shared constant and the
+  sibling cost centres, fix each one, and pin each one structurally (work performed, not
+  elapsed time).
+- **Verification:** the record pins both legs structurally (hashes performed, paths
+  checked) and its live probe measures capture and reconcile separately;
+  `bun run fid:verify dev/fids/archive/FID-2026-1006-004-law15-capture-budget-refusal.md
+  --check` reports 10/10.
+- **Scope:** internal
+- **Owning FID:** FID-2026-1006-004 (closed + archived)
+- **Status:** active
+
+## Lesson: A governance control that degrades to an advisory needs a loud, specific degradation
+
+- **Date:** 2026-10-06
+- **Failure:** Refusing a half-captured baseline was the correct call, but the advisory it
+  produced named no files, no leg and no cause, and it disarmed the backstop for the rest of
+  the session. Three distinct causes (enumeration failure, dirty-set failure, budget
+  exhaustion) shared one catch-all sentence, and a git that answered in ~110 ms was reported
+  as "git failed at turn end" — indistinguishable from a broken control, so the only
+  observable symptom was a line of prose every reader learns to ignore.
+- **Evidence:** packages/agent-runtime/src/echo/enforcement/worktree-capture.ts → symbol:captureWorktreeBaseline,
+  packages/agent-runtime/src/echo/enforcement/worktree-git.ts → symbol:describeGitFailure
+- **Invariant:** A control's degradation path needs the same specificity as its success
+  path — the failed leg, the budget, the count and the error evidence. A degradation that
+  cannot say why is dismissed as noise, and the real defect leaves with it.
+- **Guard:** Every refusal or degraded verdict names the specific failed leg and carries its
+  evidence; no two distinct causes share one message.
+- **Verification:** the pins assert the leg name and the failure evidence per leg, and the
+  live probe shows the post-fix path returning `degraded: false` with a named method.
+- **Scope:** internal
+- **Owning FID:** FID-2026-1006-004 (closed + archived)
+- **Status:** active
+
+## Lesson: A fix that deletes a detection class costs more than the work it removes
+
+- **Date:** 2026-10-06
+- **Failure:** Two deletion classes — a file untracked at capture and a session-created file
+  — are invisible to every status-derived source, and were caught only by the expensive
+  per-key loop being replaced. A cheaper `git ls-files --cached` diff looked equivalent and
+  was strictly worse: the index says nothing about an unstaged removal, which is the single
+  case the deletion leg exists for, so both nets would have gone blind at once.
+- **Evidence:** packages/agent-runtime/src/echo/enforcement/worktree-scan.ts → symbol:collectDeletions,
+  packages/agent-runtime/src/echo/enforcement/worktree-capture.ts → symbol:advanceWorktreeBaseline
+- **Invariant:** Before replacing an expensive mechanism with a cheaper one, enumerate the
+  cases for which the expensive one is the only net. A detection net that becomes cheaper by
+  covering fewer classes has not been optimised; it has been removed.
+- **Guard:** Each preserved class gets its own term and its own pin, and the pin names the
+  class it protects rather than the mechanism it exercises.
+- **Verification:** one pin per deletion class (a clean-at-capture removal, a vanished
+  untracked-at-capture file, a vanished session-created path) — the deletion suite is 6/6
+  across two consecutive runs.
+- **Scope:** internal
+- **Owning FID:** FID-2026-1006-004 (closed + archived)
+- **Status:** active
+
 ## Lesson: A library-complete hand-off needs a named consumer, not a readiness note
 
 - **Date:** 2026-10-06

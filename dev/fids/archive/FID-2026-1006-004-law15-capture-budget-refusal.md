@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-1006-004-law15-capture-budget-refusal.md`
 **ID:** FID-2026-1006-004
 **Severity:** high
-**Status:** verified
+**Status:** closed
 **Created:** 2026-10-06 19:32
 **Automation level:** 2
 **YAGNI-Compliance:** Verified
@@ -576,9 +576,12 @@ the same change.
 
 ### Implementation Evidence (REQUIRED for `closed`)
 
-- [ ] **Commit SHA:** none — implementation is complete and gate-verified, and closure
-      awaits operator G2 commit authority, which the invariants reserve to the operator.
-      Nothing in this session was committed.
+- [x] **Commit SHA:** `ba38c548` — "fix(runtime): stop the Law 15 baseline capture
+      refusing itself on a large repo (FID-2026-1006-004)", 13 files (+2400/-260), path-scoped
+      to the Law 15 change set on operator G2 authorization. The closure tail itself (this
+      record's status flip and archive move, the CHANGELOG entry, the LEARNINGS promotion and
+      the register/index updates) lands in a separate follow-on commit, so the change set stays
+      separable from the ceremony.
 - [x] **File:line ranges:**
   - `worktree-git.ts:1-192` (new) — `isSpuriousTimeout:55`, `attemptGitSpawn:78`,
     `runGitSpawn:102`, `describeGitFailure:125`, `runGitFileList:137`,
@@ -635,7 +638,7 @@ the same change.
       `worktree-capture.ts:207`; `isSpuriousTimeout` / `attemptGitSpawn` / `describeGitFailure` ←
       `worktree-git.ts:110` / `:106` / `worktree-scan.ts:113`; `resolveCandidates` /
       `collectDeletions` / `dropBaselineKeys` ← `worktree-reconcile.ts:144` / `:230` / `:254`
-- [x] FID status reflects the actual implementation state — `verified`: implementation exists,
+- [x] FID status reflects the actual implementation state — `closed`: implementation exists,
       gates pass; closure is withheld pending operator G2 (commit authority)
 - [x] Measured evidence re-grounded at Loop 2 against the live tree (capture 956-1,128 ms,
       `statSync` 181 ms / 5,459 paths, status spawn ~110 ms, one end-to-end reconcile
@@ -793,9 +796,9 @@ the same change.
 
 ## Resolution
 
-- **Closed Date:** not set — implementation is complete and verified, and closure awaits the
-  operator's G2 commit authority (the FID Auto-Archive rule and G2 both require a commit the
-  agent may not make).
+- **Closed Date:** 2026-10-06 — closed under operator G2 authorization, with the
+  implementation landed first as local commit `ba38c548` (the change set is kept separate from
+  the closure ceremony so either can be reviewed on its own).
 - **Fix Description:** splits the durable worktree baseline into a cheap path inventory plus
   content hashes for the initially-dirty set (walk mode keeps full-inventory hashing), keeps
   and sharpens the capture refusal so it names the failed leg, replaces the deletion leg's
@@ -816,8 +819,12 @@ the same change.
   (1498 baselined files)`; `validate:repository` PASS; `scope-register-check` PASS (0 issues);
   live post-fix probe (capture 244-254 ms / 18 hashes / 5,464-path inventory; reconcile 110-114 ms
   `degraded: false`). Every PRE-fix figure in Evidence was gathered at HEAD `43f436b0`; every
-  POST-fix figure in this pass.
-- **Archived:** not set — not closed.
+  POST-fix figure in this pass. Re-verified for closure on the amended bytes (Loop 3
+  AMENDMENT): the ten declared gates 10/10 exit 0 with the receipt re-stamped before the
+  archive move, the deletion suite 6/6 across two consecutive runs, and
+  `bun run validate:repository` PASS.
+- **Archived:** `dev/fids/archive/FID-2026-1006-004-law15-capture-budget-refusal.md`
+  (2026-10-06).
 
 ## Lessons Learned
 
