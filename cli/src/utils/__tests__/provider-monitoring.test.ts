@@ -76,7 +76,9 @@ test('quota monitor honors Retry-After, refusal refresh, hysteresis, and account
       service.snapshot().notices.find((n) => n.kind === 'quota-exhausted')
         ?.resolved,
     ).toBe(true)
-    expect(service.snapshot().notices.some((n) => n.kind === 'quota-recovered')).toBe(true)
+    expect(
+      service.snapshot().notices.some((n) => n.kind === 'quota-recovered'),
+    ).toBe(true)
     result = { ...result, amount: 0, reading: '0 credits' }
     now++
     await measure()

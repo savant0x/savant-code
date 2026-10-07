@@ -116,16 +116,28 @@ describe('FID-2026-0928-012: agent-answerable markdown', () => {
     expect(report.catalogEvidence?.source).toContain('free_models.json')
     const reported = {
       ...report,
-      catalogEvidence: { class: 'reported-unverified' as const, source: 'operator report' },
+      catalogEvidence: {
+        class: 'reported-unverified' as const,
+        source: 'operator report',
+      },
     }
-    expect(renderFreeOptionsMarkdown(reported)).toContain('reported free models; listing unverified; account access unverified')
-    expect(renderFreeOptionsAnnounce(reported).join('\n')).toContain('listing unverified')
+    expect(renderFreeOptionsMarkdown(reported)).toContain(
+      'reported free models; listing unverified; account access unverified',
+    )
+    expect(renderFreeOptionsAnnounce(reported).join('\n')).toContain(
+      'listing unverified',
+    )
     expect(report.quotaReading).toEqual({ state: 'unknown', source: 'none' })
     const exhausted = {
       ...report,
-      quotaReading: { state: 'exhausted' as const, source: 'authenticated-usage-api' as const },
+      quotaReading: {
+        state: 'exhausted' as const,
+        source: 'authenticated-usage-api' as const,
+      },
     }
-    expect(renderFreeOptionsAnnounce(exhausted).join('\n')).toContain('quota observed exhausted')
+    expect(renderFreeOptionsAnnounce(exhausted).join('\n')).toContain(
+      'quota observed exhausted',
+    )
   })
 })
 

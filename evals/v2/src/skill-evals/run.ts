@@ -41,7 +41,10 @@ export const CASES_DIR = path.resolve(
 )
 export const FLOOR_FILE = path.join(CASES_DIR, 'floor.json')
 
-export function floorWasLowered(current: Rank1Floor, committed: Rank1Floor | undefined): boolean {
+export function floorWasLowered(
+  current: Rank1Floor,
+  committed: Rank1Floor | undefined,
+): boolean {
   return committed !== undefined && current.rank1Floor < committed.rank1Floor
 }
 
@@ -139,7 +142,10 @@ export function runTriggerEvals(cwd: string): TriggerEvalResult {
       continue
     }
     if (skillCase.descriptionSha256 !== descriptionSha256(skill.description)) {
-      issues.push({ severity: 'error', message: `${skill.name}: description changed without updating its trigger case hash` })
+      issues.push({
+        severity: 'error',
+        message: `${skill.name}: description changed without updating its trigger case hash`,
+      })
     }
     for (const problem of ownersOutsideCatalog(skillCase, catalogNames)) {
       issues.push({ severity: 'error', message: problem })
@@ -249,7 +255,8 @@ export function runTriggerEvals(cwd: string): TriggerEvalResult {
   if (floor !== undefined && floorWasLowered(floor, loadCommittedFloor(cwd))) {
     issues.push({
       severity: 'error',
-      message: 'floor-lowered: rank1Floor is below the committed floor; require an operator ruling recorded before raising or restoring the threshold',
+      message:
+        'floor-lowered: rank1Floor is below the committed floor; require an operator ruling recorded before raising or restoring the threshold',
     })
   }
 

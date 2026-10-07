@@ -159,7 +159,9 @@ export async function runSkillProve(params: RunSkillProveParams): Promise<{
         index,
         passed: run.exitOk,
         trace_sha256: hashTrace(run.trace),
-        ...(run.expectationResults ? { expectation_results: run.expectationResults } : {}),
+        ...(run.expectationResults
+          ? { expectation_results: run.expectationResults }
+          : {}),
         ...(arm === 'active'
           ? { activated: scanActivation(run.trace, params.skillName) }
           : {}),

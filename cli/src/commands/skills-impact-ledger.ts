@@ -35,9 +35,10 @@ export function appendSkillImpactRejection(
   if (fs.readFileSync(file, 'utf8').includes(identity)) return
   const before = score(gate?.baselineTrials)
   const after = score(gate?.activeTrials)
-  const evidence = before === 'unmeasured' && after === 'unmeasured'
-    ? 'no paired proof artifact'
-    : `baseline ${before}; active ${after}; activation ${String(gate?.activation_verified === true)}`
+  const evidence =
+    before === 'unmeasured' && after === 'unmeasured'
+      ? 'no paired proof artifact'
+      : `baseline ${before}; active ${after}; activation ${String(gate?.activation_verified === true)}`
   const row = `| ${cell(rejectedAt.slice(0, 10))} | ${cell(name)} | ${cell(reason)} | ${cell(evidence)} | rejected |\n`
   fs.appendFileSync(file, row, 'utf8')
 }

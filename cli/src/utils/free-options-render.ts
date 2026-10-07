@@ -18,7 +18,8 @@ function quotaCaveat(report: FreeOptionsReport): string {
     return 'account quota unverified'
   if (reading.state === 'unavailable') return 'account quota unavailable'
   if (reading.state === 'exhausted') return 'account quota observed exhausted'
-  if (reading.state === 'approaching_limit') return 'account quota approaching limit'
+  if (reading.state === 'approaching_limit')
+    return 'account quota approaching limit'
   return 'account quota observed healthy'
 }
 
@@ -127,9 +128,7 @@ export function renderCommandOutput(report: FreeOptionsReport): string[] {
     lines.push(`- ${lane.label}: discovery only; integration unavailable`)
   for (const offer of report.discoveryOffers ?? [])
     lines.push(`- Discovery: ${offer} (source: custats free-token feed)`)
-  lines.push(
-    `${quotaFootnote(report)}; local servers must be running.`,
-  )
+  lines.push(`${quotaFootnote(report)}; local servers must be running.`)
   return lines
 }
 

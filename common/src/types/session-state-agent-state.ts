@@ -40,7 +40,6 @@ export type {
   SteeringOverrideAuditRecord,
 } from './session-state-compaction-records'
 
-
 export type AgentState = {
   /**
    * @deprecated agentId is replaced by runId

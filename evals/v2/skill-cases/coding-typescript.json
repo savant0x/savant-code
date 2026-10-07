@@ -3,12 +3,20 @@
   "descriptionSha256": "a9a77b304bc1eaf55163e402ebe190a1f8c9e5f227f73af2aed4dc261a0feaa5",
   "trigger": {
     "positive": [
-      { "prompt": "anti-patterns in this typescript async retry helper?", "topK": 1 },
-      { "prompt": "typescript naming conventions for this interface vs type alias" },
+      {
+        "prompt": "anti-patterns in this typescript async retry helper?",
+        "topK": 1
+      },
+      {
+        "prompt": "typescript naming conventions for this interface vs type alias"
+      },
       { "prompt": "patterns for typing this event emitter in typescript" }
     ],
     "negative": [
-      { "prompt": "java import ordering for this service", "owner": "coding-java" },
+      {
+        "prompt": "java import ordering for this service",
+        "owner": "coding-java"
+      },
       { "prompt": "go naming for the receiver", "owner": "coding-go" }
     ]
   },

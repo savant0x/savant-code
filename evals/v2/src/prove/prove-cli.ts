@@ -214,15 +214,24 @@ export async function runProveCommand(
   }
 
   const agentDefinitions = await deps.loadAgentDefinitions()
-  const behavioral = deps.loadBehavioralCase(opts.projectRoot, opts.skillName, opts.taskId)
+  const behavioral = deps.loadBehavioralCase(
+    opts.projectRoot,
+    opts.skillName,
+    opts.taskId,
+  )
   if (behavioral.kind === 'execution') {
     const setupFiles = new Set(task.environment.setup_files ?? [])
     for (const file of behavioral.files) {
-      if (!setupFiles.has(file)) throw new Error(`Behavioral fixture '${file}' is absent from task setup_files`)
+      if (!setupFiles.has(file))
+        throw new Error(
+          `Behavioral fixture '${file}' is absent from task setup_files`,
+        )
     }
   }
-  const judge = deps.judge ?? ((prompt: string, signal: AbortSignal) =>
-    defaultJudge(prompt, signal, opts.agentId, agentDefinitions))
+  const judge =
+    deps.judge ??
+    ((prompt: string, signal: AbortSignal) =>
+      defaultJudge(prompt, signal, opts.agentId, agentDefinitions))
   console.log(
     `Proving skill '${opts.skillName}' on task '${opts.taskId}' — ${opts.trialsPerArm} trial(s) per arm…`,
   )
@@ -237,7 +246,13 @@ export async function runProveCommand(
     ...(opts.maxAgentSteps !== undefined
       ? { maxAgentSteps: opts.maxAgentSteps }
       : {}),
-    runTrial: buildProductionTrialRunner(task, opts, agentDefinitions, behavioral, judge),
+    runTrial: buildProductionTrialRunner(
+      task,
+      opts,
+      agentDefinitions,
+      behavioral,
+      judge,
+    ),
   })
 
   printSummary(artifact, artifactPath)

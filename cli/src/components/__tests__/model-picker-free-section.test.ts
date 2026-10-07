@@ -20,12 +20,28 @@ describe('model page FREE KEY section (FID-2026-1005-010)', () => {
   test('an explicit routing refusal removes only that model until a successful reprobe', () => {
     const id = 'chatanywhere/availability-picker-test'
     const fixture = model(id, 'Availability', 'chatanywhere')
-    recordModelAvailability('chatanywhere', id, { class: 'declared-not-routed', reason: 'model_not_found', observedAt: 1 })
-    expect(buildGroupedItems([fixture]).some((item) => item.type === 'model')).toBe(false)
-    recordModelAvailability('chatanywhere', id, { class: 'gateway-fault', kind: '429' })
-    expect(buildGroupedItems([fixture]).some((item) => item.type === 'model')).toBe(false)
-    recordModelAvailability('chatanywhere', id, { class: 'routable', observedAt: 2 })
-    expect(buildGroupedItems([fixture]).some((item) => item.type === 'model')).toBe(true)
+    recordModelAvailability('chatanywhere', id, {
+      class: 'declared-not-routed',
+      reason: 'model_not_found',
+      observedAt: 1,
+    })
+    expect(
+      buildGroupedItems([fixture]).some((item) => item.type === 'model'),
+    ).toBe(false)
+    recordModelAvailability('chatanywhere', id, {
+      class: 'gateway-fault',
+      kind: '429',
+    })
+    expect(
+      buildGroupedItems([fixture]).some((item) => item.type === 'model'),
+    ).toBe(false)
+    recordModelAvailability('chatanywhere', id, {
+      class: 'routable',
+      observedAt: 2,
+    })
+    expect(
+      buildGroupedItems([fixture]).some((item) => item.type === 'model'),
+    ).toBe(true)
   })
   test('hoists free-TOKEN entries first; a free-key provider keeps its group', () => {
     const items = buildGroupedItems([

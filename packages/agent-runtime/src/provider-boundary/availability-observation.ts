@@ -13,11 +13,14 @@ export function explicitModelRejection(error: unknown): string | undefined {
   if (typeof body !== 'object' || body === null) return undefined
   const payload = body as Record<string, unknown>
   const nested = payload.error
-  const detail = typeof nested === 'object' && nested !== null
-    ? nested as Record<string, unknown>
-    : payload
+  const detail =
+    typeof nested === 'object' && nested !== null
+      ? (nested as Record<string, unknown>)
+      : payload
   const code = detail.code
-  return code === 'model_not_found' || code === 'model_unavailable' || code === 'no_endpoints'
+  return code === 'model_not_found' ||
+    code === 'model_unavailable' ||
+    code === 'no_endpoints'
     ? code
     : undefined
 }

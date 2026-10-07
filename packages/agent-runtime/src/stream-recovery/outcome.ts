@@ -67,7 +67,9 @@ export function classifyStreamOutcome(
   if (close.kind === 'cap') return 'output-cap'
   if (close.kind === 'error') return 'upstream-error'
   const reasoningOnly =
-    turn.reasoning.length > 0 && turn.bodyChars === 0 && turn.toolCallCount === 0
+    turn.reasoning.length > 0 &&
+    turn.bodyChars === 0 &&
+    turn.toolCallCount === 0
   if (reasoningOnly && (close.kind === 'done' || close.kind === 'thrown')) {
     return 'reasoning-only-truncation'
   }
@@ -77,7 +79,9 @@ export function classifyStreamOutcome(
 
 /** The measured failure surface: truncated turn, recovery not completed. */
 export class StreamCutError extends Error {
-  constructor(message = 'STREAM_CUT: the turn was truncated and bounded recovery did not complete') {
+  constructor(
+    message = 'STREAM_CUT: the turn was truncated and bounded recovery did not complete',
+  ) {
     super(message)
     this.name = 'StreamCutError'
   }

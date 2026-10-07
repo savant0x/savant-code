@@ -15,11 +15,7 @@
 import type { ProviderQuotaResult } from './provider-quota'
 
 export type QuotaState =
-  | 'healthy'
-  | 'approaching_limit'
-  | 'exhausted'
-  | 'unavailable'
-  | 'unknown'
+  'healthy' | 'approaching_limit' | 'exhausted' | 'unavailable' | 'unknown'
 
 /** How the reading is known, in the reference preference order. */
 export type QuotaEvidenceSource =
@@ -97,7 +93,8 @@ export function resolveQuotaState(
   return { state: 'healthy', source }
 }
 
-export type QuotaNoticeKind = 'quota-low' | 'quota-exhausted' | 'quota-recovered'
+export type QuotaNoticeKind =
+  'quota-low' | 'quota-exhausted' | 'quota-recovered'
 
 /**
  * Notification preconditions (converged design decision 4): a quota notice

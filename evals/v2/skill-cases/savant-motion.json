@@ -3,13 +3,26 @@
   "descriptionSha256": "0e20cd9412938c4ee81eab6f18ee55659932c0430d706c1008502c503bdc1dd2",
   "trigger": {
     "positive": [
-      { "prompt": "build a scrollytelling page where the hero video scrubs frame by frame as you scroll", "topK": 1 },
-      { "prompt": "apple-style interactive landing page — stages pin while the scroll advances the story" },
-      { "prompt": "scroll-driven site where headlines assemble line by line and the ground shifts color" }
+      {
+        "prompt": "build a scrollytelling page where the hero video scrubs frame by frame as you scroll",
+        "topK": 1
+      },
+      {
+        "prompt": "apple-style interactive landing page — stages pin while the scroll advances the story"
+      },
+      {
+        "prompt": "scroll-driven site where headlines assemble line by line and the ground shifts color"
+      }
     ],
     "negative": [
-      { "prompt": "design-system preset for the tokens", "owner": "savant-design-systems" },
-      { "prompt": "changelog entry for the release", "owner": "release-workflow" }
+      {
+        "prompt": "design-system preset for the tokens",
+        "owner": "savant-design-systems"
+      },
+      {
+        "prompt": "changelog entry for the release",
+        "owner": "release-workflow"
+      }
     ]
   },
   "behavioral": [

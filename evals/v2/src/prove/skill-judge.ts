@@ -29,8 +29,10 @@ export async function defaultJudge(
       permissionMode: 'safe',
       signal,
     })
-    if (state.output.type === 'error') throw new Error(`Skill grader failed: ${state.output.message}`)
-    if (state.output.type === 'structuredOutput') return JSON.stringify(state.output.value)
+    if (state.output.type === 'error')
+      throw new Error(`Skill grader failed: ${state.output.message}`)
+    if (state.output.type === 'structuredOutput')
+      return JSON.stringify(state.output.value)
     return state.output.value
       .filter((message) => message.role === 'assistant')
       .flatMap((message) => message.content)

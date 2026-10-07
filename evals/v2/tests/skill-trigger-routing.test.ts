@@ -199,9 +199,16 @@ describe('deterministic ranking (FID-2026-1005-005)', () => {
 describe('rank-1 floor ratchet (FID-2026-1005-005)', () => {
   it('rejects a floor below the committed value and accepts equal or higher floors', () => {
     const committed = { rank1Floor: 0.8, measuredAt: '2026-10-01' }
-    expect(floorWasLowered({ rank1Floor: 0.79, measuredAt: '2026-10-02' }, committed)).toBe(true)
+    expect(
+      floorWasLowered(
+        { rank1Floor: 0.79, measuredAt: '2026-10-02' },
+        committed,
+      ),
+    ).toBe(true)
     expect(floorWasLowered(committed, committed)).toBe(false)
-    expect(floorWasLowered({ rank1Floor: 0.9, measuredAt: '2026-10-02' }, committed)).toBe(false)
+    expect(
+      floorWasLowered({ rank1Floor: 0.9, measuredAt: '2026-10-02' }, committed),
+    ).toBe(false)
   })
 })
 

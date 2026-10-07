@@ -146,9 +146,14 @@ export function runSkillsCommand(projectRoot: string, args: string): string {
         reason: reason || gateSummary,
         rejectedAt: new Date().toISOString(),
       })
-      appendSkillImpactRejection(projectRoot, name, reason, readProofGate(projectRoot, name), new Date().toISOString())
-      output =
-        `🗑 Rejected '${name}' — recorded in the pattern wiki and skill-impact ledger.`
+      appendSkillImpactRejection(
+        projectRoot,
+        name,
+        reason,
+        readProofGate(projectRoot, name),
+        new Date().toISOString(),
+      )
+      output = `🗑 Rejected '${name}' — recorded in the pattern wiki and skill-impact ledger.`
     }
   } else if (sub === 'prove') {
     // FID-2026-0824-016: paired-trial execution lives in @savant-code/evals

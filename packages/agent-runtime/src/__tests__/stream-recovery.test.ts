@@ -12,7 +12,10 @@ import {
 } from '../stream-recovery/recovery-plan'
 
 import type { TurnAccumulation } from '../stream-recovery/outcome'
-import type { RecoveryAccountingRecord, RecoveryRequest } from '../stream-recovery/recovery-executor'
+import type {
+  RecoveryAccountingRecord,
+  RecoveryRequest,
+} from '../stream-recovery/recovery-executor'
 
 type Chunk = { type?: string; text?: string; toolCallId?: string }
 
@@ -30,7 +33,8 @@ function answerStream(text: string): AsyncGenerator<Chunk, string> {
   })()
 }
 
-const observe = (turn: TurnAccumulation, chunk: Chunk) => accumulateChunk(turn, chunk)
+const observe = (turn: TurnAccumulation, chunk: Chunk) =>
+  accumulateChunk(turn, chunk)
 const closeKindOf = (): 'thrown' => 'thrown'
 const GOOD_BUDGET = { elapsedMs: 10, remainingTokenBudget: 4096 }
 
@@ -104,10 +108,11 @@ describe('bounded stream recovery (FID-2026-1005-007)', () => {
   test('a second truncation during recovery is terminal (no third request)', async () => {
     const harness = run({
       create: () => reasoningThenCut('thought'),
-      createRecovery: () => (async function* () {
-        yield { type: 'reasoning', text: 'more thought' }
-        return 'never-used'
-      })(),
+      createRecovery: () =>
+        (async function* () {
+          yield { type: 'reasoning', text: 'more thought' }
+          return 'never-used'
+        })(),
     })
     await expect(harness.drain()).rejects.toBeInstanceOf(StreamCutError)
     expect(harness.requests).toHaveLength(1) // hard 2-request cap
@@ -141,9 +146,11 @@ describe('bounded stream recovery (FID-2026-1005-007)', () => {
       canRecover: () => false,
       physicalRequestCount: () => 2,
     })
-    await expect((async () => {
-      for await (const _chunk of stream) void _chunk
-    })()).rejects.toBeInstanceOf(StreamCutError)
+    await expect(
+      (async () => {
+        for await (const _chunk of stream) void _chunk
+      })(),
+    ).rejects.toBeInstanceOf(StreamCutError)
     expect(recoveryCalls).toBe(0)
     expect(accounting[0]?.physicalRequestIndex).toBe(2)
   })
@@ -153,7 +160,10 @@ describe('bounded stream recovery (FID-2026-1005-007)', () => {
     const stream = runTurnWithRecovery({
       logicalTurnId: 'failed-turn',
       originalInput: 'solve it',
-      create: () => (async function* () { throw upstream })(),
+      create: () =>
+        (async function* () {
+          throw upstream
+        })(),
       createRecovery: () => answerStream('must not run'),
       observeChunk: observe,
       closeKindOf: () => 'error',
@@ -164,13 +174,17 @@ describe('bounded stream recovery (FID-2026-1005-007)', () => {
   })
 
   test('no wall-clock budget remains → skipped', () => {
-    const plan = planRecovery('r', { elapsedMs: 480_000, remainingTokenBudget: 4096 })
+    const plan = planRecovery('r', {
+      elapsedMs: 480_000,
+      remainingTokenBudget: 4096,
+    })
     expect(plan.go).toBe(false)
     expect(plan.skipReason).toContain('wall-clock')
   })
 
   test('checkpoint cap is enforced tail-first (the conclusion end survives)', () => {
-    const checkpoint = 'HEAD-' + 'a'.repeat(RECOVERY_CHECKPOINT_CAP_CHARS) + '-TAIL'
+    const checkpoint =
+      'HEAD-' + 'a'.repeat(RECOVERY_CHECKPOINT_CAP_CHARS) + '-TAIL'
     const plan = planRecovery(checkpoint, GOOD_BUDGET)
     expect(plan.go).toBe(true)
     expect(plan.checkpoint).toHaveLength(RECOVERY_CHECKPOINT_CAP_CHARS)
@@ -184,14 +198,22 @@ describe('bounded stream recovery (FID-2026-1005-007)', () => {
       createRecovery: () => answerStream('answer'),
     })
     await recovered.drain()
-    expect(recovered.accounting.map((r) => [r.logicalTurnId, r.physicalRequestIndex, r.recovered])).toEqual([
-      ['turn-1', 2, true],
-    ])
+    expect(
+      recovered.accounting.map((r) => [
+        r.logicalTurnId,
+        r.physicalRequestIndex,
+        r.recovered,
+      ]),
+    ).toEqual([['turn-1', 2, true]])
 
     const plain = run({ create: () => answerStream('direct') })
     expect(await plain.drain()).toBe('recovered-result')
-    expect(plain.accounting.map((r) => [r.logicalTurnId, r.physicalRequestIndex, r.recovered])).toEqual([
-      ['turn-1', 1, false],
-    ])
+    expect(
+      plain.accounting.map((r) => [
+        r.logicalTurnId,
+        r.physicalRequestIndex,
+        r.recovered,
+      ]),
+    ).toEqual([['turn-1', 1, false]])
   })
 })

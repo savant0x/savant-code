@@ -70,15 +70,28 @@ export class ProviderQuotaMonitor {
     quota: ProviderQuotaResult,
   ): void {
     if (quota.status !== 'ok' || quota.amount === undefined) return
-    const priorRaw = this.coordinator.storage.presentation().facts[`${source}:episode`]
+    const priorRaw =
+      this.coordinator.storage.presentation().facts[`${source}:episode`]
     let previous: ReturnType<typeof quotaEpisode> | undefined
     try {
       if (priorRaw) {
         const parsed: unknown = JSON.parse(priorRaw)
-        if (typeof parsed === 'object' && parsed !== null &&
-          'level' in parsed && typeof parsed.level === 'string' &&
-          ['healthy', 'approaching_limit', 'exhausted', 'unavailable', 'unknown'].includes(parsed.level) &&
-          'revision' in parsed && typeof parsed.revision === 'number' && Number.isFinite(parsed.revision))
+        if (
+          typeof parsed === 'object' &&
+          parsed !== null &&
+          'level' in parsed &&
+          typeof parsed.level === 'string' &&
+          [
+            'healthy',
+            'approaching_limit',
+            'exhausted',
+            'unavailable',
+            'unknown',
+          ].includes(parsed.level) &&
+          'revision' in parsed &&
+          typeof parsed.revision === 'number' &&
+          Number.isFinite(parsed.revision)
+        )
           previous = parsed as ReturnType<typeof quotaEpisode>
       }
     } catch {

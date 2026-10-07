@@ -3,13 +3,24 @@
   "descriptionSha256": "1f2a318283c762311b9560e5bd2ea8400f08553820961a87b0ff3f86bf2858a5",
   "trigger": {
     "positive": [
-      { "prompt": "naming and error handling conventions for this Go module", "topK": 1 },
-      { "prompt": "concurrency patterns for this Go worker pool — channel or mutex?" },
+      {
+        "prompt": "naming and error handling conventions for this Go module",
+        "topK": 1
+      },
+      {
+        "prompt": "concurrency patterns for this Go worker pool — channel or mutex?"
+      },
       { "prompt": "how should this Go function return and wrap errors?" }
     ],
     "negative": [
-      { "prompt": "rust ownership and lifetime patterns for this struct", "owner": "coding-rust" },
-      { "prompt": "java exception hierarchy for this parser", "owner": "coding-java" }
+      {
+        "prompt": "rust ownership and lifetime patterns for this struct",
+        "owner": "coding-rust"
+      },
+      {
+        "prompt": "java exception hierarchy for this parser",
+        "owner": "coding-java"
+      }
     ]
   },
   "behavioral": [

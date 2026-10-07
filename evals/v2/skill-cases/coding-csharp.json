@@ -3,13 +3,24 @@
   "descriptionSha256": "66d8c44223973d60a9c9f4245515ab3a9e1fa0d750cdc7b25569de560b0196be",
   "trigger": {
     "positive": [
-      { "prompt": "how should I name this private field and async method in my C# service?", "topK": 1 },
-      { "prompt": "review the interface conventions in this C# class before I ship it" },
+      {
+        "prompt": "how should I name this private field and async method in my C# service?",
+        "topK": 1
+      },
+      {
+        "prompt": "review the interface conventions in this C# class before I ship it"
+      },
       { "prompt": "async/await patterns for this C# data loader" }
     ],
     "negative": [
-      { "prompt": "review this Go goroutine leak in the worker pool", "owner": "coding-go" },
-      { "prompt": "python type hints for this helper function", "owner": "coding-python" }
+      {
+        "prompt": "review this Go goroutine leak in the worker pool",
+        "owner": "coding-go"
+      },
+      {
+        "prompt": "python type hints for this helper function",
+        "owner": "coding-python"
+      }
     ]
   },
   "behavioral": [

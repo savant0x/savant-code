@@ -3,12 +3,22 @@
   "descriptionSha256": "13bed93ba978c70a6596fb0dcc902cfcf9db4920657cb666b84677e3b82b164c",
   "trigger": {
     "positive": [
-      { "prompt": "audit this UI with evidence — what design issues does the adversarial review surface?", "topK": 1 },
-      { "prompt": "design governance for this new settings panel — which hard gates apply to the interface polish?" },
-      { "prompt": "review the typesetting and visual hierarchy of this dashboard" }
+      {
+        "prompt": "audit this UI with evidence — what design issues does the adversarial review surface?",
+        "topK": 1
+      },
+      {
+        "prompt": "design governance for this new settings panel — which hard gates apply to the interface polish?"
+      },
+      {
+        "prompt": "review the typesetting and visual hierarchy of this dashboard"
+      }
     ],
     "negative": [
-      { "prompt": "pick an offline preset for the token refresh", "owner": "savant-design-systems" },
+      {
+        "prompt": "pick an offline preset for the token refresh",
+        "owner": "savant-design-systems"
+      },
       { "prompt": "scroll-driven landing page build", "owner": "savant-motion" }
     ]
   },

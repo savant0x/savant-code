@@ -135,9 +135,16 @@ describe('getAgentStreamFromTemplate output-budget forwarding (FID-2026-0909-008
       retryPolicy: { ...DEFAULT_RETRY_POLICY, maxAttempts: 1 },
     }
     for (let turn = 0; turn < 3; turn++) {
-      await expect(getAgentStreamFromTemplate({ ...base, runId: `failure-${turn}` }).next()).rejects.toThrow()
+      await expect(
+        getAgentStreamFromTemplate({
+          ...base,
+          runId: `failure-${turn}`,
+        }).next(),
+      ).rejects.toThrow()
     }
-    await expect(getAgentStreamFromTemplate({ ...base, runId: 'blocked' }).next()).rejects.toThrow(/Circuit breaker open/)
+    await expect(
+      getAgentStreamFromTemplate({ ...base, runId: 'blocked' }).next(),
+    ).rejects.toThrow(/Circuit breaker open/)
     expect(calls).toBe(3)
   })
 
@@ -146,15 +153,24 @@ describe('getAgentStreamFromTemplate output-budget forwarding (FID-2026-0909-008
     const modelId = 'availability-test/model-unique'
     const routed = {
       ...makeBaseParams(async function* () {
-        throw { status: 404, responseBody: JSON.stringify({ error: { code: 'model_not_found' } }) }
+        throw {
+          status: 404,
+          responseBody: JSON.stringify({ error: { code: 'model_not_found' } }),
+        }
       }),
-      template: { ...template, model: modelId, modelRoute: { providerId, authMode: 'provider' as const } },
+      template: {
+        ...template,
+        model: modelId,
+        modelRoute: { providerId, authMode: 'provider' as const },
+      },
     }
     await expect(getAgentStreamFromTemplate(routed).next()).rejects.toThrow()
     expect(advertisedModelVisible(providerId, modelId)).toBe(false)
     const success = {
       ...routed,
-      promptAiSdkStream: async function* () { return promptSuccess('restored') },
+      promptAiSdkStream: async function* () {
+        return promptSuccess('restored')
+      },
     }
     await getAgentStreamFromTemplate(success).next()
     expect(advertisedModelVisible(providerId, modelId)).toBe(true)

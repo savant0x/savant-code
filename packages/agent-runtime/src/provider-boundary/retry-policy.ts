@@ -109,5 +109,8 @@ export function resolveRetryPolicy(input: unknown): RetryPolicy {
 /** Capped exponential delay for the n-th boundary attempt (always finite). */
 export function retryDelayMs(attempt: number, policy: RetryPolicy): number {
   const raw = policy.baseDelayMs * 2 ** (attempt - 1)
-  return Math.min(policy.maxDelayMs, Number.isFinite(raw) ? raw : policy.maxDelayMs)
+  return Math.min(
+    policy.maxDelayMs,
+    Number.isFinite(raw) ? raw : policy.maxDelayMs,
+  )
 }

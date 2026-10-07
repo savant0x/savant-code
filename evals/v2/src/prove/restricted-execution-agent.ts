@@ -33,6 +33,7 @@ export function restrictedExecutionAgentDefinitions(
       handleSteps: undefined,
     }
   })
-  if (!found) throw new Error(`Execution proof agent '${agentId}' is not registered`)
+  if (!found)
+    throw new Error(`Execution proof agent '${agentId}' is not registered`)
   return restricted
 }

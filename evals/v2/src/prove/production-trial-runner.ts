@@ -4,7 +4,10 @@ import path from 'node:path'
 
 import { SavantAgentRunner } from '../runners/savant'
 import { TempDirSandbox } from '../sandboxes/tempdir'
-import { behavioralGradePrompt, parseBehavioralGrade } from '../skill-evals/behavioral'
+import {
+  behavioralGradePrompt,
+  parseBehavioralGrade,
+} from '../skill-evals/behavioral'
 import { DeterministicVerifier } from '../verify'
 import { prepareProofArm } from './prepare-proof-arm'
 import { restrictedExecutionAgentDefinitions } from './restricted-execution-agent'
@@ -20,11 +23,19 @@ import type { AgentDefinition } from '@savant-code/sdk'
  */
 export function buildProductionTrialRunner(
   task: TaskDefinition,
-  opts: { projectRoot: string; skillName: string; agentId: string; maxAgentSteps?: number },
+  opts: {
+    projectRoot: string
+    skillName: string
+    agentId: string
+    maxAgentSteps?: number
+  },
   agentDefinitions: AgentDefinition[],
   behavioral: BehavioralCase,
   judge: (prompt: string, signal: AbortSignal) => Promise<string>,
-): (trial: { arm: 'baseline' | 'active'; index: number }) => Promise<TrialRunResult> {
+): (trial: {
+  arm: 'baseline' | 'active'
+  index: number
+}) => Promise<TrialRunResult> {
   return async ({ arm }) => {
     const sandbox = new TempDirSandbox({ prefix: `savant-prove-${arm}-` })
     const runner = new SavantAgentRunner()
@@ -53,7 +64,9 @@ export function buildProductionTrialRunner(
         const resolved = path.resolve(sandbox.getWorkingDir(), file)
         const relative = path.relative(sandbox.getWorkingDir(), resolved)
         if (relative.startsWith('..') || path.isAbsolute(relative))
-          throw new Error(`Behavioral output path escapes proof workspace: ${file}`)
+          throw new Error(
+            `Behavioral output path escapes proof workspace: ${file}`,
+          )
         try {
           finalFiles[file] = await readFile(resolved, 'utf8')
         } catch {

@@ -51,7 +51,11 @@ export function planRecovery(
     return { ...base, go: false, skipReason: 'token budget is not finite' }
   }
   if (budget.remainingTokenBudget < RECOVERY_MIN_REMAINING_TOKENS) {
-    return { ...base, go: false, skipReason: 'fewer than 512 tokens of budget remain' }
+    return {
+      ...base,
+      go: false,
+      skipReason: 'fewer than 512 tokens of budget remain',
+    }
   }
   const remainingMs = RECOVERY_TOTAL_BUDGET_MS - budget.elapsedMs
   const segmentBudgetMs = Math.min(RECOVERY_SEGMENT_BUDGET_MS, remainingMs)

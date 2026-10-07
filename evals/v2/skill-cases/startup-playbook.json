@@ -3,13 +3,26 @@
   "descriptionSha256": "ef17a0ec3aa78f8874b858aff5146db6f233e40189bff37c93b88b388db487c7",
   "trigger": {
     "positive": [
-      { "prompt": "how should a founder use AI leverage to raise ambition without abandoning fundamentals?", "topK": 1 },
-      { "prompt": "help me build evidence-updated conviction for this idea instead of shipping on hype" },
-      { "prompt": "evaluate the power and safety tradeoffs of this growth plan — human agency matters here" }
+      {
+        "prompt": "how should a founder use AI leverage to raise ambition without abandoning fundamentals?",
+        "topK": 1
+      },
+      {
+        "prompt": "help me build evidence-updated conviction for this idea instead of shipping on hype"
+      },
+      {
+        "prompt": "evaluate the power and safety tradeoffs of this growth plan — human agency matters here"
+      }
     ],
     "negative": [
-      { "prompt": "audit this interface for visual issues", "owner": "savant-design" },
-      { "prompt": "bump the version and write the changelog", "owner": "release-workflow" }
+      {
+        "prompt": "audit this interface for visual issues",
+        "owner": "savant-design"
+      },
+      {
+        "prompt": "bump the version and write the changelog",
+        "owner": "release-workflow"
+      }
     ]
   },
   "behavioral": [

@@ -3,12 +3,22 @@
   "descriptionSha256": "7bd4bd3885a9eee154a2644561bd5ba50f0b2c40da6a55eb74a384274227afad",
   "trigger": {
     "positive": [
-      { "prompt": "where does this custom exception fit in the Java exception hierarchy?", "topK": 1 },
-      { "prompt": "import ordering and naming conventions for this Java module" },
-      { "prompt": "java patterns for this builder — checked or unchecked throws?" }
+      {
+        "prompt": "where does this custom exception fit in the Java exception hierarchy?",
+        "topK": 1
+      },
+      {
+        "prompt": "import ordering and naming conventions for this Java module"
+      },
+      {
+        "prompt": "java patterns for this builder — checked or unchecked throws?"
+      }
     ],
     "negative": [
-      { "prompt": "typescript anti-patterns in this react hook", "owner": "coding-typescript" },
+      {
+        "prompt": "typescript anti-patterns in this react hook",
+        "owner": "coding-typescript"
+      },
       { "prompt": "go error wrapping with percent w", "owner": "coding-go" }
     ]
   },

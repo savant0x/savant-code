@@ -100,10 +100,15 @@ export function classifyFailure(input: unknown): FailureVerdict {
   const code = codeOf(input)
   // A user abort must never be retried: conservative `unknown`.
   if (name === 'AbortError') return verdict('unknown', 'unrecognized')
-  if (name === 'TimeoutError' || code === 'ETIMEDOUT' || code === 'UND_ERR_CONNECT_TIMEOUT')
+  if (
+    name === 'TimeoutError' ||
+    code === 'ETIMEDOUT' ||
+    code === 'UND_ERR_CONNECT_TIMEOUT'
+  )
     return verdict('transient', 'timeout')
   if (NETWORK_CODES.has(code)) return verdict('transient', 'network')
-  if (/timed? ?out/.test(messageOf(input))) return verdict('transient', 'timeout')
+  if (/timed? ?out/.test(messageOf(input)))
+    return verdict('transient', 'timeout')
   return verdict('unknown', 'unrecognized')
 }
 

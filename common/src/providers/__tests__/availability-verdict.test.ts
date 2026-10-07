@@ -6,7 +6,11 @@
  */
 import { describe, expect, test } from 'bun:test'
 
-import { advertisedModelVisible, modelAvailability, recordModelAvailability } from '../availability-state'
+import {
+  advertisedModelVisible,
+  modelAvailability,
+  recordModelAvailability,
+} from '../availability-state'
 import {
   GATEWAY_FAULT_FROM_FAILURE_REASON,
   classifyAvailabilityObservation,
@@ -26,7 +30,11 @@ describe('availability verdicts (FID-2026-1005-008)', () => {
 
   test('a decodeable body with no rejection is routable', () => {
     expect(
-      classifyAvailabilityObservation({ httpStatus: 200, bodyDecoded: true, observedAt: 1 }),
+      classifyAvailabilityObservation({
+        httpStatus: 200,
+        bodyDecoded: true,
+        observedAt: 1,
+      }),
     ).toEqual({ class: 'routable', observedAt: 1 })
   })
 
@@ -87,12 +95,24 @@ describe('availability verdicts (FID-2026-1005-008)', () => {
   test('recorded faults retain reachability while an explicit refusal hides until success', () => {
     const provider = 'availability-test-provider'
     const model = 'availability-test-model'
-    recordModelAvailability(provider, model, { class: 'declared-not-routed', reason: 'model_not_found', observedAt: 1 })
+    recordModelAvailability(provider, model, {
+      class: 'declared-not-routed',
+      reason: 'model_not_found',
+      observedAt: 1,
+    })
     expect(advertisedModelVisible(provider, model)).toBe(false)
-    expect(modelAvailability(provider, model)).toMatchObject({ reason: 'model_not_found' })
-    recordModelAvailability(provider, model, { class: 'gateway-fault', kind: 'parse' })
+    expect(modelAvailability(provider, model)).toMatchObject({
+      reason: 'model_not_found',
+    })
+    recordModelAvailability(provider, model, {
+      class: 'gateway-fault',
+      kind: 'parse',
+    })
     expect(advertisedModelVisible(provider, model)).toBe(false)
-    recordModelAvailability(provider, model, { class: 'routable', observedAt: 2 })
+    recordModelAvailability(provider, model, {
+      class: 'routable',
+      observedAt: 2,
+    })
     expect(advertisedModelVisible(provider, model)).toBe(true)
   })
 

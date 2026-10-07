@@ -69,7 +69,8 @@ export async function* runTurnWithRecovery<C, R>(
     let next = await stream.next()
     while (!next.done) {
       params.observeChunk(turn, next.value)
-      if ((next.value as { type?: unknown }).type === 'error') sawErrorFrame = true
+      if ((next.value as { type?: unknown }).type === 'error')
+        sawErrorFrame = true
       yield next.value
       next = await stream.next()
     }
@@ -81,7 +82,8 @@ export async function* runTurnWithRecovery<C, R>(
   }
 
   const outcome = classifyStreamOutcome(turn, close)
-  const budget = typeof params.budget === 'function' ? params.budget(turn) : params.budget
+  const budget =
+    typeof params.budget === 'function' ? params.budget(turn) : params.budget
   const plan = planRecovery(turn.reasoning, budget)
   const recoverable =
     outcome === 'reasoning-only-truncation' &&

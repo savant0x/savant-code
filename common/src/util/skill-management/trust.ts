@@ -83,7 +83,11 @@ export function rollbackDraft(params: {
 export function trustSkill(
   rootDir: string,
   name: string,
-  context: { sessionId?: string; reason?: string; triggerCasesDir?: string } = {},
+  context: {
+    sessionId?: string
+    reason?: string
+    triggerCasesDir?: string
+  } = {},
 ): SkillManageResult {
   if (!isValidSkillName(name))
     return { ok: false, error: `invalid skill name: ${name}` }
@@ -91,18 +95,32 @@ export function trustSkill(
   const draft = readSkillFile(draftDir)
   if (!draft) return { ok: false, error: `no quarantined draft '${name}'` }
   if (context.triggerCasesDir !== undefined) {
-    const frontmatter = SkillFrontmatterSchema.safeParse(matter(draft.content).data)
-    if (!frontmatter.success) return { ok: false, error: `skill frontmatter invalid for '${name}'` }
+    const frontmatter = SkillFrontmatterSchema.safeParse(
+      matter(draft.content).data,
+    )
+    if (!frontmatter.success)
+      return { ok: false, error: `skill frontmatter invalid for '${name}'` }
     const caseFile = path.join(context.triggerCasesDir, `${name}.json`)
     let raw: unknown
     try {
       raw = JSON.parse(fs.readFileSync(caseFile, 'utf8'))
     } catch {
-      return { ok: false, error: `trigger cases missing or unreadable for '${name}': ${caseFile}` }
+      return {
+        ok: false,
+        error: `trigger cases missing or unreadable for '${name}': ${caseFile}`,
+      }
     }
     const cases = skillCaseSchema.safeParse(raw)
-    if (!cases.success || cases.data.skillName !== name || cases.data.descriptionSha256 !== descriptionSha256(frontmatter.data.description)) {
-      return { ok: false, error: `trigger cases invalid for '${name}': require matching skillName and description hash, at least 3 positive and 2 negative prompts` }
+    if (
+      !cases.success ||
+      cases.data.skillName !== name ||
+      cases.data.descriptionSha256 !==
+        descriptionSha256(frontmatter.data.description)
+    ) {
+      return {
+        ok: false,
+        error: `trigger cases invalid for '${name}': require matching skillName and description hash, at least 3 positive and 2 negative prompts`,
+      }
     }
   }
   const liveDir = skillCanonicalDir(rootDir, name)

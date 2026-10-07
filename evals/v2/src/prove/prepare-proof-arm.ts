@@ -22,18 +22,33 @@ export async function prepareProofArm(
   const skillsDir = path.join(workingDir, '.proof-skills')
   await mkdir(skillsDir)
   if (arm === 'active') {
-    const quarantined = path.join(opts.projectRoot, '.agents', 'skills', '.quarantine', opts.skillName)
-    const trusted = path.join(opts.projectRoot, '.agents', 'skills', opts.skillName)
-    const source = existsSync(path.join(quarantined, 'SKILL.md')) ? quarantined : trusted
+    const quarantined = path.join(
+      opts.projectRoot,
+      '.agents',
+      'skills',
+      '.quarantine',
+      opts.skillName,
+    )
+    const trusted = path.join(
+      opts.projectRoot,
+      '.agents',
+      'skills',
+      opts.skillName,
+    )
+    const source = existsSync(path.join(quarantined, 'SKILL.md'))
+      ? quarantined
+      : trusted
     if (!existsSync(path.join(source, 'SKILL.md')))
       throw new Error(`No skill source for '${opts.skillName}'`)
     await cp(source, path.join(skillsDir, opts.skillName), { recursive: true })
   }
   if (task.environment.setup_files?.length) {
-    if (!task.task_dir) throw new Error(`Task '${task.task_id}' has setup_files but no task_dir`)
+    if (!task.task_dir)
+      throw new Error(`Task '${task.task_id}' has setup_files but no task_dir`)
     const taskDir = path.resolve(task.task_dir)
     for (const file of task.environment.setup_files) {
-      if (path.isAbsolute(file)) throw new Error(`setup_files entry is absolute: ${file}`)
+      if (path.isAbsolute(file))
+        throw new Error(`setup_files entry is absolute: ${file}`)
       const source = path.resolve(taskDir, file)
       const relative = path.relative(taskDir, source)
       if (relative.startsWith('..') || path.isAbsolute(relative))
@@ -48,7 +63,8 @@ export async function prepareProofArm(
       shell: true,
       timeout: task.validation.timeout_seconds * 1000,
     })
-    if (setup.exitCode !== 0) throw new Error(`Task setup failed: exit ${setup.exitCode}`)
+    if (setup.exitCode !== 0)
+      throw new Error(`Task setup failed: exit ${setup.exitCode}`)
   }
   return skillsDir
 }

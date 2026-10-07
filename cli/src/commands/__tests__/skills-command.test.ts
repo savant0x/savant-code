@@ -41,14 +41,21 @@ function seedDraft(root: string, name: string): void {
   expect(result.ok).toBe(true)
   const casesDir = path.join(root, 'evals', 'v2', 'skill-cases')
   fs.mkdirSync(casesDir, { recursive: true })
-  fs.writeFileSync(path.join(casesDir, `${name}.json`), JSON.stringify({
-    skillName: name,
-    descriptionSha256: descriptionSha256('A seeded draft skill'),
-    trigger: {
-      positive: [{ prompt: 'first' }, { prompt: 'second' }, { prompt: 'third' }],
-      negative: [{ prompt: 'fourth' }, { prompt: 'fifth' }],
-    },
-  }))
+  fs.writeFileSync(
+    path.join(casesDir, `${name}.json`),
+    JSON.stringify({
+      skillName: name,
+      descriptionSha256: descriptionSha256('A seeded draft skill'),
+      trigger: {
+        positive: [
+          { prompt: 'first' },
+          { prompt: 'second' },
+          { prompt: 'third' },
+        ],
+        negative: [{ prompt: 'fourth' }, { prompt: 'fifth' }],
+      },
+    }),
+  )
 }
 
 describe('/skills command (FID-2026-0824-012 S0-A/B, S2-E)', () => {
@@ -116,41 +123,90 @@ describe('/skills command (FID-2026-0824-012 S0-A/B, S2-E)', () => {
   test('trust refuses a draft without complete trigger cases', () => {
     const root = fixtureRoot()
     seedDraft(root, 'missing-cases')
-    fs.rmSync(path.join(root, 'evals', 'v2', 'skill-cases', 'missing-cases.json'))
+    fs.rmSync(
+      path.join(root, 'evals', 'v2', 'skill-cases', 'missing-cases.json'),
+    )
     const refused = runSkillsCommand(root, 'trust missing-cases')
     expect(refused).toContain('trigger cases missing')
-    expect(fs.existsSync(path.join(root, '.agents', 'skills', '.quarantine', 'missing-cases', 'SKILL.md'))).toBe(true)
+    expect(
+      fs.existsSync(
+        path.join(
+          root,
+          '.agents',
+          'skills',
+          '.quarantine',
+          'missing-cases',
+          'SKILL.md',
+        ),
+      ),
+    ).toBe(true)
   })
 
   test('trust refuses trigger cases bound to an older description', () => {
     const root = fixtureRoot()
     seedDraft(root, 'stale-description')
-    const caseFile = path.join(root, 'evals', 'v2', 'skill-cases', 'stale-description.json')
-    const cases = JSON.parse(fs.readFileSync(caseFile, 'utf8')) as Record<string, unknown>
+    const caseFile = path.join(
+      root,
+      'evals',
+      'v2',
+      'skill-cases',
+      'stale-description.json',
+    )
+    const cases = JSON.parse(fs.readFileSync(caseFile, 'utf8')) as Record<
+      string,
+      unknown
+    >
     cases['descriptionSha256'] = 'f'.repeat(64)
     fs.writeFileSync(caseFile, JSON.stringify(cases))
     const refused = runSkillsCommand(root, 'trust stale-description')
     expect(refused).toContain('description hash')
-    expect(fs.existsSync(path.join(root, '.agents', 'skills', '.quarantine', 'stale-description', 'SKILL.md'))).toBe(true)
+    expect(
+      fs.existsSync(
+        path.join(
+          root,
+          '.agents',
+          'skills',
+          '.quarantine',
+          'stale-description',
+          'SKILL.md',
+        ),
+      ),
+    ).toBe(true)
   })
 
   test('reject appends measured before and after scores to the impact ledger', () => {
     const root = fixtureRoot()
-    fs.mkdirSync(path.join(root, '.savant', 'skill-proofs'), { recursive: true })
-    fs.writeFileSync(path.join(root, '.savant', 'skill-proofs', 'declined.json'), JSON.stringify({
-      activation_verified: false,
-      trials: {
-        baseline: [{ index: 0, passed: true }, { index: 1, passed: false }],
-        active: [{ index: 0, passed: false }, { index: 1, passed: false }],
-      },
-    }))
+    fs.mkdirSync(path.join(root, '.savant', 'skill-proofs'), {
+      recursive: true,
+    })
+    fs.writeFileSync(
+      path.join(root, '.savant', 'skill-proofs', 'declined.json'),
+      JSON.stringify({
+        activation_verified: false,
+        trials: {
+          baseline: [
+            { index: 0, passed: true },
+            { index: 1, passed: false },
+          ],
+          active: [
+            { index: 0, passed: false },
+            { index: 1, passed: false },
+          ],
+        },
+      }),
+    )
     const output = runSkillsCommand(root, 'reject declined weaker routing')
     expect(output).toContain('skill-impact ledger')
-    const ledger = fs.readFileSync(path.join(root, 'evals', 'skill-impact.md'), 'utf8')
+    const ledger = fs.readFileSync(
+      path.join(root, 'evals', 'skill-impact.md'),
+      'utf8',
+    )
     expect(ledger).toContain('baseline 1/2; active 0/2')
     expect(ledger).toContain('weaker routing')
     runSkillsCommand(root, 'reject declined weaker routing')
-    expect(fs.readFileSync(path.join(root, 'evals', 'skill-impact.md'), 'utf8')).toBe(ledger)
+    expect(
+      fs.readFileSync(path.join(root, 'evals', 'skill-impact.md'), 'utf8'),
+    ).toBe(ledger)
   })
 
   test('rollback restores a versioned snapshot into the live copy', () => {

@@ -3,13 +3,24 @@
   "descriptionSha256": "7999cef48c57e6fb63bbb15565c603d7574fbe8164ef7b1925f1c3c881963933",
   "trigger": {
     "positive": [
-      { "prompt": "cut the next release — version bump, changelog entry, and the README checklist", "topK": 1 },
+      {
+        "prompt": "cut the next release — version bump, changelog entry, and the README checklist",
+        "topK": 1
+      },
       { "prompt": "what goes in the CHANGELOG for this patch release?" },
-      { "prompt": "release cycle: bump the version and update the changelog and readme" }
+      {
+        "prompt": "release cycle: bump the version and update the changelog and readme"
+      }
     ],
     "negative": [
-      { "prompt": "audit this settings screen for design issues", "owner": "savant-design" },
-      { "prompt": "typescript naming for the version constant", "owner": "coding-typescript" }
+      {
+        "prompt": "audit this settings screen for design issues",
+        "owner": "savant-design"
+      },
+      {
+        "prompt": "typescript naming for the version constant",
+        "owner": "coding-typescript"
+      }
     ]
   },
   "behavioral": [

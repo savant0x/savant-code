@@ -18,19 +18,25 @@ export const negativeCaseSchema = z.object({
   owner: z.string().min(1).optional(),
 })
 
-export const behavioralCaseSchema = z.object({
-  id: z.string().min(1),
-  taskId: z.string().min(1),
-  kind: z.enum(['execution', 'dialogue']).default('execution'),
-  prompt: z.string().min(1),
-  expectedOutput: z.string().min(1),
-  files: z.array(z.string().min(1)).default([]),
-  expectations: z.array(z.string().min(1)).min(1),
-  pressure: z.enum(['time', 'sunk-cost', 'authority']).optional(),
-}).superRefine((value, ctx) => {
-  if (value.kind === 'execution' && value.files.length === 0)
-    ctx.addIssue({ code: 'custom', message: 'execution eval requires fixture files', path: ['files'] })
-})
+export const behavioralCaseSchema = z
+  .object({
+    id: z.string().min(1),
+    taskId: z.string().min(1),
+    kind: z.enum(['execution', 'dialogue']).default('execution'),
+    prompt: z.string().min(1),
+    expectedOutput: z.string().min(1),
+    files: z.array(z.string().min(1)).default([]),
+    expectations: z.array(z.string().min(1)).min(1),
+    pressure: z.enum(['time', 'sunk-cost', 'authority']).optional(),
+  })
+  .superRefine((value, ctx) => {
+    if (value.kind === 'execution' && value.files.length === 0)
+      ctx.addIssue({
+        code: 'custom',
+        message: 'execution eval requires fixture files',
+        path: ['files'],
+      })
+  })
 
 export const skillCaseSchema = z
   .object({
