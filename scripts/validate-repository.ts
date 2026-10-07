@@ -16,6 +16,7 @@ import { auditBunfigTestTimeout } from './audit-bunfig-test-timeout.js'
 import { auditExitCodeMasking } from './audit-exit-codes.js'
 import { auditGateEnvParity } from './audit-gate-env-parity.js'
 import { auditRebrandCorruption } from './audit-rebrand-corruption.js'
+import { collectTestBudgetIssues } from './audit-test-budget-injection.js'
 import { auditVendoredTrees } from './audit-vendored-tree.js'
 import { collectChangelogCoverageIssues } from './changelog-coverage.js'
 import {
@@ -23,6 +24,7 @@ import {
   validateFidVerificationGates,
 } from './fid-gates.js'
 import { validateActiveFidLedger } from './fid-ledger.js'
+import { collectGateDeclarabilityIssues } from './gate-declarability.js'
 import { collectHygieneIssues } from './hygiene.js'
 import {
   validateEmbeddedLearningSource,
@@ -196,10 +198,6 @@ const exitCodeMaskingIssues = auditExitCodeMasking(root).map((issue) => ({
   message: `${issue.file}:${issue.line}: ${issue.message}`,
 }))
 
-// FID-2026-0909-002: refuse the two mechanically-expressible release-gate
-// environment-parity defect classes (bare runtime-name spawns; Bun-only
-// import.meta properties in common/src production) — the v0.0.30 incident
-// class that shipped green through every local gate.
 /**
  * FID-2026-0919-024: no agent-side scope trimming. Fails the repository gate on
  * any prohibited disposition token (`[OUT-OF-SCOPE]`, `[OPEN-OUT-OF-SCOPE]`,
@@ -237,6 +235,7 @@ const changelogCoverageIssues = collectChangelogCoverageIssues(root).map(
   (issue) => ({ code: issue.code, message: issue.message }),
 )
 
+// FID-2026-0909-002: refuse the two release-gate env-parity defect classes (./audit-gate-env-parity).
 const gateEnvParityIssues = auditGateEnvParity(root).map((issue) => ({
   code: 'audit.gate-env-parity',
   message: `${issue.file}:${issue.line}: ${issue.message}`,
@@ -256,6 +255,10 @@ const issues: FidLedgerIssue[] = [
   ...validateMetadata(collectMetadata()),
   ...validateCommandParity(collectParity()),
   ...validateGateContract(repositoryValidationGates(root), root),
+  // Every enforced gate must be expressible as an allowlisted `fid:verify`
+  // declaration, or a FID whose subject is that gate cannot record the check
+  // that proves it (see ./gate-declarability).
+  ...collectGateDeclarabilityIssues(root),
   ...validateActiveFidLedger(root),
   ...validateFidVerificationGates(root),
   ...validateArchivedFidClosures(root),
@@ -278,6 +281,8 @@ const issues: FidLedgerIssue[] = [
   ...changelogCoverageIssues,
   ...vendoredTreeIssues,
   ...bunfigTimeoutIssues,
+  // FID-2026-1006-004 pin-hardening: helpers inject budgets (./audit-test-budget-injection).
+  ...collectTestBudgetIssues(root),
 ]
 
 // FID-2026-0927-003 F3: `severity: 'warning'` findings are REPORTED but do

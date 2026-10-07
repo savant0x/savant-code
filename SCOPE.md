@@ -62,10 +62,17 @@
 
 ## Open items
 
-**Five** items are open — three blocked pending operator input (T119,
-T62-followups, T122), one shelved on an operator ruling (T147), and one
-active implementation record: T155 (the prompt-cache optimization program,
-`FID-2026-1006-005`). T153 and T154 both completed 2026-10-06 — T153's record
+**Eight** items are open — three blocked pending operator input (T119,
+T62-followups, T122), one shelved on an operator ruling (T147), and four
+implementation records: T155 (the prompt-cache optimization program,
+`FID-2026-1006-005`, `fixed` with a stamped receipt; steps 8, 10 and 11 stay
+open on a live endpoint, provider billing, and the locator gap its step-3 audit
+measured), T156 (the agent-runtime suite repair, `FID-2026-1007-001`, closed and
+archived this pass) and T157 (the module-state isolation program,
+`FID-2026-1007-002`, closed and archived this pass), plus T158 (the repository
+gate declarability program, `FID-2026-1007-003`, registered and verified this
+pass).
+T153 and T154 both completed 2026-10-06 — T153's record
 is closed and archived, its implementation landed as local commit `ba38c548`,
 and T154's gate fix landed in the same pass; both boxes below are checked. (T149, the
 deep pi review, completed
@@ -674,9 +681,14 @@ T90-F3 was resolved by the operator ruling "T90-F3 residual needs no code"
 - [ ] **T155. Prompt-cache optimization program (`FID-2026-1006-005`).**
       **Automation level: 3.** Registered 2026-10-06 on the operator's
       directive that the cache research document needed its own record. The
-      record is `converged` — the Perfection Loop is complete and was
-      independently adjudicated — and it folds in the T154 gate fix rather than
-      losing it. Reconciliation findings against the shipped tree: two of the
+      record is `fixed` — the Perfection Loop is complete, was independently
+      adjudicated, and its Phase 1 (steps 5-6) landed 2026-10-07: the
+      model-facing tool payload is canonical at its single assembly seam behind
+      the `CANONICAL_TOOL_PAYLOAD` rollback flag, and `normalizeForJson` /
+      `stableHash` are order-canonical in both twins, so `toolsHash` moves only
+      when the tool set really changes (measured before/after in the record's
+      Loop 4) — and it folds in the T154 gate fix rather than losing it.
+      Reconciliation findings against the shipped tree: two of the
       report's three phases are substantially already implemented
       (`evidence/spill.ts`, `util/simplify-tool-results.ts`,
       `common/src/util/messages/cache-control.ts`); genuinely absent are a
@@ -689,10 +701,99 @@ T90-F3 was resolved by the operator ruling "T90-F3 residual needs no code"
       cache-control seam instead (the trim path deletes camelCase
       `cacheControl` while production writes snake_case `cache_control`, against
       different provider sets, under a comment describing re-tagging nobody
-      implemented). **Blocker:** steps 3-10 are unstarted and sit behind
-      operator approval points — the mode-to-TTL spend policy, the report's two
-      proposed ECHO amendments, and live-endpoint certification for the two pins
-      that cannot be observed in this environment.
+      implemented). **Operator ruling 2026-10-07 — the approval points are cleared.** Verbatim:
+      "approve, grant automation level 3". That approves the two gates this
+      sentence named — the mode-to-TTL spend policy (5m for Hybrid, 1h for
+      FID-bound) and the report's two proposed ECHO amendments — and supplies
+      the G2 commit authority the register was waiting on, so steps 3, 4 and
+      7-10 are actioned in this pass. **Not cleared by it** (stated, not
+      assumed): the pins that exist only on the live wire (P5's TTL payload,
+      P6's `tool_addition`/`tool_removal`) and step 10's hit-ratio claim still
+      need a real endpoint and provider billing — the repo holds no
+      `debug/cache-debug/` corpus to read a historical ratio from.
+
+- [ ] **T156. Agent-runtime suite repair — breaker-leak isolation and three
+      behaviour corrections (`FID-2026-1007-001`).** **Automation level: 3.**
+      Registered 2026-10-07 with the record, in the same pass that verified the
+      work. The suite was red with 76 failures spread across four unrelated
+      families (`run-agent-step`, `web_search`, `read-docs`, hook-event), and
+      all 76 shared ONE cause: `providerBreakers`
+      (`packages/agent-runtime/src/provider-boundary/provider-circuit-breaker.ts`)
+      is a process-lifetime `Map` with no reset, `bun test` runs every file in
+      one process, and the shared fixtures reuse the literal
+      `clientSessionId: 'test-session'` — so three transient failures in one
+      suite (`PROVIDER_BREAKER_MAX_FAILURES = 3`) left the circuit OPEN on the
+      key `legacy:test-session` for the rest of the run (30-minute cooldown
+      base). A second registry of the same class (`DEFAULT_SEEN_SHAPES` in
+      `classified-stream-retry.ts`) was the last order-dependent failure. Fixed
+      at the test boundary rather than in the production contract: two exported
+      resets called from a `bunfig.toml` preload, plus a dedicated isolation
+      pin. Removing that noise then unmasked **three production behaviour
+      defects**, each repaired and pinned in the same record — `isAbortError`
+      now reads through the `cause` chain, the loop's fallback message reports
+      the innermost error instead of the wrapper's label, and the newer
+      stale-cycle guard is carved out for autonomous runs as the
+      operator-mandated AUTONOMY CARVE-OUT requires. **Operator ruling 2026-10-07:** verbatim
+      "approve, grant automation level 3" — G2 granted, so this record closes
+      and archives with its path-scoped commit in this pass. No blocker remains.
+
+- [ ] **T157. Module-scope state is shared by every Bun test file
+      (`FID-2026-1007-002`).** **Automation level: 3.** Registered 2026-10-07
+      with the record, in the same pass that verified the work — the
+      class-level answer to T156's instance. `bun test` loads every file of a
+      workspace into ONE process, so a module-scope `Map`/`Set`/array/`let`
+      that accumulates is state every suite inherits and a suite's verdict
+      depends on file order. A new mechanical audit
+      (`scripts/audit-module-state.ts` + `scripts/module-state-check.ts`)
+      enumerated the class: **144 bindings across 98 files** had no way back to
+      their start state, and **six workspaces had no test preload at all**
+      (Bun does not walk up for `[test] preload` — measured). All 144 are cured
+      (96 new `reset*`/`clear*` seams, 9 weak-container declaration flips, no
+      reset performing I/O) and **180 of the 187 resettable bindings are wired
+      into a preload**; the remaining 7 in three modules carry recorded reasons
+      the audit enforces in both directions (two are program tooling a preload
+      must never import, one is a theme store whose reset breaks 122 component
+      tests that today depend on the leak — that wiring is the named open
+      remainder inside the record, not a silently dropped item). Ten preload
+      surfaces were created or extended. Wiring exposed two real regressions,
+      both fixed at the boundary the failure named: an in-memory database's
+      connection IS the database, so the connection/statement caches reset at
+      the FILE boundary (`afterAll`) rather than per case. **Operator ruling
+      2026-10-07:** verbatim "approve, grant automation level 3" — G2 granted.
+      The one named remainder (the theme store) is closed in this pass rather
+      than carried: the CLI preload resets *and* re-initializes the store per
+      case, so a case starts from an initialized default instead of inheriting
+      whatever an earlier file left behind, and the audit's reach report moves
+      to 181 of 187 wired.
+
+- [ ] **T158. Every repository gate must be declarable on a FID
+      (`FID-2026-1007-003`).** **Automation level: 3.** Registered 2026-10-07 in
+      the pass that verified the work — it was found in the tree as an
+      unregistered workstream and is registered rather than left unowned. The FID
+      gate executor admits four shapes only (`typecheck <workspace>`,
+      `test <path>`, `probe <path>`, `quality`), so a gate that is a binary
+      (`eslint`, `prettier`), a package-manager invocation
+      (`bun install --frozen-lockfile`), a build, or a script that only checks
+      under a flag had **no declaration in that vocabulary** — and a record whose
+      subject was that gate could not declare the check that proved it. T154 was
+      the worked example: `lint:md` was un-recordable until
+      `scripts/lint-md-check.ts` existed. Two mechanisms close the class: a shared
+      probe body (`scripts/probe-runner.ts` — argv arrays only, spawned through
+      `process.execPath`, env INHERITED so a probe behaves identically under
+      `fid:verify` and by hand) with 16 repository gates now expressed as thin
+      probes, and a wired audit (`scripts/gate-declarability.ts` +
+      `scripts/gate-declarability-registry.ts`) that fails `validate:repository`
+      when a contract gate has no audited entry, when a declaration is rejected by
+      the REAL allowlist (`resolveGate`, so "expressible" means the executor
+      agrees), or when a gate is left undeclarable with no stated and permitted
+      reason — only `repository-validation` (C3 recursion) and `credential-scan`
+      (scoped to a pushed commit range) are permitted, each with its structural
+      reason recorded. The same pass adds
+      `scripts/audit-test-budget-injection.ts`, the pin-hardening follow-on from
+      FID-2026-1006-004: no test helper may call a budgeted function without
+      injecting a budget. **Verified here, not asserted:** 19 unit tests pass,
+      `bun run scripts/scripts-typecheck-check.ts` exit 0, `validate:repository`
+      clean.
 
 - [ ] **T122. Savant-free feature disposition (operator-owned).** Operator
       ruling 2026-10-03, verbatim: "i think it might be smarter to leave
@@ -806,6 +907,29 @@ operator-directed session. **Automation level: 1** (no agent action;
   `package.json`, `scripts/provider-docs-counts-drift.ts`,
   `cli/src/utils/free-options-types.ts`, `cli/src/utils/free-options.ts`,
   `cli/src/utils/free-options-render.ts`, `cli/src/utils/__tests__/free-options.test.ts`
+- T155: `dev/fids/**`, `dev/session-summaries/2026-10-07-*.md`,
+  `CHANGELOG.md`, `SCOPE.md`, `ECHO.md`,
+  `common/src/constants/protocol-bundle.generated.ts`, `common/src/util/**`,
+  `packages/agent-runtime/src/util/**`,
+  `packages/agent-runtime/src/context-compactor.ts`,
+  `packages/agent-runtime/src/evidence/**`,
+  `packages/agent-runtime/src/find-files/**`,
+  `packages/agent-runtime/src/run-agent-step/**`,
+  `packages/agent-runtime/src/tools/**`,
+  `packages/agent-runtime/src/__tests__/**`, `sdk/src/impl/llm/**`,
+  `scripts/lint-md-check.ts`, `scripts/protocol-copies/**`, `docs/design/**`
 - T153: `dev/fids/**`, `packages/agent-runtime/src/echo/**`,
   `common/src/types/session-state-records.ts`,
   `dev/session-summaries/2026-10-06-*.md`
+- T156: `dev/fids/**`, `dev/LEARNINGS.md`, `packages/agent-runtime/**`,
+  `common/src/util/**`
+- T157: `dev/fids/**`, `dev/LEARNINGS.md`, `scripts/audit-module-state.ts`,
+  `scripts/module-state-*.ts`, `scripts/module-state-check.ts`,
+  `scripts/__tests__/module-state-audit.test.ts`, `cli/**`, `common/**`,
+  `desktop/**`, `sdk/**`, `evals/**`, `packages/**`
+- T158: `dev/fids/**`, `dev/session-summaries/2026-10-07-*.md`, `SCOPE.md`,
+  `CHANGELOG.md`, `scripts/validate-repository.ts`, `scripts/probe-runner.ts`,
+  `scripts/*-check.ts`, `scripts/gate-declarability.ts`,
+  `scripts/gate-declarability-registry.ts`,
+  `scripts/audit-test-budget-injection.ts`, `scripts/test-budget-*.ts`,
+  `scripts/__tests__/**`
