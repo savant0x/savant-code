@@ -67,9 +67,8 @@ T62-followups, T122), one shelved on an operator ruling (T147), and two awaiting
 work: T155 (the prompt-cache optimization program, `FID-2026-1006-005`, `fixed`
 with a stamped receipt; steps 8, 10 and 11 stay open on a live endpoint, provider
 billing, and the locator gap its step-3 audit measured) and T159 (the lossless
-tool-output retention design, `FID-2026-1007-004`, `converged` — the Perfection
-Loop ran, no code is written, and implementation waits on the operator's
-go-ahead). **T156, T157 and T158 completed in this pass** (`FID-2026-1007-001`,
+tool-output retention, `FID-2026-1007-004`, `fixed` — steps 1-2 of 7 landed as
+`e9322b38`, and steps 3-7 are open). **T156, T157 and T158 completed in this pass** (`FID-2026-1007-001`,
 `-002` and `-003`: all three closed and archived with their path-scoped commits);
 their boxes below are checked, and their record is the CHANGELOG, the archived
 FID, and the session summary.
@@ -816,12 +815,15 @@ T90-F3 was resolved by the operator ruling "T90-F3 residual needs no code"
       transforms receive only the value), readable only by `requiresRawEvidence`
       roles (Verifier and Adversary), spliceable only over a `[compacted]` sentinel
       the trim pass never writes, silently ceilinged (512 KiB/record, 8 MiB/file) at
-      a `void` call site that discards the verdict, and unredacted. The record is
-      `converged`: the Perfection Loop ran and the RED measurement is reproducible
-      (`dev/scratchpad/active/step3-truncation-audit.ts`, five shapes across five
-      paths), but **no code is written** — implementation waits on the operator's
-      go-ahead per Law 2. **Blocker:** none; this item is ready to implement on
-      approval.
+      a `void` call site that discards the verdict, and unredacted. **Implemented so
+      far:** steps 1-2 of 7 landed 2026-10-07 in commit `e9322b38` — `retainOriginal`
+      returns a handle or a named refusal, and the verdict travels from the tool-result
+      boundary to the synchronous transforms through an in-process registry whose reset
+      is wired into the workspace preload (module-state 183 of 188, up from 182 of
+      187). **Steps 3-7 are open**, and the honest reading of that commit is
+      infrastructure, not repair: nothing consumes the verdict yet, so no discard
+      behaviour has changed and the marker still advertises a location it cannot
+      compute. **Blocker:** none; the remaining steps are ready to implement.
 
 - [ ] **T122. Savant-free feature disposition (operator-owned).** Operator
       ruling 2026-10-03, verbatim: "i think it might be smarter to leave
