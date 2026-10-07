@@ -1,5 +1,44 @@
 # LEARNINGS
 
+## Lesson: A suite can be passing because of the defect it is named after
+
+- **Date:** 2026-10-07
+- **Failure:** The heaviest evidence in this loop was not a new failing test but an
+  old one going red. `util/__tests__/messages-trim.test.ts` was passing **partly
+  because of the defect it exists to prevent**: its terminal fixtures were bare JSON
+  strings, a shape `run_terminal_command`'s output schema cannot produce, so the old
+  transform threw into its lossy fallback (`{ command: '',
+  stdoutOmittedForLength: true }`), collapsing a ~2,018-character result to roughly
+  40 characters — and that silent destruction was what satisfied the suite's own
+  token-budget assertion (`finalTokens < maxTotalTokens * 0.5`). A transform
+  changed to refuse a shape it cannot faithfully represent turned that assertion
+  red, and the two candidate repairs were not equivalent: rewriting the assertion to
+  match the new code hides the defect again, while repairing the fixture to the shape
+  the real tool emits — and registering the retention handles the precondition now
+  requires — keeps the assertion and turns a decorative test into evidence.
+- **Evidence:** packages/agent-runtime/src/util/simplify-tool-results.ts → symbol:simplifyTerminalCommandResults,
+  packages/agent-runtime/src/util/messages/trimming.ts → symbol:ledgerTrimPass,
+  packages/agent-runtime/src/util/__tests__/messages-trim.test.ts → test:handles all features working together correctly
+- **Invariant:** A passing suite is a claim about the CODE **and** the FIXTURES. When a
+  fixture cannot be produced by the tool it stands for, the test measures the
+  transform's error path instead of its real one — and an error path that returns a
+  conveniently tiny result will keep a token/size assertion green no matter what the
+  production path does.
+- **Guard:** When a fix turns an existing test red, the first question is not "how do
+  I restore it" but "which of the two was lying"; repair the fixture to the shape the
+  real tool emits and keep the assertion. Pin the precondition the fixture depends on
+  (here: the boundary retained these payloads, so the fixture registers the handles)
+  instead of relying on a transform that used to drop first and never ask.
+- **Verification:** the repaired fixture drives the SHIPPED transforms and asserts the
+  same budget as before (`packages/agent-runtime` 1905 pass / 0 fail across 297
+  files); the refusals it now depends on are pinned by
+  `util/__tests__/simplify-tool-results-omission.test.ts` (9 tests, both legs of the
+  property) and `util/__tests__/messages-trim-inventory.test.ts` (3 tests); all eleven
+  gates declared on FID-2026-1007-004 exit 0 at the stamped receipt.
+- **Scope:** internal
+- **Owning FID:** FID-2026-1007-004
+- **Status:** active
+
 ## Lesson: A gate that cannot be declared cannot be proven
 
 - **Date:** 2026-10-07

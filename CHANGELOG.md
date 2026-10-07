@@ -394,6 +394,51 @@
 
 ### Fixed
 
+- **No path discards model-facing bytes it has not provably stored, and no marker
+  claims a location it cannot compute (FID-2026-1007-004, high; closed 2026-10-07;
+  local commits `e9322b38`, `eb2ee0f3`, `49c7bab4`; register item T159).** Savant
+  discarded tool output in five places and in every one of them told the model the
+  bytes were available somewhere it could not reach.
+  `truncateToolOutputValue`'s marker carried
+  `fullOutput: '[See cache-debug snapshot / rerun the tool for full output]'` — a
+  fixed string naming two *possibilities*, while the cache-debug feature it names is
+  disabled by default — and the other four (`simplifyVerboseToolResults`,
+  `simplifyReadFileResults`, `simplifyTerminalCommandResults`, and the trim pass in
+  `trimMessagesToFitTokenLimit`) dropped the payload with **no locator at all**,
+  the trim pass deleting whole messages and writing no inventory row (the only
+  destructive path accountable to no ledger). The store that could answer all of
+  it — the per-run evidence spill at `.savant/evidence/<runId>.jsonl` — was
+  unreachable from every marker, its read side gated behind `requiresRawEvidence`
+  (Verifier and Adversary only), its splice firing only on a `[compacted]` sentinel
+  the trim pass never produces, its ceilings refused silently, and its raw output
+  persisted unredacted. All seven steps landed: the retention seam returns a handle
+  or a named refusal; the four transforms read the boundary's verdict by
+  `toolCallId` and return the payload **untouched** when there is no handle, so no
+  path can take bytes nobody kept; one `omitted` marker carries
+  `retained: { file, toolCallId, sha256, bytes, redacted }` or the refusal reason,
+  and `fullOutput`'s placeholder is deleted; the trim pass writes a
+  `layer: 'trim'` ledger row naming the `toolCallId`s it deleted; the store resolves
+  for whoever holds the handle (the spawn read gate is scoped by need, not by role),
+  and credentials are redacted **before** hashing and appending, so the stored form
+  is the redacted form — a Law 12 decision stated on the record and the handle,
+  removing bytes only from the store and never from the model's context; and the
+  store shards, so its ceilings are a stated bound that is reported when hit instead
+  of a silent `false` nobody reads. 25 new pins across six files;
+  `packages/agent-runtime` **1905 pass / 0 fail** across 297 files (was 1880 / 294),
+  root `typecheck` exit 0, `eslint . --max-warnings 0` exit 0, `prettier` clean,
+  `module-state-check` PASS (183 of 188), and all **eleven** declared gates exit 0 at
+  the stamped receipt. The quality gate rejected five files this work had grown past
+  the 300-line absolute maximum, and each was split at a real seam with every origin
+  re-exporting what moved, so no caller changed. Two deviations from the record's own
+  plan are recorded rather than smoothed over, and the loop's heaviest finding ran
+  the other way: `util/__tests__/messages-trim.test.ts` was passing **partly because
+  of the defect** — its terminal fixtures were bare JSON strings no
+  `run_terminal_command` schema can produce, so the old transform threw into its
+  lossy fallback and collapsed ~2,018 characters to ~40, which is what satisfied the
+  suite's own token-budget assertion; the fixture was repaired to the real shape (and
+  registers the handles it now requires) and the assertion was kept unchanged. Local
+  commit only: no push and no release.
+
 - **Law 15 baseline capture refused its own baseline on a large repository
   (FID-2026-1006-004, high; closed 2026-10-06; local commit `ba38c548`).** The worktree
   backstop was inert at this repository's size: `captureWorktreeBaseline` content-hashed
