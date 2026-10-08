@@ -93,7 +93,27 @@
       pricing feed — every flagship (gpt-5.6-sol, claude-opus-5-5,
       gemini-3.8-flash, grok-4.7 …) was absent. Swap the catalog source to
       `https://kiosapi.com/api/pricing` (unauthenticated) so the list matches
-      the site. `FID-2026-1008-001`. **Automation level: 2.**
+      the site. `FID-2026-1008-001`.      **Automation level: 2.**
+
+- [ ] **T168. `FID-2026-1008-002` phase 1 — every-boot free-provider launch
+      summary.** The launch digest is gated to once per calendar day
+      (`use-chat-bootstrap.ts`), so a same-day relaunch never shows the
+      free-provider summary. Operator decision 2026-10-08: "Show a launch
+      summary every boot." `FID-2026-1008-002`. **Automation level: 2.**
+
+- [ ] **T169. `FID-2026-1008-002` phase 2 — auto-wire selected free providers.**
+      Selecting a free provider in the UI should update the provider and
+      `/model` lists as a first-class custom provider. Operator decision
+      2026-10-08: "full support". Design review before implementation.
+      `FID-2026-1008-002`. **Automation level: 2.**
+
+- [ ] **T170. `FID-2026-1008-003` — launch announce wired count and offer wording.**
+      The every-boot free-provider summary reported "Wired & free: 2" from the
+      custats-overlap subset and called all 212 feed offers "ending soon". The
+      announce now shows the configured set, relabels the overlap, and drops the
+      unsupported claim. Operator report 2026-10-08. Offer deadline filtering is
+      blocked on an operator ruling about the offer data shape.
+      **Automation level: 2.**
 
 - [ ] **T62-followups (remaining items routed, not blocking `Task 62`
       closure):** (1) is **completed 2026-09-28** — commandcode catalog
@@ -205,6 +225,18 @@
   `cli/src/utils/openrouter-models/kiosapi.ts`,
   `cli/src/utils/__tests__/openrouter-models-gateway*.test.ts`,
   `common/src/constants/context-window-table-kiosapi.ts`
+- T168: `dev/fids/FID-2026-1008-002-free-provider-launch-and-autowire.md`,
+  `cli/src/chat/use-chat-bootstrap.ts`,
+  `cli/src/utils/__tests__/free-options-digest.test.ts`
+- T169: `dev/fids/FID-2026-1008-002-free-provider-launch-and-autowire.md`,
+  `cli/src/commands/provider-subcommands-handlers.ts`,
+  `common/src/providers/custom-providers.ts`,
+  `cli/src/utils/settings/io.ts`
+- T170: `dev/fids/FID-2026-1008-003-launch-announce-wired-and-offers.md`,
+  `cli/src/utils/free-options.ts`,
+  `cli/src/utils/free-options-render.ts`,
+  `cli/src/utils/free-options-types.ts`,
+  `cli/src/utils/__tests__/free-options.test.ts`
 - T62-followups: `dev/scratchpad/active/t62*.ts` (the catalog itself is
   gateway-side; the local write surface is the probe scripts — verified
   2026-10-02: no local catalog directory exists)

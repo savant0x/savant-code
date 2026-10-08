@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-1008-001-kiosapi-full-square-catalog.md`
 **ID:** FID-2026-1008-001
 **Severity:** medium
-**Status:** created
+**Status:** fixed
 **Created:** 2026-10-08
 **Automation level:** 2
 **YAGNI-Compliance:** Verified
@@ -138,6 +138,15 @@ as selecting any model the account cannot call today.
 - gate: typecheck cli
 - gate: quality
 
+### Verification Receipt
+
+- fingerprint: sha256:adae74c72f64257ab49d8fe33692a63b3dabb72f0676632b60fc1a1ee50cefc9
+- verified: 2026-10-08T15:52:14.818Z
+- test cli/src/utils/__tests__/openrouter-models-gateway.test.ts: exit 0
+- test cli/src/utils/__tests__/openrouter-models-gateway-providers.test.ts: exit 0
+- typecheck cli: exit 0
+- quality: exit 0
+
 ## Perfection Loop
 
 ### Loop 1 — RED
@@ -171,13 +180,52 @@ as selecting any model the account cannot call today.
   the 300-line cap in `registry-partitioned.ts`; both repaired, re-run PASS
   (`validation: PASS`, `lint:md` exit 0).
 
+### Loop 2 — RED re-check and GREEN revision (2026-10-08)
+
+- **RED re-check, readers:** the kiosapi catalog URL has one reader
+  (`deriveLiveCatalogUrl(PROVIDER_REGISTRY, 'kiosapi')` in
+  `openrouter-models/kiosapi.ts`). The gateway consumers
+  (`gateway-live-results.ts`, `openrouter-models.ts`) call the fetcher and cache
+  accessors only. No other surface reads the old `/v1/models` URL.
+- **RED re-check, window coverage (new finding):** live feed `GET
+  https://kiosapi.com/api/pricing` = 80 ids; fallback table
+  `KIOSAPI_CONTEXT_WINDOW_FALLBACKS` = 69 rows; **18 feed ids have no row**
+  (probe, read-only, 2026-10-08). Eight are documented as deliberate defaults in
+  the table header (`fledge-alpha`, `big-pickle`, `kilo-auto`,
+  `longcat-2.5-preview`, `gpt-image-2`, `gpt-image-2.5`, `gpt-image-2.5-flare`,
+  `gpt-image-2.5-sunburst`). Ten are **undocumented**:
+  `grok-imagine-image`, `grok-imagine-image-edit`,
+  `grok-imagine-image-quality`, `grok-imagine-image-2.0` (image models),
+  `llama-3.2-11b-vision-instruct`, `gpt-oss-20b`,
+  `claude-haiku-4-5-20251001`, `deepseek-v4-pro-0813`, `codex-auto-review`,
+  `openrouter/free` (router).
+- **GREEN decision:** a row is added only from a verified published window.
+  Unverified ids keep the 200k default and are documented in the table header
+  by name. Public sources (search, 2026-10-08) report a 1M-token window for
+  DeepSeek V4 Pro, but none confirms it for the KiosAPI id `deepseek-v4-pro-0813`,
+  so no row is added for it yet.
+- **Blocker (open, not dropped):** verified windows for `claude-haiku-4-5-20251001`,
+  `gpt-oss-20b`, `llama-3.2-11b-vision-instruct`, `deepseek-v4-pro-0813`,
+  `codex-auto-review`. Blocker: vendor-published window values per id; the
+  search above does not supply them. Image models and the `openrouter/free`
+  router have no single window and stay on the default.
+
 ### Resolution
 
-- **Closed Date:** pending
-- **Fix Description:** pending
-- **Tests Added:** pending
-- **Verification Evidence:** pending
-- **Archived:** pending
+- **Closed Date:** not closed. Closure needs a commit hash and operator
+  authorization for the closing commit.
+- **Status:** fixed. The catalog source change is committed (`4e1ab59b`). The
+  window-coverage gap below remains open.
+- **Fix Description:** registry catalog URL set to `https://kiosapi.com/api/pricing`;
+  parser reads `data[].model_name` with no auth header for listing.
+- **Tests Added:** parser and no-auth fetcher pins in
+  `openrouter-models-gateway.test.ts` and `openrouter-models-gateway-providers.test.ts`.
+- **Verification Evidence:** `fid:verify` on this FID exits 0 (both gate tests,
+  `typecheck cli`, `quality`). Live probe: 80 rows, all unique, five flagships
+  present. `validate:repository` and `lint:md` pass.
+- **Open item (blocked):** 10 feed ids with no window row (see Loop 2). Blocker:
+  vendor-published window values per id.
+- **Archived:** pending commit authorization.
 
 ## Lessons Learned
 
