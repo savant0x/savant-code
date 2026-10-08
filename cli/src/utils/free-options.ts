@@ -116,6 +116,15 @@ export function buildFreeOptionsReport(
     notWired.sort((a, b) => a.providerId.localeCompare(b.providerId))
   }
 
+  const configuredProviders = Object.values(context.registryByProviderId)
+    .filter(
+      (attribution) =>
+        attribution.credentialReady ??
+        context.wiredEnvVars.has(attribution.envVar),
+    )
+    .map((attribution) => attribution.label)
+    .sort((a, b) => a.localeCompare(b))
+
   return {
     fetchedAt: catalog?.fetchedAt ?? null,
     stale: catalog !== null && !isCacheFresh(catalog.fetchedAt, context.nowMs),
@@ -128,6 +137,7 @@ export function buildFreeOptionsReport(
         }
       : {}),
     quotaReading: { state: 'unknown', source: 'none' },
+    configuredProviders,
     wiredFree,
     notWired,
     localFree: context.localProviders.map((p) => ({ ...p })),

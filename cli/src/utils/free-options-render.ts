@@ -151,6 +151,8 @@ export function renderFreeOptionsAnnounce(
   // `fetchedAt` runtime-undefined (the type says `string | null`, so the
   // `=== null` form would let "catalog fetchedAt undefined" reach the user).
   if (!report.fetchedAt) return []
+  // Free lanes only: a configured provider with no free lane has nothing
+  // free to announce under the "Free AI lanes available" header.
   const total =
     report.wiredFree.length + report.notWired.length + report.localFree.length
   if (total === 0) return []
@@ -158,10 +160,15 @@ export function renderFreeOptionsAnnounce(
   const lines: string[] = [
     `Free AI lanes available${age} — catalog fetchedAt ${report.fetchedAt}:`,
   ]
+  if (report.configuredProviders.length > 0) {
+    lines.push(
+      `- Configured: ${report.configuredProviders.length} provider(s) — ${boundedLabels(report.configuredProviders)}`,
+    )
+  }
   if (report.wiredFree.length > 0) {
     const labels = boundedLabels(report.wiredFree.map((lane) => lane.label))
     lines.push(
-      `- Wired & free: ${report.wiredFree.length} — ${labels} — ${freeClaimCaveat(report)}; ${quotaCaveat(report)}`,
+      `- Free catalog overlap: ${report.wiredFree.length} — ${labels} — ${freeClaimCaveat(report)}; ${quotaCaveat(report)}`,
     )
   }
   if (report.notWired.length > 0) {
@@ -179,7 +186,7 @@ export function renderFreeOptionsAnnounce(
   const offers = report.discoveryOffers ?? []
   if (offers.length > 0) {
     lines.push(
-      `- Offers: ${offers.length} advertised free-token offer(s) ending soon — ${offers.slice(0, 2).join('; ')}`,
+      `- Offers: ${offers.length} advertised free-token offer(s) in the custats feed; eligibility and deadlines unverified — ${offers.slice(0, 2).join('; ')}`,
     )
   }
   if (discovery && (discovery.newCount > 0 || discovery.changedCount > 0)) {

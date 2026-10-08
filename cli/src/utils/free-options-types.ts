@@ -60,6 +60,9 @@ export type FreeOptionsReport = {
   catalogEvidence?: FactEvidence
   /** The best observed account quota state; absent data is unknown. */
   quotaReading?: QuotaStateReading
+  /** Labels of every registry provider with credentials configured
+   *  (FID-2026-1008-003). Labels only; never key values. */
+  configuredProviders: string[]
   wiredFree: Array<FreeLane>
   notWired: Array<FreeLane & { setupCommand: string }>
   localFree: Array<{ id: string; label: string; setupCommand: string }>

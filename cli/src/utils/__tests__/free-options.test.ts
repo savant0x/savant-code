@@ -214,7 +214,11 @@ describe('FID-2026-1001-002: boot announce (cached reader + renderer)', () => {
     )
     const joined = lines.join('\n')
     expect(joined).toContain('Free AI lanes available')
-    expect(joined).toContain('Wired & free')
+    // FID-2026-1008-003: the wired line is the configured set; the overlap line
+    // is the free-catalog subset, relabelled so it cannot pass for the set.
+    expect(joined).toContain('Configured:')
+    expect(joined).toContain('Free catalog overlap')
+    expect(joined).not.toContain('Wired & free')
     expect(joined).toContain('Not wired')
     expect(joined).toContain('Local & free')
     expect(joined).toContain('/provider free')
