@@ -449,6 +449,46 @@
 
 ### Changed
 
+- **Build-order register cleaned; five terminal records archived, four live
+  orders' status corrected against the working tree (2026-10-07).** `dev/build-orders/`
+  held nine records with no index, no stated lifecycle, and no `SCOPE.md`
+  registration, so delivered work was indistinguishable from open work. Five
+  terminal records moved to `dev/build-orders/archive/`: the EHEL
+  verification-state order (resolved, shipped in cruder form and since
+  superseded), the anti-deferral gate order (superseded by archived
+  `FID-2026-0817-005`, whose successor `scope-disposition-guard.ts` ships), the
+  NDJSON Phase B emitter, the gate-chain hardening program (FIDs `-0909-001..003`
+  archived), and the pre-push rewrite (fixture now scans clean). The NDJSON order
+  had claimed `status: planning` and a "child emitter ABSENT" state for work that
+  shipped as five closed FIDs (`2026-0907-003..007`); both were corrected before
+  archiving. Four stay live with status restated against code:
+  `BO-2026-08-23` (Phase 0 + FIDs 1-3 shipped; FID 4's G2 hash audit and G5
+  bundle check unbuilt), `BO-2026-08-24` (0/7), `BO-2026-09-08` (0/7), and the
+  `BO-2026-09-16` Atria handoff (feature shipped; P1's other-dirty Law 3 block
+  and P5's missing `green → complete` FSM edge both still reproducible). A new
+  `dev/build-orders/README.md` states the lifecycle and records that a build
+  order is a proposal, not approved scope. Three references to moved paths were
+  repaired in the same pass — `cli/src/headless-ndjson.ts:4` (comment only, no
+  behavior change) and the `dev/fids/README.md` link — with
+  `scripts/tree-drain-manifest/` updated because the drain tool is fail-closed on
+  unmatched paths: `dev/build-orders` is now covered as a directory (the three
+  exact-path entries were replaced, which also removed the `OVERLAP` the pass
+  itself triggered by broadening coverage while an exact path still existed),
+  and a group was added for the comment repair. The cleanup is recorded as
+  **FID-2026-1007-010** (`verified`, awaiting the G2 commit) — the pass owed
+  this FID and did not write it, having run as a complex change with no record.
+  The four live orders are formalized as tracked FIDs: **-011** (drain-manifest
+  move safety — directory coverage is landed provisionally, the regression test
+  is not written), **-012** (telemetry, 0/7), **-013** (eval-runner model
+  override + usage, 0/7), **-014** (git-workflow FID 4's G2 commit-hash and G5
+  bundle-verified preflight audit), **-015** (Atria handoff friction P1/P5), all
+  registered in `SCOPE.md` as `T164-A`..`T164-F`. Verified:
+  `tree-drain` UNCOVERED PATHS back to its pre-existing baseline of 4 (the
+  operator's untracked docs), `typecheck:scripts` + `cli typecheck` exit 0, eslint
+  `--max-warnings 0` exit 0, `lint:md` exit 0, prettier clean,
+  `validate:repository` PASS, and the register/contract/disposition guard suites
+  green (8 + 25 + 7 pass, 0 fail).
+
 - **Release script owns the README release callout (FID-2026-1003-007-era
   housekeeping, T94 ruling 2026-10-03).** The operator's model is now the
   contract: the CHANGELOG's newest released section is the callout's prose

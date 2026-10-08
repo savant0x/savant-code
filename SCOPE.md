@@ -130,6 +130,44 @@
       operator-directed session. **Automation level: 1** (no agent action;
       the e2e failures are known and operator-owned until then).
 
+### Build orders (formalized as FIDs 2026-10-07)
+
+- [ ] **T164-A. `FID-2026-1007-010` — build-order register cleanup (executed).**
+      The cleanup landed in the working tree; this FID is the record the pass
+      owed and did not write at the time. `FID-2026-1007-010`. **Automation
+      level: 2.** Awaiting the operator's commit (G2) before closure.
+
+- [ ] **T164-B. `FID-2026-1007-011` — tree-drain manifest coverage under a
+      moving directory.** The manifest names exact paths inside
+      `dev/build-orders/`, whose contents move to `archive/`; any move aborts
+      the drain tool with `UNCOVERED PATHS`. Needs a directory-scoped entry
+      plus a regression test — the manifest is a fail-closed contract with no
+      coverage today. `FID-2026-1007-011`. **Automation level: 2.**
+
+- [ ] **T164-C. `FID-2026-1007-012` — model-compliance telemetry (0 of 7).**
+      `BO-2026-08-24`, unstarted since 2026-08-24: no
+      `common/src/types/telemetry.ts`, no `dev/telemetry/`, no
+      `compliance.jsonl`. `FID-2026-1007-012`. **Automation level: 2.**
+
+- [ ] **T164-D. `FID-2026-1007-013` — eval-runner model override + usage
+      telemetry (0 of 7).** `BO-2026-09-08`: `RunnerConfig` carries no `model`
+      or `onUsage`, `TraceMetadata` no usage/model, and `printModeEventSchema`
+      no `usage` member. `FID-2026-1007-013`. **Automation level: 2.**
+
+- [ ] **T164-E. `FID-2026-1007-014` — git-workflow FID 4 remainder (G2 hash
+      audit + G5 bundle verification).** `BO-2026-08-23`: Phase 0 and FIDs
+      1–3 shipped; the pre-release preflight asserts worktree-clean and
+      push-range but never the G2 closed-FID commit-hash audit or the G5
+      latest-bundle-verified check. `FID-2026-1007-014`. **Automation level: 2.**
+
+- [ ] **T164-F. `FID-2026-1007-015` — Atria handoff friction P1 and P5.**
+      `BO-2026-09-16` recorded six harness friction points; P6 is fixed
+      (`enforcement/tool-pipeline.ts:268-279`), P1 and P5 are still
+      reproducible — the other-dirty Law 3 block
+      (`pre-write-gates-law3.ts:188-195`) and the absent `green → complete`
+      FSM edge (`transition-phase.ts:40`). Both are harness-behavior changes,
+      not documentation. `FID-2026-1007-015`. **Automation level: 2.**
+
 ## Machine-readable scope targets
 
 <!-- FID-2026-1001-003 step 5a: per-item write targets for the Law 2 gate
@@ -156,3 +194,17 @@
   `dev/session-summaries/2026-10-06-geaix-excelnt-probe.md`,
   `dev/fids/**` (the integration FID)
 - T122: (no write surface — operator-owned)
+- T164-A: `dev/fids/FID-2026-1007-010-build-order-register-cleanup.md`
+- T164-B: `dev/fids/FID-2026-1007-011-tree-drain-manifest-move-safety.md`,
+  `scripts/tree-drain-manifest/**`,
+  `scripts/tree-drain.ts`,
+  `scripts/__tests__/*drain*`
+- T164-C: `dev/fids/FID-2026-1007-012-model-compliance-telemetry.md`,
+  `dev/build-orders/BO-2026-08-24-model-compliance-telemetry.md`
+- T164-D: `dev/fids/FID-2026-1007-013-eval-runner-model-override-and-usage-telemetry.md`,
+  `dev/build-orders/BO-2026-09-08-eval-runner-model-override-and-usage-telemetry.md`
+- T164-E: `dev/fids/FID-2026-1007-014-release-preflight-g2-g5-audit.md`,
+  `dev/build-orders/BO-2026-08-23-git-workflow-enforcement.md`,
+  `scripts/public-release/pre-audit*.ts`
+- T164-F: `dev/fids/FID-2026-1007-015-atria-harness-friction-p1-p5.md`,
+  `dev/build-orders/BO-2026-09-16-atria-friction.md`
