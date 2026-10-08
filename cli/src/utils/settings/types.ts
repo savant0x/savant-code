@@ -70,9 +70,6 @@ export interface Settings {
    *  (FID-2026-1001-002). The one-line first-run notice only prints to users
    *  who have never seen it, then retires. */
   freeOptionsNoticeShown?: boolean
-  /** Local calendar date (YYYY-MM-DD) the free-provider launch digest was
-   *  last shown (FID-2026-1004-007). Gates the once-per-day boot digest. */
-  freeOptionsDigestShownOn?: string
   /** Active design-system IDs by scope; invalid values fail closed at resolution. */
   designSystemProject?: string
   designSystemUser?: string

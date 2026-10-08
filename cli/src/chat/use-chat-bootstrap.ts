@@ -26,10 +26,6 @@ import {
   getMissingProviderSetup,
   getProviderSetupGuidance,
 } from '../utils/provider-setup'
-import {
-  loadFreeOptionsDigestShownOn,
-  markFreeOptionsDigestShown,
-} from '../utils/settings'
 
 import type { ChatMessage } from '../types/chat'
 import type { AgentMode } from '../utils/constants'
@@ -89,7 +85,8 @@ export function useChatBootstrap(args: UseChatBootstrapArgs): void {
       // Fail-silent (MQ5): announce failures never break the TUI.
     }
   }, [args.setMessages])
-  // Once-per-day free-provider launch digest (FID-2026-1004-007): rewires the
+  // Free-provider launch digest, shown every boot (FID-2026-1004-007; boot
+  // cadence per FID-2026-1008-002): rewires the
   // orphaned renderFreeOptionsAnnounce and folds in the expiring offers plus
   // the discovery delta. Repo-gated only for the discovery leg; free-build
   // exempt; fail-silent. NEW discovery candidates are also routed into the
@@ -105,9 +102,9 @@ export function useChatBootstrap(args: UseChatBootstrapArgs): void {
       if (IS_SAVANT_FREE) return
       const repoRoot = tryGetProjectRoot()
       const discovery = repoRoot ? readDiscoveryCounts(repoRoot) : null
-      // Inbox routing runs on EVERY boot — deliberately OUTSIDE the
-      // once-per-day digest gate, so a candidate discovered after the day's
-      // first boot still reaches /notifications. The coordinator dedupes by
+      // Inbox routing runs on EVERY boot — deliberately OUTSIDE the digest
+      // render path, so a candidate discovered after the day's first boot
+      // still reaches /notifications. The coordinator dedupes by
       // fact value, so repeat boots are idempotent.
       if (discovery && discovery.newHosts.length > 0)
         observeDiscoveryCandidates(discovery)
@@ -124,9 +121,6 @@ export function useChatBootstrap(args: UseChatBootstrapArgs): void {
             observe: observeDiscoveryCandidates,
           },
         )
-      const now = new Date()
-      const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
-      if (loadFreeOptionsDigestShownOn() === today) return
       const lines = renderFreeOptionsDigest(
         readCachedFreeOptionsReport(),
         discovery
@@ -138,7 +132,6 @@ export function useChatBootstrap(args: UseChatBootstrapArgs): void {
       )
       if (lines.length === 0) return
       args.setMessages((prev) => [...prev, getSystemMessage(lines.join('\n'))])
-      markFreeOptionsDigestShown(today)
     } catch {
       // Fail-silent (FID-2026-1004-007): the digest never breaks the TUI.
     }
