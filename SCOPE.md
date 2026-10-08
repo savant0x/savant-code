@@ -107,19 +107,12 @@
       2026-10-08: "full support". Design review before implementation.
       `FID-2026-1008-002`. **Automation level: 2.**
 
-- [ ] **T170. `FID-2026-1008-003` — launch announce wired count and offer wording.**
-      The every-boot free-provider summary reported "Wired & free: 2" from the
-      custats-overlap subset and called all 212 feed offers "ending soon". The
-      announce now shows the configured set, relabels the overlap, and drops the
-      unsupported claim. Operator report 2026-10-08. Offer deadline filtering is
-      blocked on an operator ruling about the offer data shape.
-      **Automation level: 2.**
-
 - [ ] **T171. `FID-2026-1008-004` — free-provider follow-ups.** A: boot-path
       decision extracted to `runLaunchDigest` and pinned. B: offers ending within
       72h counted and printed (applied). C: auto-wire of selected free providers is
-      **blocked pending operator ruling** between registry-only and
-      harvested-candidate wiring (FID section "C"). **Automation level: 2.**
+      **blocked pending operator ruling** — operator directed a harvested-candidate
+      design draft 2026-10-08 (option 2 of FID section "C"); design presented,
+      implementation gated on the ruling. **Automation level: 2.**
 
 - [ ] **T172. `FID-2026-1008-005` — /model stale-while-revalidate, gauntlet docs,
       registry-only auto-wire.** (1) `/model` opens from the cache and refreshes
@@ -193,9 +186,12 @@
       `compliance.jsonl`. `FID-2026-1007-012`. **Automation level: 2.**
 
 - [ ] **T164-D. `FID-2026-1007-013` — eval-runner model override + usage
-      telemetry (0 of 7).** `BO-2026-09-08`: `RunnerConfig` carries no `model`
-      or `onUsage`, `TraceMetadata` no usage/model, and `printModeEventSchema`
-      no `usage` member. `FID-2026-1007-013`. **Automation level: 2.**
+      telemetry (stage 1-2 of 7; wire stage open).** `--model` override, inline
+      clone, run-usage fold + tree-summed `TraceMetadata.usage`/`model`, CLI
+      flag — implemented and gate-verified (receipt 5/5, commit `8ead0378`).
+      Open: the print-mode `usage` wire member + host-facing `onUsage`
+      callback, gated on a NAMED consumer outside the eval harness.
+      `FID-2026-1007-013`. **Automation level: 2.**
 
 - [ ] **T164-E. `FID-2026-1007-014` — git-workflow FID 4 remainder (G2 hash
       audit + G5 bundle verification).** `BO-2026-08-23`: Phase 0 and FIDs
@@ -203,13 +199,16 @@
       push-range but never the G2 closed-FID commit-hash audit or the G5
       latest-bundle-verified check. `FID-2026-1007-014`. **Automation level: 2.**
 
-- [ ] **T164-F. `FID-2026-1007-015` — Atria handoff friction P1 and P5.**
-      `BO-2026-09-16` recorded six harness friction points; P6 is fixed
-      (`enforcement/tool-pipeline.ts:268-279`), P1 and P5 are still
-      reproducible — the other-dirty Law 3 block
-      (`pre-write-gates-law3.ts:188-195`) and the absent `green → complete`
-      FSM edge (`transition-phase.ts:40`). Both are harness-behavior changes,
-      not documentation. `FID-2026-1007-015`. **Automation level: 2.**
+- [ ] **T164-F. `FID-2026-1007-015` — Atria handoff friction P1 and P5 —
+      RULED AND IMPLEMENTED 2026-10-08.** P1: operator ruling verbatim "verify
+      once seems optimal" — the Law 3 other-dirty branch is advisory in the
+      `green` phase (batch-verify-once; target-dirty still blocks everywhere;
+      turn-end Law 15 unchanged; non-green phases keep the hard block). P5:
+      approved — the `green → complete` edge exists, guarded by
+      enforcement-layer verification credit read through the cached factory.
+      Receipt 5/5, commit `4eaf57cc`. Remaining: closure ceremony (needs the
+      ruling recorded in the archived record + CHANGELOG entry).
+      `FID-2026-1007-015`. **Automation level: 2.**
 
 ## Machine-readable scope targets
 

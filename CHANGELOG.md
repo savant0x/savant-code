@@ -556,6 +556,24 @@
   page renders), so the list matches the site and no key is resolved for
   listing; window lookups keep the checked-in fallback table unchanged.
 
+- **The every-boot launch announce reports the configured provider set, not
+  the custats-overlap subset, and stops claiming offers are "ending soon"
+  (FID-2026-1008-003, medium; closed and archived 2026-10-08; local commit
+  `a9ae21d0`; register item T170).** The operator reported the announce as
+  "broken and very minimal vs what we provide — seeing we only have 2 wired
+  is completely wrong." `wiredFree` counted only providers present in the
+  third-party custats catalog AND keyed, so 23 configured providers rendered
+  as 2. The announce now prints `Configured: N provider(s)` from the full
+  credential-ready registry set (labels only, never key material), relabels
+  the catalog subset `Free catalog overlap`, and the offers line states the
+  feed total with an unconditional "eligibility and deadlines unverified"
+  disclaimer instead of the unsupported "ending soon". A test-driven
+  correction caught the first draft counting configured providers toward the
+  "nothing to say" guard — a configured provider with no free lane stays
+  silent under the free-lanes header. The 72h deadline window landed
+  separately under FID-2026-1008-004 (B). Receipt 4/4 live at the archived
+  path; register item T170 complete.
+
 - **A local circuit breaker no longer refuses a user's model turn (FID-2026-1007-007,
   high; closed 2026-10-07; local commit `7a7f5dee`; register item T162).** The
   operator hit this twice in one session and could not place it — "i don't even

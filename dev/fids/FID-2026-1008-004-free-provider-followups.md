@@ -150,8 +150,8 @@ Enter-per-step (proposed) vs a single confirm dialog.
 
 ### Verification Receipt
 
-- fingerprint: sha256:59399f2488ffc7fc9355824b3fa8d8ba4b3698f5fdd2d1620f7f05ac67b7d410
-- verified: 2026-10-08T21:50:10.656Z
+- fingerprint: sha256:ec940afa32834c7f8a0b9522fbf644af313b6677829476f3d8d2189efdc857a2
+- verified: 2026-10-08T22:41:30.806Z
 - test cli/src/utils/__tests__/launch-digest.test.ts: exit 0
 - test cli/src/utils/__tests__/free-options.test.ts: exit 0
 - test cli/src/utils/__tests__/free-options-digest.test.ts: exit 0
