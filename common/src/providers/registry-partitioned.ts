@@ -26,7 +26,7 @@ export const PROVIDER_REGISTRY_PARTITION = {
     baseUrl: 'https://kiosapi.com/v1',
     protocol: 'openai',
     idTransform: 'strip',
-    catalog: { source: 'live', url: 'https://kiosapi.com/v1/models' },
+    catalog: { source: 'live', url: 'https://kiosapi.com/api/pricing' },
     setupAvailable: true,
     domain: 'kiosapi.com',
     order: 4,

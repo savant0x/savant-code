@@ -1,21 +1,34 @@
 /**
  * Live KiosAPI model catalog.
  *
- * KiosAPI exposes an OpenAI-compatible authenticated `/v1/models` endpoint
- * (standard list shape: `{ object: 'list', data: [{ id, created, owned_by }] }`).
- * The shared live-catalog fetcher supplies bounded timeout, cache, in-flight
- * deduplication, stale-cache fallback, and redacted failure handling.
+ * FID-2026-1008-001: the source is the vendor's **public** pricing feed
+ * `GET https://kiosapi.com/api/pricing` (unauthenticated; HTTP 200 measured
+ * 2026-10-08, 80 rows, `pricing_version` content hash) — the same JSON the
+ * Models & Pricing page renders. The previous source, the key-scoped
+ * `GET /v1/models`, is documented by the vendor as "list all models available
+ * for your API key" (different token groups see different models), so a
+ * `Free`-group key inherited the Free group's 36-row view of the square and
+ * every flagship on the site — `gpt-5.6-sol`, `claude-opus-5-5`,
+ * `gemini-3.8-flash`, `grok-4.7` — was absent from the picker ("old/outdated",
+ * operator report 2026-10-08). Listing must not depend on which token group
+ * the stored key belongs to, so no key is resolved for this request.
  *
- * The parser is pass-through over model entries: every id the key can access
- * is listed (including GLM/free variants) with the internal `kiosapi/` routing
- * prefix applied. No allowlist, no denylist, no modality filtering.
+ * **Wire shape, measured 2026-10-08** (`data[]` rows):
+ * `{ model_name, description, icon, tags, vendor_id, quota_type, model_ratio,
+ * model_price, owner_by, completion_ratio, enable_groups[],
+ * supported_endpoint_types[], billing_mode, billing_expr? }` — pricing is in
+ * vendor billing terms (ratios / tiered expressions), not per-token dollars,
+ * so no price fields are mapped. There are no window fields (same as the old
+ * `/v1/models` — FID-2026-1003-008), so context lookups keep the checked-in
+ * fallback table (200k default for no-row ids). The internal `kiosapi/`
+ * routing prefix applies as before (`idTransform: 'strip'` at chat time).
+ * Synchronous parse; the shared fetcher supplies cache, timeout and degrade.
  */
 import { deriveLiveCatalogUrl } from '@savant-code/common/providers/derive'
 import { PROVIDER_REGISTRY } from '@savant-code/common/providers/registry'
 
-import { resolveProviderApiKey } from '../provider-credentials'
 import { createLiveCatalogFetcher } from './live-catalog'
-import { asOptionalNumber, asOptionalString } from './wire-guards'
+import { asOptionalString } from './wire-guards'
 
 import type { OpenRouterModel } from './types'
 
@@ -26,44 +39,27 @@ if (!KIOSAPI_MODELS_URL) {
   )
 }
 
-type KiosapiModelsResponse = {
+type KiosapiPricingResponse = {
   data?: Array<{
-    id?: unknown
-    name?: unknown
+    model_name?: unknown
     description?: unknown
-    context_length?: unknown
-    max_completion_tokens?: unknown
-    created?: unknown
   }>
 }
 
-/**
- * Normalize the `created` field. KiosAPI reports unix seconds (a number);
- * accept ISO strings defensively so the parser never drops an entry over it.
- */
-function asOptionalCreated(value: unknown): string | undefined {
-  if (typeof value === 'string' && value.length > 0) return value
-  if (typeof value === 'number' && Number.isFinite(value)) {
-    return new Date(value * 1000).toISOString()
-  }
-  return undefined
-}
-
-function parseKiosapiCatalog(json: KiosapiModelsResponse): OpenRouterModel[] {
+function parseKiosapiCatalog(json: KiosapiPricingResponse): OpenRouterModel[] {
   const parsed: OpenRouterModel[] = []
   for (const model of json.data ?? []) {
-    const upstreamId = asOptionalString(model.id)
+    const upstreamId = asOptionalString(model.model_name)
     if (!upstreamId) continue
 
     parsed.push({
       id: upstreamId.startsWith('kiosapi/')
         ? upstreamId
         : `kiosapi/${upstreamId}`,
-      name: asOptionalString(model.name) ?? upstreamId,
+      // The pricing feed carries no display-name field; the vendor's own
+      // page titles rows from `model_name` too, so no naming layer here.
+      name: upstreamId,
       description: asOptionalString(model.description),
-      contextLength: asOptionalNumber(model.context_length),
-      maxCompletionTokens: asOptionalNumber(model.max_completion_tokens),
-      created: asOptionalCreated(model.created),
       provider: 'kiosapi',
     })
   }
@@ -71,11 +67,12 @@ function parseKiosapiCatalog(json: KiosapiModelsResponse): OpenRouterModel[] {
   return parsed
 }
 
-const fetcher = createLiveCatalogFetcher<KiosapiModelsResponse>({
+// Public feed: deliberately NO resolveKey (FID-2026-1008-001) — a Bearer
+// header would re-couple listing to the stored key's token group.
+const fetcher = createLiveCatalogFetcher<KiosapiPricingResponse>({
   url: KIOSAPI_MODELS_URL,
   logLabel: 'KiosAPI',
   parse: parseKiosapiCatalog,
-  resolveKey: () => resolveProviderApiKey('kiosapi'),
 })
 
 export const fetchKiosapiModels = fetcher.fetchModels
@@ -85,7 +82,7 @@ export const __resetKiosapiCacheForTest = fetcher.resetForTest
 
 /** Test-only parser seam for catalog contract tests without network access. */
 export function parseKiosapiModelsForTest(
-  json: KiosapiModelsResponse,
+  json: KiosapiPricingResponse,
 ): OpenRouterModel[] {
   return parseKiosapiCatalog(json)
 }

@@ -87,6 +87,14 @@
       already accepts `--control-*`; the sweep does not. `FID-2026-1007-016`.
       **Automation level: 2.**
 
+- [ ] **T167. `FID-2026-1008-001` — KiosAPI picker catalog: full public
+      square.** The picker's KiosAPI group served the stored Free-group key's
+      36-row `/v1/models` view while the vendor publishes 80 on its public
+      pricing feed — every flagship (gpt-5.6-sol, claude-opus-5-5,
+      gemini-3.8-flash, grok-4.7 …) was absent. Swap the catalog source to
+      `https://kiosapi.com/api/pricing` (unauthenticated) so the list matches
+      the site. `FID-2026-1008-001`. **Automation level: 2.**
+
 - [ ] **T62-followups (remaining items routed, not blocking `Task 62`
       closure):** (1) is **completed 2026-09-28** — commandcode catalog
       case-drift re-keyed to the live roster casing (`zai-org/GLM-5.2/5.3`),
@@ -192,6 +200,11 @@
   `dev/scratchpad/active/provider-integration-*`
 - T165: `dev/fids/FID-2026-1007-016-provider-identity-sweep-verdict-controls.md`,
   `scripts/providers/**`
+- T167: `dev/fids/FID-2026-1008-001-kiosapi-full-square-catalog.md`,
+  `common/src/providers/registry-partitioned.ts`,
+  `cli/src/utils/openrouter-models/kiosapi.ts`,
+  `cli/src/utils/__tests__/openrouter-models-gateway*.test.ts`,
+  `common/src/constants/context-window-table-kiosapi.ts`
 - T62-followups: `dev/scratchpad/active/t62*.ts` (the catalog itself is
   gateway-side; the local write surface is the probe scripts — verified
   2026-10-02: no local catalog directory exists)

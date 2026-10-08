@@ -543,6 +543,19 @@
   contract for custom providers. The operator renamed the section header
   `⭐ FREE KEY` → `⭐ FREE MODELS` and live-confirmed the picker 2026-10-08.
 
+- **The model picker's KiosAPI group serves the full published Model Square,
+  not the Free key's subset (FID-2026-1008-001, low; register item T167).**
+  The catalog source was the key-scoped `GET /v1/models`, which per KiosAPI's
+  docs lists "models available for your API key" — the stored key is a `Free`-
+  group key, so the picker showed 36 free-tier rows while the vendor's own
+  page publishes 80 (operator: "the models list … is old/outdated"). Every
+  flagship was absent: `gpt-5.6-sol`, `gpt-6-astra`, `claude-opus-5-5`,
+  `claude-sonnet-5-5`, `gemini-3.8-flash`, `grok-4.7`, `deepseek-v4-pro-0813`.
+  The source is now the vendor's public, unauthenticated
+  `https://kiosapi.com/api/pricing` feed (the same JSON the Models & Pricing
+  page renders), so the list matches the site and no key is resolved for
+  listing; window lookups keep the checked-in fallback table unchanged.
+
 - **A local circuit breaker no longer refuses a user's model turn (FID-2026-1007-007,
   high; closed 2026-10-07; local commit `7a7f5dee`; register item T162).** The
   operator hit this twice in one session and could not place it — "i don't even

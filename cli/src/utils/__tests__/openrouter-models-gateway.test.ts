@@ -53,12 +53,12 @@ describe('openrouter-models', () => {
   test('parses KiosAPI ids pass-through with one internal prefix (GLM preserved)', () => {
     const models = parseKiosapiModelsForTest({
       data: [
-        { id: 'gpt-4o-mini', name: 'GPT-4o mini', created: 1686935002 },
-        { id: 'z-ai/glm-5.3-free' },
-        { id: 'claude-sonnet-4-6' },
-        { id: 'kiosapi/already-prefixed' },
-        { id: '', name: 'invalid' },
-        { id: 42 },
+        { model_name: 'gpt-4o-mini', description: 'GPT-4o mini' },
+        { model_name: 'z-ai/glm-5.3-free' },
+        { model_name: 'claude-sonnet-4-6' },
+        { model_name: 'kiosapi/already-prefixed' },
+        { model_name: '', description: 'invalid' },
+        { model_name: 42 },
       ],
     })
 
@@ -76,22 +76,13 @@ describe('openrouter-models', () => {
         expect.objectContaining({ id: 'kiosapi/z-ai/glm-5.3-free' }),
       ]),
     )
-    // Unix-seconds `created` normalizes to an ISO string, never drops the entry.
-    expect(
-      models.find((model) => model.id === 'kiosapi/gpt-4o-mini')?.created,
-    ).toBe('2023-06-16T17:03:22.000Z')
   })
 
   test('kiosapi nested architecture fields stay unmapped (T96-followup probe 2026-09-28)', () => {
-    // Measured live 2026-09-28 (HTTP 200, 36 models): no `architecture.*`
-    // object and no flat modality/tokenizer/instruct_type — 0/36 in both
-    // positions (T96-followup / FID-2026-0927-006). The catalog serves the
-    // plain OpenAI list shape; a nested read would populate nothing for
-    // every model, so the parser deliberately reads neither position.
     const models = parseKiosapiModelsForTest({
       data: [
         {
-          id: 'z-ai/glm-5.3-free',
+          model_name: 'z-ai/glm-5.3-free',
           architecture: { modality: 'text->text', tokenizer: 'Other' },
           modality: 'text->text',
         } as Record<string, unknown>,

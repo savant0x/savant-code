@@ -68,12 +68,14 @@ describe('openrouter-models provider clusters', () => {
         (input: RequestInfo | URL, init?: RequestInit) => {
           const url = String(input)
           if (url.includes('kiosapi.com')) {
-            expect(new Headers(init?.headers).get('authorization')).toBe(
-              'Bearer kiosapi-catalog-test-key',
-            )
+            // Public pricing feed: no Authorization header (FID-2026-1008-001)
+            expect(new Headers(init?.headers).get('authorization')).toBeNull()
             return Promise.resolve(
               makeJsonResponse({
-                data: [{ id: 'z-ai/glm-5.3-free' }, { id: 'gpt-4o-mini' }],
+                data: [
+                  { model_name: 'z-ai/glm-5.3-free' },
+                  { model_name: 'gpt-4o-mini' },
+                ],
               }),
             )
           }
@@ -124,12 +126,11 @@ describe('openrouter-models provider clusters', () => {
       // @ts-expect-error - mock fetch
       globalThis.fetch = mock(
         (input: RequestInfo | URL, init?: RequestInit) => {
-          expect(String(input)).toContain('kiosapi.com/v1/models')
-          expect(new Headers(init?.headers).get('authorization')).toBe(
-            'Bearer stored-kiosapi-key',
-          )
+          const url = String(input)
+          expect(url).toContain('kiosapi.com')
+          expect(new Headers(init?.headers).get('authorization')).toBeNull()
           return Promise.resolve(
-            makeJsonResponse({ data: [{ id: 'stored-model' }] }),
+            makeJsonResponse({ data: [{ model_name: 'stored-model' }] }),
           )
         },
       )
