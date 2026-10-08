@@ -79,6 +79,14 @@
       **Blocker:** operator account access (xKiro paid plan) and the fourth
       provider's identity — both external to the repository.
 
+- [ ] **T165. `FID-2026-1007-016` — provider identity sweep verdict controls.**
+      The `--all` catalog sweep reports per-route status and a served-label
+      classification but every row's identity `verdict` is `inconclusive`,
+      because the sweep threads no control into the runner
+      (`scripts/providers/lib/identity-matrix.ts:111`). The single-target path
+      already accepts `--control-*`; the sweep does not. `FID-2026-1007-016`.
+      **Automation level: 2.**
+
 - [ ] **T62-followups (remaining items routed, not blocking `Task 62`
       closure):** (1) is **completed 2026-09-28** — commandcode catalog
       case-drift re-keyed to the live roster casing (`zai-org/GLM-5.2/5.3`),
@@ -187,6 +195,8 @@
   `dev/session-summaries/2026-10-03-provider-*.md`,
   `dev/scratchpad/active/provider-catalogs-2026-10-03/**`,
   `dev/scratchpad/active/provider-integration-*`
+- T165: `dev/fids/FID-2026-1007-016-provider-identity-sweep-verdict-controls.md`,
+  `scripts/providers/**`
 - T62-followups: `dev/scratchpad/active/t62*.ts` (the catalog itself is
   gateway-side; the local write surface is the probe scripts — verified
   2026-10-02: no local catalog directory exists)
