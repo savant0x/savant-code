@@ -2,7 +2,7 @@
 title: NDJSON Phase B Emitter — FID-067 v2 delegation transport (child side)
 date: 2026-09-07
 author: —
-status: planning
+status: SHIPPED — all five FIDs closed and archived (verified 2026-10-07)
 requested_by: Spencer (via Savant DelegationEngine, FID-067)
 consumed_by: (unassigned — any harness session with Orchestrator role)
 source_research: FULL SPEC EMBEDDED BELOW (§Frozen Wire Contract, verbatim) — canonical copies live in the Savant repo (C:\Users\spenc\dev\Savant): dev/handoffs/2026-09-03-fid067-phase-b-savant-code-ndjson-emitter.md (ratified handoff, wire contract FROZEN) + dev/fids/FID-2026-07-31-067-bidirectional-streaming.md §Transport Decision. Those paths do NOT resolve inside savant-code; this document is self-contained by design.
@@ -10,6 +10,15 @@ fids_emitted: []
 ---
 
 # BO-2026-09-07-ndjson-phase-b-emitter
+
+## Disposition (2026-10-07)
+
+**Delivered in full.** Every Phase 1, 2, and 3 item below shipped as five
+closed FIDs (`2026-0907-003`..`-007`, all in `dev/fids/archive/`). The
+`status: planning` header and the "Child emitter: ABSENT" state row this
+document carried were stale: they were accurate when written (2026-09-07) and
+were never updated after the program landed. Both are corrected above. Archived
+here 2026-10-07 — terminal record, not open work.
 
 ## Overview
 
@@ -65,7 +74,7 @@ re-design it.
 | Item | State |
 | --- | --- |
 | Parent transport (Savant) | SHIPPED + green (frames.rs parser/builders, engine rewire, `test_ndjson_*` suite, workspace battery 1603/0 at Phase A closure) |
-| Child emitter (this repo) | ABSENT — no commit, no CHANGELOG entry, no frame logic in `headless-run.ts` (verified 2026-09-07 on main, all branches) |
+| Child emitter (this repo) | **SHIPPED** — verified 2026-10-07. `cli/src/headless-ndjson.ts` + `cli/src/headless-ndjson-tap.ts` exist; `cli/src/headless-run.ts:9-13` imports both, `:112` builds the emitter, `:281` emits the single artifact frame. FIDs `2026-0907-003` (frame module), `-004` (handleEvent tap), `-005` (artifact/error + stdout purity), `-006` (stdin control reader), `-007` (live handoff matrix) are all closed and archived. The "ABSENT" state recorded below was true on 2026-09-07 and is retained as the build order's opening baseline. |
 | Wire contract | Ratified + frozen in the Savant handoff doc (source of truth) |
 | Activation flag contract | Parent emits `--json` immediately before the brief, ndjson profiles only |
 

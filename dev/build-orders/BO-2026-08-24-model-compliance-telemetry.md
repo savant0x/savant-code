@@ -2,7 +2,7 @@
 title: Model Compliance Telemetry — Law-Violation Analytics on the Dashboard
 date: 2026-08-24
 author: Nova
-status: planning
+status: OPEN — 0 of 7 FIDs implemented (verified 2026-10-07)
 requested_by: Spencer
 consumed_by: (unassigned — any harness session with Orchestrator role)
 source_research: none yet — recommend a Gemini DR pass on agent-behavior telemetry prior art before Phase 1
@@ -56,6 +56,21 @@ generating ground truth.
 | Per-model identity | Available at runtime (provider/model slug per session) |
 | Storage convention | Append-only JSONL well-established (experiences store, version ledgers) |
 | Existing metrics surface | perf-hud.ts (FrameStats ring buffer) — UI pattern precedent inside floor/stage |
+
+## Progress (verified 2026-10-07)
+
+**Nothing in this order has been implemented.** Zero of the seven FIDs exist as
+records, and no phase of the artifact surface is present:
+
+- `common/src/types/telemetry.ts` — **absent**
+- `dev/telemetry/` — **absent**
+- `dev/telemetry/compliance.jsonl` — **absent** repo-wide
+
+The order has sat at `planning` since 2026-08-24. The recommended pre-Phase-1
+Gemini DR pass (§Research Foundation) never ran, so `source_research` is still
+empty. Phase 6 depends on `dev/agenda.md`, which has since gained its own
+1–3 item cap (`FID-2026-0824-012` S3-A) — reconcile that leg's design with the
+cap before opening FID 6.
 
 ## Phased Build Order
 

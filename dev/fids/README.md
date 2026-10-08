@@ -868,7 +868,7 @@ parameterized gate list and its RED pin is sequenced after FID-001; FID-002's
 Step-1 inventory ran with one residual reasoned exemption found
 (`public-release-pinned-bun.test.ts:54`, the pinned-runtime contract probe)
 and class-3 (`process.env` shape dependence) ruled non-greppable. Coordination
-master: [`dev/build-orders/BO-2026-09-09-gate-chain-hardening.md`](../build-orders/BO-2026-09-09-gate-chain-hardening.md)
+master: [`dev/build-orders/archive/BO-2026-09-09-gate-chain-hardening.md`](../build-orders/archive/BO-2026-09-09-gate-chain-hardening.md)
 — implementation order 001 → 003 → 002, awaiting operator approval (Law 2).
 **2026-09-09 closure (operator directive: "Approve the full 001→003→002 program
 and implement all three sequentially"):** all three FIDs implemented in the

@@ -2,7 +2,7 @@
 title: Atria Integration — Session Friction Build Order
 date: 2026-09-16
 author: Savant (session report)
-status: HANDOFF — problems cataloged; fixes left to the next engineer
+status: HANDOFF — feature shipped; P6 resolved, P1 and P5 still reproducible (verified 2026-10-07)
 requested_by: Spencer
 consumed_by: (stronger model — figures out the best path forward)
 source_context: FID-2026-0916-005-atria-gateway-provider integration session (2026-09-16)
@@ -108,11 +108,32 @@ impediments that slowed the work and misdirected effort.
 
 ## Current State
 
-- FID-2026-0916-005 is `verified`, implementation complete, all gates green.
-- The FID closure ceremony (archive move + CHANGELOG + FSM transition) is
-  pending; the path is left to the next engineer.
-- The five friction points above (P1–P5) are open; P6 is a process/harness
-  concern. No code change is required to the Atria feature itself.
+Re-verified 2026-10-07 against the working tree:
+
+- **`FID-2026-0916-005` is closed and archived** (`dev/fids/archive/`). The
+  closure ceremony this document listed as pending is done — the "pending"
+  note was stale.
+- **P6 is FIXED.** `packages/agent-runtime/src/echo/enforcement/tool-pipeline.ts:268-279`
+  now gates Law 4 wiring detection on `classifyFileKind(path) === 'code' &&
+  hasWiringDeclaration(content)`; the comment at `:270` cites this exact
+  incident (`FID-2026-1001-003` step 6, "row H") as the reason. Docs verify
+  with `lint:md`, never Law 4.
+- **P1 is STILL REPRODUCIBLE.** `pre-write-gates-law3.ts:188-195` is the
+  "Other-dirty BLOCK (restored, `FID-2026-1001-003` step 4)" branch — writing
+  to a *different* file while another is dirty+unverified still blocks. The
+  friction is now guarded by a verification-command escape clause, a
+  failure-attribution carve-out, and a `self_correct` carve-out, so the blast
+  radius shrank, but the batch-edit collision this document reported is intact.
+- **P5 is STILL REPRODUCIBLE.** `transition-phase.ts:40` reads
+  `green: ['audit', 'idle']` — there is no direct `green → complete` edge. The
+  reported `green → idle` workaround still applies.
+- **P2, P3, P4** were process slips, not code defects. P4 (repo-wide prettier
+  failing on inherited drift with no way to separate yours from inherited) has
+  no mechanical distinction.
+
+P1 and P5 are the live remainder. Neither has a FID; both are harness-behavior
+observations rather than committed deliverables, so opening FIDs for them is an
+operator decision — not an agent-side scope call.
 
 ## Non-Goals
 

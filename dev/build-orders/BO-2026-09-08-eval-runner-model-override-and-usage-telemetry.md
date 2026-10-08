@@ -2,7 +2,7 @@
 title: Eval-runner model override + usage telemetry (Savant Bench measurement substrate)
 date: 2026-09-08
 author: —
-status: planning
+status: OPEN — 0 of 7 items implemented (verified 2026-10-07)
 requested_by: Spencer (Savant Bench — savant-eval-fame, FID-2026-0908-008)
 consumed_by: (unassigned — any savant-code session with Recorder role; FID-2026-0908-002 draft exists at dev/scratchpad/active/)
 source_research: FULL SPEC EMBEDDED BELOW — canonical benchmark contract in the requesting repo: C:\Users\spenc\dev\savant-eval-fame\dev\fids\FID-2026-0908-008-harness-integrated-gate-engine.md. This document is self-contained by design; no cross-repo reads are required to implement it.
@@ -25,6 +25,22 @@ zero behavior change when absent:
 2. **Usage telemetry** — per-run token split (input / output / cached) and the model
    actually used, surfaced on the trace, so the board can report lane economics
    without synthesizing numbers.
+
+## Progress (verified 2026-10-07)
+
+**Nothing in this order has been implemented.** Every named surface was checked
+directly:
+
+- `evals/v2/src/runner.ts` — `RunnerConfig` carries no `model` and no `onUsage`
+- `evals/v2/src/trace.ts` — no `usage` / `model` fields on `TraceMetadata`
+- `common/src/types/print-mode.ts` — no `usage` member in the
+  `printModeEventSchema` union (runs `start` → `compliance_warning`)
+
+The design decision below still stands — routing usage through a `usage`
+PrintMode event emitted from the existing `onUsage` hook remains far narrower
+than threading a host callback through ~8 files across 4 packages. The
+`source_research` FID (`FID-2026-0908-002`) is a draft under
+`dev/scratchpad/active/`; no implementation FID was ever opened from it.
 
 Requesting side (Savant Bench) consumes ONLY the public shapes added here
 (`RunnerConfig.model`, `TraceMetadata.usage`, `TraceMetadata.model`), via the

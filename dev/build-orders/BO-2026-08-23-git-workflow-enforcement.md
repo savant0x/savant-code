@@ -2,7 +2,7 @@
 title: Git Workflow Optimization — Enforcement & Migration Build Order
 date: 2026-08-23
 author: Nova
-status: planning
+status: PARTIALLY EXECUTED — Phase 0 + FIDs 1-3 shipped; FID 4 and Phase 2 open (verified 2026-10-07)
 requested_by: Spencer
 consumed_by: (unassigned — any harness session with Orchestrator role)
 source_research: docs/design/Solo Git Workflow Optimization.md (Gemini DR v2, operator-approved); dev/nova/outbox/2026-08-23-git-workflow-echo-amendment-draft.md (Nine Rules, G1–G9)
@@ -10,6 +10,26 @@ fids_emitted: []
 ---
 
 # BO-2026-08-23-git-workflow-enforcement
+
+## Progress (verified 2026-10-07)
+
+**Phase 0 and three of four FIDs shipped. FID 4 and Phase 2 remain open.**
+
+| Item | Claimed state (2026-08-23) | Verified 2026-10-07 |
+|---|---|---|
+| Phase 0 — G1–G9 in `ECHO.md` | No G-rules yet | **DONE** — `ECHO.md` → "Version-Control Workflow Laws (G1–G9)", amended 2026-09-05 |
+| Phase 0 — `.gitmessage` + template | Not configured | **DONE** — `.gitmessage` exists; root `prepare` sets `commit.template` |
+| FID 1 — commit template | open | **DONE** (same artifact as above) |
+| FID 2 — FID template `Commit:` | Resolution has no required field | **DONE** — `templates/FID-TEMPLATE.md:32` carries `- **Commit/State:**` |
+| FID 3 — bundle script | Not started | **DONE** — `scripts/git-bundle-backup.ts`; archived `FID-2026-0905-008` |
+| FID 4 — preflight / G2+G5 audit | optional, recommended | **OPEN — partially covered.** `scripts/public-release/pre-audit.ts` asserts worktree-clean and push-range, but **not** the G2 closed-FID commit-hash audit nor the G5 bundle-verified check this order specified |
+| Phase 2 — migration execution | not started | **OPEN** — `git maintenance` state unverified; baseline bundle existence unverified |
+| Open Question 2 — OneDrive path | pending | **ANSWERED in code** — `SAVANT_BUNDLE_DIR_DEFAULT` is `C:/Users/spenc/OneDrive/savant-backups`; no operator confirmation was ever recorded |
+
+FID 4 is the live remainder. Its acceptance gates (red on each violated
+condition individually, working-tree clean, all closed FIDs carry hashes, latest
+bundle verified) are only partly met by the existing pre-audit family
+(`pre-audit-local.ts`, `pre-audit-push.ts`, `pre-audit-config.ts`).
 
 ## Overview
 
