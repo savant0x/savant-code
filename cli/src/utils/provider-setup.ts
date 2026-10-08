@@ -169,6 +169,20 @@ export function activateConfiguredProvider(provider: string): boolean {
 }
 
 /**
+ * FID-2026-1008-005 item 3: true when a registry provider has setup metadata
+ * but no usable credentials yet ("Not wired"). Picking its model starts the
+ * key flow instead of activating the provider. Ollama needs no key.
+ */
+export function isModelProviderUnwired(provider: string): boolean {
+  if (provider.toLowerCase() === 'ollama') return false
+  if (!getProviderSetupInfo(provider)) return false
+  return !hasProviderCredentials(
+    getEffectiveProviderRegistry()[provider],
+    process.env,
+  )
+}
+
+/**
  * Apply a /model-picker selection end to end (FID-2026-0917-005).
  *
  * Resolves the model's provider (defaulting to 'openrouter' when unset),
