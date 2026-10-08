@@ -76,6 +76,8 @@ filesystem entries in `agents/`.
 - [**`.agents/skills/`**](.agents/skills/) — operator-trusted skills: coding standards, release workflow, design suite (auto-loaded)
 - [**`docs/self-improving-harness.md`**](docs/self-improving-harness.md) —
   Self-improving harness + agent-created skills (full guide)
+- [**`docs/provider-gauntlets.md`**](docs/provider-gauntlets.md) —
+  Operator-run provider identity and quality gauntlets (advisory, not merge gates)
 
 ## Self-Improving Harness (FID-2026-0824-012)
 

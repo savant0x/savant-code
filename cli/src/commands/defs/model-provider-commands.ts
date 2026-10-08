@@ -4,7 +4,11 @@ import { useModelPickerStore } from '../../state/model-picker-store'
 import { useProviderPickerStore } from '../../state/provider-picker-store'
 import { useSavantFreeModelStore } from '../../state/savant-free-model-store'
 import { getSystemMessage, getUserMessage } from '../../utils/message-history'
-import { fetchGatewayModels } from '../../utils/openrouter-models'
+import { openModelPicker } from '../../utils/model-picker-open'
+import {
+  fetchGatewayModels,
+  getCachedGatewayModels,
+} from '../../utils/openrouter-models'
 import {
   activateConfiguredProvider,
   applyModelPickerSelection,
@@ -63,16 +67,22 @@ export const MODEL_PROVIDER_COMMANDS = [
       // Live picker: fetch the real-time OpenRouter catalog and render a
       // filterable list. Typing /model <id> (or re-running with a filter)
       // selects the model. Degrades to free-text if the catalog can't load.
-      const models = await fetchGatewayModels()
-      if (models.length === 0) {
+      // FID-2026-1008-005: cache-first open with a background refresh; the
+      // cold path still waits for the first load.
+      const opened = await openModelPicker({
+        readCached: getCachedGatewayModels,
+        refresh: () => fetchGatewayModels(),
+        open: (models) => useModelPickerStore.getState().open(models),
+        setModels: (models) => useModelPickerStore.getState().setModels(models),
+        isOpen: () => useModelPickerStore.getState().isOpen,
+      })
+      if (!opened) {
         const message = currentModel
           ? `Current model: ${currentModel}\n\nCouldn't load the live OpenRouter model list. Type an exact model id to switch, e.g. /model anthropic/claude-sonnet-4`
           : "No model override set. Couldn't load the live OpenRouter model list — type an exact model id to switch, e.g. /model anthropic/claude-sonnet-4"
         params.setMessages((prev) => [...prev, getSystemMessage(message)])
         return
       }
-
-      useModelPickerStore.getState().open(models)
     },
   }),
   defineCommandWithArgs({

@@ -17,10 +17,18 @@ import { useProviderInboxStore } from '../state/provider-inbox-store'
 import { useProviderPickerStore } from '../state/provider-picker-store'
 import { useRewindPickerStore } from '../state/rewind-picker-store'
 import { getSystemMessage } from '../utils/message-history'
-import { applyModelPickerSelection } from '../utils/provider-setup'
+import {
+  clearModelAutoWire,
+  stageModelAutoWire,
+} from '../utils/model-picker-autowire'
+import {
+  applyModelPickerSelection,
+  isModelProviderUnwired,
+} from '../utils/provider-setup'
 import { executeRewind } from '../utils/rewind'
 import { loadSavantCodeModelPreference } from '../utils/settings'
 
+import type { PickerSelectionParams } from '../commands/provider-subcommands-replies'
 import type { MultilineInputHandle } from '../components/multiline-input'
 import type { RewindMode } from '../state/rewind-picker-store'
 import type { ChatMessage } from '../types/chat'
@@ -69,6 +77,28 @@ export interface UseChatPickersReturn {
   setRewindPickerMode: (mode: RewindMode) => void
   closeRewindPicker: () => void
   handleRewindPickerConfirm: (turn: TurnSummary, mode: RewindMode) => void
+}
+
+/**
+ * Shared setInputValue adapter for picker-driven key flows: the chat store
+ * keeps inputValue as a raw string while the router's InputValue carries
+ * cursor metadata; the reducer form's prev is synthesized from the stored
+ * text. Module scope keeps its identity stable for both picker callbacks
+ * (FID-2026-1008-005).
+ */
+function syncInputValue(
+  value: Parameters<NonNullable<PickerSelectionParams['setInputValue']>>[0],
+): void {
+  const state = useChatStore.getState()
+  state.setInputValue(
+    typeof value === 'function'
+      ? value({
+          text: state.inputValue,
+          cursorPosition: 0,
+          lastEditDueToNav: false,
+        })
+      : value,
+  )
 }
 
 export function useChatPickers({
@@ -177,21 +207,7 @@ export function useChatPickers({
         inputRef,
         setInputFocused,
         setMessages,
-        setInputValue: (value) => {
-          // The chat store keeps inputValue as a raw string while the
-          // router's InputValue carries cursor metadata; the reducer form's
-          // prev is synthesized from the stored text.
-          const state = useChatStore.getState()
-          state.setInputValue(
-            typeof value === 'function'
-              ? value({
-                  text: state.inputValue,
-                  cursorPosition: 0,
-                  lastEditDueToNav: false,
-                })
-              : value,
-          )
-        },
+        setInputValue: syncInputValue,
       })
     },
     [closeProviderPicker, inputRef, setInputFocused, setMessages],
@@ -211,6 +227,21 @@ export function useChatPickers({
   // INFERENCE_BASE_URL is not clobbered.
   const handleModelPickerSelect = useCallback(
     (model: OpenRouterModel) => {
+      // FID-2026-1008-005 item 3: an unwired registry provider starts its key
+      // flow; the staged model is applied when that key is saved.
+      const provider = model.provider ?? 'openrouter'
+      if (isModelProviderUnwired(provider)) {
+        stageModelAutoWire({ id: model.id, provider })
+        closeModelPicker()
+        handleProviderPickerSelection(provider, {
+          inputRef,
+          setInputFocused,
+          setMessages,
+          setInputValue: syncInputValue,
+        })
+        return
+      }
+      clearModelAutoWire()
       applyModelPickerSelection(model)
       const current = loadSavantCodeModelPreference()
       setMessages((prev) => [

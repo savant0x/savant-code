@@ -1,5 +1,7 @@
 import { routeKeySetup } from './route-key-setup'
+import { completeModelAutoWire } from '../../utils/model-picker-autowire'
 import {
+  applyModelPickerSelection,
   consumeNextPendingExtraCredential,
   getActiveProviderSetup,
   getActiveResearchKeyService,
@@ -97,8 +99,13 @@ export function routeMaskedKeySetup(
       getInfo: () => getProviderSetupInfo(provider),
       saveKey: (value) => {
         saveProviderApiKey(provider, value)
-        // The staged queue (seeded by beginProviderSetup) decides whether
-        // the flow chains into the next extra-credential prompt.
+        // FID-2026-1008-005: a model picked for this unwired provider is
+        // applied now that its key exists. The staged queue (seeded by
+        // beginProviderSetup) decides whether the flow chains into the next
+        // extra-credential prompt.
+        completeModelAutoWire(provider, (model) =>
+          applyModelPickerSelection(model),
+        )
       },
       getNextInputMode: () =>
         getNextPendingExtraCredential() ? 'providerSetup' : undefined,

@@ -23,6 +23,8 @@ interface ModelPickerStore {
   close: () => void
   setQuery: (query: string) => void
   setSelectedIndex: (index: number) => void
+  /** Replace rows while open (FID-2026-1008-005 background refresh). */
+  setModels: (models: OpenRouterModel[]) => void
 }
 
 function getProvider(model: OpenRouterModel): ModelProvider {
@@ -59,6 +61,14 @@ export const useModelPickerStore = create<ModelPickerStore>((set) => ({
   close: () => set({ isOpen: false, query: '', models: [], selectedIndex: 0 }),
   setQuery: (query) => set({ query, selectedIndex: 0 }),
   setSelectedIndex: (index) => set({ selectedIndex: index }),
+  setModels: (models) =>
+    set((state) => ({
+      models,
+      selectedIndex: Math.min(
+        state.selectedIndex,
+        Math.max(0, models.length - 1),
+      ),
+    })),
 }))
 
 /** Imperative read for non-React callers. */
