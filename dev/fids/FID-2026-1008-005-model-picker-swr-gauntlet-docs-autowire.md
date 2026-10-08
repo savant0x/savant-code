@@ -82,8 +82,8 @@ the fid then present it". Three recommendations accepted:
 
 ### Verification Receipt
 
-- fingerprint: sha256:10f4d7fef509c308feec41c503224ee7ab7d968209b8ad2fe673d6602f35a5dd
-- verified: 2026-10-08T18:30:10.258Z
+- fingerprint: sha256:1f1239f902a539e5d8eefb658d1eb395f916adc66feca363963b0e27d9d02ff4
+- verified: 2026-10-08T21:50:32.187Z
 - test cli/src/utils/__tests__/model-picker-open.test.ts: exit 0
 - test cli/src/utils/__tests__/model-picker-autowire.test.ts: exit 0
 - test cli/src/chat/__tests__/model-picker-activation.test.ts: exit 0
@@ -150,7 +150,7 @@ Loop 2 GREEN / Loop 3 AUDIT (run from repo root unless noted):
 - Repo gates: `bun run validate:repository`, `bun run lint:md`,
   `bun run scripts/scope-register-check.ts` — results recorded in Resolution.
 
-### Resolution
+## Resolution
 
 **fixed** (2026-10-08) — all three items implemented and gate-verified:
 

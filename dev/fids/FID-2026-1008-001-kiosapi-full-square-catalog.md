@@ -140,8 +140,8 @@ as selecting any model the account cannot call today.
 
 ### Verification Receipt
 
-- fingerprint: sha256:0e3950998b5fcd22c091f0593962600e8403d0c242813dfb2cd1d7a3a776e96b
-- verified: 2026-10-08T18:20:56.137Z
+- fingerprint: sha256:885f4586d1d207c48ffd778cae6e9fef8de0a6adeba19a4140a73e675605739f
+- verified: 2026-10-08T21:49:15.495Z
 - test cli/src/utils/__tests__/openrouter-models-gateway.test.ts: exit 0
 - test cli/src/utils/__tests__/openrouter-models-gateway-providers.test.ts: exit 0
 - typecheck cli: exit 0
@@ -210,7 +210,7 @@ as selecting any model the account cannot call today.
   search above does not supply them. Image models and the `openrouter/free`
   router have no single window and stay on the default.
 
-### Resolution
+## Resolution
 
 - **Closed Date:** not closed. Closure needs a commit hash and operator
   authorization for the closing commit.

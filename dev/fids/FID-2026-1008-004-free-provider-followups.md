@@ -103,8 +103,8 @@ implementation:
 
 ### Verification Receipt
 
-- fingerprint: sha256:c46d059c70180dd1270f48781eb9d2b173f218f2152a4ae137c6f905c4b64bae
-- verified: 2026-10-08T18:22:59.030Z
+- fingerprint: sha256:59399f2488ffc7fc9355824b3fa8d8ba4b3698f5fdd2d1620f7f05ac67b7d410
+- verified: 2026-10-08T21:50:10.656Z
 - test cli/src/utils/__tests__/launch-digest.test.ts: exit 0
 - test cli/src/utils/__tests__/free-options.test.ts: exit 0
 - test cli/src/utils/__tests__/free-options-digest.test.ts: exit 0
@@ -180,7 +180,7 @@ implementation:
   amended into those records and this one closed. Lifecycle mutation is the
   operator's call, not this pass's.
 
-### Resolution
+## Resolution
 
 - **Closed Date:** not closed.
 - **Status:** fixed for A and B. C is blocked on the operator ruling.

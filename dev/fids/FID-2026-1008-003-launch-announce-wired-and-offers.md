@@ -66,8 +66,8 @@ Seeing we only have 2 wired is completely wrong."
 
 ### Verification Receipt
 
-- fingerprint: sha256:3ff1d6630d494e6904c30e86bce9a8f301de23b6b4f79bd56569939fde2ab49a
-- verified: 2026-10-08T18:22:02.104Z
+- fingerprint: sha256:adc65d59629ee4265f86a4a2bcca2f38c6571380fb0b4215679b45c4ca3db405
+- verified: 2026-10-08T21:49:50.401Z
 - test cli/src/utils/__tests__/free-options-digest.test.ts: exit 0
 - test cli/src/utils/__tests__/free-options.test.ts: exit 0
 - typecheck cli: exit 0
@@ -127,7 +127,7 @@ Seeing we only have 2 wired is completely wrong."
 - Open item unchanged (operator ruling): whether `discoveryOffers` should carry
   structured deadlines so this line can be windowed here too.
 
-### Resolution
+## Resolution
 
 - **Closed Date:** not closed.
 - **Status:** fixed for the wired count and the offer wording.

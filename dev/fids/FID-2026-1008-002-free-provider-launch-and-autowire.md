@@ -84,14 +84,16 @@ Proposed, not yet approved in detail:
 - Keyless providers: wire immediately. Keyed providers: prompt for the key
   using the existing provider-setup flow before wiring.
 
-## Affected components
+## Impact Assessment
+
+### Affected Components
 
 - `cli/src/chat/use-chat-bootstrap.ts` (phase 1)
 - `cli/src/utils/__tests__/free-options-digest.test.ts` (phase 1 pin)
 - Phase 2: `cli/src/commands/provider-subcommands-handlers.ts`,
   `common/src/providers/custom-providers.ts`, `cli/src/utils/settings/io.ts`
 
-## Risk
+### Risk Level
 
 - Phase 1: low. Adds one short message per boot. Empty days stay silent.
 - Phase 2: medium. Writes to settings and changes the picker's provider set;
@@ -139,8 +141,8 @@ to require a verified terms page per provider before wiring.
 
 ### Verification Receipt
 
-- fingerprint: sha256:a746380da3d5d837396c8f6e7953b39c0763abc89157dd96e60585822de7644d
-- verified: 2026-10-08T18:21:19.142Z
+- fingerprint: sha256:4449c7ed4959d347ea0b3c7de56935f32f2a7c2c0a584b246c7f7d9c80146136
+- verified: 2026-10-08T21:49:32.102Z
 - test cli/src/utils/__tests__/free-options-digest.test.ts: exit 0
 - typecheck cli: exit 0
 - quality: exit 0
@@ -189,7 +191,7 @@ to require a verified terms page per provider before wiring.
 - **GREEN (phase 2, unchanged):** the auto-wire design above still needs the
   operator's approval before implementation.
 
-### Resolution
+## Resolution
 
 - **Closed Date:** not closed. Phase 2 is still open.
 - **Status:** fixed for phase 1 (every-boot launch summary, T168). Phase 2
