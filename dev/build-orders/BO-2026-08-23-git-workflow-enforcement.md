@@ -1,7 +1,7 @@
 ---
 title: Git Workflow Optimization — Enforcement & Migration Build Order
 date: 2026-08-23
-author: Nova
+author: —
 status: PARTIALLY EXECUTED — Phase 0 + FIDs 1-3 shipped; FID 4 and Phase 2 open (verified 2026-10-07)
 requested_by: Spencer
 consumed_by: (unassigned — any harness session with Orchestrator role)

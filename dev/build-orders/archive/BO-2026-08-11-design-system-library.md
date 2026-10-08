@@ -4,7 +4,7 @@
 
 title: Savant Design-System Library (DESIGN.md Retrofit)
 date: 2026-08-11
-author: Nova
+author: —
 status: planning
 requested_by: Spencer
 consumed_by: harness model (designs FIDs) — FreeBuff executes
@@ -16,7 +16,7 @@ fids_emitted: []
 
 **Date:** 2026-08-11
 **Requested by:** Spencer
-**Author:** Nova
+**Author:** —
 **Status:** PLANNING — research complete, data staged, awaiting operator approval to enter Phase 1
 
 ---

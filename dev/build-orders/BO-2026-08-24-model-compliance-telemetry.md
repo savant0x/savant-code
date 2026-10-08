@@ -1,7 +1,7 @@
 ---
 title: Model Compliance Telemetry — Law-Violation Analytics on the Dashboard
 date: 2026-08-24
-author: Nova
+author: —
 status: OPEN — 0 of 7 FIDs implemented (verified 2026-10-07)
 requested_by: Spencer
 consumed_by: (unassigned — any harness session with Orchestrator role)

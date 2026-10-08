@@ -1,7 +1,7 @@
 ---
 title: Atria Integration — Session Friction Build Order
 date: 2026-09-16
-author: Savant (session report)
+author: —
 status: HANDOFF — feature shipped; P6 resolved, P1 and P5 still reproducible (verified 2026-10-07)
 requested_by: Spencer
 consumed_by: (stronger model — figures out the best path forward)

@@ -4,7 +4,7 @@
 
 title: Savant Command Center
 date: 2026-08-09
-author: Nova
+author: —
 status: planning
 requested_by: Spencer
 consumed_by: harness model (designs FIDs)
@@ -16,7 +16,7 @@ fids_emitted: []
 
 **Date:** 2026-08-09
 **Requested by:** Spencer
-**Author:** Nova
+**Author:** —
 **Status:** PLANNING — research complete, awaiting operator approval to enter Phase 1
 
 ---
