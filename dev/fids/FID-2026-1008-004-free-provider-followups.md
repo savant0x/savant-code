@@ -88,10 +88,57 @@ implementation:
 1. **Registry-only auto-wire.** On selecting a `Not wired` registry provider in
    the picker or announce, run the existing `/provider <id>` key flow inline and
    set it active on success. Discovery-only providers stay in `/notifications`.
-   This needs no new data.
+   This needs no new data. **Status: RESOLVED by FID-2026-1008-005 item 3
+   (implemented, receipt-backed).**
 2. **Harvested-candidate auto-wire.** Also wire discovery-only providers from
    the harvester's candidate `url`, after its probe verdict is `up`. This needs a
    verdict-to-wire rule and key handling for unknown providers.
+
+### Loop 4 — option-2 design draft (2026-10-08, operator-directed: "Design harvested")
+
+The operator chose option 2's design path. Design below; **implementation is
+NOT authorized by this draft** — the ruling to proceed (or amend) is the
+operator's.
+
+**Ground truth already in the tree (measured 2026-10-08):**
+
+- The discovery wizard prefill seam (`provider-wizard-discovery.ts`) ALREADY
+  solves every hard problem option 2 names: host→id slug derivation, env-var
+  derivation with collision fallback, reserved-id refusal, registry-URL
+  validation, the `open-relay-reject` LLMjacking guard (live-proven:
+  chutes.ai), and provenance stamping through the single validation truth.
+- `CandidateState` carries `lastBoundary` (the standing verdict), `lastProbe`
+  (reachability + models count), and `url` — the verdict-to-wire inputs exist.
+
+**Proposed design: the picker reuses the wizard prefill, not a new wire rule.**
+
+1. **Verdict gate (stricter than the FID's "verdict is up").** A candidate is
+   auto-wire-eligible only when `lastBoundary` is `key-required` or
+   `boundary-unverifiable` — never `open-relay-reject` (the LLMjacking class;
+   the standing verdict is authoritative, not the per-run probe), and never
+   when `downStreak > 0`. `open-relay` candidates are surfaced as
+   "keyless but flagged" and excluded from one-press wiring.
+2. **Flow.** Selecting a discovery-only lane in the picker runs
+   `readDiscoveryPrefill(host)`; null prefill → the picker declines with the
+   existing discovery notification (no dead end, Law 14). Non-null → open the
+   SAME `createDiscoveryWizardSession` inline (the consent gesture stays
+   Enter-per-step — no silent wiring, matching the operator's registry-only
+   consent shape), and on finalize the record lands stamped through
+   `parseCustomProviders` exactly as `/provider add <host>` does today.
+3. **No new key handling.** The env var is derived and stored as a NAME; the
+   operator supplies the secret through the existing masked key flow. The
+   pipeline never reads a third-party credential store (FID-004 Loop 4's
+   recorded preference, preserved).
+4. **No new modules.** `use-chat-pickers.ts` gains one branch delegating to
+   the existing `beginDiscoveryWizard` seam; the picker row carries the host
+   string it already announces. Estimated surface: 1 picker file + 1 test
+   suite. Every security property is inherited from the existing seam, not
+   re-derived.
+
+**Named operator decisions before implementation:** (a) approve the stricter
+verdict gate (excludes `open-relay` from one-press wiring) or the FID's looser
+"verdict is up" reading; (b) confirm the consent shape — inline wizard with
+Enter-per-step (proposed) vs a single confirm dialog.
 
 ## Verification Gates
 
