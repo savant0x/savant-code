@@ -1,12 +1,13 @@
 # Changelog
 
-## Unreleased — 2026-10-04
+## Unreleased — 2026-10-07
 
 ### Added
 
-- **An evidence-calibrated provider identity gauntlet, offline (FID-2026-1007-008,
-  high; implemented 2026-10-07; local commits `7e661983` + `66abdcfa`; register item
-  T163; record status `fixed`, still open on its live gate).** The audit of HCNSec
+- **An evidence-calibrated provider identity gauntlet, offline and sweepable
+  (FID-2026-1007-008, high; closed and archived 2026-10-07; local commits
+  `7e661983` + `66abdcfa` + `37d425be` + `b1c67fde`; register item T163).** The
+  audit of HCNSec
   `kimi-k3` had stopped at a fingerprint timeout, and the shipped capability runner
   scores task success, which is not provenance — so the route had no dated answer
   about what it serves. Two halves land. The **passive seam**
@@ -425,6 +426,12 @@
   added/removed/changed deltas, dated health/removal notices with eligible
   429 fallback hints, and capability-based quota windows with dated offer
   expiry.
+
+- **Provider probe-stage keys documented (T146, 2026-10-06; commit `d8e655af`).**
+  The Geaix and Excelnt probe-stage credentials are recorded by name in
+  `.env.example`, and a dated probe report landed at
+  `dev/session-summaries/2026-10-06-geaix-excelnt-probe.md`, so the next
+  discovery pass starts from recorded key names instead of re-deriving them.
 
 ### Changed
 
