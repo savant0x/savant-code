@@ -1,4 +1,10 @@
-import type { EchoPhase, RunFault, TraceDocument, TraceEvent } from './runner'
+import type {
+  EchoPhase,
+  RunFault,
+  TraceDocument,
+  TraceEvent,
+  UsageSample,
+} from './runner'
 import type { PrintModeEvent } from '@savant-code/common/types/print-mode'
 import type { RunState } from '@savant-code/sdk'
 
@@ -32,12 +38,24 @@ export class TraceCollector {
   private phaseTransitionCount = 0
   private finalState?: RunState
   private endTime?: string
+  /**
+   * FID-2026-1007-013: the model the run executed against — set by the
+   * runner (override if configured, else the resolved template's model).
+   */
+  private effectiveModel?: string
 
   constructor(
     private readonly taskId: string,
     private readonly runId: string,
     private readonly startTime: string = new Date().toISOString(),
   ) {}
+
+  /** FID-2026-1007-013: record the effective model for the trace metadata. */
+  recordEffectiveModel(model: string | undefined): void {
+    if (model !== undefined) {
+      this.effectiveModel = model
+    }
+  }
 
   /** Record a raw {@link PrintModeEvent} from the runtime. */
   recordPrintEvent(event: PrintModeEvent): void {
@@ -154,6 +172,12 @@ export class TraceCollector {
     const directCreditsUsed = mainAgentState?.directCreditsUsed
     const contextTokenCount = mainAgentState?.contextTokenCount
 
+    // FID-2026-1007-013: sum the run-usage tree — the main agent's cumulative
+    // total plus every subagent's (AgentState.subagents is recursive). A field
+    // missing from a node contributes 0; an all-absent tree yields undefined
+    // so the metadata stays honestly "not reported" rather than a fake zero.
+    const usageTree = collectRunUsage(mainAgentState)
+
     const durationMs =
       this.startTime && this.endTime
         ? new Date(this.endTime).getTime() - new Date(this.startTime).getTime()
@@ -181,7 +205,42 @@ export class TraceCollector {
           typeof contextTokenCount === 'number' ? contextTokenCount : undefined,
         cost_usd:
           typeof creditsUsed === 'number' ? creditsUsed / 100 : undefined,
+        usage: usageTree,
+        model: this.effectiveModel,
       },
     }
   }
+}
+
+/**
+ * FID-2026-1007-013: depth-first sum of `runUsage` over an agent-state tree
+ * (main agent + recursive `subagents`). Returns undefined when no node
+ * reported usage at all.
+ */
+function collectRunUsage(
+  state: { runUsage?: UsageSample; subagents?: unknown[] } | undefined,
+): UsageSample | undefined {
+  if (!state) return undefined
+  let total: UsageSample | undefined
+  const fold = (sample: UsageSample | undefined): void => {
+    if (!sample) return
+    total = total
+      ? {
+          inputTokens: total.inputTokens + sample.inputTokens,
+          outputTokens: total.outputTokens + sample.outputTokens,
+          cachedInputTokens:
+            total.cachedInputTokens + sample.cachedInputTokens,
+          totalTokens: total.totalTokens + sample.totalTokens,
+        }
+      : { ...sample }
+  }
+  fold(state.runUsage)
+  const subagents = Array.isArray(state.subagents) ? state.subagents : []
+  for (const child of subagents) {
+    const childUsage = collectRunUsage(
+      child as { runUsage?: UsageSample; subagents?: unknown[] } | undefined,
+    )
+    fold(childUsage)
+  }
+  return total
 }

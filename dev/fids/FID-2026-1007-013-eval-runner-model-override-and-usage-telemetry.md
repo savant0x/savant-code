@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-1007-013-eval-runner-model-override-and-usage-telemetry.md`
 **ID:** FID-2026-1007-013
 **Severity:** low
-**Status:** created
+**Status:** fixed
 **Created:** 2026-10-07
 **Automation level:** 2
 **YAGNI-Compliance:** Verified
@@ -112,7 +112,21 @@ parity proof and the Law 4 call-graph check that `model` is consumed by
 
 ## Verification Gates
 
-None — `created` status; gates declared at implementation time.
+- gate: test evals/v2/tests/eval-runner-model-usage.test.ts
+- gate: typecheck common
+- gate: typecheck packages/agent-runtime
+- gate: typecheck evals
+- gate: quality
+
+### Verification Receipt
+
+- fingerprint: sha256:3ec13c2d667e06753a17090bd841b627af5fec94187e28252833d1f063e6bc0d
+- verified: 2026-10-08T21:26:58.333Z
+- test evals/v2/tests/eval-runner-model-usage.test.ts: exit 0
+- typecheck common: exit 0
+- typecheck packages/agent-runtime: exit 0
+- typecheck evals: exit 0
+- quality: exit 0
 
 ## Perfection Loop
 
@@ -157,22 +171,108 @@ Five Questions: fails "all cases" without (1) and "2 years" without (2); both
 folded. Named operator decisions: eval billing keys; ratify the staged
 wire-change decision.
 
+### Loop 3 — STAGE 1-2 IMPLEMENTED (2026-10-08, operator-approved work list)
+
+The staged design's first stage is implemented; the print-mode wire member is
+NOT (no named consumer exists outside the eval harness — exactly the staging
+condition Loop 2 set). Deviations from the source build order's step list,
+recorded rather than smoothed:
+
+- **`onUsage` callback deferred, not implemented.** The SDK `RunOptions` has
+  no per-sample usage channel (`sdk/src/run/types.ts` — `handleEvent`,
+  `onStateSnapshot`, `onFileWritten`, none usage-shaped). A callback field on
+  `RunnerConfig` with no producer behind it is a dead field (Law 4). The
+  callback ships WITH the wire stage, when `step.ts` emits `usage` events.
+- **Run-total usage instead reaches the trace from the runtime state**: the
+  existing `onUsage` hook body in `step.ts` now also folds each observation
+  into `agentState.runUsage` (new `RunUsageSample` type on `AgentState`,
+  classified by-design in the spawn partition — a child sums its own calls;
+  the host totals the tree), and `TraceCollector.finalize` lifts the sum over
+  the recursive `subagents` tree into `TraceMetadata.usage`.
+- **`TraceMetadata.model`**: the runner records the effective model at
+  initialize (override if set, else the resolved definition's model) via
+  `TraceCollector.recordEffectiveModel`.
+
+Implementation evidence (all on this tree):
+
+- `common/src/types/session-state-run-usage.ts` (new) — `RunUsageSample`,
+  4 token-count fields, Law 12 payload rule stated on the type.
+- `common/src/types/session-state-agent-state.ts` — `runUsage?:
+  RunUsageSample` + import (file was near the ceiling; the type lives in its
+  own module per the `session-state-cache-usage.ts` precedent).
+- `packages/agent-runtime/src/tools/handlers/tool/spawn-child-fields.ts` —
+  `runUsage` classified by-design with its reason (compile-time partition
+  gate stays exhaustive).
+- `packages/agent-runtime/src/run-agent-step/step.ts` — the existing
+  `onUsage` hook body additionally sums into `agentState.runUsage` (extend,
+  don't duplicate — same channel, zero new emission sites).
+- `evals/v2/src/runner.ts` — `RunnerConfig.model?`; `TraceMetadata.usage?` /
+  `model?`; exported `UsageSample`. `onUsage` deferred with the reason
+  recorded on the config field's comment.
+- `evals/v2/src/runners/savant.ts` — override → inline definition clone
+  (`{ ...base, model }` — `resolveAgentIdentity` appends clones; `agents/`
+  untouched), fail-fast error naming the unresolved id; effective model
+  recorded at initialize.
+- `evals/v2/src/trace.ts` — `collectRunUsage` depth-first sum over the
+  recursive subagent tree; absent-when-unreported (never a fake zero);
+  `metadata.model` from the collector.
+- `evals/v2/src/cli.ts` — `--model <slug>` (help text, validation,
+  threaded to the runner config).
+- New suite `evals/v2/tests/eval-runner-model-usage.test.ts` — 7 pins:
+  override clone reaches `client.run` as an inline object; mixed-model
+  impossibility (trace `model` equals EXACTLY the override); fail-fast on
+  unresolved id; string passthrough parity (no clone without override);
+  resolved-template model recorded without override; usage-tree sum across
+  recursive subagents; absent-when-unreported; Law 12 token-only surface.
+
+Gates (live, this tree): new suite 7/7; full evals battery **229 pass /
+0 fail across 31 files** (the BO's unchanged-suite proof — every pre-existing
+suite green with no modification); `typecheck` exit 0 on common,
+packages/agent-runtime, sdk, and evals; receipts stamped below.
+No diff outside the named files (step 8) — verified by `git status` at
+commit time: only `common/src/types/session-state-run-usage.ts` (new),
+`session-state-agent-state.ts`, `spawn-child-fields.ts`, `step.ts`,
+`evals/v2/src/{runner,trace,runners/savant,cli}.ts`, and the new test file.
+
+Remaining (tracked, not dropped): the wire stage — the `printModeEventSchema`
+`usage` member, emission from `step.ts` via `onResponseChunk`, and the
+host-facing `RunnerConfig.onUsage` — opens when a NAMED consumer outside the
+eval harness exists. The two named operator decisions (eval billing keys;
+wire-stage ratification) stay with the operator.
+
 ## Resolution
 
-- **Closed Date:** pending
-- **Fix Description:** pending
-- **Tests Added:** pending
-- **Verification Evidence:** pending
+- **Closed Date:** pending operator commit (G2 authorized; lands with this
+  session's batch)
+- **Fix Description:** stage 1-2 of the staged design: per-run model override
+  (inline clone, fail-fast, no disk mutation), run-total usage telemetry
+  (`AgentState.runUsage` folded from the existing hook, summed over the
+  subagent tree in `finalize()`), `TraceMetadata.usage`/`model`, CLI
+  `--model`. The per-sample `onUsage` callback and print-mode `usage` event
+  are deferred to the wire stage per Loop 2's staging decision (no named
+  consumer yet).
+- **Tests Added:** Yes — `evals/v2/tests/eval-runner-model-usage.test.ts`,
+  7 pins.
+- **Verification Evidence:** new suite 7/7; full evals battery 229 pass /
+  0 fail (unchanged-suite proof); typecheck exit 0 on common, agent-runtime,
+  sdk, evals; receipt stamped below from live gate runs.
 - **Source:** `dev/build-orders/BO-2026-09-08-eval-runner-model-override-and-usage-telemetry.md`
-- **Archived:** pending
+- **Archived:** pending closure ceremony
 
 ### Code Verification Evidence
 
-Status is `created` — no implementation exists, so there is nothing to verify
-against. The absence claims in this FID's Evidence section are the verified
-facts (measured 2026-10-07, all three named surfaces confirmed to lack the
-fields), reproduced here so a future session re-measures rather than trusts.
+Status is `fixed` — stage 1-2 implemented and gate-verified (Loop 3). The
+original absence evidence (2026-10-07) is retained below as the record of
+what this FID found; the named surfaces now carry the fields Loop 3 lists.
+
+Original RED (2026-10-07): the absence claims in this FID's Evidence section
+were the verified facts (all three named surfaces confirmed to lack the
+fields).
 
 ## Lessons Learned
 
-Pending implementation.
+The build order's step list and the tree disagreed about the mechanism: the
+"thread `onUsage` through RunnerConfig" step assumed an SDK channel that does
+not exist. Recording the deviation (and deferring the callback rather than
+shipping a dead field) kept the implementation additive without inventing a
+producer.

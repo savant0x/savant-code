@@ -158,6 +158,18 @@ export const runAgentStep = async (
           : null,
         observationKey: `${agentState.runId}:${agentStepId}:${iterationNum}`,
       })
+      // FID-2026-1007-013: fold the same observation into the run's cumulative
+      // usage total (eval lane economics). Same hook, same dedupe-free contract
+      // as `lastProviderUsage` — one fold per stream finalize, subagents sum
+      // into their own state and the host totals the tree.
+      const previous = agentState.runUsage
+      agentState.runUsage = {
+        inputTokens: (previous?.inputTokens ?? 0) + usage.inputTokens,
+        outputTokens: (previous?.outputTokens ?? 0) + usage.outputTokens,
+        cachedInputTokens:
+          (previous?.cachedInputTokens ?? 0) + usage.cachedInputTokens,
+        totalTokens: (previous?.totalTokens ?? 0) + usage.totalTokens,
+      }
     },
   })
 

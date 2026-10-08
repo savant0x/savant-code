@@ -89,6 +89,30 @@ export interface TraceMetadata {
   context_token_count?: number
   /** Approximate cost in USD, derived from credits (1 credit = $0.01). */
   cost_usd?: number
+  /**
+   * FID-2026-1007-013: cumulative provider-reported usage for the run —
+   * summed across every LLM call including subagents (lifted from the final
+   * state's `runUsage` tree). Absent when no provider reported usage.
+   */
+  usage?: UsageSample
+  /**
+   * FID-2026-1007-013: the model the run actually executed against — the
+   * override when `RunnerConfig.model` was set, else the resolved template's
+   * model. Absent when the runtime does not report one.
+   */
+  model?: string
+}
+
+/**
+ * FID-2026-1007-013: cumulative provider-reported usage for one run, lifted
+ * into `TraceMetadata.usage`. Token counts only (Law 12: no payload content,
+ * no pricing — `cost_usd` stays credits-derived as today).
+ */
+export interface UsageSample {
+  inputTokens: number
+  outputTokens: number
+  cachedInputTokens: number
+  totalTokens: number
 }
 
 /**
@@ -135,6 +159,19 @@ export interface RunnerConfig {
   projectFiles?: Record<string, string>
   /** Optional steering/drain messages for interactive runs. */
   drainSteeringMessages?: () => string[]
+  /**
+   * FID-2026-1007-013: per-run model override. When set, the runner executes
+   * against an inline clone of the resolved agent definition with this model
+   * swapped in — `agents/` on disk is never mutated. Fail fast when no
+   * definition resolves for `agentId`.
+   */
+  model?: string
+  // FID-2026-1007-013 staged design (Loop 2 fold): the host-facing per-sample
+  // `onUsage` callback is DEFERRED to the wire stage together with the
+  // `printModeEventSchema` `usage` member — the SDK `RunOptions` has no
+  // per-sample usage channel today, so a callback here would be a dead field
+  // (Law 4). Run-total usage reaches the trace via the final state's
+  // `runUsage` tree instead.
 }
 
 /**

@@ -59,6 +59,8 @@ export interface CliArgs {
   globalTimeoutMs?: number
   agentId?: string
   maxAgentSteps?: number
+  /** FID-2026-1007-013: per-run model override (evaluate mode). */
+  model?: string
   category?: TaskCategory
   difficulty?: TaskDifficulty
 }
@@ -80,6 +82,8 @@ Options:
   --global-timeout <ms>   Optional global timeout for the whole harness run
   --agent-id <id>         Agent ID to run in evaluate mode (default: savant)
   --max-steps <n>         Maximum agent steps per task (default: 100)
+  --model <slug>          FID-2026-1007-013: run against an explicit model
+                          (inline override; agents/ on disk is not mutated)
   --category <cat>        Only run tasks in this category (e.g. pure_coding)
 --difficulty <level>    Only run tasks with this difficulty (easy|medium|hard)
   --help                  Show this help message
@@ -140,6 +144,14 @@ function parseArgs(argv: string[]): Partial<CliArgs> {
       case '--max-steps':
         args.maxAgentSteps = Number.parseInt(argv[++i], 10)
         break
+      case '--model': {
+        const slug = argv[++i]
+        if (!slug || slug.startsWith('--')) {
+          throw new Error('--model requires a model slug')
+        }
+        args.model = slug
+        break
+      }
       case '--category':
         args.category = argv[++i] as TaskCategory
         break
@@ -179,6 +191,7 @@ function validateArgs(args: Partial<CliArgs>): CliArgs {
     globalTimeoutMs: args.globalTimeoutMs,
     agentId: args.agentId ?? 'savant',
     maxAgentSteps: args.maxAgentSteps,
+    model: args.model,
     category: args.category,
     difficulty: args.difficulty,
   }
@@ -238,6 +251,7 @@ export async function main(
               agentId: args.agentId,
               agentDefinitions,
               maxAgentSteps: args.maxAgentSteps,
+              model: args.model,
             })
             return runner
           }

@@ -94,6 +94,8 @@ export const NOT_INHERITED_BY_DESIGN = {
   lastProviderUsage: 'provider usage observed on the owning run’s stream',
   cacheUsage:
     'reported cache usage observed on the owning run’s stream; a child folds its own',
+  runUsage:
+    'cumulative usage of the owning run’s stream (FID-2026-1007-013); a child sums its own calls into its own state',
   consecutiveToolErrorSteps: 'anti-runaway counter, reset per run',
   lastToolCallSignature: 'anti-runaway counter, reset per run',
   consecutiveIdenticalToolSignatures: 'anti-runaway counter, reset per run',

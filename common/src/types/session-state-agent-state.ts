@@ -10,6 +10,7 @@ import type { Message } from './messages/savant-code-message'
 import type { ProvenanceSessionLike } from './provenance'
 import type { AgentTemplateType } from './session-state'
 import type { CacheUsageSummary } from './session-state-cache-usage'
+import type { RunUsageSample } from './session-state-run-usage'
 import type {
   CompactionCutPlan,
   CompactionFileLedger,
@@ -142,6 +143,8 @@ export type AgentState = {
    */
   lastProviderUsage?: { inputTokens: number; capturedAt: number }
   /** FID-2026-1007-009: reported cache usage. */ cacheUsage?: CacheUsageSummary
+  /** FID-2026-1007-013: cumulative run usage — contract on `RunUsageSample`. */
+  runUsage?: RunUsageSample
   /**
    * FID-2026-0818-007: set true by the drive loop after a COMPLETE archive —
    * the FID boundary is the deterministic compaction checkpoint; consumed
@@ -188,7 +191,6 @@ export type AgentState = {
    * to the SDK; cleared on cloneSessionState.
    */
   activityIdleTimer?: ReturnType<typeof setTimeout>
-
   /**
    * FID-2026-0824-024 post-closure amendment: operator-configured
    * result-digest caps from `protocol.config.yaml`
@@ -226,7 +228,6 @@ export type AgentState = {
    * `goal` record below supersedes it when present.
    */
   goalCondition?: string
-
   /**
    * FID-2026-0814-002: durable budgeted goal record. Owned by the runtime;
    * created from the `<goal-set>` directive (slash surface), controlled by
