@@ -3,6 +3,30 @@
 This directory contains closed or historically completed FIDs. Files here are
 an audit record, not an active work queue.
 
+## 2026-10-07 closure — the build-order register cleanup (1 FID archived)
+
+Closed after the cleanup's four implementation commits landed locally on `main`
+(`63db5305`, `a3384883`, `a58472da`, `6888cf74`), satisfying the G2 commit the
+record was waiting on; nothing was pushed. This FID is the record the cleanup pass
+owed — its four live orders became separate tracked records (`-011`..`-015`), so
+the register grew rather than shrank.
+
+**`FID-2026-1007-010-build-order-register-cleanup`** (register item T164-A,
+severity low, automation level 2). `dev/build-orders/` held nine records with no
+index, no lifecycle and no `SCOPE.md` registration, so five terminal orders were
+indistinguishable from the four live ones. The terminal five moved to `archive/`
+— one had asserted `status: planning` and "child emitter ABSENT" for work that
+had shipped as five closed FIDs, and that status was corrected before archiving
+rather than filed as historical fact. The live four had their statuses restated
+against the working tree; a new `README.md` states the lifecycle and that a build
+order is a proposal, not approved scope. Three references to moved paths were
+repaired in the same pass, including the drain manifest, which is fail-closed on
+unmatched paths. Receipt 2/2 (typecheck cli, quality) live at the archived path.
+Two corrections to the implementing session's own account are kept in the record:
+the `OVERLAP` abort it reported as a pre-existing defect was created by that same
+pass, and the manifest fix was not covered by the gate run that preceded its final
+edit.
+
 ## 2026-10-07 closure — the reusable provider identity gauntlet (1 FID archived)
 
 Closed on the operator's two-part ruling: the tool must be a **re-usable testing

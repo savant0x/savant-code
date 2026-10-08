@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-1007-010-build-order-register-cleanup.md`
 **ID:** FID-2026-1007-010
 **Severity:** low
-**Status:** verified
+**Status:** closed
 **Created:** 2026-10-07
 **Automation level:** 2
 **YAGNI-Compliance:** Verified
@@ -158,8 +158,8 @@ FID-2026-1007-011 rather than promised here.
 
 ### Verification Receipt
 
-- fingerprint: sha256:b108e0c79b22adbaf72d95a06030c35f889a0d9cce6d542ed99032db6185ed96
-- verified: 2026-10-08T02:47:31.259Z
+- fingerprint: sha256:2bfdc97a5450c75ca7e9ad2ff8d5822160f42a6addc4ddbcc52c2625c5573d80
+- verified: 2026-10-08T03:21:47.312Z
 - typecheck cli: exit 0
 - quality: exit 0
 
@@ -213,8 +213,10 @@ here rather than carried forward:
 
 ### Implementation Evidence
 
-- [ ] **Commit SHA:** pending — G2 requires the changes committed locally before
-      closure. Operator action.
+- [x] **Commit SHA:** `63db5305` (build-order archive + restatements),
+      `a3384883` (NDJSON citation repair), `a58472da` (drain-manifest coverage),
+      `6888cf74` (this record + `SCOPE.md`/`CHANGELOG.md` registration). G2
+      satisfied: the changes are committed locally on `main`.
 - [x] **File:line ranges:**
       - `dev/build-orders/archive/` — 5 records moved (SHA256 IDENTICAL pre/post move)
       - `dev/build-orders/BO-2026-08-23-git-workflow-enforcement.md:5` + `## Progress` section
@@ -281,7 +283,7 @@ BO-2026-09-22-pre-push-rewrite.md                            -> archived/ [IDENT
 
 ## Resolution
 
-- **Closed Date:** pending (awaiting the G2 commit)
+- **Closed Date:** 2026-10-07
 - **Fix Description:** Five terminal build orders archived with verified
   disposition; four live orders restated against the codebase; directory
   lifecycle documented; three moved-path references repaired; drain manifest
@@ -291,7 +293,7 @@ BO-2026-09-22-pre-push-rewrite.md                            -> archived/ [IDENT
 - **Verification Evidence:** gate output above.
 - **Follow-on FIDs:** FID-2026-1007-011 (manifest move safety), -012 (telemetry),
   -013 (eval runner), -014 (G2/G5 preflight), -015 (Atria P1/P5).
-- **Archived:** pending
+- **Archived:** 2026-10-07 — `dev/fids/archive/FID-2026-1007-010-build-order-register-cleanup.md`
 
 ## Lessons Learned
 

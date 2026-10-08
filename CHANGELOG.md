@@ -475,7 +475,8 @@
   exact-path entries were replaced, which also removed the `OVERLAP` the pass
   itself triggered by broadening coverage while an exact path still existed),
   and a group was added for the comment repair. The cleanup is recorded as
-  **FID-2026-1007-010** (`verified`, awaiting the G2 commit) — the pass owed
+  **FID-2026-1007-010** (`closed`; commits `63db5305`, `a3384883`, `a58472da`,
+  `6888cf74`) — the pass owed
   this FID and did not write it, having run as a complex change with no record.
   The four live orders are formalized as tracked FIDs: **-011** (drain-manifest
   move safety — directory coverage is landed provisionally, the regression test

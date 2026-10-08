@@ -140,11 +140,6 @@
 
 ### Build orders (formalized as FIDs 2026-10-07)
 
-- [ ] **T164-A. `FID-2026-1007-010` — build-order register cleanup (executed).**
-      The cleanup landed in the working tree; this FID is the record the pass
-      owed and did not write at the time. `FID-2026-1007-010`. **Automation
-      level: 2.** Awaiting the operator's commit (G2) before closure.
-
 - [ ] **T164-B. `FID-2026-1007-011` — tree-drain manifest coverage under a
       moving directory.** The manifest names exact paths inside
       `dev/build-orders/`, whose contents move to `archive/`; any move aborts
@@ -204,7 +199,6 @@
   `dev/session-summaries/2026-10-06-geaix-excelnt-probe.md`,
   `dev/fids/**` (the integration FID)
 - T122: (no write surface — operator-owned)
-- T164-A: `dev/fids/FID-2026-1007-010-build-order-register-cleanup.md`
 - T164-B: `dev/fids/FID-2026-1007-011-tree-drain-manifest-move-safety.md`,
   `scripts/tree-drain-manifest/**`,
   `scripts/tree-drain.ts`,

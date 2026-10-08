@@ -5,11 +5,20 @@ operator decision, implementation, runtime review, or closure evidence.
 
 ## Current active FIDs
 
-**None.** The last active record, `FID-2026-1007-008` (T163, provider identity
-gauntlet), closed and archived 2026-10-07 with a 9/9 receipt. Everything that was
-open on 2026-10-07 is closed, receipted and archived under the operator's standing
-ruling (verbatim: "approve, work until everything is completed, no more blockers
-and all fixed with echo compliance") — `FID-2026-1007-007`, `-008` and `-009`.
+**Six.** Opened 2026-10-07 by the build-order register cleanup (`FID-2026-1007-010`,
+closed and archived with its G2 commits) and the provider identity sweep:
+
+- **`FID-2026-1007-011`** (T164-B, drain-manifest move safety, `converged`) — the
+  directory coverage landed provisionally; the regression test is not written.
+- **`FID-2026-1007-012`** (T164-C, model-compliance telemetry, `created`) — 0 of 7.
+- **`FID-2026-1007-013`** (T164-D, eval-runner model override + usage, `created`) — 0 of 7.
+- **`FID-2026-1007-014`** (T164-E, release-preflight G2/G5 audit, `created`).
+- **`FID-2026-1007-015`** (T164-F, Atria handoff friction P1/P5, `created`).
+- **`FID-2026-1007-016`** (T165, identity-sweep verdict controls, `created`).
+
+The prior queue (`FID-2026-1007-007`, `-008`, `-009`) closed and archived
+2026-10-07 under the operator's standing ruling (verbatim: "approve, work until
+everything is completed, no more blockers and all fixed with echo compliance").
 Their closure sections are in [`archive/README.md`](archive/README.md):
 
 - **`FID-2026-1006-005` (T155, cache program)** — all eleven steps resolved. Four
