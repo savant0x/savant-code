@@ -127,8 +127,8 @@ bun x eslint cli/src/components/ --max-warnings 0
 
 ### Verification Receipt
 
-- fingerprint: sha256:02b44bb9012c2cda09569f19e3b77f11414b58d43424f5eb4e0b09916d86791f
-- verified: 2026-10-08T04:02:18.901Z
+- fingerprint: sha256:fcc766e643ad5f3ae00721ff4b9a293deaef38f5fc0dfcbe204325643ee3aec0
+- verified: 2026-10-08T04:41:02.613Z
 - test cli/src/components/__tests__/model-picker-free-section.test.ts: exit 0
 - typecheck cli: exit 0
 - quality: exit 0
