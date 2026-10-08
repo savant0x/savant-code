@@ -115,6 +115,18 @@
       blocked on an operator ruling about the offer data shape.
       **Automation level: 2.**
 
+- [ ] **T171. `FID-2026-1008-004` — free-provider follow-ups.** A: boot-path
+      decision extracted to `runLaunchDigest` and pinned. B: offers ending within
+      72h counted and printed (applied). C: auto-wire of selected free providers is
+      **blocked pending operator ruling** between registry-only and
+      harvested-candidate wiring (FID section "C"). **Automation level: 2.**
+
+- [ ] **T172. `FID-2026-1008-005` — /model stale-while-revalidate, gauntlet docs,
+      registry-only auto-wire.** (1) `/model` opens from the cache and refreshes
+      in the background. (2) `docs/provider-gauntlets.md` linked from AGENTS.md.
+      (3) Selecting an unkeyed registry provider runs the key flow and wires the
+      picked model on save. **Automation level: 2.**
+
 - [ ] **T62-followups (remaining items routed, not blocking `Task 62`
       closure):** (1) is **completed 2026-09-28** — commandcode catalog
       case-drift re-keyed to the live roster casing (`zai-org/GLM-5.2/5.3`),
@@ -237,6 +249,27 @@
   `cli/src/utils/free-options-render.ts`,
   `cli/src/utils/free-options-types.ts`,
   `cli/src/utils/__tests__/free-options.test.ts`
+- T171: `dev/fids/FID-2026-1008-004-free-provider-followups.md`,
+  `cli/src/utils/launch-digest.ts`,
+  `cli/src/utils/__tests__/launch-digest.test.ts`,
+  `cli/src/chat/use-chat-bootstrap.ts`,
+  `cli/src/utils/provider-offers.ts`,
+  `cli/src/utils/free-options.ts`,
+  `cli/src/utils/free-options-types.ts`,
+  `cli/src/utils/free-options-render.ts`,
+  `cli/src/utils/__tests__/free-options.test.ts`
+- T172: `dev/fids/FID-2026-1008-005-model-picker-swr-gauntlet-docs-autowire.md`,
+  `cli/src/utils/model-picker-open.ts`,
+  `cli/src/utils/__tests__/model-picker-open.test.ts`,
+  `cli/src/utils/model-picker-autowire.ts`,
+  `cli/src/utils/__tests__/model-picker-autowire.test.ts`,
+  `cli/src/state/model-picker-store.ts`,
+  `cli/src/commands/defs/model-provider-commands.ts`,
+  `cli/src/chat/use-chat-pickers.ts`,
+  `cli/src/commands/router/route-masked-key-setup.ts`,
+  `cli/src/chat/__tests__/model-picker-activation.test.ts`,
+  `docs/provider-gauntlets.md`,
+  `AGENTS.md`
 - T62-followups: `dev/scratchpad/active/t62*.ts` (the catalog itself is
   gateway-side; the local write surface is the probe scripts — verified
   2026-10-02: no local catalog directory exists)

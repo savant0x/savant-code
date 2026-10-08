@@ -6,6 +6,8 @@ Index of shelf notes. New entries go here as one line.
 - [ai-frontier-snapshot-2026-10-08.md](ai-frontier-snapshot-2026-10-08.md) — frozen baseline of the frontier board (Opus 5.5 #1, open-weight gap 13-22pts, $/task era) for a 30-day progress diff. **REVISIT 2026-11-07.** ACTIONABLE.
 - [replace-subscriptions-repos-2026-10.md](replace-subscriptions-repos-2026-10.md) — all 10 repos from the "replace 10 subscriptions" video, verified w/ real URLs + transcript-garble table + agent-relevance read (freellmapi, OpenShorts MCP, VoiceStudio MCP, Dyad). SHELVED.
 - [thinking-orbs-agent-status-2026-10.md](thinking-orbs-agent-status-2026-10.md) — @yogesharc/thinking-orbs: zero-dep animated AI agent status orbs (8 states incl. compacting/retrying, 15 variants). State taxonomy = free requirements research for Savant Desktop status UI. SHELVED.
+- [shellshock-gateway-2026-10.md](shellshock-gateway-2026-10.md) — theRizwan/ShellShock: local free-provider gateway (Next.js + open-sse + brand.json white-label). Pattern: brand.json single-source + policy-as-config. Flag: routes stealth Big Pickle as "GPT-6.1-Sol". SHELVED.
+- [hermes-story-farm-2026-10.md](hermes-story-farm-2026-10.md) + baseline JSON — LIVE 3-day idea farm: diffs the Hermes user-stories page (371 tiles), classifies new stories, appends roadmap candidates. First sweep 10-08: 321 tiles, 44 pain / 86 workflow / 72 memory-system. ACTIONABLE.
 
 Shelved ideas, explorations, and design references — **not active work**.
 Nothing here is a commitment, a FID, or a registered task; active work lives
