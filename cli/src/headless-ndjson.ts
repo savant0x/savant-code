@@ -1,7 +1,7 @@
 // FID-2026-0907-003 — NDJSON delegation frame module (BO Phase 1, FID 1).
 //
 // Speaks the Savant parent's FROZEN wire contract verbatim
-// (dev/build-orders/BO-2026-09-07-ndjson-phase-b-emitter.md,
+// (dev/build-orders/archive/BO-2026-09-07-ndjson-phase-b-emitter.md,
 // §Frozen Wire Contract): strict envelope {v, type, ts, data} with v = 1,
 // one JSON object per line, real epoch-ms ts. Child→parent frame types are
 // progress/question/artifact/error; parent→child control frames are
