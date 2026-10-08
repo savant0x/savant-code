@@ -1,6 +1,20 @@
 # Changelog
 
-## Unreleased — 2026-10-07
+## 0.0.35 — 2026-10-01
+
+> **v0.0.35** — **OpenAI as a first-class platform provider**: a platform `sk-` key
+> (`/provider openai`) routes `openai/<id>` — and bare slugs while OpenAI is active —
+> over the **Responses API** at api.openai.com, while the ChatGPT-subscription OAuth
+> lane keeps precedence for its allowlisted models, and the `/provider` picker finally
+> sorts alphabetically. The **connector layer lands**: the monid port ships as
+> `packages/connectors` and its catalog reaches the agent vocabulary as a four-tool
+> meta-family (`connector_search` / `describe` / `invoke` / `credentials`). **Direct
+> mode is the product** — the backend-mode surface is retired across CLI and SDK
+> (stage 2), only an explicit env backend key defers boot routing, direct-mode 402s
+> render the provider's own message, and the dead login surface is deleted. Also:
+> the harness asserts its own identity against supplier-branded personas. Previously
+> shipped in v0.0.34: live-verified **Vercel AI Gateway** + **Clean APIs**, the
+> Cloudflare dual-credential wizard, and the Law 3 verification-gate soundness fix.
 
 ### Added
 
@@ -728,7 +742,7 @@ play). All eleven FIDs are closed and archived to `dev/fids/archive/` with
 the closure commit, satisfying ECHO G2. These local commits are not a
 published release or remote push.
 
-## 2026-10-02 — EHEL enforcement restored end-to-end: effect-based mutation classification, worktree-reconciled Law 15, Law 2 scope gate, and fail-loud code_search (2 FIDs archived)
+### 2026-10-02 — EHEL enforcement restored end-to-end: effect-based mutation classification, worktree-reconciled Law 15, Law 2 scope gate, and fail-loud code_search (2 FIDs archived)
 
 ### The ECHO laws are no longer bypassable — enforcement by effect, reconciliation against the worktree, and the Law 2 scope gate (FID-2026-1001-003) — **closed 2026-10-02**
 
@@ -747,22 +761,6 @@ Gates: receipt stamped via `fid:verify --write` — all 14 declared gates PASS f
 ### code_search fails loud — silent "Found 0 matches" is no longer indistinguishable from a genuine absence (FID-2026-1002-001) — **closed 2026-10-02**
 
 An evidence tool lying by omission: a pattern with 65 ground-truth hits returned `Found 0 matches` with `Exit code: 0` — internally inconsistent for ripgrep (0 = matches existed), pointing at silent event loss in the collector. Fixed at both layers: the collector now accounts for every unparseable event line (`droppedEventLines` + first-dropped-line diagnostics, with protocol events `begin`/`end`/`summary` correctly exempt) and flushes the trailing remainder; the executor classifies the run outcome at close (`sdk/src/tools/code-search/anomaly.ts → classifyCodeSearchOutcome`, rg exit semantics as ground truth) and settles hard anomalies (exit-0-with-zero-collected, drop-explained zeros, error exits) through the error channel carrying stderr and drop counts; the display formatter renders "Found 0 matches" only for a verified clean zero (`options.emptyResultText`). Drops alongside real matches settle with a visible warning suffix. Stated limit: the fix makes every loss LOUD; it does not recover lost lines — a recurring decode-level drop becomes a follow-up with real evidence. Gates: sdk typecheck 0; new suite `sdk/src/__tests__/code-search-fail-loud.test.ts` 14/0; common typecheck 0; `common/src/util/format-code-search.test.ts` 4/0; full sdk 551/0; quality PASS; receipt stamped via `fid:verify --write`. Commit SHA pending operator git execution.
-
-## 0.0.35 — 2026-10-01
-
-> **v0.0.35** — **OpenAI as a first-class platform provider**: a platform `sk-` key
-> (`/provider openai`) routes `openai/<id>` — and bare slugs while OpenAI is active —
-> over the **Responses API** at api.openai.com, while the ChatGPT-subscription OAuth
-> lane keeps precedence for its allowlisted models, and the `/provider` picker finally
-> sorts alphabetically. The **connector layer lands**: the monid port ships as
-> `packages/connectors` and its catalog reaches the agent vocabulary as a four-tool
-> meta-family (`connector_search` / `describe` / `invoke` / `credentials`). **Direct
-> mode is the product** — the backend-mode surface is retired across CLI and SDK
-> (stage 2), only an explicit env backend key defers boot routing, direct-mode 402s
-> render the provider's own message, and the dead login surface is deleted. Also:
-> the harness asserts its own identity against supplier-branded personas. Previously
-> shipped in v0.0.34: live-verified **Vercel AI Gateway** + **Clean APIs**, the
-> Cloudflare dual-credential wizard, and the Law 3 verification-gate soundness fix.
 
 ### Free-provider discovery reaches users (FID-2026-1001-002) — **closed 2026-10-01** (commit 5ea0e0a5)
 

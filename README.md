@@ -14,16 +14,6 @@ local-first use with Ollama.
 
 </div>
 
-> **Unreleased — 2026-10-03:** CodeCraft API and xKiro join `/provider` and
-> the live model picker; CleanAPIs catalog metadata is completed. `/model`
-> scrolling now keeps model and header rows one terminal line tall. Also
-> landed: durable provider notifications with a `/notifications` inbox
-> (semantic deltas, dated health/removal notices, quota/offer windows),
-> gateway reconnect event replay, request token budgets enforced across every
-> model call, and a custom `INFERENCE_BASE_URL` endpoint authorized by
-> `INFERENCE_API_KEY` alone. See the
-> [provider/model reference](docs/providers.md) and [CHANGELOG](CHANGELOG.md).
-
 > **v0.0.35** — **OpenAI as a first-class platform provider**: a platform `sk-` key
 > (`/provider openai`) routes `openai/<id>` — and bare slugs while OpenAI is active —
 > over the **Responses API** at api.openai.com, while the ChatGPT-subscription OAuth
