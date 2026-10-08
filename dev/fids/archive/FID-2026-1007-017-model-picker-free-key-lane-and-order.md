@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-1007-017-model-picker-free-key-lane-and-order.md`
 **ID:** FID-2026-1007-017
 **Severity:** low
-**Status:** verified
+**Status:** closed
 **Created:** 2026-10-07
 **Automation level:** 2
 **YAGNI-Compliance:** Verified
@@ -127,8 +127,8 @@ bun x eslint cli/src/components/ --max-warnings 0
 
 ### Verification Receipt
 
-- fingerprint: sha256:fcc766e643ad5f3ae00721ff4b9a293deaef38f5fc0dfcbe204325643ee3aec0
-- verified: 2026-10-08T04:41:02.613Z
+- fingerprint: sha256:f3b1e2cb565e76016fcc0360783465ee6629f3c1e15cf6f131a1d05ba6de026d
+- verified: 2026-10-08T05:03:31.713Z
 - test cli/src/components/__tests__/model-picker-free-section.test.ts: exit 0
 - typecheck cli: exit 0
 - quality: exit 0
@@ -162,11 +162,29 @@ bun x eslint cli/src/components/ --max-warnings 0
 
 ## Resolution
 
-- **Closed Date:** pending
-- **Fix Description:** The free-key lane is removed; provider groups order A→Z.
-- **Tests Added:** `model-picker-free-section.test.ts` updated (5 tests).
-- **Verification Evidence:** receipt below.
-- **Archived:** pending
+- **Closed Date:** 2026-10-08 — closed on the operator's directive after they
+  live-confirmed the picker themselves ("i tested it live, everything
+  confirmed"). Implementation landed as local commits `df2d88af` (the fix +
+  tests) and `4ccabe17` (the operator's own `⭐ FREE MODELS` header rename,
+  pinned in the test and comments).
+- **Fix Description:** The free-key lane is removed — the section emits the
+  hoisted free-token models only, with no `CHATANYWHERE_API_KEY` placeholder
+  row, so the free-key provider renders as an ordinary provider group; provider
+  groups order A→Z by provider id (`openai` no longer leads on its registry
+  `order: 0`); `getProviderOrder` is retained as the registry-derivation
+  contract for custom providers. The operator renamed the section header
+  `⭐ FREE KEY` → `⭐ FREE MODELS` post-verification; the pin and comments
+  follow the shipped label.
+- **Tests Added:** `model-picker-free-section.test.ts` updated (5 tests: no
+  key-lane row under the header, free-key provider keeps its group, groups come
+  out A→Z).
+- **Verification Evidence:** receipt 3/3 (test, typecheck cli, quality) stamped
+  at this record's archived path; repo-wide `typecheck`, `eslint --max-warnings
+  0`, `prettier --check`, `lint:md`, `validate:repository`, and
+  `scope-register-check` all exit 0 at closure; operator live TUI confirmation
+  2026-10-08 (the unit pins plus the live smoke together close the boundary).
+- **Archived:** `dev/fids/archive/FID-2026-1007-017-model-picker-free-key-lane-and-order.md`
+  (2026-10-08).
 
 ### Code Verification Evidence
 

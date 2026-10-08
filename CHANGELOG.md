@@ -528,7 +528,8 @@
 ### Fixed
 
 - **The model picker no longer renders a free-key lane, and provider groups are
-  alphabetical (FID-2026-1007-017, low; register item T166).** Two defects in the
+  alphabetical (FID-2026-1007-017, low; closed and archived 2026-10-08; local
+  commits `df2d88af` + `4ccabe17`; register item T166).** Two defects in the
   `/model` picker. The `⭐ FREE KEY` section pushed a
   `CHATANYWHERE_API_KEY: ···· (free key set)` row beneath its header, so the free
   lane read as ChatAnywhere's section rather than a lane of free models — the
@@ -539,7 +540,8 @@
   free-token models only (no key lane; the free-key provider appears as an
   ordinary group with its ⭐, and provider groups order alphabetically by
   provider id. `getProviderOrder` is retained as the registry-derivation
-  contract for custom providers.
+  contract for custom providers. The operator renamed the section header
+  `⭐ FREE KEY` → `⭐ FREE MODELS` and live-confirmed the picker 2026-10-08.
 
 - **A local circuit breaker no longer refuses a user's model turn (FID-2026-1007-007,
   high; closed 2026-10-07; local commit `7a7f5dee`; register item T162).** The

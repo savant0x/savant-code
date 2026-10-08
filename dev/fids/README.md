@@ -16,6 +16,13 @@ closed and archived with its G2 commits) and the provider identity sweep:
 - **`FID-2026-1007-015`** (T164-F, Atria handoff friction P1/P5, `created`).
 - **`FID-2026-1007-016`** (T165, identity-sweep verdict controls, `created`).
 
+**2026-10-08 — `FID-2026-1007-017` (T166, model picker free-key lane +
+provider order) closed and archived** on the operator's directive after their
+live confirmation ("i tested it live, everything confirmed"). It was opened
+after the list above was written and never entered it, so the active queue is
+the six above. Receipt 3/3 at the archived path; see
+[`archive/README.md`](archive/README.md).
+
 The prior queue (`FID-2026-1007-007`, `-008`, `-009`) closed and archived
 2026-10-07 under the operator's standing ruling (verbatim: "approve, work until
 everything is completed, no more blockers and all fixed with echo compliance").

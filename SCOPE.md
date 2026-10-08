@@ -87,14 +87,6 @@
       already accepts `--control-*`; the sweep does not. `FID-2026-1007-016`.
       **Automation level: 2.**
 
-- [ ] **T166. `FID-2026-1007-017` — model picker free-key lane + provider
-      order.** The `⭐ FREE KEY` section rendered a `CHATANYWHERE_API_KEY`
-      key-lane row beneath its header (misreading the lane as ChatAnywhere's),
-      and provider groups were ordered by the registry `order` field — so
-      `openai` (order 0) led the list. Fixed: the section renders models only
-      and provider groups order alphabetically by provider id.
-      `FID-2026-1007-017`. **Automation level: 2.**
-
 - [ ] **T62-followups (remaining items routed, not blocking `Task 62`
       closure):** (1) is **completed 2026-09-28** — commandcode catalog
       case-drift re-keyed to the live roster casing (`zai-org/GLM-5.2/5.3`),
@@ -200,10 +192,6 @@
   `dev/scratchpad/active/provider-integration-*`
 - T165: `dev/fids/FID-2026-1007-016-provider-identity-sweep-verdict-controls.md`,
   `scripts/providers/**`
-- T166: `dev/fids/FID-2026-1007-017-model-picker-free-key-lane-and-order.md`,
-  `cli/src/components/model-picker*.tsx`,
-  `cli/src/components/model-picker-grouping.ts`,
-  `cli/src/components/__tests__/model-picker-free-section.test.ts`
 - T62-followups: `dev/scratchpad/active/t62*.ts` (the catalog itself is
   gateway-side; the local write surface is the probe scripts — verified
   2026-10-02: no local catalog directory exists)

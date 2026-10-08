@@ -3,6 +3,23 @@
 This directory contains closed or historically completed FIDs. Files here are
 an audit record, not an active work queue.
 
+## 2026-10-08 closure — model picker free-key lane + provider order (1 FID archived)
+
+Closed on the operator's directive after they live-confirmed the picker
+themselves ("i tested it live, everything confirmed"), which closed the last
+open boundary on the record. The two reported defects were pinned at the
+grouping function: the free section pushed a key-lane placeholder row that made
+the lane read as ChatAnywhere's, and provider groups sorted by the registry
+`order` field so `openai` (order 0) led the list. The fix emits hoisted
+free-token models only and sorts groups A→Z by provider id; the operator then
+renamed the section header `⭐ FREE KEY` → `⭐ FREE MODELS` themselves, and the
+test pin and comments follow the shipped label. Receipt 3/3 (test, typecheck
+cli, quality) live at the archived path.
+
+**`FID-2026-1007-017-model-picker-free-key-lane-and-order`** (register item
+T166, severity low, automation level 2). Implementation commits `df2d88af` +
+`4ccabe17`; register item removed from `SCOPE.md` at closure.
+
 ## 2026-10-07 closure — the build-order register cleanup (1 FID archived)
 
 Closed after the cleanup's four implementation commits landed locally on `main`
