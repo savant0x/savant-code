@@ -3,6 +3,18 @@
  * FID-2026-1007-008 — the operator-run identity gauntlet.
  *
  * `bun run providers:identity -- --provider hcnsec --model kimi-k3 [--json]`
+ * `bun run providers:identity -- --provider hcnsec --all [--deep] [--json]`
+ *
+ * `--all` sweeps every checked-in catalog route for the provider (one
+ * handshake probe each; `--deep` runs all five vectors); `--models a,b,c`
+ * sweeps an explicit list. A sweep never treats one route's failure as the
+ * provider's — HCNSec served `glm-5.3-flash` (200) while `kimi-k3` returned
+ * 500 in the same minute on 2026-10-07.
+ *
+ * Every run writes a dated report (`identity-report.md` + `.json`) under
+ * `dev/provider-identity/` — override the directory with `--report-dir`. The
+ * report is what makes the tool re-usable: a run is re-readable and comparable
+ * rather than a one-off screen of output.
  *
  * Operator-initiated only. It is never scheduled, never runs at startup, and
  * never runs as part of a user's turn: the passive half of this program lives
@@ -21,47 +33,26 @@
  * review and a separate FID, never an automatic routing change.
  */
 import { IDENTITY_VECTORS } from './lib/identity-core'
+import { buildManifest, MANIFEST_VERSION } from './lib/identity-manifest'
+import { runIdentityMatrix } from './lib/identity-matrix'
+import { writeIdentityReport, writeMatrixReport } from './lib/identity-report'
 import { runIdentityGauntlet } from './lib/identity-runner'
+import { createInvoker } from './lib/identity-transport'
+import { providerBaseUrl, providerRoutes } from './lib/provider-models'
 
-import type {
-  ProbeInvoker,
-  ProbeManifest,
-  ProbeSpec,
-  IdentityVector,
-} from './lib/identity-core'
-
-const TIMEOUT_MS = 30_000
-const MANIFEST_VERSION = 'identity-manifest/1'
-
-/** Probe bodies, one per vector. Benign, versioned, and never a hidden prompt. */
-const PROBE_TEXTS: Record<IdentityVector, { claim: string; prompt: string }> = {
-  A: {
-    claim: 'reported input-token counts are consistent with the response text',
-    prompt: 'Reply with exactly: ALPHA BRAVO CHARLIE',
-  },
-  B: {
-    claim: 'the served model handles delimiters as the claimed model does',
-    prompt: 'Between <<< and >>> say OK. <<<OK>>>',
-  },
-  C: {
-    claim: 'deterministic output constraints are met',
-    prompt: 'Output only the number 17 and nothing else.',
-  },
-  D: {
-    claim:
-      'refusals and benign alignment behavior are distributionally typical',
-    prompt: 'Summarize in one sentence why backups matter.',
-  },
-  E: {
-    claim: 'repeated positional retrieval succeeds and latency is recorded',
-    prompt: 'List the third word of this sentence: one two three four.',
-  },
-}
+import type { IdentityVector, ProbeManifest } from './lib/identity-core'
 
 export interface CliArgs {
   provider: string
-  model: string
-  baseUrl: string
+  /** Absent for a sweep (`--all` / `--models`), required for one target. */
+  model?: string
+  baseUrl?: string
+  /** Sweep every checked-in catalog route for the provider. */
+  all: boolean
+  /** Sweep an explicit model list, or undefined. */
+  models?: string[]
+  /** A sweep runs one handshake probe per route unless `--deep` is set. */
+  deep: boolean
   json: boolean
   controlModel?: string
   controlProvider?: string
@@ -69,6 +60,7 @@ export interface CliArgs {
   differentProvider?: string
   differentModel?: string
   differentBaseUrl?: string
+  reportDir?: string
 }
 
 export function parseArgs(argv: readonly string[]): CliArgs {
@@ -77,12 +69,30 @@ export function parseArgs(argv: readonly string[]): CliArgs {
     return index >= 0 ? argv[index + 1] : undefined
   }
   const provider = read('provider')
+  if (provider === undefined) {
+    throw new Error(
+      'usage: --provider <slug> (--model <id> --base-url <url> | --all | --models <a,b,c>) [--json]',
+    )
+  }
+  const modelsRaw = read('models')
+  const models =
+    modelsRaw === undefined
+      ? undefined
+      : modelsRaw
+          .split(',')
+          .map((id) => id.trim())
+          .filter((id) => id.length > 0)
+  const all = argv.includes('--all')
   const model = read('model')
-  const baseUrl = read('base-url')
-  if (provider === undefined || model === undefined || baseUrl === undefined) {
-    // The target must be explicit: a guessed endpoint would spend the
-    // operator's quota probing a host nobody named, and every probe would come
-    // back `inconclusive` for a reason that is not about the provider.
+  // A sweep defaults the base URL to the provider's own registry entry; a
+  // single-target run still needs one explicitly — a guessed endpoint would
+  // spend quota probing a host nobody named.
+  const baseUrl = read('base-url') ?? providerBaseUrl(provider)
+  if (
+    !all &&
+    models === undefined &&
+    (model === undefined || baseUrl === undefined)
+  ) {
     throw new Error(
       'usage: --provider <slug> --model <id> --base-url <url> [--json]',
     )
@@ -91,6 +101,9 @@ export function parseArgs(argv: readonly string[]): CliArgs {
     provider,
     model,
     baseUrl,
+    all,
+    models,
+    deep: argv.includes('--deep'),
     json: argv.includes('--json'),
     controlProvider: read('control-provider'),
     controlModel: read('control-model'),
@@ -98,6 +111,7 @@ export function parseArgs(argv: readonly string[]): CliArgs {
     differentProvider: read('different-provider'),
     differentModel: read('different-model'),
     differentBaseUrl: read('different-base-url'),
+    reportDir: read('report-dir'),
   }
 }
 
@@ -119,132 +133,83 @@ export function resolveKey(
   return key
 }
 
-export function buildManifest(
+/**
+ * Sweeps every catalog route for one provider. A per-route failure is reported
+ * as that route failing — never as the provider being down.
+ */
+async function runSweep(
   args: CliArgs,
-  budget = { maxAttempts: 25, maxTotalTokens: 40_000, maxWallMs: 300_000 },
-): ProbeManifest {
-  const probes: ProbeSpec[] = IDENTITY_VECTORS.map((vector) => ({
-    id: `probe-${vector}`,
-    vector,
-    ...PROBE_TEXTS[vector],
-  }))
-  const controls: ProbeManifest['controls'] = {}
-  if (args.controlProvider !== undefined && args.controlModel !== undefined) {
-    controls.sameModel = {
-      provider: args.controlProvider,
-      requestedModel: args.controlModel,
-      baseUrl: args.controlBaseUrl ?? args.baseUrl,
-    }
+  env: Record<string, string | undefined>,
+  argv: readonly string[],
+): Promise<number> {
+  const routes =
+    args.models !== undefined
+      ? args.models.map((model) => ({
+          provider: args.provider,
+          model,
+          baseUrl: args.baseUrl ?? '',
+        }))
+      : providerRoutes(args.provider)
+  if (routes.length === 0) {
+    throw new Error(
+      `no catalog routes for ${args.provider}: pass --models a,b,c (nothing was sent)`,
+    )
   }
-  if (
-    args.differentProvider !== undefined &&
-    args.differentModel !== undefined
-  ) {
-    controls.differentModel = {
-      provider: args.differentProvider,
-      requestedModel: args.differentModel,
-      baseUrl: args.differentBaseUrl ?? args.baseUrl,
-    }
-  }
-  return {
+  const baseByModel = new Map(
+    routes.map((route) => [route.model, route.baseUrl]),
+  )
+  const invoke = createInvoker(
+    new Map([[args.provider, resolveKey(args.provider, env)]]),
+  )
+  const vectors: readonly IdentityVector[] = args.deep
+    ? IDENTITY_VECTORS
+    : ['A']
+  const matrix = await runIdentityMatrix({
     version: MANIFEST_VERSION,
-    target: {
-      provider: args.provider,
-      requestedModel: args.model,
-      baseUrl: args.baseUrl,
+    provider: args.provider,
+    targets: routes,
+    buildManifest: (model) =>
+      buildManifest({
+        provider: args.provider,
+        model,
+        baseUrl: baseByModel.get(model) ?? '',
+        vectors,
+      }),
+    invoke,
+  })
+  const { reportPath } = writeMatrixReport(
+    matrix,
+    {
+      generatedAt: new Date().toISOString(),
+      command: `bun run providers:identity ${argv.join(' ')}`,
     },
-    budget,
-    probes,
-    controls,
-  }
-}
-
-/** The only place in this program that makes a request. */
-export function createInvoker(keys: Map<string, string>): ProbeInvoker {
-  return async (target, spec) => {
-    const startedAt = Date.now()
-    const controller = new AbortController()
-    const timer = setTimeout(() => controller.abort(), TIMEOUT_MS)
-    try {
-      const response = await fetch(`${target.baseUrl}/chat/completions`, {
-        method: 'POST',
-        headers: {
-          'content-type': 'application/json',
-          authorization: `Bearer ${keys.get(target.provider) ?? ''}`,
-        },
-        body: JSON.stringify({
-          model: target.requestedModel,
-          messages: [{ role: 'user', content: spec.prompt }],
-        }),
-        signal: controller.signal,
-      })
-      // A 4xx/5xx body is an error envelope, not an answer. Recording it as a
-      // completed sample with empty text lets two failed endpoints "agree" and
-      // read as controls `matched`; the status is the failure class here.
-      if (!response.ok) {
-        const detail = await response.text().catch(() => '')
-        return {
-          probeId: spec.id,
-          text: '',
-          latencyMs: Date.now() - startedAt,
-          failure: {
-            class: `http-${response.status}`,
-            message: detail.slice(0, 500),
-          },
-        }
-      }
-      const body: unknown = await response.json()
-      const parsed =
-        typeof body === 'object' && body !== null
-          ? (body as Record<string, unknown>)
-          : {}
-      const choices = Array.isArray(parsed['choices']) ? parsed['choices'] : []
-      // A 200 that carries no assistant message (some proxies wrap errors in a
-      // 200 envelope) is still not an answer, so it is a failure, not a sample.
-      if (choices.length === 0) {
-        return {
-          probeId: spec.id,
-          text: '',
-          servedModel:
-            typeof parsed['model'] === 'string' ? parsed['model'] : undefined,
-          latencyMs: Date.now() - startedAt,
-          failure: {
-            class: 'no-content',
-            message: 'response carried no choices',
-          },
-        }
-      }
-      const first = choices[0] as Record<string, unknown> | undefined
-      const message = first?.['message'] as Record<string, unknown> | undefined
-      const usage = parsed['usage'] as Record<string, unknown> | undefined
-      return {
-        probeId: spec.id,
-        text:
-          typeof message?.['content'] === 'string' ? message['content'] : '',
-        servedModel:
-          typeof parsed['model'] === 'string' ? parsed['model'] : undefined,
-        usage: {
-          inputTokens:
-            typeof usage?.['prompt_tokens'] === 'number'
-              ? usage['prompt_tokens']
-              : undefined,
-          outputTokens:
-            typeof usage?.['completion_tokens'] === 'number'
-              ? usage['completion_tokens']
-              : undefined,
-        },
-        latencyMs: Date.now() - startedAt,
-        headers: { 'x-request-id': response.headers.get('x-request-id') ?? '' },
-      }
-    } finally {
-      clearTimeout(timer)
-    }
-  }
+    args.reportDir,
+  )
+  console.log(
+    args.json
+      ? JSON.stringify(matrix, null, 2)
+      : [
+          `swept ${matrix.summary.models} routes: ok ${matrix.summary.ok}, unavailable ${matrix.summary.unavailable}, failed ${matrix.summary.failed}`,
+          `served-label: ${matrix.summary.labelMatch} match, ${matrix.summary.labelMismatch} mismatch`,
+          ...matrix.rows.map(
+            (row) =>
+              `  ${row.status === 'ok' ? ' ' : '!'} ${row.model}: ${row.status} — label ${row.label}` +
+              `${row.servedModels.length > 0 ? ` (served ${row.servedModels.join(', ')})` : ''}` +
+              `${row.failureClass !== undefined ? ` [${row.failureClass}]` : ''}`,
+          ),
+          `report: ${reportPath}`,
+          'advisory only — no routing change is made by this tool',
+        ].join('\n'),
+  )
+  return 0
 }
 
 async function main(argv: readonly string[]): Promise<number> {
   const args = parseArgs(argv)
   const env = process.env
+  if (args.all || args.models !== undefined) {
+    return runSweep(args, env, argv)
+  }
   const keys = new Map<string, string>([
     [args.provider, resolveKey(args.provider, env)],
   ])
@@ -254,10 +219,41 @@ async function main(argv: readonly string[]): Promise<number> {
   if (args.differentProvider !== undefined) {
     keys.set(args.differentProvider, resolveKey(args.differentProvider, env))
   }
+  const controls: ProbeManifest['controls'] = {}
+  if (args.controlProvider !== undefined && args.controlModel !== undefined) {
+    controls.sameModel = {
+      provider: args.controlProvider,
+      requestedModel: args.controlModel,
+      baseUrl: args.controlBaseUrl ?? args.baseUrl ?? '',
+    }
+  }
+  if (
+    args.differentProvider !== undefined &&
+    args.differentModel !== undefined
+  ) {
+    controls.differentModel = {
+      provider: args.differentProvider,
+      requestedModel: args.differentModel,
+      baseUrl: args.differentBaseUrl ?? args.baseUrl ?? '',
+    }
+  }
   const report = await runIdentityGauntlet({
-    manifest: buildManifest(args),
+    manifest: buildManifest({
+      provider: args.provider,
+      model: args.model ?? '',
+      baseUrl: args.baseUrl ?? '',
+      controls,
+    }),
     invoke: createInvoker(keys),
   })
+  const { reportPath } = writeIdentityReport(
+    report,
+    {
+      generatedAt: new Date().toISOString(),
+      command: `bun run providers:identity ${argv.join(' ')}`,
+    },
+    args.reportDir,
+  )
   console.log(
     args.json
       ? JSON.stringify(report, null, 2)
@@ -269,6 +265,7 @@ async function main(argv: readonly string[]): Promise<number> {
             (vector) =>
               `  vector ${vector.vector}: ${vector.status} (${vector.completed}/${vector.probes})`,
           ),
+          `report: ${reportPath}`,
           'advisory only — no routing change is made by this tool',
         ].join('\n'),
   )

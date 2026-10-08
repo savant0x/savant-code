@@ -3,6 +3,33 @@
 This directory contains closed or historically completed FIDs. Files here are
 an audit record, not an active work queue.
 
+## 2026-10-07 closure — the reusable provider identity gauntlet (1 FID archived)
+
+Closed on the operator's two-part ruling: the tool must be a **re-usable testing
+system with a report**, and it must test a **provider's whole catalog, not one
+model** — "why does that gauntlet only test a single model and call it done?" and
+"just because one model is down, does not mean the entire provider is down." Live
+tests through it exposed four defects, and the sweep's served-label check is what
+surfaces a substitution. Receipt 9/9 at the archived path.
+
+**`FID-2026-1007-008-provider-identity-gauntlet`** (register item T163, severity
+high, automation level 2). A passive observation seam makes no request; the
+operator-run gauntlet runs either one target (with optional same-model and
+different-model controls) or a **catalog sweep** (`--all` / `--models a,b,c`,
+`--deep` for all five vectors), and every run writes a dated report under
+`dev/provider-identity/` (`identity-report.md` for one target, `identity-matrix.md`
+for a sweep). The per-route row is the unit of truth: route status, failure class,
+served `model` label and its verdict, probes completed, latency. Four defects were
+found by the pins and the live runs rather than by reasoning — a failed control
+counted as `separated`; the 0.85 check failing against the modules' own comments;
+a CLI that defaulted `--base-url` to a placeholder host; and, worst, a transport
+that counted an HTTP 500/402 error envelope as a completed sample so two dead
+endpoints read as controls `matched`. No numeric threshold is applied, the 0.85
+auto-failover is implemented nowhere, and no verdict ever blocks a user call or
+changes routing. Live: the single-target `kimi-k3` run was `inconclusive` (route
+`http-500`; TokenBom controls `http-402`), and the seven-route HCNSec sweep read
+**ok 1 / failed 6** — reported per route, never as the provider being down.
+
 ## 2026-10-07 closure — truthful cache telemetry in the sidebar (1 FID archived)
 
 Closed on the operator's report that cache reuse was simply invisible. Three layers had

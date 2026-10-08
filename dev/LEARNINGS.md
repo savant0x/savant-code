@@ -1,5 +1,40 @@
 # LEARNINGS
 
+## Lesson: A failing part is not a failing whole
+
+- **Date:** 2026-10-07
+- **Failure:** The identity gauntlet tested one hard-coded target and emitted one
+  verdict, so a single route being down read as a statement about the provider —
+  the operator corrected it twice: "why does that gauntlet only test a single
+  model and call it done?" and "just because one model is down, does not mean the
+  entire provider is down. For example, i just tried glm 5.3 flash and it
+  responded." In the same minute HCNSec answered `glm-5.3-flash` with 200 and
+  `kimi-k3` with 500, so a one-target run could not tell a broken route from a
+  broken host, and never asked the routes where a substituted `model` label was
+  being served.
+- **Evidence:** scripts/providers/lib/provider-models.ts → symbol:providerRoutes,
+  scripts/providers/lib/identity-core.ts → symbol:classifyServedLabel,
+  scripts/providers/lib/identity-matrix.ts → symbol:runIdentityMatrix,
+  scripts/providers/__tests__/identity-matrix.test.ts → test:a served label that does not name the requested model is flagged
+- **Invariant:** A per-member result must be reported per member; a failure in
+  one member must never be aggregated into a claim about its container. Testing
+  one member of a set and reporting on the set is not a smaller version of the
+  test — it is a false one, because a healthy sibling is exactly the evidence
+  that separates "this member is broken" from "the container is broken".
+- **Guard:** When a tool's subject is a collection (a provider's routes, a host's
+  endpoints), enumerate the collection by default and emit one row per member
+  with its own status; require an explicit scope argument to narrow it. Keep the
+  member states distinct — `ok`, `unavailable` (refused for funding) and
+  `failed` (the route is broken) are three facts, not two.
+- **Verification:** `bun run providers:identity -- --provider hcnsec --all` wrote
+  `dev/provider-identity/identity-matrix.md` with seven per-route rows (ok 1,
+  failed 6) and no provider-level failure; the pins assert one `ok` row beside a
+  `failed` row, that a quota refusal is `unavailable` rather than `failed`, and
+  that a served label not naming the requested model is flagged `mismatch`.
+- **Scope:** internal
+- **Owning FID:** FID-2026-1007-008
+- **Status:** active
+
 ## Lesson: A control that fails is not a control that disagrees
 
 - **Date:** 2026-10-07
@@ -16,7 +51,7 @@
   only the first may feed a comparison.
 - **Evidence:** scripts/providers/lib/identity-runner.ts → symbol:verdictFor,
   scripts/providers/__tests__/identity-gauntlet.test.ts → test:an unavailable control means inconclusive,
-  dev/fids/FID-2026-1007-008-provider-identity-gauntlet.md → heading:Code Verification Evidence
+  dev/fids/archive/FID-2026-1007-008-provider-identity-gauntlet.md → heading:Code Verification Evidence
 - **Invariant:** A comparison needs three outcomes, not two: agrees, disagrees,
   and did not answer. Collapsing "did not answer" into "disagrees" turns an
   infrastructure failure into a substantive finding, and the more the

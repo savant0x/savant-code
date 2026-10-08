@@ -168,6 +168,36 @@ export function stableTextHash(text: string): string {
 }
 
 /**
+ * The leading alphabetic brand token of a model id, lowercased: `glm-5.3-flash`
+ * -> `glm`, `moonshotai/kimi-k3` -> `kimi`, `DeepSeek-V4-Flash` -> `deepseek`.
+ * Returns '' when the id has no alphabetic lead, which is treated as unknown.
+ */
+export function modelFamily(id: string): string {
+  const bare = id
+    .toLowerCase()
+    .replace(/^[a-z0-9-]+\//, '')
+    .trim()
+  return /^[a-z]+/.exec(bare)?.[0] ?? ''
+}
+
+/**
+ * Compares the `model` label a provider returns with the id we requested. This
+ * is the sweep's primary, control-free signal, and it is deliberately narrow: a
+ * served label must name the requested model's family. An empty or unparseable
+ * label is `unknown`, never a mismatch, and a `match` is not proof of identity
+ * (a proxy can echo any label); a `mismatch` is a claim that must be explained.
+ */
+export function classifyServedLabel(
+  requested: string,
+  observed: string | undefined,
+): 'match' | 'mismatch' | 'unknown' {
+  if (observed === undefined || observed.trim() === '') return 'unknown'
+  const family = modelFamily(requested)
+  if (family === '') return 'unknown'
+  return modelFamily(observed) === family ? 'match' : 'mismatch'
+}
+
+/**
  * Vector A's overhead rule. A served model's own tokenizer reports roughly the
  * prompt's token count, so a very different count is worth reporting — but a
  * chat template, tool preamble, proxy billing layer or CJK-heavy prompt

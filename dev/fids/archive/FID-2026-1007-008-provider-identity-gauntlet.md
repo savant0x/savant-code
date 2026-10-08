@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-1007-008-provider-identity-gauntlet.md`
 **ID:** FID-2026-1007-008
 **Severity:** high
-**Status:** fixed
+**Status:** closed
 **Created:** 2026-10-07
 **Automation level:** 2
 **YAGNI-Compliance:** Verified
@@ -113,6 +113,8 @@ a decision that says exactly which claim was tested.
 
 - gate: test scripts/providers/__tests__/identity-gauntlet.test.ts
 - gate: test scripts/providers/__tests__/identity-gauntlet-invariants.test.ts
+- gate: test scripts/providers/__tests__/identity-report.test.ts
+- gate: test scripts/providers/__tests__/identity-matrix.test.ts
 - gate: test packages/agent-runtime/src/__tests__/provider-identity-observation.test.ts
 - gate: test scripts/providers/__tests__/quality-gauntlet.test.ts
 - gate: typecheck packages/agent-runtime
@@ -121,10 +123,12 @@ a decision that says exactly which claim was tested.
 
 ### Verification Receipt
 
-- fingerprint: sha256:50e12873a97afd6dadaa8cc1c94b234a84df5190e58433752e615d297bdd3371
-- verified: 2026-10-08T00:17:28.722Z
+- fingerprint: sha256:cad8743b74cffbf1c4155b7b180e1d7fc7cc32349945cefbdd2d439d06189131
+- verified: 2026-10-08T01:13:34.471Z
 - test scripts/providers/__tests__/identity-gauntlet.test.ts: exit 0
 - test scripts/providers/__tests__/identity-gauntlet-invariants.test.ts: exit 0
+- test scripts/providers/__tests__/identity-report.test.ts: exit 0
+- test scripts/providers/__tests__/identity-matrix.test.ts: exit 0
 - test packages/agent-runtime/src/__tests__/provider-identity-observation.test.ts: exit 0
 - test scripts/providers/__tests__/quality-gauntlet.test.ts: exit 0
 - typecheck packages/agent-runtime: exit 0
@@ -242,6 +246,68 @@ a decision that says exactly which claim was tested.
   *different* route, not evidence about `kimi-k3`, and per step 6 it needs its
   own reviewed decision; it is recorded here as an observation only.
 
+### Loop 6 — the report, and the operator's ruling that closed it
+
+- **RED:** The operator's requirement, verbatim: *"i wanted it to be a testing
+  system that i could re-use moving forward, which would include a report. That's
+  missing entirely."* A tool whose only output is a screen of text is not a
+  testing system — a run cannot be re-read, compared across dates, or cited as
+  dated evidence.
+- **GREEN:** A new `scripts/providers/lib/identity-report.ts` renders a dated
+  Markdown report and writes `identity-report.md` + `identity-report.json` at a
+  stable, gitignored path (`dev/provider-identity/`, overridable with
+  `--report-dir`), mirroring the existing `quality.json` / `report.md`
+  convention and reusing the `assertWithinDev` write guard. Every run writes one
+  and the CLI prints its path. The report carries the verdict, target, controls,
+  budget, per-vector findings, every redacted observation with its failure class,
+  the tested claims, and a "what this does not prove" section.
+- **GREEN (structure):** the network transport moved out of the CLI into
+  `scripts/providers/lib/identity-transport.ts`, keeping `identity-gauntlet.ts`
+  at 218 lines and every touched file well under the 300-line ceiling.
+- **AUDIT:** five new report pins prove the verdict/controls/negative bound are
+  rendered, the exact command is recorded, no credential-shaped value reaches the
+  report, both artifacts are written under `dev/`, and a path outside `dev/` is
+  refused — 27 pass / 0 fail across the three suites. A real run wrote
+  `dev/provider-identity/identity-report.md` and printed its path.
+- **OPERATOR RULING (2026-10-07, verbatim):** *"the entire point of the gauntlet is
+  so i could use it as an internal tool moving forward, not a one off case. The
+  provider has stability issues i am fully aware of, hence why i wanted the
+  gauntlet as well. It was supposed to be a tool i can use to test the model, not
+  a fid to test one off."* The deliverable is the reusable tool; endpoint
+  instability is the motivation for it, so step 7's single live leg is
+  observational evidence rather than a closure blocker.
+- **CHANGE DELTA:** report module + transport split + 5 pins.
+
+### Loop 7 — the sweep, and a route is not a provider
+
+- **RED:** The operator rejected the single-target run, verbatim: *"why does that
+  gauntlet only test a single model and call it done? That's a one shot 'test', i
+  wanted a gauntlet"*, *"testing a single model, saying it failed and then
+  calling it done does not do 1/100th of what i need"*, and the decisive
+  correction: *"just because one model is down, does not mean the entire provider
+  is down. For example, i just tried glm 5.3 flash and it responded."*
+- **GREEN:** `--all` sweeps every checked-in catalog route for a provider
+  (`provider-models.ts` reads the registry entry's `modelsRef` and strips the
+  routing prefix), `--models a,b,c` sweeps an explicit list, and `--deep` runs all
+  five vectors per route instead of one handshake probe. `identity-matrix.ts`
+  aggregates a per-model row, and the served `model` label the API returns is now
+  a first-class signal (`classifyServedLabel`) — the check that catches a
+  `glm-5.3-flash` → `longcat-2.5-preview-free` substitution the single-target run
+  never surfaced.
+- **AUDIT:** a live sweep of HCNSec read **7 routes — ok 1, failed 6** (per-route
+  `http-500`/`http-503`/`error`) with `DeepSeek-V4-Flash` answering and serving
+  `deepseek_for_coding`. The report states per route: status (ok / unavailable /
+  failed), the failure class, the served label and its label verdict, probes
+  completed and latency — and the provider is **not** reported as down, which is
+  the correction the operator made.
+- **ADVERSARIAL:** A `match` is not proof of identity (a proxy can echo a label),
+  so it is a label check, never identity proof; a `mismatch` is flagged for
+  review, never a fraud verdict. A route that is down is `failed`; a quota refusal
+  is `unavailable` (funding — "top up"), and the two are deliberately distinct.
+- **CHANGE DELTA:** new `identity-matrix.ts`, `identity-manifest.ts` and
+  `provider-models.ts`; `--all`/`--models`/`--deep`; 5 sweep pins; the served-label
+  signal. The record closes.
+
 ### Code Verification Evidence
 
 - [x] Files referenced exist, verified by read:
@@ -249,9 +315,16 @@ a decision that says exactly which claim was tested.
       `packages/agent-runtime/src/__tests__/provider-identity-observation.test.ts`,
       `scripts/providers/lib/identity-core.ts`,
       `scripts/providers/lib/identity-runner.ts`,
+      `scripts/providers/lib/identity-transport.ts`,
+      `scripts/providers/lib/identity-manifest.ts`,
+      `scripts/providers/lib/identity-matrix.ts`,
+      `scripts/providers/lib/provider-models.ts`,
+      `scripts/providers/lib/identity-report.ts`,
       `scripts/providers/identity-gauntlet.ts`,
       `scripts/providers/__tests__/identity-gauntlet.test.ts`,
       `scripts/providers/__tests__/identity-gauntlet-invariants.test.ts`,
+      `scripts/providers/__tests__/identity-report.test.ts`,
+      `scripts/providers/__tests__/identity-matrix.test.ts`,
       `package.json`
 - [x] The failure output is pasted from the actual command, with its exit
       status: the non-declarable gate is the executor's own message, and the
@@ -265,35 +338,66 @@ a decision that says exactly which claim was tested.
 - [x] Production call-graph evidence: the passive seam is imported by nothing on
       a user path yet — it is a new seam, and the record says so rather than
       implying adoption; the gauntlet's only network call is inside
-      `createInvoker` in `scripts/providers/identity-gauntlet.ts`, and the
+      `createInvoker` in `scripts/providers/lib/identity-transport.ts`, and the
       invariant pin proves the two engine modules contain none
-- [x] The record's own boundary is honoured: **this record stays OPEN.** Step 7
-      makes the live HCNSec re-audit a named gate that requires the operator's
-      credential and spend authority, and the record's own Loop 3 says an
-      unavailable live leg reports `inconclusive` and keeps the FID open. The
-      operator granted that authority on 2026-10-07 and the leg ran (Loop 5):
-      the target route answered `http-500` and both controls `http-402`, so the
-      run is **inconclusive** and no identity claim is made about the route. No
-      verdict was manufactured from an empty response, and the transport defect
-      the run exposed was fixed rather than papered over
-- [x] FID status reflects reality (`fixed`: implementation complete and gated,
-      receipt stamped; `closed` is withheld until the live leg runs or the
-      operator retires it)
+- [x] The report is a real artifact, not a claim: a live run wrote
+      `dev/provider-identity/identity-report.md` and `.json` and printed the
+      path; the pins assert the verdict, controls, command and the refusal to
+      write outside `dev/`
+- [x] The record's boundary is honoured and closed by the operator's ruling of
+      2026-10-07 (Loop 6): the live leg ran (Loop 5) and is recorded as dated
+      observational evidence — target `http-500`, controls `http-402`, verdict
+      **inconclusive**, no identity claim about the route. The reusable tool is
+      the deliverable, so the incomplete single-route verdict does not hold the
+      record open, and no verdict was manufactured from an empty response
+- [x] FID status reflects reality (`closed`): the tool is implemented, receipted,
+      and produces the dated report the operator asked for
 
 ## Resolution
 
-Open (implementation complete and gated; the live leg ran on 2026-10-07 and
-returned **inconclusive**). The offline program is implemented and receipted
-7/7: a passive seam that makes no request, and an operator-run, budget-bounded,
-control-required gauntlet whose verdicts are advisory and whose 0.85
-auto-failover is implemented nowhere. Step 7's live re-audit was executed under
-operator authority and could not produce a verdict — HCNSec currently serves no
-channel for `kimi-k3` (`http-500 get_channel_failed`) and the TokenBom controls
-are out of credits (`http-402 insufficient_credits`) — so the route remains
-**inconclusive** and nothing about its model identity is claimed. Closing this
-record needs either a funded control pair plus an available `kimi-k3` channel,
-or an explicit operator decision to retire it on offline evidence alone. A
-mismatch, if one is ever observed, triggers human review and a separate FID —
-never an automatic routing change. The unrelated `glm-5.3-flash` →
-`longcat-2.5-preview-free` substitution recorded in Loop 5 likewise needs its
-own record.
+Closed 2026-10-07. The deliverable is a reusable, operator-run testing system —
+not a one-off test of one model — per the operator's rulings in Loop 6 and
+Loop 7.
+
+**Delivered.** A passive observation seam
+(`packages/agent-runtime/src/provider-boundary/identity-observation.ts`) that
+records only what a completed call already returned and makes no request at all.
+An operator-run gauntlet in two shapes: a single-target run (`--provider <slug>
+--model <id> --base-url <url>`, optional same-model and different-model controls)
+whose verdict requires both controls, and a **catalog sweep** (`--all`, or
+`--models a,b,c`; `--deep` for all five vectors) that tests **every** route a
+provider declares and reports each one separately. Its 0.85 auto-failover is
+implemented nowhere. Every run writes a dated report under `dev/provider-identity/`
+— `identity-report.md`/`.json` for one target, `identity-matrix.md`/`.json` for a
+sweep — so runs are re-readable and comparable across dates. `identity-gauntlet.ts`
+is a thin CLI over `lib/identity-core.ts`, `lib/identity-manifest.ts`,
+`lib/identity-runner.ts`, `lib/identity-matrix.ts`, `lib/identity-transport.ts`,
+`lib/identity-report.ts` and `lib/provider-models.ts`.
+
+**A route is not a provider.** On 2026-10-07 HCNSec answered `glm-5.3-flash` with
+200 while `kimi-k3` returned 500 in the same minute; a live sweep of the
+seven-route catalog read **ok 1, failed 6** with `DeepSeek-V4-Flash` answering and
+serving `deepseek_for_coding`. The sweep reports per route and never rolls a
+single route's failure up to the host.
+
+**Served-label signal.** The sweep's primary, control-free check compares the
+`model` label the endpoint returns with the id requested (`classifyServedLabel`);
+it is what exposes a substitution like the observed `glm-5.3-flash` →
+`longcat-2.5-preview-free`. A `match` is not proof of identity (a proxy can echo a
+label) and a `mismatch` is flagged for human review, never a fraud verdict.
+
+**Live boundary (2026-10-07), recorded in
+`docs/provider-identity-audit-2026-09-13.md` section 9:** the single-target control
+run could not reach a verdict — the `kimi-k3` route answered `http-500` and both
+TokenBom controls `http-402 insufficient_credits` — so that route is
+**inconclusive** and nothing about its identity is claimed. The run also exposed a
+transport defect (error envelopes counted as completed samples, so two dead
+endpoints read as `matched`) fixed in commit `37d425be` with three pins; the
+report and the sweep followed from the operator's requirement that the tool be
+re-usable.
+
+**Advisory, never automatic.** This tool never blocks a user call or changes
+routing. The unrelated `glm-5.3-flash` substitution deserves its own record.
+
+**Archived** to `dev/fids/archive/` with the receipt re-stamped at the archived
+path.

@@ -322,7 +322,16 @@ is **inconclusive — the route is currently unserved**:
 No identity signal exists to judge: the target cannot answer and both controls
 are unfunded. Under the gauntlet's rule an unavailable control or endpoint
 yields `inconclusive`, never a fraud verdict, so nothing about `kimi-k3` is
-claimed and the FID stays open.
+claimed. The record closed on the operator's ruling that the **reusable tool**,
+not one route's verdict, is the deliverable.
+
+**A route is not a provider.** The same host answered `glm-5.3-flash` with HTTP
+200 while `kimi-k3` returned 500 in the same minute, so the gauntlet was extended
+to sweep the whole catalog (`bun run providers:identity -- --provider hcnsec
+--all`) and report each route separately. The seven-route sweep read **ok 1,
+failed 6** — `DeepSeek-V4-Flash` answered and served `deepseek_for_coding`, while
+`kimi-k3` alone reported `http-500`. A per-route failure is never reported as the
+provider being down.
 
 Incidental, and out of scope for this cell: probing another allowlist entry,
 `glm-5.3-flash`, returned **HTTP 200 with a `longcat-2.5-preview-free` served

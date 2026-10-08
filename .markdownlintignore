@@ -80,6 +80,11 @@ docs/design/Free LLM API Aggregator Research — Verification.md
 # exemption precedent as the Free LLM API Aggregator Research docs above.
 docs/Model Context Window Review.md
 
+# Provider identity gauntlet report (FID-2026-1007-008) — machine-generated
+# per operator run (replace-in-place), gitignored; MD013 on generated evidence
+# tables is meaningless. Same exemption precedent as provider-candidates below.
+dev/provider-identity/**
+
 # Discovery-pipeline daily report (FID-2026-0914-003) — machine-generated
 # per harvest run (replaced in place), gitignored; MD013 on generated
 # evidence tables is meaningless. Same exemption precedent as the scratchpad.

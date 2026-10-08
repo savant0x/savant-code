@@ -35,10 +35,19 @@
   (six refused probes read as evidence of a different model), the 0.85 pin failed
   against the modules' own comments until it scanned code only, and the CLI's first
   draft defaulted `--base-url` to a placeholder host so a misconfigured run spent
-  quota against a name nobody chose. Receipt 7/7. The record is **not closed**: its
-  step 7 makes the live HCNSec re-audit a named gate requiring the operator's
-  credential and spend authority, and until it runs the route stays `inconclusive`
-  with nothing claimed about its identity.
+  quota against a name nobody chose. The operator then required that the tool be
+  **re-usable** and rejected a single-target one-shot: every run now writes a dated
+  report (`dev/provider-identity/`), and `--all` / `--models a,b,c` sweep **every**
+  catalog route and report each separately — a route being down is never the
+  provider being down (HCNSec served `glm-5.3-flash` with 200 while `kimi-k3`
+  returned 500 in the same minute), with the served `model` label as a first-class
+  signal. A live sweep of the seven-route HCNSec catalog read ok 1 / failed 6. A
+  fourth defect surfaced from the live runs: the transport counted an HTTP error
+  envelope as a completed sample, so two dead endpoints read as `matched`.
+  Receipt 9/9; the record is **closed and archived 2026-10-07** on the operator's
+  ruling that the reusable tool, not one route's verdict, is the deliverable. The
+  observed `glm-5.3-flash` -> `longcat-2.5-preview-free` substitution needs its own
+  record.
 - **The sidebar reports provider cache reuse truthfully (FID-2026-1007-009, medium;
   closed 2026-10-07; local commits `8c528f12` + `07fbbbd9`; register item T164).**
   Cache reuse was invisible in the CLI, and three layers had each destroyed the fact

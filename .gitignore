@@ -58,6 +58,9 @@ dev/scratchpad/*
 # harvest report + candidate state + agent-context sidecars — regenerated
 # in place by every run, never source.
 dev/provider-candidates/
+# Provider identity gauntlet reports (FID-2026-1007-008) — regenerated fresh on
+# every operator run, replace-in-place, never committed.
+dev/provider-identity/
 
 # Materialized by release package prepack scripts and removed by postpack.
 cli/release/launcher.js
