@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-1008-003-launch-announce-wired-and-offers.md`
 **ID:** FID-2026-1008-003
 **Severity:** medium
-**Status:** created
+**Status:** fixed
 **Created:** 2026-10-08
 **Automation level:** 2
 **YAGNI-Compliance:** Verified
@@ -66,8 +66,8 @@ Seeing we only have 2 wired is completely wrong."
 
 ### Verification Receipt
 
-- fingerprint: sha256:5a9500c7ac01bc6e7badc85ca8cc13f6792dac50a3bc860f5114fe4b63f567c9
-- verified: 2026-10-08T16:28:25.431Z
+- fingerprint: sha256:3ff1d6630d494e6904c30e86bce9a8f301de23b6b4f79bd56569939fde2ab49a
+- verified: 2026-10-08T18:22:02.104Z
 - test cli/src/utils/__tests__/free-options-digest.test.ts: exit 0
 - test cli/src/utils/__tests__/free-options.test.ts: exit 0
 - typecheck cli: exit 0
@@ -110,6 +110,22 @@ Seeing we only have 2 wired is completely wrong."
 - `typecheck cli`: exit 0. ESLint `--max-warnings 0` and Prettier: exit 0 on
   changed files.
 - Real-cache render: see Loop 2 above.
+
+### Loop 3 — full-perfection pass (2026-10-08, operator-triggered)
+
+- RED re-confirmed in the tree: `FreeOptionsReport.configuredProviders` exists
+  (`free-options-types.ts`), the announce prints `Configured: N provider(s)` and
+  `Free catalog overlap` (`free-options-render.ts`), and `free-options.test.ts`
+  forbids the old `Wired & free` wording. Committed at `a9ae21d0`; receipt
+  stamped above.
+- Metadata drift repaired: the header read `created` while the Resolution and the
+  receipt said `fixed` — header aligned to `fixed` (ground truth: implementation
+  exists and the declared gates exited 0).
+- The offers line is honest by construction: the count is the feed total and the
+  disclaimer is unconditional. The 72h window count landed separately under
+  FID-2026-1008-004 (B) and the renderer prints it only when N > 0.
+- Open item unchanged (operator ruling): whether `discoveryOffers` should carry
+  structured deadlines so this line can be windowed here too.
 
 ### Resolution
 

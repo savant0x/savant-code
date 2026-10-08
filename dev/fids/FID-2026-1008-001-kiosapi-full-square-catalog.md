@@ -140,8 +140,8 @@ as selecting any model the account cannot call today.
 
 ### Verification Receipt
 
-- fingerprint: sha256:adae74c72f64257ab49d8fe33692a63b3dabb72f0676632b60fc1a1ee50cefc9
-- verified: 2026-10-08T15:52:14.818Z
+- fingerprint: sha256:0e3950998b5fcd22c091f0593962600e8403d0c242813dfb2cd1d7a3a776e96b
+- verified: 2026-10-08T18:20:56.137Z
 - test cli/src/utils/__tests__/openrouter-models-gateway.test.ts: exit 0
 - test cli/src/utils/__tests__/openrouter-models-gateway-providers.test.ts: exit 0
 - typecheck cli: exit 0
@@ -226,6 +226,24 @@ as selecting any model the account cannot call today.
 - **Open item (blocked):** 10 feed ids with no window row (see Loop 2). Blocker:
   vendor-published window values per id.
 - **Archived:** pending commit authorization.
+
+### Loop 3 — full-perfection pass, RED re-confirmation (2026-10-08, operator-triggered)
+
+- Re-measured today: kiosapi `catalog.url` is `https://kiosapi.com/api/pricing`
+  (grep, `registry-partitioned.ts`); the parser reads `data[].model_name` and
+  deliberately resolves no key (`openrouter-models/kiosapi.ts`). Committed at
+  `4e1ab59b`; receipt stamped above.
+- Window-coverage item re-measured: `context-window-table-kiosapi.ts` carries a
+  row for `deepseek-v4-pro` (1,048,576) and none for the other nine ids named in
+  Loop 2.
+- Fold (Thinker pass): the ten ids are two classes — text models needing a
+  vendor-published window row (`gpt-oss-20b`, `claude-haiku-4-5-20251001`,
+  `llama-3.2-11b-vision-instruct`, `deepseek-v4-pro-0813`, `codex-auto-review`)
+  and non-context ids where NO row is the honest answer (the four
+  `grok-imagine-image*` entries, `openrouter/free`). The second class must be
+  recorded as deliberately non-applicable so it does not read as unverified.
+- Status unchanged: `fixed` (receipt-backed). External blocker owner:
+  KiosAPI-published window values per id.
 
 ## Lessons Learned
 

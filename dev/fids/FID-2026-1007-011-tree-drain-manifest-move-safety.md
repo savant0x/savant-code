@@ -180,6 +180,18 @@ available shapes.
    verification shape, and -010's own pass recorded that burying tooling in a
    documentation entry was the error under review.
 
+### Loop 2 — full-perfection pass, RED re-confirmation (2026-10-08, operator-triggered)
+
+- Re-measured today: directory entry `dev/build-orders` IS present
+  (`tree-drain-manifest/records.ts` → symbol:GROUPS entry); coverage test is
+  still ABSENT (`ls scripts/__tests__ | grep -i drain` → no match).
+- Thinker fold: the future coverage test must pin BOTH directions — every
+  directory-scoped entry must resolve to ≥1 real path (a silently zeroed entry
+  fails the reverse pin) and a synthetic post-freeze addition resolves to the
+  frozen root — consuming the production loader path, not a re-import.
+- Status unchanged: `converged`. Close-eligibility still blocked on the
+  coverage test (implementation not authorized by the loop trigger).
+
 ## Resolution
 
 - **Closed Date:** pending

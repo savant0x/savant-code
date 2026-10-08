@@ -167,6 +167,32 @@ None — `created` status; gates declared at implementation time.
    left to the next engineer" and no register line, so nothing re-read it. Same
    root cause as the build-order cleanup this FID sits beside.
 
+### Loop 2 — full-perfection pass, GREEN fold (2026-10-08, operator-triggered)
+
+RED re-confirmed today: the other-dirty BLOCK is live
+(`pre-write-gates-law3.ts` → the `Other-dirty BLOCK` branch) with its three
+carve-outs; `transition-phase.ts` still maps `green: ['audit', 'idle']` while
+`self_correct: ['green', 'complete', 'idle']` exists.
+
+GREEN fold — missed questions answered:
+
+1. The gate is an intentionally restored control (operator Ruling 1, recorded in
+   the gate's own header) and passes all Five Questions. The only non-ruling
+   change is guidance-side (batch planning + verify-after-write cadence) or a
+   narrower conveyance (a `targetFiles`/`selfDirty` verification-credit lane),
+   never a relaxation of the block.
+2. Trace-first precondition: classify block triggers (in-batch / self-dirty /
+   external-dirty) from `dev/experiences/raw-traces.jsonl` before proposing any
+   behavior change.
+3. P5 predicate (folded into the plan): `green → complete` requires verification
+   credit — a tool-mediated verification event (typecheck/lint/test, exit 0)
+   that postdates the last write, satisfying ECHO.md's documented AUDIT-skip
+   criteria (< 10 lines, single file, inline gates pass). No credit → the edge is
+   refused. Test both legs.
+
+Named operator decision: P1 intent — does Ruling 1 permit any gate-behavior
+change at all? Until ruled, P1 ships nothing.
+
 ## Resolution
 
 - **Closed Date:** pending

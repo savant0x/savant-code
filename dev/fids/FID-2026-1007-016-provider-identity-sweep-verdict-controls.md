@@ -159,6 +159,35 @@ Gates are declared at implementation time per the `converged` contract; a
    Record it; the control seam is the fix, and the route currently fails.
 3. Does this change any production behavior? → No. It is an operator-run script.
 
+### Loop 2 — full-perfection pass, GREEN fold (2026-10-08, operator-triggered)
+
+RED re-verified today: `identity-matrix.json` is still 7/7 `inconclusive`
+(`grep -c` = 7); `runIdentityMatrix` calls `runIdentityGauntlet` with no
+`controls` argument (the call's own comment says the caller owns probes and
+controls); `verdictFor(controls, samples)` branches on control absence.
+
+GREEN fold — missed questions answered:
+
+1. A control must be a PAIR (a same-endpoint known model for spoof detection plus
+   the reference model for undetectability); a CLI flag alone was the wrong
+   default. Controls come from an operator-owned manifest, never hardcoded.
+2. A missing manifest entry is a first-class state: that row stays
+   `inconclusive` and the sweep continues (provider rosters churn).
+3. Vocabulary: separate "structurally unevaluable" (no control exists) from
+   "empirically inconclusive" (control ran, samples insufficient). Whether the
+   no-control state gets its own verdict name is an operator decision.
+4. Controls are credential-epoch bound: a control captured before the provider's
+   last key rotation is inadmissible (stale-control → inconclusive), so a verdict
+   can never survive a credential change.
+5. Multi-family hosts: key the manifest by (provider, family), mirroring what the
+   single-target path already demands per invocation.
+6. Cost bound: an operator probe budget; exhaustion degrades rows explicitly.
+7. Downstream contract: only the generated provider-reference rendering may
+   upgrade ('not attested' → 'attested'); no CI gate may fail on a verdict.
+
+Named operator decisions: authorize/fund the control-armed re-run; author the
+control manifest; ToS comfort for scaled dual-model probing; probe budget.
+
 ## Resolution
 
 - **Closed Date:** pending

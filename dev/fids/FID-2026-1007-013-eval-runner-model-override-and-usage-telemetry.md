@@ -134,6 +134,29 @@ None — `created` status; gates declared at implementation time.
 2. **Is `subagent_finish` cost a gap here?** → Out of scope; the source order
    scopes usage, not cost. Recorded so it is not silently assumed covered.
 
+### Loop 2 — full-perfection pass, GREEN fold (2026-10-08, operator-triggered)
+
+RED re-confirmed today: `RunnerConfig` has no `model`/`onUsage` (grep, no
+match); `trace.ts` has no usage/model fields; the print-mode union (17 literals)
+has no `usage` member. The `onUsage` emission seam in `step.ts` exists.
+
+GREEN fold — missed questions answered (defaults from code inspection):
+
+1. Resolve `model` ONCE at run-config construction, not per-runner — per-runner
+   threading recreates the multi-loader problem the BO rejected for `onUsage`.
+2. Stage the public wire change: eval-local capture from the existing `onUsage`
+   hook plus `TraceMetadata.usage?`/`model?` first; add the
+   `printModeEventSchema` `usage` member only when a NAMED consumer exists
+   outside the eval harness.
+3. Acceptance pin: a fixture run with an override asserts every trace's `model`
+   equals the override (mixed-model runs impossible, not assumed).
+4. Clone the agent definition at load; never edit the generated bundled agents.
+5. Payload is token counts + model slugs only (Law 12 stated, not assumed).
+
+Five Questions: fails "all cases" without (1) and "2 years" without (2); both
+folded. Named operator decisions: eval billing keys; ratify the staged
+wire-change decision.
+
 ## Resolution
 
 - **Closed Date:** pending

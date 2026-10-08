@@ -161,6 +161,34 @@ available shapes.
    verified", which is vacuously true when there is none. Needs an explicit
    rule, not a fallback.
 
+### Loop 2 — full-perfection pass, GREEN fold (2026-10-08, operator-triggered)
+
+RED re-confirmed today: `runPreAudit` still iterates exactly six checks
+(`checkWorktreeClean`, `checkReleaseLock`, `checkStaleTag`, `checkPushRange`,
+`checkConfigDirUnpolluted`, `checkConfigDirIsolation`); no `bundle`/`Commit:`/
+`fid:verify` reference in any pre-audit file. `scripts/git-bundle-backup.ts`
+exists.
+
+GREEN fold — missed questions answered:
+
+1. Enforcement point named: the new checks join the `runPreAudit` result list
+   (an executed rejection path, not prose), each emitting a `block` finding that
+   names the failing artifact.
+2. Proof artifact: the gate run's own output is the evidence (receipt pattern);
+   the check is falsifiable by construction (fixture register cases).
+3. G2 window default (code-derivable): closed FIDs whose closure postdates the
+   last release tag — bounded and actionable, O(release) not O(archive).
+4. G2 predicate stated exactly: a non-empty `Commit/State` field. The template
+   permits a free-text state description, so hash-shape validation is a separate
+   template-wording decision, not folded silently.
+5. G5 explicit rule: a missing bundle is a `block` (recovery point of record
+   absent) — "latest bundle verified" must not be vacuously true.
+6. Law 7 check: reuse `scripts/changelog-coverage.ts` and the FID ledger before
+   adding parallel logic.
+
+Named operator decisions (not picked silently): G2 window scope; G5 staleness
+constant; enforcement layer (pre-audit vs pre-push hook).
+
 ## Resolution
 
 - **Closed Date:** pending

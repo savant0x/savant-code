@@ -139,8 +139,8 @@ to require a verified terms page per provider before wiring.
 
 ### Verification Receipt
 
-- fingerprint: sha256:d919322195f4548e52cd906e516312a436491e3c884f7ea662e1fb5e0f66e9f4
-- verified: 2026-10-08T15:52:31.673Z
+- fingerprint: sha256:a746380da3d5d837396c8f6e7953b39c0763abc89157dd96e60585822de7644d
+- verified: 2026-10-08T18:21:19.142Z
 - test cli/src/utils/__tests__/free-options-digest.test.ts: exit 0
 - typecheck cli: exit 0
 - quality: exit 0
@@ -204,6 +204,23 @@ to require a verified terms page per provider before wiring.
 - **Not verified:** the boot effect has no test. Confirm by relaunching twice in
   one day.
 - **Archived:** pending commit authorization and phase 2.
+
+### Loop 3 — full-perfection pass, RED re-confirmation (2026-10-08, operator-triggered)
+
+- This record's own "Not verified: the boot effect has no test" gap is CLOSED by
+  FID-2026-1008-004 (A): the decision logic now lives in
+  `cli/src/utils/launch-digest.ts` (`runLaunchDigest`, injected readers + sink)
+  and `cli/src/utils/__tests__/launch-digest.test.ts` pins it (post on lines,
+  skip on empty, every call, discovery-only, fail-silent reader).
+  `use-chat-bootstrap.ts` imports and calls `runLaunchDigest` — Law 4 caller
+  present. The test belongs to -004's gate set; cross-referenced here.
+- `loadFreeOptionsDigestShownOn` / `freeOptionsDigestShownOn` are absent from
+  `cli/src` (grep, 0 matches) — the dead-state removal is complete, and stale
+  keys in old settings files are tolerated by the whitelist loader (no
+  migration code needed).
+- Status unchanged: `fixed` (phase 1, receipt-backed). Phase 2 remains blocked
+  on the operator design approval, now carried with both options in
+  FID-2026-1008-004 item C.
 
 ## Lessons Learned
 

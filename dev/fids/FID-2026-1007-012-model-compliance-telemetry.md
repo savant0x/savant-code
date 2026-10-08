@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-1007-012-model-compliance-telemetry.md`
 **ID:** FID-2026-1007-012
 **Severity:** low
-**Status:** created
+**Status:** analyzed
 **Created:** 2026-10-07
 **Automation level:** 2
 **YAGNI-Compliance:** Verified
@@ -123,6 +123,38 @@ None — `created` status; gates are declared at implementation time.
    before FID 6 opens: `dev/agenda.md` is capped at 1–3 items by
    `FID-2026-0824-012` S3-A, and a sentinel writing into it competes with the
    three capabilities already listed there.
+
+### Loop 2 — full-perfection pass, GREEN fold (2026-10-08, operator-triggered)
+
+RED re-confirmed: `common/src/types/telemetry.ts` and `dev/telemetry` ABSENT
+(measured today); no `ComplianceEvent` symbol in code (grep: only the build
+order and this record).
+
+GREEN fold — mandated missed-questions answered (defaults adopted, operator
+decisions named):
+
+1. Do not re-implement identity probing — the identity gauntlet
+   (`scripts/providers/identity-gauntlet.ts`) already produces probe reports;
+   a later phase composes its output (Law 13).
+2. Drift findings must NOT write into `dev/agenda.md` (1–3 item cap measured in
+   the file today): dedicated ledger; agenda promotion stays operator-only.
+   Resolves Missed Question 2 with a concrete default.
+3. Emitting wire-list: structured-violation producers only (pre-write gates,
+   escalation ladder, turn-end Law 15 reconciliation); ad-hoc `warn()` calls
+   never fabricate telemetry lines.
+4. Storage follows the `dev/experiences/raw-traces.jsonl` precedent (tracked
+   append + sibling dedup); fixed-size lines, schema-version field, no payloads.
+5. The no-bodies red line is compatible with all four detectors (needed fields
+   exist in already-collected runtime state).
+
+Five Questions: fixed for "all cases" (emitting wire-list) and "2 years"
+(schema version + imported enums). Passes hostile/standard.
+
+Status ruling: `created` → `analyzed`. GREEN remains design-authority-bound —
+the build order's `source_research` precondition is still empty (measured
+today); the honest next move is the research pass, not Phase 1 code.
+Operator decisions named: confirm tracked+dedup git policy; confirm no agenda
+competition; approve the emitting wire-list.
 
 ## Resolution
 
