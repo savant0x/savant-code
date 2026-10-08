@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-1008-003-launch-announce-wired-and-offers.md`
 **ID:** FID-2026-1008-003
 **Severity:** medium
-**Status:** fixed
+**Status:** closed
 **Created:** 2026-10-08
 **Automation level:** 2
 **YAGNI-Compliance:** Verified
@@ -66,8 +66,8 @@ Seeing we only have 2 wired is completely wrong."
 
 ### Verification Receipt
 
-- fingerprint: sha256:adc65d59629ee4265f86a4a2bcca2f38c6571380fb0b4215679b45c4ca3db405
-- verified: 2026-10-08T21:49:50.401Z
+- fingerprint: sha256:b49e32bae6c00669dd4329e735a4bb957c525520aafed033695fabd809ef3d50
+- verified: 2026-10-08T21:56:17.865Z
 - test cli/src/utils/__tests__/free-options-digest.test.ts: exit 0
 - test cli/src/utils/__tests__/free-options.test.ts: exit 0
 - typecheck cli: exit 0
@@ -129,14 +129,21 @@ Seeing we only have 2 wired is completely wrong."
 
 ## Resolution
 
-- **Closed Date:** not closed.
-- **Status:** fixed for the wired count and the offer wording.
+- **Closed Date:** 2026-10-08
+- **Fix Description:** the launch announce reports the configured provider set
+  (`Configured: N provider(s)`) instead of the custats-overlap subset, relabels
+  the overlap `Free catalog overlap`, and drops the unsupported "ending soon"
+  claim on the offers line. The operator's original defect ("Wired & free: 2")
+  is gone: every credential-ready registry provider is counted, label-safe and
+  secret-safe (labels only). The 72h deadline window subsequently landed under
+  FID-2026-1008-004 (B) and prints only when N > 0.
+- **Tests Added:** Yes — `free-options.test.ts` asserts `Configured:` and
+  `Free catalog overlap` and forbids the `Wired & free` wording; the
+  digest-render pins cover the "nothing to say" guard (free lanes only).
 - **Verification Evidence:** `free-options-digest.test.ts`,
   `free-options.test.ts`, `free-options-routing.test.ts`: 24 pass, 0 fail.
-  `typecheck cli`: exit 0. ESLint and Prettier clean on changed files.
-- **Open item (blocked, needs operator ruling):** the offer line still counts
-  every feed item, with no deadline filter. Filtering to offers ending within 72h
-  needs `discoveryOffers` to carry structured deadlines, not strings. That changes
-  the report shape. Ruling needed: approve the type change, or keep the count
-  labelled as is.
-- **Archived:** pending commit authorization.
+  `typecheck cli`: exit 0. Receipt stamped (4/4 gates) and re-stamped at the
+  archived path. Implementation committed as `a9ae21d0`.
+- **Archived:** 2026-10-08 — moved to `dev/fids/archive/` on the operator's
+  closure authorization; register item T170 complete and evicted from
+  `SCOPE.md`.

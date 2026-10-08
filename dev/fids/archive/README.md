@@ -3,6 +3,23 @@
 This directory contains closed or historically completed FIDs. Files here are
 an audit record, not an active work queue.
 
+## 2026-10-08 closure — launch announce wired count and offer wording (1 FID archived)
+
+Closed on the operator's session authorization (all implemented work reviewed,
+gates green). The announce had reported "Wired & free: 2" while 23 providers
+were configured — the count was the third-party custats-overlap subset, not the
+wired set — and called all 212 feed offers "ending soon" without deadline data.
+Both fixed: `Configured: N provider(s)` from the credential-ready registry set,
+the subset relabelled `Free catalog overlap`, the offers line honest by
+construction (feed total + unconditional disclaimer). A test-driven correction
+during GREEN caught the first draft counting configured providers toward the
+"nothing to say" guard. The 72h offer window landed separately under
+FID-2026-1008-004 (B). Receipt 4/4 re-stamped live at the archived path.
+
+**`FID-2026-1008-003-launch-announce-wired-and-offers`** (register item T170,
+severity medium, automation level 2). Implementation commit `a9ae21d0`;
+register item evicted from `SCOPE.md` at closure.
+
 ## 2026-10-08 closure — model picker free-key lane + provider order (1 FID archived)
 
 Closed on the operator's directive after they live-confirmed the picker
