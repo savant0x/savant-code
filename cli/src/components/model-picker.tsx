@@ -27,7 +27,7 @@ interface ModelPickerProps {
  *
  * - Filters the FULL live catalog by substring (id or name) — no truncation.
  * - Groups models by provider with section headers (alphabetical by
- *   provider id); free-token entries hoist into a FREE KEY section.
+ *   provider id); free-token entries hoist into a FREE MODELS section.
  * - Shows a provider badge for every model.
  * - Arrow / Tab navigation with a viewport that keeps the focus in view.
  * - Enter (or click) selects; Escape closes.

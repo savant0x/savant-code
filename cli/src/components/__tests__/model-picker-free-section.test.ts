@@ -1,4 +1,4 @@
-// FID-2026-1007-017 — the model page FREE KEY section: free-TOKEN entries
+// FID-2026-1007-017 — the model page FREE MODELS section: free-TOKEN entries
 // hoisted first, NO key lane, and provider groups ordered alphabetically by
 // provider id. Supersedes the key-lane behaviour introduced by
 // FID-2026-1005-010 / FID-2026-1007-005 at the operator's direction: the free
@@ -15,7 +15,7 @@ import type { OpenRouterModel } from '../../utils/openrouter-models'
 const model = (id: string, name: string, provider: string): OpenRouterModel =>
   ({ id, name, provider }) as unknown as OpenRouterModel
 
-describe('model page FREE KEY section (FID-2026-1007-017)', () => {
+describe('model page FREE MODELS section (FID-2026-1007-017)', () => {
   test('an explicit routing refusal removes only that model until a successful reprobe', () => {
     const id = 'chatanywhere/availability-picker-test'
     const fixture = model(id, 'Availability', 'chatanywhere')
@@ -55,7 +55,7 @@ describe('model page FREE KEY section (FID-2026-1007-017)', () => {
     expect(items[0]).toMatchObject({
       type: 'header',
       provider: null,
-      label: '⭐ FREE KEY',
+      label: '⭐ FREE MODELS',
     })
     expect(items[1]).toMatchObject({
       type: 'model',

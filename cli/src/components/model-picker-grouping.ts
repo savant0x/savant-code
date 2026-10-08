@@ -40,7 +40,7 @@ export function getProviderOrder(provider: ModelProvider): number {
 }
 
 export function buildGroupedItems(models: OpenRouterModel[]): ListItem[] {
-  // FID-2026-1007-017: the ⭐ FREE KEY section hoists only the entries that
+  // FID-2026-1007-017: the ⭐ FREE MODELS section hoists only the entries that
   // carry the free token THEMSELVES and renders NO key lane — the free-key
   // provider appears as an ordinary provider group (with its ⭐ rows), not as a
   // synthetic section header. Provider groups are ordered alphabetically by
@@ -72,7 +72,7 @@ export function buildGroupedItems(models: OpenRouterModel[]): ListItem[] {
     items.push({
       type: 'header',
       provider: null,
-      label: `${FREE_BADGE} FREE KEY`,
+      label: `${FREE_BADGE} FREE MODELS`,
     })
     items.push(...free)
   }

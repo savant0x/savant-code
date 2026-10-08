@@ -187,3 +187,9 @@ bun x eslint cli/src/components/ --max-warnings 0
 `CHATANYWHERE_API_KEY` row under `⭐ FREE KEY` made the lane read as
 ChatAnywhere's; a section that aggregates rows across providers should carry no
 provider-specific key line.
+
+## Post-Verification Operator Rename (2026-10-08)
+
+The operator renamed the section header `⭐ FREE KEY` → `⭐ FREE MODELS`
+themselves ("it looks fine, i updated it myself"). Behavior unchanged; the
+free-section test pin and the two live comments were updated to the new label.
