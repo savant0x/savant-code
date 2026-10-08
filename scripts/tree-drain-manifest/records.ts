@@ -37,7 +37,7 @@ export const RECORDS_GROUPS: DrainGroup[] = [
       'dev/idea-shelf',
       'dev/nova/outbox/2026-08-21-fid-2026-0821-001-auto-compact-planning-audit-verdict.md',
       'dev/nova/outbox/2026-08-22-scroll-craft-native-skill-planning-audit.md',
-      'dev/build-orders/BO-2026-08-24-model-compliance-telemetry.md',
+      'dev/build-orders',
       'dev/LEARNING-RULES.md',
     ],
   },
@@ -85,9 +85,20 @@ export const RECORDS_GROUPS: DrainGroup[] = [
       '',
       'Scope: SCOPE.md Task 82 → T82-I.',
     ].join('\n'),
-    paths: [
-      'docs/Model Context Window Review.md',
-      'dev/build-orders/BO-2026-09-22-pre-push-rewrite.md',
-    ],
+    paths: ['docs/Model Context Window Review.md'],
+  },
+  {
+    message: [
+      'fix(cli): repoint the NDJSON build-order citation at its archived path',
+      '',
+      'The frozen-wire-contract comment cited dev/build-orders/BO-2026-09-07-',
+      'ndjson-phase-b-emitter.md, which moved to archive/ when that order was',
+      'verified delivered (FIDs 2026-0907-003..007) and closed out. Comment-only',
+      'path repair — no behavior change, no frame or wire-contract semantics.',
+      '',
+      'The build-order records themselves are covered by the dev/build-orders',
+      'group above.',
+    ].join('\n'),
+    paths: ['cli/src/headless-ndjson.ts'],
   },
 ]

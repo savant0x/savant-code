@@ -24,7 +24,6 @@ export const FOUNDATION_GROUPS: DrainGroup[] = [
       'ECHO.md',
       'dev/echo-v0.1.2-single-agent.md',
       'dev/LEARNINGS.md',
-      'dev/build-orders/BO-2026-08-23-git-workflow-enforcement.md',
       'dev/nova/outbox/2026-08-23-git-workflow-echo-amendment-draft.md',
       'docs/design/Solo Git Workflow Optimization.md',
       'docs/design/AI Solo Git Workflow Design.md',
