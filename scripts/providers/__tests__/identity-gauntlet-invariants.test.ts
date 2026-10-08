@@ -11,9 +11,9 @@ import path from 'node:path'
 
 import { afterEach, describe, expect, test } from 'bun:test'
 
-import { createInvoker } from '../lib/identity-transport'
 import { normalizeText, stableTextHash } from '../lib/identity-core'
 import { runIdentityGauntlet } from '../lib/identity-runner'
+import { createInvoker } from '../lib/identity-transport'
 
 import type { IdentityTarget, ProbeSpec } from '../lib/identity-core'
 
