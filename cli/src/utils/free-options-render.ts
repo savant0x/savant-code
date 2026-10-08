@@ -185,8 +185,12 @@ export function renderFreeOptionsAnnounce(
   }
   const offers = report.discoveryOffers ?? []
   if (offers.length > 0) {
+    // The window count is printed only when it is positive; eligibility stays
+    // unverified either way (FID-2026-1008-004).
+    const ending = report.discoveryOffersEndingSoon ?? 0
+    const endingNote = ending > 0 ? `${ending} end within 72h; ` : ''
     lines.push(
-      `- Offers: ${offers.length} advertised free-token offer(s) in the custats feed; eligibility and deadlines unverified — ${offers.slice(0, 2).join('; ')}`,
+      `- Offers: ${offers.length} advertised free-token offer(s) in the custats feed; ${endingNote}eligibility unverified — ${offers.slice(0, 2).join('; ')}`,
     )
   }
   if (discovery && (discovery.newCount > 0 || discovery.changedCount > 0)) {

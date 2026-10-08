@@ -4,6 +4,7 @@ import { join } from 'node:path'
 import {
   parseCustatsFeed,
   feedFreshness,
+  type CustatsOffer,
 } from '@savant-code/common/providers/custats-feed'
 import { matchOfferHosts } from '@savant-code/common/providers/custats-models'
 import { getEffectiveProviderRegistry } from '@savant-code/common/providers/custom-providers'
@@ -140,8 +141,8 @@ function persistOffers(file: string, cache: z.infer<typeof cacheSchema>): void {
     /* Keep fresh memory and the diagnostic bytes of a corrupt file. */
   }
 }
-/** Unattributed offers remain visible as discovery; they never create setup actions. */
-export function readProviderOfferDiscovery(now = Date.now()): string[] {
+/** Fresh feed offers, or [] when the cache is missing, stale, or unreadable. */
+function readFreshFeedOffers(now: number): CustatsOffer[] {
   const file = join(getConfigDir(), 'provider-offers.json')
   try {
     const cache =
@@ -154,13 +155,30 @@ export function readProviderOfferDiscovery(now = Date.now()): string[] {
       !feedFreshness(parsed.lastBuildDate, now, 72 * 3600_000)
     )
       return []
-    return parsed.offers.map(
-      (offer) =>
-        `${offer.title}: advertised offer; account eligibility unverified${offer.expiryTimestamp ? `; advertised deadline ${offer.expiryTimestamp}` : '; deadline unverified'}`,
-    )
+    return parsed.offers
   } catch {
     return []
   }
+}
+
+/** Unattributed offers remain visible as discovery; they never create setup actions. */
+export function readProviderOfferDiscovery(now = Date.now()): string[] {
+  return readFreshFeedOffers(now).map(
+    (offer) =>
+      `${offer.title}: advertised offer; account eligibility unverified${offer.expiryTimestamp ? `; advertised deadline ${offer.expiryTimestamp}` : '; deadline unverified'}`,
+  )
+}
+
+/**
+ * Offers whose advertised deadline falls within the next 72 hours of `now`
+ * (FID-2026-1008-004). Offers without a parsed deadline are never counted.
+ */
+export function countOffersEndingSoon(now = Date.now()): number {
+  return readFreshFeedOffers(now).filter((offer) => {
+    if (!offer.expiryTimestamp) return false
+    const left = Date.parse(offer.expiryTimestamp) - now
+    return left > 0 && left <= 72 * 3600_000
+  }).length
 }
 
 /**

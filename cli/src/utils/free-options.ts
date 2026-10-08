@@ -13,7 +13,10 @@ import { buildMachineContext } from './free-options-context'
 import { freeOptionsPaths } from './free-options-paths'
 import { renderFreeOptionsMarkdown } from './free-options-render'
 import { providerNotifications } from './provider-notifications'
-import { readProviderOfferDiscovery } from './provider-offers'
+import {
+  countOffersEndingSoon,
+  readProviderOfferDiscovery,
+} from './provider-offers'
 import { writeFileAtomic } from './write-file-atomic'
 
 import type {
@@ -188,6 +191,7 @@ async function refreshFreeOptionsOnce(): Promise<FreeOptionsReport> {
   const report = buildFreeOptionsReport(catalog, buildMachineContext(nowMs))
   report.fetchedAt = fetchedAt
   report.discoveryOffers = readProviderOfferDiscovery(nowMs)
+  report.discoveryOffersEndingSoon = countOffersEndingSoon(nowMs)
 
   if (catalog !== null) {
     try {
@@ -228,6 +232,7 @@ export function readCachedFreeOptionsReport(): FreeOptionsReport | null {
   return {
     ...buildFreeOptionsReport(catalog, buildMachineContext(Date.now())),
     discoveryOffers: readProviderOfferDiscovery(),
+    discoveryOffersEndingSoon: countOffersEndingSoon(),
   }
 }
 

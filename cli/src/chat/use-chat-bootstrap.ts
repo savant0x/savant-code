@@ -13,10 +13,8 @@ import {
 } from '../utils/discovery-announce'
 import { startDiscoveryCompletionWatcher } from '../utils/discovery-completion-watcher'
 import { observeDiscoveryCandidates } from '../utils/discovery-inbox'
-import {
-  readCachedFreeOptionsReport,
-  renderFreeOptionsDigest,
-} from '../utils/free-options'
+import { readCachedFreeOptionsReport } from '../utils/free-options'
+import { runLaunchDigest } from '../utils/launch-digest'
 import { getSystemMessage } from '../utils/message-history'
 import {
   resolveContextWindowForModel,
@@ -121,17 +119,18 @@ export function useChatBootstrap(args: UseChatBootstrapArgs): void {
             observe: observeDiscoveryCandidates,
           },
         )
-      const lines = renderFreeOptionsDigest(
-        readCachedFreeOptionsReport(),
-        discovery
-          ? {
-              newCount: discovery.newCount,
-              changedCount: discovery.changedCount,
-            }
-          : null,
-      )
-      if (lines.length === 0) return
-      args.setMessages((prev) => [...prev, getSystemMessage(lines.join('\n'))])
+      runLaunchDigest({
+        readReport: readCachedFreeOptionsReport,
+        readDiscovery: () =>
+          discovery
+            ? {
+                newCount: discovery.newCount,
+                changedCount: discovery.changedCount,
+              }
+            : null,
+        post: (text) =>
+          args.setMessages((prev) => [...prev, getSystemMessage(text)]),
+      })
     } catch {
       // Fail-silent (FID-2026-1004-007): the digest never breaks the TUI.
     }

@@ -224,6 +224,25 @@ describe('FID-2026-1001-002: boot announce (cached reader + renderer)', () => {
     expect(joined).toContain('/provider free')
   })
 
+  test('announce offers line: window count only when positive (FID-2026-1008-004)', () => {
+    const base = buildFreeOptionsReport(CATALOG, CTX)
+    const offers = ['Viktor: advertised offer', 'Valyu: advertised offer']
+    const withWindow = renderFreeOptionsAnnounce({
+      ...base,
+      discoveryOffers: offers,
+      discoveryOffersEndingSoon: 1,
+    }).join('\n')
+    expect(withWindow).toContain('Offers: 2 advertised')
+    expect(withWindow).toContain('1 end within 72h;')
+    const noWindow = renderFreeOptionsAnnounce({
+      ...base,
+      discoveryOffers: offers,
+      discoveryOffersEndingSoon: 0,
+    }).join('\n')
+    expect(noWindow).not.toContain('end within 72h')
+    expect(noWindow).toContain('eligibility unverified')
+  })
+
   test('announce renderer: nothing to say renders no lines', () => {
     // No catalog at all.
     expect(

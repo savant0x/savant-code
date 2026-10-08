@@ -68,4 +68,6 @@ export type FreeOptionsReport = {
   localFree: Array<{ id: string; label: string; setupCommand: string }>
   discoveryOnly?: FreeLane[]
   discoveryOffers?: string[]
+  /** Offers ending within 72h (FID-2026-1008-004). Absent means 0. */
+  discoveryOffersEndingSoon?: number
 }
