@@ -121,8 +121,8 @@ a decision that says exactly which claim was tested.
 
 ### Verification Receipt
 
-- fingerprint: sha256:cb67736d7745cf69600ebce30f46563a87df5e75ae651e571facde7385de3c8f
-- verified: 2026-10-07T23:29:49.803Z
+- fingerprint: sha256:50e12873a97afd6dadaa8cc1c94b234a84df5190e58433752e615d297bdd3371
+- verified: 2026-10-08T00:17:28.722Z
 - test scripts/providers/__tests__/identity-gauntlet.test.ts: exit 0
 - test scripts/providers/__tests__/identity-gauntlet-invariants.test.ts: exit 0
 - test packages/agent-runtime/src/__tests__/provider-identity-observation.test.ts: exit 0
@@ -211,6 +211,37 @@ a decision that says exactly which claim was tested.
   unavailable-control rule fixed; absent token usage reclassified from a
   tokenizer breach to `no-signal`; an explicit required `--base-url`.
 
+### Loop 5 — the live leg, and the fourth defect it exposed
+
+- **RED:** Operator authority for the live leg was granted on 2026-10-07, so
+  step 7's re-audit ran against the real endpoints (target `hcnsec/kimi-k3` at
+  `https://api.hcnsec.cn/v1`; independent same-model control `tokenbom/kimi-k3`
+  and a different-model control `tokenbom/grok-4.6`).
+- **The observation:** the target answered **HTTP 500** (`get_channel_failed` —
+  no available channel for `kimi-k3` under group `auto`), and both controls
+  answered **HTTP 402** (`insufficient_credits`, TokenBom balance 0.02 credits).
+  The route is currently unserved and the controls are unfunded, so no identity
+  signal exists to judge.
+- **ADVERSARIAL:** The first run exposed a **fourth defect, and a worse one**.
+  The transport recorded every error envelope as a *completed* sample with empty
+  text; empty-vs-empty then hash-matched, so the report claimed both controls
+  `matched` on a run where nothing succeeded — the exact false-positive this FID
+  exists to prevent. Only the `--json` raw samples revealed it.
+- **GREEN:** `createInvoker` now turns a non-2xx body (and a 2xx that carries no
+  choices) into a `failure` sample — classes `http-<status>` and `no-content` —
+  so a dead endpoint is recorded as absence, never as an empty answer. Three new
+  transport pins stub `globalThis.fetch` and assert it; a dead endpoint can no
+  longer read as a matched control.
+- **CHANGE DELTA:** `scripts/providers/identity-gauntlet.ts` (+27 lines) and
+  `identity-gauntlet-invariants.test.ts` (+71 lines); receipt re-stamped 7/7.
+  The live verdict remains **inconclusive**, so the record stays open.
+- **Incidental, and outside this cell:** checking whether the 500 was route-wide,
+  a request for `glm-5.3-flash` (another HCNSec allowlist entry) returned
+  **HTTP 200 with `"model": "longcat-2.5-preview-free"`** — a served model that
+  is not the requested one. That is a `mismatch-requiring-review` for a
+  *different* route, not evidence about `kimi-k3`, and per step 6 it needs its
+  own reviewed decision; it is recorded here as an observation only.
+
 ### Code Verification Evidence
 
 - [x] Files referenced exist, verified by read:
@@ -239,21 +270,30 @@ a decision that says exactly which claim was tested.
 - [x] The record's own boundary is honoured: **this record stays OPEN.** Step 7
       makes the live HCNSec re-audit a named gate that requires the operator's
       credential and spend authority, and the record's own Loop 3 says an
-      unavailable live leg reports `inconclusive` and keeps the FID open. No
-      live HCNSec verdict is asserted here, and no `.env.local` credential was
-      used to obtain one
+      unavailable live leg reports `inconclusive` and keeps the FID open. The
+      operator granted that authority on 2026-10-07 and the leg ran (Loop 5):
+      the target route answered `http-500` and both controls `http-402`, so the
+      run is **inconclusive** and no identity claim is made about the route. No
+      verdict was manufactured from an empty response, and the transport defect
+      the run exposed was fixed rather than papered over
 - [x] FID status reflects reality (`fixed`: implementation complete and gated,
       receipt stamped; `closed` is withheld until the live leg runs or the
       operator retires it)
 
 ## Resolution
 
-Open (implementation complete, live leg pending). The offline program is
-implemented and gated: a passive seam that makes no request, and an
-operator-run, budget-bounded, control-required gauntlet whose verdicts are
-advisory and whose 0.85 auto-failover is not implemented anywhere. What remains
-is step 7's live HCNSec `kimi-k3` re-audit, which needs the operator's
-credential and spend authority; until it runs, this route remains
-**inconclusive** and nothing about its model identity is claimed. A mismatch
-from that run would trigger human review and a separate FID — never an
-automatic routing change.
+Open (implementation complete and gated; the live leg ran on 2026-10-07 and
+returned **inconclusive**). The offline program is implemented and receipted
+7/7: a passive seam that makes no request, and an operator-run, budget-bounded,
+control-required gauntlet whose verdicts are advisory and whose 0.85
+auto-failover is implemented nowhere. Step 7's live re-audit was executed under
+operator authority and could not produce a verdict — HCNSec currently serves no
+channel for `kimi-k3` (`http-500 get_channel_failed`) and the TokenBom controls
+are out of credits (`http-402 insufficient_credits`) — so the route remains
+**inconclusive** and nothing about its model identity is claimed. Closing this
+record needs either a funded control pair plus an available `kimi-k3` channel,
+or an explicit operator decision to retire it on offline evidence alone. A
+mismatch, if one is ever observed, triggers human review and a separate FID —
+never an automatic routing change. The unrelated `glm-5.3-flash` →
+`longcat-2.5-preview-free` substitution recorded in Loop 5 likewise needs its
+own record.

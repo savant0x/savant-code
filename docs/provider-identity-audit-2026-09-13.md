@@ -303,3 +303,33 @@ host) where model identity is contractual by construction.
 | Probe scripts | `dev/scratchpad/active/hcnsec-*.ts`, `dev/scratchpad/active/tokenbom-gauntlet.ts` (gitignored) |
 | Task record | `SCOPE.md` Task 43 (hcnsec, closed — not integrated), Task 44 (TokenBom) |
 | Cells unknown | hcnsec `kimi-k3` fingerprint (timeout), `spark-x2.5` EN self-ID (empty at fin=length) |
+
+---
+
+## 9. Addendum — 2026-10-07 re-audit of hcnsec `kimi-k3`
+
+FID-2026-1007-008 built an operator-run identity gauntlet
+(`bun run providers:identity`) and used it to re-test the one cell this audit
+left unknown: hcnsec `kimi-k3` (section 3, fingerprint `(timeout)`). The result
+is **inconclusive — the route is currently unserved**:
+
+| Target | Result |
+| --- | --- |
+| hcnsec `kimi-k3` | **HTTP 500** `get_channel_failed` — no available channel for `kimi-k3` under group `auto` |
+| tokenbom `kimi-k3` (same-model control) | **HTTP 402** `insufficient_credits` — balance 0.02 credits |
+| tokenbom `grok-4.6` (different-model control) | **HTTP 402** `insufficient_credits` |
+
+No identity signal exists to judge: the target cannot answer and both controls
+are unfunded. Under the gauntlet's rule an unavailable control or endpoint
+yields `inconclusive`, never a fraud verdict, so nothing about `kimi-k3` is
+claimed and the FID stays open.
+
+Incidental, and out of scope for this cell: probing another allowlist entry,
+`glm-5.3-flash`, returned **HTTP 200 with a `longcat-2.5-preview-free` served
+model** — a substitution of the same class section 7 already lists
+(`longcat-2.0`). It is a different route from `kimi-k3` and needs its own record.
+
+**Operational limit:** an HTTP error envelope is not evidence. The first
+gauntlet run counted a 500/402 body as a *completed* sample with empty text, and
+empty-vs-empty then read as controls `matched`; the transport now records
+`http-<status>` / `no-content` as failures instead.

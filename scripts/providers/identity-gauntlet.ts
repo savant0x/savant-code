@@ -178,12 +178,42 @@ export function createInvoker(keys: Map<string, string>): ProbeInvoker {
         }),
         signal: controller.signal,
       })
+      // A 4xx/5xx body is an error envelope, not an answer. Recording it as a
+      // completed sample with empty text lets two failed endpoints "agree" and
+      // read as controls `matched`; the status is the failure class here.
+      if (!response.ok) {
+        const detail = await response.text().catch(() => '')
+        return {
+          probeId: spec.id,
+          text: '',
+          latencyMs: Date.now() - startedAt,
+          failure: {
+            class: `http-${response.status}`,
+            message: detail.slice(0, 500),
+          },
+        }
+      }
       const body: unknown = await response.json()
       const parsed =
         typeof body === 'object' && body !== null
           ? (body as Record<string, unknown>)
           : {}
       const choices = Array.isArray(parsed['choices']) ? parsed['choices'] : []
+      // A 200 that carries no assistant message (some proxies wrap errors in a
+      // 200 envelope) is still not an answer, so it is a failure, not a sample.
+      if (choices.length === 0) {
+        return {
+          probeId: spec.id,
+          text: '',
+          servedModel:
+            typeof parsed['model'] === 'string' ? parsed['model'] : undefined,
+          latencyMs: Date.now() - startedAt,
+          failure: {
+            class: 'no-content',
+            message: 'response carried no choices',
+          },
+        }
+      }
       const first = choices[0] as Record<string, unknown> | undefined
       const message = first?.['message'] as Record<string, unknown> | undefined
       const usage = parsed['usage'] as Record<string, unknown> | undefined
