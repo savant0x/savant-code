@@ -3,6 +3,9 @@
 Index of shelf notes. New entries go here as one line.
 
 - [free-llm-api-directory-2026-10.md](free-llm-api-directory-2026-10.md) — verified URL directory for Spencer's 72-item free-API list + stealth shelf status (Pixel Canary live, Space Bunny withdrawn) + meta-directory pointers. SHELVED.
+- [ai-frontier-snapshot-2026-10-08.md](ai-frontier-snapshot-2026-10-08.md) — frozen baseline of the frontier board (Opus 5.5 #1, open-weight gap 13-22pts, $/task era) for a 30-day progress diff. **REVISIT 2026-11-07.** ACTIONABLE.
+- [replace-subscriptions-repos-2026-10.md](replace-subscriptions-repos-2026-10.md) — all 10 repos from the "replace 10 subscriptions" video, verified w/ real URLs + transcript-garble table + agent-relevance read (freellmapi, OpenShorts MCP, VoiceStudio MCP, Dyad). SHELVED.
+- [thinking-orbs-agent-status-2026-10.md](thinking-orbs-agent-status-2026-10.md) — @yogesharc/thinking-orbs: zero-dep animated AI agent status orbs (8 states incl. compacting/retrying, 15 variants). State taxonomy = free requirements research for Savant Desktop status UI. SHELVED.
 
 Shelved ideas, explorations, and design references — **not active work**.
 Nothing here is a commitment, a FID, or a registered task; active work lives

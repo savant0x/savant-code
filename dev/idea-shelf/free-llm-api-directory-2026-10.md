@@ -58,7 +58,7 @@ Every URL below was found in a live search result — none constructed from the 
 | Model | URL | Status |
 |---|---|---|
 | Union Alpha | openrouter.ai/stealth/union-alpha | REVEALED = Pareto by Unbiased; stealth ended |
-| Space Bunny Alpha | openrouter.ai/stealth/space-bunny-alpha | WITHDRAWN 2026-10-05; ID returns errors. OpenCode Zen's `space-bunny-free` was separate |
+| Space Bunny Alpha | openrouter.ai/stealth/space-bunny-alpha | WITHDRAWN from OpenRouter 2026-10-05 (verified live 10-07: no stealth/* ids remain in OR catalog). BUT OpenCode Zen's `space-bunny-free` still live 10-07 (verified via /zen/v1/models) — zero-retention policy, ~9-10T tokens/day, MiniMax M3.1 suspected but unconfirmed |
 | Pixel Canary | vercel.com/ai-gateway/models/pixel-canary | LIVE, free during stealth; ties GPT-6 Astra at 90.3% on Vercel Next.js eval (96.8% w/ AGENTS.md); Cline-supported |
 | Apodex 1.1 Mini | openrouter.ai/apodex/apodex-1.1-mini:free | Live, reasoning-first, 262K ctx |
 
@@ -102,3 +102,22 @@ xKiro, CleanAPIs, GreenPower, Tiarina ("Tiarina Cloud" exists only as Twitter me
 - Meta-directories: https://github.com/mvalentsev/awesome-free-ai-coding · https://freellmapihub.com · https://freellm.net
 - Stealth pages: https://openrouter.ai/stealth · https://vercel.com/ai-gateway/models/pixel-canary · https://openrouter.ai/apodex/apodex-1.1-mini:free
 - Scam-context companion: abigail.sh/blog/detecting-and-stopping-mr-beast-scams-discord (7.75% of Discord images are scams; pHash fails on monitor-photo scams)
+## STEALTH SHELL UPDATE (2026-10-07 evening, live-verified)
+
+New stealth: **Exo Free** (`opencode/exo-free`) appeared 2026-10-06 22:54 UTC (ArtificialWatch
+first-sweep; PR #53620 merged 22:27). 1M ctx / 131K out, image+tool calls, single forced-high
+reasoning level, $0/$0. Community consensus: frontier-level — won the horse-galloping CSS
+benchmark (~2M tokens vs Space Bunny's 35M failure). Identity: UNKNOWN, no credible
+fingerprint published yet (the doc's "Claude 5.5" claim is speculation, not verified).
+Instability: "Upstream request failed" errors within hours of launch; heavy rate limits.
+
+Zen free-tier census (live /zen/v1/models, 10-07): 87 models; free/stealth lane =
+big-pickle, space-bunny-free, fledge-alpha-free, exo-free, mimo-v2.6-flash-free,
+mimo-v2.5-free, longcat-2.5-preview-free, ling-3.0-flash-fin-free, ling-3.1-flash-free,
+nemotron-3-ultra-free, nemotron-3.5-lightning-free, muse-spark-{1.2,1.3}-contributor-free,
+deepseek-v4-flash-free, qwen3.8-flash (listed free elsewhere).
+
+Stealth-shelf state 10-07: OpenRouter stealth/* = EMPTY (first time in months).
+OpenCode Zen = the stealth launch platform now. Three-prices-of-free taxonomy:
+zero-retention (Space Bunny) / data-for-training (Big Pickle, Exo, Fledge, MiMo) /
+contributor-discount (Muse Spark).
