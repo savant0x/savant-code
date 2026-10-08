@@ -2,12 +2,14 @@ import {
   readProtocolConfig,
   scanOpenFids,
 } from '@savant-code/common/util/protocol-config'
+import { getOrCreateEnforcement } from '../../../echo/enforcement/factory'
 
 import type { SavantCodeToolHandlerFunction } from '../handler-function-type'
 import type {
   SavantCodeToolCall,
   SavantCodeToolOutput,
 } from '@savant-code/common/tools/list'
+import type { AgentState } from '@savant-code/common/types/session-state'
 import type { Logger } from '@savant-code/common/types/contracts/logger'
 import type { FsmPhase } from '@savant-code/common/types/session-state'
 import type { ProjectFileContext } from '@savant-code/common/util/file'
@@ -37,7 +39,10 @@ export function resetMaxIterationsCache(): void {
 const VALID_TRANSITIONS: Record<string, string[]> = {
   idle: ['red', 'green'],
   red: ['green', 'idle'], // abort from red
-  green: ['audit', 'idle'], // abort from green
+  // FID-2026-1007-015 P5: `green → complete` added, but ONLY with verification
+  // credit (enforced below — the map alone is not the gate). Without credit
+  // the edge is refused and the run must detour through `audit`/`idle`.
+  green: ['audit', 'complete', 'idle'], // inline-verified → complete; else audit / abort
   audit: ['adversarial', 'self_correct', 'complete', 'idle'], // FID-2026-0805-004: ADVERSARIAL added between AUDIT and COMPLETE
   adversarial: ['complete', 'self_correct', 'idle'], // meta-verification: clean → complete; findings → self_correct; abort → idle
   self_correct: ['green', 'complete', 'idle'], // fix & verify inline → complete; or loop back to green
@@ -61,6 +66,38 @@ export const handleTransitionPhase = (async (params: {
   const MAX_ITERATIONS = getMaxIterations(fileContext.cwd)
   const allowed = VALID_TRANSITIONS[currentPhase] ?? []
   const isValid = allowed.includes(phase)
+
+  // FID-2026-1007-015 P5: verification-credit guard on the new `green →
+  // complete` shortcut. The edge exists so an inline-verified GREEN run can
+  // close the loop without the `audit` detour; it must never let an
+  // UNVERIFIED run bypass Law 3 the way an unguarded edge would.
+  // `hasVerifiedSinceLastDirty` is the enforcement layer's own cumulative
+  // credit flag (FID-2026-0819-001): a green verification run after the last
+  // dirtying write sets it; any later write revokes it (tool-pipeline.ts).
+  // The enforcement instance is the SAME object the executor's EHEL gate
+  // uses (getOrCreateEnforcement caches per agentState), so the guard reads
+  // exactly the credit the enforcement layer granted — no parallel state.
+  if (isValid && currentPhase === 'green' && phase === 'complete') {
+    const verified =
+      getOrCreateEnforcement(params.agentState as AgentState).getState()
+        .hasVerifiedSinceLastDirty
+    if (!verified) {
+      logger.warn(
+        { phase, reason, currentPhase, verificationCredit: false },
+        'FSM transition REJECTED — green→complete without verification credit',
+      )
+      return {
+        output: [
+          {
+            type: 'json',
+            value: {
+              message: `INVALID FSM transition: green → complete requires verification credit — a green verification run (typecheck/lint/test, exit 0) after the last file write. None is recorded. Run the verification, or route through audit/idle. Reason: ${reason}`,
+            },
+          },
+        ],
+      }
+    }
+  }
 
   if (!isValid) {
     logger.warn(

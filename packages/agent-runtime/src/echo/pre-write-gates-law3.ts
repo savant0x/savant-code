@@ -18,6 +18,20 @@
  *      N=3 escalation ladder (enforcement/escalation.ts) whose terminal
  *      response is turn termination rather than an unverified exit.
  *
+ * FID-2026-1007-015 P1 (operator ruling 2026-10-08, verbatim: "verify once
+ * seems optimal"): the OTHER-DIRTY branch is an ADVISORY while the caller is
+ * in the `green` implementation phase. The ruling reconciles the gate with
+ * the batch-then-verify-once workflow: an N-file batch no longer costs N+1
+ * verification round-trips. This is NOT a repeat of the 2026-09-18 demotion
+ * it supersedes — the operator set it explicitly, it is scoped to `green`,
+ * and Law 3 is still enforced at the batch boundary: the target-dirty block
+ * below is unchanged in every phase (verify before RE-editing), and turn-end
+ * Law 15 (enforcement/turn-end.ts) still refuses to end a turn with
+ * unverified files, so exactly one green verification run is mandatory
+ * before the turn closes. Outside `green` (audit, adversarial, self_correct,
+ * idle) the branch remains the hard block Ruling 1 restored, and the
+ * escalation ladder keeps keying on it there.
+ *
  * FID-2026-0927-003 F2: the target-dirty block is where a RED verification
  * run deadlocked. Credit is withheld on failure, so the file the run is
  * complaining about became unwritable — and editing that file is the only
@@ -180,11 +194,27 @@ export function runLaw3Gate(params: {
     }
   }
 
-  // ── Other-dirty BLOCK (restored, FID-2026-1001-003 step 4) ─────────
+  // ── Other-dirty branch (restored, FID-2026-1001-003 step 4) ─────────
   // Ruling 1: Laws 1-4 are not advice — the FID-2026-0918-005 demotion of
-  // this branch to advisory was attribution laundering. The block names the
-  // same set the old advisory did; the escalation ladder (escalation.ts)
-  // keys its N=3 response on exactly this block.
+  // this branch to advisory was attribution laundering.
+  // FID-2026-1007-015 P1: in the `green` implementation phase the operator's
+  // 2026-10-08 "verify once seems optimal" ruling scopes this branch to an
+  // advisory — batch the writes, then verify ONCE; turn-end Law 15 still
+  // blocks an unverified exit. Every other phase keeps the hard block, and
+  // the escalation ladder (escalation.ts) keys its N=3 response on it there.
+  if (fsmPhase === 'green') {
+    warnings.push({
+      law: 3,
+      severity: 'warning',
+      message:
+        `Law 3: ${unverifiedDirty.length} unverified file(s) pending: ` +
+        `[${unverifiedDirty.join(', ')}]. Batch-verify-once (operator ruling ` +
+        '2026-10-08): finish the batch, run typecheck/lint once, and the ' +
+        'turn cannot end until that run is green.',
+      file: targetPath,
+    })
+    return { blocked: false }
+  }
   return {
     blocked: true,
     reason:

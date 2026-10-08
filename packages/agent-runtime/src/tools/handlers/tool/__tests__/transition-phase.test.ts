@@ -5,8 +5,12 @@ import path from 'path'
 import { afterEach, beforeEach, describe, expect, it } from 'bun:test'
 
 import { handleTransitionPhase } from '../transition-phase'
+import { getOrCreateEnforcement } from '../../../../echo/enforcement/factory'
 
-import type { FsmPhase } from '@savant-code/common/types/session-state'
+import type {
+  AgentState,
+  FsmPhase,
+} from '@savant-code/common/types/session-state'
 import type { ProjectFileContext } from '@savant-code/common/util/file'
 
 function callTransition(
@@ -92,5 +96,109 @@ describe('handleTransitionPhase — ADVERSARIAL state (FID-2026-0805-004)', () =
       cwd: projectRoot,
     })
     expect(getMessage(result)).toContain('audit → complete')
+  })
+})
+
+describe('handleTransitionPhase — green → complete verification-credit guard (FID-2026-1007-015 P5)', () => {
+  let projectRoot: string
+
+  beforeEach(() => {
+    projectRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'fsm-p5-test-'))
+  })
+
+  afterEach(() => {
+    fs.rmSync(projectRoot, { recursive: true, force: true })
+  })
+
+  /**
+   * P5 pins construct the enforcement layer through the same factory the
+   * executor uses, keyed on the SAME agentState object the handler receives
+   * — so the guard reads exactly the credit the EHEL gate granted.
+   */
+  function callWithCredit(
+    currentPhase: FsmPhase | undefined,
+    phase: FsmPhase,
+    seed: 'green-run' | 'no-run' | 'write-after-run' | 'none',
+  ) {
+    const agentState: {
+      fsmPhase?: FsmPhase
+      iterationCount: number
+      enforcementMode?: string
+    } = { fsmPhase: currentPhase, iterationCount: 0 }
+    if (seed !== 'none') {
+      const enforcement = getOrCreateEnforcement(
+        agentState as unknown as AgentState,
+      )
+      enforcement.beforeToolCall({
+        toolName: 'read_files',
+        input: { paths: ['ECHO.md'] },
+        agentId: 'savant',
+      })
+      if (seed === 'green-run' || seed === 'write-after-run') {
+        enforcement.afterToolCall({
+          toolName: 'run_readonly_command',
+          input: { command: 'bun run typecheck' },
+          result: { text: 'ok' },
+          commandSucceeded: true,
+        })
+      }
+      if (seed === 'no-run' || seed === 'write-after-run') {
+        enforcement.afterToolCall({
+          toolName: 'write_file',
+          input: { path: '/proj/src/a.ts' },
+          result: { text: 'ok' },
+          writeSucceeded: true,
+        })
+      }
+    }
+    return handleTransitionPhase({
+      previousToolCallFinished: Promise.resolve(),
+      toolCall: {
+        toolCallId: 'test-call',
+        toolName: 'transition_phase',
+        input: { phase, reason: 'test transition' },
+      },
+      logger: {
+        debug: () => {},
+        info: () => {},
+        warn: () => {},
+        error: () => {},
+      },
+      agentState,
+      fileContext: { cwd: projectRoot } as ProjectFileContext,
+    })
+  }
+
+  it('allows green → complete WITH verification credit (a green run followed the last write)', async () => {
+    const result = await callWithCredit('green', 'complete', 'green-run')
+    expect(getMessage(result)).toContain('green → complete')
+  })
+
+  it('REFUSES green → complete WITHOUT verification credit (unverified writes pending)', async () => {
+    const result = await callWithCredit('green', 'complete', 'no-run')
+    expect(getMessage(result)).toContain('INVALID FSM transition')
+    expect(getMessage(result)).toContain('verification credit')
+  })
+
+  it('no enforcement history: a fresh state starts clean, so the edge is lawful (createEnforcementState contract)', async () => {
+    // hasVerifiedSinceLastDirty initializes TRUE ("start clean") — with zero
+    // dirty files there is nothing unverified, and turn-end Law 15 passes
+    // identically. The guard reads the same flag, so it must agree.
+    const result = await callWithCredit('green', 'complete', 'none')
+    expect(getMessage(result)).toContain('green → complete')
+  })
+
+  it('a write AFTER the green run revokes credit (the edge refuses again)', async () => {
+    const result = await callWithCredit(
+      'green',
+      'complete',
+      'write-after-run',
+    )
+    expect(getMessage(result)).toContain('INVALID FSM transition')
+  })
+
+  it('keeps green → audit working (the lawful detour is intact)', async () => {
+    const result = await callWithCredit('green', 'audit', 'none')
+    expect(getMessage(result)).toContain('green → audit')
   })
 })
