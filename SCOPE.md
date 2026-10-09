@@ -222,4 +222,5 @@
   `evals/v2/src/runner.ts`, `sdk/src/run/types.ts`
 - T176: `art/icons/cyberpunk/**`,
   `cli/src/utils/theme-system/**`,
+  `scripts/icon-palette-check.ts`, `package.json`,
   `dev/session-summaries/2026-10-09-nova-icon-merge.md`
