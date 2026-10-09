@@ -114,6 +114,19 @@ export function applyCompactionStatus(
   }
 }
 
+/**
+ * FID-2026-1009-002: zero ONLY the sidebar's context used-count. The cap is
+ * owned by the resolved model window (use-chat-bootstrap at boot,
+ * startRunMonitors per run) and deliberately survives a chat clear — a /new
+ * must show 0/1,000,000 (the new chat's true state), not the fallback
+ * readout. Kept out of resetSidebarData (which zeroes the cap and the rest
+ * of the session stats) so the /new path stays surgical. Extracted from
+ * sidebar-actions.ts over the 300-line ceiling.
+ */
+export function resetContextTokensUsed(state: DraftState): void {
+  state.contextTokensUsed = 0
+}
+
 /** Session/id/input half of `reset` (verbatim). */
 export function resetChatSessionState(state: DraftState): void {
   state.chatSessionId = generateSessionId()

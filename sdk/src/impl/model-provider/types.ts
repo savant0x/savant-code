@@ -13,6 +13,17 @@ export interface ModelRequestParams {
   skipChatGptOAuth?: boolean
   contextWindow?: number
   logger?: Logger
+  /**
+   * FID-2026-1009-003 L2: overflow seam. Invoked when a request would
+   * exceed the context budget, before the prompt is trimmed and retried
+   * once. Hosts may compact their shared session state here (the next
+   * step benefits); a throwing seam is logged and never blocks the
+   * trim recovery.
+   */
+  onContextOverflow?: (info: {
+    inputTokens: number
+    contextWindow: number
+  }) => void | Promise<void>
 }
 
 /**

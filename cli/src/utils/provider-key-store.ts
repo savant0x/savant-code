@@ -14,6 +14,7 @@ import {
   readStoredProviderKeys,
 } from './provider-credentials'
 import {
+  adoptPersistedSelectionRevision,
   persistProviderKey,
   synchronizeAccountRevision,
 } from './provider-key-persistence'
@@ -109,6 +110,7 @@ export function applyPersistedProviderApiKeys(): void {
         seedProviderAccountRevision(config, revision)
     }
   }
+  adoptPersistedSelectionRevision() // FID-2026-1009-001
 
   // Restore direct mode from an earlier-saved provider key.
   // FID-2026-0929-005: the hasEnvBackendCredentials() deferral term is

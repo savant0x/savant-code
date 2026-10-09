@@ -43,7 +43,7 @@ export function applyModelRequestBudget(
     .replace(/\/+$/, '')
   const endpointId = createHash('sha256').update(endpoint).digest('hex')
   const routeId = `${params.modelRoute?.providerId ?? result.model.provider}:${result.model.modelId}:${endpointId}`
-  return {
+return {
     ...result,
     model: withRequestTokenBudget(result.model, {
       catalogId,
@@ -51,6 +51,8 @@ export function applyModelRequestBudget(
       fallbackModelId: params.model,
       contextWindow: params.contextWindow,
       logger: params.logger,
+      // FID-2026-1009-003 L2: thread the host overflow seam through.
+      onContextOverflow: params.onContextOverflow,
     }),
   }
 }

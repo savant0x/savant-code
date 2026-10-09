@@ -137,11 +137,17 @@ break
           }
         }
       }
-      // P3d force offset: above (maxContextLength − forceCompactOffset) the
+      // P3d force offset: above (maxContextLength − forceMargin) the
       // pruner proceeds even for low-value folds (force: true bypasses the
       // pruner's own gates) rather than risking a hard overflow. The
       // autoCompactRatio proactive trigger stays as-is. Both thresholds come
       // from the factory (H-07 / FID-2026-0814-013).
+      // FID-2026-1009-003 L3: proportional force margin — the configured
+      // offset is a floor; large windows get 2% of window (20k at 1M).
+      const forceMargin = Math.max(
+        forceCompactOffset,
+        Math.floor(maxContextLength * 0.02),
+      )
       // FID-2026-0814-011 C-02: single trigger authority. autoCompactDue
       // is set every step by prepareStepContext from the proven
       // shouldAutoCompact verdict; the ratio arithmetic below is a fallback
@@ -153,7 +159,7 @@ break
         autoCompactRatio,
       )
       const forceDue =
-        agentState.contextTokenCount > maxContextLength - forceCompactOffset
+        agentState.contextTokenCount > maxContextLength - forceMargin
       // P2-2: judge the PREVIOUS pass before arming a new one — the spawn
       // boundary recounts history synchronously, so this count is already
       // post-compaction.
@@ -204,11 +210,16 @@ break
             forceDue,
             autoCompactRatio,
             forceCompactOffset,
+            forceMargin,
           },
           'savant handleSteps: auto-compact trigger evaluated',
         )
       }
       if (forceDue) {
+        // FID-2026-1009-003 L4: the forced pass supersedes the escalation
+        // ladder — reset it so proactive compaction resumes next turn.
+        escalationStage = 0
+        holdBaselineCount = 0
         agentState.compactionStatus = { phase: 'compacting' }
         yield {
           toolName: 'spawn_agent_inline',

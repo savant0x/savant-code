@@ -5,6 +5,7 @@ import { initialState } from './initial-state'
 import {
   applyCompactionStatus,
   resetChatSessionState,
+  resetContextTokensUsed,
   resetSidebarSlice,
 } from './sidebar-reset'
 import { trimAgentStack, trimToolsUsed } from '../../utils/bounded-arrays'
@@ -57,6 +58,7 @@ export const createSidebarActions = (set: SetState): ChatSidebarActions => ({
       if (Object.is(state.contextWindowSource, source)) return
       state.contextWindowSource = source
     }),
+  resetContextTokens: () => set(resetContextTokensUsed),
 
   setCompactionStatus: (status) =>
     set((state) => {

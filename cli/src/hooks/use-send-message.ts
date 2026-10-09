@@ -5,7 +5,10 @@ import { createStreamController } from './stream-state'
 import { useActiveSubagents } from './use-active-subagents'
 import { useChatStore } from '../state/chat-store'
 import { createStalledResetWatcher } from '../utils/finish-logic'
-import { loadMostRecentChatState } from '../utils/run-state-storage'
+import {
+  loadMostRecentChatState,
+  readRestoredContextTokenCount,
+} from '../utils/run-state-storage'
 import { sanitizeRestoredMessages } from '../utils/send-message-helpers'
 import { prepareUserMessage as prepareUserMessageHelper } from './helpers/send-message'
 import { createSendMessageBody } from './helpers/send-message-fn'
@@ -53,6 +56,8 @@ export const useSendMessage = ({
     addSessionCredits,
     setRunState,
     setIsRetrying,
+    updateContextTokens,
+    resetContextTokens,
   } = useChatStore.getState()
   const previousRunStateRef = useRef<RunState | null>(
     useChatStore.getState().runState,
@@ -82,12 +87,29 @@ export const useSendMessage = ({
         previousRunStateRef.current = loadedState.runState
         setRunState(loadedState.runState)
         setMessages(sanitizeRestoredMessages(loadedState.messages))
+        // FID-2026-1009-002: seed the sidebar's context readout from the
+        // restored session so a resumed chat shows its real count instead
+        // of 0/1,000,000 until the first run's first step recomputes it.
+        // The cap is seeded separately by use-chat-bootstrap from the
+        // resolved model window.
+        const restoredContextTokens = readRestoredContextTokenCount(
+          loadedState.runState,
+        )
+        if (restoredContextTokens !== null) {
+          updateContextTokens(restoredContextTokens)
+        }
         if (loadedState.chatId) {
           setCurrentChatId(loadedState.chatId)
         }
       }
     }
-  }, [continueChat, continueChatId, setMessages, setRunState])
+  }, [
+    continueChat,
+    continueChatId,
+    setMessages,
+    setRunState,
+    updateContextTokens,
+  ])
 
   const updateChainInProgress = useCallback(
     (value: boolean) => {
@@ -105,6 +127,13 @@ export const useSendMessage = ({
   function clearMessages() {
     previousRunStateRef.current = null
     setRunState(null)
+    // FID-2026-1009-002: zero the context readout for the new chat. The cap
+    // is owned by the resolved model window (use-chat-bootstrap /
+    // startRunMonitors) and survives a chat clear; only the used-count
+    // resets. Without this the previous chat's count would strand in the
+    // meter until the new chat's first step completes, because
+    // updateContextTokens now suppresses the run-start 0 snapshot.
+    resetContextTokens()
   }
 
   const prepareUserMessage = useCallback(

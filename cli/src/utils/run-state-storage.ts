@@ -23,6 +23,7 @@ export {
 export {
   clearChatState,
   loadMostRecentChatState,
+  readRestoredContextTokenCount,
 } from './run-state-storage/load'
 
 export { getAllToggleIdsFromMessages } from './run-state-storage/toggle-ids'

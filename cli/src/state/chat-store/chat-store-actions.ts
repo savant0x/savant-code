@@ -88,6 +88,8 @@ export type ChatStoreActions = {
 
   // Sidebar data actions
   updateContextTokens: (used: number) => void
+  /** FID-2026-1009-002: zero the used-count for a new chat (cap survives). */
+  resetContextTokens: () => void
   updateContextTokensMax: (max: number) => void
   /** FID-2026-0914-002 (MQ4): set the sidebar window provenance. */
   updateContextWindowSource: (
@@ -176,6 +178,7 @@ type AliasActionKeys =
 
 type SidebarActionKeys =
   | 'updateContextTokens'
+  | 'resetContextTokens'
   | 'updateContextTokensMax'
   | 'updateContextWindowSource'
   | 'setSidebarCollapsed'

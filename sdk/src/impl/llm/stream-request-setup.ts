@@ -52,6 +52,7 @@ export async function prepareLlmStreamRequest(
     modelRoute: params.modelRoute,
     skipChatGptOAuth: params.skipChatGptOAuth,
     contextWindow: params.contextWindow,
+    onContextOverflow: params.onContextOverflow,
     logger: params.logger,
   }
   const { model: aiSDKModel, isChatGptOAuth } =

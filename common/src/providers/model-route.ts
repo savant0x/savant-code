@@ -3,7 +3,10 @@ import { createHash } from 'node:crypto'
 import { z } from 'zod/v4'
 
 import { getEffectiveProviderRegistry } from './custom-providers'
-import { providerAccountRevision } from './provider-account-revisions'
+import {
+  providerAccountRevision,
+  seedProviderAccountRevision,
+} from './provider-account-revisions'
 
 import type { ProviderConfig } from './types'
 import type { ModelRoute } from '../templates/initial-agents-dir/types/agent-models'
@@ -58,13 +61,20 @@ export function getModelRouteConfig(route: ModelRoute): ProviderConfig {
       'Selected provider configuration changed. Reselect it before retrying.',
     )
   }
-  if (
-    route.accountRevision &&
-    route.accountRevision !== providerAccountRevision(config)
-  ) {
-    throw new Error(
-      'Selected provider credentials changed. Reselect the provider before retrying.',
-    )
+  if (route.accountRevision) {
+    // FID-2026-1009-001: a route persisted by an earlier process carries the
+    // revision that process minted. A fresh process holds no in-memory
+    // observation of the provider, so the comparison below would mint a
+    // different random UUID and reject unchanged credentials as changed on
+    // the first message of every boot. Adopt the route's revision when the
+    // provider was never observed this process; an existing observation (a
+    // /provider anchor or a mid-session mint) keeps the strict comparison.
+    seedProviderAccountRevision(config, route.accountRevision)
+    if (route.accountRevision !== providerAccountRevision(config)) {
+      throw new Error(
+        'Selected provider credentials changed. Reselect the provider before retrying.',
+      )
+    }
   }
   return config
 }

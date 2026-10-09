@@ -18,6 +18,7 @@ import type { TrackEventFn } from '@savant-code/common/types/contracts/analytics
 import type { SendActionFn } from '@savant-code/common/types/contracts/client'
 import type {
   CacheDebugUsageData,
+  OnContextOverflow,
   PromptAiSdkStreamFn,
 } from '@savant-code/common/types/contracts/llm'
 import type { Logger } from '@savant-code/common/types/contracts/logger'
@@ -45,6 +46,9 @@ export const getAgentStreamFromTemplate = (params: {
    *  and the provider default governs. */
   maxOutputTokens?: number
   contextWindow?: number
+  /** FID-2026-1009-003 L2: overflow seam forwarded to the SDK budget
+   *  layer; see OnContextOverflow. */
+  onContextOverflow?: OnContextOverflow
   logger: Logger
   messages: Message[]
   runId: string
@@ -114,6 +118,7 @@ export const getAgentStreamFromTemplate = (params: {
     localAgentTemplates,
     maxOutputTokens: params.maxOutputTokens,
     contextWindow: params.contextWindow,
+    onContextOverflow: params.onContextOverflow,
     // FID-2026-1005-006: the classified boundary owns retries (see below),
     // so the client's blind retry is disabled — never a uniform 3.
     maxRetries: 0,

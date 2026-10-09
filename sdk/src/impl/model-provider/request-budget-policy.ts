@@ -3,6 +3,8 @@ import {
   validTokenLimit,
 } from '@savant-code/common/util/model-request-limits'
 
+import { countRequestInputTokens } from './request-token-count'
+
 import type { LanguageModelV2CallOptions } from '@ai-sdk/provider'
 import type { ModelRequestLimits } from '@savant-code/common/util/model-request-limits'
 
@@ -17,11 +19,15 @@ const OUTPUT_OPTION_KEYS = [
 
 export class RequestInputBudgetError extends Error {
   readonly code = 'context_length_exceeded'
+  readonly inputTokens: number
+  readonly contextWindow: number
   constructor(inputTokens: number, contextWindow: number) {
     super(
       `Request input estimate ${inputTokens} leaves no output headroom within the ${contextWindow} token context window.`,
     )
     this.name = 'RequestInputBudgetError'
+    this.inputTokens = inputTokens
+    this.contextWindow = contextWindow
   }
 }
 
@@ -67,6 +73,41 @@ function boundProviderOutputOptions(
       ),
     ]),
   )
+}
+
+/**
+ * FID-2026-1009-003 L2: last-resort prompt trim for the overflow seam.
+ * When the budget check fails and a seam is wired, drop the oldest
+ * non-system turns until the re-estimated input fits with headroom.
+ * System messages and the final (current) turn are always kept. Returns
+ * null when even the minimal prompt cannot fit — the caller rethrows the
+ * original error. Byte-for-byte prompt reuse otherwise (no copy when the
+ * prompt already fits).
+ */
+export function trimPromptToFit(
+  params: LanguageModelV2CallOptions,
+  contextWindow: number,
+): LanguageModelV2CallOptions | null {
+const reserve = Math.min(
+    MAX_SAFETY_RESERVE,
+    Math.ceil(contextWindow * RESERVE_FRACTION),
+  )
+  // budgetModelRequest requires headroom >= 1, so the trim target is one
+  // below the largest input that still passes (window - reserve - 1).
+  const inputBudget = contextWindow - reserve - 1
+  let prompt = params.prompt
+  if (countRequestInputTokens({ ...params, prompt }) <= inputBudget) {
+    return params
+  }
+  // Drop one oldest non-system message at a time (never the final turn).
+  while (countRequestInputTokens({ ...params, prompt }) > inputBudget) {
+    const dropIndex = prompt.findIndex(
+      (message, index) => message.role !== 'system' && index < prompt.length - 1,
+    )
+    if (dropIndex === -1) return null
+    prompt = [...prompt.slice(0, dropIndex), ...prompt.slice(dropIndex + 1)]
+  }
+  return { ...params, prompt }
 }
 
 /** Pure policy: capabilities are ceilings, never a per-request allowance. */

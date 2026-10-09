@@ -10,6 +10,7 @@ import {
   readStoredProviderKeys,
 } from './provider-credentials'
 import { notifyProviderSelectionChanged } from './provider-monitoring-events'
+import { loadModelSelection } from './settings'
 import { writeFileAtomic } from './write-file-atomic'
 
 export function synchronizeAccountRevision(provider: string): void {
@@ -29,6 +30,34 @@ export function synchronizeAccountRevision(provider: string): void {
       true,
     )
   }
+}
+
+/**
+ * FID-2026-1009-001: adopt the persisted selection's account revision as
+ * this process's first observation of that provider.
+ *
+ * `providerAccountRevision` mints a fresh random UUID the first time a
+ * process observes a provider. A route persisted by an earlier process
+ * carries the UUID that process minted, so with no in-memory entry the
+ * first message's comparison would mint a different UUID and reject the
+ * unchanged credentials as changed. Seeding here — before provider
+ * monitoring captures a route at boot — makes the persisted route the
+ * process's own observation.
+ *
+ * An entry already seeded from credentials.json (an anchored `/provider`
+ * save) keeps precedence: seedProviderAccountRevision fills absent entries
+ * only, and a genuine credential value change still mints a new UUID
+ * through the ordinary comparison.
+ */
+export function adoptPersistedSelectionRevision(): void {
+  const selection = loadModelSelection()
+  if (!selection) return
+  const revision = selection.route.accountRevision
+  if (!revision) return
+  const registry = getEffectiveProviderRegistry()
+  const providerId = selection.route.providerId
+  if (!Object.hasOwn(registry, providerId)) return
+  seedProviderAccountRevision(registry[providerId], revision)
 }
 
 /** Write one credential into the shared 0600 credentials store by env-var name. */

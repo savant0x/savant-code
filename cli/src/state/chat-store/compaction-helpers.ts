@@ -51,6 +51,13 @@ export const CONTEXT_TOKEN_MAX_STEP_RATIO = 0.12
 export const CONTEXT_TOKEN_SMALL_COUNT_FLOOR = 10_000
 
 export function dampTokenCount(current: number, incoming: number): number {
+  // FID-2026-1009-002: a non-positive incoming is "no reading", never a real
+  // count — the runtime emits contextTokenCount: 0 before the first step
+  // computes one (the run-start immediate snapshot) and the reconcile can
+  // adopt a provider usage that reports 0 input tokens. Adopting either
+  // wipes an established readout to 0/1,000,000 mid-session and strands it
+  // there until the next run recomputes. Hold the last known value instead.
+  if (incoming <= 0) return current
   // First update: no history to damp against. Small counts: adopt exactly so
   // a large-window session can't stall near zero (FID-2026-0827-001).
   if (current <= 0 || incoming <= CONTEXT_TOKEN_SMALL_COUNT_FLOOR) {

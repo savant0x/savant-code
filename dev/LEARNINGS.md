@@ -1,5 +1,95 @@
 # LEARNINGS
 
+## Lesson: A machine-readable register entry is a parsed artifact, not prose
+
+- **Date:** 2026-10-09
+- **Failure:** The `FID-2026-1009-001` entry in SCOPE.md's machine-readable
+  scope-targets section was edited incrementally three times, and each edit
+  silently corrupted the entry — a dropped continuation indent, duplicated
+  glob lines, a stray trailing backslash. The corruption never announced
+  itself as corruption; it announced itself as the Law 2 write gate blocking
+  the very files the entry covered ("no approved scope item covers ...").
+  The gate read the register exactly as written — the entry's shape had
+  stopped parsing.
+- **Evidence:** packages/agent-runtime/src/echo/pre-write-gates-law2.ts → symbol:loadScopeArtifact,
+  SCOPE.md → heading:Machine-readable scope targets
+- **Invariant:** A register entry that gates writes is code, not
+  documentation — its indentation and line shape are the contract, and a
+  malformed entry fails closed by denying approved work. The failure is
+  uniquely confusing because the block message names the missing coverage,
+  never the mangled entry that caused it.
+- **Guard:** Never edit a machine-readable register entry line-by-line. Read
+  the entry, then rewrite the WHOLE entry block in one operation (or run a
+  small anchor-based script), and confirm the globs still parse — a targeted
+  write to one of the entry's own paths is the live probe. Prefer a script
+  for multi-line glob lists; the tool-call payload path is lossy for them.
+- **Verification:** after the script rewrite, the previously blocked edits
+  applied on the first attempt and the full battery passed (typecheck ×2,
+  tests 5/5 and 1/1, probe 5/5, quality, eslint, prettier, lint:md,
+  fid:verify 6/6).
+- **Scope:** internal
+- **Owning FID:** FID-2026-1009-001
+- **Status:** active
+
+## Lesson: A repair script that slices on a re-run is a data-loss script
+
+- **Date:** 2026-10-09
+- **Failure:** The repair script for the two lessons above removed a
+  previously inserted block with `text.slice(0, start) + text.slice(markerAt)`,
+  where `start` was the heading of the block it had itself inserted at the
+  TOP of the file. Re-running the script then sliced from that top block all
+  the way down to the insertion marker — deleting 1,082 lines and 35 governed
+  lessons from dev/LEARNINGS.md. The file's own tool gate never flagged it:
+  learnings:check passed on the truncated file (fewer entries is still a
+  valid file), and only `git diff --stat` against HEAD revealed the loss.
+- **Evidence:** scripts/learnings-schema.ts → symbol:LEARNINGS_INSERTION_MARKER
+- **Invariant:** A script that removes content by slicing between two
+  located indices is only safe when both indices bound EXACTLY the content it
+  inserted. Locating the block by a heading that the script itself placed at
+  an arbitrary position (the top) turns any re-run into an unbounded delete.
+  Idempotence in a repair script means "no-op when already correct", never
+  "delete then re-insert".
+- **Guard:** Repair scripts insert and remove only between a stable anchor
+  and its immediate neighbor (marker-adjacent insert; block-anchored delete
+  bounded by the block's own start AND end headings). After any scripted
+  edit to a tracked ledger file, diff against HEAD (`git diff --numstat`)
+  before declaring success — a green content validator proves the file is
+  well-formed, never that nothing was lost.
+- **Verification:** pristine file restored from HEAD (1,989 lines; the
+  expected 2026-10-09 lesson present); `git diff --numstat` shows insertions
+  only and zero deletions; learnings:check PASS; lint:md and prettier clean.
+- **Scope:** internal
+- **Owning FID:** FID-2026-1009-001
+- **Status:** active
+
+## Lesson: Verification gates inside a code fence are invisible to fid:verify
+
+- **Date:** 2026-10-09
+- **Failure:** FID-2026-1009-001 declared its verification gates inside a
+  markdown fence, copying the shape of the FID template's example block. The
+  gates-section locator strips fenced blocks BEFORE parsing, so the fence —
+  which the template uses to show an EXAMPLE — declared nothing, and
+  fid:verify would have reported "no gates declared" with no receipt
+  stampable for the verified status flip. Archived records declare gates as
+  plain bullets outside any fence.
+- **Evidence:** packages/agent-runtime/src/echo/fid-verification-gates-locators.ts → symbol:withoutFencedBlocks,
+  packages/agent-runtime/src/echo/fid-verification-gates-locators.ts → symbol:verificationGatesSection,
+  dev/fids/archive/FID-2026-1008-005-model-picker-swr-gauntlet-docs-autowire.md → heading:Verification Gates
+- **Invariant:** A fence makes content documentation, never declaration —
+  any machine-read contract (gates, receipts, register targets) must live
+  outside fences. The template's fenced block shows the SHAPE of a
+  declaration; copying the fence copies the invisibility.
+- **Guard:** When declaring FID gates, write plain gate bullets directly
+  under the Verification Gates heading and dry-run fid:verify on the record —
+  it fails loudly ("no gates declared") long before a status flip. Copy the
+  structure of an archived record, never the template's fenced example.
+- **Verification:** after un-fencing, fid:verify --write stamped 6/6 gates
+  exit 0 and fid:verify --check PASS — all active fixed/verified FIDs carry
+  valid receipts.
+- **Scope:** internal
+- **Owning FID:** FID-2026-1009-001
+- **Status:** active
+
 ## Lesson: Extend an existing command before registering its replacement
 
 - **Date:** 2026-10-09

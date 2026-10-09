@@ -162,6 +162,20 @@ export function loadMostRecentChatState(
 }
 
 /**
+ * FID-2026-1009-002: the context token count a restored chat carries, or
+ * null when the state has none. The sidebar seeds its readout from this at
+ * boot so a resumed chat shows its real count instead of 0/1,000,000 until
+ * the first run's first step recomputes it. Non-positive counts are "no
+ * reading" and yield null (the display guard suppresses them anyway).
+ */
+export function readRestoredContextTokenCount(
+  runState: RunState | null | undefined,
+): number | null {
+  const count = runState?.sessionState?.mainAgentState?.contextTokenCount
+  return typeof count === 'number' && count > 0 ? count : null
+}
+
+/**
  * Clear the saved state files
  */
 export function clearChatState(): void {

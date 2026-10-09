@@ -35,8 +35,18 @@ export function reconcileTokenCount(params: {
   const { agentState, localEstimate, logger } = params
   const usage = agentState.lastProviderUsage
   const lastCompactionAt = agentState.lastPrunerCompletionAt ?? 0
+  // FID-2026-1009-002: a provider usage with a missing or non-positive
+  // inputTokens is "no reading", not truth — some streams finalize with a
+  // zero or unset input-token count. Preferring it would set the count to 0
+  // mid-run: the sidebar meter wipes to 0/1,000,000 AND the compaction gates
+  // (shouldAutoCompact / percentUsed) see an empty context, silently
+  // disabling proactive compaction until the next step's estimator. Fall
+  // back to the local estimate when the reported count is not a real
+  // positive number.
+  const hasUsableProviderUsage =
+    typeof usage?.inputTokens === 'number' && usage.inputTokens > 0
   const choseProviderUsage = Boolean(
-    usage && usage.capturedAt > lastCompactionAt,
+    usage && hasUsableProviderUsage && usage.capturedAt > lastCompactionAt,
   )
   const result = choseProviderUsage && usage ? usage.inputTokens : localEstimate
   // FID-2026-0821-003-A: bounded observability — a logger failure must never

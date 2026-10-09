@@ -121,6 +121,41 @@ describe('reconcileTokenCount (FID-2026-0821-001 P2-1)', () => {
     })
   })
 
+  test('FID-2026-1009-002: a provider usage reporting 0 input tokens loses to the estimate', () => {
+    const state = stateWith({
+      lastProviderUsage: { inputTokens: 0, capturedAt: 2_000 },
+      lastPrunerCompletionAt: 1_000,
+    })
+    expect(
+      reconcileTokenCount({ agentState: state, localEstimate: 120_000 }),
+    ).toBe(120_000)
+  })
+
+  test('FID-2026-1009-002: a provider usage with an unset inputTokens loses to the estimate', () => {
+    // The upstream usage shape is inputTokens?: number; the stamp can carry
+    // undefined at runtime despite the narrower local type.
+    const state = stateWith({
+      lastProviderUsage: {
+        inputTokens: undefined as unknown as number,
+        capturedAt: 2_000,
+      },
+      lastPrunerCompletionAt: 1_000,
+    })
+    expect(
+      reconcileTokenCount({ agentState: state, localEstimate: 120_000 }),
+    ).toBe(120_000)
+  })
+
+  test('FID-2026-1009-002: a negative provider inputTokens loses to the estimate', () => {
+    const state = stateWith({
+      lastProviderUsage: { inputTokens: -1, capturedAt: 2_000 },
+      lastPrunerCompletionAt: 1_000,
+    })
+    expect(
+      reconcileTokenCount({ agentState: state, localEstimate: 120_000 }),
+    ).toBe(120_000)
+  })
+
   test('FID-2026-0821-003-A: a throwing logger never breaks the reconcile', () => {
     const throwingLogger: Logger = {
       debug: () => {

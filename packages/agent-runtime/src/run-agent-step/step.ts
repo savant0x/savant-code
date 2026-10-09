@@ -248,6 +248,14 @@ export const runAgentStep = async (
     // today's request bytes unchanged. Read from the run's own enforcement axis,
     // never from a caller's argument.
     cacheBreakpointTtl: resolveCacheBreakpointTtl(agentState.enforcementMode),
+    // FID-2026-1009-003 L2: overflow seam — the SDK budget layer invokes
+    // this when a request would exceed the window (before trimming and
+    // retrying once). Arm the next trigger evaluation so the handleSteps
+    // generator force-compacts the shared session state; the next
+    // prepareStepContext recomputes the flag, so the arming is one-shot.
+    onContextOverflow: () => {
+      agentState.autoCompactDue = true
+    },
     messages: [systemMessage(system), ...agentState.messageHistory],
     onCacheDebugProviderRequestBuilt,
     onCacheDebugUsageReceived,

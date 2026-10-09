@@ -93,6 +93,18 @@ export type CacheDebugUsageData = {
   cachedInputTokensReported?: boolean
 }
 
+/**
+ * FID-2026-1009-003 L2: overflow seam. Invoked when a request's input
+ * estimate leaves no output headroom within the context window — before
+ * the SDK trims the prompt and retries once. Hosts may compact their
+ * shared session state here (the next step benefits); a throwing seam is
+ * logged and never blocks the trim recovery.
+ */
+export type OnContextOverflow = (info: {
+  inputTokens: number
+  contextWindow: number
+}) => void | Promise<void>
+
 export type PromptAiSdkStreamFn = (
   params: {
     runId: string
@@ -102,6 +114,8 @@ export type PromptAiSdkStreamFn = (
     model: Model
     modelRoute?: ModelRoute
     contextWindow?: number
+    /** FID-2026-1009-003 L2: overflow seam — see OnContextOverflow. */
+    onContextOverflow?: OnContextOverflow
     userId: string | undefined
     chargeUser?: boolean
     thinkingBudget?: number
