@@ -158,6 +158,20 @@
       operator-directed session. **Automation level: 1** (no agent action;
       the e2e failures are known and operator-owned until then).
 
+### Icon integration
+
+- [ ] **T177. CLI icon-integration program — wire the 132-SVG cyberdeck
+      family into product surfaces (FID-2026-1009-004).** The export HTML
+      report swaps Font Awesome for inline Savant SVGs, gains agents/phase
+      marks and drops the ~1.2 MB base64 FA payload (FA strategy per the
+      FID's Q1); Discord presence derives the 14 agent/mode PNGs (upload is
+      the operator's); desktop adopts the family natively. TUI inline icons
+      intentionally remain the `glyphs.ts` chain. TUI raster art is a separate
+      work item **blocked pending the operator's rasterization ruling** (same
+      blocker as the FID records); it stays registered and proceeds the moment
+      the ruling lands.
+      **Automation level: 3.**
+
 ### Build orders (formalized as FIDs 2026-10-07)
 
 - [ ] **T164-D. Eval-runner wire-stage usage telemetry.** Open remainder
@@ -203,3 +217,10 @@
 - T164-D: `common/src/types/print-mode.ts`,
   `packages/agent-runtime/src/run-agent-step/step.ts`,
   `evals/v2/src/runner.ts`, `sdk/src/run/types.ts`
+- T177: `dev/fids/FID-2026-1009-004-cli-icon-integration-program.md`,
+  `art/icons/cyberpunk/**`,
+  `cli/src/constants/**`, `cli/src/commands/export-conversation/**`,
+  `cli/scripts/**`, `scripts/**`,
+  `cli/src/state/presence/presence-mapper.ts` (keys stay byte-identical —
+  citation surface only), `desktop/**`, `docs/**`,
+  `dev/session-summaries/**`, `CHANGELOG.md`

@@ -1498,9 +1498,14 @@
     "common/src/util/skill-proposals.ts": 136,
     "common/src/util/skill-proposal-gate.ts": 107,
     "scripts/draft-archive.ts": 78,
-    "scripts/session-end-review.ts": 167
+    "scripts/session-end-review.ts": 167,
+    "cli/src/constants/savant-icons.ts": 3353,
+    "cli/src/hooks/use-savant-raster.ts": 51,
+    "cli/scripts/generate-savant-icons.ts": 129,
+    "cli/src/utils/__tests__/savant-raster.test.ts": 63
   },
   "dataConstantExemptions": {
+    "cli/src/constants/savant-icons.ts": "FID-2026-1009-004 (operator directive 2026-10-09: CLI TUI is the primary icon surface): GENERATED asset module from cli/scripts/generate-savant-icons.ts — 132 inline-SVG strings + 132 build-time-rasterized base64 PNG data URIs keyed by stable icon names. Generated data, not authored logic; one data-URI literal per icon cannot be split. Regenerate via `bun cli/scripts/generate-savant-icons.ts`; growth-frozen at 3353 lines via trackedFiles.",
     "cli/src/constants/savant-logo.ts": "FID-2026-0819-005 (operator decision 2026-09-03): single base64 PNG payload (SAVANT_LOGO_PNG_BASE64) \u2014 generated data, not authored logic; one string literal cannot be split. Growth-frozen at 921 lines via trackedFiles.",
     "common/src/constants/savant-free-models.ts": "FID-2026-0819-005 (operator decision 2026-09-03): generated model-catalog constants (108 export consts feeding the waiting-room selector) \u2014 data, not control flow; splitting would scatter one catalog across arbitrary files. Growth-frozen at 856 lines via trackedFiles."
   }

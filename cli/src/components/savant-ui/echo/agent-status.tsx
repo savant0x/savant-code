@@ -1,8 +1,14 @@
 import { TextAttributes } from '@opentui/core'
 import React from 'react'
 
+import { activityIcon } from './agent-icons'
+import { savantRasterDataUri } from '../../../hooks/use-savant-raster'
 import { useChatStore } from '../../../state/chat-store'
 import { glyph } from '../../../utils/glyphs'
+import {
+  renderInlineImage,
+  supportsInlineImages,
+} from '../../../utils/terminal-images'
 import {
   sidebarActivity,
   sidebarEllipsis,
@@ -12,7 +18,30 @@ import { SidebarFocusContext } from '../../right-sidebar-focus'
 import { SidebarActivityAccent } from '../../right-sidebar-motion'
 import { useSidebarTheme as useTheme } from '../../right-sidebar-theme'
 
+import type { SavantIconName } from '../../../constants/savant-icons'
 import type { StatusIndicatorState } from '../../../utils/status-indicator-state'
+
+/**
+ * Family icon for the current activity line, as a 1-cell inline-image
+ * sequence when the terminal supports one and the activity resolves to a
+ * mark in the generated family (FID-2026-1009-004). Any miss — unsupported
+ * terminal, idle, unknown kind, unmapped everything — degrades to `null`
+ * and the row renders the existing glyph composition (Law 14).
+ */
+function activityIconSequence(
+  kind: string,
+  detail: { agentType?: string; toolName?: string },
+): string | null {
+  const icon: SavantIconName | null = activityIcon(kind, detail)
+  if (!icon) return null
+  if (!supportsInlineImages()) return null
+  const dataUri = savantRasterDataUri(icon)
+  if (!dataUri) return null
+  return renderInlineImage(dataUri.replace(/^data:image\/png;base64,/, ''), {
+    width: 1, // single-line activity row — same cell the glyph occupies
+    height: 1,
+  })
+}
 
 export function AgentStatus({
   lifecycle,
@@ -81,9 +110,46 @@ export function AgentStatus({
           flexShrink={0}
           backgroundColor={emphasized ? theme.surfaceHover : undefined}
         >
-          <text fg={color} attributes={TextAttributes.BOLD} selectable={false}>
-            {`${glyph(display.tone === 'idle' ? 'phaseIdle' : display.tone === 'warning' ? 'alertWarning' : 'phaseActive')} ${sidebarEllipsis(display.label, cells - 2)}`}
-          </text>
+          {(() => {
+            const iconSeq = activityIconSequence(activity.kind, {
+              agentType:
+                activity.kind === 'subagent' ? activity.agentType : undefined,
+              toolName: activity.kind === 'tool' ? activity.toolName : undefined,
+            })
+            const glyphChar = glyph(
+              display.tone === 'idle'
+                ? 'phaseIdle'
+                : display.tone === 'warning'
+                  ? 'alertWarning'
+                  : 'phaseActive',
+            )
+            const label = sidebarEllipsis(display.label, cells - 2)
+            return iconSeq ? (
+              <box
+                flexDirection="row"
+                gap={1}
+                alignItems="center"
+                selectable={false}
+              >
+                <text selectable={false}>{iconSeq}</text>
+                <text
+                  fg={color}
+                  attributes={TextAttributes.BOLD}
+                  selectable={false}
+                >
+                  {label}
+                </text>
+              </box>
+            ) : (
+              <text
+                fg={color}
+                attributes={TextAttributes.BOLD}
+                selectable={false}
+              >
+                {`${glyphChar} ${label}`}
+              </text>
+            )
+          })()}
           {!compact && !hideDetail && detail && (
             <text fg={theme.foreground} selectable={false}>
               {sidebarEllipsis(detail, cells)}
