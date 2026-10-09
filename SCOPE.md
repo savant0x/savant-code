@@ -79,46 +79,33 @@
       **Blocker:** operator account access (xKiro paid plan) and the fourth
       provider's identity — both external to the repository.
 
-- [ ] **T165. `FID-2026-1007-016` — provider identity sweep verdict controls.**
-      The `--all` catalog sweep reports per-route status and a served-label
-      classification but every row's identity `verdict` is `inconclusive`,
-      because the sweep threads no control into the runner
-      (`scripts/providers/lib/identity-matrix.ts:111`). The single-target path
-      already accepts `--control-*`; the sweep does not. `FID-2026-1007-016`.
-      **Automation level: 2.**
+- [ ] **T175. Sweep control-manifest authorship + control-armed re-run.**
+      Open remainder of archived `FID-2026-1007-016`: the seam is built, but
+      verdicts need the operator-owned `<provider>/<family>` control manifest,
+      a funded control-armed re-run, ToS comfort for scaled dual-model
+      probing, a probe-budget number, the no-control verdict-naming ruling,
+      and a credential-epoch rotation source. Design is in archived
+      `FID-2026-1007-016` Loops 2 and 4.
+      **Blocker:** operator manifest content, funding, ToS, budget, naming,
+      and rotation source — all external to the repository.
+      **Automation level: 1** (no agent action; operator-owned until then).
 
-- [ ] **T167. `FID-2026-1008-001` — KiosAPI picker catalog: full public
-      square.** The picker's KiosAPI group served the stored Free-group key's
-      36-row `/v1/models` view while the vendor publishes 80 on its public
-      pricing feed — every flagship (gpt-5.6-sol, claude-opus-5-5,
-      gemini-3.8-flash, grok-4.7 …) was absent. Swap the catalog source to
-      `https://kiosapi.com/api/pricing` (unauthenticated) so the list matches
-      the site. `FID-2026-1008-001`.      **Automation level: 2.**
+- [ ] **T171. Harvested-candidate auto-wire.** Open remainder of archived
+      `FID-2026-1008-002` phase 2 and `FID-2026-1008-004` item C, option 2.
+      Reuse the discovery wizard prefill when selecting a discovery-only
+      provider; design is in archived `FID-2026-1008-004` Loop 4.
+      **Blocker:** operator ruling on the stricter verdict gate (exclude
+      `open-relay`) and consent shape (inline wizard with Enter per step
+      versus one confirmation). **Automation level: 1.**
 
-- [ ] **T168. `FID-2026-1008-002` phase 1 — every-boot free-provider launch
-      summary.** The launch digest is gated to once per calendar day
-      (`use-chat-bootstrap.ts`), so a same-day relaunch never shows the
-      free-provider summary. Operator decision 2026-10-08: "Show a launch
-      summary every boot." `FID-2026-1008-002`. **Automation level: 2.**
-
-- [ ] **T169. `FID-2026-1008-002` phase 2 — auto-wire selected free providers.**
-      Selecting a free provider in the UI should update the provider and
-      `/model` lists as a first-class custom provider. Operator decision
-      2026-10-08: "full support". Design review before implementation.
-      `FID-2026-1008-002`. **Automation level: 2.**
-
-- [ ] **T171. `FID-2026-1008-004` — free-provider follow-ups.** A: boot-path
-      decision extracted to `runLaunchDigest` and pinned. B: offers ending within
-      72h counted and printed (applied). C: auto-wire of selected free providers is
-      **blocked pending operator ruling** — operator directed a harvested-candidate
-      design draft 2026-10-08 (option 2 of FID section "C"); design presented,
-      implementation gated on the ruling. **Automation level: 2.**
-
-- [ ] **T172. `FID-2026-1008-005` — /model stale-while-revalidate, gauntlet docs,
-      registry-only auto-wire.** (1) `/model` opens from the cache and refreshes
-      in the background. (2) `docs/provider-gauntlets.md` linked from AGENTS.md.
-      (3) Selecting an unkeyed registry provider runs the key flow and wires the
-      picked model on save. **Automation level: 2.**
+- [ ] **T173. KiosAPI window-table rows for five exact feed ids.**
+      Open remainder of archived `FID-2026-1008-001`: `gpt-oss-20b`,
+      `claude-haiku-4-5-20251001`, `llama-3.2-11b-vision-instruct`,
+      `deepseek-v4-pro-0813`, `codex-auto-review` have no fallback row and
+      retain the conservative 200k default.
+      **Blocker:** vendor-published window values for these exact ids;
+      the previous public-source search did not establish them.
+      **Automation level: 1.**
 
 - [ ] **T62-followups (remaining items routed, not blocking `Task 62`
       closure):** (1) is **completed 2026-09-28** — commandcode catalog
@@ -171,39 +158,27 @@
       operator-directed session. **Automation level: 1** (no agent action;
       the e2e failures are known and operator-owned until then).
 
+### Asset work
+
+- [ ] **T174. Cyberpunk icon set expansion to ~100
+      (operator-requested 2026-10-09).** Expand
+      `art/icons/cyberpunk/` from 15 to ~100 hand-authored
+      SVGs: 5 Perfection Loop phase marks, 20 tool glyphs,
+      12 status indicators, 15 command marks, 15 dev-object
+      marks, 15 cyberpunk motif marks, and 5 variation /
+      secondary options — same design system (canonical
+      palette, 64×64, glow, circuit motifs). Manifest
+      rewritten to index all ~102. **Automation level: 3.**
+
 ### Build orders (formalized as FIDs 2026-10-07)
 
-- [ ] **T164-B. `FID-2026-1007-011` — tree-drain manifest coverage under a
-      moving directory.** The manifest names exact paths inside
-      `dev/build-orders/`, whose contents move to `archive/`; any move aborts
-      the drain tool with `UNCOVERED PATHS`. Needs a directory-scoped entry
-      plus a regression test — the manifest is a fail-closed contract with no
-      coverage today. `FID-2026-1007-011`. **Automation level: 2.**
-
-- [ ] **T164-D. `FID-2026-1007-013` — eval-runner model override + usage
-      telemetry (stage 1-2 of 7; wire stage open).** `--model` override, inline
-      clone, run-usage fold + tree-summed `TraceMetadata.usage`/`model`, CLI
-      flag — implemented and gate-verified (receipt 5/5, commit `8ead0378`).
-      Open: the print-mode `usage` wire member + host-facing `onUsage`
-      callback, gated on a NAMED consumer outside the eval harness.
-      `FID-2026-1007-013`. **Automation level: 2.**
-
-- [ ] **T164-E. `FID-2026-1007-014` — git-workflow FID 4 remainder (G2 hash
-      audit + G5 bundle verification).** `BO-2026-08-23`: Phase 0 and FIDs
-      1–3 shipped; the pre-release preflight asserts worktree-clean and
-      push-range but never the G2 closed-FID commit-hash audit or the G5
-      latest-bundle-verified check. `FID-2026-1007-014`. **Automation level: 2.**
-
-- [ ] **T164-F. `FID-2026-1007-015` — Atria handoff friction P1 and P5 —
-      RULED AND IMPLEMENTED 2026-10-08.** P1: operator ruling verbatim "verify
-      once seems optimal" — the Law 3 other-dirty branch is advisory in the
-      `green` phase (batch-verify-once; target-dirty still blocks everywhere;
-      turn-end Law 15 unchanged; non-green phases keep the hard block). P5:
-      approved — the `green → complete` edge exists, guarded by
-      enforcement-layer verification credit read through the cached factory.
-      Receipt 5/5, commit `4eaf57cc`. Remaining: closure ceremony (needs the
-      ruling recorded in the archived record + CHANGELOG entry).
-      `FID-2026-1007-015`. **Automation level: 2.**
+- [ ] **T164-D. Eval-runner wire-stage usage telemetry.** Open remainder
+      of archived `FID-2026-1007-013`: the print-mode `usage` wire member,
+      emission from the existing `step.ts` hook, and host-facing `onUsage`
+      callback.
+      **Blocker:** a NAMED consumer outside the eval harness plus operator
+      decisions on eval billing keys and wire-stage ratification.
+      **Automation level: 1.**
 
 ## Machine-readable scope targets
 
@@ -224,46 +199,12 @@
   `dev/session-summaries/2026-10-03-provider-*.md`,
   `dev/scratchpad/active/provider-catalogs-2026-10-03/**`,
   `dev/scratchpad/active/provider-integration-*`
-- T165: `dev/fids/FID-2026-1007-016-provider-identity-sweep-verdict-controls.md`,
-  `scripts/providers/**`
-- T167: `dev/fids/FID-2026-1008-001-kiosapi-full-square-catalog.md`,
-  `common/src/providers/registry-partitioned.ts`,
-  `cli/src/utils/openrouter-models/kiosapi.ts`,
-  `cli/src/utils/__tests__/openrouter-models-gateway*.test.ts`,
-  `common/src/constants/context-window-table-kiosapi.ts`
-- T168: `dev/fids/FID-2026-1008-002-free-provider-launch-and-autowire.md`,
-  `cli/src/chat/use-chat-bootstrap.ts`,
-  `cli/src/utils/__tests__/free-options-digest.test.ts`
-- T169: `dev/fids/FID-2026-1008-002-free-provider-launch-and-autowire.md`,
-  `cli/src/commands/provider-subcommands-handlers.ts`,
-  `common/src/providers/custom-providers.ts`,
-  `cli/src/utils/settings/io.ts`
-- T170: `dev/fids/FID-2026-1008-003-launch-announce-wired-and-offers.md`,
-  `cli/src/utils/free-options.ts`,
-  `cli/src/utils/free-options-render.ts`,
-  `cli/src/utils/free-options-types.ts`,
-  `cli/src/utils/__tests__/free-options.test.ts`
-- T171: `dev/fids/FID-2026-1008-004-free-provider-followups.md`,
-  `cli/src/utils/launch-digest.ts`,
-  `cli/src/utils/__tests__/launch-digest.test.ts`,
-  `cli/src/chat/use-chat-bootstrap.ts`,
-  `cli/src/utils/provider-offers.ts`,
-  `cli/src/utils/free-options.ts`,
-  `cli/src/utils/free-options-types.ts`,
-  `cli/src/utils/free-options-render.ts`,
-  `cli/src/utils/__tests__/free-options.test.ts`
-- T172: `dev/fids/FID-2026-1008-005-model-picker-swr-gauntlet-docs-autowire.md`,
-  `cli/src/utils/model-picker-open.ts`,
-  `cli/src/utils/__tests__/model-picker-open.test.ts`,
-  `cli/src/utils/model-picker-autowire.ts`,
-  `cli/src/utils/__tests__/model-picker-autowire.test.ts`,
-  `cli/src/state/model-picker-store.ts`,
-  `cli/src/commands/defs/model-provider-commands.ts`,
+- T175: (no write surface — operator-owned)
+- T171: `cli/src/utils/provider-wizard-discovery.ts`,
   `cli/src/chat/use-chat-pickers.ts`,
-  `cli/src/commands/router/route-masked-key-setup.ts`,
   `cli/src/chat/__tests__/model-picker-activation.test.ts`,
-  `docs/provider-gauntlets.md`,
-  `AGENTS.md`
+  `cli/src/utils/__tests__/provider-wizard-discovery.test.ts`
+- T173: `common/src/constants/context-window-table-kiosapi.ts`
 - T62-followups: `dev/scratchpad/active/t62*.ts` (the catalog itself is
   gateway-side; the local write surface is the probe scripts — verified
   2026-10-02: no local catalog directory exists)
@@ -271,14 +212,7 @@
   `dev/session-summaries/2026-10-06-geaix-excelnt-probe.md`,
   `dev/fids/**` (the integration FID)
 - T122: (no write surface — operator-owned)
-- T164-B: `dev/fids/FID-2026-1007-011-tree-drain-manifest-move-safety.md`,
-  `scripts/tree-drain-manifest/**`,
-  `scripts/tree-drain.ts`,
-  `scripts/__tests__/*drain*`
-- T164-D: `dev/fids/FID-2026-1007-013-eval-runner-model-override-and-usage-telemetry.md`,
-  `dev/build-orders/BO-2026-09-08-eval-runner-model-override-and-usage-telemetry.md`
-- T164-E: `dev/fids/FID-2026-1007-014-release-preflight-g2-g5-audit.md`,
-  `dev/build-orders/BO-2026-08-23-git-workflow-enforcement.md`,
-  `scripts/public-release/pre-audit*.ts`
-- T164-F: `dev/fids/FID-2026-1007-015-atria-harness-friction-p1-p5.md`,
-  `dev/build-orders/BO-2026-09-16-atria-friction.md`
+- T164-D: `common/src/types/print-mode.ts`,
+  `packages/agent-runtime/src/run-agent-step/step.ts`,
+  `evals/v2/src/runner.ts`, `sdk/src/run/types.ts`
+- T174: `art/icons/cyberpunk/**`
