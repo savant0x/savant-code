@@ -6,6 +6,7 @@ import {
   checkConfigDirIsolation,
   checkConfigDirUnpolluted,
 } from './pre-audit-config'
+import { checkG2CommitHashes, checkG5BundleState } from './pre-audit-g2-g5'
 import {
   checkReleaseLock,
   checkStaleTag,
@@ -30,6 +31,8 @@ export function runPreAudit(
     checkPushRange(root),
     checkConfigDirUnpolluted(),
     checkConfigDirIsolation(root),
+    checkG2CommitHashes(root),
+    checkG5BundleState(root),
   ]) {
     findings.push(...result.findings)
     fixes.push(...result.fixes)

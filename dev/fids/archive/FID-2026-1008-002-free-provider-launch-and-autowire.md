@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-1008-002-free-provider-launch-and-autowire.md`
 **ID:** FID-2026-1008-002
 **Severity:** medium
-**Status:** fixed
+**Status:** closed
 **Created:** 2026-10-08
 **Automation level:** 2 (phase 1); 2 (phase 2, after design review)
 **YAGNI-Compliance:** Verified
@@ -141,8 +141,8 @@ to require a verified terms page per provider before wiring.
 
 ### Verification Receipt
 
-- fingerprint: sha256:4449c7ed4959d347ea0b3c7de56935f32f2a7c2c0a584b246c7f7d9c80146136
-- verified: 2026-10-08T21:49:32.102Z
+- fingerprint: sha256:e99e3fac52b0eb38c054d27cf68ecde19a3036e4faca072bb76d2e41d694ffa4
+- verified: 2026-10-09T00:20:40.263Z
 - test cli/src/utils/__tests__/free-options-digest.test.ts: exit 0
 - typecheck cli: exit 0
 - quality: exit 0
@@ -193,19 +193,32 @@ to require a verified terms page per provider before wiring.
 
 ## Resolution
 
-- **Closed Date:** not closed. Phase 2 is still open.
-- **Status:** fixed for phase 1 (every-boot launch summary, T168). Phase 2
-  (auto-wire, T169) is blocked on operator design approval.
-- **Fix Description:** phase 1 removes the same-day gate in
-  `use-chat-bootstrap.ts` and removes the orphaned shown-date store (preferences,
-  settings type, validation, tests).
-- **Tests Added:** render pins retained; store pins removed with the store.
-- **Verification Evidence:** `fid:verify` exits 0 (digest test, `typecheck cli`,
-  `quality`), receipt written. Also ran: 49/49 pass across digest, settings, and
-  chat tests; eslint and prettier clean; `validate:repository` and `lint:md` pass.
-- **Not verified:** the boot effect has no test. Confirm by relaunching twice in
-  one day.
-- **Archived:** pending commit authorization and phase 2.
+- **Closed Date:** 2026-10-08
+- **Fix Description:** phase 1 (every-boot launch summary) — the same-day
+  early return is removed from the boot effect so a non-empty digest
+  renders on every boot (quiet boots still post nothing, the empty-lines
+  guard is unchanged), and the orphaned shown-date store it left behind
+  (`loadFreeOptionsDigestShownOn` / `markFreeOptionsDigestShownOn`, the
+  preferences accessors, the settings type field, the validation branch and
+  the store pins) is removed as dead state under Law 4. This record's own
+  "the boot effect has no test" gap is closed by FID-2026-1008-004 (A): the
+  decision now lives in the pure, injected, fail-silent `runLaunchDigest`
+  and is pinned by `launch-digest.test.ts`, with `use-chat-bootstrap.ts`
+  as its caller.
+- **Open remainder (registered, not dropped):** phase 2's registry-only
+  auto-wire branch is implemented under FID-2026-1008-005 item 3; the
+  harvested-candidate branch is blocked pending the operator ruling and is
+  registered on `SCOPE.md` as T171 (its design is drafted in
+  FID-2026-1008-004 Loop 4).
+- **Tests Added:** Yes — the render pins are retained in
+  `free-options-digest.test.ts` (the store pins left with the store); the
+  boot decision is pinned in `launch-digest.test.ts`.
+- **Verification Evidence:** implementation commits `d6d544b4` +
+  `742d919f`; gates 3/3 exit 0 — receipt `sha256:4449c7ed…`, re-verified
+  live 2026-10-08T23:46:53Z and re-stamped at the archived path.
+- **Archived:** 2026-10-08 — moved to `dev/fids/archive/` on the operator's
+  closure authorization; register items T168 and T169 complete and evicted
+  from `SCOPE.md`; the phase-2 remainder lives on as T171.
 
 ### Loop 3 — full-perfection pass, RED re-confirmation (2026-10-08, operator-triggered)
 

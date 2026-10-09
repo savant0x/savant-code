@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-1008-005-model-picker-swr-gauntlet-docs-autowire.md`
 **ID:** FID-2026-1008-005
 **Severity:** medium
-**Status:** fixed
+**Status:** closed
 **Created:** 2026-10-08
 **Automation level:** 2
 **YAGNI-Compliance:** Verified
@@ -25,7 +25,8 @@ the fid then present it". Three recommendations accepted:
 3. **Registry-only auto-wire.** Selecting a model whose provider is in the
    registry but unkeyed ("Not wired") runs the existing `/provider <id>` key
    flow inline and makes that model active when the key is saved. No
-   harvested-candidate wiring (that remains deferred).
+   harvested-candidate wiring (that remains registered on T171 as blocked
+   pending the operator ruling).
 
 ## Root cause / RED
 
@@ -82,8 +83,8 @@ the fid then present it". Three recommendations accepted:
 
 ### Verification Receipt
 
-- fingerprint: sha256:1f1239f902a539e5d8eefb658d1eb395f916adc66feca363963b0e27d9d02ff4
-- verified: 2026-10-08T21:50:32.187Z
+- fingerprint: sha256:959a236beb9bfb5141cd634ad388cb4a4ad34089266be35e3af2abe6e3bac1ad
+- verified: 2026-10-09T00:22:15.224Z
 - test cli/src/utils/__tests__/model-picker-open.test.ts: exit 0
 - test cli/src/utils/__tests__/model-picker-autowire.test.ts: exit 0
 - test cli/src/chat/__tests__/model-picker-activation.test.ts: exit 0
@@ -152,22 +153,30 @@ Loop 2 GREEN / Loop 3 AUDIT (run from repo root unless noted):
 
 ## Resolution
 
-**fixed** (2026-10-08) — all three items implemented and gate-verified:
-
-1. `/model` opens from the gateway cache in **0 ms** (was 10,025 ms on a
-   stale-TTL invocation) and refreshes in the background; picker rows update
-   only while the picker stays open. 5 new tests.
-2. `docs/provider-gauntlets.md` published and linked from the AGENTS.md docs
-   map.
-3. Registry-only auto-wire: picking a model for an unkeyed registry provider
-   runs the `/provider <id>` key flow; saving that key applies the staged
-   model (matching provider only, applied once). 5 new tests; existing
-   fail-closed activation pins still pass.
-
-Receipt: `bun run fid:verify … --write` PASS (tests ×3, typecheck cli,
-quality). `validate:repository` PASS; `lint:md` PASS; `scope-register-check`
-PASS (T172). `use-chat-pickers.ts` refactored (shared `syncInputValue`
-adapter) to stay under the 300-line quality ceiling — 298 lines.
-
-Note: FID-2026-1008-004 item C (auto-wire) is resolved by this FID's item 3
-registry-only branch; harvested-candidate wiring remains deferred.
+- **Closed Date:** 2026-10-08
+- **Fix Description:** all three items. (1) `/model` opens from the gateway
+  cache in 0 ms (was ~10,025 ms on a stale-TTL invocation) via
+  `openModelPicker` and refreshes in the background, updating only a picker
+  that stays open through the new `setModels` action (the cold-empty path is
+  unchanged). (2) `docs/provider-gauntlets.md` is published and linked from
+  the AGENTS.md docs map. (3) Registry-only auto-wire — picking a model for
+  an unkeyed registry provider runs the existing `/provider <id>` key flow,
+  and saving the key applies the staged model (matching provider only,
+  applied once), with every existing fail-closed activation pin still
+  passing.
+- **Tests Added:** Yes — 5 cache-first-open pins in
+  `model-picker-open.test.ts`, 5 auto-wire pins in
+  `model-picker-autowire.test.ts`, plus the existing activation,
+  provider-setup and picker pins.
+- **Verification Evidence:** implementation commits `9a07792e` +
+  `32b222ff`; gates 7/7 exit 0 — receipt `sha256:1f1239f9…`, re-verified
+  live 2026-10-08T23:47:36Z and re-stamped at the archived path. Loop 3
+  records 41 pass / 0 fail across the five suites; `validate:repository`,
+  `lint:md` and `scope-register-check` PASS (T172).
+- **Open remainder (registered, not dropped):** the harvested-candidate
+  branch of FID-2026-1008-004 item C is not implemented by this record; it
+  is blocked pending the operator ruling and is registered on `SCOPE.md` as
+  T171.
+- **Archived:** 2026-10-08 — moved to `dev/fids/archive/` on the operator's
+  closure authorization; register item T172 complete and evicted from
+  `SCOPE.md`.

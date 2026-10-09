@@ -26,6 +26,87 @@ markdownlint, quality and repository validation pass. Receipt fingerprints
 record the verified pre-closure documents, as prescribed for closed records.
 The working-tree active FID queue is empty. No push or release.
 
+## 2026-10-08 closure — tree-drain manifest coverage (1 FID archived)
+
+Closed on the operator's completion directive after the coverage suite landed
+7/7 with a refreshed receipt. The `dev/build-orders` directory entry is now
+pinned against silent narrowing (seven pins over the real `GROUPS`, both
+directions, plus the manifest header rule); the provisional `-010` entry is
+permanent.
+
+**`FID-2026-1007-011-tree-drain-manifest-move-safety`** (register item T164-B,
+severity medium, automation level 2). Test plus header comment only, working
+tree (no implementation commit); register item evicted from `SCOPE.md` at
+closure. Receipt 2/2 re-stamped live at the archived path
+(`sha256:9ee213ef…`).
+
+## 2026-10-08 closure — release-preflight G2/G5 audit (1 FID archived)
+
+Closed on the operator's completion directive after the two checks landed with
+a 20/20 suite and a refreshed receipt. `runPreAudit` now blocks a cut whose
+release-window closed FIDs lack recorded hashes, or whose bundle marker has
+nothing verifying behind it. Two live design corrections (152 → 18 → 0
+findings) are recorded in the FID's Loop 4, with the pre-gate remainder
+grandfathered in `dev/preaudit-g2-commit-baseline.json`.
+
+**`FID-2026-1007-014-release-preflight-g2-g5-audit`** (register item T164-E,
+severity medium, automation level 2). New module plus two suites, working tree
+(no implementation commit); register item evicted from `SCOPE.md` at closure.
+Receipt 3/3 re-stamped live at the archived path (`sha256:d9724ec0…`).
+
+## 2026-10-08 closure — identity-sweep verdict controls (1 FID archived)
+
+Closed on the operator's completion directive after the control seam landed
+with 43/43 provider suites and a refreshed receipt. Sweep rows with an
+operator-manifested control pair can now earn verdicts (conditional two-probe
+rows, budget degradation, verdict rendering); the `runSweep` extraction keeps
+the CLI under the file cap, and the `glm-5.3-flash` substitution was
+re-captured live to an artifact.
+
+**`FID-2026-1007-016-provider-identity-sweep-verdict-controls`** (register
+item T165, severity low, automation level 2). New controls module, sweep
+extraction, report column and suite extensions, working tree (no
+implementation commit); register item evicted from `SCOPE.md` at closure,
+remainder registered as `T175`. Receipt 4/4 re-stamped live at the archived
+path (`sha256:53cdb7d7…`).
+
+## 2026-10-08 closure — provider and harness housekeeping (6 FIDs archived)
+
+Operator authorization: review completed work, update CHANGELOG and physically
+archive the records; accepted the presented plan with "a, accept all
+suggestions". Implementation commits already exist. Closure documents remain
+working-tree changes for the operator's path-scoped staging and commit.
+
+- [`FID-2026-1007-013-eval-runner-model-override-and-usage-telemetry.md`](FID-2026-1007-013-eval-runner-model-override-and-usage-telemetry.md)
+  (low) — model override, inline definition clone, tree-summed run usage and
+  trace metadata; commit `8ead0378`, 5 declared gates. The wire-stage remainder
+  stays registered as `T164-D`, blocked on the named consumer and operator
+  decisions.
+- [`FID-2026-1007-015-atria-harness-friction-p1-p5.md`](FID-2026-1007-015-atria-harness-friction-p1-p5.md)
+  (low) — green-phase batch verification advisory and credit-guarded
+  `green → complete`; commit `4eaf57cc`, 5 declared gates; `T164-F` complete.
+- [`FID-2026-1008-001-kiosapi-full-square-catalog.md`](FID-2026-1008-001-kiosapi-full-square-catalog.md)
+  (medium) — public unauthenticated catalog; commit `4e1ab59b`, 4 declared
+  gates; `T167` complete. Five deliberately non-context ids are documented in
+  the table header; five exact text-id windows stay blocked on vendor data as
+  `T173`.
+- [`FID-2026-1008-002-free-provider-launch-and-autowire.md`](FID-2026-1008-002-free-provider-launch-and-autowire.md)
+  (medium) — every-boot digest and removal of the dead shown-date store;
+  commits `d6d544b4` + `742d919f`, 3 declared gates; `T168`/`T169` complete.
+  Registry-only wiring shipped under `-005`; harvested-candidate decisions
+  stay registered as `T171`.
+- [`FID-2026-1008-004-free-provider-followups.md`](FID-2026-1008-004-free-provider-followups.md)
+  (medium) — injected boot-path decision and counted 72h offer deadlines;
+  commit `742d919f`, 5 declared gates. Option-2 design stays in this archived
+  record; its implementation is blocked on the `T171` operator ruling.
+- [`FID-2026-1008-005-model-picker-swr-gauntlet-docs-autowire.md`](FID-2026-1008-005-model-picker-swr-gauntlet-docs-autowire.md)
+  (medium) — cache-first picker with background refresh, gauntlet runbook and
+  registry-only key-flow auto-wire; commits `9a07792e` + `32b222ff`, 7 declared
+  gates; `T172` complete.
+
+All six receipts are refreshed at their archived paths. Four unfinished
+records remain active: `FID-2026-1007-011`, `-012`, `-014`, `-016`.
+
 ## 2026-10-08 closure — launch announce wired count and offer wording (1 FID archived)
 
 Closed on the operator's session authorization (all implemented work reviewed,

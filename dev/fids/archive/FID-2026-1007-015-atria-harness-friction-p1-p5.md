@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-1007-015-atria-harness-friction-p1-p5.md`
 **ID:** FID-2026-1007-015
 **Severity:** low
-**Status:** fixed
+**Status:** closed
 **Created:** 2026-10-07
 **Automation level:** 2
 **YAGNI-Compliance:** Verified
@@ -147,8 +147,8 @@ bun run quality:report
 
 ### Verification Receipt
 
-- fingerprint: sha256:ac2056d96d5c43a7d877874850018f72184e669995bc11c88f5b94c710449cc0
-- verified: 2026-10-08T19:50:29.550Z
+- fingerprint: sha256:70bab2f3528feadbdb505ce1344fffdf76b075988fb45d01ca93168e186d2020
+- verified: 2026-10-09T00:17:31.580Z
 - test packages/agent-runtime/src/echo/__tests__/pre-write-gates-law3.test.ts: exit 0
 - test packages/agent-runtime/src/echo/__tests__/law3-credit-mechanism.test.ts: exit 0
 - test packages/agent-runtime/src/tools/handlers/tool/__tests__/transition-phase.test.ts: exit 0
@@ -282,27 +282,37 @@ Missed questions answered at implementation time:
 
 ## Resolution
 
-- **Closed Date:** pending operator commit (G2 authorized; commit lands with
-  this session's batch)
+- **Closed Date:** 2026-10-08
 - **Fix Description:** P1 — the Law 3 other-dirty branch is advisory in the
-  `green` phase (batch-verify-once, operator ruling 2026-10-08 "verify once
-  seems optimal") and a hard block everywhere else. P5 — `green → complete`
-  edge added, refused without enforcement-layer verification credit
-  (`hasVerifiedSinceLastDirty` read through the same cached factory instance
-  the EHEL gate uses). See Loop 3 for the full implementation evidence.
+  `green` phase (operator ruling 2026-10-08, verbatim "verify once seems
+  optimal"): an N-file batch costs ONE verification round-trip instead of
+  N+1. Law 3 still holds at the batch boundary three ways — the target-dirty
+  leg hard-blocks in every phase including `green`, turn-end Law 15 refuses
+  to end a turn with unverified files, and outside `green` the branch
+  remains the hard block Ruling 1 restored (an undefined phase fails
+  closed). P5 — the `green → complete` edge is added and guarded: the
+  transition handler reads the enforcement layer's cumulative
+  `hasVerifiedSinceLastDirty` through the SAME cached
+  `getOrCreateEnforcement(agentState)` instance the EHEL gate uses; no
+  credit → the edge is refused with remediation text, and any write after
+  the run revokes the flag.
 - **Tests Added:** Yes — 5 pins in `pre-write-gates-law3.test.ts` (the
   batch-verify-once suite), 5 pins in `transition-phase.test.ts` (the P5
   guard suite), and the credit-mechanism suite relocated verbatim to
   `law3-credit-mechanism.test.ts` (no content change).
-- **Verification Evidence:** 30 pass / 0 fail across both suites; 348 pass /
-  0 fail across `src/echo/` (40 files); `typecheck` exit 0. Receipt stamped
-  below from live gate runs.
+- **Verification Evidence:** implementation commit `4eaf57cc`; gates 5/5
+  exit 0 — receipt `sha256:ac2056d9…`, re-verified live
+  2026-10-08T23:45:56Z and re-stamped at the archived path. Loop 3 records
+  30 pass / 0 fail across the three suites and 348 pass / 0 fail across
+  `src/echo/` (40 files); `typecheck` exit 0.
 - **Source:** `dev/build-orders/BO-2026-09-16-atria-friction.md`
-- **Archived:** pending closure ceremony
+- **Archived:** 2026-10-08 — moved to `dev/fids/archive/` on the operator's
+  closure authorization; register item T164-F complete and evicted from
+  `SCOPE.md`.
 
 ### Code Verification Evidence
 
-Status is `fixed` — both frictions implemented and gate-verified (Loop 3).
+Status is `closed` (was `fixed`) — both frictions implemented and gate-verified (Loop 3).
 The original RED evidence is retained below for the record; both quoted sites
 have changed as described in Loop 3, and the suites pin the new behavior in
 both directions.

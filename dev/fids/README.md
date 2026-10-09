@@ -3,34 +3,39 @@
 This directory contains **active** FIDs only: findings that still require
 operator decision, implementation, runtime review, or closure evidence.
 
-## 2026-10-09 closures
-
-- [Sidebar command console](archive/FID-2026-1008-006-sidebar-command-console-visual-redesign.md):
-  closed and archived; implementation `2b6075e7`; receipt 11/11.
-- [Model-compliance telemetry](archive/FID-2026-1007-012-model-compliance-telemetry.md):
-  all seven phases complete; closed and archived; implementation `512659cc`;
-  receipt 19/19. Root regression: 8,572 pass, zero failures.
-
-The queue below describes the committed baseline. Earlier unrelated working-tree
-archive changes are preserved for their own commits.
-
 ## Current active FIDs
 
-**Five.** Opened 2026-10-07 by the build-order register cleanup (`FID-2026-1007-010`,
-closed and archived with its G2 commits) and the provider identity sweep:
+**Zero — both remaining FIDs completed, closed and archived 2026-10-09.**
 
-- **`FID-2026-1007-011`** (T164-B, drain-manifest move safety, `converged`) — the
-  directory coverage landed provisionally; the regression test is not written.
-- **`FID-2026-1007-013`** (T164-D, eval-runner model override + usage, `created`) — 0 of 7.
-- **`FID-2026-1007-014`** (T164-E, release-preflight G2/G5 audit, `created`).
-- **`FID-2026-1007-015`** (T164-F, Atria handoff friction P1/P5, `created`).
-- **`FID-2026-1007-016`** (T165, identity-sweep verdict controls, `created`).
+- **[`FID-2026-1007-012`](archive/FID-2026-1007-012-model-compliance-telemetry.md)**
+  (T164-C, model-compliance telemetry) — all seven phases; receipt 19/19.
+- **[`FID-2026-1008-006`](archive/FID-2026-1008-006-sidebar-command-console-visual-redesign.md)**
+  (T174, sidebar command console) — receipt 11/11; all implementation
+  and native verification complete, including the operator's refinements.
+
+Completion pass 2026-10-09: root regression **8,572 pass, 23 skip, zero failures**;
+typecheck, ESLint, markdownlint, quality and repository validation pass. Fresh
+declared-gate receipts are recorded in the archived FIDs. The operator authorized
+scoped local commits after archiving and updating the changelog. Both completed
+scope items and their write grants have been removed from `SCOPE.md`.
+
+**2026-10-08 — six completed FIDs closed and archived:**
+`FID-2026-1007-013`, `-015`, `FID-2026-1008-001`, `-002`, `-004`, `-005`.
+Implementation commits and fresh verification receipts are recorded in
+[`archive/README.md`](archive/README.md) and each archived FID. The remaining
+eval wire stage, harvested-candidate wiring decisions, and five vendor window
+values stay registered in `SCOPE.md` as `T164-D`, `T171` and `T173`. Later the
+same day, `-011` (T164-B) closed and archived on its 7/7 coverage suite with a
+refreshed receipt; that historical queue then contained three. Later still,
+`-014` (T164-E) closed and archived on its 20/20 preflight suite with a
+refreshed receipt; that historical queue then contained two. Finally, `-016`
+(T165) closed and archived on its 43/43 provider suites with a refreshed
+receipt; that historical queue then contained one, before the sidebar FID opened.
 
 **2026-10-08 — `FID-2026-1007-017` (T166, model picker free-key lane +
 provider order) closed and archived** on the operator's directive after their
 live confirmation ("i tested it live, everything confirmed"). It was opened
-after the list above was written and never entered it, so the active queue is
-the five above. Receipt 3/3 at the archived path; see
+after the historical queue was written and never entered it. Receipt 3/3 at the archived path; see
 [`archive/README.md`](archive/README.md).
 
 The prior queue (`FID-2026-1007-007`, `-008`, `-009`) closed and archived

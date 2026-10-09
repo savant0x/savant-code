@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none" role="img" aria-label="Adversary — ECHO agent role: meta-verification override, glitch blades">
+  <!-- SAVANT // CYBERDECK — hand-authored vector geometry, no external assets -->
+  <defs>
+    <filter id="glow" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="2.5" result="blur" />
+      <feMerge>
+        <feMergeNode in="blur" />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
+    </filter>
+  </defs>
+  <!-- chromatic glitch layer: offset copies of both blades -->
+  <g stroke="#ff2bd6" stroke-width="2" opacity="0.45" stroke-linejoin="round">
+    <polygon points="14,46 18,50 46,18 42,14" />
+    <polygon points="50,50 54,54 26,22 22,18" />
+  </g>
+  <!-- crossed blades -->
+  <g stroke="#18faf9" stroke-width="3" stroke-linejoin="round">
+    <polygon points="16,48 20,52 48,20 44,16" />
+    <polygon points="48,48 52,52 24,20 20,16" />
+  </g>
+  <!-- crossing core -->
+  <circle cx="32" cy="32" r="3" fill="#ff2bd6" filter="url(#glow)" />
+</svg>

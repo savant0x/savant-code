@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none" role="img" aria-label="Forge — ECHO agent role: code implementation">
+  <!-- SAVANT // CYBERDECK — hand-authored vector geometry, no external assets -->
+  <defs>
+    <filter id="glow" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="2.5" result="blur" />
+      <feMerge>
+        <feMergeNode in="blur" />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
+    </filter>
+  </defs>
+  <!-- anvil: horn left, top block, waist, base -->
+  <path d="M10 28 L26 28 L26 22 L54 22 L54 30 L40 30 L40 34 L48 34 L48 42 L16 42 L16 34 L24 34 L24 28 Z" stroke="#18faf9" stroke-width="3" stroke-linejoin="round" />
+  <!-- hammer head -->
+  <polygon points="46,2 54,10 46,18 38,10" stroke="#18faf9" stroke-width="3" stroke-linejoin="round" />
+  <!-- hammer handle striking the anvil face -->
+  <path d="M46 18 L42 24" stroke="#18faf9" stroke-width="3" stroke-linecap="round" />
+  <!-- sparks: zigzag circuit traces with terminal nodes -->
+  <g stroke="#ff2bd6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M18 21 L14 15 L18 9" />
+    <path d="M26 21 L26 13" />
+    <path d="M32 21 L36 15 L32 9" />
+  </g>
+  <g fill="#ff2bd6" filter="url(#glow)">
+    <circle cx="18" cy="7" r="1.5" />
+    <circle cx="26" cy="11" r="1.5" />
+    <circle cx="32" cy="7" r="1.5" />
+  </g>
+</svg>

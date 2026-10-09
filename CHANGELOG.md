@@ -592,6 +592,90 @@
   hold baseline the count can never re-cross. Seven declared gates pass; 9 new
   tests; independent Verifier PASS.
 
+- **The identity sweep can emit verdicts from operator-owned control pairs
+  (FID-2026-1007-016, low; closed and archived 2026-10-08; register item
+  `T165` complete).** Routes with a `<provider>/<family>` manifest entry run
+  controlled (credentials pre-resolved, two-probe verdict rows, probe-budget
+  degradation); anything missing stays `inconclusive`. Verdicts render in the
+  console rows and the report table, and the `glm-5.3-flash` substitution was
+  re-captured live to an artifact. Four declared gates pass with a refreshed
+  archive receipt. Manifest authorship and the control-armed re-run stay
+  registered as blocked under `T175`.
+  Commit pending operator G2 commit (working-tree verified 2026-10-08).
+
+- **The release preflight now audits G2 commit hashes and G5 bundle state
+  (FID-2026-1007-014, medium; closed and archived 2026-10-08; register item
+  `T164-E` complete).** Two blocking checks join `runPreAudit`: closed FIDs
+  whose closure postdates the last release tag must carry the hash in a
+  machine-readable surface (field or status-line token), and the
+  `last-backup` marker must resolve to verifying bundle files. Live design
+  corrections cut 152 naive findings to 0 without weakening the gate;
+  pre-gate history is grandfathered in a baseline with staleness
+  enforcement. Three declared gates pass with a refreshed archive receipt.
+  Commit pending operator G2 commit (working-tree verified 2026-10-08).
+
+- **The tree-drain manifest's directory coverage is pinned by a regression
+  suite (FID-2026-1007-011, medium; closed and archived 2026-10-08; register
+  item `T164-B` complete).** The `dev/build-orders` directory entry can no
+  longer silently narrow back to exact paths: seven pins over the real
+  `GROUPS` cover forward resolution, the synthetic moved path, the overlap
+  class, exact-entry single ownership, and reverse liveness, plus a manifest
+  header rule. Two declared gates pass with a refreshed archive receipt.
+  Commit pending operator G2 commit (working-tree verified 2026-10-08).
+
+- **The model picker opens immediately from a warm cache and wires unkeyed
+  registry providers through the existing key flow (FID-2026-1008-005,
+  medium; closed and archived 2026-10-08; implementation commits `9a07792e`
+  + `32b222ff`; register item `T172` complete).** `openModelPicker` opens
+  cached rows before the gateway refresh, then updates a picker that remains
+  open; the measured stale-cache wait falls from 10,025 ms to 0 ms. Saving a
+  matching provider key activates the staged model once. The provider quality
+  and identity gauntlets are documented in `docs/provider-gauntlets.md` and
+  linked from AGENTS.md. Seven declared gates pass with a refreshed archive
+  receipt. Harvested-candidate wiring remains blocked on the operator ruling
+  under `T171`.
+
+- **The every-boot digest has a tested decision seam and counted offer
+  deadlines (FID-2026-1008-004, medium; closed and archived 2026-10-08;
+  implementation commit `742d919f`).** The injected `runLaunchDigest` posts
+  only non-empty summaries and handles reader failures without throwing.
+  Offer deadlines survive parsing into a count for the next 72 hours;
+  "end within 72h" appears only when the count is positive. Five declared
+  gates pass with a refreshed archive receipt. The harvested-candidate
+  design remains in the archived record, with verdict and consent decisions
+  registered as the blocked `T171` remainder.
+
+- **Free-provider launch summaries appear on every boot
+  (FID-2026-1008-002, medium; closed and archived 2026-10-08;
+  implementation commits `d6d544b4` + `742d919f`; register items
+  `T168`/`T169` complete).** Removed the same-day early return and the
+  orphaned shown-date preferences, settings field, validation branch and
+  store pins. Quiet boots remain silent. Three declared gates pass with a
+  refreshed archive receipt; boot-decision coverage is supplied by `-004`,
+  registry-only wiring by `-005`, and the harvested-candidate remainder
+  stays registered as blocked under `T171`.
+
+- **Eval lanes accept a model override and report actual run-total usage
+  (FID-2026-1007-013, low; closed and archived 2026-10-08;
+  implementation commit `8ead0378`).** `--model` reaches an inline agent
+  definition clone without mutating bundled agents; unresolved ids fail
+  explicitly. The existing runtime usage hook accumulates token counts,
+  and trace finalization sums the recursive subagent tree while recording
+  the effective model. Five declared gates pass with a refreshed archive
+  receipt. The per-sample callback and print-mode wire member remain blocked
+  under `T164-D` on a named consumer and the operator's billing and wire
+  decisions.
+
+- **GREEN batches verify once and can complete with enforcement credit
+  (FID-2026-1007-015, low; closed and archived 2026-10-08;
+  implementation commit `4eaf57cc`; register item `T164-F` complete).**
+  Operator ruling "verify once seems optimal": the other-dirty Law 3 leg
+  is advisory only in `green`; target-dirty, non-green and turn-end checks
+  remain enforced. The approved `green → complete` edge reads the cached
+  enforcement instance's verification credit and refuses completion after
+  an unverified write. Five declared gates pass with a refreshed archive
+  receipt; pins cover the allowed and refused transitions.
+
 - **The model picker no longer renders a free-key lane, and provider groups are
   alphabetical (FID-2026-1007-017, low; closed and archived 2026-10-08; local
   commits `df2d88af` + `4ccabe17`; register item T166).** Two defects in the
@@ -609,7 +693,9 @@
   `⭐ FREE KEY` → `⭐ FREE MODELS` and live-confirmed the picker 2026-10-08.
 
 - **The model picker's KiosAPI group serves the full published Model Square,
-  not the Free key's subset (FID-2026-1008-001, low; register item T167).**
+  not the Free key's subset (FID-2026-1008-001, medium; closed and archived
+  2026-10-08; implementation commit `4e1ab59b`; register item `T167`
+  complete).**
   The catalog source was the key-scoped `GET /v1/models`, which per KiosAPI's
   docs lists "models available for your API key" — the stored key is a `Free`-
   group key, so the picker showed 36 free-tier rows while the vendor's own
@@ -619,7 +705,11 @@
   The source is now the vendor's public, unauthenticated
   `https://kiosapi.com/api/pricing` feed (the same JSON the Models & Pricing
   page renders), so the list matches the site and no key is resolved for
-  listing; window lookups keep the checked-in fallback table unchanged.
+  listing; window lookups keep the checked-in fallback values unchanged.
+  Four declared gates pass with a refreshed archive receipt. The table header
+  documents the four `grok-imagine-image*` ids and `openrouter/free` as
+  deliberately non-applicable; five exact text-id windows remain blocked on
+  vendor-published data under `T173`.
 
 - **The every-boot launch announce reports the configured provider set, not
   the custats-overlap subset, and stops claiming offers are "ending soon"

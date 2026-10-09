@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-1007-011-tree-drain-manifest-move-safety.md`
 **ID:** FID-2026-1007-011
 **Severity:** medium
-**Status:** converged
+**Status:** closed
 **Created:** 2026-10-07
 **Automation level:** 2
 **YAGNI-Compliance:** Verified
@@ -18,9 +18,9 @@ changed path belongs to exactly one commit group
 three **exact file paths**. Any move within that directory — which the build-order
 cleanup requires, and which the directory's lifecycle mandates — turns the old
 path into an unmatched change and aborts the tool with `UNCOVERED PATHS`. The
-manifest has no regression test: `scripts/` contains 35 `*.test.ts` files and
-none covers the drain manifest, so the contract's coverage invariant is
-unenforced.
+  manifest has no regression test: `scripts/` contains 36 `*.test.ts` files and
+  none covers the drain manifest, so the contract's coverage invariant is
+  unenforced.
 
 ## Environment
 
@@ -73,7 +73,7 @@ error: UNCOVERED PATHS (17):
 Zero test coverage, measured:
 
 ```text
-$ Get-ChildItem "scripts" -Filter "*.test.ts" | Measure-Object   # 35 files
+$ Get-ChildItem "scripts" -Filter "*.test.ts" | Measure-Object   # 36 files (re-measured 2026-10-08; was 35 at authoring)
 $ Get-ChildItem "scripts/__tests__" -Filter "*drain*"            # (none)
 ```
 
@@ -118,12 +118,15 @@ coverage cannot silently narrow back to exact paths.
    FID-2026-1007-010; provisional — this FID exists to make it permanent and
    pinned).
 2. Add `scripts/__tests__/tree-drain-manifest-coverage.test.ts` asserting, over
-   the real `GROUPS`: every path matching `dev/build-orders/**` resolves to
+   the real `GROUPS` through the production loader path (not a re-import):
+   every path matching `dev/build-orders/**` resolves to
    exactly one group; no group both contains `dev/build-orders` and a path under
    it (the overlap class that fired during -010); and a synthetic moved path
    (`dev/build-orders/archive/<any>.md`) is covered.
-3. Assert the invariant generically: for every changed path the test feeds
-   through `groupPaths`-equivalent matching, exactly one group claims it.
+3. Assert the invariant generically and in both directions: for every changed
+   path the test feeds through `groupPaths`-equivalent matching, exactly one
+   group claims it; and every directory-scoped entry resolves to at least one
+   real path (a silently zeroed entry fails the reverse pin).
 4. Document in `tree-drain-manifest.ts`'s header which entries are
    directory-scoped by necessity and must not be narrowed to exact paths.
 5. Run the full gate set.
@@ -140,23 +143,27 @@ bun run quality:report
 ```
 
 > Contract rule (FID-2026-0918-006): the test artifact named above MUST also
-> appear as a declared `- gate: test <path>` below. It does not yet exist —
-> gates are declared when the implementation lands, per the `converged`
-> contract.
+> appear as a declared `- gate: test <path>` below. Declared at implementation
+> (see Verification Gates).
 
 ## Verification Gates
 
-Gates are declared at implementation time. `scripts` is **not** in
-`VALIDATION_WORKSPACE_POLICY` (`scripts/validation-gates.ts:22-59`), so no
-`typecheck scripts` gate is declarable; the suite plus `quality` are the
-available shapes.
+- gate: test scripts/__tests__/tree-drain-manifest-coverage.test.ts
+- gate: quality
+
+### Verification Receipt
+
+- fingerprint: sha256:9ee213ef5949c75e35c2b36f9b7268207c707b7afd9881031eecefe9453114f4
+- verified: 2026-10-09T01:03:12.404Z
+- test scripts/__tests__/tree-drain-manifest-coverage.test.ts: exit 0
+- quality: exit 0
 
 ## Perfection Loop
 
 ### Loop 1 — RED
 
 - **RED:** (1) Manifest binds exact paths under a moving directory → any move
-  aborts the drain. (2) Zero test coverage for the manifest across 35 test files.
+  aborts the drain. (2) Zero test coverage for the manifest across 36 test files (re-measured 2026-10-08).
 - **GREEN:** Directory coverage + a regression test pinning the invariant.
 - **AUDIT:** Overlap class pinned (the failure mode that fired in -010) so the
   directory entry cannot be reintroduced alongside a specific path.
@@ -192,24 +199,64 @@ available shapes.
 - Status unchanged: `converged`. Close-eligibility still blocked on the
   coverage test (implementation not authorized by the loop trigger).
 
+### Loop 3 — document convergence (2026-10-08)
+
+- **RED re-verified:** dir entry live (`records.ts:40`); no exact-path
+  `dev/build-orders/*` matchers (`foundations.ts` prose-only);
+  fail-closed rule live (`tree-drain.ts:12,60,71`); zero drain tests;
+  `scripts/*.test.ts` now 36 (was 35); `GROUPS` exported (`records.ts:9`).
+- **GREEN:** Loop-2 both-direction pins folded into Steps 2–3; stale
+  35-counts corrected in Evidence, Code Verification Evidence, Loop 1.
+- **AUDIT (double):** (1) all citations re-measured above; `typecheck:scripts`
+  confirmed real (`package.json:69`). (2) `fid:verify --check` reports
+  "no gates declared" — dismissed with cross-record proof: untouched `-012`
+  and `-014` return the identical informational output, so it is the tool's
+  uniform pre-implementation response, not a defect. `converged` status kept:
+  tolerated by every repo gate (`validate:repository` PASS) and the only
+  value describing design-converged/implementation-pending.
+- **ADVERSARIAL:** no silently-narrowable step remains; the reverse pin closes
+  the last gaming path (a zeroed directory entry).
+- **CHANGE DELTA:** ~5% (Steps fold + count corrections + this loop).
+- **CONVERGED:** zero open questions; implementation authorized separately.
+
+### Loop 4 — implementation (2026-10-08, operator-authorized completion pass)
+
+- **RED:** coverage test absent; header documents no directory-scoped rule.
+- **GREEN:** `scripts/__tests__/tree-drain-manifest-coverage.test.ts` (7 pins:
+  forward coverage, synthetic moved path, overlap-class scan, exact-entry
+  single-owner samples, reverse liveness with non-vacuous guard, two fixture
+  negative legs proving load-bearing); header note in
+  `tree-drain-manifest.ts`; one self-found import-order warning fixed.
+  Step 1 confirmed already live on disk (`records.ts:40`, foundations clean).
+- **AUDIT:** suite 7/7 · `typecheck:scripts` exit 0 ·
+  `eslint --max-warnings 0` exit 0 · `lint:md` exit 0 ·
+  `quality: PASS (1498 baselined files)` (`typecheck:scripts` run, not
+  declared: `scripts/` outside `VALIDATION_WORKSPACE_POLICY`).
+- **CHANGE DELTA:** ~4%. **Status ruling:** `converged` → `fixed`.
+- **Closure:** `fixed` → `closed` on implementation verification (receipt 2/2
+  PASS); archived with receipt re-stamped at the archived path.
+
 ## Resolution
 
-- **Closed Date:** pending
-- **Fix Description:** pending
-- **Tests Added:** pending — `scripts/__tests__/tree-drain-manifest-coverage.test.ts`
-- **Verification Evidence:** pending
-- **Archived:** pending
+- **Closed Date:** 2026-10-08
+- **Fix Description:** directory coverage made permanent and pinned: regression
+  suite over the real `GROUPS` (both directions) plus the manifest header rule.
+- **Tests Added:** Yes — `scripts/__tests__/tree-drain-manifest-coverage.test.ts` (7 pins).
+- **Verification Evidence:** suite 7/7, `typecheck:scripts` exit 0,
+  `eslint --max-warnings 0` exit 0, `lint:md` exit 0,
+  `quality: PASS (1498 baselined files)`; receipt `sha256:37be7da1…`
+  stamped 2026-10-09T01:00:45Z at implementation (2/2 gates), re-stamped at
+  the archived path. Commit: pending operator G2 commit (working tree).
+- **Archived:** 2026-10-08 — moved to `dev/fids/archive/`; register item T164-B complete.
 
 ### Code Verification Evidence
 
-Status is `converged` — the implementation described in Step 1 landed
-provisionally with FID-2026-1007-010 (the directory-scoped `dev/build-orders`
-entry is in `records.ts`; the overlapping exact path is gone from
-`foundations.ts`), but the regression test in Steps 2–3 does not exist, so this
-FID is **not** closure-eligible. The RED evidence in this document is measured
-output, and `FID-2026-1007-010`'s stamped receipt covers the provisional
-manifest edit. The gap this FID closes — zero test coverage across 35 files in
-`scripts/` — is verified by the enumeration in the Evidence section.
+Status is `closed` — closed on implementation verification (Loop 4) and
+archived. The regression test in Steps 2–3 exists and passes
+(7/7, including the fixture negative legs), the header rule in Step 4 is
+written, and Step 1's provisional entry was confirmed live on disk
+(`records.ts:40`; foundations clean) before archival. The RED evidence remains
+measured output; gate outputs are transcribed in Loop 4.
 
 ## Lessons Learned
 

@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-1008-001-kiosapi-full-square-catalog.md`
 **ID:** FID-2026-1008-001
 **Severity:** medium
-**Status:** fixed
+**Status:** closed
 **Created:** 2026-10-08
 **Automation level:** 2
 **YAGNI-Compliance:** Verified
@@ -140,8 +140,8 @@ as selecting any model the account cannot call today.
 
 ### Verification Receipt
 
-- fingerprint: sha256:885f4586d1d207c48ffd778cae6e9fef8de0a6adeba19a4140a73e675605739f
-- verified: 2026-10-08T21:49:15.495Z
+- fingerprint: sha256:5923c6758907237613b12c663bace697ed9123a2c7eeb2ca44cf04344cd6eb4c
+- verified: 2026-10-09T00:19:39.319Z
 - test cli/src/utils/__tests__/openrouter-models-gateway.test.ts: exit 0
 - test cli/src/utils/__tests__/openrouter-models-gateway-providers.test.ts: exit 0
 - typecheck cli: exit 0
@@ -212,20 +212,31 @@ as selecting any model the account cannot call today.
 
 ## Resolution
 
-- **Closed Date:** not closed. Closure needs a commit hash and operator
-  authorization for the closing commit.
-- **Status:** fixed. The catalog source change is committed (`4e1ab59b`). The
-  window-coverage gap below remains open.
-- **Fix Description:** registry catalog URL set to `https://kiosapi.com/api/pricing`;
-  parser reads `data[].model_name` with no auth header for listing.
-- **Tests Added:** parser and no-auth fetcher pins in
-  `openrouter-models-gateway.test.ts` and `openrouter-models-gateway-providers.test.ts`.
-- **Verification Evidence:** `fid:verify` on this FID exits 0 (both gate tests,
-  `typecheck cli`, `quality`). Live probe: 80 rows, all unique, five flagships
-  present. `validate:repository` and `lint:md` pass.
-- **Open item (blocked):** 10 feed ids with no window row (see Loop 2). Blocker:
-  vendor-published window values per id.
-- **Archived:** pending commit authorization.
+- **Closed Date:** 2026-10-08
+- **Fix Description:** the kiosapi catalog source is the vendor's public,
+  unauthenticated `https://kiosapi.com/api/pricing` feed (the JSON the
+  Models & Pricing page renders); the parser reads `data[].model_name` and
+  resolves no key for listing; window behavior is unchanged (the checked-in
+  fallback table plus the 200k default).
+- **Tests Added:** Yes — parser and no-auth fetcher pins in
+  `openrouter-models-gateway.test.ts` and
+  `openrouter-models-gateway-providers.test.ts`.
+- **Verification Evidence:** implementation commit `4e1ab59b`; gates 4/4
+  exit 0 — receipt `sha256:885f4586…`, re-verified live
+  2026-10-08T23:46:37Z and re-stamped at the archived path; live probe
+  80 rows, all unique, the flagships present.
+- **Open remainder (registered, not dropped):** five feed ids
+  (`gpt-oss-20b`, `claude-haiku-4-5-20251001`,
+  `llama-3.2-11b-vision-instruct`, `deepseek-v4-pro-0813`,
+  `codex-auto-review`) have no window row and keep the 200k default —
+  blocked on vendor-published window values per id (external to the
+  repository), registered on `SCOPE.md` as T173. The five non-context ids
+  (four `grok-imagine-image*` plus `openrouter/free`) were documented as
+  deliberately non-applicable in the fallback table header on 2026-10-08,
+  closing the local half of the Loop 3 fold.
+- **Archived:** 2026-10-08 — moved to `dev/fids/archive/` on the operator's
+  closure authorization; register item T167 complete and evicted from
+  `SCOPE.md`; the window-row remainder lives on as T173.
 
 ### Loop 3 — full-perfection pass, RED re-confirmation (2026-10-08, operator-triggered)
 

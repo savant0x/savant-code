@@ -152,7 +152,7 @@ function matrixRow(row: MatrixRow): string {
   const served = row.servedModels.length > 0 ? row.servedModels.join(', ') : '—'
   return (
     `| \`${cell(row.model)}\` | ${row.status} | ${cell(served)} | ${row.label} | ` +
-    `${row.completed}/${row.probes} | ${row.latencyMs ?? '—'} | ${cell(row.failureClass ?? '—')} |`
+    `${row.completed}/${row.probes} | ${row.latencyMs ?? '—'} | ${cell(row.failureClass ?? '—')} | ${row.verdict} |`
   )
 }
 
@@ -182,8 +182,8 @@ export function renderMatrixReport(
   lines.push('')
   lines.push('## Routes')
   lines.push('')
-  lines.push('| Model | Route | Served label | Label | Probes | ms | Failure |')
-  lines.push('| --- | --- | --- | --- | --- | --- | --- |')
+  lines.push('| Model | Route | Served label | Label | Probes | ms | Failure | Verdict |')
+  lines.push('| --- | --- | --- | --- | --- | --- | --- | --- |')
   for (const row of matrix.rows) lines.push(matrixRow(row))
   const flagged = matrix.rows.filter((row) => row.label === 'mismatch')
   lines.push('')

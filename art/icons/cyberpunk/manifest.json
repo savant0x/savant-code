@@ -1,0 +1,133 @@
+{
+  "set": "savant-cyberdeck",
+  "version": "1.0.0",
+  "created": "2026-10-09",
+  "description": "Custom cyberpunk icon set for the Savant CLI: the 10 canonical ECHO agent roles and 5 protocol marks, hand-authored as vector geometry in the canonical Savant neon palette. No external assets, no icon fonts, no downloaded content.",
+  "viewBox": "0 0 64 64",
+  "palette": {
+    "cyan": "#18faf9",
+    "magenta": "#ff2bd6",
+    "blue": "#4fa8ff"
+  },
+  "paletteSources": [
+    "cli/src/utils/theme-system/palette.ts",
+    "cli/src/commands/graph-export/universe-css.ts"
+  ],
+  "style": {
+    "strokeWidth": 3,
+    "detailWidth": 1.5,
+    "linecap": "round",
+    "linejoin": "round",
+    "ground": "transparent",
+    "glow": "feGaussianBlur merge filter, stdDeviation 2.5",
+    "motifs": [
+      "circuit traces with 90-degree elbows",
+      "terminal node dots",
+      "neon glow",
+      "HUD corner brackets",
+      "glitch offset layer",
+      "scanlines"
+    ]
+  },
+  "icons": [
+    {
+      "file": "orchestrator.svg",
+      "name": "Orchestrator",
+      "category": "echo-agent",
+      "subject": "Protocol enforcement — hexagonal hub with six radiating circuit spokes and terminal nodes"
+    },
+    {
+      "file": "detective.svg",
+      "name": "Detective",
+      "category": "echo-agent",
+      "subject": "Codebase analysis — magnifier with scanline lens and circuit handle"
+    },
+    {
+      "file": "forge.svg",
+      "name": "Forge",
+      "category": "echo-agent",
+      "subject": "Code implementation — anvil, hammer and circuit sparks"
+    },
+    {
+      "file": "verifier.svg",
+      "name": "Verifier",
+      "category": "echo-agent",
+      "subject": "Double-audit validation — shield with circuit check"
+    },
+    {
+      "file": "recorder.svg",
+      "name": "Recorder",
+      "category": "echo-agent",
+      "subject": "FID lifecycle management — document with folded corner and elbow traces"
+    },
+    {
+      "file": "thinker.svg",
+      "name": "Thinker",
+      "category": "echo-agent",
+      "subject": "Sequential logic engine — neural mesh with via diamonds"
+    },
+    {
+      "file": "scout.svg",
+      "name": "Scout",
+      "category": "echo-agent",
+      "subject": "Contextual exploration — radar with sweep beam and contacts"
+    },
+    {
+      "file": "researcher.svg",
+      "name": "Researcher",
+      "category": "echo-agent",
+      "subject": "External verification — flask with neon liquid and rising bubbles"
+    },
+    {
+      "file": "scribe.svg",
+      "name": "Scribe",
+      "category": "echo-agent",
+      "subject": "Documentation synthesis — pen nib with writing traces"
+    },
+    {
+      "file": "adversary.svg",
+      "name": "Adversary",
+      "category": "echo-agent",
+      "subject": "Meta-verification override — crossed blades with chromatic glitch layer"
+    },
+    {
+      "file": "fid.svg",
+      "name": "FID",
+      "category": "protocol-mark",
+      "subject": "Feature Implementation Document — folded-corner document, code lines and phase dots"
+    },
+    {
+      "file": "loop.svg",
+      "name": "Perfection Loop",
+      "category": "protocol-mark",
+      "subject": "The fix/verify cycle — 270-degree arc, arrowhead and four phase nodes"
+    },
+    {
+      "file": "law.svg",
+      "name": "Law",
+      "category": "protocol-mark",
+      "subject": "The ECHO protocol laws — gavel with impact ticks"
+    },
+    {
+      "file": "audit.svg",
+      "name": "Audit",
+      "category": "protocol-mark",
+      "subject": "Double-audit — HUD brackets, circuit check and scanline sweep"
+    },
+    {
+      "file": "scope.svg",
+      "name": "Scope",
+      "category": "protocol-mark",
+      "subject": "Target reticle — dual rings, crosshair ticks and cardinal nodes"
+    }
+  ],
+  "integration": {
+    "status": "source assets — not yet wired into a CLI surface",
+    "candidatePaths": [
+      "HTML export inlining (pattern: cli/src/constants/savant-logo.ts SAVANT_LOGO_PNG_BASE64)",
+      "PNG rasterization for TUI image protocols (cli deps: terminal-image, jimp) — needs an external rasterizer; none present on the authoring box",
+      "desktop/public asset adoption"
+    ],
+    "decision": "operator"
+  }
+}

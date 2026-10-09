@@ -3,7 +3,12 @@
  * FID-2026-1007-008 — the operator-run identity gauntlet.
  *
  * `bun run providers:identity -- --provider hcnsec --model kimi-k3 [--json]`
- * `bun run providers:identity -- --provider hcnsec --all [--deep] [--json]`
+ * `bun run providers:identity -- --provider hcnsec --all [--deep] [--json] [--controls-manifest <path>] [--max-control-probes <n>]`
+ *
+ * `--controls-manifest` points at the operator-owned control manifest
+ * (`lib/identity-controls.ts` documents the format): routes with a
+ * `<provider>/<family>` entry run controlled and can earn a verdict;
+ * anything missing runs uncontrolled and stays `inconclusive`.
  *
  * `--all` sweeps every checked-in catalog route for the provider (one
  * handshake probe each; `--deep` runs all five vectors); `--models a,b,c`
@@ -32,15 +37,14 @@
  * Costs the operator's own quota. Results are advisory: a mismatch forces human
  * review and a separate FID, never an automatic routing change.
  */
-import { IDENTITY_VECTORS } from './lib/identity-core'
-import { buildManifest, MANIFEST_VERSION } from './lib/identity-manifest'
-import { runIdentityMatrix } from './lib/identity-matrix'
-import { writeIdentityReport, writeMatrixReport } from './lib/identity-report'
+import { buildManifest } from './lib/identity-manifest'
+import { writeIdentityReport } from './lib/identity-report'
 import { runIdentityGauntlet } from './lib/identity-runner'
+import { runSweep } from './lib/identity-sweep'
 import { createInvoker } from './lib/identity-transport'
-import { providerBaseUrl, providerRoutes } from './lib/provider-models'
+import { providerBaseUrl } from './lib/provider-models'
 
-import type { IdentityVector, ProbeManifest } from './lib/identity-core'
+import type { ProbeManifest } from './lib/identity-core'
 
 export interface CliArgs {
   provider: string
@@ -60,7 +64,20 @@ export interface CliArgs {
   differentProvider?: string
   differentModel?: string
   differentBaseUrl?: string
+  /** Operator-owned control manifest path; absent means uncontrolled rows. */
+  controlsManifest?: string
+  /** Sweep-level control probe budget; absent means unbounded. */
+  maxControlProbes?: number
   reportDir?: string
+}
+
+function parseCount(raw: string | undefined): number | undefined {
+  if (raw === undefined) return undefined
+  const parsed = Number(raw)
+  if (!Number.isInteger(parsed) || parsed < 0) {
+    throw new Error('usage: --max-control-probes <non-negative integer>')
+  }
+  return parsed
 }
 
 export function parseArgs(argv: readonly string[]): CliArgs {
@@ -111,6 +128,8 @@ export function parseArgs(argv: readonly string[]): CliArgs {
     differentProvider: read('different-provider'),
     differentModel: read('different-model'),
     differentBaseUrl: read('different-base-url'),
+    controlsManifest: read('controls-manifest'),
+    maxControlProbes: parseCount(read('max-control-probes')),
     reportDir: read('report-dir'),
   }
 }
@@ -131,77 +150,6 @@ export function resolveKey(
     )
   }
   return key
-}
-
-/**
- * Sweeps every catalog route for one provider. A per-route failure is reported
- * as that route failing — never as the provider being down.
- */
-async function runSweep(
-  args: CliArgs,
-  env: Record<string, string | undefined>,
-  argv: readonly string[],
-): Promise<number> {
-  const routes =
-    args.models !== undefined
-      ? args.models.map((model) => ({
-          provider: args.provider,
-          model,
-          baseUrl: args.baseUrl ?? '',
-        }))
-      : providerRoutes(args.provider)
-  if (routes.length === 0) {
-    throw new Error(
-      `no catalog routes for ${args.provider}: pass --models a,b,c (nothing was sent)`,
-    )
-  }
-  const baseByModel = new Map(
-    routes.map((route) => [route.model, route.baseUrl]),
-  )
-  const invoke = createInvoker(
-    new Map([[args.provider, resolveKey(args.provider, env)]]),
-  )
-  const vectors: readonly IdentityVector[] = args.deep
-    ? IDENTITY_VECTORS
-    : ['A']
-  const matrix = await runIdentityMatrix({
-    version: MANIFEST_VERSION,
-    provider: args.provider,
-    targets: routes,
-    buildManifest: (model) =>
-      buildManifest({
-        provider: args.provider,
-        model,
-        baseUrl: baseByModel.get(model) ?? '',
-        vectors,
-      }),
-    invoke,
-  })
-  const { reportPath } = writeMatrixReport(
-    matrix,
-    {
-      generatedAt: new Date().toISOString(),
-      command: `bun run providers:identity ${argv.join(' ')}`,
-    },
-    args.reportDir,
-  )
-  console.log(
-    args.json
-      ? JSON.stringify(matrix, null, 2)
-      : [
-          `swept ${matrix.summary.models} routes: ok ${matrix.summary.ok}, unavailable ${matrix.summary.unavailable}, failed ${matrix.summary.failed}`,
-          `served-label: ${matrix.summary.labelMatch} match, ${matrix.summary.labelMismatch} mismatch`,
-          ...matrix.rows.map(
-            (row) =>
-              `  ${row.status === 'ok' ? ' ' : '!'} ${row.model}: ${row.status} — label ${row.label}` +
-              `${row.servedModels.length > 0 ? ` (served ${row.servedModels.join(', ')})` : ''}` +
-              `${row.failureClass !== undefined ? ` [${row.failureClass}]` : ''}`,
-          ),
-          `report: ${reportPath}`,
-          'advisory only — no routing change is made by this tool',
-        ].join('\n'),
-  )
-  return 0
 }
 
 async function main(argv: readonly string[]): Promise<number> {

@@ -19,11 +19,15 @@ const routes = [
 interface Stub {
   served?: string
   status?: number
+  text?: string
 }
 
 const invoke = (byModel: Record<string, Stub | undefined>): ProbeInvoker => {
   return async (target, spec) => {
-    const stub = byModel[target.requestedModel] ?? {}
+    const stub =
+      byModel[`${target.provider}/${target.requestedModel}`] ??
+      byModel[target.requestedModel] ??
+      {}
     if (stub.status !== undefined && stub.status !== 200) {
       return {
         probeId: spec.id,
@@ -34,7 +38,7 @@ const invoke = (byModel: Record<string, Stub | undefined>): ProbeInvoker => {
     }
     return {
       probeId: spec.id,
-      text: 'ALPHA BRAVO CHARLIE',
+      text: stub.text ?? 'ALPHA BRAVO CHARLIE',
       servedModel: stub.served,
       latencyMs: 7,
       usage: { inputTokens: 5, outputTokens: 3 },
@@ -116,5 +120,51 @@ describe('identity gauntlet sweep (FID-2026-1007-008)', () => {
     const matrix = await run({})
     expect(matrix.summary.models).toBe(routes.length)
     expect(matrix.rows).toHaveLength(routes.length)
+  })
+
+  test('a route with no controls stays inconclusive', async () => {
+    const matrix = await run({ 'glm-5.3-flash': { served: 'glm-5.3-flash' } })
+    expect(matrix.rows[0]!.verdict).toBe('inconclusive')
+  })
+
+  test('a controlled route serving a different family reports mismatch-requiring-review', async () => {
+    const matrix = await runIdentityMatrix({
+      version: 'identity-manifest/1',
+      provider: 'hcnsec',
+      targets: [{ model: 'glm-5.3-flash' }],
+      buildManifest: (model) =>
+        buildManifest({
+          provider: 'hcnsec',
+          model,
+          baseUrl: 'https://api.hcnsec.cn/v1',
+          vectors: ['A', 'B'],
+          controls: {
+            sameModel: {
+              provider: 'tokenbom',
+              requestedModel: 'glm-5.3-flash',
+              baseUrl: 'https://tokenbom.example/v1',
+            },
+            differentModel: {
+              provider: 'openai',
+              requestedModel: 'gpt-5',
+              baseUrl: 'https://openai.example/v1',
+            },
+          },
+        }),
+      invoke: invoke({
+        'glm-5.3-flash': {
+          served: 'longcat-2.5-preview-free',
+          text: 'TARGET-TEXT',
+        },
+        'tokenbom/glm-5.3-flash': {
+          served: 'glm-5.3-flash',
+          text: 'CONTROL-TEXT',
+        },
+        'openai/gpt-5': { served: 'gpt-5', text: 'OTHER-TEXT' },
+      }),
+    })
+    const row = matrix.rows[0]!
+    expect(row.label).toBe('mismatch')
+    expect(row.verdict).toBe('mismatch-requiring-review')
   })
 })

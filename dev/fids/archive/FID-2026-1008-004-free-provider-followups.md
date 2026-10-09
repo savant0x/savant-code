@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-1008-004-free-provider-followups.md`
 **ID:** FID-2026-1008-004
 **Severity:** medium
-**Status:** fixed
+**Status:** closed
 **Created:** 2026-10-08
 **Automation level:** 2
 **YAGNI-Compliance:** Verified
@@ -150,8 +150,8 @@ Enter-per-step (proposed) vs a single confirm dialog.
 
 ### Verification Receipt
 
-- fingerprint: sha256:ec940afa32834c7f8a0b9522fbf644af313b6677829476f3d8d2189efdc857a2
-- verified: 2026-10-08T22:41:30.806Z
+- fingerprint: sha256:03df28b0f227872ceecb8ff0892d14d4d928fece9a9a4a3b896a900a4438e34f
+- verified: 2026-10-09T00:21:31.190Z
 - test cli/src/utils/__tests__/launch-digest.test.ts: exit 0
 - test cli/src/utils/__tests__/free-options.test.ts: exit 0
 - test cli/src/utils/__tests__/free-options-digest.test.ts: exit 0
@@ -229,6 +229,27 @@ Enter-per-step (proposed) vs a single confirm dialog.
 
 ## Resolution
 
-- **Closed Date:** not closed.
-- **Status:** fixed for A and B. C is blocked on the operator ruling.
-- **Archived:** pending commit authorization and C.
+- **Closed Date:** 2026-10-08
+- **Fix Description:** A — the boot-path decision is extracted into the pure
+  `runLaunchDigest` (`cli/src/utils/launch-digest.ts`: injected readers and
+  sink, posts only when there are lines, fail-silent on a throwing reader),
+  called from the unchanged-gated boot effect. B — `provider-offers.ts`
+  splits into `readFreshFeedOffers` (the existing freshness gate),
+  `readProviderOfferDiscovery` (strings, unchanged output) and
+  `countOffersEndingSoon` (deadline inside (0, 72h]); the report carries the
+  optional `discoveryOffersEndingSoon` and the announce line prints
+  `N end within 72h;` only when N > 0.
+- **Open remainder (registered, not dropped):** C — the registry-only
+  branch (option 1) is implemented under FID-2026-1008-005 item 3; the
+  harvested-candidate branch (option 2) is blocked pending the operator
+  ruling, with its design drafted in Loop 4 above, and is registered on
+  `SCOPE.md` as T171.
+- **Tests Added:** Yes — `launch-digest.test.ts` (post-on-lines,
+  skip-on-empty, every-call, discovery-only, fail-silent reader) and the
+  72h-window pins in `free-options.test.ts` (both branches).
+- **Verification Evidence:** implementation commit `742d919f`; gates 5/5
+  exit 0 — receipt `sha256:ec940afa…`, re-verified live
+  2026-10-08T23:47:13Z and re-stamped at the archived path.
+- **Archived:** 2026-10-08 — moved to `dev/fids/archive/` on the operator's
+  closure authorization; T171 restated on `SCOPE.md` as the blocked
+  remainder.

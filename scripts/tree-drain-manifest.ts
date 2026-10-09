@@ -6,6 +6,13 @@
  * or directory prefixes. The runner assigns every changed path to exactly one
  * group and aborts on gaps/overlaps/empty groups. Order = commit order.
  *
+ * Directory-scoped entries (FID-2026-1007-011): `dev/build-orders` is
+ * covered as a directory because its membership moves under the archival
+ * lifecycle. Do not narrow a directory-scoped entry back to exact paths —
+ * the coverage suite
+ * (`scripts/__tests__/tree-drain-manifest-coverage.test.ts`) pins both
+ * directions and fails on narrowing.
+ *
  * The group data lives in domain modules under `tree-drain-manifest/`;
  * this file concatenates them in the original commit order.
  *

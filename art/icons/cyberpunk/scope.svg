@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none" role="img" aria-label="Scope — target reticle">
+  <!-- SAVANT // CYBERDECK — hand-authored vector geometry, no external assets -->
+  <defs>
+    <filter id="glow" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="2.5" result="blur" />
+      <feMerge>
+        <feMergeNode in="blur" />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
+    </filter>
+  </defs>
+  <!-- outer and inner rings -->
+  <circle cx="32" cy="32" r="20" stroke="#18faf9" stroke-width="3" />
+  <circle cx="32" cy="32" r="13" stroke="#4fa8ff" stroke-width="1.5" opacity="0.6" />
+  <!-- crosshair ticks -->
+  <g stroke="#18faf9" stroke-width="3" stroke-linecap="round">
+    <path d="M32 6 L32 14" />
+    <path d="M32 50 L32 58" />
+    <path d="M6 32 L14 32" />
+    <path d="M50 32 L58 32" />
+  </g>
+  <!-- cardinal ring nodes -->
+  <g fill="#4fa8ff">
+    <circle cx="32" cy="12" r="1.5" />
+    <circle cx="52" cy="32" r="1.5" />
+    <circle cx="32" cy="52" r="1.5" />
+    <circle cx="12" cy="32" r="1.5" />
+  </g>
+  <!-- center dot -->
+  <circle cx="32" cy="32" r="3" fill="#ff2bd6" filter="url(#glow)" />
+</svg>

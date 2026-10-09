@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none" role="img" aria-label="Thinker — ECHO agent role: sequential logic engine">
+  <!-- SAVANT // CYBERDECK — hand-authored vector geometry, no external assets -->
+  <defs>
+    <filter id="glow" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="2.5" result="blur" />
+      <feMerge>
+        <feMergeNode in="blur" />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
+    </filter>
+  </defs>
+  <!-- synapses: five spokes from the core to satellite nodes -->
+  <g stroke="#18faf9" stroke-width="2" stroke-linecap="round">
+    <path d="M32 32 L32 16" />
+    <path d="M32 32 L47 27" />
+    <path d="M32 32 L41 45" />
+    <path d="M32 32 L23 45" />
+    <path d="M32 32 L17 27" />
+  </g>
+  <!-- via diamonds at each spoke midpoint -->
+  <g fill="#ff2bd6">
+    <polygon points="32,22.2 33.8,24 32,25.8 30.2,24" />
+    <polygon points="39.5,27.7 41.3,29.5 39.5,31.3 37.7,29.5" />
+    <polygon points="36.5,36.7 38.3,38.5 36.5,40.3 34.7,38.5" />
+    <polygon points="27.5,36.7 29.3,38.5 27.5,40.3 25.7,38.5" />
+    <polygon points="24.5,27.7 26.3,29.5 24.5,31.3 22.7,29.5" />
+  </g>
+  <!-- outer dashed ring -->
+  <circle cx="32" cy="32" r="21" stroke="#4fa8ff" stroke-width="1.5" stroke-dasharray="3 4" opacity="0.5" />
+  <!-- satellite nodes -->
+  <g fill="#18faf9">
+    <circle cx="32" cy="16" r="2.5" />
+    <circle cx="47" cy="27" r="2.5" />
+    <circle cx="41" cy="45" r="2.5" />
+    <circle cx="23" cy="45" r="2.5" />
+    <circle cx="17" cy="27" r="2.5" />
+  </g>
+  <!-- core -->
+  <circle cx="32" cy="32" r="3.5" fill="#ff2bd6" filter="url(#glow)" />
+</svg>

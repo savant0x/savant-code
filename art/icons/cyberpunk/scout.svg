@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none" role="img" aria-label="Scout — ECHO agent role: contextual exploration radar">
+  <!-- SAVANT // CYBERDECK — hand-authored vector geometry, no external assets -->
+  <defs>
+    <filter id="glow" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="2.5" result="blur" />
+      <feMerge>
+        <feMergeNode in="blur" />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
+    </filter>
+  </defs>
+  <!-- range rings -->
+  <g stroke="#18faf9" stroke-width="2">
+    <path d="M25 46 A7 7 0 0 0 39 46" />
+    <path d="M20 46 A12 12 0 0 0 44 46" />
+  </g>
+  <!-- sweep beam -->
+  <polygon points="32,46 49,27 53,33" fill="#ff2bd6" opacity="0.18" />
+  <path d="M32 46 L49 27" stroke="#ff2bd6" stroke-width="2" stroke-linecap="round" />
+  <!-- contacts -->
+  <circle cx="40" cy="38" r="2" fill="#ff2bd6" filter="url(#glow)" />
+  <circle cx="26" cy="36" r="1.5" fill="#18faf9" />
+  <!-- pivot -->
+  <circle cx="32" cy="46" r="2" fill="#18faf9" />
+  <!-- dish -->
+  <path d="M18 46 A14 14 0 0 1 46 46" stroke="#18faf9" stroke-width="3" stroke-linecap="round" />
+  <!-- pedestal -->
+  <g stroke="#18faf9" stroke-linecap="round">
+    <path d="M18 46 L22 55" stroke-width="2.5" />
+    <path d="M46 46 L42 55" stroke-width="2.5" />
+    <path d="M19 57 L45 57" stroke-width="3" />
+  </g>
+</svg>

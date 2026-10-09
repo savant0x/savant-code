@@ -20,6 +20,11 @@
  *   is a different model).
  * - gpt-image-2 / gpt-image-2.5 / -flare / -sunburst: image-generation
  *   models, not chat-completion ids — no context window semantics.
+ * - grok-imagine-image / grok-imagine-image-edit /
+ *   grok-imagine-image-quality / grok-imagine-image-2.0: image-generation
+ *   models — deliberately non-applicable, no context window semantics.
+ * - openrouter/free: router id, no single model context window —
+ *   deliberately non-applicable (FID-2026-1008-001 closure, 2026-10-08).
  */
 export const KIOSAPI_CONTEXT_WINDOW_FALLBACKS: ReadonlyArray<
   readonly [string, number]

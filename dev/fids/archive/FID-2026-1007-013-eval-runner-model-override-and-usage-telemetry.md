@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-1007-013-eval-runner-model-override-and-usage-telemetry.md`
 **ID:** FID-2026-1007-013
 **Severity:** low
-**Status:** fixed
+**Status:** closed
 **Created:** 2026-10-07
 **Automation level:** 2
 **YAGNI-Compliance:** Verified
@@ -120,8 +120,8 @@ parity proof and the Law 4 call-graph check that `model` is consumed by
 
 ### Verification Receipt
 
-- fingerprint: sha256:3ec13c2d667e06753a17090bd841b627af5fec94187e28252833d1f063e6bc0d
-- verified: 2026-10-08T21:26:58.333Z
+- fingerprint: sha256:af452568bf224aab9af592dfbf5deba43872d78b124778546d064f36ee75bcf7
+- verified: 2026-10-09T00:18:45.102Z
 - test evals/v2/tests/eval-runner-model-usage.test.ts: exit 0
 - typecheck common: exit 0
 - typecheck packages/agent-runtime: exit 0
@@ -242,26 +242,34 @@ wire-stage ratification) stay with the operator.
 
 ## Resolution
 
-- **Closed Date:** pending operator commit (G2 authorized; lands with this
-  session's batch)
-- **Fix Description:** stage 1-2 of the staged design: per-run model override
-  (inline clone, fail-fast, no disk mutation), run-total usage telemetry
-  (`AgentState.runUsage` folded from the existing hook, summed over the
-  subagent tree in `finalize()`), `TraceMetadata.usage`/`model`, CLI
-  `--model`. The per-sample `onUsage` callback and print-mode `usage` event
-  are deferred to the wire stage per Loop 2's staging decision (no named
-  consumer yet).
+- **Closed Date:** 2026-10-08
+- **Fix Description:** stage 1-2 of the staged design is closed: the per-run
+  model override (`RunnerConfig.model`, resolved once at run-config
+  construction and landed as an inline agent-definition clone — fail-fast on
+  an unresolved `agentId`, `agents/` never mutated), run-total usage
+  telemetry (`AgentState.runUsage` folded from the existing `onUsage` hook,
+  summed over the recursive subagent tree in `TraceCollector.finalize`),
+  `TraceMetadata.usage`/`model`, and the eval CLI `--model` flag.
+- **Open remainder (registered, not dropped):** the per-sample `onUsage`
+  callback and the `printModeEventSchema` `usage` wire member — blocked
+  pending a NAMED consumer outside the eval harness (Loop 2's staging
+  condition) and the two operator decisions named in Loop 3 (eval billing
+  keys; wire-stage ratification). The remainder is registered on
+  `SCOPE.md` as T164-D with the blocker stated and stays active work.
 - **Tests Added:** Yes — `evals/v2/tests/eval-runner-model-usage.test.ts`,
   7 pins.
-- **Verification Evidence:** new suite 7/7; full evals battery 229 pass /
-  0 fail (unchanged-suite proof); typecheck exit 0 on common, agent-runtime,
-  sdk, evals; receipt stamped below from live gate runs.
+- **Verification Evidence:** implementation commit `8ead0378`; gates 5/5
+  exit 0 — receipt `sha256:3ec13c2d…`, re-verified live
+  2026-10-08T23:46:18Z and re-stamped at the archived path. Loop 3 records
+  the full evals battery at 229 pass / 0 fail (the unchanged-suite proof).
 - **Source:** `dev/build-orders/BO-2026-09-08-eval-runner-model-override-and-usage-telemetry.md`
-- **Archived:** pending closure ceremony
+- **Archived:** 2026-10-08 — moved to `dev/fids/archive/` on the operator's
+  closure authorization; T164-D restated on `SCOPE.md` as the blocked
+  remainder.
 
 ### Code Verification Evidence
 
-Status is `fixed` — stage 1-2 implemented and gate-verified (Loop 3). The
+Status is `closed` (was `fixed`) — stage 1-2 implemented and gate-verified (Loop 3). The
 original absence evidence (2026-10-07) is retained below as the record of
 what this FID found; the named surfaces now carry the fields Loop 3 lists.
 
