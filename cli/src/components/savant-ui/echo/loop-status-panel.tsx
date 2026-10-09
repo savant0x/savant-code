@@ -1,6 +1,6 @@
 import { useLoopSchedule } from '../../../hooks/use-loop-scheduler'
-import { useTheme } from '../../../hooks/use-theme'
 import { useChatStore } from '../../../state/chat-store'
+import { useSidebarTheme as useTheme } from '../../right-sidebar-theme'
 import { KeyValueRow } from '../../savant-ui/primitives/key-value-row'
 import { SidebarSection } from '../../savant-ui/primitives/sidebar-section'
 
@@ -47,12 +47,16 @@ export function LoopStatusPanel() {
         : theme.success
 
   return (
-    <SidebarSection title="Loop">
+    <SidebarSection
+      title="Loop"
+      attention={goal?.status === 'blocked' || goal?.status === 'paused'}
+      count={goal?.status}
+    >
       <KeyValueRow
         label="Status"
         value={
-          <text fg={theme.success} selectable={false}>
-            🔄 Active
+          <text fg={schedule ? theme.foreground : goalColor} selectable={false}>
+            {schedule ? 'Scheduled' : (goal?.status ?? 'Unknown')}
           </text>
         }
       />
@@ -70,10 +74,8 @@ export function LoopStatusPanel() {
         <KeyValueRow
           label="Goal"
           value={
-            <text fg={goalColor} selectable={false}>
-              {goal.status === 'active'
-                ? `🔄 ${goal.objective.slice(0, 60)}`
-                : `${goal.status === 'paused' ? '⏸' : '⛔'} ${goal.objective.slice(0, 60)}`}
+            <text fg={goalColor} wrapMode="word" selectable={false}>
+              {`${goal.status} · ${goal.objective}`}
             </text>
           }
         />

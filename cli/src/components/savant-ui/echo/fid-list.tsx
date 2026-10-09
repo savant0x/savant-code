@@ -5,6 +5,7 @@ import { useTheme } from '../../../hooks/use-theme'
 
 export interface FidData {
   id: string
+  title?: string
   status: string
   severity: string
   summary: string
@@ -60,6 +61,7 @@ export function FidList({
         <FidCard
           key={fid.id}
           id={fid.id}
+          title={fid.title}
           status={fid.status}
           severity={fid.severity}
           summary={fid.summary}

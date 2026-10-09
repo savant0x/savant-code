@@ -1,5 +1,6 @@
 import { LayoutEvents } from '@opentui/core'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { AppContext } from '@opentui/react'
+import { useCallback, useContext, useEffect, useRef, useState } from 'react'
 
 import { useAnimationTimeline } from './use-animation-timeline'
 
@@ -31,7 +32,10 @@ export interface FoldCollapse {
  * was collapsed before its height was ever measured degrades to an instant
  * expand (the next fold animates correctly).
  */
-export function useFoldCollapse(defaultExpanded = false): FoldCollapse {
+export function useFoldCollapse(
+  defaultExpanded = false,
+  reducedMotion = false,
+): FoldCollapse {
   const [expanded, setExpanded] = useState(defaultExpanded)
   const [mounted, setMounted] = useState(defaultExpanded)
   const [height, setHeight] = useState<number | 'auto'>(
@@ -40,15 +44,38 @@ export function useFoldCollapse(defaultExpanded = false): FoldCollapse {
   const bodyRef = useRef<BoxRenderable | null>(null)
   const naturalHeightRef = useRef(0)
   const animatingRef = useRef(false)
-  const timeline = useAnimationTimeline()
+  const timeline = useAnimationTimeline({ duration: FOLD_DURATION_MS })
+  const { renderer } = useContext(AppContext)
+  const removeBlurRef = useRef<(() => void) | null>(null)
+  const clearBlur = useCallback(() => {
+    removeBlurRef.current?.()
+    removeBlurRef.current = null
+  }, [])
+  useEffect(() => clearBlur, [clearBlur])
 
   const runTween = useCallback(
     (from: number, to: number, onComplete: () => void) => {
+      clearBlur()
       timeline.items.length = 0
-      if (from === to) {
+      if (from === to || reducedMotion) {
+        timeline.pause()
+        setHeight(to)
         onComplete()
         return
       }
+      const complete = () => {
+        clearBlur()
+        onComplete()
+      }
+      const settle = () => {
+        timeline.pause()
+        timeline.items.length = 0
+        setHeight(to)
+        complete()
+      }
+      // Static sections have no renderer listener or live reference.
+      renderer?.on('blur', settle)
+      removeBlurRef.current = () => renderer?.off('blur', settle)
       timeline.add(
         { h: from },
         {
@@ -59,12 +86,12 @@ export function useFoldCollapse(defaultExpanded = false): FoldCollapse {
           onUpdate: (anim) => {
             setHeight(Math.max(0, Math.round(anim.targets[0]?.h ?? to)))
           },
-          onComplete,
+          onComplete: complete,
         },
       )
       timeline.restart()
     },
-    [timeline],
+    [timeline, reducedMotion, renderer, clearBlur],
   )
 
   const collapse = useCallback(() => {

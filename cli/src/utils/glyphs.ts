@@ -149,7 +149,11 @@ export const hasNerdFont = (): boolean => {
 
 /** Resolve the active tier for the session. */
 export const activeGlyphTier = (): GlyphTier =>
-  hasNerdFont() ? 'nerdfont' : 'unicode'
+  process.env.SAVANT_GLYPH_TIER?.toLowerCase() === 'ascii'
+    ? 'ascii'
+    : hasNerdFont()
+      ? 'nerdfont'
+      : 'unicode'
 
 /**
  * Resolve an icon to the best available character for the active tier.

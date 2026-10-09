@@ -1,8 +1,9 @@
-import { useKeyboard } from '@opentui/react'
-import { useCallback } from 'react'
+import { useKeyboard, useTerminalDimensions } from '@opentui/react'
+import { useCallback, useMemo } from 'react'
 
 import { SIDEBAR_TOOLS_AVAILABLE } from './styles'
 import { RightSidebar } from '../components/right-sidebar'
+import { createSidebarFocusController } from '../components/right-sidebar-focus'
 import { SidebarRail } from '../components/sidebar-rail'
 import { useTerminalBreakpoints } from '../hooks/use-terminal-breakpoints'
 import { useChatStore } from '../state/chat-store'
@@ -45,7 +46,10 @@ export function ChatSidebar(props: ChatSidebarProps) {
     agentMode,
   } = props
 
+  // Subscribe to native resize; useRenderer alone does not rerender consumers.
+  useTerminalDimensions()
   const { isWide } = useTerminalBreakpoints()
+  const focusController = useMemo(() => createSidebarFocusController(), [])
   const sidebarCollapsed = useChatStore((s) => s.sidebarCollapsed)
   const setSidebarCollapsed = useChatStore((s) => s.setSidebarCollapsed)
 
@@ -70,6 +74,8 @@ export function ChatSidebar(props: ChatSidebarProps) {
   )
 
   const sidebarProps = {
+    focusController,
+    lifecycle: props.statusIndicatorState,
     tokensUsed: contextTokensUsed,
     tokensMax: contextTokensMax,
     // FID-2026-0914-002 (MQ4): window provenance badge.

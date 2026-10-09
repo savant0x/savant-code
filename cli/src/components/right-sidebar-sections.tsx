@@ -2,26 +2,28 @@ import React from 'react'
 
 import {
   formatCacheUsage,
-  formatCost,
   formatToolHistoryEvent,
-  formatTokens,
   resolveActiveAgentDisplay,
-  type AgentInfo,
-  type ToolCall,
-  type formatCompactionStatus,
 } from './right-sidebar-format'
+import { SidebarSessionSummary } from './right-sidebar-summary'
+import { useSidebarTheme as useTheme } from './right-sidebar-theme'
 import { AgentStack } from './savant-ui'
-import { useTheme } from '../hooks/use-theme'
+import { glyph } from '../utils/glyphs'
 import { Timeline } from './savant-ui/data-display/timeline'
-import { FidList, type FidData } from './savant-ui/echo/fid-list'
+import { FidList } from './savant-ui/echo/fid-list'
 import { KeyValueRow } from './savant-ui/primitives/key-value-row'
 import { SidebarSection } from './savant-ui/primitives/sidebar-section'
 
+import type {
+  AgentInfo,
+  ToolCall,
+  formatCompactionStatus,
+} from './right-sidebar-format'
+import type { SidebarSummaryProps } from './right-sidebar-summary'
+import type { FidData } from './savant-ui/echo/fid-list'
 import type { CacheUsageSummary } from '@savant-code/common/types/session-state-cache-usage'
 
-/** Active Agents section — only active agents, or the main agent while
- *  streaming/waiting; hidden when there is nothing to show. */
-export const SidebarActiveAgents = ({
+export function SidebarActiveAgents({
   agentStack,
   agent,
   isStreaming,
@@ -31,115 +33,116 @@ export const SidebarActiveAgents = ({
   agent: string
   isStreaming: boolean
   isWaitingForResponse: boolean
-}) => {
-  const displayAgents = resolveActiveAgentDisplay(
+}) {
+  const agents = resolveActiveAgentDisplay(
     agentStack,
     agent,
     isStreaming,
     isWaitingForResponse,
   )
-  if (displayAgents.length === 0) return null
+  if (!agents.length) return null
   return (
-    <SidebarSection title="Active Agents" defaultExpanded>
-      <AgentStack agents={displayAgents} />
+    <SidebarSection title="Active Agents" count={agents.length} defaultExpanded>
+      <AgentStack agents={agents} />
     </SidebarSection>
   )
 }
 
-/** Tools section — used (●) then available (○), alphabetized, capped at 5. */
-export const SidebarToolsList = ({
+export function SidebarToolsList({
   toolsUsed,
   toolsAvailable,
 }: {
   toolsUsed: string[]
   toolsAvailable: string[]
-}) => {
+}) {
   const theme = useTheme()
+  const used = [...new Set(toolsUsed)].sort((a, b) => a.localeCompare(b))
+  const available = [...new Set(toolsAvailable)]
+    .filter((t) => !used.includes(t))
+    .sort()
+    .slice(0, Math.max(0, 5 - used.length))
   return (
-    <SidebarSection title="Tools">
-      {[...toolsUsed]
-        .sort((a, b) => a.localeCompare(b))
-        .map((tool, i) => (
-          <text
-            key={`used-${i}`}
-            fg={theme.foreground}
-            wrapMode="none"
-            selectable={false}
-          >
-            {`● ${tool}`}
-          </text>
-        ))}
-      {toolsAvailable
-        .filter((t) => !toolsUsed.includes(t))
-        .sort((a, b) => a.localeCompare(b))
-        .slice(0, Math.max(0, 5 - toolsUsed.length))
-        .map((tool, i) => (
-          <text
-            key={`avail-${i}`}
-            fg={theme.muted}
-            wrapMode="none"
-            selectable={false}
-          >
-            {`○ ${tool}`}
-          </text>
-        ))}
+    <SidebarSection title="Tools" count={used.length}>
+      {used.map((tool) => (
+        <text
+          key={tool}
+          fg={theme.foreground}
+          wrapMode="word"
+          selectable={false}
+        >{`${glyph('statusActive')} ${tool}`}</text>
+      ))}
+      {available.map((tool) => (
+        <text
+          key={tool}
+          fg={theme.muted}
+          wrapMode="word"
+          selectable={false}
+        >{`${glyph('statusInactive')} ${tool}`}</text>
+      ))}
     </SidebarSection>
   )
 }
 
-/** Active FIDs section — live from dev/fids/ via the harness watcher. */
-export const SidebarActiveFids = ({
+export function SidebarActiveFids({
   fids,
   archivedCount,
+  isLoading = false,
 }: {
   fids: FidData[]
   archivedCount: number
-}) => {
+  isLoading?: boolean
+}) {
   const theme = useTheme()
+  const attention = fids.filter(
+    (fid) => fid.severity === 'critical' || fid.severity === 'high',
+  ).length
   return (
-    <SidebarSection title="Active FIDs">
-      {fids.length > 0 ? (
-        <box
-          flexDirection="column"
-          gap={1}
-          focusable={false}
-          selectable={false}
-        >
-          {/* FID-2026-1005-002: every active FID renders (the section body
-              scrolls); FidCard rows are keyboard reachable via the sidebar
-              focus cycle, so no passive overflow count is needed. */}
-          <FidList fids={fids} sortBy="severity" />
-        </box>
+    <SidebarSection
+      title="Active FIDs"
+      id="FIDs"
+      count={
+        isLoading
+          ? 'Loading'
+          : attention
+            ? `${fids.length} · ${attention}!`
+            : fids.length
+      }
+      attention={attention > 0}
+    >
+      {isLoading ? (
+        <text fg={theme.muted}>Loading FIDs…</text>
+      ) : fids.length ? (
+        <FidList fids={fids} sortBy="severity" />
       ) : (
-        <text fg={theme.muted} wrapMode="none" selectable={false}>
+        <text fg={theme.muted} selectable={false}>
           (none active)
         </text>
       )}
       {archivedCount > 0 && (
-        <text fg={theme.muted} wrapMode="none" selectable={false}>
-          {`${archivedCount} archived`}
-        </text>
+        <text
+          fg={theme.muted}
+          selectable={false}
+        >{`${archivedCount} archived`}</text>
       )}
     </SidebarSection>
   )
 }
 
-/** History section — the last 5 tool calls as a Timeline. */
-export const SidebarHistoryTimeline = ({
+export function SidebarHistoryTimeline({
   toolHistory,
 }: {
   toolHistory: ToolCall[]
-}) => {
+}) {
   const theme = useTheme()
   return (
-    <SidebarSection title="History">
-      {toolHistory.length > 0 ? (
+    <SidebarSection title="History" count={toolHistory.length}>
+      {toolHistory.length ? (
         <Timeline
           events={toolHistory.slice(-5).map(formatToolHistoryEvent)}
           maxItems={5}
         />
       ) : (
-        <text fg={theme.muted} wrapMode="none" selectable={false}>
+        <text fg={theme.muted} selectable={false}>
           (empty)
         </text>
       )}
@@ -147,112 +150,69 @@ export const SidebarHistoryTimeline = ({
   )
 }
 
-/** Session section — agent/cost/mode/model/context/compaction rows. */
-export const SidebarSession = ({
+export function SidebarSession({
   agent,
-  cost,
-  mode,
-  model,
-  tokensUsed,
-  tokensMax,
-  windowSource,
   compactionStatus,
   compactionCount,
   cacheUsage,
-}: {
+  summaryVisible = false,
+  ...summary
+}: SidebarSummaryProps & {
   agent: string
-  cost: number
-  mode: string
-  model: string
-  tokensUsed: number
-  tokensMax: number
-  /** FID-2026-0914-002 (MQ4): how the window value was resolved. */
-  windowSource: 'catalog' | 'fallback-table' | 'default'
   compactionStatus: ReturnType<typeof formatCompactionStatus> | null
   compactionCount: number
-  /** FID-2026-1007-009: reported provider cache reuse for the active route. */
   cacheUsage?: CacheUsageSummary
-}) => {
+  summaryVisible?: boolean
+}) {
   const theme = useTheme()
-  const compactionLabel = compactionStatus
   return (
-    <SidebarSection title="Session" defaultExpanded>
+    <SidebarSection
+      title="Session"
+      defaultExpanded
+      attention={compactionStatus?.warning}
+    >
+      {!summaryVisible && <SidebarSessionSummary {...summary} />}
       {agent !== 'main-agent' && agent !== 'Savant' && (
         <KeyValueRow label="Agent" value={agent} />
       )}
-      <KeyValueRow label="Cost" value={formatCost(cost)} />
-      <KeyValueRow label="Mode" value={mode} />
-      <KeyValueRow label="Model" value={model} />
-      {/* P4d (FID-2026-0806-003): live context-usage meter with color
-          thresholds (Gemini CLI pattern) — warning at >=70%, error at
-          >=100%. tokensMax of 0 means the window is unknown; fall back to
-          the plain readout. */}
-      {tokensMax > 0 ? (
-        <KeyValueRow
-          label="Context"
-          value={`${formatTokens(tokensUsed)}/${formatTokens(tokensMax)}${
-            // FID-2026-0914-002 (MQ4): surface window provenance — the
-            // operator sees when a model sits on the conservative default
-            // (the "artificially restricted" tell) vs vendor data.
-            windowSource === 'default'
-              ? ' (default)'
-              : windowSource === 'fallback-table'
-                ? ' (table)'
-                : ''
-          }`}
-          valueColor={
-            tokensUsed >= tokensMax
-              ? theme.error
-              : tokensUsed / tokensMax >= 0.7
-                ? theme.warning
-                : undefined
-          }
-        />
-      ) : (
-        <KeyValueRow label="Tokens" value={`${formatTokens(tokensUsed)}`} />
-      )}
-      {compactionLabel !== null && (
+      {compactionStatus && (
         <KeyValueRow
           label="Compaction"
-          value={compactionLabel.label}
+          value={compactionStatus.label}
           valueColor={
-            compactionLabel.warning
+            compactionStatus.warning
               ? theme.warning
-              : compactionLabel.band === 'red'
+              : compactionStatus.band === 'red'
                 ? theme.error
-                : compactionLabel.band === 'orange'
+                : compactionStatus.band === 'orange' ||
+                    compactionStatus.band === 'yellow'
                   ? theme.warning
-                  : compactionLabel.band === 'yellow'
-                    ? theme.warning
-                    : undefined
+                  : undefined
           }
         />
       )}
-      {/* FID-2026-0814-006: session compaction counter (OpenClaw pattern).
-          Per-session aggregate, reset alongside the other sidebar data. */}
       {compactionCount > 0 && (
         <KeyValueRow label="Compactions" value={compactionCount.toString()} />
       )}
-      {/* FID-2026-1007-009: reported provider cache reuse. Always rendered,
-          including before any data exists, because the point of the row is to
-          distinguish "the provider does not report this" from "no cache
-          reuse" — a row that appears only once there is good news cannot do
-          that. `—` = nothing usable observed, `Not reported` = the provider
-          omitted the field, `0%` = a reported miss. No pricing claim is made:
-          this is reported token reuse on one route, not a bill. */}
       <KeyValueRow label="Cache" value={formatCacheUsage(cacheUsage)} />
     </SidebarSection>
   )
 }
 
-/** Files Changed section — the SDK emits only created/modified events. */
-export const SidebarFilesChanged = ({
+export function SidebarFilesChanged({
   filesChanged,
 }: {
   filesChanged: { created: number; modified: number }
-}) => (
-  <SidebarSection title="Files Changed" defaultExpanded>
-    <KeyValueRow label="Created" value={filesChanged.created.toString()} />
-    <KeyValueRow label="Modified" value={filesChanged.modified.toString()} />
-  </SidebarSection>
-)
+}) {
+  return (
+    <SidebarSection
+      title="Files Changed"
+      id="Files"
+      count={`+${filesChanged.created} / ~${filesChanged.modified}`}
+      defaultExpanded
+    >
+      <KeyValueRow label="Created" value={filesChanged.created.toString()} />
+      <KeyValueRow label="Modified" value={filesChanged.modified.toString()} />
+    </SidebarSection>
+  )
+}

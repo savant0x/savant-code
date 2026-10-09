@@ -1,16 +1,14 @@
-import { RenderableEvents, TextAttributes } from '@opentui/core'
-import React, { useEffect, useRef, useState } from 'react'
+import { TextAttributes } from '@opentui/core'
+import React, { useEffect, useState } from 'react'
 
-import { useTheme } from '../../../hooks/use-theme'
-import {
-  isSidebarActivateKey,
-  SidebarFocusContext,
-} from '../../right-sidebar-focus'
-
-import type { BoxRenderable } from '@opentui/core'
+import { glyph } from '../../../utils/glyphs'
+import { useSidebarControl } from '../../right-sidebar-control'
+import { SidebarFocusContext } from '../../right-sidebar-focus'
+import { useSidebarTheme as useTheme } from '../../right-sidebar-theme'
 
 export interface FidCardProps {
   id: string
+  title?: string
   status: string
   severity: string
   summary: string
@@ -22,96 +20,87 @@ export interface FidCardProps {
  * FidCard — a single FID entry used inside the right sidebar's Active FIDs section.
  *
  * Renders a compact entry with:
- *   - an expand/collapse chevron and short FID ID
+ *   - an expand/collapse chevron, document title and unambiguous FID suffix
  *   - the full FID summary below the title
  *
  * Uses only native OpenTUI flexbox with no extra gaps so rows stay tight.
  *
  * FID-2026-1005-002: the title row toggles on mouse click (unchanged) and on
- * Enter/Space when focused; it registers with the sidebar's Ctrl+G focus
- * cycle so FID rows are keyboard reachable. A focused title inverts as the
+ * Enter/Space when focused; it registers with the sidebar's F6 focus
+ * cycle so FID rows are keyboard reachable. A focused title underlines as the
  * focus indicator.
  */
 export function FidCard({
   id,
+  title,
+  status,
+  severity,
   summary,
   onClick,
   expanded: initialExpanded = false,
 }: FidCardProps) {
   const theme = useTheme()
-  const [expanded, setExpanded] = useState(initialExpanded)
   const focusController = React.useContext(SidebarFocusContext)
-  const titleRef = useRef<BoxRenderable | null>(null)
-  const [titleFocused, setTitleFocused] = useState(false)
+  const [expanded, setExpanded] = useState(
+    focusController?.folds.get(id) ?? initialExpanded,
+  )
 
-  // Parse ID to extract short number (e.g., "035" from "FID-2026-0721-035")
-  const shortId = id.replace(/^FID-\d{4}-\d{4}-/, '')
+  // Retain year/date/sequence so repeated sequence numbers stay distinct.
+  const shortId = id.replace(/^FID-/, '')
 
   const handleToggle = () => {
     setExpanded((prev) => !prev)
     onClick?.()
   }
 
-  // Join the sidebar focus cycle (no-op without a provider).
+  const { focused, hovered, ...events } = useSidebarControl(id, handleToggle)
   useEffect(() => {
-    if (!focusController) return undefined
-    return focusController.register({
-      focus: () => titleRef.current?.focus(),
-      blur: () => titleRef.current?.blur(),
-    })
-  }, [focusController])
-
-  // Track focus for the title indicator.
-  useEffect(() => {
-    const title = titleRef.current
-    if (!title) return undefined
-    const onFocus = () => setTitleFocused(true)
-    const onBlur = () => setTitleFocused(false)
-    title.on(RenderableEvents.FOCUSED, onFocus)
-    title.on(RenderableEvents.BLURRED, onBlur)
-    return () => {
-      title.off(RenderableEvents.FOCUSED, onFocus)
-      title.off(RenderableEvents.BLURRED, onBlur)
-    }
-  }, [])
+    focusController?.folds.set(id, expanded)
+  }, [focusController, id, expanded])
 
   return (
     <box flexDirection="column" focusable={false} selectable={false}>
-      {/* Title row: chevron + short FID ID. onMouseDown is placed on a
-          content-width box (alignSelf="flex-start") so empty space to the
-          right is not clickable/highlightable. */}
+      {/* The complete title row is an actionable control. */}
       <box
-        ref={titleRef}
+        {...events}
         flexDirection="row"
         gap={1}
-        alignSelf="flex-start"
-        onMouseDown={handleToggle}
-        onKeyDown={(key) => {
-          if (isSidebarActivateKey(key)) {
-            key.preventDefault?.()
-            key.stopPropagation?.()
-            handleToggle()
-          }
-        }}
+        width="100%"
+        backgroundColor={focused || hovered ? theme.surfaceHover : undefined}
         focusable={true}
         selectable={false}
       >
         <text fg={theme.muted} selectable={false}>
-          {expanded ? '▼' : '▶'}
+          {glyph(expanded ? 'treeExpanded' : 'treeCollapsed')}
         </text>
         <text
           fg={theme.foreground}
           attributes={
-            titleFocused
-              ? TextAttributes.BOLD | TextAttributes.INVERSE
+            focused
+              ? TextAttributes.BOLD | TextAttributes.UNDERLINE
               : TextAttributes.BOLD
           }
-          wrapMode="none"
+          wrapMode="word"
+          flexShrink={1}
           selectable={false}
         >
-          {`FID-${shortId}`}
+          {title ?? id}
         </text>
       </box>
+      <text
+        paddingLeft={2}
+        fg={
+          severity === 'critical'
+            ? theme.error
+            : severity === 'high'
+              ? theme.warning
+              : theme.muted
+        }
+        wrapMode="word"
+        selectable={false}
+      >
+        {`${shortId} · ${status} · ${severity}`}
+      </text>
 
       {/* Full summary (preserve paragraph breaks from the FID) */}
       {expanded && (
@@ -121,9 +110,13 @@ export function FidCard({
           focusable={false}
           selectable={false}
         >
+          <text fg={theme.foreground} wrapMode="word" selectable={false}>
+            {id}
+          </text>
           {summary.split(/\n\s*\n/).map((paragraph, index) => (
             <text
               key={index}
+              marginTop={index > 0 ? 1 : 0}
               fg={theme.muted}
               wrapMode="word"
               selectable={false}

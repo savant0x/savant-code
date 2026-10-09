@@ -1,7 +1,8 @@
-import { useTimeline } from '@opentui/react'
 import React, { useEffect, useRef, useState } from 'react'
 
+import { useAnimationTimeline } from '../../../hooks/use-animation-timeline'
 import { useTheme } from '../../../hooks/use-theme'
+import { activeGlyphTier } from '../../../utils/glyphs'
 
 export interface ProgressBarProps {
   value: number
@@ -10,6 +11,7 @@ export interface ProgressBarProps {
   showPercent?: boolean
   width?: number
   color?: string
+  animate?: boolean
 }
 
 export function ProgressBar({
@@ -19,36 +21,54 @@ export function ProgressBar({
   showPercent = true,
   width = 20,
   color,
+  animate = true,
 }: ProgressBarProps) {
   const theme = useTheme()
   const [displayValue, setDisplayValue] = useState(value)
   const startRef = useRef(value)
 
-  const timeline = useTimeline({ autoplay: false })
+  const timeline = useAnimationTimeline({ duration: 300 })
 
   useEffect(() => {
     const start = startRef.current
     const end = value
+    timeline.pause()
+    timeline.items.length = 0
+    if (!animate) {
+      setDisplayValue(end)
+      startRef.current = end
+      return
+    }
     if (start === end) return
 
-    timeline.once(
+    timeline.add(
       { value: start },
       {
         value: end,
         duration: 300,
         ease: 'outQuad',
+        once: true,
         onUpdate: (anim) => {
           setDisplayValue(anim.targets[0]?.value ?? end)
         },
       },
     )
-    timeline.play()
+    timeline.restart()
     startRef.current = end
-  }, [value, timeline])
+    return () => {
+      timeline.pause()
+    }
+  }, [value, timeline, animate])
 
-  const clampedValue = Math.min(Math.max(displayValue, 0), max)
+  const safeMax = Number.isFinite(max) && max > 0 ? max : 0
+  const clampedValue = Math.min(
+    Math.max(Number.isFinite(displayValue) ? displayValue : 0, 0),
+    safeMax,
+  )
   const percent =
-    max === 0 ? 0 : Math.min(Math.max((clampedValue / max) * 100, 0), 100)
+    safeMax === 0
+      ? 0
+      : Math.min(Math.max((clampedValue / safeMax) * 100, 0), 100)
   const filled = Math.round((percent / 100) * width)
   const empty = width - filled
 
@@ -62,8 +82,8 @@ export function ProgressBar({
     <box flexDirection="row" gap={1}>
       {label && <text fg={theme.muted}>{label}</text>}
       <text fg={barColor}>
-        {'█'.repeat(filled)}
-        {'░'.repeat(empty)}
+        {(activeGlyphTier() === 'ascii' ? '#' : '█').repeat(filled)}
+        {(activeGlyphTier() === 'ascii' ? '.' : '░').repeat(empty)}
       </text>
       {showPercent && <text fg={theme.muted}>{percent.toFixed(0)}%</text>}
     </box>

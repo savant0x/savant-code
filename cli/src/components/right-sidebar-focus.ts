@@ -5,24 +5,30 @@
  * reachable by keyboard if something moves focus for them. The right sidebar
  * provides that parent control: its interactive controls (section headers,
  * FID-card title rows) register a `{ focus, blur }` handle here, and a global
- * Ctrl+G (input unfocused or empty — same guard as the Ctrl+B fold) cycles
+ * F6 cycles
  * focus through them. Each control also activates on Enter/Space via its own
  * `onKeyDown`, the OpenTUI focus/button pattern. Mouse behavior is unchanged.
  *
- * The cycle logic is pure and unit-tested (sidebar-collapse.test.tsx); live
- * focus traversal is a NEEDS-REVIEW boundary pending native captures.
+ * Pure cycle tests and native sidebar-rail-navigation tests cover traversal,
+ * activation and scrolling to reveal offscreen controls.
  */
 import { createContext } from 'react'
 
-import type { KeyEvent } from '@opentui/core'
+import type { KeyEvent, Renderable } from '@opentui/core'
 
 /** A focusable sidebar control's imperative handle. */
 export interface SidebarFocusHandle {
+  id?: string
+  renderable?: () => Renderable | null
   focus: () => void
   blur: () => void
 }
 
 export interface SidebarFocusController {
+  reducedMotion: boolean
+  folds: Map<string, boolean>
+  scrollTop: number
+  focusSection: (id: string) => void
   /** Register a control; returns its unregister function. */
   register: (handle: SidebarFocusHandle) => () => void
   /** Advance the cycle: blur the current control, focus the next (or first);
@@ -54,11 +60,15 @@ export function isSidebarActivateKey(key: Pick<KeyEvent, 'name'>): boolean {
   return key.name === 'return' || key.name === 'enter' || key.name === 'space'
 }
 
-/** The sidebar focus-cycle shortcut: plain Ctrl+G (no meta/option). */
+/** The sidebar focus-cycle shortcut: plain F6. */
 export function isSidebarFocusCycleKey(
-  key: Pick<KeyEvent, 'ctrl' | 'meta' | 'option' | 'name'>,
+  key: Pick<KeyEvent, 'ctrl' | 'meta' | 'option' | 'name'> & {
+    shift?: boolean
+  },
 ): boolean {
-  return key.ctrl && !key.meta && !key.option && key.name === 'g'
+  return (
+    !key.ctrl && !key.meta && !key.option && !key.shift && key.name === 'f6'
+  )
 }
 
 /** Create the controller the right sidebar provides via context. Handles
@@ -67,9 +77,32 @@ export function isSidebarFocusCycleKey(
 export function createSidebarFocusController(): SidebarFocusController {
   const handles: SidebarFocusHandle[] = []
   let current = -1
+  let pending: string | null = null
+  const focus = (index: number) => {
+    if (current >= 0) handles[current]?.blur()
+    current = index
+    if (current >= 0) handles[current]?.focus()
+  }
   return {
+    reducedMotion: /^(1|true)$/i.test(
+      process.env.SAVANT_CODE_REDUCED_MOTION ?? '',
+    ),
+    folds: new Map(),
+    scrollTop: 0,
+    focusSection(id) {
+      const index = handles.findIndex((handle) => handle.id === id)
+      if (index < 0) pending = id
+      else {
+        pending = null
+        focus(index)
+      }
+    },
     register(handle) {
       handles.push(handle)
+      if (pending === handle.id) {
+        pending = null
+        focus(handles.length - 1)
+      }
       return () => {
         const index = handles.indexOf(handle)
         if (index === -1) return
@@ -83,9 +116,16 @@ export function createSidebarFocusController(): SidebarFocusController {
     },
     focusNext() {
       if (handles.length === 0) return
-      if (current >= 0) handles[current]?.blur()
-      current = nextFocusIndex(current, handles.length)
-      if (current >= 0) handles[current]?.focus()
+      const ordered = [...handles].sort((a, b) => {
+        const ar = a.renderable?.(),
+          br = b.renderable?.()
+        return ar && br ? ar.y - br.y || ar.x - br.x : 0
+      })
+      const next = nextFocusIndex(
+        ordered.indexOf(handles[current]),
+        ordered.length,
+      )
+      focus(next < 0 ? -1 : handles.indexOf(ordered[next]))
     },
   }
 }

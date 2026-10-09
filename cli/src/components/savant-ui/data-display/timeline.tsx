@@ -1,6 +1,9 @@
 import React from 'react'
 
-import { useTheme } from '../../../hooks/use-theme'
+import {
+  readableSidebarColor,
+  useSidebarTheme as useTheme,
+} from '../../right-sidebar-theme'
 
 export interface TimelineEvent {
   time: string
@@ -31,8 +34,13 @@ export function Timeline({ events, maxItems }: TimelineProps) {
             {event.time}
           </text>
           <text
-            fg={event.color ?? theme.foreground}
+            fg={
+              event.color
+                ? readableSidebarColor(theme, event.color)
+                : theme.foreground
+            }
             wrapMode="word"
+            flexShrink={1}
             selectable={false}
           >
             {event.label}

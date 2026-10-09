@@ -63,6 +63,7 @@ export type OnSubmitPrompt = (
 ) => Promise<CommandResult>
 
 export type ChatSidebarProps = {
+  statusIndicatorState?: StatusIndicatorState
   contextTokensUsed: number
   contextTokensMax: number
   /** FID-2026-0914-002 (MQ4): how the window value was resolved. */

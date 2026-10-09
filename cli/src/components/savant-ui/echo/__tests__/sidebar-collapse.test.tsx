@@ -50,7 +50,7 @@ describe('sidebar startup collapse defaults', () => {
     )
 
     expect(markup).toContain('▶')
-    expect(markup).toContain('FID-001')
+    expect(markup).toContain('FID-2026-0801-001')
     expect(markup).not.toContain('The full FID summary')
   })
 
@@ -112,7 +112,11 @@ describe('sidebar focus cycle (FID-2026-1005-002)', () => {
     expect(isSidebarActivateKey({ name: 'g' })).toBe(false)
   })
 
-  test('the cycle shortcut is plain Ctrl+G', () => {
+  test('the cycle shortcut is plain F6; legacy and modified keys pass through', () => {
+    const plain = { ctrl: false, meta: false, option: false, name: 'f6' }
+    expect(isSidebarFocusCycleKey(plain)).toBe(true)
+    for (const modifier of ['ctrl', 'meta', 'option', 'shift'])
+      expect(isSidebarFocusCycleKey({ ...plain, [modifier]: true })).toBe(false)
     expect(
       isSidebarFocusCycleKey({
         ctrl: true,
@@ -120,7 +124,7 @@ describe('sidebar focus cycle (FID-2026-1005-002)', () => {
         option: false,
         name: 'g',
       }),
-    ).toBe(true)
+    ).toBe(false)
     expect(
       isSidebarFocusCycleKey({
         ctrl: false,

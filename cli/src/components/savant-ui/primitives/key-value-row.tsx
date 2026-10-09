@@ -1,6 +1,6 @@
 import React from 'react'
 
-import { useTheme } from '../../../hooks/use-theme'
+import { useSidebarTheme as useTheme } from '../../right-sidebar-theme'
 
 export interface KeyValueRowProps {
   label: string
@@ -29,13 +29,20 @@ export function KeyValueRow({ label, value, valueColor }: KeyValueRowProps) {
       <text fg={theme.muted} wrapMode="none" selectable={false}>
         {label}
       </text>
-      <text
-        fg={valueColor ?? theme.foreground}
-        wrapMode="none"
-        selectable={false}
-      >
-        {value}
-      </text>
+      {typeof value === 'string' || typeof value === 'number' ? (
+        <text
+          fg={valueColor ?? theme.foreground}
+          flexShrink={1}
+          wrapMode="word"
+          selectable={false}
+        >
+          {value}
+        </text>
+      ) : (
+        <box flexShrink={1} flexDirection="column">
+          {value}
+        </box>
+      )}
     </box>
   )
 }

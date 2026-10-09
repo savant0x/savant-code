@@ -107,6 +107,10 @@ function parseFidFile(filePath: string): FidData | undefined {
     const severity = extractField(content, 'Severity') ?? 'medium'
     const summary = extractSummary(content) ?? id ?? 'Untitled FID'
     const parentId = extractField(content, 'Parent')
+    const heading = content.match(/^#[ \t]+([^\r\n]+)/m)?.[1]?.trim()
+    const title = heading
+      ?.replace(/^FID:[ \t]*/i, '')
+      .replace(/^FID-\d{4}-\d{4}-\d+[^\s]*[ \t]+[—–-][ \t]*/, '')
 
     if (!id) return undefined
 
@@ -115,6 +119,7 @@ function parseFidFile(filePath: string): FidData | undefined {
       status,
       severity,
       summary,
+      ...(title ? { title } : {}),
       ...(parentId !== undefined ? { parentId } : {}),
       path: filePath,
     }

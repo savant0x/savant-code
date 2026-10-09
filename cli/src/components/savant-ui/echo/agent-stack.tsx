@@ -1,6 +1,7 @@
 import React from 'react'
 
-import { useTheme } from '../../../hooks/use-theme'
+import { glyph } from '../../../utils/glyphs'
+import { useSidebarTheme as useTheme } from '../../right-sidebar-theme'
 
 export interface AgentStackAgent {
   name: string
@@ -55,11 +56,12 @@ export function AgentStack({ agents }: AgentStackProps) {
               fg={isActive ? theme.primary : theme.muted}
               selectable={false}
             >
-              {isActive ? '●' : '○'}
+              {glyph(isActive ? 'statusActive' : 'statusInactive')}
             </text>
             <text
               fg={isActive ? theme.foreground : theme.muted}
-              wrapMode="none"
+              wrapMode="word"
+              flexShrink={1}
               selectable={false}
             >
               {formatAgentName(agent.name)}

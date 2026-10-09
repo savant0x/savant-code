@@ -1,5 +1,5 @@
-import { useTheme } from '../../../hooks/use-theme'
 import { useChatStore } from '../../../state/chat-store'
+import { useSidebarTheme as useTheme } from '../../right-sidebar-theme'
 import { KeyValueRow } from '../../savant-ui/primitives/key-value-row'
 import { SidebarSection } from '../../savant-ui/primitives/sidebar-section'
 

@@ -232,6 +232,7 @@ export function buildChatLayoutProps(
     onSubmit: handleSubmit,
     onSubmitPrompt,
     sidebar: {
+      statusIndicatorState,
       contextTokensUsed,
       contextTokensMax,
       contextWindowSource,

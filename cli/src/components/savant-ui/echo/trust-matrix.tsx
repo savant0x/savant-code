@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react'
 
-import { useTheme } from '../../../hooks/use-theme'
+import { useSidebarTheme as useTheme } from '../../right-sidebar-theme'
 
 import type { PrintModeProvenanceReceipt } from '@savant-code/common/types/print-mode'
 
@@ -186,7 +186,7 @@ export const TrustMatrix = React.memo(function TrustMatrix({
   if (state.rows.length === 0) {
     return (
       <box flexDirection="column" gap={1} focusable={false} selectable={false}>
-        <text fg={theme.muted} wrapMode="none" selectable={false}>
+        <text fg={theme.muted} wrapMode="word" selectable={false}>
           No signed provenance events yet — signed writes and verdicts appear
           here live.
         </text>
@@ -197,7 +197,7 @@ export const TrustMatrix = React.memo(function TrustMatrix({
           {`${state.rows.length} signed event(s) this session`}
         </text>
         {state.dropped > 0 && (
-          <text fg={theme.muted} wrapMode="none" selectable={false}>
+          <text fg={theme.muted} wrapMode="word" selectable={false}>
             {`${state.dropped} unsigned/unmatched event(s) hidden`}
           </text>
         )}
@@ -222,7 +222,7 @@ export const TrustMatrix = React.memo(function TrustMatrix({
           >
             {`#${row.seq} ${row.phase.toUpperCase()} · ${statusLabel(row.status)}`}
           </text>
-          <text fg={theme.muted} wrapMode="none" selectable={false}>
+          <text fg={theme.muted} wrapMode="word" selectable={false}>
             {`  ${basenameOf(row.path)}${row.fidId ? ` · ${row.fidId}` : ''}`}
           </text>
         </box>
@@ -248,7 +248,7 @@ export const TrustMatrix = React.memo(function TrustMatrix({
       )}
       {/* FID-2026-0814-001: live session signal — reactive count of signed
           events this session; updates as receipts stream in. */}
-      <text fg={theme.muted} wrapMode="none" selectable={false}>
+      <text fg={theme.muted} wrapMode="word" selectable={false}>
         {`${state.rows.length} signed event(s) this session — live via write/verdict stream`}
       </text>
     </box>

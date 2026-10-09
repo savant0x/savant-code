@@ -1,12 +1,12 @@
 import { TextAttributes } from '@opentui/core'
 import React, { useMemo } from 'react'
 
-import { useTheme } from '../../../hooks/use-theme'
 import {
   completionLabel,
   progressionLine,
   receiptLine,
 } from '../../../teacher/render'
+import { useSidebarTheme as useTheme } from '../../right-sidebar-theme'
 
 import type {
   AttemptEvent,
@@ -106,7 +106,7 @@ export const LearnOverlay = React.memo(function LearnOverlay({
       <text
         fg={theme.primary}
         attributes={TextAttributes.BOLD}
-        wrapMode="none"
+        wrapMode="word"
         selectable={false}
       >
         TEACHER · EXERCISE
@@ -117,7 +117,7 @@ export const LearnOverlay = React.memo(function LearnOverlay({
           <text fg={theme.foreground} selectable={false}>
             {derived.objective}
           </text>
-          <text fg={theme.muted} wrapMode="none" selectable={false}>
+          <text fg={theme.muted} wrapMode="word" selectable={false}>
             {derived.prompt}
           </text>
           {derived.guidance && (

@@ -1,66 +1,101 @@
+import { TextAttributes } from '@opentui/core'
 import React from 'react'
 
-import { activityMapping, phaseMapping } from './phase-info'
-import { useTheme } from '../../../hooks/use-theme'
 import { useChatStore } from '../../../state/chat-store'
 import { glyph } from '../../../utils/glyphs'
-import { SidebarSection } from '../primitives/sidebar-section'
+import {
+  sidebarActivity,
+  sidebarEllipsis,
+  sidebarPhase,
+} from '../../right-sidebar-display'
+import { SidebarFocusContext } from '../../right-sidebar-focus'
+import { SidebarActivityAccent } from '../../right-sidebar-motion'
+import { useSidebarTheme as useTheme } from '../../right-sidebar-theme'
 
-/**
- * Agent Status — ECHO FSM phase + runtime activity display.
- *
- * Reads the current FSM phase and runtime activity from the chat store and
- * renders them inside a single bordered, self-contained box. The activity row
- * is hidden when both phase and activity are idle to avoid a duplicated
- * `IDLE`/`IDLE` pair.
- *
- * NOTE: This component shows the agent's runtime status, NOT the ECHO
- * Perfection Loop (the RED→GREEN→AUDIT fix/verify cycle bound to a FID).
- */
-export const AgentStatus: React.FC = () => {
+import type { StatusIndicatorState } from '../../../utils/status-indicator-state'
+
+export function AgentStatus({
+  lifecycle,
+  compact = false,
+  detailOnly = false,
+  hideDetail = false,
+  cells = 33,
+}: {
+  lifecycle?: StatusIndicatorState
+  compact?: boolean
+  detailOnly?: boolean
+  hideDetail?: boolean
+  cells?: number
+}) {
   const theme = useTheme()
-  const fsmPhase = useChatStore((s) => s.fsmPhase) ?? 'idle'
+  const phase = useChatStore((s) => s.fsmPhase) ?? 'idle'
   const activity = useChatStore((s) => s.activity)
-
-  const phaseMap = phaseMapping(fsmPhase)
-  const phaseStr = `${glyph(phaseMap.glyph)} ${phaseMap.label}`
-
-  const activityMap = activityMapping(activity.kind)
-  let activityDetail = ''
-  if (activity.kind === 'tool') {
-    activityDetail = activity.target
-      ? `${activity.toolName}: ${activity.target}`
-      : (activity.toolName ?? '')
-  } else if (activity.kind === 'subagent') {
-    activityDetail = activity.agentType ?? ''
-  } else if (activity.kind === 'researching') {
-    activityDetail = activity.query ?? ''
-  } else if (activity.kind === 'thinking' && activity.model) {
-    activityDetail = activity.model
-  }
-
-  const phaseIsIdle = fsmPhase === 'idle'
-  const activityIsIdle = activity.kind === 'idle'
-  // Show the phase row when the FSM phase is non-idle OR when both phase and
-  // activity are idle. Suppress the idle phase row while real runtime activity
-  // is happening so the user never sees a duplicated IDLE + <doing work> pair.
-  const showPhase = !phaseIsIdle || activityIsIdle
-  const showActivity = !activityIsIdle
-
+  const controller = React.useContext(SidebarFocusContext)
+  const display = sidebarActivity(activity.kind, lifecycle)
+  const detail =
+    activity.kind === 'tool'
+      ? [activity.toolName, activity.target].filter(Boolean).join(': ')
+      : activity.kind === 'researching'
+        ? (activity.query ?? '')
+        : activity.kind === 'subagent'
+          ? (activity.agentType ?? '')
+          : activity.kind === 'thinking'
+            ? (activity.model ?? '')
+            : ''
+  const color =
+    display.tone === 'warning'
+      ? theme.warning
+      : display.tone === 'active'
+        ? theme.primary
+        : theme.muted
+  if (detailOnly)
+    return (
+      <box flexDirection="column">
+        {detail && (
+          <text fg={theme.foreground} wrapMode="word" selectable={false}>
+            {detail}
+          </text>
+        )}
+        <text fg={theme.muted} wrapMode="word" selectable={false}>
+          {sidebarPhase(phase)}
+        </text>
+      </box>
+    )
   return (
-    <SidebarSection title="Agent Status" defaultExpanded>
-      {showPhase && (
-        <text fg={theme.muted} wrapMode="none" selectable={false}>
-          {phaseStr}
-        </text>
+    <SidebarActivityAccent
+      kind={
+        lifecycle?.kind === 'paused' ||
+        lifecycle?.kind === 'connecting' ||
+        lifecycle?.kind === 'retrying'
+          ? lifecycle.kind
+          : activity.kind
+      }
+      disabled={controller?.reducedMotion ?? true}
+    >
+      {(emphasized) => (
+        <box
+          flexDirection="column"
+          border={['left']}
+          borderColor={color}
+          paddingLeft={1}
+          flexShrink={0}
+          backgroundColor={emphasized ? theme.surfaceHover : undefined}
+        >
+          <text fg={color} attributes={TextAttributes.BOLD} selectable={false}>
+            {`${glyph(display.tone === 'idle' ? 'phaseIdle' : display.tone === 'warning' ? 'alertWarning' : 'phaseActive')} ${sidebarEllipsis(display.label, cells - 2)}`}
+          </text>
+          {!compact && !hideDetail && detail && (
+            <text fg={theme.foreground} selectable={false}>
+              {sidebarEllipsis(detail, cells)}
+            </text>
+          )}
+          {!compact && (
+            <text fg={theme.muted} selectable={false}>
+              {sidebarEllipsis(sidebarPhase(phase), cells)}
+            </text>
+          )}
+        </box>
       )}
-      {showActivity && (
-        <text fg={theme.muted} wrapMode="none" selectable={false}>
-          {activityDetail
-            ? `${glyph(activityMap.glyph)} ${activityDetail}`
-            : `${glyph(activityMap.glyph)} ${activityMap.label}`}
-        </text>
-      )}
-    </SidebarSection>
+    </SidebarActivityAccent>
   )
 }

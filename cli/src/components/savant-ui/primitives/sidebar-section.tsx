@@ -1,17 +1,17 @@
-import { RenderableEvents, TextAttributes } from '@opentui/core'
+import { TextAttributes } from '@opentui/core'
 import React from 'react'
 
 import { useFoldCollapse } from '../../../hooks/use-fold-collapse'
-import { useTheme } from '../../../hooks/use-theme'
-import {
-  isSidebarActivateKey,
-  SidebarFocusContext,
-} from '../../right-sidebar-focus'
-
-import type { BoxRenderable } from '@opentui/core'
+import { glyph } from '../../../utils/glyphs'
+import { useSidebarControl } from '../../right-sidebar-control'
+import { SidebarFocusContext } from '../../right-sidebar-focus'
+import { useSidebarTheme as useTheme } from '../../right-sidebar-theme'
 
 export interface SidebarSectionProps {
   title: string
+  id?: string
+  count?: string | number
+  attention?: boolean
   defaultExpanded?: boolean
   children: React.ReactNode
 }
@@ -19,83 +19,70 @@ export interface SidebarSectionProps {
 /**
  * Collapsible sidebar section.
  *
- * Renders a bold primary header with an expand/collapse chevron and a
+ * Renders a bold neutral header with an expand/collapse chevron and a
  * padded body. The header toggles on mouse click (unchanged) and on
  * Enter/Space when focused (FID-2026-1005-002): the header is focusable and
- * registers with the sidebar's Ctrl+G focus cycle, so section controls are
- * keyboard reachable. A focused header inverts its title as the focus
- * indicator (compact, no focus rectangle). Folding tweens the body height
+ * registers with the sidebar's F6 focus cycle, so section controls are
+ * keyboard reachable. A focused header underlines its title and accents the
+ * row. Folding tweens the body height
  * to 0 (via `useFoldCollapse`) before unmounting.
  */
 export function SidebarSection({
   title,
+  id = title,
+  count,
+  attention = false,
   defaultExpanded = false,
   children,
 }: SidebarSectionProps) {
   const theme = useTheme()
-  const { mounted, height, bodyRef, toggle, expanded } =
-    useFoldCollapse(defaultExpanded)
   const focusController = React.useContext(SidebarFocusContext)
-  const headerRef = React.useRef<BoxRenderable | null>(null)
-  const [headerFocused, setHeaderFocused] = React.useState(false)
-
-  // Join the sidebar focus cycle so Ctrl+G can reach this header (FID-
-  // 2026-1005-002). No provider mounted (e.g. isolated renders/tests) is a
-  // no-op — sections stay usable without the controller.
+  const { mounted, height, bodyRef, toggle, expanded } = useFoldCollapse(
+    focusController?.folds.get(id) ?? defaultExpanded,
+    focusController?.reducedMotion,
+  )
+  const { focused, hovered, ...events } = useSidebarControl(id, toggle)
   React.useEffect(() => {
-    if (!focusController) return undefined
-    return focusController.register({
-      focus: () => headerRef.current?.focus(),
-      blur: () => headerRef.current?.blur(),
-    })
-  }, [focusController])
-
-  // Track focus for the title indicator.
-  React.useEffect(() => {
-    const header = headerRef.current
-    if (!header) return undefined
-    const onFocus = () => setHeaderFocused(true)
-    const onBlur = () => setHeaderFocused(false)
-    header.on(RenderableEvents.FOCUSED, onFocus)
-    header.on(RenderableEvents.BLURRED, onBlur)
-    return () => {
-      header.off(RenderableEvents.FOCUSED, onFocus)
-      header.off(RenderableEvents.BLURRED, onBlur)
-    }
-  }, [])
+    focusController?.folds.set(id, expanded)
+  }, [focusController, id, expanded])
 
   return (
     <box flexDirection="column" focusable={false} selectable={false}>
       <box
-        ref={headerRef}
+        {...events}
         flexDirection="row"
         gap={1}
-        alignSelf="flex-start"
-        onMouseDown={toggle}
-        onKeyDown={(key) => {
-          if (isSidebarActivateKey(key)) {
-            key.preventDefault?.()
-            key.stopPropagation?.()
-            toggle()
-          }
-        }}
+        width="100%"
+        backgroundColor={focused || hovered ? theme.surfaceHover : undefined}
         focusable={true}
         selectable={false}
       >
         <text fg={theme.muted} selectable={false}>
-          {expanded ? '▼' : '▶'}
+          {glyph(expanded ? 'treeExpanded' : 'treeCollapsed')}
         </text>
         <text
           attributes={
-            headerFocused
-              ? TextAttributes.BOLD | TextAttributes.INVERSE
+            focused
+              ? TextAttributes.BOLD | TextAttributes.UNDERLINE
               : TextAttributes.BOLD
           }
-          fg={theme.primary}
+          fg={focused ? theme.primary : theme.foreground}
+          flexShrink={1}
+          wrapMode="word"
           selectable={false}
         >
           {title}
         </text>
+        {count !== undefined && (
+          <text
+            marginLeft="auto"
+            flexShrink={0}
+            fg={attention ? theme.warning : theme.muted}
+            selectable={false}
+          >
+            {count}
+          </text>
+        )}
       </box>
       {mounted && (
         <box

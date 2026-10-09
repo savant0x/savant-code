@@ -1,7 +1,7 @@
 import React from 'react'
 
+import { useSidebarTheme as useTheme } from './right-sidebar-theme'
 import { EasterEggLogo } from './savant-ui/easter-egg-logo'
-import { useTheme } from '../hooks/use-theme'
 
 /**
  * FID-2026-0915-002 — sidebar header (logo + tagline), moved verbatim from
@@ -13,8 +13,7 @@ export const SidebarHeader = React.memo(function SidebarHeader() {
     <box
       flexDirection="column"
       alignItems="center"
-      gap={1}
-      paddingBottom={1}
+      gap={0}
       focusable={false}
       selectable={false}
     >
