@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none" role="img" aria-label="Trust Matrix — agent trust verification grid">
+  <defs>
+    <filter id="glow" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="2.5" result="blur" />
+      <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
+    </filter>
+  </defs>
+  <!-- 3x3 verification grid -->
+  <g stroke="#18faf9" stroke-width="2.5" stroke-linecap="round">
+    <path d="M16 10 L16 54" /><path d="M32 10 L32 54" /><path d="M48 10 L48 54" />
+    <path d="M10 16 L54 16" /><path d="M10 32 L54 32" /><path d="M10 48 L54 48" />
+  </g>
+  <!-- verified cells (magenta = trust confirmed) -->
+  <g fill="#ff2bd6" filter="url(#glow)">
+    <circle cx="16" cy="16" r="3" />
+    <circle cx="32" cy="32" r="3" />
+    <circle cx="48" cy="48" r="3" />
+  </g>
+  <!-- pending cells (blue = frame) -->
+  <g fill="#4fa8ff" opacity="0.7">
+    <circle cx="48" cy="16" r="2" />
+    <circle cx="16" cy="48" r="2" />
+    <circle cx="32" cy="16" r="2" />
+    <circle cx="16" cy="32" r="2" />
+    <circle cx="48" cy="32" r="2" />
+    <circle cx="32" cy="48" r="2" />
+  </g>
+</svg>

@@ -1,17 +1,19 @@
 {
   "set": "savant-cyberdeck",
-  "version": "2.0.0",
+  "version": "3.0.0",
   "created": "2026-10-09",
-  "description": "Custom cyberpunk icon set for the Savant CLI: 102 hand-authored vector icons in the canonical Savant neon palette — 10 ECHO agent roles and 5 protocol marks with 5 variation marks, 5 Perfection Loop phase marks, 20 tool glyphs, 12 status indicators, 15 command marks, 15 dev-object marks, and 15 cyberpunk motif marks. No external assets, no icon fonts, no downloaded content.",
+  "description": "Custom cyberpunk icon set for the Savant CLI: 132 hand-authored vector icons in the canonical Savant neon palette — the identity core (logo, S-monogram), 10 ECHO agent roles and 5 protocol marks with 5 variation marks, the Perfection Loop phase vocabulary plus 4 generic run-lifecycle marks, 20 tool glyphs, 13 status indicators, 15 command marks, 15 dev-object marks, 15 cyberpunk motif marks, 6 sidebar-section marks, 4 activity indicators, 4 nav glyphs, 4 alert glyphs, and 2 toggle glyphs. No external assets, no icon fonts, no downloaded content.",
   "viewBox": "0 0 64 64",
   "palette": {
     "cyan": "#18faf9",
     "magenta": "#ff2bd6",
-    "blue": "#4fa8ff"
+    "blue": "#4fa8ff",
+    "white": "#ffffff",
+    "green": "#3dff9a",
+    "acid": "#f3e600"
   },
   "paletteSources": [
-    "cli/src/utils/theme-system/palette.ts",
-    "cli/src/commands/graph-export/universe-css.ts"
+    "cli/src/utils/theme-system/icon-palette.ts (ICON_PALETTE export)"
   ],
   "style": {
     "strokeWidth": 3,
@@ -20,6 +22,7 @@
     "linejoin": "round",
     "ground": "transparent",
     "glow": "feGaussianBlur merge filter, stdDeviation 2.5",
+    "familyRule": "every icon shares the circuit-trace + node-dot grammar; magenta = the mind/energy, cyan = the structure, blue = the frame, green = verification, acid = the caveat",
     "motifs": [
       "circuit traces with 90-degree elbows",
       "terminal node dots",
@@ -29,7 +32,43 @@
       "scanlines"
     ]
   },
+  "vocabulary": {
+    "perfectionLoopPhases": [
+      "idle",
+      "red",
+      "green",
+      "audit",
+      "self_correct",
+      "complete"
+    ],
+    "phaseMarkMapping": {
+      "idle": "phase-idle.svg",
+      "red": "phase-red.svg",
+      "green": "phase-green.svg",
+      "audit": "phase-audit.svg",
+      "self_correct": "phase-self-correct.svg",
+      "complete": "phase-complete.svg"
+    },
+    "subMarks": {
+      "implement": "phase-implement.svg — the GREEN implementation sub-mark",
+      "archive": "phase-archive.svg — the FID-archival duty at complete"
+    },
+    "runLifecycle": ["active", "error", "fix", "done"],
+    "note": "The ECHO Perfection Loop vocabulary is authoritative for phase-* marks; run-* marks carry the generic run lifecycle (the engine running, a flaw identified, repair in progress, shipped and archived)."
+  },
   "icons": [
+    {
+      "file": "logo.svg",
+      "name": "Savant Logo",
+      "category": "identity-mark",
+      "subject": "One Mind. A Thousand Faces. — magenta core with ten radiating cyan circuit facets, HUD bracket frame, scanline accents"
+    },
+    {
+      "file": "logo-s.svg",
+      "name": "Savant S-Monogram",
+      "category": "identity-mark",
+      "subject": "The S as a circuit trace — 90-degree elbows, terminal nodes at entry/exit, the core dot at center"
+    },
     {
       "file": "orchestrator.svg",
       "name": "Orchestrator",
@@ -91,36 +130,6 @@
       "subject": "Meta-verification override — crossed blades with chromatic glitch layer"
     },
     {
-      "file": "fid.svg",
-      "name": "FID",
-      "category": "protocol-mark",
-      "subject": "Feature Implementation Document — folded-corner document, code lines and phase dots"
-    },
-    {
-      "file": "loop.svg",
-      "name": "Perfection Loop",
-      "category": "protocol-mark",
-      "subject": "The fix/verify cycle — 270-degree arc, arrowhead and four phase nodes"
-    },
-    {
-      "file": "law.svg",
-      "name": "Law",
-      "category": "protocol-mark",
-      "subject": "The ECHO protocol laws — gavel with impact ticks"
-    },
-    {
-      "file": "audit.svg",
-      "name": "Audit",
-      "category": "protocol-mark",
-      "subject": "Double-audit — HUD brackets, circuit check and scanline sweep"
-    },
-    {
-      "file": "scope.svg",
-      "name": "Scope",
-      "category": "protocol-mark",
-      "subject": "Target reticle — dual rings, crosshair ticks and cardinal nodes"
-    },
-    {
       "file": "detective-crosshair.svg",
       "name": "Detective Crosshair",
       "category": "variation-mark",
@@ -151,6 +160,42 @@
       "subject": "Double-audit validation shield, bold variant"
     },
     {
+      "file": "fid.svg",
+      "name": "FID",
+      "category": "protocol-mark",
+      "subject": "Feature Implementation Document — folded-corner document, code lines and phase dots"
+    },
+    {
+      "file": "loop.svg",
+      "name": "Perfection Loop",
+      "category": "protocol-mark",
+      "subject": "The fix/verify cycle — 270-degree arc, arrowhead and four phase nodes"
+    },
+    {
+      "file": "law.svg",
+      "name": "Law",
+      "category": "protocol-mark",
+      "subject": "The ECHO protocol laws — gavel with impact ticks"
+    },
+    {
+      "file": "audit.svg",
+      "name": "Audit",
+      "category": "protocol-mark",
+      "subject": "Double-audit — HUD brackets, circuit check and scanline sweep"
+    },
+    {
+      "file": "scope.svg",
+      "name": "Scope",
+      "category": "protocol-mark",
+      "subject": "Target reticle — dual rings, crosshair ticks and cardinal nodes"
+    },
+    {
+      "file": "phase-idle.svg",
+      "name": "IDLE",
+      "category": "phase-mark",
+      "subject": "Hollow core, dim frame — present, not active"
+    },
+    {
       "file": "phase-red.svg",
       "name": "RED",
       "category": "phase-mark",
@@ -163,10 +208,10 @@
       "subject": "Implementing fixes"
     },
     {
-      "file": "phase-implement.svg",
-      "name": "IMPLEMENT",
+      "file": "phase-audit.svg",
+      "name": "AUDIT",
       "category": "phase-mark",
-      "subject": "Writing the fix"
+      "subject": "Scanner examining the core — magnifier with scanline, circuit handle"
     },
     {
       "file": "phase-self-correct.svg",
@@ -178,7 +223,43 @@
       "file": "phase-complete.svg",
       "name": "COMPLETE",
       "category": "phase-mark",
-      "subject": "Archiving the FID"
+      "subject": "Verified check in a green frame"
+    },
+    {
+      "file": "phase-implement.svg",
+      "name": "IMPLEMENT",
+      "category": "phase-mark",
+      "subject": "Writing the fix — the GREEN implementation sub-mark"
+    },
+    {
+      "file": "phase-archive.svg",
+      "name": "ARCHIVE",
+      "category": "phase-mark",
+      "subject": "Archiving the FID — archive box with closure check"
+    },
+    {
+      "file": "run-active.svg",
+      "name": "Run: Active",
+      "category": "run-mark",
+      "subject": "The engine is running — solid glowing core, dashed energized ring, radiating energy"
+    },
+    {
+      "file": "run-error.svg",
+      "name": "Run: Error",
+      "category": "run-mark",
+      "subject": "A flaw, identified — lightning crack through a magenta frame"
+    },
+    {
+      "file": "run-fix.svg",
+      "name": "Run: Fix",
+      "category": "run-mark",
+      "subject": "Repair in progress — repair loop with wrench-trace, acid sparks at the repair point"
+    },
+    {
+      "file": "run-done.svg",
+      "name": "Run: Done",
+      "category": "run-mark",
+      "subject": "Shipped, verified, archived — sealed diamond, corner ticks"
     },
     {
       "file": "tool-bash.svg",
@@ -304,7 +385,7 @@
       "file": "status-active.svg",
       "name": "Active",
       "category": "status-indicator",
-      "subject": "Pulsing core"
+      "subject": "Live and working — solid green core, white-hot center"
     },
     {
       "file": "status-blocked.svg",
@@ -337,6 +418,12 @@
       "subject": "Dim ring"
     },
     {
+      "file": "status-inactive.svg",
+      "name": "Inactive",
+      "category": "status-indicator",
+      "subject": "Present, not running — hollow core, dim ticks"
+    },
+    {
       "file": "status-offline.svg",
       "name": "Offline",
       "category": "status-indicator",
@@ -346,7 +433,7 @@
       "file": "status-partial.svg",
       "name": "Partial",
       "category": "status-indicator",
-      "subject": "Half-filled ring"
+      "subject": "Running with a caveat — half-lit core, acid-yellow split"
     },
     {
       "file": "status-paused.svg",
@@ -641,6 +728,126 @@
       "name": "Wave",
       "category": "cyberpunk-motif",
       "subject": "Sine wave"
+    },
+    {
+      "file": "sidebar-activity.svg",
+      "name": "Activity",
+      "category": "sidebar-section",
+      "subject": "Agent activity stream — vertical timeline with pulse nodes and branch events"
+    },
+    {
+      "file": "sidebar-trust-matrix.svg",
+      "name": "Trust Matrix",
+      "category": "sidebar-section",
+      "subject": "Trust verification grid — 3x3 lattice, magenta verified cells, blue pending cells"
+    },
+    {
+      "file": "sidebar-fid.svg",
+      "name": "FID Section",
+      "category": "sidebar-section",
+      "subject": "Flaw Identification Document — notched document frame, magenta crack, green verification check"
+    },
+    {
+      "file": "sidebar-history.svg",
+      "name": "History",
+      "category": "sidebar-section",
+      "subject": "Session history archive — clock face pointing back, magenta now-node, archive ticks"
+    },
+    {
+      "file": "sidebar-loop.svg",
+      "name": "Loop Section",
+      "category": "sidebar-section",
+      "subject": "The ECHO Perfection Loop — cycle closing on itself, magenta return arrow, iteration nodes"
+    },
+    {
+      "file": "sidebar-session.svg",
+      "name": "Session",
+      "category": "sidebar-section",
+      "subject": "Persistent session state — container pod, state layers, green always-on indicator"
+    },
+    {
+      "file": "activity-thinking.svg",
+      "name": "Thinking",
+      "category": "activity-indicator",
+      "subject": "Branching thought trace — paths the model tried, green cross on the kept branch"
+    },
+    {
+      "file": "activity-tool.svg",
+      "name": "Tool",
+      "category": "activity-indicator",
+      "subject": "Sandbox gear — circuit-trace cog with stub teeth, executing core"
+    },
+    {
+      "file": "activity-subagent.svg",
+      "name": "Subagent",
+      "category": "activity-indicator",
+      "subject": "Parent node spawning a child — delegation trace, smaller child one generation down"
+    },
+    {
+      "file": "activity-researching.svg",
+      "name": "Researching",
+      "category": "activity-indicator",
+      "subject": "Magnifier over indexed sources — source lines, glowing match, circuit handle"
+    },
+    {
+      "file": "nav-back.svg",
+      "name": "Nav: Back",
+      "category": "nav-glyph",
+      "subject": "Left chevron with magenta terminal node and HUD corner tick"
+    },
+    {
+      "file": "nav-forward.svg",
+      "name": "Nav: Forward",
+      "category": "nav-glyph",
+      "subject": "Right chevron with magenta terminal node and HUD corner tick"
+    },
+    {
+      "file": "nav-up.svg",
+      "name": "Nav: Up",
+      "category": "nav-glyph",
+      "subject": "Up chevron with magenta terminal node and HUD corner tick"
+    },
+    {
+      "file": "nav-down.svg",
+      "name": "Nav: Down",
+      "category": "nav-glyph",
+      "subject": "Down chevron with magenta terminal node and HUD corner tick"
+    },
+    {
+      "file": "alert-info.svg",
+      "name": "Alert: Info",
+      "category": "alert-glyph",
+      "subject": "Blue circle frame, info dot and stroke, terminal dot at the base"
+    },
+    {
+      "file": "alert-success.svg",
+      "name": "Alert: Success",
+      "category": "alert-glyph",
+      "subject": "Green circle frame, verified check"
+    },
+    {
+      "file": "alert-warning.svg",
+      "name": "Alert: Warning",
+      "category": "alert-glyph",
+      "subject": "Acid-yellow triangle, glowing exclamation stroke, HUD ticks"
+    },
+    {
+      "file": "alert-error.svg",
+      "name": "Alert: Error",
+      "category": "alert-glyph",
+      "subject": "Magenta octagon (hard stop), crossing circuit traces, terminal nodes"
+    },
+    {
+      "file": "toggle-on.svg",
+      "name": "Toggle: On",
+      "category": "toggle-glyph",
+      "subject": "Energized track, glowing node right, white-hot center"
+    },
+    {
+      "file": "toggle-off.svg",
+      "name": "Toggle: Off",
+      "category": "toggle-glyph",
+      "subject": "Dim track, hollow node left"
     }
   ],
   "integration": {

@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none" role="img" aria-label="Activity: researching — deep research in progress">
+  <defs>
+    <filter id="glow" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="2.5" result="blur" />
+      <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
+    </filter>
+  </defs>
+  <!-- researching: the magnifier over indexed sources -->
+  <circle cx="26" cy="26" r="13" stroke="#18faf9" stroke-width="3" />
+  <!-- indexed content inside the lens: source lines -->
+  <g stroke="#4fa8ff" stroke-width="1.5" opacity="0.7">
+    <path d="M19 22 L33 22" /><path d="M19 26 L33 26" /><path d="M19 30 L29 30" />
+  </g>
+  <!-- the found signal: glowing match -->
+  <circle cx="26" cy="26" r="2" fill="#ff2bd6" filter="url(#glow)" />
+  <!-- circuit handle with elbow -->
+  <path d="M36 36 L48 50" stroke="#18faf9" stroke-width="3" stroke-linecap="round" />
+  <circle cx="49" cy="51" r="2.5" fill="#ff2bd6" />
+  <!-- citation tick -->
+  <path d="M52 12 L56 12 L56 16" stroke="#4fa8ff" stroke-width="1.5" opacity="0.6" />
+</svg>

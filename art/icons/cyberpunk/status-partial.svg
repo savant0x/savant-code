@@ -1,18 +1,15 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none" role="img" aria-label="Partial status — half-filled ring">
-  <!-- SAVANT // CYBERDECK — hand-authored vector geometry, no external assets -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none" role="img" aria-label="Status: partial — running with a caveat">
   <defs>
     <filter id="glow" x="-40%" y="-40%" width="180%" height="180%">
       <feGaussianBlur stdDeviation="2.5" result="blur" />
-      <feMerge>
-        <feMergeNode in="blur" />
-        <feMergeNode in="SourceGraphic" />
-      </feMerge>
+      <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
     </filter>
   </defs>
-  <!-- base ring -->
-  <circle cx="32" cy="32" r="15" stroke="#18faf9" stroke-width="3" />
-  <!-- filled half -->
-  <path d="M32 17 A15 15 0 0 1 32 47 Z" fill="#18faf9" fill-opacity="0.25" />
-  <!-- divider -->
-  <path d="M32 17 L32 47" stroke="#4fa8ff" stroke-width="1.5" />
+  <!-- partial: half-lit core, the split state -->
+  <circle cx="32" cy="32" r="10" stroke="#18faf9" stroke-width="3" />
+  <path d="M32 22 A10 10 0 0 1 32 42 Z" fill="#f3e600" filter="url(#glow)" opacity="0.85" />
+  <circle cx="32" cy="32" r="2" fill="#18faf9" />
+  <g stroke="#f3e600" stroke-width="1.5" opacity="0.5">
+    <path d="M32 12 L32 16" /><path d="M32 52 L32 48" />
+  </g>
 </svg>

@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none" role="img" aria-label="Phase: archive — archiving the FID">
+  <!-- SAVANT // CYBERDECK — hand-authored vector geometry, no external assets -->
+  <defs>
+    <filter id="glow" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="2.5" result="blur" />
+      <feMerge>
+        <feMergeNode in="blur" />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
+    </filter>
+  </defs>
+  <!-- archive box -->
+  <path d="M12 18 L52 18" stroke="#18faf9" stroke-width="3" stroke-linecap="round" />
+  <path d="M14 22 L50 22 L50 52 L14 52 Z" stroke="#18faf9" stroke-width="3" stroke-linejoin="round" />
+  <path d="M28 22 L28 28 L36 28 L36 22" stroke="#ff2bd6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+  <!-- closure check -->
+  <path d="M23 40 L29 46 L42 32" stroke="#ff2bd6" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" filter="url(#glow)" />
+</svg>

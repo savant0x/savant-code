@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none" role="img" aria-label="Activity: thinking — the model is reasoning">
+  <defs>
+    <filter id="glow" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="2.5" result="blur" />
+      <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
+    </filter>
+  </defs>
+  <!-- thinking: the branching thought trace -->
+  <path d="M32 54 L32 36" stroke="#18faf9" stroke-width="3" stroke-linecap="round" />
+  <path d="M32 36 L20 22" stroke="#18faf9" stroke-width="2.5" stroke-linecap="round" />
+  <path d="M32 36 L44 22" stroke="#18faf9" stroke-width="2.5" stroke-linecap="round" />
+  <!-- thought nodes: the paths the model tried -->
+  <g fill="#ff2bd6" filter="url(#glow)">
+    <circle cx="20" cy="22" r="3" />
+    <circle cx="44" cy="22" r="3" />
+  </g>
+  <circle cx="32" cy="54" r="2.5" fill="#18faf9" />
+  <!-- the kept branch: small cross on the left path -->
+  <g stroke="#3dff9a" stroke-width="2" stroke-linecap="round">
+    <path d="M16 14 L22 18" /><path d="M22 14 L16 18" />
+  </g>
+</svg>

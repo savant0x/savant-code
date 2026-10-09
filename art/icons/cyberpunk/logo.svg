@@ -1,0 +1,66 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none" role="img" aria-label="SAVANT — One Mind. A Thousand Faces.">
+  <!-- SAVANT // CYBERDECK — identity core -->
+  <defs>
+    <filter id="glow" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="2.5" result="blur" />
+      <feMerge>
+        <feMergeNode in="blur" />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
+    </filter>
+    <filter id="glow-strong" x="-60%" y="-60%" width="220%" height="220%">
+      <feGaussianBlur stdDeviation="3.5" result="blur" />
+      <feMerge>
+        <feMergeNode in="blur" />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- THE ONE MIND: core consciousness node -->
+  <circle cx="32" cy="32" r="6.5" fill="#ff2bd6" filter="url(#glow-strong)" />
+  <circle cx="32" cy="32" r="3" fill="#ffffff" opacity="0.95" />
+
+  <!-- THE THOUSAND FACES: radiating identity facets, cyan circuit traces -->
+  <g stroke="#18faf9" stroke-width="2.5" stroke-linecap="round">
+    <!-- 10 facets at 30-degree intervals: the faces of the one mind -->
+    <path d="M32 21.5 L32 12" />
+    <path d="M40.25 23.75 L46.5 16.5" />
+    <path d="M44.25 29.75 L53 28" />
+    <path d="M44.25 34.25 L53 36" />
+    <path d="M40.25 40.25 L46.5 47.5" />
+    <path d="M32 42.5 L32 52" />
+    <path d="M23.75 40.25 L17.5 47.5" />
+    <path d="M19.75 34.25 L11 36" />
+    <path d="M19.75 29.75 L11 28" />
+    <path d="M23.75 23.75 L17.5 16.5" />
+  </g>
+
+  <!-- terminal node dots: each facet terminates in a face -->
+  <g fill="#18faf9">
+    <circle cx="32" cy="12" r="2" />
+    <circle cx="46.5" cy="16.5" r="2" />
+    <circle cx="53" cy="28" r="2" />
+    <circle cx="53" cy="36" r="2" />
+    <circle cx="46.5" cy="47.5" r="2" />
+    <circle cx="32" cy="52" r="2" />
+    <circle cx="17.5" cy="47.5" r="2" />
+    <circle cx="11" cy="36" r="2" />
+    <circle cx="11" cy="28" r="2" />
+    <circle cx="17.5" cy="16.5" r="2" />
+  </g>
+
+  <!-- HUD bracket ring: the cyberdeck frame -->
+  <g stroke="#4fa8ff" stroke-width="1.5" opacity="0.7">
+    <path d="M20 8 L12 8 L12 16" fill="none" />
+    <path d="M44 8 L52 8 L52 16" fill="none" />
+    <path d="M52 44 L52 52 L44 52" fill="none" />
+    <path d="M20 52 L12 52 L12 44" fill="none" />
+  </g>
+
+  <!-- scanline accents -->
+  <g stroke="#4fa8ff" stroke-width="0.75" opacity="0.35">
+    <path d="M8 30 L14 30" />
+    <path d="M50 34 L56 34" />
+  </g>
+</svg>
