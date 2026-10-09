@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none" role="img" aria-label="Drone motif — quad rotor">
+  <!-- SAVANT // CYBERDECK — hand-authored vector geometry, no external assets -->
+  <defs>
+    <filter id="glow" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="2.5" result="blur" />
+      <feMerge>
+        <feMergeNode in="blur" />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
+    </filter>
+  </defs>
+  <!-- body -->
+  <rect x="26" y="26" width="12" height="12" rx="3" stroke="#18faf9" stroke-width="3" />
+  <!-- arms -->
+  <path d="M26 28 L16 20" stroke="#18faf9" stroke-width="2.5" stroke-linecap="round" />
+  <path d="M38 28 L48 20" stroke="#18faf9" stroke-width="2.5" stroke-linecap="round" />
+  <path d="M26 36 L16 44" stroke="#18faf9" stroke-width="2.5" stroke-linecap="round" />
+  <path d="M38 36 L48 44" stroke="#18faf9" stroke-width="2.5" stroke-linecap="round" />
+  <!-- rotors -->
+  <ellipse cx="14" cy="18" rx="6" ry="2" stroke="#4fa8ff" stroke-width="2" />
+  <ellipse cx="50" cy="18" rx="6" ry="2" stroke="#4fa8ff" stroke-width="2" />
+  <ellipse cx="14" cy="46" rx="6" ry="2" stroke="#4fa8ff" stroke-width="2" />
+  <ellipse cx="50" cy="46" rx="6" ry="2" stroke="#4fa8ff" stroke-width="2" />
+  <!-- camera -->
+  <circle cx="32" cy="32" r="2" fill="#ff2bd6" filter="url(#glow)" />
+</svg>

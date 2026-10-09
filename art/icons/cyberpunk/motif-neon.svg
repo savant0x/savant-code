@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none" role="img" aria-label="Neon motif — radiant core">
+  <!-- SAVANT // CYBERDECK — hand-authored vector geometry, no external assets -->
+  <defs>
+    <filter id="glow" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="2.5" result="blur" />
+      <feMerge>
+        <feMergeNode in="blur" />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
+    </filter>
+  </defs>
+  <!-- eight radiant spokes -->
+  <path d="M32 10 L32 22" stroke="#18faf9" stroke-width="2.5" stroke-linecap="round" />
+  <path d="M32 42 L32 54" stroke="#18faf9" stroke-width="2.5" stroke-linecap="round" />
+  <path d="M10 32 L22 32" stroke="#18faf9" stroke-width="2.5" stroke-linecap="round" />
+  <path d="M42 32 L54 32" stroke="#18faf9" stroke-width="2.5" stroke-linecap="round" />
+  <path d="M17 17 L25 25" stroke="#18faf9" stroke-width="2.5" stroke-linecap="round" />
+  <path d="M39 39 L47 47" stroke="#18faf9" stroke-width="2.5" stroke-linecap="round" />
+  <path d="M47 17 L39 25" stroke="#18faf9" stroke-width="2.5" stroke-linecap="round" />
+  <path d="M25 39 L17 47" stroke="#18faf9" stroke-width="2.5" stroke-linecap="round" />
+  <!-- radiant core -->
+  <circle cx="32" cy="32" r="6" fill="#ff2bd6" filter="url(#glow)" />
+</svg>

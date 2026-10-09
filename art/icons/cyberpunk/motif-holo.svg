@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none" role="img" aria-label="Holo motif — projected diamond">
+  <!-- SAVANT // CYBERDECK — hand-authored vector geometry, no external assets -->
+  <defs>
+    <filter id="glow" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="2.5" result="blur" />
+      <feMerge>
+        <feMergeNode in="blur" />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
+    </filter>
+  </defs>
+  <!-- emitter -->
+  <path d="M20 50 L44 50" stroke="#18faf9" stroke-width="3" stroke-linecap="round" />
+  <path d="M24 54 L40 54" stroke="#18faf9" stroke-width="2" stroke-linecap="round" />
+  <!-- projection rays -->
+  <path d="M20 50 L28 26" stroke="#18faf9" stroke-width="2" opacity="0.6" stroke-linecap="round" />
+  <path d="M32 50 L32 20" stroke="#18faf9" stroke-width="2" opacity="0.6" stroke-linecap="round" />
+  <path d="M44 50 L36 26" stroke="#18faf9" stroke-width="2" opacity="0.6" stroke-linecap="round" />
+  <!-- hologram diamond -->
+  <path d="M32 12 L42 24 L32 36 L22 24 Z" stroke="#ff2bd6" stroke-width="2" stroke-linejoin="round" filter="url(#glow)" />
+  <!-- inner node -->
+  <circle cx="32" cy="24" r="2" fill="#18faf9" />
+</svg>

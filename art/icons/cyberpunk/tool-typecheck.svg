@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none" role="img" aria-label="Typecheck tool — T monogram with check">
+  <!-- SAVANT // CYBERDECK — hand-authored vector geometry, no external assets -->
+  <defs>
+    <filter id="glow" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="2.5" result="blur" />
+      <feMerge>
+        <feMergeNode in="blur" />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
+    </filter>
+  </defs>
+  <!-- T glyph -->
+  <path d="M22 16 L42 16" stroke="#18faf9" stroke-width="3" stroke-linecap="round" />
+  <path d="M32 16 L32 34" stroke="#18faf9" stroke-width="3" stroke-linecap="round" />
+  <!-- type-safe check -->
+  <path d="M24 42 L30 48 L44 34" stroke="#ff2bd6" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" filter="url(#glow)" />
+</svg>

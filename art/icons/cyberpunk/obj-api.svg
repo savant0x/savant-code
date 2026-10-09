@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none" role="img" aria-label="API object — plug and socket">
+  <!-- SAVANT // CYBERDECK — hand-authored vector geometry, no external assets -->
+  <defs>
+    <filter id="glow" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="2.5" result="blur" />
+      <feMerge>
+        <feMergeNode in="blur" />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
+    </filter>
+  </defs>
+  <!-- plug head -->
+  <path d="M22 12 L42 12 L42 24 L22 24 Z" stroke="#18faf9" stroke-width="3" stroke-linejoin="round" />
+  <!-- prongs -->
+  <path d="M26 12 L26 6" stroke="#18faf9" stroke-width="2.5" stroke-linecap="round" />
+  <path d="M38 12 L38 6" stroke="#18faf9" stroke-width="2.5" stroke-linecap="round" />
+  <!-- cable -->
+  <path d="M32 24 L32 44" stroke="#18faf9" stroke-width="2.5" stroke-linecap="round" />
+  <!-- socket -->
+  <path d="M24 44 L40 44 L40 54 L24 54 Z" stroke="#18faf9" stroke-width="3" stroke-linejoin="round" />
+  <!-- port dots -->
+  <circle cx="28" cy="49" r="1.5" fill="#ff2bd6" />
+  <circle cx="36" cy="49" r="1.5" fill="#ff2bd6" />
+</svg>

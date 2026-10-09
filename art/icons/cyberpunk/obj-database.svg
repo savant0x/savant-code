@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none" role="img" aria-label="Database object — cylinder">
+  <!-- SAVANT // CYBERDECK — hand-authored vector geometry, no external assets -->
+  <defs>
+    <filter id="glow" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="2.5" result="blur" />
+      <feMerge>
+        <feMergeNode in="blur" />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
+    </filter>
+  </defs>
+  <!-- top rim -->
+  <path d="M16 20 A16 6 0 0 0 48 20" stroke="#18faf9" stroke-width="3" stroke-linecap="round" />
+  <!-- body -->
+  <path d="M16 20 L16 44 A16 6 0 0 0 48 44 L48 20" stroke="#18faf9" stroke-width="3" stroke-linecap="round" />
+  <!-- mid rim -->
+  <path d="M16 32 A16 6 0 0 0 48 32" stroke="#4fa8ff" stroke-width="1.5" stroke-linecap="round" />
+  <!-- data node -->
+  <circle cx="32" cy="20" r="2" fill="#ff2bd6" filter="url(#glow)" />
+</svg>

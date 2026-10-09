@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none" role="img" aria-label="Agents command — three figures">
+  <!-- SAVANT // CYBERDECK — hand-authored vector geometry, no external assets -->
+  <defs>
+    <filter id="glow" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="2.5" result="blur" />
+      <feMerge>
+        <feMergeNode in="blur" />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
+    </filter>
+  </defs>
+  <!-- center figure -->
+  <circle cx="32" cy="22" r="5" stroke="#18faf9" stroke-width="3" />
+  <path d="M22 38 C22 31 42 31 42 38" stroke="#18faf9" stroke-width="3" stroke-linecap="round" />
+  <!-- left figure -->
+  <circle cx="18" cy="18" r="4" stroke="#4fa8ff" stroke-width="2.5" />
+  <path d="M10 32 C10 26 26 26 26 32" stroke="#4fa8ff" stroke-width="2.5" stroke-linecap="round" />
+  <!-- right figure -->
+  <circle cx="46" cy="18" r="4" stroke="#4fa8ff" stroke-width="2.5" />
+  <path d="M38 32 C38 26 54 26 54 32" stroke="#4fa8ff" stroke-width="2.5" stroke-linecap="round" />
+</svg>

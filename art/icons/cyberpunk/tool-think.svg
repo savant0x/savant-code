@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none" role="img" aria-label="Think tool — thought bubble with nodes">
+  <!-- SAVANT // CYBERDECK — hand-authored vector geometry, no external assets -->
+  <defs>
+    <filter id="glow" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="2.5" result="blur" />
+      <feMerge>
+        <feMergeNode in="blur" />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
+    </filter>
+  </defs>
+  <!-- thought bubble -->
+  <circle cx="28" cy="26" r="14" stroke="#18faf9" stroke-width="3" />
+  <!-- trailing bubbles -->
+  <circle cx="18" cy="44" r="3.5" stroke="#18faf9" stroke-width="3" />
+  <circle cx="12" cy="52" r="2" stroke="#18faf9" stroke-width="3" />
+  <!-- thought nodes -->
+  <circle cx="22" cy="26" r="2" fill="#ff2bd6" />
+  <circle cx="28" cy="26" r="2" fill="#ff2bd6" />
+  <circle cx="34" cy="26" r="2" fill="#ff2bd6" />
+</svg>

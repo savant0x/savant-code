@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none" role="img" aria-label="Terminal object — monitor">
+  <!-- SAVANT // CYBERDECK — hand-authored vector geometry, no external assets -->
+  <defs>
+    <filter id="glow" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="2.5" result="blur" />
+      <feMerge>
+        <feMergeNode in="blur" />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
+    </filter>
+  </defs>
+  <!-- screen -->
+  <path d="M12 14 L52 14 L52 42 L12 42 Z" stroke="#18faf9" stroke-width="3" stroke-linejoin="round" />
+  <!-- prompt -->
+  <path d="M18 24 L24 28 L18 32" stroke="#ff2bd6" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
+  <path d="M28 30 L40 30" stroke="#18faf9" stroke-width="2" stroke-linecap="round" />
+  <!-- stand -->
+  <path d="M32 42 L32 48" stroke="#18faf9" stroke-width="3" stroke-linecap="round" />
+  <path d="M22 50 L42 50" stroke="#18faf9" stroke-width="3" stroke-linecap="round" />
+</svg>

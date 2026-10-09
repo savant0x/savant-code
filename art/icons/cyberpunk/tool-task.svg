@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none" role="img" aria-label="Task tool — clipboard with checked rows">
+  <!-- SAVANT // CYBERDECK — hand-authored vector geometry, no external assets -->
+  <defs>
+    <filter id="glow" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="2.5" result="blur" />
+      <feMerge>
+        <feMergeNode in="blur" />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
+    </filter>
+  </defs>
+  <!-- clipboard body -->
+  <path d="M18 12 L46 12 L46 52 L18 52 Z" stroke="#18faf9" stroke-width="3" stroke-linejoin="round" />
+  <!-- clip -->
+  <path d="M26 8 L38 8 L38 14 L26 14 Z" stroke="#ff2bd6" stroke-width="2" stroke-linejoin="round" />
+  <!-- row 1: check + text -->
+  <path d="M23 26 L26 29 L31 23" stroke="#ff2bd6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" filter="url(#glow)" />
+  <path d="M35 27 L42 27" stroke="#18faf9" stroke-width="2" stroke-linecap="round" />
+  <!-- row 2: check + text -->
+  <path d="M23 35 L26 38 L31 32" stroke="#ff2bd6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" filter="url(#glow)" />
+  <path d="M35 36 L42 36" stroke="#18faf9" stroke-width="2" stroke-linecap="round" />
+  <!-- row 3: check + text -->
+  <path d="M23 44 L26 47 L31 41" stroke="#ff2bd6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" filter="url(#glow)" />
+  <path d="M35 45 L42 45" stroke="#18faf9" stroke-width="2" stroke-linecap="round" />
+</svg>

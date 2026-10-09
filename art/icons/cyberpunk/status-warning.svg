@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none" role="img" aria-label="Warning status — triangle with exclamation">
+  <!-- SAVANT // CYBERDECK — hand-authored vector geometry, no external assets -->
+  <defs>
+    <filter id="glow" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="2.5" result="blur" />
+      <feMerge>
+        <feMergeNode in="blur" />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
+    </filter>
+  </defs>
+  <!-- warning triangle -->
+  <path d="M32 12 L52 48 L12 48 Z" stroke="#18faf9" stroke-width="3" stroke-linejoin="round" />
+  <!-- exclamation -->
+  <path d="M32 22 L32 34" stroke="#ff2bd6" stroke-width="3" stroke-linecap="round" />
+  <circle cx="32" cy="40" r="2" fill="#ff2bd6" />
+</svg>

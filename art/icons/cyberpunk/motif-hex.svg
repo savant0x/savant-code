@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none" role="img" aria-label="Hex motif — nested hexagons">
+  <!-- SAVANT // CYBERDECK — hand-authored vector geometry, no external assets -->
+  <defs>
+    <filter id="glow" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="2.5" result="blur" />
+      <feMerge>
+        <feMergeNode in="blur" />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
+    </filter>
+  </defs>
+  <!-- outer hexagon -->
+  <path d="M32 12 L49 22 L49 42 L32 52 L15 42 L15 22 Z" stroke="#18faf9" stroke-width="3" stroke-linejoin="round" />
+  <!-- inner hexagon -->
+  <path d="M32 22 L41 27 L41 37 L32 42 L23 37 L23 27 Z" stroke="#ff2bd6" stroke-width="2" stroke-linejoin="round" />
+  <!-- core -->
+  <circle cx="32" cy="32" r="2.5" fill="#4fa8ff" />
+</svg>

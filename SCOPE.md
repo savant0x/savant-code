@@ -158,18 +158,6 @@
       operator-directed session. **Automation level: 1** (no agent action;
       the e2e failures are known and operator-owned until then).
 
-### Asset work
-
-- [ ] **T174. Cyberpunk icon set expansion to ~100
-      (operator-requested 2026-10-09).** Expand
-      `art/icons/cyberpunk/` from 15 to ~100 hand-authored
-      SVGs: 5 Perfection Loop phase marks, 20 tool glyphs,
-      12 status indicators, 15 command marks, 15 dev-object
-      marks, 15 cyberpunk motif marks, and 5 variation /
-      secondary options — same design system (canonical
-      palette, 64×64, glow, circuit motifs). Manifest
-      rewritten to index all ~102. **Automation level: 3.**
-
 ### Build orders (formalized as FIDs 2026-10-07)
 
 - [ ] **T164-D. Eval-runner wire-stage usage telemetry.** Open remainder
@@ -215,4 +203,3 @@
 - T164-D: `common/src/types/print-mode.ts`,
   `packages/agent-runtime/src/run-agent-step/step.ts`,
   `evals/v2/src/runner.ts`, `sdk/src/run/types.ts`
-- T174: `art/icons/cyberpunk/**`

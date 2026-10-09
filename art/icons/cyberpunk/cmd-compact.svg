@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none" role="img" aria-label="Compact command — converging arrows">
+  <!-- SAVANT // CYBERDECK — hand-authored vector geometry, no external assets -->
+  <defs>
+    <filter id="glow" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="2.5" result="blur" />
+      <feMerge>
+        <feMergeNode in="blur" />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
+    </filter>
+  </defs>
+  <!-- left arrow -->
+  <path d="M14 32 L26 32" stroke="#18faf9" stroke-width="3" stroke-linecap="round" />
+  <polygon points="22,27 29,32 22,37" fill="#ff2bd6" filter="url(#glow)" />
+  <!-- right arrow -->
+  <path d="M50 32 L38 32" stroke="#18faf9" stroke-width="3" stroke-linecap="round" />
+  <polygon points="42,27 35,32 42,37" fill="#ff2bd6" filter="url(#glow)" />
+  <!-- center lines -->
+  <path d="M28 20 L28 44" stroke="#4fa8ff" stroke-width="1.5" stroke-linecap="round" />
+  <path d="M36 20 L36 44" stroke="#4fa8ff" stroke-width="1.5" stroke-linecap="round" />
+</svg>

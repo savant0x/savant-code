@@ -1,8 +1,8 @@
 {
   "set": "savant-cyberdeck",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "created": "2026-10-09",
-  "description": "Custom cyberpunk icon set for the Savant CLI: the 10 canonical ECHO agent roles and 5 protocol marks, hand-authored as vector geometry in the canonical Savant neon palette. No external assets, no icon fonts, no downloaded content.",
+  "description": "Custom cyberpunk icon set for the Savant CLI: 102 hand-authored vector icons in the canonical Savant neon palette — 10 ECHO agent roles and 5 protocol marks with 5 variation marks, 5 Perfection Loop phase marks, 20 tool glyphs, 12 status indicators, 15 command marks, 15 dev-object marks, and 15 cyberpunk motif marks. No external assets, no icon fonts, no downloaded content.",
   "viewBox": "0 0 64 64",
   "palette": {
     "cyan": "#18faf9",
@@ -119,6 +119,528 @@
       "name": "Scope",
       "category": "protocol-mark",
       "subject": "Target reticle — dual rings, crosshair ticks and cardinal nodes"
+    },
+    {
+      "file": "detective-crosshair.svg",
+      "name": "Detective Crosshair",
+      "category": "variation-mark",
+      "subject": "Analysis scanner, crosshair variant"
+    },
+    {
+      "file": "loop-minimal.svg",
+      "name": "Loop Minimal",
+      "category": "variation-mark",
+      "subject": "The ECHO fix/verify cycle, minimal variant"
+    },
+    {
+      "file": "orchestrator-solid.svg",
+      "name": "Orchestrator Solid",
+      "category": "variation-mark",
+      "subject": "Protocol enforcement hub, solid variant"
+    },
+    {
+      "file": "scope-crosshair.svg",
+      "name": "Scope Crosshair",
+      "category": "variation-mark",
+      "subject": "Target reticle, crosshair variant"
+    },
+    {
+      "file": "verifier-bold.svg",
+      "name": "Verifier Bold",
+      "category": "variation-mark",
+      "subject": "Double-audit validation shield, bold variant"
+    },
+    {
+      "file": "phase-red.svg",
+      "name": "RED",
+      "category": "phase-mark",
+      "subject": "Investigating the codebase"
+    },
+    {
+      "file": "phase-green.svg",
+      "name": "GREEN",
+      "category": "phase-mark",
+      "subject": "Implementing fixes"
+    },
+    {
+      "file": "phase-implement.svg",
+      "name": "IMPLEMENT",
+      "category": "phase-mark",
+      "subject": "Writing the fix"
+    },
+    {
+      "file": "phase-self-correct.svg",
+      "name": "SELF-CORRECT",
+      "category": "phase-mark",
+      "subject": "Revising the approach"
+    },
+    {
+      "file": "phase-complete.svg",
+      "name": "COMPLETE",
+      "category": "phase-mark",
+      "subject": "Archiving the FID"
+    },
+    {
+      "file": "tool-bash.svg",
+      "name": "Bash",
+      "category": "tool-glyph",
+      "subject": "Terminal window"
+    },
+    {
+      "file": "tool-build.svg",
+      "name": "Build",
+      "category": "tool-glyph",
+      "subject": "Gear"
+    },
+    {
+      "file": "tool-call.svg",
+      "name": "Call",
+      "category": "tool-glyph",
+      "subject": "Arrow into a port box"
+    },
+    {
+      "file": "tool-deploy.svg",
+      "name": "Deploy",
+      "category": "tool-glyph",
+      "subject": "Rocket"
+    },
+    {
+      "file": "tool-diff.svg",
+      "name": "Diff",
+      "category": "tool-glyph",
+      "subject": "Two documents with spark"
+    },
+    {
+      "file": "tool-edit.svg",
+      "name": "Edit",
+      "category": "tool-glyph",
+      "subject": "Pencil"
+    },
+    {
+      "file": "tool-fetch.svg",
+      "name": "Fetch",
+      "category": "tool-glyph",
+      "subject": "Download arrow onto a tray"
+    },
+    {
+      "file": "tool-glob.svg",
+      "name": "Glob",
+      "category": "tool-glyph",
+      "subject": "Orbital spokes"
+    },
+    {
+      "file": "tool-grep.svg",
+      "name": "Grep",
+      "category": "tool-glyph",
+      "subject": "Search lens over text lines"
+    },
+    {
+      "file": "tool-lint.svg",
+      "name": "Lint",
+      "category": "tool-glyph",
+      "subject": "Broom sweeping"
+    },
+    {
+      "file": "tool-read.svg",
+      "name": "Read",
+      "category": "tool-glyph",
+      "subject": "Open book"
+    },
+    {
+      "file": "tool-search.svg",
+      "name": "Search",
+      "category": "tool-glyph",
+      "subject": "Lens with crosshair"
+    },
+    {
+      "file": "tool-skill.svg",
+      "name": "Skill",
+      "category": "tool-glyph",
+      "subject": "Hexagon with star core"
+    },
+    {
+      "file": "tool-task.svg",
+      "name": "Task",
+      "category": "tool-glyph",
+      "subject": "Clipboard with checked rows"
+    },
+    {
+      "file": "tool-test.svg",
+      "name": "Test",
+      "category": "tool-glyph",
+      "subject": "Flask with passing check"
+    },
+    {
+      "file": "tool-think.svg",
+      "name": "Think",
+      "category": "tool-glyph",
+      "subject": "Thought bubble with nodes"
+    },
+    {
+      "file": "tool-todo.svg",
+      "name": "Todo",
+      "category": "tool-glyph",
+      "subject": "List with checkboxes"
+    },
+    {
+      "file": "tool-typecheck.svg",
+      "name": "Typecheck",
+      "category": "tool-glyph",
+      "subject": "T monogram with check"
+    },
+    {
+      "file": "tool-web.svg",
+      "name": "Web",
+      "category": "tool-glyph",
+      "subject": "Globe with meridians"
+    },
+    {
+      "file": "tool-write.svg",
+      "name": "Write",
+      "category": "tool-glyph",
+      "subject": "Pen on document"
+    },
+    {
+      "file": "status-active.svg",
+      "name": "Active",
+      "category": "status-indicator",
+      "subject": "Pulsing core"
+    },
+    {
+      "file": "status-blocked.svg",
+      "name": "Blocked",
+      "category": "status-indicator",
+      "subject": "Octagon with bar"
+    },
+    {
+      "file": "status-complete.svg",
+      "name": "Complete",
+      "category": "status-indicator",
+      "subject": "Ringed check"
+    },
+    {
+      "file": "status-connecting.svg",
+      "name": "Connecting",
+      "category": "status-indicator",
+      "subject": "Plug and cable"
+    },
+    {
+      "file": "status-error.svg",
+      "name": "Error",
+      "category": "status-indicator",
+      "subject": "Ringed cross"
+    },
+    {
+      "file": "status-idle.svg",
+      "name": "Idle",
+      "category": "status-indicator",
+      "subject": "Dim ring"
+    },
+    {
+      "file": "status-offline.svg",
+      "name": "Offline",
+      "category": "status-indicator",
+      "subject": "Slashed ring"
+    },
+    {
+      "file": "status-partial.svg",
+      "name": "Partial",
+      "category": "status-indicator",
+      "subject": "Half-filled ring"
+    },
+    {
+      "file": "status-paused.svg",
+      "name": "Paused",
+      "category": "status-indicator",
+      "subject": "Double bars"
+    },
+    {
+      "file": "status-retrying.svg",
+      "name": "Retrying",
+      "category": "status-indicator",
+      "subject": "Circular arrow"
+    },
+    {
+      "file": "status-syncing.svg",
+      "name": "Syncing",
+      "category": "status-indicator",
+      "subject": "Counter-rotating arcs"
+    },
+    {
+      "file": "status-warning.svg",
+      "name": "Warning",
+      "category": "status-indicator",
+      "subject": "Triangle with exclamation"
+    },
+    {
+      "file": "cmd-agents.svg",
+      "name": "Agents",
+      "category": "command-mark",
+      "subject": "Three figures"
+    },
+    {
+      "file": "cmd-clear.svg",
+      "name": "Clear",
+      "category": "command-mark",
+      "subject": "Trash can"
+    },
+    {
+      "file": "cmd-commit.svg",
+      "name": "Commit",
+      "category": "command-mark",
+      "subject": "Node graph with branch"
+    },
+    {
+      "file": "cmd-compact.svg",
+      "name": "Compact",
+      "category": "command-mark",
+      "subject": "Converging arrows"
+    },
+    {
+      "file": "cmd-config.svg",
+      "name": "Config",
+      "category": "command-mark",
+      "subject": "Sliders"
+    },
+    {
+      "file": "cmd-exit.svg",
+      "name": "Exit",
+      "category": "command-mark",
+      "subject": "Door with arrow"
+    },
+    {
+      "file": "cmd-export.svg",
+      "name": "Export",
+      "category": "command-mark",
+      "subject": "Arrow out of a tray"
+    },
+    {
+      "file": "cmd-graph.svg",
+      "name": "Graph",
+      "category": "command-mark",
+      "subject": "Triangle of nodes"
+    },
+    {
+      "file": "cmd-help.svg",
+      "name": "Help",
+      "category": "command-mark",
+      "subject": "Question mark"
+    },
+    {
+      "file": "cmd-logs.svg",
+      "name": "Logs",
+      "category": "command-mark",
+      "subject": "Console with lines"
+    },
+    {
+      "file": "cmd-model.svg",
+      "name": "Model",
+      "category": "command-mark",
+      "subject": "Stacked layers"
+    },
+    {
+      "file": "cmd-new.svg",
+      "name": "New",
+      "category": "command-mark",
+      "subject": "Circled plus"
+    },
+    {
+      "file": "cmd-skills.svg",
+      "name": "Skills",
+      "category": "command-mark",
+      "subject": "Medal with ribbon"
+    },
+    {
+      "file": "cmd-status.svg",
+      "name": "Status",
+      "category": "command-mark",
+      "subject": "Gauge"
+    },
+    {
+      "file": "cmd-theme.svg",
+      "name": "Theme",
+      "category": "command-mark",
+      "subject": "Half-filled circle"
+    },
+    {
+      "file": "obj-api.svg",
+      "name": "API",
+      "category": "dev-object-mark",
+      "subject": "Plug and socket"
+    },
+    {
+      "file": "obj-branch.svg",
+      "name": "Branch",
+      "category": "dev-object-mark",
+      "subject": "Git branch"
+    },
+    {
+      "file": "obj-calendar.svg",
+      "name": "Calendar",
+      "category": "dev-object-mark",
+      "subject": "Month grid"
+    },
+    {
+      "file": "obj-clock.svg",
+      "name": "Clock",
+      "category": "dev-object-mark",
+      "subject": "Analog clock"
+    },
+    {
+      "file": "obj-cloud.svg",
+      "name": "Cloud",
+      "category": "dev-object-mark",
+      "subject": "Cloud with rain"
+    },
+    {
+      "file": "obj-code.svg",
+      "name": "Code",
+      "category": "dev-object-mark",
+      "subject": "Angle brackets with slash"
+    },
+    {
+      "file": "obj-database.svg",
+      "name": "Database",
+      "category": "dev-object-mark",
+      "subject": "Cylinder"
+    },
+    {
+      "file": "obj-file.svg",
+      "name": "File",
+      "category": "dev-object-mark",
+      "subject": "Document"
+    },
+    {
+      "file": "obj-folder.svg",
+      "name": "Folder",
+      "category": "dev-object-mark",
+      "subject": "Open folder"
+    },
+    {
+      "file": "obj-key.svg",
+      "name": "Key",
+      "category": "dev-object-mark",
+      "subject": "Circle and shaft"
+    },
+    {
+      "file": "obj-lock.svg",
+      "name": "Lock",
+      "category": "dev-object-mark",
+      "subject": "Padlock"
+    },
+    {
+      "file": "obj-merge.svg",
+      "name": "Merge",
+      "category": "dev-object-mark",
+      "subject": "Converging paths"
+    },
+    {
+      "file": "obj-server.svg",
+      "name": "Server",
+      "category": "dev-object-mark",
+      "subject": "Rack unit"
+    },
+    {
+      "file": "obj-tag.svg",
+      "name": "Tag",
+      "category": "dev-object-mark",
+      "subject": "Rotated square"
+    },
+    {
+      "file": "obj-terminal.svg",
+      "name": "Terminal",
+      "category": "dev-object-mark",
+      "subject": "Monitor"
+    },
+    {
+      "file": "motif-binary.svg",
+      "name": "Binary",
+      "category": "cyberpunk-motif",
+      "subject": "Bit cells"
+    },
+    {
+      "file": "motif-chip.svg",
+      "name": "Chip",
+      "category": "cyberpunk-motif",
+      "subject": "Microprocessor"
+    },
+    {
+      "file": "motif-chrome.svg",
+      "name": "Chrome",
+      "category": "cyberpunk-motif",
+      "subject": "Stacked chevrons"
+    },
+    {
+      "file": "motif-circuit.svg",
+      "name": "Circuit",
+      "category": "cyberpunk-motif",
+      "subject": "Traces and nodes"
+    },
+    {
+      "file": "motif-drone.svg",
+      "name": "Drone",
+      "category": "cyberpunk-motif",
+      "subject": "Quad rotor"
+    },
+    {
+      "file": "motif-glitch.svg",
+      "name": "Glitch",
+      "category": "cyberpunk-motif",
+      "subject": "Offset bars"
+    },
+    {
+      "file": "motif-hex.svg",
+      "name": "Hex",
+      "category": "cyberpunk-motif",
+      "subject": "Nested hexagons"
+    },
+    {
+      "file": "motif-holo.svg",
+      "name": "Holo",
+      "category": "cyberpunk-motif",
+      "subject": "Projected diamond"
+    },
+    {
+      "file": "motif-matrix.svg",
+      "name": "Matrix",
+      "category": "cyberpunk-motif",
+      "subject": "Dot grid with highlight columns"
+    },
+    {
+      "file": "motif-neon.svg",
+      "name": "Neon",
+      "category": "cyberpunk-motif",
+      "subject": "Radiant core"
+    },
+    {
+      "file": "motif-node.svg",
+      "name": "Node",
+      "category": "cyberpunk-motif",
+      "subject": "Hub and satellites"
+    },
+    {
+      "file": "motif-pulse.svg",
+      "name": "Pulse",
+      "category": "cyberpunk-motif",
+      "subject": "Heartbeat line"
+    },
+    {
+      "file": "motif-scan.svg",
+      "name": "Scan",
+      "category": "cyberpunk-motif",
+      "subject": "Corner brackets with sweep"
+    },
+    {
+      "file": "motif-voxel.svg",
+      "name": "Voxel",
+      "category": "cyberpunk-motif",
+      "subject": "Isometric cube"
+    },
+    {
+      "file": "motif-wave.svg",
+      "name": "Wave",
+      "category": "cyberpunk-motif",
+      "subject": "Sine wave"
     }
   ],
   "integration": {

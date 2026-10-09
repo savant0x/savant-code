@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none" role="img" aria-label="Search tool — lens with crosshair">
+  <!-- SAVANT // CYBERDECK — hand-authored vector geometry, no external assets -->
+  <defs>
+    <filter id="glow" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="2.5" result="blur" />
+      <feMerge>
+        <feMergeNode in="blur" />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
+    </filter>
+  </defs>
+  <!-- lens -->
+  <circle cx="27" cy="27" r="14" stroke="#18faf9" stroke-width="3" />
+  <!-- crosshair ticks -->
+  <path d="M27 17 L27 22" stroke="#ff2bd6" stroke-width="1.5" stroke-linecap="round" />
+  <path d="M27 32 L27 37" stroke="#ff2bd6" stroke-width="1.5" stroke-linecap="round" />
+  <path d="M17 27 L22 27" stroke="#ff2bd6" stroke-width="1.5" stroke-linecap="round" />
+  <path d="M32 27 L37 27" stroke="#ff2bd6" stroke-width="1.5" stroke-linecap="round" />
+  <!-- handle -->
+  <path d="M37 37 L48 48" stroke="#18faf9" stroke-width="3" stroke-linecap="round" />
+  <circle cx="50" cy="50" r="2.5" fill="#ff2bd6" />
+</svg>
