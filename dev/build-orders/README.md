@@ -50,14 +50,17 @@ Approved work lives in [`../../SCOPE.md`](../../SCOPE.md) and
 in `SCOPE.md` in the same pass that opens its FID. Nothing in this directory is
 itself approved scope.
 
-## Current contents (2026-10-07)
+## Current contents (2026-10-09)
 
 | Order | State |
 |---|---|
 | [`BO-2026-08-23-git-workflow-enforcement.md`](BO-2026-08-23-git-workflow-enforcement.md) | PARTIALLY EXECUTED — Phase 0 + FIDs 1–3 shipped; FID 4 (G2/G5 preflight audit) and Phase 2 migration open |
-| [`BO-2026-08-24-model-compliance-telemetry.md`](BO-2026-08-24-model-compliance-telemetry.md) | OPEN — 0 of 7 FIDs; no telemetry artifact exists |
 | [`BO-2026-09-08-eval-runner-model-override-and-usage-telemetry.md`](BO-2026-09-08-eval-runner-model-override-and-usage-telemetry.md) | OPEN — 0 of 7 items; no `RunnerConfig.model`, no `usage` event |
 | [`BO-2026-09-16-atria-friction.md`](BO-2026-09-16-atria-friction.md) | HANDOFF — Atria feature shipped; P1 and P5 friction points still reproducible, no FID |
 
 The remaining seven records were archived 2026-10-07 after their terminal state
 was verified against the working tree.
+
+The [model-compliance telemetry order](archive/BO-2026-08-24-model-compliance-telemetry.md)
+was completed and archived 2026-10-09: all seven phases are implemented and
+verified under `FID-2026-1007-012`.

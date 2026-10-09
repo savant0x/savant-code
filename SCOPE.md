@@ -180,11 +180,6 @@
       plus a regression test — the manifest is a fail-closed contract with no
       coverage today. `FID-2026-1007-011`. **Automation level: 2.**
 
-- [ ] **T164-C. `FID-2026-1007-012` — model-compliance telemetry (0 of 7).**
-      `BO-2026-08-24`, unstarted since 2026-08-24: no
-      `common/src/types/telemetry.ts`, no `dev/telemetry/`, no
-      `compliance.jsonl`. `FID-2026-1007-012`. **Automation level: 2.**
-
 - [ ] **T164-D. `FID-2026-1007-013` — eval-runner model override + usage
       telemetry (stage 1-2 of 7; wire stage open).** `--model` override, inline
       clone, run-usage fold + tree-summed `TraceMetadata.usage`/`model`, CLI
@@ -280,8 +275,6 @@
   `scripts/tree-drain-manifest/**`,
   `scripts/tree-drain.ts`,
   `scripts/__tests__/*drain*`
-- T164-C: `dev/fids/FID-2026-1007-012-model-compliance-telemetry.md`,
-  `dev/build-orders/BO-2026-08-24-model-compliance-telemetry.md`
 - T164-D: `dev/fids/FID-2026-1007-013-eval-runner-model-override-and-usage-telemetry.md`,
   `dev/build-orders/BO-2026-09-08-eval-runner-model-override-and-usage-telemetry.md`
 - T164-E: `dev/fids/FID-2026-1007-014-release-preflight-g2-g5-audit.md`,

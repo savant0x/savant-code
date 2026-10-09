@@ -28,8 +28,8 @@ record authorizes implementation following the operator's 2026-10-08 ruling:
 - **Language/Runtime:** TypeScript strict, React 19, Bun 1.3.14 (measured).
 - **Tool Versions:** OpenTUI 0.5.3 per project contract; native renderer,
   ESLint, Prettier, markdownlint and repository validators.
-- **Commit/State:** verified implementation; local commit authorized after
-  archive and changelog updates. Unrelated working-tree changes are preserved.
+- **Commit/State:** implemented locally in `2b6075e7ebf7039d25ec9953321b21ba70417a76`.
+  Archive and changelog updates preceded this authorized commit.
 - **Platform:** terminal CLI, including its embedded terminal presentation.
   Typography is governed by terminal cell geometry and the host font.
 
@@ -437,7 +437,7 @@ Steps 1-8 and Step 9's implementation verification are complete following
 Nine declared suites pass 57 tests; with Teacher/Trust regressions, 84 tests
 pass across 12 files. Fresh root regression, typecheck, ESLint, markdownlint
 and quality pass. The operator authorized local commits after archive and
-changelog updates on 2026-10-09; actual hashes are recorded after those commits.
+changelog updates on 2026-10-09; implementation commit `2b6075e7`.
 
 ### Code Verification Evidence
 
@@ -636,7 +636,8 @@ confirm this is spacing, without reinstating the redundant status row.
 - **Closed Date:** 2026-10-09
 - **Commit Authorization:** Operator: "you can commmit it after you properly
   archive it and update the changelog". Archive and changelog completed before
-  the authorized local implementation commit; its actual hash is recorded next.
+  the authorized local implementation commit.
+- **Implementation Commit:** `2b6075e7ebf7039d25ec9953321b21ba70417a76`
 - **Fix Description:** Command-console sidebar implemented and presented.
 - **Tests Added:** Five new files and existing loader/collapse extensions;
   nine declared suites plus Teacher/Trust regressions pass.

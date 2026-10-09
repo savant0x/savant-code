@@ -1,5 +1,42 @@
 # LEARNINGS
 
+## Lesson: Extend an existing command before registering its replacement
+
+- **Date:** 2026-10-09
+- **Failure:** Compliance added a second `/telemetry` entry beside remote
+  consent. Full CLI regression caught the duplicate; first-match dispatch
+  would otherwise hide the new feature.
+- **Evidence:** cli/src/commands/telemetry.ts → symbol:handleTelemetryCommand,
+  cli/src/commands/__tests__/telemetry-command.test.ts → test:the telemetry command is registered
+- **Invariant:** One public command name has one registry owner; new argument
+  behavior must preserve its existing consent and alias semantics.
+- **Guard:** Search registry and menu before registration; pin uniqueness and
+  exercise dispatch through the real registry rather than a helper alone.
+- **Verification:** Targeted CLI integration 46 pass; full CLI 4,026 pass;
+  full root 8,572 pass, zero failures after command integration.
+- **Scope:** internal
+- **Owning FID:** FID-2026-1007-012
+- **Status:** active
+
+## Lesson: Preserve operator-owned controls through a visual redesign
+
+- **Date:** 2026-10-09
+- **Failure:** Sidebar polish removed the S logo and raised fold buttons,
+  left folded controls off-center, and lost context after re-expansion.
+  The operator had to identify each regression.
+- **Evidence:** cli/src/components/right-sidebar-rail-control.tsx → symbol:RailControl,
+  cli/src/components/__tests__/right-sidebar-responsive.test.tsx →
+  test:chat composition follows the breakpoint and preserves manual folds
+- **Invariant:** Existing brand controls, alignment, user state and truthful
+  context are acceptance requirements during visual refinement.
+- **Guard:** Record existing controls before redesign; verify real fold,
+  resize and re-expand paths, including native layout event names and cleanup.
+- **Verification:** 84 UI tests pass; 38 revised native captures; centered
+  S/navigation/context/version, raised buttons and context recovery verified.
+- **Scope:** internal
+- **Owning FID:** FID-2026-1008-006
+- **Status:** active
+
 ## Lesson: A failing part is not a failing whole
 
 - **Date:** 2026-10-07

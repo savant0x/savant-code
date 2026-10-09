@@ -3,6 +3,29 @@
 This directory contains closed or historically completed FIDs. Files here are
 an audit record, not an active work queue.
 
+## 2026-10-09 closure — sidebar and compliance telemetry (2 FIDs archived)
+
+Operator authorization: "you can commmit it after you properly archive it and
+update the changelog". Both records were closed and physically archived, the
+changelog updated, and completed scope items/write grants evicted before local
+commits. Implementation commits: sidebar `2b6075e7`, telemetry `512659cc`.
+
+- [`FID-2026-1007-012-model-compliance-telemetry.md`](FID-2026-1007-012-model-compliance-telemetry.md)
+  (low, T164-C) — all seven telemetry phases; requested-route identity,
+  authenticated desktop panel, one CLI command preserving consent controls,
+  fail-open SessionEnd drift/proposal reporting. Fresh receipt 19/19; browser
+  smoke 10/10, zero page errors. Completed build order archived too.
+- [`FID-2026-1008-006-sidebar-command-console-visual-redesign.md`](FID-2026-1008-006-sidebar-command-console-visual-redesign.md)
+  (medium, T174) — sidebar command console, including the operator's restored
+  S/raised controls, centered rail and bottom context/version, F6 navigation,
+  folded spacing and context recovery. Fresh receipt 11/11; 84 UI tests,
+  38 revised native captures; minimum measured ordinary-text contrast 5.38:1.
+
+Root regression: 8,572 pass, 23 skip, zero failures. Typecheck, ESLint,
+markdownlint, quality and repository validation pass. Receipt fingerprints
+record the verified pre-closure documents, as prescribed for closed records.
+The working-tree active FID queue is empty. No push or release.
+
 ## 2026-10-08 closure — launch announce wired count and offer wording (1 FID archived)
 
 Closed on the operator's session authorization (all implemented work reviewed,

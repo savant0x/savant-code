@@ -18,6 +18,16 @@
 
 ### Added
 
+- **Local model-compliance telemetry completed (FID-2026-1007-012,
+  low; closed and archived 2026-10-09; local commit `512659cc`).** Metadata-only law
+  events carry resolved route/session/role identity into rolling 7d/30d/all
+  aggregates. The existing `/telemetry` command now serves summary/laws/models
+  while preserving consent controls. An authenticated desktop Compliance panel
+  shows ranked laws, a numeric law/model heatmap and dated trends, with
+  empty/error/disconnect recovery. SessionEnd reports drift and reviewable
+  dominant-law drafts without automatic promotion. Seven build-order phases
+  completed; browser smoke 10/10; full root regression 8,572 pass, zero failures.
+
 - **An evidence-calibrated provider identity gauntlet, offline and sweepable
   (FID-2026-1007-008, high; closed and archived 2026-10-07; local commits
   `7e661983` + `66abdcfa` + `37d425be` + `b1c67fde`; register item T163).** The
@@ -448,6 +458,15 @@
   discovery pass starts from recorded key names instead of re-deriving them.
 
 ### Changed
+
+- **Sidebar command console polished (FID-2026-1008-006, medium;
+  closed and archived 2026-10-09; local commit `2b6075e7`).** Clearer activity/model
+  hierarchy, quieter sections, descriptive FID rows and restrained motion.
+  Preserves the centered S logo and raised collapse/expand controls; folded
+  navigation is centered with more brand spacing. Centered version sits above
+  bottom context, which survives collapse/re-expand. F6 navigation preserves
+  input and leaves Ctrl+G available to the host. Native UI battery: 84 pass,
+  38 revised captures, minimum measured ordinary-text contrast 5.38:1.
 
 - **Build-order register cleaned; five terminal records archived, four live
   orders' status corrected against the working tree (2026-10-07).** `dev/build-orders/`

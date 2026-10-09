@@ -24,7 +24,7 @@ you can properly close them." The build order remains the design authority.
 - **OS:** Windows (win32)
 - **Language/Runtime:** TypeScript, Bun 1.3.14
 - **Tool Versions:** `tsc --noEmit`, `eslint`
-- **Commit/State:** verified implementation; local commit authorized after archive.
+- **Commit/State:** implemented locally in `512659ccb8630ef3f129e396dbe253a848e54c46`.
 
 ## Detailed Description
 
@@ -345,7 +345,8 @@ competition. Design converged before implementation.
 - **Closed Date:** 2026-10-09
 - **Commit Authorization:** Operator: "you can commmit it after you properly
   archive it and update the changelog". Archive and changelog completed before
-  the authorized local implementation commit; its actual hash is recorded next.
+  the authorized local implementation commit.
+- **Implementation Commit:** `512659ccb8630ef3f129e396dbe253a848e54c46`
 - **Fix Description:** All seven phases implemented; runtime identity seeded
   from resolved routes; authenticated desktop RPC and mounted panel; one
   `/telemetry` command preserving remote-consent controls; fail-open SessionEnd

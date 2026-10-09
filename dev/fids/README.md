@@ -3,14 +3,24 @@
 This directory contains **active** FIDs only: findings that still require
 operator decision, implementation, runtime review, or closure evidence.
 
+## 2026-10-09 closures
+
+- [Sidebar command console](archive/FID-2026-1008-006-sidebar-command-console-visual-redesign.md):
+  closed and archived; implementation `2b6075e7`; receipt 11/11.
+- [Model-compliance telemetry](archive/FID-2026-1007-012-model-compliance-telemetry.md):
+  all seven phases complete; closed and archived; implementation `512659cc`;
+  receipt 19/19. Root regression: 8,572 pass, zero failures.
+
+The queue below describes the committed baseline. Earlier unrelated working-tree
+archive changes are preserved for their own commits.
+
 ## Current active FIDs
 
-**Six.** Opened 2026-10-07 by the build-order register cleanup (`FID-2026-1007-010`,
+**Five.** Opened 2026-10-07 by the build-order register cleanup (`FID-2026-1007-010`,
 closed and archived with its G2 commits) and the provider identity sweep:
 
 - **`FID-2026-1007-011`** (T164-B, drain-manifest move safety, `converged`) — the
   directory coverage landed provisionally; the regression test is not written.
-- **`FID-2026-1007-012`** (T164-C, model-compliance telemetry, `created`) — 0 of 7.
 - **`FID-2026-1007-013`** (T164-D, eval-runner model override + usage, `created`) — 0 of 7.
 - **`FID-2026-1007-014`** (T164-E, release-preflight G2/G5 audit, `created`).
 - **`FID-2026-1007-015`** (T164-F, Atria handoff friction P1/P5, `created`).
@@ -20,7 +30,7 @@ closed and archived with its G2 commits) and the provider identity sweep:
 provider order) closed and archived** on the operator's directive after their
 live confirmation ("i tested it live, everything confirmed"). It was opened
 after the list above was written and never entered it, so the active queue is
-the six above. Receipt 3/3 at the archived path; see
+the five above. Receipt 3/3 at the archived path; see
 [`archive/README.md`](archive/README.md).
 
 The prior queue (`FID-2026-1007-007`, `-008`, `-009`) closed and archived
