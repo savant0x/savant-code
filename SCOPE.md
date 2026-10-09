@@ -158,23 +158,6 @@
       operator-directed session. **Automation level: 1** (no agent action;
       the e2e failures are known and operator-owned until then).
 
-### Asset work
-
-- [ ] **T176. Nova icon-set merge + integration groundwork.** Merge the
-      32-icon nova surface set (identity, sidebar sections, FSM/run
-      lifecycle, activity, status, nav, alerts, toggles) into
-      `art/icons/cyberpunk/` as one family under a single manifest
-      (v3.0.0, 132 icons). Collision rule: the ECHO Perfection Loop
-      vocabulary stays authoritative for phase marks (idle, red, green,
-      audit, self_correct, complete); nova's generic lifecycle icons
-      land as `run-*`; cyberpunk's FID-archival complete mark is
-      preserved as `phase-archive.svg`; nova wins the overlapping
-      status slots (active, partial). Green `#3dff9a` and acid
-      `#f3e600` adopted into the theme's `ICON_PALETTE` export and the
-      manifest palette block. This item lands the asset set; later
-      phases wire the CLI surfaces (sidebar rail, /export HTML,
-      presence mapper). **Automation level: 2.**
-
 ### Build orders (formalized as FIDs 2026-10-07)
 
 - [ ] **T164-D. Eval-runner wire-stage usage telemetry.** Open remainder
@@ -220,7 +203,3 @@
 - T164-D: `common/src/types/print-mode.ts`,
   `packages/agent-runtime/src/run-agent-step/step.ts`,
   `evals/v2/src/runner.ts`, `sdk/src/run/types.ts`
-- T176: `art/icons/cyberpunk/**`,
-  `cli/src/utils/theme-system/**`,
-  `scripts/icon-palette-check.ts`, `package.json`,
-  `dev/session-summaries/2026-10-09-nova-icon-merge.md`
