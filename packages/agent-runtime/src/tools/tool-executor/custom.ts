@@ -11,6 +11,7 @@ import {
   formatBlockingError,
 } from '../../echo/violation-handler'
 import { resolveYagniEnforced } from '../../echo/yagni-pre-write-gate'
+import { seedComplianceContext } from '../../hooks/compliance-context'
 import { buildHookInput, getHookEngine } from '../../hooks/engine'
 import { getMCPToolData } from '../../mcp'
 import { formatValueForError } from '../../util/format-value'
@@ -174,6 +175,12 @@ export async function executeCustomToolCall(
   }
 
   const enforcement = getOrCreateEnforcement(agentState)
+  seedComplianceContext(
+    enforcement.state,
+    params.fileContext?.projectRoot,
+    agentTemplate,
+    agentState,
+  )
   const enforceResult = enforcement.beforeToolCall({
     toolName,
     input: toolCall.input as Record<string, unknown>,

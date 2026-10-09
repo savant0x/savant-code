@@ -236,3 +236,42 @@ export const replayResultSchema = z.object({
   latestSeq: z.number(),
   gapped: z.boolean(),
 })
+
+// FID-2026-1007-012 FID 5: compliance aggregates --------------------------
+
+export const telemetryAggregatesParamsSchema = z.object({
+  window: z.enum(['7d', '30d', 'all']).optional(),
+})
+
+export function telemetryAggregatesRequest(
+  id: JsonRpcId,
+  window?: '7d' | '30d' | 'all',
+): JsonRpcRequest {
+  return {
+    jsonrpc: '2.0',
+    id,
+    method: 'telemetry_aggregates',
+    params: telemetryAggregatesParamsSchema.parse(
+      window === undefined ? {} : { window },
+    ),
+  }
+}
+
+export const telemetryAggregatesResultSchema = z.object({
+  window: z.string(),
+  aggregates: z.object({
+    violationsByLaw: z.record(z.string(), z.number()),
+    violationsByModel: z.record(z.string(), z.number()),
+    lawByModel: z.record(z.string(), z.record(z.string(), z.number())),
+    trendSeries: z.array(z.object({ day: z.string(), count: z.number() })),
+    meta: z.object({
+      totalLines: z.number(),
+      skippedLines: z.number(),
+      window: z.union([z.number(), z.literal('all')]),
+    }),
+  }),
+})
+
+export type TelemetryAggregates = z.infer<
+  typeof telemetryAggregatesResultSchema
+>['aggregates']

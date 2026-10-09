@@ -59,7 +59,8 @@ export const CORE_SLASH_COMMANDS: SlashCommand[] = [
   {
     id: 'telemetry',
     label: 'telemetry',
-    description: 'Show or change remote analytics consent',
+    description:
+      'Remote analytics consent or local compliance: /telemetry status|summary|laws|models',
     aliases: ['analytics'],
   },
   {

@@ -16,7 +16,12 @@ import type { CheckResult, SafeFix } from './audit-types'
  * operator (the automation path already commits everything). Anything else
  * dirty blocks with the operator's own remediation.
  */
-const TELEMETRY_CHURN_PATHS = ['dev/experiences/raw-traces.jsonl']
+const TELEMETRY_CHURN_PATHS = [
+  'dev/experiences/raw-traces.jsonl',
+  // FID-2026-1007-012 FID 2: compliance-telemetry ledger (tracked, same
+  // precedent — a captured violation must not block the release pre-audit).
+  'dev/telemetry/compliance.jsonl',
+]
 
 export function checkWorktreeClean(root: string): CheckResult {
   const status = spawnSync(

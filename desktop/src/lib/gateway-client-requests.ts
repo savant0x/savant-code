@@ -10,6 +10,8 @@ import {
   listCommandsResultSchema,
   scopedThreadsRequest,
   scopedThreadsResultSchema,
+  telemetryAggregatesRequest,
+  telemetryAggregatesResultSchema,
   triggersCreateRequest,
   triggersCreateResultSchema,
   triggersDeleteRequest,
@@ -29,6 +31,7 @@ import type {
   JsonRpcId,
   JsonRpcRequest,
   TriggerRecord,
+  TelemetryAggregates,
   WorkspaceScopeType,
 } from './gateway-protocol'
 
@@ -81,6 +84,21 @@ export async function updateScopedThreadStateVia(
     updateScopedThreadStateRequest(ctx.nextId(), sessionId, state),
   )
   return updateScopedThreadStateResultSchema.parse(result)
+}
+
+/** FID-2026-1007-012 FID 5: compliance aggregates for the deck HUD. */
+export async function getTelemetryAggregatesVia(
+  ctx: GatewayRequestContext,
+  window?: '7d' | '30d' | 'all',
+): Promise<{
+  window: string
+  aggregates: TelemetryAggregates
+}> {
+  const result = await ctx.dispatch(
+    telemetryAggregatesRequest(ctx.nextId(), window),
+  )
+  const parsed = telemetryAggregatesResultSchema.parse(result)
+  return { window: parsed.window, aggregates: parsed.aggregates }
 }
 
 /** FID-2026-0901-005: the server-side slash-command registry — the full

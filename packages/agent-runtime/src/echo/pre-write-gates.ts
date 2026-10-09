@@ -28,6 +28,7 @@ import {
   skillCanonicalDir,
 } from '@savant-code/common/util/skill-management'
 
+import { runComplianceCapture } from '../hooks/compliance-capture'
 import { recordLawBlock } from './enforcement/escalation'
 import {
   getTargetPath,
@@ -107,6 +108,43 @@ export function runPreWriteGates(params: {
 
   const warnings: AdvisoryWarning[] = []
   const targetPath = getTargetPath(params.input)
+  // FID-2026-1007-012 FID 2: single exit funnel for observe-only telemetry.
+  // Blocks emit with their construction-known law (absent = unattributed:
+  // warnings still emit); warnings emit by own law. Each run returns once,
+  // so each observation emits exactly once. Never throws, never blocks.
+  const finish = (
+    result: EnforcementResult,
+    blockLaw?: number,
+  ): EnforcementResult => {
+    const rootDir = params.state.telemetryRootDir
+    if (rootDir !== undefined) {
+      if (result.blocked && blockLaw !== undefined) {
+        runComplianceCapture(
+          rootDir,
+          {
+            lawId: blockLaw,
+            violationClass: 'rejected',
+            gateLayer: 'pre-write',
+            agentId: params.agentId,
+          },
+          params.state.telemetryIdentity,
+        )
+      }
+      for (const warning of result.warnings) {
+        runComplianceCapture(
+          rootDir,
+          {
+            lawId: warning.law,
+            violationClass: 'flagged',
+            gateLayer: 'pre-write',
+            agentId: params.agentId,
+          },
+          params.state.telemetryIdentity,
+        )
+      }
+    }
+    return result
+  }
   // Classified mutation targets (terminal bypass) — Law 1 iterates these.
   const mutationTargets = params.state.pendingMutation?.targets ?? []
 
@@ -120,7 +158,7 @@ export function runPreWriteGates(params: {
     filesRead: params.state.filesRead,
   })
   if (law1Result.blocked) {
-    return { blocked: true, reason: law1Result.reason, warnings }
+    return finish({ blocked: true, reason: law1Result.reason, warnings }, 1)
   }
 
   // ── Law 2: approved scope (FID-2026-1001-003 step 5a) ────────────
@@ -132,7 +170,7 @@ export function runPreWriteGates(params: {
     scopePath: params.scopePath,
   })
   if (law2Result.blocked) {
-    return { blocked: true, reason: law2Result.reason, warnings }
+    return finish({ blocked: true, reason: law2Result.reason, warnings }, 2)
   }
 
   // ── Immutable skill gate (FID-2026-0824-012 S2-A) ──────────────────
@@ -145,7 +183,7 @@ export function runPreWriteGates(params: {
   if (targetPath) {
     const immutableReason = immutableSkillBlockReason(targetPath)
     if (immutableReason) {
-      return { blocked: true, reason: immutableReason, warnings }
+      return finish({ blocked: true, reason: immutableReason, warnings })
     }
   }
 
@@ -180,14 +218,17 @@ export function runPreWriteGates(params: {
   if (law3Result.blocked) {
     // FID-2026-1001-003 step 4: every hard block of this key feeds the N=3
     // escalation ladder (tracked separately from the steering budget).
-    return recordLawBlock({
-      state: params.state,
-      law: 3,
-      toolName: params.toolName,
-      targetPath,
-      reason: law3Result.reason,
-      warnings,
-    })
+    return finish(
+      recordLawBlock({
+        state: params.state,
+        law: 3,
+        toolName: params.toolName,
+        targetPath,
+        reason: law3Result.reason,
+        warnings,
+        agentId: params.agentId,
+      }),
+    )
   }
 
   // ── P5b YAGNI gate (FID-2026-0806-003) ──────────────────────────────
@@ -201,7 +242,7 @@ export function runPreWriteGates(params: {
     targetPath,
   })
   if (yagniResult.blocked) {
-    return yagniResult
+    return finish(yagniResult)
   }
   if (yagniResult.warnings.length > 0) {
     warnings.push(...yagniResult.warnings)
@@ -220,7 +261,7 @@ export function runPreWriteGates(params: {
     warnings,
   })
   if (fidResult) {
-    return fidResult
+    return finish(fidResult)
   }
 
   // ── Scope-disposition gate (FID-2026-0919-024) ─────────────────────
@@ -234,8 +275,8 @@ export function runPreWriteGates(params: {
     warnings,
   })
   if (scopeResult) {
-    return scopeResult
+    return finish(scopeResult)
   }
 
-  return { blocked: false, warnings }
+  return finish({ blocked: false, warnings })
 }

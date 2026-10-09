@@ -1,3 +1,4 @@
+import { complianceTelemetryMessage } from './defs/telemetry'
 import {
   disableAnalytics,
   initAnalytics,
@@ -16,8 +17,14 @@ function currentStatusMessage(): string {
 
 export function handleTelemetryCommand(
   action: string,
+  rootDir: string = process.cwd(),
 ): (messages: ChatMessage[]) => ChatMessage[] {
   const normalized = action.trim().toLowerCase() as TelemetryAction | ''
+
+  if (/^(summary|laws|models|--window)(?:\s|$)/.test(normalized)) {
+    const message = complianceTelemetryMessage(normalized, rootDir)
+    return (messages) => [...messages, getSystemMessage(message)]
+  }
 
   if (normalized === 'enable' || normalized === 'disable') {
     const enabled = normalized === 'enable'
@@ -63,6 +70,8 @@ export function handleTelemetryCommand(
 
   return (messages) => [
     ...messages,
-    getSystemMessage('Usage: /telemetry [status|enable|disable]'),
+    getSystemMessage(
+      'Usage: /telemetry [status|enable|disable|summary|laws|models] [--window 7d|30d|all]',
+    ),
   ]
 }

@@ -13,6 +13,7 @@
  *   sessions deadlocked with a single read-only shell.
  */
 
+import { runComplianceCapture } from '../../hooks/compliance-capture'
 import { detectsVerificationCommand } from '../../util/echo-compliance'
 import { canonicalizePath } from '../path-canonicalization'
 import { terminalCommandCandidates } from './helpers'
@@ -34,6 +35,8 @@ export function creditVerificationRun(params: {
    *  run named (Law 3 repair-path attribution). */
   verificationFailurePaths?: string[]
   warnings: AdvisoryWarning[]
+  /** FID-2026-1007-012 FID 2: emitting agent for telemetry (optional). */
+  agentId?: string
 }): void {
   const {
     toolName,
@@ -80,6 +83,18 @@ export function creditVerificationRun(params: {
       message:
         'Verification command detected but its outcome is unknown — Law 3 credit not granted; re-run it and confirm it passes.',
     })
+    // FID-2026-1007-012 FID 2: receipt-layer telemetry (sole producer
+    // here). Root rides session state; absent = silent.
+    runComplianceCapture(
+      params.state.telemetryRootDir,
+      {
+        lawId: 3,
+        violationClass: 'flagged',
+        gateLayer: 'receipt',
+        agentId: params.agentId ?? '',
+      },
+      params.state.telemetryIdentity,
+    )
   }
 }
 

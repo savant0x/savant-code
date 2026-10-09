@@ -69,6 +69,14 @@ export interface ProtocolTelemetryConfig {
   cacheHitAlertDrop: number
 }
 
+/** FID-2026-1007-012 FID 2 — model-compliance telemetry kill-switch. The
+ *  `telemetry:` key is P4 token telemetry; this sibling section governs the
+ *  law-violation event sink only. Default-on per the build order (local-only,
+ *  zero-cost); `enabled: false` stops all capture. */
+export interface ProtocolComplianceTelemetryConfig {
+  enabled: boolean
+}
+
 /** FID-2026-0813-004 — ZTAP provenance mode from `provenance.mode`. */
 export interface ProtocolProvenanceConfig {
   /** `off` disables the ledger; `record` signs + appends; `enforce` also
@@ -116,6 +124,8 @@ export interface ProtocolConfig {
   caveman: ProtocolCavemanConfig
   /** P4 token telemetry + cache-hit monitoring. */
   telemetry: ProtocolTelemetryConfig
+  /** FID-2026-1007-012 FID 2 — model-compliance telemetry sink (default-on). */
+  complianceTelemetry: ProtocolComplianceTelemetryConfig
   /** FID-2026-0813-004 — ZTAP provenance mode (defaults to `record`). */
   provenance: ProtocolProvenanceConfig
   /** FID-2026-0814-003 — project-scoped lifecycle hooks (default: none). */
@@ -160,6 +170,10 @@ export const DEFAULT_CAVEMAN: ProtocolCavemanConfig = {
 export const DEFAULT_TELEMETRY: ProtocolTelemetryConfig = {
   enabled: true,
   cacheHitAlertDrop: 0.3,
+}
+
+export const DEFAULT_COMPLIANCE_TELEMETRY: ProtocolComplianceTelemetryConfig = {
+  enabled: true,
 }
 
 export const DEFAULT_PROVENANCE: ProtocolProvenanceConfig = {

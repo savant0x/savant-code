@@ -20,6 +20,7 @@
  *   which forces the turn to end at that step's boundary.
  */
 
+import { runComplianceCapture } from '../../hooks/compliance-capture'
 import { detectsVerificationCommand } from '../../util/echo-compliance'
 import { canonicalizePath } from '../path-canonicalization'
 import { terminalCommandCandidates } from './helpers'
@@ -55,10 +56,27 @@ export function recordLawBlock(params: {
   reason: string
   /** Advisories accumulated by earlier gates; preserved on the block. */
   warnings?: AdvisoryWarning[]
+  /** FID-2026-1007-012 FID 2: emitting agent for telemetry (optional). */
+  agentId?: string
 }): EnforcementResult {
   const key = buildBlockKey(params)
   const count = (params.state.blockStrikes.get(key) ?? 0) + 1
   params.state.blockStrikes.set(key, count)
+  // FID-2026-1007-012 FID 2: observe-only telemetry (never blocks). The
+  // strike count travels as additive-optional metadata; the reason text
+  // never does (no-bodies rule). Root rides session state (set once per
+  // session by the tool-executor before-paths); absent = silent.
+  runComplianceCapture(
+    params.state.telemetryRootDir,
+    {
+      lawId: params.law,
+      violationClass: 'rejected',
+      gateLayer: 'escalation',
+      agentId: params.agentId ?? '',
+      strikeCount: count,
+    },
+    params.state.telemetryIdentity,
+  )
   let reason = params.reason
   if (count === LAW_BLOCK_ESCALATION_THRESHOLD) {
     reason +=

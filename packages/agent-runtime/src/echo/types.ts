@@ -11,6 +11,17 @@ export type EnforcementMode = 'hybrid' | 'strict'
 export type EnforcementTier = 'core_4' | 'all_15'
 
 export interface EnforcementState {
+  /** FID-2026-1007-012 FID 2: compliance-telemetry sink root, set once per
+   *  session by the tool-executor before-paths (absent = silent). Carried on
+   *  state so every enforcement funnel shares it without threading. */
+  telemetryRootDir?: string
+  /** Resolved request identity; never a claim about the served model. */
+  telemetryIdentity?: {
+    model: string
+    provider: string
+    sessionId: string
+    agentRole: string
+  }
   // Law 1: Read tracking
   filesRead: Set<string>
   /**

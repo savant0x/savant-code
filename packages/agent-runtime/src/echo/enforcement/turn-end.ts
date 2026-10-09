@@ -1,5 +1,6 @@
 import { readFileSync } from 'node:fs'
 
+import { runComplianceCapture } from '../../hooks/compliance-capture'
 import { classifyFileKind } from '../../util/echo-compliance-core'
 import { runDesignContractScanner } from '../design-contract'
 import { resetForNewTurn } from '../enforcement-state'
@@ -15,8 +16,51 @@ import {
   getTier,
 } from './helpers'
 
-import type { EnforcementResult } from '../types'
+import type { EnforcementResult, EnforcementState } from '../types'
 import type { EnforcementSelf } from './self'
+import type { GateLayer } from '@savant-code/common/types/telemetry'
+
+/**
+ * FID-2026-1007-012 FID 2: emit one turn-end result. Blocks carry the
+ * construction-documented law; warnings carry their own law (the type
+ * requires it). Results whose blocks lack law attribution (post-write
+ * scanners, design-contract scanner) are never routed here — documented
+ * boundary, not silent scope.
+ */
+function emitTurnEndResult(
+  rootDir: string | undefined,
+  agentId: string,
+  result: EnforcementResult,
+  blockLaw: number,
+  identity: EnforcementState['telemetryIdentity'],
+): void {
+  if (rootDir === undefined) return
+  const layer: GateLayer = 'turn-end'
+  if (result.blocked) {
+    runComplianceCapture(
+      rootDir,
+      {
+        lawId: blockLaw,
+        violationClass: 'rejected',
+        gateLayer: layer,
+        agentId,
+      },
+      identity,
+    )
+  }
+  for (const warning of result.warnings) {
+    runComplianceCapture(
+      rootDir,
+      {
+        lawId: warning.law,
+        violationClass: 'flagged',
+        gateLayer: layer,
+        agentId,
+      },
+      identity,
+    )
+  }
+}
 
 /**
  * Turn-end evaluation (FID-2026-0819-005 Loop 303: extracted verbatim from
@@ -28,6 +72,8 @@ export function evaluateTurnEndImpl(self: EnforcementSelf): {
 } {
   const tier = getTier(self.mode)
   const results: EnforcementResult[] = []
+  // Historical callers without resolved identity retain their agentId proxy.
+  const agentId = self.agentState?.agentId ?? ''
 
   // FID-2026-1001-003 step 6 (livelock backstop): reconcile the wiring ledger
   // against file-kind ground truth before Law 4 reads it. A docs-classified
@@ -53,13 +99,17 @@ export function evaluateTurnEndImpl(self: EnforcementSelf): {
   // behavior is identical there); reconciling against any other root diffs
   // the fixture-sized baseline against an unrelated tree.
   const checkpoint = self.ensureCheckpoint()
+  // FID-2026-1007-012 FID 2: sink root for observe-only telemetry, derived
+  // from the checkpoint this function already computes (production: captured
+  // repo root; tests: temp fixture root or absent = silent). Never ambient.
+  const telemetryRootDir = checkpoint?.worktreeBaselineRoot
   const reconcile = reconcileWorktree({
     checkpoint,
     repoRoot: checkpoint?.worktreeBaselineRoot ?? process.cwd(),
     dirtyFiles: self.state.dirtyFiles,
   })
   if (reconcile.diagnostic) {
-    results.push({
+    const reconcileResult: EnforcementResult = {
       blocked: false,
       warnings: [
         {
@@ -68,16 +118,30 @@ export function evaluateTurnEndImpl(self: EnforcementSelf): {
           message: reconcile.diagnostic,
         },
       ],
-    })
+    }
+    results.push(reconcileResult)
+    emitTurnEndResult(
+      telemetryRootDir,
+      agentId,
+      reconcileResult,
+      15,
+      self.state.telemetryIdentity,
+    )
   }
 
-  // Law 4: call-graph reachability
-  results.push(
-    evaluateLaw4TurnEnd({
-      state: self.state,
-      mode: self.mode,
-      tier,
-    }),
+  // Law 4: call-graph reachability (blocks are law 4 by construction).
+  const law4Result = evaluateLaw4TurnEnd({
+    state: self.state,
+    mode: self.mode,
+    tier,
+  })
+  results.push(law4Result)
+  emitTurnEndResult(
+    telemetryRootDir,
+    agentId,
+    law4Result,
+    4,
+    self.state.telemetryIdentity,
   )
 
   // Law 15: build stays clean (cumulative — a dirty file is clean once
@@ -87,13 +151,21 @@ export function evaluateTurnEndImpl(self: EnforcementSelf): {
   )
   if (unverifiedDirty.length > 0) {
     if (tier === 'all_15') {
-      results.push({
+      const law15Result: EnforcementResult = {
         blocked: true,
         reason: 'Law 15: Files modified without verification (typecheck/lint)',
         warnings: [],
-      })
+      }
+      results.push(law15Result)
+      emitTurnEndResult(
+        telemetryRootDir,
+        agentId,
+        law15Result,
+        15,
+        self.state.telemetryIdentity,
+      )
     } else {
-      results.push({
+      const law15Advisory: EnforcementResult = {
         blocked: false,
         warnings: [
           {
@@ -102,7 +174,15 @@ export function evaluateTurnEndImpl(self: EnforcementSelf): {
             message: 'Files modified without running typecheck/lint',
           },
         ],
-      })
+      }
+      results.push(law15Advisory)
+      emitTurnEndResult(
+        telemetryRootDir,
+        agentId,
+        law15Advisory,
+        15,
+        self.state.telemetryIdentity,
+      )
     }
   }
 

@@ -13,6 +13,7 @@ import { z } from 'zod'
 import { AutoDriveDashboard } from './components/chat/AutoDriveDashboard'
 import { ChatThread } from './components/chat/ChatThread'
 import { CompactionStatusBar } from './components/chat/CompactionStatusBar'
+import { CompliancePanel } from './components/chat/CompliancePanel'
 import { ConnectionPill } from './components/chat/ConnectionPill'
 import { FidQueuePanel } from './components/chat/FidQueuePanel'
 import { PhaseStepper } from './components/chat/PhaseStepper'
@@ -233,6 +234,10 @@ export function App(): JSX.Element {
                   <FidQueuePanel
                     queue={gateway.fidQueue}
                     scope={workspaceScope}
+                  />
+                  <CompliancePanel
+                    api={getSharedGatewayClient()}
+                    connected={gateway.status === 'ready'}
                   />
                   {/* FID-2026-0824-005 step 5: trigger configuration region +
                       calendar receipts. Degrades to an "off" card when the

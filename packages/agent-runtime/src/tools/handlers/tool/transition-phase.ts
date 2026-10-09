@@ -2,6 +2,7 @@ import {
   readProtocolConfig,
   scanOpenFids,
 } from '@savant-code/common/util/protocol-config'
+
 import { getOrCreateEnforcement } from '../../../echo/enforcement/factory'
 
 import type { SavantCodeToolHandlerFunction } from '../handler-function-type'
@@ -9,9 +10,11 @@ import type {
   SavantCodeToolCall,
   SavantCodeToolOutput,
 } from '@savant-code/common/tools/list'
-import type { AgentState } from '@savant-code/common/types/session-state'
 import type { Logger } from '@savant-code/common/types/contracts/logger'
-import type { FsmPhase } from '@savant-code/common/types/session-state'
+import type {
+  AgentState,
+  FsmPhase,
+} from '@savant-code/common/types/session-state'
 import type { ProjectFileContext } from '@savant-code/common/util/file'
 
 // Circuit-breaker limit, driven by `perfection_loop.max_iterations` in
@@ -78,9 +81,9 @@ export const handleTransitionPhase = (async (params: {
   // uses (getOrCreateEnforcement caches per agentState), so the guard reads
   // exactly the credit the enforcement layer granted — no parallel state.
   if (isValid && currentPhase === 'green' && phase === 'complete') {
-    const verified =
-      getOrCreateEnforcement(params.agentState as AgentState).getState()
-        .hasVerifiedSinceLastDirty
+    const verified = getOrCreateEnforcement(
+      params.agentState as AgentState,
+    ).getState().hasVerifiedSinceLastDirty
     if (!verified) {
       logger.warn(
         { phase, reason, currentPhase, verificationCredit: false },

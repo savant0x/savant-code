@@ -228,7 +228,7 @@ describe('custom provider catalogs (Step 9 remainder)', () => {
     )
   })
 
-  test('groups custom providers after every built-in (D9 order 5, effective registry)', () => {
+  test('groups custom and built-in providers alphabetically while retaining registry order metadata', () => {
     registerCustomProviders([LIVE_CUSTOM])
 
     // D9: the order must come from the EFFECTIVE registry (customs carry 5),
@@ -243,6 +243,6 @@ describe('custom provider catalogs (Step 9 remainder)', () => {
     const groupOrder = items
       .filter((item) => item.type === 'header')
       .map((item) => item.provider)
-    expect(groupOrder).toEqual(['openrouter', 'tokenharbor', 'my-gateway'])
+    expect(groupOrder).toEqual(['my-gateway', 'openrouter', 'tokenharbor'])
   })
 })

@@ -37,7 +37,7 @@
 // All RPC behavior lives in the stage modules; the public export surface is
 // re-exported byte-identically.
 
-import { basename, join } from 'node:path'
+import { basename, join, resolve } from 'node:path'
 
 import {
   DEFAULT_GATEWAY_ALLOWED_ORIGINS,
@@ -63,6 +63,7 @@ import {
   denyPendingApprovals,
   emitEventBatch,
 } from './gateway/state'
+import { defaultLoadTelemetryAggregates } from './gateway/telemetry-rpc'
 import { GATEWAY_ERROR_CODES } from './json-rpc'
 import { refreshProviderNotifications } from '../chat/provider-notification-lifecycle'
 import { startProviderMonitoring } from '../utils/provider-monitoring'
@@ -101,6 +102,8 @@ export async function startGateway(
     loadScopedThreads = defaultLoadScopedThreads,
     updateScopedThreadState = defaultUpdateScopedThreadState,
     listCommands = defaultListCommands,
+    loadTelemetryAggregates = (windowDays) =>
+      defaultLoadTelemetryAggregates(windowDays, resolve(fidsDir, '..', '..')),
   } = options
   const logger = options.logger
   // P19 (operator: "the window is x/200k, which is clearly a hardcoded value"):
@@ -127,6 +130,7 @@ export async function startGateway(
     runPrompt,
     loadScopedThreads,
     updateScopedThreadState,
+    loadTelemetryAggregates,
   })
 
   // FID-queue change bus (fidStatuses encapsulated in the bus).

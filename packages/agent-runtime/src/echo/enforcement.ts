@@ -138,6 +138,8 @@ export class EchoEnforcement {
      *  attributed. Absent in callers that do not know the phase, which fails
      *  closed to the blocking behaviour. */
     fsmPhase?: string
+    /** FID-2026-1007-012 FID 2: compliance-telemetry sink root. Absent = silent. */
+    telemetryRootDir?: string
   }): EnforcementResult {
     return beforeToolCallImpl(
       this,

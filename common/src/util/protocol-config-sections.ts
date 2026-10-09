@@ -10,6 +10,7 @@ import {
 
 import type {
   ProtocolCavemanConfig,
+  ProtocolComplianceTelemetryConfig,
   ProtocolCompressionConfig,
   ProtocolProvenanceConfig,
   ProtocolTelemetryConfig,
@@ -151,6 +152,20 @@ export function applyTelemetrySection(
   const cacheHitAlertDrop = parseYamlNumber(telemetryText, 'cacheHitAlertDrop')
   if (cacheHitAlertDrop !== undefined) {
     telemetry.cacheHitAlertDrop = cacheHitAlertDrop
+  }
+}
+
+/** FID-2026-1007-012 FID 2: model-compliance telemetry kill-switch.
+ *  Only `enabled: false` is accepted; anything else (or a missing key)
+ *  keeps the default-on contract. */
+export function applyComplianceTelemetrySection(
+  lines: string[],
+  complianceTelemetry: ProtocolComplianceTelemetryConfig,
+): void {
+  if (lines.length === 0) return
+  const enabled = parseYamlBool(lines.join('\n'), 'enabled')
+  if (enabled !== undefined) {
+    complianceTelemetry.enabled = enabled
   }
 }
 

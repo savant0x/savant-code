@@ -10,7 +10,6 @@ import type { Message } from './messages/savant-code-message'
 import type { ProvenanceSessionLike } from './provenance'
 import type { AgentTemplateType } from './session-state'
 import type { CacheUsageSummary } from './session-state-cache-usage'
-import type { RunUsageSample } from './session-state-run-usage'
 import type {
   CompactionCutPlan,
   CompactionFileLedger,
@@ -27,6 +26,7 @@ import type {
   GroundingCheckpoint,
   Subgoal,
 } from './session-state-records'
+import type { RunUsageSample } from './session-state-run-usage'
 import type { ProtocolVariant } from '../util/boot-contract'
 
 /**

@@ -83,6 +83,9 @@ describe('readProtocolConfig', () => {
         enabled: true,
         cacheHitAlertDrop: 0.3,
       },
+      complianceTelemetry: {
+        enabled: true,
+      },
       provenance: {
         mode: 'record',
       },
@@ -192,6 +195,9 @@ describe('readProtocolConfig', () => {
         enabled: true,
         cacheHitAlertDrop: 0.3,
       },
+      complianceTelemetry: {
+        enabled: true,
+      },
       provenance: {
         mode: 'record',
       },
@@ -259,5 +265,26 @@ describe('readProtocolConfig', () => {
     expect(config.yagni).toEqual({ enforced: false, ledger: 'dev/debt.md' })
     expect(config.caveman).toEqual({ enabled: true, autoClarity: false })
     expect(config.telemetry).toEqual({ enabled: false, cacheHitAlertDrop: 0.1 })
+  })
+
+  test('parses the compliance-telemetry kill-switch (FID-2026-1007-012 FID 2)', () => {
+    const cwd = fs.mkdtempSync(path.join(os.tmpdir(), 'protocol-config-'))
+    temporaryDirectories.push(cwd)
+    fs.mkdirSync(path.join(cwd, 'dev', 'fids'), { recursive: true })
+    fs.writeFileSync(
+      path.join(cwd, 'protocol.config.yaml'),
+      ['complianceTelemetry:', '  enabled: false', ''].join('\n'),
+    )
+    expect(readProtocolConfig(cwd).complianceTelemetry).toEqual({
+      enabled: false,
+    })
+
+    const plain = fs.mkdtempSync(path.join(os.tmpdir(), 'protocol-config-'))
+    temporaryDirectories.push(plain)
+    fs.mkdirSync(path.join(plain, 'dev', 'fids'), { recursive: true })
+    fs.writeFileSync(path.join(plain, 'protocol.config.yaml'), '')
+    expect(readProtocolConfig(plain).complianceTelemetry).toEqual({
+      enabled: true,
+    })
   })
 })

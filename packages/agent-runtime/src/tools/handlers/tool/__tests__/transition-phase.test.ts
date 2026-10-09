@@ -4,8 +4,8 @@ import path from 'path'
 
 import { afterEach, beforeEach, describe, expect, it } from 'bun:test'
 
-import { handleTransitionPhase } from '../transition-phase'
 import { getOrCreateEnforcement } from '../../../../echo/enforcement/factory'
+import { handleTransitionPhase } from '../transition-phase'
 
 import type {
   AgentState,
@@ -189,11 +189,7 @@ describe('handleTransitionPhase — green → complete verification-credit guard
   })
 
   it('a write AFTER the green run revokes credit (the edge refuses again)', async () => {
-    const result = await callWithCredit(
-      'green',
-      'complete',
-      'write-after-run',
-    )
+    const result = await callWithCredit('green', 'complete', 'write-after-run')
     expect(getMessage(result)).toContain('INVALID FSM transition')
   })
 

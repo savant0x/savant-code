@@ -16,15 +16,15 @@ import { describe, expect, it } from 'bun:test'
 import { SavantAgentRunner } from '../src/runners/savant'
 import { TraceCollector } from '../src/trace'
 
-import type { SavantAgentRunnerConfig } from '../src/runners/savant'
 import type { UsageSample } from '../src/runner'
+import type { SavantAgentRunnerConfig } from '../src/runners/savant'
+import type { Sandbox } from '../src/sandbox'
 import type { TaskDefinition } from '../src/schema'
 import type {
   AgentDefinition,
   RunState,
   SavantCodeClient,
 } from '@savant-code/sdk'
-import type { Sandbox } from '../src/sandbox'
 
 function makeTask(): TaskDefinition {
   return {

@@ -8,6 +8,8 @@
 // socket-close path and the facade shutdown — it stays here so the
 // fail-closed contract has a single owner.
 
+import { aggregateCompliance } from '@savant-code/common/util/telemetry-aggregate'
+
 import { notification } from '../json-rpc'
 import { EVENT_FLUSH_INTERVAL_MS } from './types'
 
@@ -21,6 +23,7 @@ import type {
   ConnectionState,
 } from './types'
 import type { PrintModeEvent } from '@savant-code/common/types/print-mode'
+import type { ComplianceAggregates } from '@savant-code/common/util/telemetry-aggregate'
 import type { RunState } from '@savant-code/sdk'
 
 /** FID-2026-1003-002 (D6): replay-buffer bound — 1,000 batches ≈ 50 s at
@@ -56,6 +59,8 @@ export type GatewayContext = {
     unread?: boolean
     pinned?: boolean
   }) => boolean
+  /** FID-2026-1007-012 FID 5 — DI: compliance-aggregates reader. */
+  loadTelemetryAggregates: (windowDays: number | 'all') => ComplianceAggregates
 
   /** Connected sockets (added on open, removed on close). */
   connectedSockets: Set<{
@@ -103,6 +108,7 @@ export function createGatewayContext(params: {
     unread?: boolean
     pinned?: boolean
   }) => boolean
+  loadTelemetryAggregates?: (windowDays: number | 'all') => ComplianceAggregates
 }): GatewayContext {
   return {
     token: params.token,
@@ -113,6 +119,13 @@ export function createGatewayContext(params: {
     runPrompt: params.runPrompt,
     loadScopedThreads: params.loadScopedThreads,
     updateScopedThreadState: params.updateScopedThreadState,
+    loadTelemetryAggregates:
+      params.loadTelemetryAggregates ??
+      ((windowDays) =>
+        aggregateCompliance(
+          { records: [], totalLines: 0, skippedLines: 0 },
+          { windowDays },
+        )),
     connectedSockets: new Set(),
     pendingApprovals: new Map(),
     activeRun: null,

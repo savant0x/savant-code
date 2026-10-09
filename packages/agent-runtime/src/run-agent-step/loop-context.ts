@@ -9,6 +9,8 @@ import { applyGoalDirectives } from './loop-context-goals'
 import { buildInitialMessages } from './loop-context-messages'
 import { toTokenCountInputSchema } from './token-count'
 import { additionalToolDefinitions } from './tool-definitions'
+import { getOrCreateEnforcement } from '../echo/enforcement'
+import { seedComplianceContext } from '../hooks/compliance-context'
 import { getAgentTemplate } from '../templates/agent-registry'
 import { buildAgentToolSet } from '../templates/prompts'
 import { getAgentPrompt } from '../templates/strings'
@@ -94,6 +96,12 @@ export async function createLoopContext(params: {
   // correlation, which a crypto-grade id serves identically.
   const runId = crypto.randomUUID()
   initialAgentState.runId = runId
+  seedComplianceContext(
+    getOrCreateEnforcement(initialAgentState).state,
+    loopParams.fileContext.projectRoot,
+    agentTemplate,
+    initialAgentState,
+  )
 
   let cachedAdditionalToolDefinitions: CustomToolDefinitions | undefined
   // Use parent's tools for prompt caching when inheritParentSystemPrompt is true

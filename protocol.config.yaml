@@ -167,6 +167,13 @@ telemetry: # P4 — token usage + cache-hit monitoring
   enabled: true
   cacheHitAlertDrop: 0.3 # alert when cached-token ratio drops 30+ points
 
+# Model-compliance telemetry (FID-2026-1007-012 FID 2): law-violation event
+# sink. Local-only, zero inference, metadata only. Default-on per the build
+# order; set enabled: false to stop all capture. (The `telemetry:` key above
+# is P4 token telemetry — a different surface.)
+complianceTelemetry:
+  enabled: true
+
 # ZTAP provenance (FID-2026-0813-004): mode is LIVE — parsed by
 # common/src/util/protocol-config.ts and wired into every CLI run by
 # cli/src/hooks/helpers/send-message-run-config.ts.

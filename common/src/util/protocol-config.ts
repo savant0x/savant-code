@@ -11,6 +11,7 @@ import {
 } from './protocol-config-parser'
 import {
   applyCavemanSection,
+  applyComplianceTelemetrySection,
   applyCompressionSection,
   applyHooksSection,
   applyProvenanceSection,
@@ -20,6 +21,7 @@ import {
 } from './protocol-config-sections'
 import {
   DEFAULT_CAVEMAN,
+  DEFAULT_COMPLIANCE_TELEMETRY,
   DEFAULT_COMPRESSION,
   DEFAULT_PROVENANCE,
   DEFAULT_TELEMETRY,
@@ -29,6 +31,7 @@ import {
 import type { PresetShape } from './orchestration-preset'
 import type {
   ProtocolCavemanConfig,
+  ProtocolComplianceTelemetryConfig,
   ProtocolCompressionConfig,
   ProtocolConfig,
   ProtocolContractConfig,
@@ -44,6 +47,7 @@ import type { SteeringRuleSpec } from '../types/steering'
 // Re-export the protocol config contract + defaults from the original path.
 export type {
   ProtocolCavemanConfig,
+  ProtocolComplianceTelemetryConfig,
   ProtocolCompressionConfig,
   ProtocolConfig,
   ProtocolContractConfig,
@@ -72,6 +76,9 @@ export function readProtocolConfig(cwd: string): ProtocolConfig {
   const yagni: ProtocolYagniConfig = { ...DEFAULT_YAGNI }
   const caveman: ProtocolCavemanConfig = { ...DEFAULT_CAVEMAN }
   const telemetry: ProtocolTelemetryConfig = { ...DEFAULT_TELEMETRY }
+  const complianceTelemetry: ProtocolComplianceTelemetryConfig = {
+    ...DEFAULT_COMPLIANCE_TELEMETRY,
+  }
   const provenance: ProtocolProvenanceConfig = { ...DEFAULT_PROVENANCE }
   const hooks: HookConfig[] = []
   const steering: SteeringRuleSpec[] = []
@@ -138,6 +145,10 @@ export function readProtocolConfig(cwd: string): ProtocolConfig {
     applyYagniSection(extractYamlSection(lines, 'yagni', 0), yagni)
     applyCavemanSection(extractYamlSection(lines, 'caveman', 0), caveman)
     applyTelemetrySection(extractYamlSection(lines, 'telemetry', 0), telemetry)
+    applyComplianceTelemetrySection(
+      extractYamlSection(lines, 'complianceTelemetry', 0),
+      complianceTelemetry,
+    )
     applyProvenanceSection(
       extractYamlSection(lines, 'provenance', 0),
       provenance,
@@ -186,6 +197,7 @@ export function readProtocolConfig(cwd: string): ProtocolConfig {
     yagni,
     caveman,
     telemetry,
+    complianceTelemetry,
     provenance,
     hooks,
     steering,

@@ -7,12 +7,10 @@ import type {
   RunnerConfig,
   RunFault,
   TraceDocument,
-  UsageSample,
 } from '../runner'
-import type { AgentDefinition } from '@savant-code/sdk'
 import type { Sandbox } from '../sandbox'
 import type { PrintModeEvent } from '@savant-code/common/types/print-mode'
-import type { RunState } from '@savant-code/sdk'
+import type { AgentDefinition, RunState } from '@savant-code/sdk'
 
 export interface SavantAgentRunnerConfig extends RunnerConfig {
   /**

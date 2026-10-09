@@ -5,6 +5,7 @@ import {
   buildComplianceWarningChunks,
 } from '../../echo/violation-handler'
 import { resolveYagniEnforced } from '../../echo/yagni-pre-write-gate'
+import { seedComplianceContext } from '../../hooks/compliance-context'
 import { stripYagniCheckBlocksFromWritePayload } from '../../util/think-tags'
 
 import type { GateContext, GateHalt, GateStage } from './gate-context'
@@ -32,6 +33,12 @@ export function createEhelGate<T extends ToolName>(deps: {
   return (ctx: GateContext<T>): GateHalt => {
     const enforcement: EchoEnforcement = ctx.enforcement
     let writeLawChecks: { law: number; outcome: 'advisory' }[] = []
+    seedComplianceContext(
+      enforcement.state,
+      deps.projectRoot(),
+      ctx.params.agentTemplate,
+      ctx.params.agentState,
+    )
     const enforceResult = enforcement.beforeToolCall({
       toolName: ctx.toolCall.toolName,
       input: ctx.toolCall.input as Record<string, unknown>,

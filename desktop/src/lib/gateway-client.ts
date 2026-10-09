@@ -8,6 +8,7 @@ import {
 } from './gateway-client-connection'
 import {
   getScopedThreadsVia,
+  getTelemetryAggregatesVia,
   interruptVia,
   listCommandsVia,
   respondApprovalVia,
@@ -125,6 +126,12 @@ export class GatewayClient {
    *  management (SAVANT_TRIGGERS=1) in its hello capabilities. */
   getTriggersAvailable(): boolean {
     return this.triggersAvailableValue
+  }
+
+  getTelemetryAggregates(
+    window: '7d' | '30d' | 'all' = '7d',
+  ): ReturnType<typeof getTelemetryAggregatesVia> {
+    return getTelemetryAggregatesVia(this.requestCtx, window)
   }
 
   onStatus(listener: (s: GatewayStatus) => void): () => void {

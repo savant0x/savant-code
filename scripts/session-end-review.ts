@@ -24,11 +24,6 @@
 import * as fs from 'node:fs'
 import * as path from 'node:path'
 
-import {
-  claimSkillLifecycleEvents,
-  formatSkillLifecycleNoticeLine,
-} from '@savant-code/common/util/skill-lifecycle-events'
-import { countQuarantinedDrafts } from '@savant-code/common/util/skill-management'
 import { proposalsForSession } from '@savant-code/common/util/skill-proposals'
 import { updateWikiPattern } from '@savant-code/common/util/skill-wiki'
 
@@ -36,6 +31,16 @@ import {
   computeRecurrences,
   readExperienceLedger,
 } from './experiences-dedup.js'
+import {
+  quarantineAlertNote,
+  skillLifecycleReportLines,
+  telemetryReportLines,
+} from './session-end-notices'
+
+export {
+  quarantineAlertNote,
+  skillLifecycleReportLines,
+} from './session-end-notices'
 
 export const AGENDA_MAX_LINES = 50
 export const AGENDA_MAX_ITEMS = 3
@@ -76,40 +81,6 @@ export type SessionEndReview = {
    * discipline).
    */
   proposerEligible: boolean
-}
-
-/**
- * FID-2026-0910-001 P3 — deterministic quarantine alert line printed after
- * the routing notes when drafts pend (silent at zero). The only surface that
- * can catch mechanical drafts (`lessons:to-skills`), which never pass through
- * the chat. Zero LLM; pure read after the agenda write.
- */
-export function quarantineAlertNote(rootDir: string): string | null {
-  const pending = countQuarantinedDrafts(rootDir)
-  if (pending === 0) return null
-  return (
-    `⚠ ${pending} quarantined skill draft${pending === 1 ? '' : 's'} ` +
-    'pending operator review — run `/skills list --quarantined`'
-  )
-}
-
-/**
- * FID-2026-1005-003 Step 4 — headless skill-event visibility.
- *
- * Every unseen lifecycle event (per the CLI surface's own cursor) surfaces
- * here as one formatted notice line at session end — the durable net for
- * events created while no TUI was watching. Metadata-only lines, built by
- * the shared formatter; acknowledgement stays with the rendering surface
- * (this report NEVER advances the cursor — it is a report, not a display).
- */
-export function skillLifecycleReportLines(rootDir: string): string[] {
-  const { events, remaining } = claimSkillLifecycleEvents(rootDir, 'cli')
-  if (events.length === 0) return []
-  const lines = events.map(formatSkillLifecycleNoticeLine)
-  if (remaining > 0) {
-    lines.push(`… ${remaining} more — run \`/skills activity\``)
-  }
-  return lines
 }
 
 /**
@@ -273,6 +244,7 @@ export function runSessionEndReview(
     ...built.routing,
     ...(quarantineNote !== null ? [quarantineNote] : []),
     ...lifecycleLines,
+    ...telemetryReportLines(rootDir, opts),
   ]
   // FID-2026-0912-004: the proposer may draft only once per session — read
   // from the proposal store, not from conversation memory.

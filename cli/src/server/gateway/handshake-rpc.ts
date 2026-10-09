@@ -1,6 +1,7 @@
 // Authenticated frozen-v1 dispatch with optional client capabilities.
 
 import { handleListCommands } from './commands-registry'
+import { handleHello } from './hello-rpc'
 import {
   handleProviderNotices,
   supportsProviderNotices,
@@ -20,7 +21,7 @@ import {
   handleGetScopedThreads,
   handleUpdateScopedThreadState,
 } from './scoped-threads-rpc'
-import { emitEventBatch } from './state'
+import { handleTelemetryAggregates } from './telemetry-rpc'
 import {
   handleTriggersCreate,
   handleTriggersDelete,
@@ -28,12 +29,9 @@ import {
   handleTriggersSetEnabled,
   handleTriggersSetRecurrence,
 } from './triggers-rpc'
-import { safeTokenEqual } from '../auth'
 import {
   failure,
-  GATEWAY_CAPABILITIES,
   GATEWAY_ERROR_CODES,
-  GATEWAY_PROTOCOL_VERSION,
   isJsonRpcMessage,
   success,
 } from '../json-rpc'
@@ -42,65 +40,7 @@ import type { FidEventBus } from './fid-events'
 import type { GatewayContext } from './state'
 import type { ConnectionState } from './types'
 
-/** Authenticate the hello frame. Fail-closed: mismatched protocolVersion →
- *  -32003 (never silently downgraded); missing/bad token → -32001. The reply
- *  carries the frozen capability list. */
-export function handleHello(
-  ctx: GatewayContext,
-  bus: FidEventBus,
-  send: (data: string) => void,
-  id: number | string,
-  params: unknown,
-): boolean {
-  const record = (params ?? {}) as Record<string, unknown>
-  if (record.protocolVersion !== GATEWAY_PROTOCOL_VERSION) {
-    send(
-      JSON.stringify(
-        failure(
-          id,
-          GATEWAY_ERROR_CODES.unsupportedProtocolVersion,
-          'Unsupported protocol version',
-        ),
-      ),
-    )
-    return false
-  }
-  const providedToken = typeof record.token === 'string' ? record.token : ''
-  if (!safeTokenEqual(providedToken, ctx.token)) {
-    send(
-      JSON.stringify(
-        failure(
-          id,
-          GATEWAY_ERROR_CODES.unauthorized,
-          'Unauthorized: bad or missing bearer token',
-        ),
-      ),
-    )
-    return false
-  }
-  send(
-    JSON.stringify(
-      success(id, {
-        protocolVersion: GATEWAY_PROTOCOL_VERSION,
-        capabilities: GATEWAY_CAPABILITIES,
-        projectId: ctx.projectId,
-        // FID-2026-1003-002 (D6): the batch counter at hello time — the
-        // renderer's replay-cursor baseline (additive; old clients ignore).
-        eventSeq: ctx.batchSeq,
-      }),
-    ),
-  )
-  setTimeout(() => {
-    // Contained boot snapshot uses the same replayable event path.
-    try {
-      const updates = bus.collectFidUpdates()
-      emitEventBatch(ctx, updates)
-    } catch (error) {
-      ctx.logger?.error?.(error, 'gateway: post-hello FID snapshot failed')
-    }
-  }, 0)
-  return true
-}
+export { handleHello } from './hello-rpc'
 
 /** update_setting (v1: capability listed, no-op persistence). */
 function handleUpdateSetting(
@@ -241,6 +181,15 @@ export function createDispatch(
         break
       case 'list_commands':
         handleListCommands(send, id, ctx.commands)
+        break
+      case 'telemetry_aggregates':
+        handleTelemetryAggregates(
+          send,
+          id,
+          params,
+          ctx.loadTelemetryAggregates,
+          ctx.logger,
+        )
         break
       case 'triggers_list':
         withTriggerManager(send, id, ctx, (manager) =>

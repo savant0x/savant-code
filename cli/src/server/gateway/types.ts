@@ -5,6 +5,7 @@
 // Stage modules import from here — never from the facade.
 
 import type { PrintModeEvent } from '@savant-code/common/types/print-mode'
+import type { ComplianceAggregates } from '@savant-code/common/util/telemetry-aggregate'
 import type { RunState } from '@savant-code/sdk'
 
 /** Fixed ~50ms event-stream flush interval (token-stream backpressure). */
@@ -48,6 +49,11 @@ export type GatewayOptions = {
     unread?: boolean
     pinned?: boolean
   }) => boolean
+  /** FID-2026-1007-012 FID 5 — DI: compliance-aggregates reader used by the
+   *  read-only RPC method. Defaults to the project ledger. */
+  loadTelemetryAggregates?: (
+    windowDays: number | 'all',
+  ) => ComplianceAggregates
   /** Optional logger. */
   logger?: {
     info?: (...args: unknown[]) => void
