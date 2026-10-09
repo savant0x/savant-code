@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-1009-001-first-message-credentials-changed-false-positive.md`
 **ID:** FID-2026-1009-001
 **Severity:** medium
-**Status:** verified
+**Status:** closed
 **Created:** 2026-10-09 09:15
 **Automation level:** 2
 **YAGNI-Compliance:** Verified
@@ -25,7 +25,8 @@ irrelevant to the failure — the check compares two random UUIDs.
 
 - **OS:** Windows (win32), Git Bash
 - **Language/Runtime:** TypeScript, Bun 1.3.14
-- **Commit/State:** uncommitted working tree on `main`
+- **Commit/State:** committed locally as `f56020b7` (combined with
+  FID-2026-1009-002/-003); closed and archived 2026-10-09
 
 ## Detailed Description
 
@@ -180,8 +181,8 @@ comparison, and the ordinary value-change detection still mints on rotation.
 
 ## Implementation Evidence
 
-- **Commit SHA:** pending — G2 closure requires the operator's local
-  commit; working-tree verified 2026-10-09.
+- **Commit SHA:** `f56020b7` — combined with FID-2026-1009-002 and
+  FID-2026-1009-003; all three closed and archived 2026-10-09.
 - **File:line ranges:**
   - `common/src/providers/model-route.ts` — `getModelRouteConfig`:
     `seedProviderAccountRevision(config, route.accountRevision)` before
@@ -212,13 +213,12 @@ comparison, and the ordinary value-change detection still mints on rotation.
       probe 5/5, common 5/5, cli 1/1, quality:report PASS)
 - [x] Production call-graph evidence present for the repaired wiring
       (Law 4 grep output recorded in Loop 1 AUDIT)
-- [x] FID status reflects the actual implementation state (`verified` —
-      implementation exists and gates pass; closure awaits the G2 commit)
+- [x] FID status reflects the actual implementation state (`closed` —
+      implemented, verified, committed `f56020b7`, archived 2026-10-09)
 
 ## Resolution
 
-- **Closed Date:** pending — G2: an FID closes only when its changes are
-  committed locally; commit authority is the operator's.
+- **Closed Date:** 2026-10-09
 - **Fix Description:** adopt-if-unobserved for the persisted route
   `accountRevision`, at both the common validation seam
   (`getModelRouteConfig`) and the CLI boot seam
@@ -233,6 +233,8 @@ comparison, and the ordinary value-change detection still mints on rotation.
   value-change rejection; monitoring-capture stability) and 1
   boot-ordering pin in
   `cli/src/utils/__tests__/provider-key-store-account-adoption.test.ts`.
-- **Verification Evidence:** receipt below — 6/6 gates exit 0.
-- **Archived:** pending — after the operator commit, move to
-  `dev/fids/archive/` and append the CHANGELOG entry.
+- **Verification Evidence:** receipt below — 6/6 gates exit 0;
+  implementation commit `f56020b7`; independent Verifier PASS.
+- **Archived:** 2026-10-09 — moved to `dev/fids/archive/` on the
+  operator's closure authorization; register entry evicted from `SCOPE.md`;
+  CHANGELOG entry appended under 0.0.35 `### Fixed`.

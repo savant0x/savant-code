@@ -3,7 +3,7 @@
 **Filename:** FID-2026-1009-003-auto-compact-silent-before-window-overflow.md
 **ID:** FID-2026-1009-003
 **Severity:** high
-**Status:** verified
+**Status:** closed
 **Created:** 2026-10-09
 **Automation level:** 2
 **YAGNI-Compliance:** Verified
@@ -28,8 +28,8 @@ remain.
 - **OS:** Windows (win32), Git Bash
 - **Language/Runtime:** TypeScript, Bun 1.3.14
 - **Tool Versions:** `tsc --noEmit`, `eslint` (`--max-warnings 0`)
-- **Commit/State:** follows FID-2026-1009-001 + FID-2026-1009-002 (combined
-  commit pending operator G2)
+- **Commit/State:** committed locally as `f56020b7` (combined with
+  FID-2026-1009-001/-002); closed and archived 2026-10-09
 
 ## Detailed Description
 
@@ -296,13 +296,13 @@ record's receipt below.
   stay blocked for the rest of the session.
 - **AUDIT:** pending.
 - **ADVERSARIAL:** Would L2's retry loop risk infinite compaction? No —
-  exactly one retry per dispatch; the pruner either reduces the count or
-  the original error is rethrown. Does L3's wider margin compact too
-  eagerly? It compacts 5k earlier (20k vs 15k before the wall) — strictly
-  safer; the proactive trigger (800k) still fires first in the normal
-  case. Does L4 resetting the ladder defeat the anti-thrash design? Only
-  on the force path, where a failed compaction is still cheaper than a
-  hard failure; the force path already bypassed the hold by design.
+  exactly one retry per dispatch; the pruner either reduces the count or the
+  original error is rethrown. Does L3's wider margin compact too eagerly?
+  It compacts 5k earlier (20k vs 15k before the wall) — strictly safer;
+  the proactive trigger (800k) still fires first in the normal case. Does
+  L4 resetting the ladder defeat the anti-thrash design? Only on the force
+  path, where a failed compaction is still cheaper than a hard failure;
+  the force path already bypassed the hold by design.
 
 ### Missed Questions
 
@@ -323,8 +323,9 @@ record's receipt below.
 
 ## Resolution
 
-- **Closed Date:** pending
-- **Fix Description:** verified (L2-L4; L1 under FID-2026-1009-002)
+- **Closed Date:** 2026-10-09
+- **Fix Description:** L2-L4 implemented and verified (L1 under
+  FID-2026-1009-002)
 - **Tests Added:**
   `sdk/src/impl/model-provider/__tests__/request-overflow-recovery.test.ts`
   (6 pins: a wired seam is invoked with the overflow facts, then the
@@ -343,11 +344,15 @@ record's receipt below.
   compact-interceptor, 3 threshold-parity), typecheck ×4 (common,
   packages/agent-runtime, sdk, agents), eslint clean on all touched
   files, prettier clean.
-- **Archived:** pending
+- **Archived:** 2026-10-09 — moved to `dev/fids/archive/` on the
+  operator's closure authorization (implementation commit `f56020b7`,
+  combined with FID-2026-1009-001/-002); register entry evicted from
+  `SCOPE.md`; CHANGELOG entry appended under 0.0.35 `### Fixed`.
 
 ### Code Verification Evidence
 
-Status is `verified` — L2-L4 implemented and gate-verified by this record's
-receipt; L1 (the reconcile positivity guard) is gate-verified under
-FID-2026-1009-002's receipt (uncommitted, pending the operator's combined
-G2 commit). Closure waits for the combined commit per G2.
+Status is `closed` — L2-L4 implemented and gate-verified by this record's
+receipt (stamped on the verified content; the pre-closure fingerprint is
+prescribed for closed records); L1 (the reconcile positivity guard) is
+gate-verified under FID-2026-1009-002's receipt. Implementation commit
+`f56020b7`.

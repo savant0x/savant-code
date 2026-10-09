@@ -546,6 +546,52 @@
 
 ### Fixed
 
+- **The every-boot "Selected provider credentials changed" error was a false
+  positive on the process-memory revision check (FID-2026-1009-001, medium;
+  closed and archived 2026-10-09; local commit `f56020b7`).** The route
+  persisted in `settings.json` carries an `accountRevision` UUID minted by the
+  saving process, while `providerAccountRevision` keeps a process-memory map
+  and mints a fresh random UUID on first observation — so every fresh process
+  compared two random UUIDs and rejected unchanged, valid env-sourced keys on
+  the first message. Adopt-if-unobserved seeding in `getModelRouteConfig`
+  (common) and `applyPersistedProviderApiKeys` (CLI boot, via the new
+  `adoptPersistedSelectionRevision`) makes a fresh process accept the
+  persisted route; an already-observed provider (a mid-session `/provider`
+  save), a `credentials.json` anchor, and key rotation keep the strict
+  comparison. Six declared gates pass with a stamped receipt; independent
+  Verifier PASS.
+
+- **The context meter no longer resets to 0/1,000,000 mid-session or on every
+  boot (FID-2026-1009-002, medium; closed and archived 2026-10-09; local
+  commit `f56020b7`).** `dampTokenCount` adopted any incoming ≤ 10,000 —
+  including 0 — exactly, so one non-positive runtime reading wiped an
+  established count and the run-end writer made the zero persist; and the
+  used-count was never seeded from the restored chat at boot. Fix: non-positive
+  incoming is "no reading" and never wipes an established count (the
+  FID-2026-0827-001 small-count floor, the ±5% deadband and the 12% ramp
+  preserved); the meter is seeded from the restored chat's persisted
+  `mainAgentState.contextTokenCount`; `reconcileTokenCount` requires a positive
+  provider `inputTokens` before provider truth wins (0/unset falls back to the
+  estimator — also keeping the compaction gates honest, FID-2026-1009-003
+  Layer 1); and `/new` gets an explicit `resetContextTokens` companion. Seven
+  declared gates pass; 26/26 tests; independent Verifier PASS.
+
+- **Auto-compact now fires before the context window overflows, and an
+  overflowing request recovers instead of hard-failing (FID-2026-1009-003,
+  high; closed and archived 2026-10-09; local commit `f56020b7`).** A long
+  session died on `RequestInputBudgetError` (input estimate 1,004,611 against
+  the 1M window) with no compaction in between. Three layers: the SDK budget
+  layer gains an overflow seam — on a budget throw it invokes the host seam
+  (the runtime arms `agentState.autoCompactDue` so the handleSteps generator
+  force-compacts the shared session state), trims the oldest non-system turns,
+  and retries exactly once (the unwired trim-recovery is the fallback; an
+  untrimmable prompt still rethrows); the force margin is proportional
+  (`max(15k, 2% of window)` = 20k at 1M) so a single large tool result cannot
+  jump the force trigger; and the force path resets the escalation ladder so a
+  successful forced compaction no longer strands proactive passes behind a
+  hold baseline the count can never re-cross. Seven declared gates pass; 9 new
+  tests; independent Verifier PASS.
+
 - **The model picker no longer renders a free-key lane, and provider groups are
   alphabetical (FID-2026-1007-017, low; closed and archived 2026-10-08; local
   commits `df2d88af` + `4ccabe17`; register item T166).** Two defects in the

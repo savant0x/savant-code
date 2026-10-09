@@ -87,17 +87,6 @@
       already accepts `--control-*`; the sweep does not. `FID-2026-1007-016`.
       **Automation level: 2.**
 
-- [ ] **FID-2026-1009-001. Boot false-positive "credentials changed" error.**
-      Env-sourced providers with no `credentials.json` revision anchor fail
-      the persisted route's `accountRevision` check on the first message of
-      every process: the check compares a process-memory random UUID against
-      a persisted one with no cross-process bridge. Fix A (operator-approved
-      2026-10-09): adopt-if-unobserved seeding in `getModelRouteConfig` and
-      at CLI boot (`applyPersistedProviderApiKeys`), preserving the
-      mid-session and anchored strict comparisons. Record:
-      `dev/fids/FID-2026-1009-001-first-message-credentials-changed-false-positive.md`.
-      **Automation level: 2.**
-
 - [ ] **T167. `FID-2026-1008-001` — KiosAPI picker catalog: full public
       square.** The picker's KiosAPI group served the stored Free-group key's
       36-row `/v1/models` view while the vendor publishes 80 on its public
@@ -130,32 +119,6 @@
       in the background. (2) `docs/provider-gauntlets.md` linked from AGENTS.md.
       (3) Selecting an unkeyed registry provider runs the key flow and wires the
       picked model on save. **Automation level: 2.**
-
-- [ ] **FID-2026-1009-002. Context meter resets to 0/1,000,000.**
-      Two defects: the sidebar's `contextTokensUsed` is never seeded from
-      the restored chat at boot (only the cap is), so a resumed session
-      reads 0/1,000,000 until the first run recomputes; and `dampTokenCount`
-      adopts any incoming ≤ 10,000 — including 0 — exactly, so a
-      non-positive runtime reading (`reconcileTokenCount` can prefer a
-      provider usage reporting 0 input tokens) wipes an established count
-      mid-session. Fix: suppress non-positive incoming in the display path,
-      seed the meter from the restored session, guard the reconcile's
-      provider-usage precedence, and add an explicit `/new` meter reset.
-      Record:
-      `dev/fids/FID-2026-1009-002-context-meter-resets-to-zero-mid-session.md`.
-      **Automation level: 2.**
-
-- [ ] **FID-2026-1009-003. Auto-compact silent before window overflow.**
-      A long session hard-fails with `RequestInputBudgetError` (input
-      estimate past the window) because the compaction trigger chain
-      evaluates a count the reconcile could zero (fixed by
-      FID-2026-1009-002 Layer 3) and the fixed 15k force margin can be
-      jumped by a single large tool result. Fix: SDK overflow seam
-      (compact-and-retry instead of hard-throw), proportional force
-      margin (max(15k, 2% of window)), escalation-hold release near the
-      force margin. Record:
-      `dev/fids/FID-2026-1009-003-auto-compact-silent-before-window-overflow.md`.
-      **Automation level: 2.**
 
 - [ ] **T62-followups (remaining items routed, not blocking `Task 62`
       closure):** (1) is **completed 2026-09-28** — commandcode catalog
@@ -319,37 +282,3 @@
   `scripts/public-release/pre-audit*.ts`
 - T164-F: `dev/fids/FID-2026-1007-015-atria-harness-friction-p1-p5.md`,
   `dev/build-orders/BO-2026-09-16-atria-friction.md`
-- FID-2026-1009-001: `common/src/providers/model-route.ts`
-  `common/src/providers/provider-account-revisions.ts`
-  `cli/src/utils/provider-key-store.ts`
-  `cli/src/utils/provider-key-persistence.ts`
-  `common/src/providers/__tests__/model-route-account-adoption.test.ts`
-  `cli/src/utils/__tests__/provider-key-store-account-adoption.test.ts`
-  `dev/scratchpad/active/fid-1009-001-first-message-probe.ts`
-- FID-2026-1009-002: `cli/src/state/chat-store/compaction-helpers.ts`,
-  `cli/src/state/chat-store/sidebar-actions.ts`,
-  `cli/src/state/chat-store/sidebar-reset.ts`,
-  `cli/src/state/chat-store/chat-store-actions.ts`,
-  `cli/src/hooks/use-send-message.ts`,
-  `cli/src/utils/run-state-storage/load.ts`,
-  `cli/src/utils/run-state-storage.ts`,
-  `packages/agent-runtime/src/run-agent-step/reconcile-token-count.ts`,
-  `cli/src/state/chat-store/__tests__/context-token-damping.test.ts`,
-  `cli/src/state/chat-store/__tests__/context-token-reset.test.ts`,
-  `cli/src/utils/__tests__/restored-context-token-count.test.ts`,
-  `packages/agent-runtime/src/__tests__/reconcile-token-count.test.ts`
-- FID-2026-1009-003: `sdk/src/impl/model-provider/request-budget-policy.ts`,
-  `sdk/src/impl/model-provider/request-budget.ts`,
-  `sdk/src/impl/model-provider/request-token-count.ts`,
-  `sdk/src/impl/model-provider/types.ts`,
-  `sdk/src/impl/model-provider/apply-request-budget.ts`,
-  `sdk/src/impl/model-provider/__tests__/request-overflow-recovery.test.ts`,
-  `sdk/src/impl/llm/stream-request-setup.ts`,
-  `sdk/src/impl/__tests__/request-budget.test.ts`,
-  `common/src/types/contracts/llm.ts`,
-  `packages/agent-runtime/src/prompt-agent-stream.ts`,
-  `packages/agent-runtime/src/run-agent-step/step.ts`,
-  `agents/savant/handle-steps-template.ts`,
-  `agents/savant/handle-steps-template-body-b.ts`,
-  `agents/__tests__/handle-steps-force-margin.test.ts`,
-  `cli/src/agents/bundled-agents.generated-data/*.ts`

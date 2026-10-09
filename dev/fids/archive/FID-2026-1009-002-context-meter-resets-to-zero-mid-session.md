@@ -3,7 +3,7 @@
 **Filename:** FID-2026-1009-002-context-meter-resets-to-zero-mid-session.md
 **ID:** FID-2026-1009-002
 **Severity:** medium
-**Status:** verified
+**Status:** closed
 **Created:** 2026-10-09
 **Automation level:** 2
 **YAGNI-Compliance:** Verified
@@ -11,7 +11,6 @@
 ---
 
 ## Summary
-
 The sidebar context meter ("used / cap") resets to `0/1,000,000` randomly
 between turns and on every boot: the used-count drops to zero while the cap
 stays at the model's resolved window, and the meter stays wrong until the next
@@ -24,7 +23,8 @@ reading wipes an established count exactly by design.
 - **OS:** Windows (win32), Git Bash
 - **Language/Runtime:** TypeScript, Bun 1.3.14
 - **Tool Versions:** `tsc --noEmit`, `eslint` (`--max-warnings 0`)
-- **Commit/State:** uncommitted working tree (follows FID-2026-1009-001)
+- **Commit/State:** committed locally as `f56020b7` (combined with
+  FID-2026-1009-001/-003); closed and archived 2026-10-09
 
 ## Detailed Description
 
@@ -55,7 +55,6 @@ Two defects produce the operator-reported symptom ("it keeps getting reset to
    writer makes the zero persist until the next run recomputes.
 
 ### Expected Behavior
-
 The meter shows the real context count continuously: the restored chat's count
 at boot, and a tracked value during and between runs that never collapses to 0
 unless the context is genuinely empty.
@@ -231,7 +230,7 @@ declared below.
 
 ## Resolution
 
-- **Closed Date:** pending (closure ceremony waits for the G2 commit)
+- **Closed Date:** 2026-10-09
 - **Fix Description:** Three layers, all implemented and verified.
   Layer 1 (`cli/src/state/chat-store/compaction-helpers.ts`): `dampTokenCount`
   now returns `current` for a non-positive `incoming` — a 0 is "no reading"
@@ -271,9 +270,14 @@ declared below.
   is called from `clearMessages` (`use-send-message.ts`), which is invoked by
   the `/new` command (`commands/defs/chat.ts`); the boot seeding runs in the
   continueChat effect of `use-send-message.ts`.
-- **Archived:** pending
+- **Archived:** 2026-10-09 — moved to `dev/fids/archive/` on the
+  operator's closure authorization (implementation commit `f56020b7`,
+  combined with FID-2026-1009-001/-003); register entry evicted from
+  `SCOPE.md`; CHANGELOG entry appended under 0.0.35 `### Fixed`.
 
 ### Code Verification Evidence
 
-Status is `verified` — receipt stamped by `fid:verify --write`; all seven
-declared gates pass on the final tree (see Verification Evidence above).
+Status is `closed` — receipt stamped by `fid:verify --write` on the
+verified content (the pre-closure fingerprint is prescribed for closed
+records); all seven declared gates passed on the final tree;
+implementation commit `f56020b7`.
