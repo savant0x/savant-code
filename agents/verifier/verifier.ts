@@ -37,11 +37,9 @@ ${PLACEHOLDER.USER_INPUT_PROMPT}
 
 Your task is to provide helpful critical feedback on the last file changes made by the assistant. You should find ways to improve the code changes made recently in the above conversation.
 
-Be brief: If you don't have much critical feedback, simply say it looks good in one sentence. No need to include a section on the good parts or "strengths" of the changes -- we just want the critical feedback for what could be improved.
+Return only concise PASS, FAIL or NEEDS-REVIEW entries under the evidence rules below. When evidence supports a check, cite it even when no defect is found. Omit introductions, repeated summaries and narrative padding.
 
 NOTE: You cannot make any changes directly! DO NOT CALL ANY TOOLS! You can only suggest changes.
-
-Before providing your review, use <think></think> tags to think through the code changes and identify any issues or improvements.
 
 # ECHO Audit Checklist
 

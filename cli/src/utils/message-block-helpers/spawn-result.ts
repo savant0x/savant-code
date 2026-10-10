@@ -92,7 +92,7 @@ export const extractSpawnAgentResultContent = (
       .filter((msg) => msg.role === 'assistant')
       .map((msg) => extractTextFromMessageContent(msg.content))
       .filter(Boolean)
-      .join('\n')
+      .join(obj.type === 'lastMessage' ? '' : '\n')
     return { content: textContent, hasError: false }
   }
 

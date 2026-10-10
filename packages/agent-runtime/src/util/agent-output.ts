@@ -34,7 +34,9 @@ function isExcludedFromOutput(message: Message): boolean {
  * below stops at user messages), but keeping the filter explicit documents
  * the contract that no excluded tags leak into agent output.
  */
-function getLastAssistantTurnMessages(messageHistory: Message[]): Message[] {
+export function getLastAssistantTurnMessages(
+  messageHistory: Message[],
+): Message[] {
   let lastAssistantIndex = -1
   for (let i = messageHistory.length - 1; i >= 0; i--) {
     if (messageHistory[i].role === 'assistant') {

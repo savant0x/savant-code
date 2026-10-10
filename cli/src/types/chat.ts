@@ -27,6 +27,8 @@ export type TextContentBlock = {
   /** True if this is a reasoning block from a <think> tag that hasn't been closed yet */
   thinkingOpen?: boolean
   thinkingCollapseState?: ThinkingCollapseState
+  /** Incomplete thinking delimiter held until the next stream chunk. */
+  pendingThinkTag?: string
 }
 /** Renders dynamic React content. NOT serializable - don't use for persistent data. */
 export type HtmlContentBlock = {

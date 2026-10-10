@@ -1,5 +1,8 @@
 import { updateBlocksRecursively } from '../message-block-helpers'
-import { closeNativeReasoningBlock } from './think-parsing'
+import {
+  closeNativeReasoningBlock,
+  finalizeThinkingBlocks,
+} from './think-parsing'
 
 import type { ContentBlock, ToolContentBlock } from '../../types/chat'
 
@@ -46,9 +49,9 @@ export const markAgentComplete = (blocks: ContentBlock[], agentId: string) =>
     if (block.type !== 'agent') {
       return block
     }
-    // Close any open native reasoning blocks when the agent completes
+    // Finalize both native and tagged reasoning when the agent completes.
     const closedBlocks = block.blocks
-      ? closeNativeReasoningBlock(block.blocks)
+      ? finalizeThinkingBlocks(block.blocks)
       : undefined
     return {
       ...block,
@@ -77,7 +80,7 @@ export const markRunningAgentsAsCancelled = (
 
     // Close any open native reasoning blocks in this agent
     if (updatedBlocks) {
-      updatedBlocks = closeNativeReasoningBlock(updatedBlocks)
+      updatedBlocks = finalizeThinkingBlocks(updatedBlocks)
     }
 
     if (block.status === 'running') {

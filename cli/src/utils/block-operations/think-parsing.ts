@@ -1,5 +1,4 @@
 import {
-  parseThinkTags,
   getPartialTagLength,
   THINK_OPEN_TAG,
   THINK_CLOSE_TAG,
@@ -14,241 +13,136 @@ import { generateThinkingId } from './thinking-id'
 
 import type { ContentBlock } from '../../types/chat'
 
-/**
- * Shared logic for appending text with think tag parsing.
- * Used by both root stream and agent blocks.
- */
-const appendTextWithThinkParsingToBlocks = (
-  blocks: ContentBlock[],
-  text: string,
-): ContentBlock[] => {
-  if (!text) {
-    return blocks
-  }
-
-  const nextBlocks = [...blocks]
-  const lastBlock = nextBlocks[nextBlocks.length - 1]
-  const wasInsideThinking = isOpenThinkingBlock(lastBlock)
-
-  let textToParse = text
-  let lastBlockContent = ''
-
-  if (wasInsideThinking && lastBlock?.type === 'text') {
-    lastBlockContent = lastBlock.content
-
-    const partialLen = getPartialTagLength(lastBlockContent)
-    if (partialLen > 0) {
-      const potentialTag = lastBlockContent.slice(-partialLen) + text
-      if (potentialTag.startsWith(THINK_CLOSE_TAG)) {
-        const newLastContent = lastBlockContent.slice(0, -partialLen)
-        textToParse = lastBlockContent.slice(-partialLen) + text
-
-        if (newLastContent) {
-          nextBlocks[nextBlocks.length - 1] = {
-            ...lastBlock,
-            content: newLastContent,
-          }
-        } else {
-          nextBlocks.pop()
-        }
-      }
-    }
-  } else if (
-    !wasInsideThinking &&
-    lastBlock?.type === 'text' &&
-    lastBlock.textType === 'text'
-  ) {
-    lastBlockContent = lastBlock.content
-    const partialLen = getPartialTagLength(lastBlockContent)
-    if (partialLen > 0) {
-      const potentialTag = lastBlockContent.slice(-partialLen) + text
-      if (potentialTag.startsWith(THINK_OPEN_TAG)) {
-        const newLastContent = lastBlockContent.slice(0, -partialLen)
-        textToParse = lastBlockContent.slice(-partialLen) + text
-
-        if (newLastContent) {
-          nextBlocks[nextBlocks.length - 1] = {
-            ...lastBlock,
-            content: newLastContent,
-          }
-        } else {
-          nextBlocks.pop()
-        }
-      }
-    }
-  }
-
-  const currentLastBlock = nextBlocks[nextBlocks.length - 1]
-  const insideThinking = isOpenThinkingBlock(currentLastBlock)
-
-  if (insideThinking && !textToParse.includes('<')) {
-    if (currentLastBlock?.type === 'text') {
-      nextBlocks[nextBlocks.length - 1] = {
-        ...currentLastBlock,
-        content: currentLastBlock.content + textToParse,
-      }
-      return nextBlocks
-    }
-  }
-
-  if (!insideThinking && !textToParse.includes('<')) {
-    if (
-      currentLastBlock?.type === 'text' &&
-      currentLastBlock.textType === 'text'
-    ) {
-      nextBlocks[nextBlocks.length - 1] = {
-        ...currentLastBlock,
-        content: currentLastBlock.content + textToParse,
-      }
-      return nextBlocks
-    }
-    return [...nextBlocks, createTextBlock(textToParse)]
-  }
-
-  const fullText = insideThinking ? THINK_OPEN_TAG + textToParse : textToParse
-
-  const segments = parseThinkTags(fullText)
-
-  let segmentStartIdx = 0
+/** Append to the current channel without creating a paragraph per chunk. */
+function appendContent(blocks: ContentBlock[], content: string): void {
+  if (!content) return
+  const last = blocks.at(-1)
   if (
-    insideThinking &&
-    segments.length > 0 &&
-    segments[0].type === 'thinking'
+    last?.type === 'text' &&
+    (last.textType !== 'reasoning' || isOpenThinkingBlock(last))
   ) {
-    const firstSegment = segments[0]
-    if (currentLastBlock?.type === 'text') {
-      const hasMoreSegments = segments.length > 1
-      const thinkingOpen =
-        !hasMoreSegments && !textToParse.includes(THINK_CLOSE_TAG)
-
-      nextBlocks[nextBlocks.length - 1] = {
-        ...currentLastBlock,
-        content: currentLastBlock.content + firstSegment.content,
-        thinkingOpen,
-      }
-    }
-    segmentStartIdx = 1
-  } else if (insideThinking && textToParse.includes(THINK_CLOSE_TAG)) {
-    // Handle case where we're inside thinking and receive </think> with no content
-    // (e.g., just "</think>" or "</think>text"). In this case parseThinkTags returns
-    // empty or starts with text, but we still need to close the thinking block.
-    if (currentLastBlock?.type === 'text') {
-      nextBlocks[nextBlocks.length - 1] = {
-        ...currentLastBlock,
-        thinkingOpen: false,
-      }
-    }
+    blocks[blocks.length - 1] = { ...last, content: last.content + content }
+  } else {
+    blocks.push(createTextBlock(content))
   }
-
-  for (let i = segmentStartIdx; i < segments.length; i++) {
-    const segment = segments[i]
-    const isLastSegment = i === segments.length - 1
-
-    if (segment.type === 'thinking') {
-      const thinkingOpen =
-        isLastSegment && !textToParse.endsWith(THINK_CLOSE_TAG)
-      if (thinkingOpen) {
-        nextBlocks.push(
-          createReasoningBlock(
-            segment.content,
-            thinkingOpen,
-            generateThinkingId(),
-          ),
-        )
-      }
-    } else {
-      const prevBlock = nextBlocks[nextBlocks.length - 1]
-      if (
-        prevBlock?.type === 'text' &&
-        prevBlock.textType === 'text' &&
-        !prevBlock.thinkingOpen
-      ) {
-        nextBlocks[nextBlocks.length - 1] = {
-          ...prevBlock,
-          content: prevBlock.content + segment.content,
-        }
-      } else {
-        nextBlocks.push(createTextBlock(segment.content))
-      }
-    }
-  }
-
-  return nextBlocks
 }
 
-/**
- * Appends native reasoning content to blocks array (for agent blocks).
- * Similar to how appendTextToRootStream handles reasoning for root.
- */
-const appendNativeReasoningToBlocks = (
+function closeTaggedReasoning(blocks: ContentBlock[]): void {
+  const last = blocks.at(-1)
+  if (!last || !isOpenThinkingBlock(last) || last.type !== 'text') return
+  if (!last.content) blocks.pop()
+  else blocks[blocks.length - 1] = { ...last, thinkingOpen: false }
+}
+
+function holdPartialTag(blocks: ContentBlock[], tag: string): void {
+  if (!tag) return
+  if (blocks.at(-1)?.type !== 'text') blocks.push(createTextBlock(''))
+  const last = blocks.at(-1)
+  if (last?.type === 'text') {
+    blocks[blocks.length - 1] = { ...last, pendingThinkTag: tag }
+  }
+}
+
+function openTaggedReasoning(blocks: ContentBlock[]): void {
+  const previous = blocks.at(-1)
+  if (
+    previous?.type === 'text' &&
+    previous.textType !== 'reasoning' &&
+    !previous.content
+  )
+    blocks.pop()
+  blocks.push(createReasoningBlock('', true, generateThinkingId()))
+}
+
+/** Shared stateful parser for root, subagent and final-result display. */
+export function appendTextWithThinkParsingToBlocks(
   blocks: ContentBlock[],
   text: string,
-): ContentBlock[] => {
-  if (!text) {
-    return blocks
+): ContentBlock[] {
+  if (!text) return blocks
+  const next = [...blocks]
+  const last = next.at(-1)
+  let remaining = text
+  if (last?.type === 'text' && last.pendingThinkTag) {
+    remaining = last.pendingThinkTag + remaining
+    const { pendingThinkTag: _, ...rest } = last
+    next[next.length - 1] = rest
   }
-
-  const nextBlocks = [...blocks]
-  const lastBlock = nextBlocks[nextBlocks.length - 1]
-
-  // If last block is already an open native reasoning block, append to it
-  // Only append if it's a native reasoning block (thinkingOpen === undefined),
-  // not a closed one or a <think> tag block
-  if (isNativeReasoningBlock(lastBlock) && lastBlock.type === 'text') {
-    const updatedBlock: ContentBlock = {
-      ...lastBlock,
-      content: lastBlock.content + text,
-    }
-    nextBlocks[nextBlocks.length - 1] = updatedBlock
-    return nextBlocks
-  }
-
-  // Create a new native reasoning block
-  const newBlock: ContentBlock = {
-    type: 'text',
-    content: text,
-    textType: 'reasoning',
-    thinkingCollapseState: 'preview',
-    thinkingId: generateThinkingId(),
-  }
-
-  return [...nextBlocks, newBlock]
-}
-
-/**
- * Marks the last native reasoning block as complete by setting thinkingOpen: false.
- * This triggers the UI to collapse the thinking block.
- *
- * Note: We search backwards through all blocks because agent/tool blocks may have
- * been added after the reasoning block but before text output starts.
- */
-export const closeNativeReasoningBlock = (
-  blocks: ContentBlock[],
-): ContentBlock[] => {
-  // Find the last native reasoning block (not just the last block)
-  let lastReasoningIndex = -1
-  for (let i = blocks.length - 1; i >= 0; i--) {
-    if (isNativeReasoningBlock(blocks[i])) {
-      lastReasoningIndex = i
+  while (remaining) {
+    const inside = isOpenThinkingBlock(next.at(-1))
+    const closeIndex = remaining.indexOf(THINK_CLOSE_TAG)
+    const openIndex = inside ? -1 : remaining.indexOf(THINK_OPEN_TAG)
+    const index =
+      openIndex >= 0 && (closeIndex < 0 || openIndex < closeIndex)
+        ? openIndex
+        : closeIndex
+    if (index < 0) {
+      const partialLength = getPartialTagLength(remaining)
+      appendContent(next, remaining.slice(0, remaining.length - partialLength))
+      holdPartialTag(next, remaining.slice(remaining.length - partialLength))
       break
     }
+    appendContent(next, remaining.slice(0, index))
+    if (index === openIndex) {
+      openTaggedReasoning(next)
+      remaining = remaining.slice(index + THINK_OPEN_TAG.length)
+    } else {
+      closeTaggedReasoning(next)
+      remaining = remaining.slice(index + THINK_CLOSE_TAG.length)
+    }
   }
-
-  if (lastReasoningIndex === -1) {
-    return blocks
-  }
-
-  const reasoningBlock = blocks[lastReasoningIndex]
-  if (reasoningBlock.type !== 'text') {
-    return blocks
-  }
-
-  const nextBlocks = [...blocks]
-  nextBlocks[lastReasoningIndex] = {
-    ...reasoningBlock,
-    thinkingOpen: false,
-  }
-  return nextBlocks
+  return next
 }
 
-export { appendNativeReasoningToBlocks, appendTextWithThinkParsingToBlocks }
+/** Close all reasoning and discard unfinished scaffold delimiters at EOF. */
+export function finalizeThinkingBlocks(blocks: ContentBlock[]): ContentBlock[] {
+  return blocks.flatMap((block): ContentBlock[] => {
+    if (block.type !== 'text') return [block]
+    const { pendingThinkTag, ...rest } = block
+    const literal =
+      pendingThinkTag === '<' || pendingThinkTag === '</' ? pendingThinkTag : ''
+    const content = rest.content + literal
+    if (!content && pendingThinkTag) return []
+    return [
+      {
+        ...rest,
+        content,
+        ...(rest.textType === 'reasoning' && { thinkingOpen: false }),
+      },
+    ]
+  })
+}
+
+export function appendNativeReasoningToBlocks(
+  blocks: ContentBlock[],
+  text: string,
+): ContentBlock[] {
+  if (!text) return blocks
+  const last = blocks.at(-1)
+  if (last && isNativeReasoningBlock(last) && last.type === 'text') {
+    return [...blocks.slice(0, -1), { ...last, content: last.content + text }]
+  }
+  return [
+    ...blocks,
+    {
+      type: 'text',
+      content: text,
+      textType: 'reasoning',
+      thinkingCollapseState: 'preview',
+      thinkingId: generateThinkingId(),
+    },
+  ]
+}
+
+/** Native reasoning ends when the provider starts text or a tool call. */
+export function closeNativeReasoningBlock(
+  blocks: ContentBlock[],
+): ContentBlock[] {
+  const index = blocks.findLastIndex(isNativeReasoningBlock)
+  if (index < 0) return blocks
+  const block = blocks[index]
+  if (block.type !== 'text') return blocks
+  return blocks.map((entry, i) =>
+    i === index ? { ...block, thinkingOpen: false } : entry,
+  )
+}

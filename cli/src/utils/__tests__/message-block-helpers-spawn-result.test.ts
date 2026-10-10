@@ -6,6 +6,22 @@ import { describe, expect, test } from 'bun:test'
 import { extractSpawnAgentResultContent } from '../message-block-helpers'
 
 describe('extractSpawnAgentResultContent', () => {
+  test('fragment boundaries preserve source bytes, Unicode and intentional blank lines', () => {
+    const source =
+      'FAIL art/icons/cyberpunk/logo-sidebar-s.svg:15 — ▄▀ ξ 🙂\n\nNEEDS-REVIEW render'
+    const result = extractSpawnAgentResultContent({
+      type: 'lastMessage',
+      value: source.split('').map((text) => ({
+        role: 'assistant',
+        content: [
+          { type: 'reasoning', text: 'native' },
+          { type: 'text', text },
+        ],
+      })),
+    })
+    expect(result).toEqual({ content: source, hasError: false })
+  })
+
   test('returns string value directly', () => {
     const result = extractSpawnAgentResultContent('Simple result')
     expect(result).toEqual({ content: 'Simple result', hasError: false })
@@ -91,7 +107,7 @@ describe('extractSpawnAgentResultContent', () => {
       ],
     })
     expect(result).toEqual({
-      content: 'First message\nSecond message',
+      content: 'First messageSecond message',
       hasError: false,
     })
   })

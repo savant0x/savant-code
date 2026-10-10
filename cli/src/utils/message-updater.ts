@@ -1,4 +1,6 @@
-import type { ChatMessage, ContentBlock, TextContentBlock } from '../types/chat'
+import { finalizeThinkingBlocks } from './block-operations/think-parsing'
+
+import type { ChatMessage, ContentBlock } from '../types/chat'
 
 // Small wrapper to avoid repeating the ai-message map/update pattern.
 export type SetMessagesFn = (
@@ -58,19 +60,7 @@ export const createMessageUpdater = (
     updateAiMessage((msg) => {
       const { metadata: messageMetadata, ...rest } = metadata ?? {}
 
-      // Mark native reasoning blocks as complete by setting thinkingOpen = false
-      // This ensures thinking blocks auto-collapse when the message finishes
-      // Check for thinkingOpen !== false to handle both true (native) and undefined (legacy)
-      const updatedBlocks = msg.blocks?.map((block) => {
-        if (
-          block.type === 'text' &&
-          (block as TextContentBlock).textType === 'reasoning' &&
-          (block as TextContentBlock).thinkingOpen !== false
-        ) {
-          return { ...block, thinkingOpen: false } as ContentBlock
-        }
-        return block
-      })
+      const updatedBlocks = msg.blocks && finalizeThinkingBlocks(msg.blocks)
 
       const nextMessage: ChatMessage = {
         ...msg,
@@ -95,6 +85,7 @@ export const createMessageUpdater = (
       ...msg,
       userError: message,
       isComplete: true,
+      blocks: msg.blocks && finalizeThinkingBlocks(msg.blocks),
     }))
   }
 
@@ -201,19 +192,7 @@ export const createBatchedMessageUpdater = (
         if (msg.id !== aiMessageId) return msg
         const { metadata: messageMetadata, ...rest } = metadata ?? {}
 
-        // Mark native reasoning blocks as complete by setting thinkingOpen = false
-        // This ensures thinking blocks auto-collapse when the message finishes
-        // Check for thinkingOpen !== false to handle both true (native) and undefined (legacy)
-        const updatedBlocks = msg.blocks?.map((block) => {
-          if (
-            block.type === 'text' &&
-            (block as TextContentBlock).textType === 'reasoning' &&
-            (block as TextContentBlock).thinkingOpen !== false
-          ) {
-            return { ...block, thinkingOpen: false } as ContentBlock
-          }
-          return block
-        })
+        const updatedBlocks = msg.blocks && finalizeThinkingBlocks(msg.blocks)
 
         const nextMessage: ChatMessage = {
           ...msg,
@@ -246,6 +225,7 @@ export const createBatchedMessageUpdater = (
           ...msg,
           userError: message,
           isComplete: true,
+          blocks: msg.blocks && finalizeThinkingBlocks(msg.blocks),
         }
       }),
     )

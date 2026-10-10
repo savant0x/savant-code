@@ -5,15 +5,30 @@ import {
   updateToolBlockWithOutput,
 } from '../message-block-helpers'
 import { isJSONValueRecord, updateStreamingAgents } from './guards'
+import { reconcileSpawnResult } from './spawn-result-reconciliation'
 
 import type { EventHandlerState } from './types'
-import type { ContentBlock } from '../../types/chat'
+import type { AgentContentBlock, ContentBlock } from '../../types/chat'
 import type { JSONValue } from '@savant-code/common/types/json'
 import type { PrintModeToolResult } from '@savant-code/common/types/print-mode'
 
-/**
- * Recursively finds and updates agent blocks that match a spawn_agents tool call.
- */
+function applySpawnResult(
+  block: AgentContentBlock,
+  resultValue: JSONValue,
+): ContentBlock | null {
+  const children = block.blocks ?? []
+  const { content, hasError } = extractSpawnAgentResultContent(resultValue)
+  if (hasError && children.length === 0) return null
+  const finalBlocks = reconcileSpawnResult(
+    children,
+    content,
+    hasError ? 'error' : block.agentType,
+  )
+  if (!finalBlocks.length) return block
+  return { ...block, blocks: finalBlocks, status: 'complete' }
+}
+
+/** Recursively match the spawn call's result index to its child branch. */
 const updateSpawnAgentBlock = (
   block: ContentBlock,
   toolCallId: string,
@@ -33,61 +48,7 @@ const updateSpawnAgentBlock = (
     const resultRecord = isJSONValueRecord(result) ? result : null
     const resultValue = resultRecord?.value
     if (resultValue !== undefined) {
-      const { content, hasError } = extractSpawnAgentResultContent(resultValue)
-      if (hasError) {
-        if (childBlocks.length === 0) {
-          return null
-        }
-        return {
-          ...block,
-          blocks: content
-            ? [...childBlocks, { type: 'text', content } as ContentBlock]
-            : childBlocks,
-          status: 'complete' as const,
-        }
-      }
-      // Agents like thinker return all output at the end via lastMessage,
-      // while agents like basher may have already streamed their text.
-      // FID-2026-1005-001: the streamed text is a live preview, NOT proof of
-      // complete display — reconcile the authoritative final text against it
-      // instead of dropping it whenever any streamed block exists.
-      const streamedTextBlocks = childBlocks.filter(
-        (b): b is Extract<ContentBlock, { type: 'text' }> =>
-          b.type === 'text' && b.textType === 'text',
-      )
-      const hasStreamedTextContent = streamedTextBlocks.length > 0
-      const streamedText = streamedTextBlocks.map((b) => b.content).join('')
-      let finalBlocks: ContentBlock[] = childBlocks
-      if (content) {
-        if (!hasStreamedTextContent) {
-          // Nothing streamed: append the authoritative final text.
-          finalBlocks = [...childBlocks, { type: 'text', content }]
-        } else if (content === streamedText) {
-          // Byte-equal: keep the streamed block (no duplicate).
-          finalBlocks = childBlocks
-        } else if (
-          streamedText.length < content.length &&
-          content.startsWith(streamedText)
-        ) {
-          // True prefix: the stream was cut before the end — append only
-          // the missing suffix so the display equals the final result.
-          finalBlocks = [
-            ...childBlocks,
-            { type: 'text', content: content.slice(streamedText.length) },
-          ]
-        } else {
-          // Divergent text: the final result is authoritative — show it
-          // alongside the preview rather than dropping either.
-          finalBlocks = [...childBlocks, { type: 'text', content }]
-        }
-      }
-      if (finalBlocks.length > 0) {
-        return {
-          ...block,
-          blocks: finalBlocks,
-          status: 'complete' as const,
-        }
-      }
+      return applySpawnResult(block, resultValue)
     }
   }
   if (!childBlocks?.length) {
