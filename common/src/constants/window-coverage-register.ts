@@ -85,8 +85,14 @@ export const WINDOW_COVERAGE_REGISTER: ReadonlyMap<
   [
     'tokenharbor',
     {
+      // FID-2026-1010-001: the authenticated /v1/models DOES publish
+      // context_length for 51 of 68 ids (probed 2026-10-10) — the entry
+      // stays `table-section` because the checked-in catalog is static and
+      // the table is its pinned source, but the note must not claim the
+      // vendor publishes nothing (the intern entry's stated divergence is
+      // the same shape).
       disposition: 'table-section',
-      note: 'Static catalog. FID-2026-0916-002/-004.',
+      note: 'Static catalog (68 ids, FID-2026-1010-001). The authenticated /v1/models publishes context_length for 51/68 ids (probed 2026-10-10); the checked-in table section remains the pinned source, with the 17 null-publishing ids cross-voted or conservatively pinned (3 NEEDS-REVIEW). FID-2026-0916-002/-004.',
     },
   ],
   [
@@ -241,6 +247,20 @@ export const WINDOW_COVERAGE_REGISTER: ReadonlyMap<
     {
       disposition: 'runtime-published',
       note: 'Reconciled from census 33 rows (FID-2026-1006-001, 2026-10-06); live catalog auth-gated — 401 keyless (probed 2026-10-04), self-populates when a key is configured.',
+    },
+  ],
+  [
+    'mistral',
+    {
+      // FID-2026-1009-005: chat rows publish `max_context_length` (probed
+      // 2026-10-09, 46-row authenticated catalog), usable only after the
+      // dedicated parser maps it to contextLength — the shared parser reads
+      // `context_length` and would extract zero. The roster is MIXED
+      // (embeddings, moderation, OCR, audio alongside chat), so only a
+      // full-roster census — not sampling — would justify
+      // `runtime-published`; `runtime-partial` is the truthful default.
+      disposition: 'runtime-partial',
+      note: 'Live catalog auth-gated (401 keyless, probed 2026-10-09); 46 rows authenticated, chat rows publish max_context_length via the dedicated parser (cli/src/utils/openrouter-models/mistral.ts). Mixed roster (embeddings/moderation/OCR/audio) — full-roster census pending before runtime-published.',
     },
   ],
 ])

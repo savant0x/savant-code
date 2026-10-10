@@ -38,6 +38,17 @@ export const PROVIDER_EXCEPTION_MANIFEST: readonly ProviderExceptionManifestEntr
       ],
     },
     {
+      // FID-2026-1009-005: authenticated live catalog (401 keyless, probed
+      // 2026-10-09) with a dedicated max_context_length parser.
+      providerId: 'mistral',
+      kinds: ['live-catalog'],
+      owner: 'cli/src/utils/openrouter-models/mistral.ts',
+      evidence: [
+        'cli/src/utils/openrouter-models/mistral.ts',
+        'cli/src/utils/openrouter-models/gateway.ts',
+      ],
+    },
+    {
       providerId: 'xkiro',
       kinds: ['live-catalog', 'multi-protocol'],
       owner: 'cli/src/utils/openrouter-models/xkiro.ts',

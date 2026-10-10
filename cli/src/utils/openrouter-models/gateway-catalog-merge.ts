@@ -51,6 +51,7 @@ export function assembleGatewayCatalog(
     ...live.vercelModels,
     ...live.cleanApisModels,
     ...live.codecraftModels,
+    ...live.mistralModels,
     ...live.xkiroModels,
     ...fetchCommandCodeModels(),
     ...fetchHcnsecModels(),

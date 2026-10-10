@@ -12,6 +12,43 @@
 import type { ProviderConfig } from './types'
 
 export const PROVIDER_REGISTRY_PARTITION_2 = {
+  mistral: {
+    id: 'mistral',
+    label: 'Mistral AI',
+    kind: 'gateway',
+    credentials: {
+      envVar: 'MISTRAL_API_KEY',
+      // /provider hint is part of the canonical message (the provider is
+      // setup-available; the masked `/provider mistral` store is the second
+      // credential path).
+      missingKeyMessage:
+        'Mistral AI API key not set. Set MISTRAL_API_KEY environment variable or run /provider mistral.',
+    },
+    // api.mistral.ai serves OpenAI Chat Completions at /v1 (docs.mistral.ai);
+    // the protocol layer appends /chat/completions. Live probes 2026-10-09
+    // (FID-2026-1009-005): GET /v1/models -> HTTP 200 / 46 rows authenticated
+    // (401 keyless — the catalog is auth-gated, the Nous/cleanapis pattern);
+    // POST /v1/chat/completions -> 200 round-trip on ministral-3b-2512 and
+    // codestral-2508. `mistral-large-4` is absent from this account's catalog
+    // and returns 403 tier_not_allowed on inference — an entitlement fact,
+    // not an integration defect (the xKiro 403 lesson).
+    baseUrl: 'https://api.mistral.ai/v1',
+    protocol: 'openai',
+    // Upstream ids are bare (`codestral-2508`, `mistral-small-latest`);
+    // `strip` removes only the internal `mistral/` routing prefix — the
+    // vercel/cleanapis precedent.
+    idTransform: 'strip',
+    // AUTHENTICATED live catalog (probed 401 keyless) — needs the
+    // `resolveKey` wiring in cli/src/utils/openrouter-models/mistral.ts.
+    // The roster publishes windows under `max_context_length` (NOT
+    // `context_length`), so the wrapper carries a dedicated parser — the
+    // shared parseChatCatalog would extract zero windows (the Vercel
+    // mis-parse class, measured).
+    catalog: { source: 'live', url: 'https://api.mistral.ai/v1/models' },
+    setupAvailable: true,
+    domain: 'mistral.ai',
+    order: 4,
+  },
   codecraft: {
     id: 'codecraft',
     label: 'CodeCraft API',

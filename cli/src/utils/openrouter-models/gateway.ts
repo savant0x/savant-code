@@ -3,7 +3,8 @@
  * + CommandCode + Nous Research + KiosAPI + APInex + OrcaRouter + B.AI +
  * HCNSec + TokenBom + Infron + UnoRouter + BazaarLink + Atria AI +
  * Intern InkStone (FID-2026-1004-008) + Vercel AI Gateway + OpenAI
- * (FID-2026-1001-001) — plus subscription plumbing.
+ * (FID-2026-1001-001) + Mistral AI (FID-2026-1009-005) — plus subscription
+ * plumbing.
  */
 import fs from 'node:fs'
 
@@ -32,6 +33,7 @@ import {
   resolveGatewayLiveCatalogs,
 } from './gateway-live-results'
 import { __resetKiosapiCacheForTest } from './kiosapi'
+import { __resetMistralCacheForTest } from './mistral'
 import { __resetNousCacheForTest } from './nous'
 import { __resetNvidiaCacheForTest } from './nvidia'
 import { __resetOpenAiCacheForTest } from './openai'
@@ -111,6 +113,7 @@ function notifyGatewayCatalogListeners(catalog: OpenRouterModel[]): void {
  *   Intern InkStone (static audited catalogs)
  * - ChatAnywhere (static audited catalog — FID-2026-1007-005)
  * - Vercel AI Gateway (live API, public)
+ * - Mistral AI (live API, authenticated — FID-2026-1009-005)
  *
  * Fetches live sources in parallel via Promise.allSettled(). If a source fails,
  * uses cached/empty list for that provider. Returns a combined, sorted list.
@@ -226,6 +229,7 @@ export function __resetOpenRouterModelsCacheForTest(): void {
   __resetVercelCacheForTest()
   __resetCleanApisCacheForTest()
   __resetCodecraftCacheForTest()
+  __resetMistralCacheForTest()
   __resetXkiroCacheForTest()
   // Step 9 remainder: lazily-built custom fetchers are cache state too.
   __resetCustomCatalogsForTest()
