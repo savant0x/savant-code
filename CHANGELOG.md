@@ -546,6 +546,16 @@
 
 ### Fixed
 
+- **Verifier output preserves one complete review (FID-2026-1010-002, medium;
+  closed and archived 2026-10-10; local implementation `a032bdfb`).** Final
+  text retains source separators, thinking remains collapsible, replay does
+  not duplicate the verdict, and provenance retains the selected final turn.
+  Catalog/test and formatting blockers were repaired in `c9c30b8f` and
+  `5f8b6e26`. Verification: 13/13 FID gates; repository tests 8,697 pass,
+  23 skip, zero failures; typecheck, development build, lint, format, quality,
+  scope-register and repository validation pass. Native OpenTUI and tmux
+  verify 60/100/160 columns, resizing and folds.
+
 - **The every-boot "Selected provider credentials changed" error was a false
   positive on the process-memory revision check (FID-2026-1009-001, medium;
   closed and archived 2026-10-09; local commit `f56020b7`).** The route

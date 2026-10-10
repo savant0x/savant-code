@@ -140,6 +140,18 @@
       provider work; the key-creation wall and the Oct 13 balance expiry
       stay recorded above).
 
+- [ ] **FID-2026-1010-001. TokenHarbor catalog live realignment (68-model
+      roster, incl. `claude-haiku-5.5`).** Operator directive 2026-10-10:
+      *"a new model has been released on tokenharbor, called claude haiku 5.5,
+      however we don't have it in our model list. We need to add it"*. Grounding
+      the add against the vendor's authenticated `/v1/models` measured a
+      snapshot-freshness defect: the checked-in static catalog carried 17 ids
+      against a live roster of 68 (52 missing, 1 no-longer-callable
+      `th-orchestra`). Operator selected **Full realignment now** + **Paid +
+      free (both)**. Record:
+      `dev/fids/FID-2026-1010-001-tokenharbor-catalog-live-realignment.md`.
+      **Automation level: 3.**
+
 ### Harness and process
 
 - [ ] **T122. Savant-free feature disposition (operator-owned).** Operator
@@ -197,6 +209,18 @@
      them to every write, so "present before act" is satisfied by work that
      finished days ago. Evict the line in the pass that closes the item. -->
 
+- FID-2026-1010-001: `dev/fids/FID-2026-1010-001-tokenharbor-catalog-live-realignment.md`,
+  `common/src/constants/model-config/providers.ts`,
+  `common/src/constants/model-config/tokenharbor.ts`,
+  `common/src/constants/context-window-table.ts`,
+  `common/src/constants/context-window-table-tokenharbor.ts`,
+  `common/src/constants/window-coverage-register.ts`,
+  `common/src/__tests__/model-config.test.ts`,
+  `cli/src/utils/openrouter-models/static-catalogs.ts`,
+  `cli/src/utils/openrouter-models/tokenharbor-names.ts`,
+  `cli/src/utils/openrouter-models/__tests__/tokenharbor-catalog.test.ts`,
+  `cli/src/utils/openrouter-models/__tests__/window-truth.test.ts`,
+  `docs/providers.md`, `dev/session-summaries/**`, `CHANGELOG.md`
 - T119: `.env.local`, `docs/providers.md`,
   `dev/session-summaries/2026-10-03-provider-*.md`,
   `dev/scratchpad/active/provider-catalogs-2026-10-03/**`,
