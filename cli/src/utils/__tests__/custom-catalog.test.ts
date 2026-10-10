@@ -223,7 +223,7 @@ describe('custom provider catalogs (Step 9 remainder)', () => {
     expect(models).toEqual(
       expect.arrayContaining([
         expect.objectContaining({ id: 'openai/kept' }),
-        expect.objectContaining({ id: 'tokenharbor/th-orchestra' }),
+        expect.objectContaining({ id: 'tokenharbor/claude-haiku-5.5' }),
       ]),
     )
   })
@@ -237,7 +237,7 @@ describe('custom provider catalogs (Step 9 remainder)', () => {
 
     const items = buildGroupedItems([
       { id: 'openai/kept', name: 'Kept', provider: 'openrouter' },
-      { id: 'tokenharbor/th-orchestra', name: 'TH', provider: 'tokenharbor' },
+      { id: 'tokenharbor/apex', name: 'TH', provider: 'tokenharbor' },
       { id: 'my-gateway/model-a', name: 'Model A', provider: 'my-gateway' },
     ])
     const groupOrder = items

@@ -177,7 +177,7 @@ describe('openrouter-models provider clusters', () => {
       expect(models).toEqual(
         expect.arrayContaining([
           expect.objectContaining({ id: 'openai/kept' }),
-          expect.objectContaining({ id: 'tokenharbor/th-orchestra' }),
+          expect.objectContaining({ id: 'tokenharbor/claude-haiku-5.5' }),
         ]),
       )
       expect(models.some((model) => model.id.startsWith('kiosapi/'))).toBe(
@@ -200,7 +200,7 @@ describe('openrouter-models provider clusters', () => {
     expect(models).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
-          id: 'tokenharbor/th-orchestra',
+          id: 'tokenharbor/claude-haiku-5.5',
           provider: 'tokenharbor',
         }),
       ]),

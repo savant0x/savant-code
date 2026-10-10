@@ -11,6 +11,7 @@ import fs from 'fs'
 import os from 'os'
 import path from 'path'
 
+import { tokenharborModels } from '@savant-code/common/constants/model-config'
 import { describe, expect, mock, test } from 'bun:test'
 
 import {
@@ -96,26 +97,9 @@ describe('openrouter-models', () => {
   test('builds the static TokenHarbor baseline catalog without network access', () => {
     const models = getTokenHarborModels()
 
-    const expectedModelIds = [
-      'tokenharbor/claude-opus-5',
-      'tokenharbor/claude-fable-5',
-      'tokenharbor/gpt-5.6-sol',
-      'tokenharbor/kimi-k3',
-      'tokenharbor/qwen3.8-max',
-      'tokenharbor/gpt-5.6-terra',
-      'tokenharbor/grok-4.5',
-      'tokenharbor/claude-sonnet-5',
-      'tokenharbor/glm-5.2',
-      'tokenharbor/gpt-5.6-luna',
-      'tokenharbor/deepseek-v4-flash',
-      'tokenharbor/deepseek-v4-pro',
-      'tokenharbor/mimo-v2.5-pro',
-      'tokenharbor/mimo-v2.5',
-      'tokenharbor/deepseek-v4-flash:free',
-      'tokenharbor/mimo-v2.5:free',
-      'tokenharbor/th-orchestra',
-    ]
+    const expectedModelIds = Object.values(tokenharborModels)
 
+    expect(models).toHaveLength(68)
     expect(models.map((model) => model.id)).toEqual(expectedModelIds)
     expect(models.every((model) => model.provider === 'tokenharbor')).toBe(true)
   })
@@ -248,7 +232,7 @@ describe('openrouter-models', () => {
     expect(models).toEqual(
       expect.arrayContaining([
         expect.objectContaining({ id: 'openai/kept' }),
-        expect.objectContaining({ id: 'tokenharbor/th-orchestra' }),
+        expect.objectContaining({ id: 'tokenharbor/claude-haiku-5.5' }),
       ]),
     )
     expect(models.some((model) => model.id.startsWith('nous/'))).toBe(false)

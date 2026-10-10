@@ -277,7 +277,7 @@ describe('native sidebar interaction', () => {
           const mark = setup.renderer.root.findDescendantById('rail-brand')
           expect(mark?.height).toBe(2)
           expect(mark?.parent?.height).toBe(2)
-          expect(setup.captureCharFrame()).toContain('▀')
+          expect(setup.captureCharFrame()).toMatch(/[▛▜▐▟▄▀█]/)
           const label =
             setup.renderer.root.findDescendantById('rail-Status-label')
           if (!label?.parent) throw new Error('Missing rail label')

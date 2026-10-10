@@ -17,7 +17,11 @@ import {
   tokenrouterModels,
 } from '@savant-code/common/constants/model-config'
 
+import { TOKENHARBOR_NAMES } from './tokenharbor-names'
+
 import type { OpenRouterModel } from './types'
+
+export { TOKENHARBOR_NAMES } from './tokenharbor-names'
 
 /** Display names for TokenRouter model ids (id set derives from common). */
 const TOKENROUTER_NAMES: Record<string, string> = {
@@ -65,26 +69,6 @@ const TOKENROUTER_NAMES: Record<string, string> = {
 export const TOKENROUTER_MODEL_IDS = Object.keys(tokenrouterModels) as Array<
   keyof typeof tokenrouterModels
 >
-
-const TOKENHARBOR_NAMES: Record<string, string> = {
-  'tokenharbor/claude-opus-5': 'Claude Opus 5',
-  'tokenharbor/claude-fable-5': 'Claude Fable 5',
-  'tokenharbor/gpt-5.6-sol': 'GPT-5.6 Sol',
-  'tokenharbor/kimi-k3': 'Kimi K3',
-  'tokenharbor/qwen3.8-max': 'Qwen3.8 Max',
-  'tokenharbor/gpt-5.6-terra': 'GPT-5.6 Terra',
-  'tokenharbor/grok-4.5': 'Grok 4.5',
-  'tokenharbor/claude-sonnet-5': 'Claude Sonnet 5',
-  'tokenharbor/glm-5.2': 'GLM 5.2',
-  'tokenharbor/gpt-5.6-luna': 'GPT-5.6 Luna',
-  'tokenharbor/deepseek-v4-flash': 'DeepSeek V4 Flash',
-  'tokenharbor/deepseek-v4-pro': 'DeepSeek V4 Pro',
-  'tokenharbor/mimo-v2.5-pro': 'MiMo V2.5 Pro',
-  'tokenharbor/mimo-v2.5': 'MiMo V2.5',
-  'tokenharbor/deepseek-v4-flash:free': 'DeepSeek V4 Flash (Free)',
-  'tokenharbor/mimo-v2.5:free': 'MiMo V2.5 (Free)',
-  'tokenharbor/th-orchestra': 'TH Orchestra',
-}
 
 /**
  * Pinned max output caps for models where a catalog reports an incorrect
@@ -145,7 +129,7 @@ export function getTokenHarborModels(): OpenRouterModel[] {
       name,
       provider: 'tokenharbor' as const,
       // FID-2026-0916-002: vendor fallback table, not the family heuristic
-      // (deepseek-v4-flash showed 131k here; vendor-published is 1,048,576).
+      // (deepseek-v4-flash showed 131k here; vendor-published is 1,000,000).
       contextLength: getContextWindowFallback(id).contextWindow,
     }
   })

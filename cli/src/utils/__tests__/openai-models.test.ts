@@ -91,7 +91,7 @@ describe('openrouter-models OpenAI catalog (FID-2026-1001-001)', () => {
       expect(models).toEqual(
         expect.arrayContaining([
           expect.objectContaining({ id: 'kept/model' }),
-          expect.objectContaining({ id: 'tokenharbor/th-orchestra' }),
+          expect.objectContaining({ id: 'tokenharbor/claude-haiku-5.5' }),
         ]),
       )
     } finally {
