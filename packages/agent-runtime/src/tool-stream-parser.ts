@@ -2,6 +2,10 @@ import { AnalyticsEvent } from '@savant-code/common/constants/analytics-events'
 import { getErrorObject } from '@savant-code/common/util/error'
 
 import {
+  createDsmlParserState,
+  parseDsmlChunk,
+} from './util/dsml-stream-parser'
+import {
   createLegacyToolCallFilterState,
   createStreamParserState,
   filterLegacyToolCallText,
@@ -105,6 +109,7 @@ export async function* processStreamWithTools(params: {
   // State for parsing XML tool calls from text stream
   const xmlParserState: StreamParserState = createStreamParserState()
   const reasoningLegacyFilterState = createLegacyToolCallFilterState()
+  const dsmlParserState = createDsmlParserState()
 
   async function processToolCallObject(params: {
     toolName: string
@@ -178,11 +183,26 @@ export async function* processStreamWithTools(params: {
 
     if (chunk.type === 'reasoning') {
       flush()
+      // DSML tokens can surface on the reasoning channel too (native template
+      // bands are frequently routed there before the text channel) —
+      // strip/preserve them before the legacy-toolcall filter so template
+      // markup never reaches the UI.
+      const dsmlFirst = parseDsmlChunk(chunk.text, dsmlParserState)
       const filteredText = filterLegacyToolCallText(
-        chunk.text,
+        dsmlFirst.filteredText,
         reasoningLegacyFilterState,
       )
       yield { ...chunk, text: filteredText }
+      if (dsmlFirst.toolCalls.length > 0) {
+        for (const call of dsmlFirst.toolCalls) {
+          const toolCallId = `dsml-${crypto.randomUUID().slice(0, 8)}`
+          await executeXmlToolCall({
+            toolCallId,
+            toolName: call.toolName,
+            input: call.input,
+          })
+        }
+      }
       return
     }
 
@@ -193,16 +213,22 @@ export async function* processStreamWithTools(params: {
         xmlParserState,
       )
 
-      if (filteredText) {
-        buffer += filteredText
+      // DSML specials tokens (DeepSeek-family native templating) can arrive
+      // interleaved with canonical XML or on their own. Recover tool data
+      // from them; strip stray markers so raw template text never reaches
+      // the user.
+      const dsml = parseDsmlChunk(filteredText, dsmlParserState)
+
+      if (dsml.filteredText) {
+        buffer += dsml.filteredText
         yield {
           type: 'text',
-          text: filteredText,
+          text: dsml.filteredText,
         }
       }
 
       // Flush buffer before yielding tool calls so text event is sent first
-      if (toolCalls.length > 0) {
+      if (toolCalls.length > 0 || dsml.toolCalls.length > 0) {
         flush()
       }
 
@@ -212,6 +238,17 @@ export async function* processStreamWithTools(params: {
 
         // Execute the tool immediately if callback provided, pausing the stream
         // The callback handles emitting tool_call and tool_result events
+        await executeXmlToolCall({
+          toolCallId,
+          toolName: toolCall.toolName,
+          input: toolCall.input,
+        })
+      }
+
+      // Then recover any DSML template-band tool calls found
+      for (const toolCall of dsml.toolCalls) {
+        const toolCallId = `dsml-${crypto.randomUUID().slice(0, 8)}`
+
         await executeXmlToolCall({
           toolCallId,
           toolName: toolCall.toolName,

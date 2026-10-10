@@ -1,4 +1,3 @@
-import { InvalidResponseDataError } from '@ai-sdk/provider'
 import { generateId } from '@ai-sdk/provider-utils'
 
 import { getResponseMetadata } from '../get-response-metadata'
@@ -140,10 +139,13 @@ export function transformChunk(params: {
 
       if (state.toolCalls[index] == null) {
         if (toolCallDelta.function?.name == null) {
-          throw new InvalidResponseDataError({
-            data: toolCallDelta,
-            message: `Expected 'function.name' to be a string.`,
-          })
+          // FID-2026-1009-006: a tool-call delta without a function name
+          // previously threw InvalidResponseDataError, killing the whole
+          // session. Providers emit such orphan deltas at stream end or
+          // after malformed native templating. Skip the orphan (it carries
+          // no executable data) instead of throwing — the stream, and the
+          // session, survive.
+          continue
         }
 
         // UPDATED (James): Generate an ID if the provider doesn't include one (e.g., GLM models)
