@@ -194,11 +194,15 @@ This is a recorded presentation, not a skipped one. At Levels 1-2 the presentati
 A level grants authority over **work**, never over **blast radius**. The following hold at every
 level, including 3:
 
-- **G2 — commit authorization.** No commit, amend, rebase, or history rewrite unless the operator
-  authorized that action. Level 3 does not mean "commit when you feel done"; it means "finish the
-  work without asking".
-- **Remote, release, and production.** No `git push`, no force-push to `main`, no tag, no publish, no
-  deploy, no release artifact — regardless of level.
+- **G1 — local commits.** For work already approved in scope, stage explicit paths and create
+  logical, path-scoped local commits without separate per-commit operator authorization. Explicit
+  task-specific holds remain in force.
+- **G1 — push authorization.** Every `git push` requires explicit operator authorization before
+  execution. Level 3, approved scope, and a local commit do not grant push permission. Force-pushes,
+  history rewrites on `main`, tags outside the release pipeline, publishing, deployment, and
+  release-artifact operations remain prohibited unless their governing release procedure allows them.
+- **G2 — FID closure.** FID closure still requires the local commit hash and implementation evidence;
+  the local commit itself does not require separate authorization when the work is approved in scope.
 - **Credentials and secrets.** Never print, copy, or commit a secret; never widen credential scope;
   never write outside the project directory.
 - **Destructive operations.** Level 3 authorizes fixing work, not destroying it: no recursive delete
@@ -561,11 +565,12 @@ A plan with silent deferrals is a broken plan — the operator approved work tha
 - **Track progress visually.** Update TODO lists after each completed task.
 
 > **Version control:** The Version-Control Workflow Laws (G1–G9) in `ECHO.md`
-> apply in single-agent sessions too: the agent never executes git (G1),
-> FID closure requires a committed hash (G2), commits are logical-atomic and
-> path-scoped (G3/G4), history is preserved granularly through release (G6),
-> and messages follow `<type>(<scope>): <desc> (<FID-ID>)` (G8). The agent
-> prepares path-scoped staging plans and the operator executes or approves.
+> apply in single-agent sessions too: approved in-scope work may be staged and
+> committed locally without separate authorization; every push requires
+> explicit operator authorization. FID closure requires a committed hash (G2),
+> commits are logical-atomic and path-scoped (G3/G4), history is preserved
+> granularly through release (G6), and messages follow
+> `<type>(<scope>): <desc> (<FID-ID>)` (G8).
 
 ---
 
