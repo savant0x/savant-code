@@ -1,5 +1,22 @@
 # Changelog
 
+## 2026-10-11 — v0.0.35 shipped without binaries: phantom `ajv` in connectors (FID-2026-1011-003)
+
+### Fixed
+
+- Restored the five missing binary assets on the `v0.0.35` GitHub release, which had
+  shipped empty and left every existing install silently unable to auto-update.
+- `packages/connectors` imported `ajv/dist/2020.js` and `ajv-formats` without declaring
+  either, so they resolved only from a root `node_modules/ajv` holding ajv 6.15.0 plus
+  stale ajv v8 files from an earlier install. Every local release gate ran green while
+  all five CI `Build binary` jobs failed after npm had published. Declared `ajv ^8.17.1`,
+  `ajv-formats ^3.0.1`, and — found by this FID's own import sweep — `@savant-code/common`
+  (`workspace:*`), then regenerated `bun.lock` (ajv hoists to 8.20.0 and eslint's ajv 6
+  nests under `eslint/*`). Backfilled the tarballs from `main` (`4d2369bd`, workflow run
+  `38184652261`) with no version bump, per `docs/public-release.md`.
+- The install-independent guard for this class is registered as T188, blocked on the
+  operator ruling for the release gate battery (T186 precedent).
+
 ## 2026-10-11 — Public release validation excludes the unpublished SDK (FID-2026-1011-002)
 
 ### Changed

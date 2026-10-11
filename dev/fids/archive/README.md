@@ -3,6 +3,15 @@
 This directory contains closed or historically completed FIDs. Files here are
 an audit record, not an active work queue.
 
+## 2026-10-11 incident closure — `v0.0.35` binary backfill
+
+- [`FID-2026-1011-003-v0.0.35-missing-release-binaries-phantom-ajv.md`](FID-2026-1011-003-v0.0.35-missing-release-binaries-phantom-ajv.md)
+  closed on local commit `4d2369bd`; all four declared gates passed live
+  (typecheck packages/connectors, the connectors engine-replay suite, the
+  cli-bundle-resolution probe, and quality). The same commit was pushed to `main`
+  and workflow run `38184652261` backfilled all five tarballs onto the `v0.0.35`
+  release. Local commit is the closure hash; the push was separately authorized.
+
 ## 2026-10-11 reconciliation — five closures and five operator cancellations
 
 - [`FID-2026-1010-001-tokenharbor-catalog-live-realignment.md`](FID-2026-1010-001-tokenharbor-catalog-live-realignment.md)
