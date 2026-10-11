@@ -13,13 +13,6 @@ recorded decision or external dependency requires it.
 
 ## Open items
 
-- [ ] **T184. Release-readiness repair.** Active repair record:
-      `dev/fids/FID-2026-1010-004-release-readiness-repair.md`.
-      R1-R2, R5, R8, A1 and A2 are implemented; Windows/Linux artifact smoke
-      passes. Root checks pass. Remaining: local candidate commit and receipt.
-      macOS is not a declared target. Push and release are not part of this FID.
-      Push, publish, and release remain unauthorized. **Automation level: 3.**
-
 - [ ] **T185. Public-release content and bloat audit.** Compare README/docs with
       current code, commands, package publication, and validation gates. Review
       the identified debug logs, generated databases, duplicate website file,
@@ -101,40 +94,6 @@ recorded decision or external dependency requires it.
      them to every write, so "present before act" is satisfied by work that
      finished days ago. Evict the line in the pass that closes the item. -->
 
-- T184: `dev/fids/FID-2026-1010-004-release-readiness-repair.md`,
-  `dev/fids/README.md`, `dev/fids/archive/README.md`,
-  `dev/fids/archive/FID-2026-1010-001-tokenharbor-catalog-live-realignment.md`,
-  `scripts/version-docs.ts`, `scripts/version-callouts.ts`,
-  `scripts/version-docs-drift.test.ts`, `scripts/telemetry-feedback.ts`,
-  `scripts/__tests__/telemetry-feedback.test.ts`,
-  `sdk/test/cjs-compatibility/test-types.ts`,
-  `sdk/test/esm-compatibility/test-types.ts`,
-  `sdk/src/tools/run-terminal-command.ts`,
-  `sdk/src/tools/child-process-registry.ts`,
-  `sdk/src/__tests__/run-terminal-command.test.ts`,
-  `sdk/src/__tests__/fixtures/windows-stubborn-grandchild.ts`,
-  `sdk/src/impl/__tests__/model-provider-free-mode-test-setup.ts`,
-  `sdk/src/impl/__tests__/model-provider-free-mode-mistral.test.ts`,
-  `cli/src/utils/openrouter-models/gateway-live-results.ts`,
-  `cli/src/utils/openrouter-models/__tests__/fid-2026-1009-005-mistral.test.ts`,
-  `cli/src/utils/__tests__/openrouter-models-gateway-providers.test.ts`,
-  `common/src/__tests__/model-config.test.ts`,
-  `cli/scripts/build-binary.ts`, `cli/scripts/build-binary-main.ts`,
-  `cli/scripts/smoke-binary.ts`,
-  `cli/src/agents/bundled-agents.generated.ts`,
-  `cli/src/agents/bundled-agents.generated-data/**`, `cli/bin/**`,
-  `node_modules/@opentui/core-linux-x64/**`,
-  `node_modules/@opentui/core-linux-x64-musl/**`,
-  `cli/node_modules/@opentui/core-linux-x64/**`,
-  `cli/node_modules/@opentui/core-linux-x64-musl/**`,
-  `dev/quality-baseline.json`,
-  `dev/telemetry/proposals/law15-dominance.md`,
-  `common/src/constants/protocol-bundle.generated.ts`,
-  `dev/session-summaries/2026-10-10-release-readiness-audit.md`,
-  `dev/session-summaries/2026-10-10-release-readiness-repair-planning.md`,
-  `dev/session-summaries/2026-10-10-release-readiness-repair.md`,
-  `dev/scratchpad/active/release-readiness-2026-10-10/**`,
-  `SCOPE.md`, `CHANGELOG.md`
 - T119: `.env.local`, `docs/providers.md`,
   `dev/session-summaries/2026-10-03-provider-*.md`,
   `dev/scratchpad/active/provider-catalogs-2026-10-03/**`,

@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-1010-004-release-readiness-repair.md`
 **ID:** FID-2026-1010-004
 **Severity:** high
-**Status:** analyzed
+**Status:** closed
 **Created:** 2026-10-10 21:48
 **Automation level:** 3
 **YAGNI-Compliance:** Verified
@@ -28,8 +28,8 @@ The existing T184 scope item is extended rather than creating a duplicate task.
 - **OS:** Windows, Git Bash; other supported platforms require native runners.
 - **Language/Runtime:** TypeScript strict monorepo, Bun 1.3.14.
 - **Tool Versions:** npm 10.9.2; Node 24.21.0 used for SDK import probes.
-- **Commit/State:** main at observed short HEAD `10877c77`, dirty working tree.
-  Product version 0.0.35. Preserve existing edits and unrelated open work.
+- **Investigation baseline:** main at `10877c77`, dirty working tree; product
+  version 0.0.35. The verified implementation candidate is recorded below.
 
 ## Detailed Description
 
@@ -157,12 +157,10 @@ The cancelled sidebar and icon work is excluded from this repair.
 4. **R6 — withdrawn.** The operator cancelled the sidebar and icon work. Their
    records are archived as declined; no sidebar product or acceptance work is
    part of this FID.
-5. **R7 — repair the releasable tree.** Review the already-corrected working-tree
-   expected roster against the checked-in catalog; retain exact-list coverage
-   and dead-ID removal. These changes landed in local commit `f6c2048d`. Verify
-   that commit and the remaining repair commit with `bun run verify:clean`. Do not
-   restore `th-orchestra`, widen away the error, or test a synthetic tree while
-   describing it as committed HEAD.
+5. **R7 — repair the releasable tree.** Keep the catalog roster exact and
+   remove the dead id; repair clean-check type failures discovered in the SDK
+   Mistral test fixture and gateway Mistral fan-out. Verified implementation
+   candidate: `a74e92e4` via `bun run verify:clean --sha a74e92e4`.
 6. **R8 — cancellation regression proof.** Use unique parent/grandchild
    heartbeats to distinguish fixture liveness from PID reuse. Repeated Windows
    focused and full SDK runs pass; production process code was not changed.
@@ -221,7 +219,7 @@ The cancelled sidebar and icon work is excluded from this repair.
   repeated-run and committed-tree acceptance are additional mandatory criteria,
   not claimed as fulfilled by the machine receipt.
 
-## Repair Execution Status (2026-10-10)
+## Repair Execution Status (2026-10-11)
 
 Implemented and gate-verified in this pass, unless marked otherwise. No claim
 below rests on an unevidenced assertion; every exit code is from a real run.
@@ -233,11 +231,11 @@ below rests on an unevidenced assertion; every exit code is from a real run.
 | R3/R4 preview and icon cleanup | withdrawn | Operator cancelled the sidebar and icon work; no changes from those workstreams are included |
 | R5 telemetry wrap | implemented | `draftFor` pre-wraps; new pin passes; `lint:md` exit 0 repo-wide |
 | R6 FID evidence | withdrawn | The sidebar FIDs were later operator-declined; their earlier receipts remain historical, not product acceptance |
-| R7 committed tree | **in progress** | The TokenHarbor repair is in `f6c2048d`; path-scoped local commit of the remaining repair and candidate verification remain |
+| R7 committed tree | implemented | Candidate `a74e92e4` passes clean detached install, full workspace typecheck, and SDK declaration build; SDK fixture and gateway fan-out compile defects repaired |
 | R8 cancellation | **implemented** | PID-only liveness was invalid under load; unique parent/grandchild heartbeats now prove ownership; 20/20 isolated runs and 5/5 elevated full SDK runs pass |
 | A1 SDK consumers | implemented | CJS/ESM imports + both `test:types` + tree-sitter + ripgrep all exit 0 |
 | A2 native CLI | implemented | Windows x64 and Linux x64 artifacts built; version/help, TTY startup and clean exit pass; macOS is not a declared product target |
-| A3 local gates | **partial** | Full root test chain, typecheck, repository validation, quality, lint:md, version, scope, archived-closure and targeted Prettier checks pass. The closed TokenHarbor FID was moved into archive to fix the repository metadata failure. A fresh receipt and committed-candidate check remain. |
+| A3 local gates | implemented | Full root test chain, typecheck, repository validation, quality, ESLint, Markdown lint, Prettier, version, scope, archive, hygiene and all 26 declared FID gates pass; package dry runs and clean-candidate proof pass |
 
 ### Discovered during repair (all fixed this pass unless marked)
 
@@ -334,7 +332,8 @@ confirms a load-sensitive leak, not its cause.
 On 2026-10-11 the operator cancelled all sidebar FIDs and FID-2026-1009-004
 because the TUI cannot use SVGs. R6's sidebar-receipt repair is withdrawn as
 product work; its previous gate evidence remains historical. This release
-readiness FID remains open for its independent R7/R8/A2 acceptance gates.
+readiness FID's independent R7/R8/A2 acceptance gates were completed later in
+this record.
 
 ### D12 — the Windows cancellation assertion confused PID reuse with a leak
 
@@ -394,11 +393,10 @@ Mistral leg; that provider suite passes with the pin included.
 
 ### Stamp result
 
-The receipt below is historical: it passed 23/23 at 2026-10-11T03:36:36Z,
-before the R8 fixture, TTY smoke, and scope cleanup edits. A fresh `--write`
-attempt did not return and was interrupted, so no current receipt was stamped.
-The receipt runner is a verification task to finish; it does not change the
-accepted platform scope or authorize a push.
+The receipt below is fresh for the closed record: all 26 declared gates passed
+after the implementation and register changes. Candidate `a74e92e4` compiled
+from a clean checkout, and the hygiene check passed after the stale scratchpad
+draft was moved under `dev/scratchpad/archive/`.
 
 ## Verification Gates
 
@@ -417,6 +415,7 @@ accepted platform scope or authorize a push.
 - gate: test scripts/quality-report.test.ts
 - gate: test scripts/version-docs-drift.test.ts
 - gate: probe scripts/version-check.ts
+- gate: probe scripts/hygiene.ts
 - gate: probe scripts/protocol-bundle-check.ts
 - gate: probe scripts/provider-reference-check.ts
 - gate: probe scripts/scope-register-check.ts
@@ -430,8 +429,8 @@ accepted platform scope or authorize a push.
 
 ### Verification Receipt
 
-- fingerprint: sha256:23ac4c641b80dae2158dc9866dad8744a81a1507c7b1ef45d04eb96f4b4bf7bd
-- verified: 2026-10-11T03:36:36.258Z
+- fingerprint: sha256:7ff78c2838e9c4ffec7e9eeff33778b02483244bbe42b4744fe37eb9fbe5acf6
+- verified: 2026-10-11T15:31:44.235Z
 - typecheck common: exit 0
 - typecheck cli: exit 0
 - typecheck sdk: exit 0
@@ -439,11 +438,15 @@ accepted platform scope or authorize a push.
 - test cli/src/components/__tests__/right-sidebar-cache.test.tsx: exit 0
 - test cli/src/components/__tests__/right-sidebar-format.test.ts: exit 0
 - test sdk/src/__tests__/run-terminal-command.test.ts: exit 0
+- test sdk/src/impl/__tests__/model-provider-free-mode-mistral.test.ts: exit 0
+- test cli/src/utils/openrouter-models/__tests__/fid-2026-1009-005-mistral.test.ts: exit 0
+- test cli/src/utils/__tests__/openrouter-models-gateway-providers.test.ts: exit 0
 - test sdk/src/__tests__/run-state-child-process.test.ts: exit 0
 - test scripts/__tests__/telemetry-feedback.test.ts: exit 0
 - test scripts/quality-report.test.ts: exit 0
 - test scripts/version-docs-drift.test.ts: exit 0
 - probe scripts/version-check.ts: exit 0
+- probe scripts/hygiene.ts: exit 0
 - probe scripts/protocol-bundle-check.ts: exit 0
 - probe scripts/provider-reference-check.ts: exit 0
 - probe scripts/scope-register-check.ts: exit 0
@@ -457,21 +460,18 @@ accepted platform scope or authorize a push.
 
 ## Gate Authority Boundaries
 
-Local commits are permitted. The historical receipt is stale until the declared
-gates are rerun. Once the repair commit and clean-candidate checks pass, the
-record can close; no macOS, external-provider, publishing, or push evidence is
-required by this local repair FID. Do not declare
-`verify-clean`, release pre-audit or native-build probes whose execution would
-implicitly cross authorization boundaries during repository validation.
+Local commits are permitted. Candidate `a74e92e4` passed `verify:clean`; all
+declared gates passed and the receipt below is current for this closed record.
+No macOS, external-provider, publishing, or push evidence is required by this
+local repair FID.
 
 ## Perfection Loop
 
 ### Loop 1 — RED
 
 - **RED:** Eight recorded findings and acceptance gaps mapped to R1–R8/A1–A3.
-- **GREEN:** R1–R2, R5, R7–R8, A1–A2, and the local gate fixes plus artifact
-  smoke harness have working-tree implementations. Windows/Linux A2 passes;
-  R7's final repair commit and clean-candidate verification remain.
+- **GREEN:** R1–R2, R5, R7–R8 and A1–A3 pass in candidate `a74e92e4`;
+  Windows/Linux artifact smoke and clean-candidate compile proof pass.
 - **AUDIT:** Existing quality, version/bundle probes, preview tests, SDK consumer
   scripts and cancellation lifecycle inspected. Prior output is explicitly
   labeled prior evidence. Exact-path gate existence and document checks must
@@ -505,24 +505,22 @@ implicitly cross authorization boundaries during repository validation.
 
 ### Implementation Evidence (REQUIRED for closed)
 
-The working tree contains implementations for R1–R2, R5, R7–R8, A1–A2, and
-the required local gate fixes; R3/R4/R6 are withdrawn. Windows/Linux CLI
-artifacts and smoke evidence are recorded. The
-remaining repair paths are being committed separately from unrelated dirty
-work. A clean candidate check and fresh FID receipt are the final local
-verification steps. macOS and external-provider evidence are not acceptance
-requirements for this FID.
+Local commits `c428e24e`, `d4b63be6`, `e679d5dc`, and `a74e92e4` contain the
+release repair and clean-candidate compile fixes. Candidate `a74e92e4` passes
+`verify:clean`; Windows/Linux CLI artifacts and smoke evidence are recorded.
+All 26 declared FID gates pass. R3/R4/R6 were withdrawn. macOS and external
+provider evidence are not acceptance requirements for this FID.
 
 ### Code Verification Evidence
 
 - [x] Files referenced in Affected Components exist
-- [x] Implementation matches the Proposed Solution (R1–R2, R5, R7–R8 and A1–A2;
-      R3/R4/R6 withdrawn; A3 candidate verification remains)
+- [x] Implementation matches the Proposed Solution (R1–R2, R5, R7–R8 and A1–A3;
+      R3/R4/R6 withdrawn)
 - [x] Typecheck and full root tests pass; quality, Markdown lint, version,
       scope, archived-FID closure, and targeted Prettier checks pass
 - [x] Production call-graph evidence is present for new or repaired wiring
-- [ ] FID status reflects the actual implementation state — pending candidate
-      commit, clean-candidate verification, and current receipt.
+- [x] FID status reflects the actual implementation state: closed after
+      candidate verification and a fresh 26/26 gate receipt.
 
 Citations for the changed code:
 
@@ -540,49 +538,59 @@ Historical gate output (before the current edits): `typecheck` exit 0;
 `validate:repository` PASS; `quality:report` exit 0 (1502 baselined);
 `lint:md` exit 0; eslint exit 0; prettier exit 0 on every changed/new file;
 FID-2026-1010-003 8/8, FID-2026-1009-007 8/8, FID-2026-1009-004 8/8 stamped.
-Current checks: root `typecheck` and full test chain pass; quality, `lint:md`,
-`version:check`, scope registration, archived-FID closure audit, targeted
-Prettier, and `validate:repository` pass after the TokenHarbor archive repair.
-No current repair receipt was produced.
+Current candidate `a74e92e4`: `verify:clean` PASS; 26/26 declared gates PASS;
+`validate:repository`, `scope-register-check`, archived-closure audit,
+`hygiene:check`, ESLint, Markdown lint, Prettier and quality PASS.
 
-### Loop 2 — Independent audit and self-correction
+### D16 — hygiene found a changelog draft at the scratchpad root
 
-Required before convergence: adversarial review of each repair against its
-acceptance criterion, especially ownership-safe Windows cleanup and generator
-recurrence. Resolve measured findings without weakening checks. Record actual
-revision deltas; do not fabricate an independent-agent review.
+`bun run hygiene:check` identified ignored `dev/scratchpad/changelog-entry.md`
+at the scratchpad root. The content duplicates the closed TokenHarbor entry
+already in `CHANGELOG.md`; it was preserved under `dev/scratchpad/archive/`.
+Hygiene then passed with no content deletion.
+
+### Loop 2 — Adversarial review and self-correction
+
+Clean-check review exposed two defects hidden by the dirty working tree: the
+SDK Mistral fixture export and the gateway Mistral fan-out. Both were repaired
+and covered. The only red receipt gate was an overlength FID line; it was
+wrapped without changing the contract. No gate was weakened or suppressed.
 
 ### Loop 3 — Final convergence
 
-Not reached yet. R8's test-only oracle and Windows/Linux artifact acceptance
-pass. The path-scoped repair commit, clean-candidate gate, and current FID
-receipt remain to be completed before closure.
+Reached. The final candidate compiles from a clean checkout; all 26 declared
+gates pass, with Windows/Linux smoke, SDK consumer checks, and the current FID
+receipt recorded below.
 
 ## Resolution
 
-- **Closed Date:** Pending the repair commit, clean-candidate verification, and
-  fresh receipt. No macOS or external-provider acceptance is required.
-- **Fix Description:** R1–R2, R5, R7–R8 and A1–A2 repaired in the working tree:
+- **Closed Date:** 2026-10-11. No macOS or external-provider acceptance is
+  required.
+- **Implementation Candidate:** `a74e92e4` (local commits `c428e24e`,
+  `d4b63be6`, `e679d5dc`, and `a74e92e4`; no push).
+- **Fix Description:** R1–R2, R5, R7–R8 and A1–A3 repaired:
   the release-callout comparison is line-ending-agnostic with a CRLF regression pin;
   the protocol bundle is regenerated; the telemetry draft is
   pre-wrapped in its renderer with a pin; FID-2026-1010-003 regained real gate
   declarations and a machine-stamped receipt; three stale-pin/FID-contract
   defects found during the pass were repaired; the SDK consumer fixtures were
-  realigned with their own published types. R3/R4/R6 were withdrawn under the
-  operator's sidebar and icon cancellation. A3 local gates pass; the fresh FID
-  receipt and clean candidate proof remain.
+  realigned with their own published types. The SDK Mistral fixture and
+  gateway fan-out were repaired after clean-check failures. R3/R4/R6 were
+  withdrawn under the operator's sidebar and icon cancellation.
 - **Tests Added:** Yes — a CRLF callout-drift pin in
   `scripts/version-docs-drift.test.ts`, and a 120-column draft pin in
   `scripts/__tests__/telemetry-feedback.test.ts`.
-- **Verification Evidence:** `bun run typecheck` exit 0; the full root test
+- **Verification Evidence:** `bun run verify:clean --sha a74e92e4` exit 0
+  (clean frozen-lockfile install, full workspace typecheck, SDK declaration
+  build); `bun run hygiene:check` PASS; all 26 declared gates exit 0. The full
+  root test
   chain completed successfully (SDK 676 pass/1 skip; CLI 4,117 pass/18 skip;
   remaining workspace/package suites passed, including desktop 444/0);
   `quality:report`, `lint:md`, `version:check`, scope registration, archived
   closure audit, targeted Prettier, and `validate:repository` passed. SDK
-  consumer CJS/ESM imports, declarations, tree-sitter, and ripgrep passed. The
-  historical receipt is stale; the fresh receipt run was interrupted and must
-  be rerun against the committed candidate.
-- **Archived:** Pending the local commit, clean-candidate check, and receipt.
+  consumer CJS/ESM imports, declarations, tree-sitter, and ripgrep passed.
+- **Archived:** Yes; moved to `dev/fids/archive/`. T184 and its write targets
+  were removed from `SCOPE.md`.
 
 ## Lessons Learned
 

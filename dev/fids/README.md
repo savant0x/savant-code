@@ -5,10 +5,9 @@ operator decision, implementation, runtime review, or closure evidence.
 
 ## Current active FIDs
 
-**One active FID remains (2026-10-11):**
-
-- [FID-2026-1010-004](FID-2026-1010-004-release-readiness-repair.md) —
-  analyzed; R7/R8/A2 and external acceptance boundaries remain open.
+**No active FIDs remain (2026-10-11).** The release-readiness repair closed
+against clean candidate `a74e92e4` with a fresh 26/26 verification receipt;
+see [`archive/README.md`](archive/README.md).
 
 FID-2026-1010-001 was already marked closed and recorded as archived in SCOPE;
 its file was moved here on 2026-10-11 to reconcile the active queue and

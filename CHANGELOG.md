@@ -1,5 +1,15 @@
 # Changelog
 
+## 2026-10-11 — Release-readiness repair (FID-2026-1010-004 archived)
+
+### Fixed
+
+- Repaired release-candidate version and protocol checks, telemetry Markdown
+  wrapping, Windows process-cancellation evidence, CLI TTY smoke, SDK Mistral
+  fixture isolation, and the Mistral live-catalog fan-out. The verified local
+  candidate is `a74e92e4`; clean-check and all 26 declared FID gates pass.
+  Sidebar and icon work cancelled by the operator is excluded.
+
 ## 0.0.35 — 2026-10-01
 
 > **v0.0.35** — **OpenAI as a first-class platform provider**: a platform `sk-` key
@@ -15,6 +25,35 @@
 > the harness asserts its own identity against supplier-branded personas. Previously
 > shipped in v0.0.34: live-verified **Vercel AI Gateway** + **Clean APIs**, the
 > Cloudflare dual-credential wizard, and the Law 3 verification-gate soundness fix.
+
+### Added
+
+- **TokenHarbor catalog live realignment — 68-model roster, incl.
+  `claude-haiku-5.5` (FID-2026-1010-001, medium; closed and archived
+  2026-10-11; local commit `f6c2048d`).** Operator directive 2026-10-10:
+  *"a new model has been released on tokenharbor, called claude haiku 5.5,
+  however we don't have it in our model list. We need to add it"*. Grounding
+  that add against the vendor's authenticated `/v1/models` measured the
+  larger defect: the one gateway whose catalog is deliberately checked-in
+  rather than fetched carried **17 ids against a live roster of 68** — 52
+  missing (`claude-opus-5.5`, `claude-sonnet-5.5`, `gpt-6-astra`, the whole
+  `muse-spark` family, every `-fast` variant) and 1 no-longer-callable
+  (`tokenharbor/th-orchestra`). Nothing enforced the snapshot's refresh, so
+  it had silently rotted against a vendor that ships weekly. The realignment
+  re-copies the roster in the vendor's own order, uses the vendor's `label`
+  field verbatim for display names, re-sources 6 retained windows **down** to
+  the vendor's own publication, and pins the 3 uncorroborated ids at a
+  conservative 200k NEEDS-REVIEW rather than a family guess.
+  `gemini-3.6-flash` — removed earlier as roster-absent and now callable
+  again — is re-added, which is the point the record makes about its own
+  precedent: a roster-absence removal is a snapshot fact, never a permanent
+  ban. The Verifier's strongest finding closed a real hole the record's
+  premise predicted: the cli-side names map is not derived from the common
+  catalog, so nothing pinned it — an id added without a name silently fell
+  back to the sliced id. `TOKENHARBOR_NAMES` is now exported and asserted
+  bidirectionally against the catalog map. All ten declared gates passed
+  live; the five cli catalog suites plus the common catalog pin are 59 pass
+  / 0 fail.
 
 ### Added
 
