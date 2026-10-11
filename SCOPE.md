@@ -113,6 +113,8 @@ recorded decision or external dependency requires it.
   `sdk/src/tools/child-process-registry.ts`,
   `sdk/src/__tests__/run-terminal-command.test.ts`,
   `sdk/src/__tests__/fixtures/windows-stubborn-grandchild.ts`,
+  `sdk/src/impl/__tests__/model-provider-free-mode-test-setup.ts`,
+  `sdk/src/impl/__tests__/model-provider-free-mode-mistral.test.ts`,
   `common/src/__tests__/model-config.test.ts`,
   `cli/scripts/build-binary.ts`, `cli/scripts/build-binary-main.ts`,
   `cli/scripts/smoke-binary.ts`,

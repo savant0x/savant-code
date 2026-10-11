@@ -372,6 +372,16 @@ Linux x64 artifact `cli/bin/savant-code` (`0.0.35`, SHA-256
 version/help and tmux TTY smoke (`Enter a coding task`, 7,642 bytes, second
 attempt; the first attempt produced no signal). No macOS acceptance gate applies.
 
+### D14 — committed SDK tests depended on an unstaged fixture export
+
+The first clean-checkout run at candidate `c428e24e` stopped in SDK typecheck:
+the tracked Mistral lane test imported `MISTRAL_MODEL`, while its shared fixture
+did not export the constant or isolate `MISTRAL_API_KEY`. The dirty worktree
+contained that fixture repair, which is why its earlier typecheck passed. The
+repair is required for the committed candidate: export the model constant and
+save, clear, and restore the environment key in the fixture lifecycle. The
+focused Mistral suite passes 2/2 and SDK typecheck passes with the repair.
+
 ### Stamp result
 
 The receipt below is historical: it passed 23/23 at 2026-10-11T03:36:36Z,
@@ -389,6 +399,7 @@ accepted platform scope or authorize a push.
 - gate: test cli/src/components/__tests__/right-sidebar-cache.test.tsx
 - gate: test cli/src/components/__tests__/right-sidebar-format.test.ts
 - gate: test sdk/src/__tests__/run-terminal-command.test.ts
+- gate: test sdk/src/impl/__tests__/model-provider-free-mode-mistral.test.ts
 - gate: test sdk/src/__tests__/run-state-child-process.test.ts
 - gate: test scripts/__tests__/telemetry-feedback.test.ts
 - gate: test scripts/quality-report.test.ts

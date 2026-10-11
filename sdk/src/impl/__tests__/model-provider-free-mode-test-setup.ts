@@ -23,6 +23,7 @@ export const INFRON_MODEL = 'infron/deepseek/deepseek-v4-flash:free'
 export const UNOROUTER_MODEL = 'unorouter/glm-5.3-flash:free'
 export const NOUS_MODEL = 'nous/anthropic/claude-sonnet-4.6'
 export const VERCEL_MODEL = 'vercel/alibaba/qwen-3-14b'
+export const MISTRAL_MODEL = 'mistral/codestral-2508'
 export const COMMAND_CODE_PROMPT = [
   {
     role: 'user' as const,
@@ -43,6 +44,7 @@ export function setupModelProviderTestHarness() {
   let originalUnorouterApiKey: string | undefined
   let originalNousApiKey: string | undefined
   let originalVercelApiKey: string | undefined
+  let originalMistralApiKey: string | undefined
   let originalOpenRouterApiKey: string | undefined
   let originalOrMasterKey: string | undefined
   let originalInferenceApiKey: string | undefined
@@ -81,6 +83,8 @@ export function setupModelProviderTestHarness() {
     delete process.env.NOUS_API_KEY
     originalVercelApiKey = process.env.AI_GATEWAY_API_KEY
     delete process.env.AI_GATEWAY_API_KEY
+    originalMistralApiKey = process.env.MISTRAL_API_KEY
+    delete process.env.MISTRAL_API_KEY
     originalOpenRouterApiKey = process.env.OPENROUTER_API_KEY
     originalOrMasterKey = process.env.OR_MASTER_KEY
     originalInferenceApiKey = process.env.INFERENCE_API_KEY
@@ -167,6 +171,11 @@ export function setupModelProviderTestHarness() {
       delete process.env.AI_GATEWAY_API_KEY
     } else {
       process.env.AI_GATEWAY_API_KEY = originalVercelApiKey
+    }
+    if (originalMistralApiKey === undefined) {
+      delete process.env.MISTRAL_API_KEY
+    } else {
+      process.env.MISTRAL_API_KEY = originalMistralApiKey
     }
     if (originalOpenRouterApiKey === undefined) {
       delete process.env.OPENROUTER_API_KEY
