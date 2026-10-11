@@ -25,6 +25,18 @@ recorded decision or external dependency requires it.
       keep the full root gates available for development and repository CI.
       **Automation level: 3.**
 
+- [ ] **FID-2026-1011-003. v0.0.35 shipped without binaries — phantom `ajv`.**
+      `packages/connectors/src/engine/validate.ts` imports `ajv/dist/2020.js` and
+      `ajv-formats`, but `packages/connectors/package.json` declares neither; the import
+      resolved locally only from stale ajv v8 files inside a root `node_modules/ajv` that
+      otherwise holds ajv 6.15.0, so every local gate ran green and all five
+      `Build binary` jobs failed in CI after npm had already published. Declare the
+      dependencies, regenerate the lockfile, then backfill the five tarballs onto the
+      existing `v0.0.35` release from a branch/tag ref (no version bump).
+      **Blocker:** the push and the `build-release-binaries.yml` dispatch are external
+      public mutations reserved to explicit operator authorization.
+      **Automation level: 3** (code fix), operator-authorized (push + dispatch).
+
 - [ ] **T185. Public-release content and bloat audit.** Compare README/docs with
       current code, commands, package publication, and validation gates. Review
       the identified debug logs, generated databases, duplicate website file,
@@ -54,6 +66,17 @@ recorded decision or external dependency requires it.
       **Blocker:** `.agents/skills/**` is the operator-only release surface
       (`/skills trust`); an agent write to a SKILL.md is a skills mutation, so
       the frontmatter addition belongs to the operator's next edit.
+      **Automation level: 1.**
+
+- [ ] **T188. Install-independent undeclared-import guard.**
+      `cli-bundle-resolution` — the gate `FID-2026-0816-001` G-03 added for the
+      phantom-dependency class — runs `bun build` against the *local* `node_modules`, so a
+      contaminated or stale install defeats it. That is how the v0.0.35 `ajv` phantom
+      passed every local gate (`FID-2026-1011-003`). A manifest-vs-import sweep asserting
+      each workspace's bare specifiers against its own declared dependencies would catch
+      the class without depending on the installed tree.
+      **Blocker:** operator ruling on adding a gate to the fail-closed release validation
+      battery (the T186 precedent).
       **Automation level: 1.**
 
 ### Providers and routing
@@ -158,6 +181,7 @@ recorded decision or external dependency requires it.
   `website/index-2.html`, `SCOPE.md`, `CHANGELOG.md`, `dev/session-summaries/**`
 - T186: (no write surface — blocked pending the operator ruling on the gate chain)
 - T187: (no write surface — operator-owned skills surface)
+- T188: (no write surface — blocked pending the operator ruling on the gate chain)
 - FID-2026-1011-002: `package.json`, `scripts/validation-gates.ts`,
   `scripts/validation-manifest.ts`, `scripts/public-release/gates.ts`,
   `scripts/public-release/catalog.ts`, `scripts/public-release/provenance.ts`,
@@ -165,3 +189,6 @@ recorded decision or external dependency requires it.
   `scripts/public-release-provenance.test.ts`,
   `dev/fids/FID-2026-1011-002-public-release-excludes-sdk.md`, `SCOPE.md`,
   `CHANGELOG.md`
+- FID-2026-1011-003: `packages/connectors/package.json`, `bun.lock`,
+  `dev/fids/FID-2026-1011-003-v0.0.35-missing-release-binaries-phantom-ajv.md`,
+  `SCOPE.md`, `CHANGELOG.md`, `dev/session-summaries/**`

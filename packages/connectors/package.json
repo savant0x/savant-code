@@ -16,6 +16,9 @@
     "build:catalog": "bun scripts/build-catalog.ts"
   },
   "dependencies": {
+    "@savant-code/common": "workspace:*",
+    "ajv": "^8.17.1",
+    "ajv-formats": "^3.0.1",
     "canonicalize": "^2.1.0",
     "zod": "^4.2.1"
   },
