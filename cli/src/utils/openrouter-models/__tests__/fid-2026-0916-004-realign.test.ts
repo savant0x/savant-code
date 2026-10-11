@@ -88,9 +88,15 @@ describe('FID-2026-0916-004: tokenharbor dead free channel + stale ids', () => {
     )
   })
 
-  test('roster-absent gemini-3.6-flash + minimax-m3 removed', () => {
+  test('roster-absent minimax-m3 stays removed; gemini-3.6-flash returns', () => {
     const ids = Object.values(tokenharborModels)
-    expect(ids).not.toContain('tokenharbor/gemini-3.6-flash')
+    // FID-2026-1010-001: gemini-3.6-flash was removed as roster-absent by
+    // FID-2026-0916-004 and is CALLABLE AGAIN in the 2026-10-10 roster, so
+    // this record re-adds it. The pin is inverted deliberately: a
+    // roster-absence removal is a snapshot fact, never a permanent ban, and
+    // the counter-example is recorded here so the next removal is argued
+    // rather than assumed.
+    expect(ids).toContain('tokenharbor/gemini-3.6-flash')
     expect(ids).not.toContain('tokenharbor/minimax-m3')
   })
 
@@ -101,11 +107,12 @@ describe('FID-2026-0916-004: tokenharbor dead free channel + stale ids', () => {
     expect(missing).toEqual([])
   })
 
-  test('cli fetcher no longer lists the removed ids', () => {
+  test('cli fetcher no longer lists the still-removed ids', () => {
     const harborIds = getTokenHarborModels().map((m) => m.id)
     expect(harborIds).not.toContain('tokenharbor/kimi-k3:free')
-    expect(harborIds).not.toContain('tokenharbor/gemini-3.6-flash')
     expect(harborIds).not.toContain('tokenharbor/minimax-m3')
+    // Re-added by FID-2026-1010-001 (callable again in the live roster).
+    expect(harborIds).toContain('tokenharbor/gemini-3.6-flash')
   })
 })
 

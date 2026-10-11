@@ -1,5 +1,40 @@
 # LEARNINGS
 
+## Lesson: A register target line whose globs all sit on continuation lines contributes nothing
+
+- **Date:** 2026-10-10
+- **Failure:** A new SCOPE.md register item for `FID-2026-1010-001` was written as
+  `- FID-2026-1010-001:` with every backticked glob on the following indented
+  continuation lines. Two subsequent writes were then blocked by the Law 2
+  write-time scope gate with `no approved scope item covers "<path>"` — naming
+  the missing coverage and never the malformed entry. The entry looked correct to
+  a human reader: it listed the paths, indented, in the same shape every
+  neighbouring entry uses.
+- **Evidence:** packages/agent-runtime/src/echo/pre-write-gates-law2.ts → symbol:loadScopeArtifact,
+  packages/agent-runtime/src/echo/pre-write-gates-law2.ts → symbol:runLaw2Gate,
+  SCOPE.md → heading:Machine-readable scope targets
+- **Invariant:** The gate matches item heads with `/^- ([A-Za-z0-9-]+): (.+)$/`,
+  which requires at least one character AFTER the colon. Continuation-line
+  collection is purely additive — it runs only once a head has matched. So an
+  item whose head ends at the colon contributes ZERO patterns, and because the
+  gate fails closed it denies exactly the paths that entry names. The block
+  message points at the missing coverage, which is the one thing that is not
+  wrong.
+- **Guard:** Always put at least one backticked glob on the same line as the
+  `- <id>:` head; continuation lines are additive only. When a Law 2 block names
+  a path the entry visibly lists, re-read the entry's HEAD line before touching
+  anything else. Related observation: the gate reads the register per write, so a
+  SCOPE.md edit and a gated write issued in the same tool batch can still see the
+  pre-edit artifact — retry the write rather than re-authoring the entry.
+- **Verification:** after moving the first glob onto the head line, both
+  previously blocked writes applied on the first attempt;
+  `bun run scripts/scope-register-check.ts` prints
+  `scope-register PASS (0 issues)`; the four TokenHarbor suites are
+  53 pass / 0 fail.
+- **Scope:** internal
+- **Owning FID:** FID-2026-1010-001
+- **Status:** active
+
 ## Lesson: A machine-readable register entry is a parsed artifact, not prose
 
 - **Date:** 2026-10-09

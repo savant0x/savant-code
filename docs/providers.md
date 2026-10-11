@@ -48,11 +48,12 @@ closed if this section drifts from the registry.
 | Infron | `infron` | gateway | `INFRON_API_KEY` | `https://llm.onerouter.pro/v1` | openai | static (9 models) |
 | Intern InkStone | `intern` | gateway | `INTERN_API_KEY` | `https://discovery-api.intern-ai.org.cn/v1` | openai | static (10 models) |
 | KiosAPI | `kiosapi` | gateway | `KIOSAPI_API_KEY` | `https://kiosapi.com/v1` | openai | live |
+| Mistral AI | `mistral` | gateway | `MISTRAL_API_KEY` | `https://api.mistral.ai/v1` | openai | live |
 | Nous Research | `nous` | gateway | `NOUS_API_KEY` | `https://inference-api.nousresearch.com/v1` | openai | live |
 | Ollama | `ollama` | local | — | `http://localhost:11434/v1` | openai | none |
 | OrcaRouter | `orcarouter` | gateway | `ORCAROUTER_API_KEY` | `https://api.orcarouter.ai/v1` | openai | live |
 | TokenBom | `tokenbom` | gateway | `TOKENBOM_API_KEY` | `https://tokenbom.com/v1` | openai | static (7 models) |
-| TokenHarbor | `tokenharbor` | gateway | `TOKENHARBOR_API_KEY` | `https://tokenharbor.ai/v1` | openai | static (17 models) |
+| TokenHarbor | `tokenharbor` | gateway | `TOKENHARBOR_API_KEY` | `https://tokenharbor.ai/v1` | openai | static (68 models) |
 | UnoRouter | `unorouter` | gateway | `UNOROUTER_API_KEY` | `https://api.unorouter.com/v1` | openai | static (17 models) |
 | Vercel AI Gateway | `vercel` | gateway | `AI_GATEWAY_API_KEY` | `https://ai-gateway.vercel.sh/v1` | openai | live |
 | xKiro | `xkiro` | gateway | `XKIRO_API_KEY` | `https://api.xkiro.com/v1` | multi (`XKIRO_PROTOCOLS`) | live |

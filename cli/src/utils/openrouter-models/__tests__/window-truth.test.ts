@@ -53,9 +53,13 @@ describe('FID-2026-0916-002: vendor fallback-table coverage', () => {
 })
 
 describe('FID-2026-0916-002: spot windows (keyed rosters 2026-09-16)', () => {
-  test('tokenharbor deepseek-v4-flash is 1,048,576 (was heuristic 131k)', () => {
+  // FID-2026-1010-001: re-sourced DOWN to the vendor's own /v1/models
+  // publication (1,000,000) from the 2026-09-16 cross-vendor value
+  // (1,048,576). The operator-reported 131k defect stays fixed either way —
+  // the pin exists so the heuristic can never return, not to freeze a number.
+  test('tokenharbor deepseek-v4-flash is 1,000,000 (vendor-published)', () => {
     expect(getContextWindowFallback('tokenharbor/deepseek-v4-flash')).toEqual({
-      contextWindow: 1_048_576,
+      contextWindow: 1_000_000,
       source: 'fallback-table',
     })
   })
@@ -64,7 +68,7 @@ describe('FID-2026-0916-002: spot windows (keyed rosters 2026-09-16)', () => {
     const harbor = getTokenHarborModels().find(
       (m) => m.id === 'tokenharbor/deepseek-v4-flash',
     )
-    expect(harbor?.contextLength).toBe(1_048_576)
+    expect(harbor?.contextLength).toBe(1_000_000)
 
     const router = fetchTokenRouterModels().find(
       (m) => m.id === 'tokenrouter/deepseek/deepseek-v4-pro',
@@ -96,8 +100,11 @@ describe('FID-2026-0916-002: spot windows (keyed rosters 2026-09-16)', () => {
     // The orcarouter *-free cap lesson: free channels of OTHER gateways keep
     // their vendor-published windows (tokenharbor publishes them); nothing
     // here heuristic-fills an unknown window — coverage invariant above.
-    expect(getContextWindowFallback('tokenharbor/th-orchestra')).toEqual({
-      contextWindow: 200_000,
+    // FID-2026-1010-001: re-pointed from `tokenharbor/th-orchestra` — that
+    // row left with the dead id, and the free-class property it pinned is
+    // carried by a surviving campaign row.
+    expect(getContextWindowFallback('tokenharbor/mimo-v2.5:free')).toEqual({
+      contextWindow: 1_048_576,
       source: 'fallback-table',
     })
   })
