@@ -516,7 +516,8 @@ requirements for this FID.
 ### Code Verification Evidence
 
 - [x] Files referenced in Affected Components exist
-- [x] Implementation matches the Proposed Solution (R1–R2, R5, R7–R8 and A1–A2; R3/R4/R6 withdrawn; A3 candidate verification remains)
+- [x] Implementation matches the Proposed Solution (R1–R2, R5, R7–R8 and A1–A2;
+      R3/R4/R6 withdrawn; A3 candidate verification remains)
 - [x] Typecheck and full root tests pass; quality, Markdown lint, version,
       scope, archived-FID closure, and targeted Prettier checks pass
 - [x] Production call-graph evidence is present for new or repaired wiring
