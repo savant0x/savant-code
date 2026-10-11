@@ -9,6 +9,7 @@ Index of shelf notes. New entries go here as one line.
 - [shellshock-gateway-2026-10.md](shellshock-gateway-2026-10.md) — theRizwan/ShellShock: local free-provider gateway (Next.js + open-sse + brand.json white-label). Pattern: brand.json single-source + policy-as-config. Flag: routes stealth Big Pickle as "GPT-6.1-Sol". SHELVED.
 - [context-mode-2026-10.md](context-mode-2026-10.md) — mksglu/context-mode (25.4k stars): MCP-layer context sandbox, 98% output reduction, FTS5 KB, PreCompact snapshot→restore, 17 platforms. Patterns: #852 escape-vector threat model (EHEL test case), ≤2KB priority snapshot, intent-driven filtering. SHELVED.
 - [hermes-story-farm-2026-10.md](hermes-story-farm-2026-10.md) + baseline JSON — LIVE 3-day idea farm: diffs the Hermes user-stories page (371 tiles), classifies new stories, appends roadmap candidates. First sweep 10-08: 321 tiles, 44 pain / 86 workflow / 72 memory-system. ACTIONABLE.
+- [voxelbench-human-preference-arena-2026-10.md](voxelbench-human-preference-arena-2026-10.md) — voxelbench.ai: LIVE human-voted Elo arena for creative/voxel builds (AI voters blocked). Measures human aesthetic preference — the scalable proxy for Spencer's design eye, complementing AA/Vals/Terminal-Bench. REFERENCE SOURCE (revisit on new model drop / Nov statement-day).
 
 Shelved ideas, explorations, and design references — **not active work**.
 Nothing here is a commitment, a FID, or a registered task; active work lives
