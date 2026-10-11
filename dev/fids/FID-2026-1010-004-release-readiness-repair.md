@@ -66,8 +66,8 @@ security check is weakened to obtain a pass.
 - R6: Sidebar polish FID lacks required code-verification evidence; its receipt
   is not a substitute for live verification. Icon-program quality failure is
   the same R3/R4 failure, not an independent product defect.
-- R7: Committed TokenHarbor test expectations still include a removed model;
-  corrected working-tree expectations have not established release-tree proof.
+- R7: Committed-tree verification exposed stale TokenHarbor expectations plus
+  an omitted Mistral live-catalog leg/type after gateway module extraction.
 - R8: Windows tree cancellation failed at the parent-PID assertion. Cause is
   not established. `killProcessGroup` uses a five-second synchronous taskkill
   timeout and falls back to direct child termination on failure; Windows
@@ -382,6 +382,16 @@ repair is required for the committed candidate: export the model constant and
 save, clear, and restore the environment key in the fixture lifecycle. The
 focused Mistral suite passes 2/2 and SDK typecheck passes with the repair.
 
+### D15 — the gateway merge referenced a missing Mistral live-catalog leg
+
+The next committed-candidate check reached CLI typecheck and failed because
+`gateway-catalog-merge.ts` consumed `mistralModels`, but the split
+`gateway-live-results.ts` contract did not declare, fetch, settle or return the
+Mistral leg. Restored the leg in the existing positional `Promise.allSettled`
+contract and result mapping. CLI typecheck passes; the existing Mistral catalog
+suite passes 9/9. Added an end-to-end gateway membership pin for the settled
+Mistral leg; that provider suite passes with the pin included.
+
 ### Stamp result
 
 The receipt below is historical: it passed 23/23 at 2026-10-11T03:36:36Z,
@@ -400,6 +410,8 @@ accepted platform scope or authorize a push.
 - gate: test cli/src/components/__tests__/right-sidebar-format.test.ts
 - gate: test sdk/src/__tests__/run-terminal-command.test.ts
 - gate: test sdk/src/impl/__tests__/model-provider-free-mode-mistral.test.ts
+- gate: test cli/src/utils/openrouter-models/__tests__/fid-2026-1009-005-mistral.test.ts
+- gate: test cli/src/utils/__tests__/openrouter-models-gateway-providers.test.ts
 - gate: test sdk/src/__tests__/run-state-child-process.test.ts
 - gate: test scripts/__tests__/telemetry-feedback.test.ts
 - gate: test scripts/quality-report.test.ts

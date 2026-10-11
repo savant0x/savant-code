@@ -224,4 +224,43 @@ describe('openrouter-models provider clusters', () => {
       ]),
     )
   })
+
+  test('includes Mistral models from its settled live-catalog leg', async () => {
+    const originalMistralKey = process.env.MISTRAL_API_KEY
+    process.env.MISTRAL_API_KEY = 'mistral-catalog-test-key'
+    try {
+      // @ts-expect-error - mock fetch
+      globalThis.fetch = mock((input: RequestInfo | URL) => {
+        if (String(input).includes('api.mistral.ai')) {
+          return Promise.resolve(
+            makeJsonResponse({
+              data: [
+                {
+                  id: 'codestral-2508',
+                  name: 'Codestral',
+                  max_context_length: 256_000,
+                  created: 1_729_382_400,
+                },
+              ],
+            }),
+          )
+        }
+        return Promise.resolve(makeJsonResponse({ data: [] }))
+      })
+
+      const models = await fetchGatewayModels(true)
+
+      expect(models).toContainEqual(
+        expect.objectContaining({
+          id: 'mistral/codestral-2508',
+          name: 'Codestral',
+          provider: 'mistral',
+          contextLength: 256_000,
+        }),
+      )
+    } finally {
+      if (originalMistralKey === undefined) delete process.env.MISTRAL_API_KEY
+      else process.env.MISTRAL_API_KEY = originalMistralKey
+    }
+  })
 })

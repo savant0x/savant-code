@@ -6,7 +6,7 @@
  * POSITIONAL CONTRACT: `restResults` is the tail of the Promise.allSettled()
  * array after [openrouter, nvidia], in exactly this order:
  * Nous, KiosAPI, APInex, OpenAI, OrcaRouter, B.AI, Vercel, CleanApis,
- * CodeCraft, xKiro, custom catalogs. Fulfilled values win; rejected sources degrade to their
+ * CodeCraft, Mistral, xKiro, custom catalogs. Fulfilled values win; rejected sources degrade to their
  * per-provider cache — custom catalogs degrade to [] (lazily-built custom
  * fetchers have no cache, FID-2026-0910-004 D10).
  *
@@ -20,6 +20,7 @@ import { fetchCleanApisModels, getCachedCleanApisModels } from './cleanapis'
 import { fetchCodecraftModels, getCachedCodecraftModels } from './codecraft'
 import { fetchAllCustomModels } from './custom-catalog'
 import { fetchKiosapiModels, getCachedKiosapiModels } from './kiosapi'
+import { fetchMistralModels, getCachedMistralModels } from './mistral'
 import { fetchNousModels, getCachedNousModels } from './nous'
 import { fetchNvidiaModels, getCachedNvidiaModels } from './nvidia'
 import { fetchOpenAiModels, getCachedOpenAiModels } from './openai'
@@ -45,6 +46,7 @@ export interface GatewayLiveCatalogs {
   vercelModels: OpenRouterModel[]
   cleanApisModels: OpenRouterModel[]
   codecraftModels: OpenRouterModel[]
+  mistralModels: OpenRouterModel[]
   xkiroModels: OpenRouterModel[]
   customModels: OpenRouterModel[]
 }
@@ -71,6 +73,7 @@ export async function fetchGatewayLiveCatalogs(forceRefresh: boolean): Promise<{
     fetchVercelModels(forceRefresh),
     fetchCleanApisModels(forceRefresh),
     fetchCodecraftModels(forceRefresh),
+    fetchMistralModels(forceRefresh),
     fetchXkiroModels(forceRefresh),
     // FID-2026-0910-004 Step 9 remainder: custom catalogs (live + inline)
     // merge here; per-provider failures degrade to [] (D10 ladder).
@@ -94,6 +97,7 @@ export function resolveGatewayLiveCatalogs(
     vercelResult,
     cleanApisResult,
     codecraftResult,
+    mistralResult,
     xkiroResult,
     customResult,
   ] = restResults
@@ -145,6 +149,10 @@ export function resolveGatewayLiveCatalogs(
       codecraftResult?.status === 'fulfilled'
         ? codecraftResult.value
         : getCachedCodecraftModels(),
+    mistralModels:
+      mistralResult?.status === 'fulfilled'
+        ? mistralResult.value
+        : getCachedMistralModels(),
     xkiroModels:
       xkiroResult?.status === 'fulfilled'
         ? xkiroResult.value
