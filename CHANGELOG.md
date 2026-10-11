@@ -18,6 +18,23 @@
 
 ### Added
 
+- **Mistral AI provider integration (FID-2026-1009-005, low; closed and
+  archived 2026-10-11; local commit `8d915d8f`).** Added the authenticated
+  catalog, dedicated `max_context_length` parser, registry/gateway wiring,
+  truthful window coverage, degraded picker visibility, and generated provider
+  documentation. All 17 declared gates passed.
+
+- **DSML stream recovery (FID-2026-1009-006, high; closed and archived
+  2026-10-11; local commit `c89de4ae`).** Recover DSML tool calls across
+  reasoning/text chunks, strip stray markers, and skip orphan tool-call deltas
+  without terminating the session. All four declared gates passed.
+
+- **Local commit authority; pushes remain authorization-gated
+  (FID-2026-1011-001, medium; closed and archived 2026-10-11; local commit
+  `15306286`).** ECHO G1/G2 and single-agent guidance now permit approved,
+  path-scoped local commits without separate authorization while keeping every
+  push explicitly gated. The generated protocol bundle is synchronized.
+
 - **Local model-compliance telemetry completed (FID-2026-1007-012,
   low; closed and archived 2026-10-09; local commit `512659cc`).** Metadata-only law
   events carry resolved route/session/role identity into rolling 7d/30d/all
@@ -458,6 +475,50 @@
   discovery pass starts from recorded key names instead of re-deriving them.
 
 ### Changed
+
+- **Sidebar and icon work cancelled by operator (FID-2026-1009-004, FID-2026-1009-007, FID-2026-1009-008, FID-2026-1010-003, FID-2026-1010-005; archived-declined 2026-10-11).** Five FIDs are out of the active queue. Earlier implementation and test records remain historical; no product acceptance is claimed.
+
+- **Cyberdeck icon family integration (FID-2026-1009-004, medium; operator-declined and archived 2026-10-11).** The operator cancelled this integration because the TUI cannot use SVGs; implementation history is retained without an acceptance claim.
+
+- **Sidebar cyberdeck HUD modernization (FID-2026-1009-008, medium; operator-declined and archived 2026-10-11).** The loop-8 findings for the sidebar HUD redesign are retained as historical evidence; the operator later cancelled the sidebar work.
+
+- **Sidebar duplication audit and phase colour restoration (FID-2026-1009-007, medium; operator-declined and archived 2026-10-11).** The fixed area above Activity detail repeated the same live facts. Removed the duplicate blocks, made Activity detail the single home for status, and restored per-phase colour on the phase line through the theme.
+
+- **Sidebar operator polish: wordmark headroom, grouped token counts, dropped `.0k`, and the kiosapi `step-5-preview` window (FID-2026-1010-003, low; operator-declined and archived 2026-10-11).** Operator feedback on the live sidebar after the FID-2026-1009-008 cyberdeck integration. Four items, three of them cosmetic and one substantive:
+
+  1. **Wordmark headroom** — the `Savant` wordmark started on the sidebar's very first row with no separation from the top border; the only vertical reserve in `SidebarHeader` sat *below* the mark (the documented fold-button reserve). One empty row now precedes it, with that reserve preserved.
+  2. **Grouped token counts** — the Cache row printed its sample ungrouped (`85% (1923.8k/2265.5k)`) while the Context row directly beneath printed the same numbers grouped (`1,923,800/2,265,500`). Two rows of one panel disagreed about how to read digits. `formatTokens` now groups via `Intl.NumberFormat('en-US')`, the convention `right-sidebar-display.ts` already used, so both rows derive from one truth.
+  3. **Dropped `.0k`** — `toFixed(1)` always emitted one decimal, so exact thousands read `1.0k`, `2.0k`, `1000.0k`. `maximumFractionDigits: 1` drops the trailing zero while keeping `1,923.8k` intact.
+  4. **kiosapi `step-5-preview` window (200k → 1M)** — a second operator report arrived mid-pass: the model resolved to the conservative 200k default because neither it nor its `-free` variant had a row in `KIOSAPI_CONTEXT_WINDOW_FALLBACKS`, the same defect class as the already-recorded `qwen3.8-flash-free` row. A 5x undersize steers compaction with the wrong denominator. Both ids now resolve to 1,000,000, sourced from the live OpenRouter read for upstream `stepfun/step-5-preview` (`context_length: 1000000`, `top_provider` agrees). The operator also noted the model is multimodal — that capability is live-derived from the cached catalog (`architecture.modality` → `model-info.ts`), so no static registration was required.
+
+  The fourth complaint ("stretched vertically") was **measured before being changed**: rendering `Branding` at forced parent heights 3/6/10 produced byte-identical frames (the `<ascii-font>` element never stretches to fill), and a whole-font-table measurement showed `tiny` is the only 2-row font in the bundle. Operator ruling: keep the wordmark as-is. Verification: typecheck `common` + `cli` exit 0; eslint 0/0; prettier clean; 17/17 sidebar format+cache, 29/29 window suites, 6/6 kiosapi window pins, 3/3 sidebar frame suites.
+
+- **The repo-wide Prettier drift is closed — the declared `format` gate is green
+  end-to-end (SCOPE item T179, low; completed 2026-10-09; operator ruling
+  recorded verbatim in SCOPE.md).** `bunx prettier --check .` — declared LIVE in
+  `protocol.config.yaml` with "active target 0.0.23" — had failed on 159
+  committed files since before v0.0.23 (project version 0.0.35): 132
+  `art/icons/cyberpunk/*.svg` opening-tag wraps plus 27 non-SVG line-length and
+  final-newline drifts. Ten files were fixed by hand in-pass (the in-flight
+  work's own files, the DSML pair, two final newlines, and two
+  `.prettierignore` exclusions following the file's own generated-artifact
+  patterns); the operator then explicitly lifted the no-scripted-edits
+  invariant for the project's own formatter — *"you can run the fix command
+  this one time since i knw the reasons to allow it. Proceed with the fix"* —
+  and the remaining 149 files were migrated with `prettier --write .`. The
+  codegen was re-run afterwards so both generated icon modules stay in sync
+  with the reformatted SVG sources (single source of truth; the modules grew
+  3,407 → 6,343 and 2,961 → 5,897 lines and the quality baseline was
+  re-frozen with the rationale recorded in-line), and the two export tests
+  that pinned the old single-line SVG opening tag now assert the family's
+  64×64 canvas instead of the tag's whitespace. Verification after the
+  migration: `prettier --check .` exit 0; typecheck across all 13 workspaces
+  exit 0; full batteries cli 4,099 / common 837 / sdk 606 / agent-runtime
+  1,971 / llm-providers 89 / desktop 403 — all pass, zero failures; eslint
+  0/0; markdownlint, quality (1,503 baselined files), icon-palette,
+  provider-docs drift, scope-register, learnings and `validate:repository`
+  all PASS; every active FID's receipt re-verified live by `fid:verify
+  --check`.
 
 - **Sidebar command console polished (FID-2026-1008-006, medium;
   closed and archived 2026-10-09; local commit `2b6075e7`).** Clearer activity/model

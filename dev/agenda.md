@@ -29,11 +29,9 @@
 - [ ] **T62-followups** — remaining items routed, not blocking `Task 62` closure):** (1) is **completed 2026-09-28** — c
       blocker: operator credits/keys — tokenharbor allowance reset and tokenrouter top-up, both external to the reposito
 
-- [ ] **T180** — DSML special-token stream recovery + orphan tool-call delta survival (FID-2026-1009-006).** DeepSeek-fa
       blocker: operator commit authorization (G2 — the agent never executes git; closure requires a committed hash). The
 
 - [ ] **T122** — Savant-free feature disposition (operator-owned).** Operator ruling 2026-10-03, verbatim: "i think it m
       blocker: the feature is woven deeply through the CLI/agents/common surfaces — disposition (repair or removal) is a
 
-- [ ] **T182** — Expressive sidebar HUD and CLI cyberpunk asset integration (FID-2026-1009-008).** Preserve the basic si
       blocker: operator design selection and production approval; actual Cursor pixel-graphics delivery must be establis

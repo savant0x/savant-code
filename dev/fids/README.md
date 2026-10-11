@@ -5,19 +5,16 @@ operator decision, implementation, runtime review, or closure evidence.
 
 ## Current active FIDs
 
-**Zero — both remaining FIDs completed, closed and archived 2026-10-09.**
+**Two active FIDs remain (2026-10-11):**
 
-- **[`FID-2026-1007-012`](archive/FID-2026-1007-012-model-compliance-telemetry.md)**
-  (T164-C, model-compliance telemetry) — all seven phases; receipt 19/19.
-- **[`FID-2026-1008-006`](archive/FID-2026-1008-006-sidebar-command-console-visual-redesign.md)**
-  (T174, sidebar command console) — receipt 11/11; all implementation
-  and native verification complete, including the operator's refinements.
+- [FID-2026-1010-001](FID-2026-1010-001-tokenharbor-catalog-live-realignment.md) —
+  verified catalog work; completion audit says full-repository gates remain.
+- [FID-2026-1010-004](FID-2026-1010-004-release-readiness-repair.md) —
+  analyzed; R7/R8/A2 and external acceptance boundaries remain open.
 
-Completion pass 2026-10-09: root regression **8,572 pass, 23 skip, zero failures**;
-typecheck, ESLint, markdownlint, quality and repository validation pass. Fresh
-declared-gate receipts are recorded in the archived FIDs. The operator authorized
-scoped local commits after archiving and updating the changelog. Both completed
-scope items and their write grants have been removed from `SCOPE.md`.
+The operator cancelled the icon-integration and sidebar work on 2026-10-11.
+Five FIDs are archived as operator-declined; their prior implementation and
+test notes are historical and do not assert product acceptance.
 
 **2026-10-08 — six completed FIDs closed and archived:**
 `FID-2026-1007-013`, `-015`, `FID-2026-1008-001`, `-002`, `-004`, `-005`.

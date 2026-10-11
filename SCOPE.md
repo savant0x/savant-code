@@ -65,6 +65,117 @@
 
 ## Open items
 
+- [ ] **T184. Release-readiness audit and repair plan (2026-10-10).** Operator request:
+      "I want you to begin a release-ready audit." **Automation level: 3.**
+      Audit the current working tree: version/toolchain parity, generated
+      artifacts, governance, quality, lint, formatting, full typecheck,
+      workspace regression, SDK build, CLI bundle and package contents.
+      Record exact command results and investigate failures before claiming
+      readiness. Preserve existing edits and item-level approval boundaries.
+      No version bump, tag, push, publish or deploy is authorized. The operator
+      directed completion on 2026-10-11, superseding the prior no-Git hold for
+      local path-scoped commits required by this FID. Push still requires
+      explicit authorization. Remote release and platform artifact verification
+      remain outside scope.
+      Evidence: `dev/session-summaries/2026-10-10-release-readiness-audit.md`.
+      Audit verdict: not release-ready. Version callout and protocol bundle
+      drift; HUD preview exceeds 300 lines; quality baseline cites a deleted
+      logo; telemetry Markdown exceeds 120 columns; sidebar polish FID lacks
+      Code Verification Evidence; committed HEAD fails the TokenHarbor test
+      typecheck. Windows cancellation failed once, then passed isolated and
+      full reruns without a fix. Operator request: "make a repair fid to fix
+      all issues you found so we're ready for release". Repair record:
+      `dev/fids/FID-2026-1010-004-release-readiness-repair.md` (analyzed;
+      R1-R6 + A1 + A3 implemented and gate-verified, R7/R8/A2 blocked).
+      Repaired this pass: release-callout comparison made line-ending-agnostic
+      (the real cause — README carried 1094 CRLF pairs against an LF blob) with
+      a CRLF regression pin; protocol bundle regenerated; HUD preview split
+      339->224 lines + new `cli/scripts/hud-preview-section.tsx`; stale
+      deleted-logo quality exemption removed; telemetry draft pre-wrapped in
+      `draftFor` with a 120-column pin; FID-2026-1010-003 un-fenced and stamped
+      (8/8); three defects found on the way fixed (stale `ECHO ·` sidebar pins
+      in FID-2026-1009-007's gates, SDK consumer fixtures passing removed
+      `apiKey`; FID-2026-1010-005 was recorded, then all sidebar FIDs were operator-cancelled
+      2026-10-11 after the sidebar attempt failed); `typecheck` exit 0 and
+      `validate:repository` PASS.
+      **Blocker:** (a) R8 — 20/20 isolated cancellation runs passed on
+      2026-10-11, but two full SDK runs reproduced the failure: the Windows
+      cancellation test left `parentPid` alive after its 5s deadline (one run
+      completed the test in 6.98s). The taskkill result and duration were not
+      captured, so the cause remains unconfirmed and no process-kill change is
+      converged. (b) R7 — local path-scoped commits are now authorized under G1
+      and the operator's 2026-10-11 completion direction; the release candidate
+      still needs a coherent, verified commit. (c) A2 — native CLI artifact acceptance needs
+      native runners and release-artifact authority. (d) remote pre-audit and
+      live-provider access/budget remain operator-gated. Native release
+      acceptance is unproven; no release-readiness claim is made.
+      Retained outputs: `dev/scratchpad/active/release-readiness-2026-10-10/`.
+      **Automation level: 1** for remediation approval and release actions.
+      Read-only audit gates are complete; no release-readiness claim is made.
+
+- [ ] **T185. Public-release content audit: README/docs staleness, bloat, scratchpad
+      cleanup (2026-10-10).** Operator request, verbatim: "review the readme, looking
+      for any stale info or that is no longer in sync with the code. Also need to
+      clean out all bloat files. Also clean up the scratchpad. Basically a project
+      wide audit getting ready for public release after a 2 week sprint."
+      **Automation level: 3** for the cataloged repairs below; every file deletion
+      is enumerated in the Law 2 presentation and waits for the operator's go-ahead
+      (loose-instruction intake rule — interpreted scope confirmed before acting).
+      Read-only audit catalog (evidence 2026-10-10, grep/tool output):
+      (1) README.md claims "the full ECHO Perfection Loop now triggers at 20 lines
+      instead of 75" and an EHEL "20-line threshold" — live gate is 100 lines
+      (`packages/agent-runtime/src/echo/pre-write-gates-fid.ts:71`,
+      `pre-write-gates.ts:15-17` "from 20 to 100"), contradicting README's own
+      Execution Modes table (100-line) and `MODE_DESCRIPTIONS`;
+      (2) README.md + README.zh-CN.md + docs/features.md + cli/release/README.md
+      list `/login` — the command was deleted and its absence is test-pinned
+      (`cli/src/commands/__tests__/router-registry.test.ts:15`, FID-2026-0929-004);
+      (3) Repo Map names `scripts/tmux/` package `@savant-code/tmux` — actual is
+      `@savant-code/tmux-scripts` (`scripts/tmux/package.json`); rows for `desktop/`
+      and `packages/connectors/` are missing (AGENTS.md Repo Map also omits
+      `packages/design-systems/` + `packages/connectors/` + `scripts/tmux/`);
+      (4) `/skills` missing from the README slash-command table though it is a
+      headline feature and a live registry command;
+      (5) README Validation section's `bun x tsc --noEmit` checks nothing at the
+      root (`tsconfig.json` has `files: []` + references) — the real gate is
+      `bun run typecheck` (13-workspace chain);
+      (6) knowledge.md claims the merge typecheck gate is the four-workspace
+      `/verify` set — stale vs the 13-workspace chain in AGENTS.md/package.json;
+      (7) `@savant-code/sdk` npmjs links (README:206, README.zh-CN:245, sdk/README.md,
+      website/, common templates README) point at a package that is
+      `defaultPublish: false` and currently 404s (`scripts/public-release.test.ts:99-103`,
+      FID-2026-0816-001 D-02) — reword or drop pending operator ruling;
+      (8) stale `cli/src/utils/constants.ts:139` comment still says "20-line
+      ceremony threshold";
+      (9) auto-update bullet retracted — `SAVANT_CODE_NO_AUTO_UPDATE` verified LIVE
+      in `cli/release-core/launcher.js:1215` (claim is correct, no change).
+      Bloat inventory: `debug/` ≈5 GB (`cli.jsonl` 2.5 GB + `trace.jsonl` 2.5 GB +
+      `probe-post-terminal.log` 12 MB; gitignored, written by
+      `cli/src/utils/logger/file-sink.ts` — delete only with no live writer),
+      root `firebase-debug.log`, root `database.db` (+`-wal`/`-shm`; regenerable
+      runtime fallback per .gitignore:94), tracked stray `website/index-2.html`
+      (92 KB duplicate, session-summaries 2026-10-07). `resources/` (user-added
+      reference clones, gitignored) is an operator disk decision — never
+      agent-deleted. Scratchpad inventory: `dev/scratchpad` 40 MB (active 35 MB,
+      archive 4.6 MB); scope-referenced protections honored: `release-readiness-
+      2026-10-10/**` (T184), `t62*.ts`, `gateway-catalog-probe.ts`,
+      `provider-catalogs-2026-10-03/**`, `provider-integration-*`,
+      `probe-logo-geometry.tsx`, and every path cited by an active FID; root
+      shape stays README+active/+archive/ per `scripts/hygiene.test.ts` P36.
+      Gates after edits: `bun run validate:repository`, `bun run lint:md`,
+      `bun x prettier --check`, `bun run hygiene:check`, `bun run version:check`.
+
+- [ ] **T186. Local commit authority; push remains approval-gated (2026-10-11).**
+      Operator directive: "LOCAL commits do not need authorization, only push
+      does." Reconcile ECHO G1/G2, the single-agent adaptation, and generated
+      protocol bundle wording: local, path-scoped commits within approved scope
+      need no separate operator authorization; every push still requires
+      explicit operator authorization. Preserve path-scoped staging, atomic
+      commits, and any narrower item-specific prohibition already recorded.
+      Reconcile active FID/SCOPE blockers that currently say commit
+      authorization is required. Do not push. **Automation level: 3.**
+      Record: `dev/fids/FID-2026-1011-001-local-commit-authority-push-gated.md`.
+
 ### Providers and routing
 
 - [ ] **T119. Pending provider account access and identity.**
@@ -138,7 +249,7 @@
       proceeding". **deferred::operator-approved 2026-10-06 — "let's
       shelf that for now and i'll revisit it later"** (operator shelved the
       provider work; the key-creation wall and the Oct 13 balance expiry
-      stay recorded above).
+stay recorded above).
 
 - [ ] **FID-2026-1010-001. TokenHarbor catalog live realignment (68-model
       roster, incl. `claude-haiku-5.5`).** Operator directive 2026-10-10:
@@ -172,18 +283,6 @@
 
 ### Icon integration
 
-- [ ] **T177. CLI icon-integration program — wire the 132-SVG cyberdeck
-      family into product surfaces (FID-2026-1009-004).** The export HTML
-      report swaps Font Awesome for inline Savant SVGs, gains agents/phase
-      marks and drops the ~1.2 MB base64 FA payload (FA strategy per the
-      FID's Q1); Discord presence derives the 14 agent/mode PNGs (upload is
-      the operator's); desktop adopts the family natively. TUI inline icons
-      intentionally remain the `glyphs.ts` chain. TUI raster art is a separate
-      work item **blocked pending the operator's rasterization ruling** (same
-      blocker as the FID records); it stays registered and proceeds the moment
-      the ruling lands.
-      **Automation level: 3.**
-
 ### Build orders (formalized as FIDs 2026-10-07)
 
 - [ ] **T164-D. Eval-runner wire-stage usage telemetry.** Open remainder
@@ -209,18 +308,27 @@
      them to every write, so "present before act" is satisfied by work that
      finished days ago. Evict the line in the pass that closes the item. -->
 
-- FID-2026-1010-001: `dev/fids/FID-2026-1010-001-tokenharbor-catalog-live-realignment.md`,
-  `common/src/constants/model-config/providers.ts`,
-  `common/src/constants/model-config/tokenharbor.ts`,
-  `common/src/constants/context-window-table.ts`,
-  `common/src/constants/context-window-table-tokenharbor.ts`,
-  `common/src/constants/window-coverage-register.ts`,
-  `common/src/__tests__/model-config.test.ts`,
-  `cli/src/utils/openrouter-models/static-catalogs.ts`,
-  `cli/src/utils/openrouter-models/tokenharbor-names.ts`,
-  `cli/src/utils/openrouter-models/__tests__/tokenharbor-catalog.test.ts`,
-  `cli/src/utils/openrouter-models/__tests__/window-truth.test.ts`,
-  `docs/providers.md`, `dev/session-summaries/**`, `CHANGELOG.md`
+- T184: `dev/fids/FID-2026-1010-004-release-readiness-repair.md`,
+  `dev/fids/archive/FID-2026-1010-003-sidebar-operator-polish-pass.md`,
+  `dev/fids/archive/FID-2026-1009-007-sidebar-duplication-audit.md`,
+  `dev/fids/archive/FID-2026-1009-004-cli-icon-integration-program.md`,
+  `scripts/version-docs.ts`, `scripts/version-callouts.ts`,
+  `scripts/version-docs-drift.test.ts`, `scripts/telemetry-feedback.ts`,
+  `scripts/__tests__/telemetry-feedback.test.ts`,
+  `cli/scripts/hud-preview-components.tsx`,
+  `cli/scripts/hud-preview-section.tsx`,
+  `cli/src/components/__tests__/right-sidebar-single-home.test.tsx`,
+  `cli/src/components/__tests__/right-sidebar-phase-color.test.tsx`,
+  `sdk/test/cjs-compatibility/test-types.ts`,
+  `sdk/test/esm-compatibility/test-types.ts`,
+  `dev/quality-baseline.json`,
+  `dev/telemetry/proposals/law15-dominance.md`,
+  `common/src/constants/protocol-bundle.generated.ts`,
+  `dev/session-summaries/2026-10-10-release-readiness-audit.md`,
+  `dev/session-summaries/2026-10-10-release-readiness-repair-planning.md`,
+  `dev/session-summaries/2026-10-10-release-readiness-repair.md`,
+  `dev/scratchpad/active/release-readiness-2026-10-10/**`,
+  `SCOPE.md`, `CHANGELOG.md`
 - T119: `.env.local`, `docs/providers.md`,
   `dev/session-summaries/2026-10-03-provider-*.md`,
   `dev/scratchpad/active/provider-catalogs-2026-10-03/**`,
@@ -239,12 +347,35 @@
   `dev/fids/**` (the integration FID)
 - T122: (no write surface — operator-owned)
 - T164-D: `common/src/types/print-mode.ts`,
-  `packages/agent-runtime/src/run-agent-step/step.ts`,
+`packages/agent-runtime/src/run-agent-step/step.ts`,
   `evals/v2/src/runner.ts`, `sdk/src/run/types.ts`
-- T177: `dev/fids/FID-2026-1009-004-cli-icon-integration-program.md`,
-  `art/icons/cyberpunk/**`,
-  `cli/src/constants/**`, `cli/src/commands/export-conversation/**`,
-  `cli/scripts/**`, `scripts/**`,
-  `cli/src/state/presence/presence-mapper.ts` (keys stay byte-identical —
-  citation surface only), `desktop/**`, `docs/**`,
-  `dev/session-summaries/**`, `CHANGELOG.md`
+- FID-2026-1010-001: `dev/fids/FID-2026-1010-001-tokenharbor-catalog-live-realignment.md`,
+  `common/src/constants/model-config/providers.ts`,
+  `common/src/constants/model-config/tokenharbor.ts`,
+  `common/src/constants/context-window-table.ts`,
+  `common/src/constants/context-window-table-tokenharbor.ts`,
+  `common/src/constants/window-coverage-register.ts`,
+  `common/src/__tests__/model-config.test.ts`,
+  `cli/src/utils/openrouter-models/static-catalogs.ts`,
+  `cli/src/utils/openrouter-models/tokenharbor-names.ts`,
+  `cli/src/utils/openrouter-models/__tests__/tokenharbor-catalog.test.ts`,
+  `cli/src/utils/openrouter-models/__tests__/window-truth.test.ts`,
+  `docs/providers.md`, `dev/session-summaries/**`, `CHANGELOG.md`
+- T185: `README.md`, `README.zh-CN.md`, `knowledge.md`, `AGENTS.md`,
+  `docs/**`, `cli/release/README.md`, `WINDOWS.md`, `desktop/README.md`,
+  `sdk/README.md`, `common/src/templates/initial-agents-dir/README.md`,
+  `cli/src/utils/constants.ts`, `dev/scratchpad/**`, `debug/**`,
+  `firebase-debug.log`, `database.db`, `database.db-wal`, `database.db-shm`,
+  `website/index-2.html`, `SCOPE.md`, `CHANGELOG.md`, `dev/session-summaries/**`
+- T186: `ECHO.md`, `dev/echo-v0.1.2-single-agent.md`,
+  `common/src/constants/protocol-bundle.generated.ts`, `SCOPE.md`,
+  `dev/agenda.md`, `CHANGELOG.md`, `dev/fids/README.md`,
+  `dev/fids/archive/README.md`,
+  `dev/fids/archive/FID-2026-1011-001-local-commit-authority-push-gated.md`,
+  `dev/fids/archive/FID-2026-1009-005-mistral-provider-integration.md`,
+  `dev/fids/archive/FID-2026-1009-006-dsml-stream-parser.md`,
+  `dev/fids/archive/FID-2026-1009-008-sidebar-cyberdeck-hud-modernization.md`,
+  `dev/fids/archive/FID-2026-1010-005-sidebar-action-labels-and-placement.md`,
+  `dev/fids/archive/FID-2026-1009-004-cli-icon-integration-program.md`,
+  `dev/fids/archive/FID-2026-1009-007-sidebar-duplication-audit.md`,
+  `dev/fids/archive/FID-2026-1010-003-sidebar-operator-polish-pass.md`

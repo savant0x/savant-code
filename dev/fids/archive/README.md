@@ -3,6 +3,27 @@
 This directory contains closed or historically completed FIDs. Files here are
 an audit record, not an active work queue.
 
+## 2026-10-11 reconciliation — three closures and five operator cancellations
+
+- [`FID-2026-1009-005-mistral-provider-integration.md`](FID-2026-1009-005-mistral-provider-integration.md)
+  closed on local commit `8d915d8f`; all 17 declared gates passed.
+- [`FID-2026-1009-006-dsml-stream-parser.md`](FID-2026-1009-006-dsml-stream-parser.md)
+  closed on local commit `c89de4ae`; all four declared gates passed.
+- [`FID-2026-1011-001-local-commit-authority-push-gated.md`](FID-2026-1011-001-local-commit-authority-push-gated.md)
+  closed on local commit `15306286`; no push was performed.
+- [`FID-2026-1009-008-sidebar-cyberdeck-hud-modernization.md`](FID-2026-1009-008-sidebar-cyberdeck-hud-modernization.md),
+  [`FID-2026-1010-005-sidebar-action-labels-and-placement.md`](FID-2026-1010-005-sidebar-action-labels-and-placement.md),
+  [`FID-2026-1009-007-sidebar-duplication-audit.md`](FID-2026-1009-007-sidebar-duplication-audit.md),
+  and [`FID-2026-1010-003-sidebar-operator-polish-pass.md`](FID-2026-1010-003-sidebar-operator-polish-pass.md)
+  were archived as operator-declined after the operator reported the attempted
+  sidebar failed and cancelled the deck/sidebar work.
+- [`FID-2026-1009-004-cli-icon-integration-program.md`](FID-2026-1009-004-cli-icon-integration-program.md)
+  was archived as operator-declined because the TUI cannot use SVGs. No product
+  acceptance is claimed for any of these five declined records.
+
+The eight records and their SCOPE entries were reconciled on 2026-10-11. No
+push or release was performed.
+
 ## 2026-10-09 closure — sidebar and compliance telemetry (2 FIDs archived)
 
 Operator authorization: "you can commmit it after you properly archive it and
