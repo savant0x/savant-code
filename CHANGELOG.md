@@ -1,5 +1,13 @@
 # Changelog
 
+## 2026-10-11 — Public release validation excludes the unpublished SDK (FID-2026-1011-002)
+
+### Changed
+
+- Scoped public release build, typecheck, test, and committed-head validation
+  to the CLI release and its repository dependencies. The full root workspace
+  gates remain available for development and CI.
+
 ## 2026-10-11 — Project audit: typecheck-coverage drift (T185)
 
 ### Fixed

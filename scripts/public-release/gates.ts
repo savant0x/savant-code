@@ -9,7 +9,7 @@ import { mkdirSync, readFileSync, renameSync, rmSync, writeFileSync } from 'fs'
 import os from 'os'
 import path from 'path'
 
-import { repositoryValidationGates } from '../validation-manifest.js'
+import { publicReleaseValidationGates } from '../validation-manifest.js'
 import { configuredReleasePackages } from './catalog'
 import { classifyCommandResult, run } from './command-runner'
 import { fail, PROFILE_ENV, readJsonObject } from './fail'
@@ -26,7 +26,7 @@ export function buildGateManifest(
   headSha = '',
 ): { specs: GateSpec[]; hash: string } {
   const specs: GateSpec[] = [
-    ...repositoryValidationGates(root),
+    ...publicReleaseValidationGates(root),
     ...configuredReleasePackages().map((target) => ({
       label: `npm-pack:${target.name}`,
       command: 'npm',

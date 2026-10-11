@@ -150,15 +150,19 @@ export function assertNoHiddenTrackedFiles(
 
 /**
  * GATES-stage wrapper: proves the committed tree compiles from the
- * receipt's release HEAD. Kept as the single call site for the stage so
- * the provenance logic stays testable without a TransactionContext.
+ * receipt's release HEAD with the CLI release typecheck chain. Kept as the
+ * single call site for the stage so provenance remains testable without a
+ * TransactionContext.
  */
 export function assertReleaseHeadCompiles(
   version: string,
   headSha: string | undefined,
   root: string,
+  runner: CommandRunner = defaultRunner,
 ): void {
-  assertCleanCheckoutCompiles(version, headSha ?? '', root)
+  assertCleanCheckoutCompiles(version, headSha ?? '', root, runner, {
+    typecheckScript: 'typecheck:release',
+  })
 }
 
 /**
@@ -188,6 +192,8 @@ export interface CleanCheckoutOptions {
   /** Filesystem seam (tests wire memory adapters; production defaults
    *  to `node:fs`). */
   fs?: CheckoutFilesystem
+  /** Alternate root typecheck script for release-target-specific proof. */
+  typecheckScript?: string
   /**
    * Extra post-install gates run INSIDE the checkout after the typecheck
    * chain, in order (FID-2026-0909-003: `verify:clean` appends the SDK
@@ -252,7 +258,11 @@ export function assertCleanCheckoutCompiles(
         `Clean checkout install failed for v${version}: ${install.stderr.trim() || install.stdout.trim()}`,
       )
     }
-    const typecheck = runner('bun', ['run', 'typecheck'], checkoutPath)
+    const typecheck = runner(
+      'bun',
+      ['run', options.typecheckScript ?? 'typecheck'],
+      checkoutPath,
+    )
     if ((typecheck.status ?? 1) !== 0) {
       fail(
         `Clean checkout compile proof failed for v${version} (the committed tree does not compile):\n${typecheck.stdout.trim()}${typecheck.stderr.trim()}`,

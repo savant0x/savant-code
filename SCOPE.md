@@ -18,6 +18,13 @@ recorded decision or external dependency requires it.
       public release pipeline. Verify the full release preview and gates first.
       **Automation level: 3.**
 
+- [ ] **FID-2026-1011-002. Exclude the unpublished SDK from public release gates.**
+      The default release publishes only `savant-code`, but release validation
+      currently runs the SDK build, typecheck, and test chain. Give the public
+      release its own CLI/repository gate commands without the SDK workspace;
+      keep the full root gates available for development and repository CI.
+      **Automation level: 3.**
+
 - [ ] **T185. Public-release content and bloat audit.** Compare README/docs with
       current code, commands, package publication, and validation gates. Review
       the identified debug logs, generated databases, duplicate website file,
@@ -151,3 +158,4 @@ recorded decision or external dependency requires it.
   `website/index-2.html`, `SCOPE.md`, `CHANGELOG.md`, `dev/session-summaries/**`
 - T186: (no write surface — blocked pending the operator ruling on the gate chain)
 - T187: (no write surface — operator-owned skills surface)
+- FID-2026-1011-002: `package.json`, `scripts/validation-gates.ts`, `scripts/validation-manifest.ts`, `scripts/public-release/gates.ts`, `scripts/public-release/catalog.ts`, `scripts/public-release/provenance.ts`, `scripts/public-release-gates.test.ts`, `scripts/public-release-provenance.test.ts`, `dev/fids/FID-2026-1011-002-public-release-excludes-sdk.md`, `SCOPE.md`, `CHANGELOG.md`

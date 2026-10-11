@@ -197,7 +197,7 @@ export function buildPublicReleasePlan(
     `Validate ${PUBLIC_REPOSITORY}@v${version}`,
     'Snapshot local routing/settings state',
     'Apply the non-secret OpenRouter/free public profile',
-    'Run public SDK/CLI build, typecheck, test, lint, format, and package gates',
+    'Run public CLI bundle, repository typecheck, test, lint, format, and package gates',
     `Create annotated tag v${version}`,
     `git push origin main and v${version}`,
     'Write the verified incremental backup bundle (OneDrive-synced)',

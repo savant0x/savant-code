@@ -271,3 +271,20 @@ export function repositoryValidationGates(
     },
   ]
 }
+
+/** Public CLI release gates omit the unpublished SDK package. */
+export function publicReleaseValidationGates(
+  root: string,
+): readonly ValidationGateSpec[] {
+  return repositoryValidationGates(root)
+    .filter((gate) => gate.label !== 'build:sdk')
+    .map((gate) => {
+      if (gate.label === 'typecheck') {
+        return { ...gate, args: ['run', 'typecheck:release'] }
+      }
+      if (gate.label === 'test') {
+        return { ...gate, args: ['run', 'test:release'] }
+      }
+      return gate
+    })
+}

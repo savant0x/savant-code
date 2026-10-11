@@ -1,13 +1,24 @@
 // Public release contract — gate manifests and package scoping. Sibling of
 // the FID-2026-0819-005 Loop 317 decomposition.
 
+import { readFileSync } from 'fs'
+import { join } from 'path'
+
 import { describe, expect, test } from 'bun:test'
 
-import { buildGateManifest, configuredReleasePackages } from './public-release'
-import { repositoryValidationGates } from './validation-manifest'
+import {
+  buildGateManifest,
+  buildPublicReleasePlan,
+  configuredReleasePackages,
+} from './public-release'
+import {
+  publicReleaseValidationGates,
+  repositoryValidationGates,
+} from './validation-manifest'
 
 describe('public release contract — gate manifests', () => {
   test('builds a deterministic gate manifest with the CLI package dry run', () => {
+    const releaseGates = publicReleaseValidationGates('/repo')
     const first = buildGateManifest(
       '/repo',
       '0.0.21',
@@ -27,13 +38,33 @@ describe('public release contract — gate manifests', () => {
       buildGateManifest('/repo', '0.0.21', '1.3.14', '10.9.2', 'b'.repeat(40))
         .hash,
     ).not.toBe(first.hash)
-    expect(
-      first.specs.slice(0, repositoryValidationGates('/repo').length),
-    ).toEqual([...repositoryValidationGates('/repo')])
+    expect(first.specs.slice(0, releaseGates.length)).toEqual([...releaseGates])
     expect(first.specs.map((spec) => spec.label)).toEqual([
-      ...repositoryValidationGates('/repo').map((spec) => spec.label),
+      ...releaseGates.map((spec) => spec.label),
       'npm-pack:savant-code',
     ])
+    expect(releaseGates.map((spec) => spec.label)).not.toContain('build:sdk')
+    expect(
+      releaseGates.find((spec) => spec.label === 'typecheck')?.args,
+    ).toEqual(['run', 'typecheck:release'])
+    expect(releaseGates.find((spec) => spec.label === 'test')?.args).toEqual([
+      'run',
+      'test:release',
+    ])
+    expect(
+      repositoryValidationGates('/repo').map((spec) => spec.label),
+    ).toContain('build:sdk')
+  })
+
+  test('release test/typecheck scripts cover CLI and omit the SDK workspace', () => {
+    const packageJson = JSON.parse(
+      readFileSync(join(import.meta.dir, '..', 'package.json'), 'utf8'),
+    ) as { scripts: Record<string, string> }
+    for (const scriptName of ['test:release', 'typecheck:release']) {
+      expect(packageJson.scripts[scriptName]).toContain('--cwd=cli')
+      expect(packageJson.scripts[scriptName]).not.toContain('--cwd=sdk')
+    }
+    expect(buildPublicReleasePlan('0.0.21').join('\n')).not.toContain('SDK')
   })
 
   test('scopes release packages to the configured subset', () => {
@@ -82,7 +113,7 @@ describe('public release contract — gate manifests', () => {
         'a'.repeat(40),
       )
       expect(scoped.specs.map((spec) => spec.label)).toEqual([
-        ...repositoryValidationGates('/repo').map((spec) => spec.label),
+        ...publicReleaseValidationGates('/repo').map((spec) => spec.label),
         'npm-pack:savant-code',
       ])
 
@@ -116,13 +147,15 @@ describe('public release contract — gate manifests', () => {
       'a'.repeat(40),
     )
     expect(specs).toHaveLength(
-      repositoryValidationGates('/repo').length +
+      publicReleaseValidationGates('/repo').length +
         configuredReleasePackages().length,
     )
 
     for (const spec of specs) {
       const argv = [spec.command, ...spec.args].join(' ')
-      expect(argv).not.toMatch(/\b(?:tag|push|publish|release|gh)\b/i)
+      expect(argv).not.toMatch(
+        /\b(?:git\s+(?:tag|push)|npm\s+publish|gh\s+release)\b/i,
+      )
     }
   })
 

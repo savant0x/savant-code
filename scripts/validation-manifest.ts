@@ -7,6 +7,7 @@ import type {
 } from './validation-gates'
 
 export {
+  publicReleaseValidationGates,
   releaseEvalTierGate,
   repositoryValidationGates,
   RELEASE_EVAL_TIER_ENV,

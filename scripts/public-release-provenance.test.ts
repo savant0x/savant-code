@@ -15,6 +15,7 @@ import { describe, expect, test } from 'bun:test'
 import {
   assertCleanCheckoutCompiles,
   assertNoHiddenTrackedFiles,
+  assertReleaseHeadCompiles,
   HIDDEN_INDEX_TAGS,
   parseGitLsFilesVerbose,
   type CommandRunner,
@@ -240,7 +241,7 @@ describe('assertCleanCheckoutCompiles — post-install gate list (FID-2026-0909-
 
   const HEAD = 'a'.repeat(40)
 
-  test('default (no options) keeps the release-path chain: typecheck only, no build:sdk', () => {
+  test('default (no options) keeps the full repository typecheck chain', () => {
     const { calls, runner } = shapeRunner()
     assertCleanCheckoutCompiles('0.0.30', HEAD, '/repo', runner)
     const shapes = calls.map((c) => `${c.command} ${c.args.join(' ')}`)
@@ -252,6 +253,14 @@ describe('assertCleanCheckoutCompiles — post-install gate list (FID-2026-0909-
       expect.stringContaining('git worktree remove --force'),
     ])
     expect(shapes.some((s) => s.includes('build'))).toBe(false)
+  })
+
+  test('release committed-head proof uses the release typecheck chain', () => {
+    const { calls, runner } = shapeRunner()
+    assertReleaseHeadCompiles('0.0.30', HEAD, '/repo', runner)
+    const shapes = calls.map((c) => `${c.command} ${c.args.join(' ')}`)
+    expect(shapes).toContain('bun run typecheck:release')
+    expect(shapes).not.toContain('bun run typecheck')
   })
 
   test('extraGates run in order INSIDE the checkout, after the typecheck chain', () => {
