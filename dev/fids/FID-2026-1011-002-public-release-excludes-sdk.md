@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-1011-002-public-release-excludes-sdk.md`
 **ID:** FID-2026-1011-002
 **Severity:** high
-**Status:** converged
+**Status:** verified
 **Created:** 2026-10-11
 **Automation level:** 3
 **YAGNI-Compliance:** Verified
@@ -100,13 +100,34 @@ the CLI release accurately.
 
 The public release manifest excludes SDK build/typecheck/test gates; its
 release-specific chains cover all other currently configured release
-workspaces. The focused public release tests and quality gate pass.
+workspaces. Focused release manifest and committed-head provenance tests pass
+(21 tests, 68 expectations), as does the scripts typecheck gate.
+
+### Code Verification Evidence
+
+- `bun test scripts/public-release-gates.test.ts scripts/public-release-provenance.test.ts` — 21 pass, 0 fail, 68 expectations.
+- `bun run typecheck:scripts` — exit 0.
+- `git diff --check` — exit 0 before commit `6093e7f7`.
+
+## Resolution
+
+Commit `6093e7f7` adds release-only validation chains that omit SDK build,
+typecheck, and tests while preserving the full developer and CI chains. Release
+manifest and committed-head proof use the release-specific chains.
 
 ## Verification Gates
 
 - gate: test scripts/public-release-gates.test.ts
 - gate: test scripts/public-release-provenance.test.ts
 - gate: quality
+
+### Verification Receipt
+
+- fingerprint: sha256:22f9868699e7ebff3231583cfa74cceeaa1db085d98ef5e8480372f036e5f8a5
+- verified: 2026-10-11T19:39:57.289Z
+- test scripts/public-release-gates.test.ts: exit 0
+- test scripts/public-release-provenance.test.ts: exit 0
+- quality: exit 0
 
 ## Perfection Loop
 
@@ -120,7 +141,7 @@ workspaces. The focused public release tests and quality gate pass.
   release-specific test/typecheck scripts; retain all other root gates.
 - **ADVERSARIAL:** Check committed-head compile proof and ordinary clean-checkout
   verification separately so the change does not silently weaken repository CI.
-- **CHANGE DELTA:** Pending implementation.
+- **CHANGE DELTA:** Implemented and verified in commit `6093e7f7`.
 
 ### Missed Questions
 

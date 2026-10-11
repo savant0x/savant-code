@@ -1,14 +1,6 @@
-// FID-2026-0906-003 — release-provenance guard tests.
-//
-// RED-first pins for two of the three unguarded provenance surfaces the
-// v0.0.29 phantom-source incident exposed (the third — the desktop
-// `head_sha` bypass — is pinned in public-release-desktop.test.ts):
-//   1. index-state blindness — assume-unchanged/skip-worktree files are
-//      invisible to `git status`, so every status-based guard passes while
-//      real source is silently excluded from commits;
-//   2. no committed-tree compile proof — every gate runs against the
-//      worktree, which is exactly the state that lied on release night.
-// All command surfaces are injectable — no test spawns git or bun.
+// FID-2026-0906-003 — release provenance guard tests. They pin index-state
+// visibility and committed-tree compile proof; desktop head_sha coverage is
+// in public-release-desktop.test.ts. Injected commands keep tests process-free.
 
 import { describe, expect, test } from 'bun:test'
 
