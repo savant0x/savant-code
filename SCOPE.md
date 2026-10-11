@@ -158,4 +158,10 @@ recorded decision or external dependency requires it.
   `website/index-2.html`, `SCOPE.md`, `CHANGELOG.md`, `dev/session-summaries/**`
 - T186: (no write surface — blocked pending the operator ruling on the gate chain)
 - T187: (no write surface — operator-owned skills surface)
-- FID-2026-1011-002: `package.json`, `scripts/validation-gates.ts`, `scripts/validation-manifest.ts`, `scripts/public-release/gates.ts`, `scripts/public-release/catalog.ts`, `scripts/public-release/provenance.ts`, `scripts/public-release-gates.test.ts`, `scripts/public-release-provenance.test.ts`, `dev/fids/FID-2026-1011-002-public-release-excludes-sdk.md`, `SCOPE.md`, `CHANGELOG.md`
+- FID-2026-1011-002: `package.json`, `scripts/validation-gates.ts`,
+  `scripts/validation-manifest.ts`, `scripts/public-release/gates.ts`,
+  `scripts/public-release/catalog.ts`, `scripts/public-release/provenance.ts`,
+  `scripts/public-release-gates.test.ts`,
+  `scripts/public-release-provenance.test.ts`,
+  `dev/fids/FID-2026-1011-002-public-release-excludes-sdk.md`, `SCOPE.md`,
+  `CHANGELOG.md`
