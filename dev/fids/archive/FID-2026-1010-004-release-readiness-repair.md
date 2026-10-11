@@ -4,7 +4,7 @@
 **ID:** FID-2026-1010-004
 **Severity:** high
 **Status:** closed
-**Commit/State:** 6b2f748a78c11bbfb11e97b3e627ad821586d56a
+- **Commit/State:** 6b2f748a78c11bbfb11e97b3e627ad821586d56a
 **Created:** 2026-10-10 21:48
 **Automation level:** 3
 **YAGNI-Compliance:** Verified
