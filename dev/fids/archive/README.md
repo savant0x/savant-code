@@ -3,7 +3,10 @@
 This directory contains closed or historically completed FIDs. Files here are
 an audit record, not an active work queue.
 
-## 2026-10-11 reconciliation — three closures and five operator cancellations
+## 2026-10-11 reconciliation — four closures and five operator cancellations
+
+- [`FID-2026-1010-001-tokenharbor-catalog-live-realignment.md`](FID-2026-1010-001-tokenharbor-catalog-live-realignment.md)
+  closed on local commit `f6c2048d`; all ten declared gates passed live.
 
 - [`FID-2026-1009-005-mistral-provider-integration.md`](FID-2026-1009-005-mistral-provider-integration.md)
   closed on local commit `8d915d8f`; all 17 declared gates passed.

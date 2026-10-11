@@ -15,8 +15,9 @@
  * when a known regression recurs.
  *
  * Designed to run on every supported platform (Linux, macOS, Windows) without
- * extra deps. The binary doesn't need a TTY: OpenTUI emits ANSI escapes to
- * stdout regardless, and the static text we look for renders contiguously.
+ * extra deps. The harness itself must run under a real TTY: the CLI routes
+ * non-TTY stdin to headless mode, which cannot prove the interactive renderer
+ * mounted. Run it in tmux or the native runner's pseudo-terminal.
  *
  * Usage:
  *   bun cli/scripts/smoke-binary.ts <path-to-binary> [seconds]
@@ -152,7 +153,7 @@ function runBootAttempt(
 ): Promise<AttemptOutcome> {
   return new Promise((resolve) => {
     const proc = spawn(binary, [], {
-      stdio: ['ignore', 'pipe', 'pipe'],
+      stdio: [process.stdin.isTTY ? 'inherit' : 'ignore', 'pipe', 'pipe'],
       env: { ...process.env, NO_COLOR: '1', TERM: 'dumb' },
     })
 
@@ -221,6 +222,11 @@ async function main(): Promise<void> {
   if (!Number.isFinite(runSeconds) || runSeconds <= 0) {
     console.error(`smoke-binary: bad seconds arg: ${process.argv[3]}`)
     process.exit(2)
+  }
+  if (!process.stdin.isTTY) {
+    throw new Error(
+      'TUI smoke requires a TTY; run under tmux or a native pseudo-terminal',
+    )
   }
 
   console.log(`smoke-binary: spawning ${binary} for ${runSeconds}s…`)

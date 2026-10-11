@@ -143,6 +143,37 @@ describe('documented version surfaces (FID-2026-0919-023)', () => {
     expect(collectDocVersionDrift(root, '0.0.23')).toEqual([])
   })
 
+  // FID-2026-1010-004: `.gitattributes` declares `*.md text eol=lf`, but a
+  // Windows tool can leave the WORKING copy CRLF while the committed blob
+  // stays LF — git only renormalizes on the next touch. The audit measured
+  // exactly that (README.md: 1094 CRLF pairs on disk, 0 in the HEAD blob),
+  // and the byte-for-byte block comparison failed `version:check` for prose
+  // that was already correct. Line endings are not content; real prose drift
+  // must still fail.
+  test('a CRLF working copy of identical prose is not callout drift', () => {
+    const root = createRoot('0.0.23')
+    const prose = '> **v0.0.23** — the release prose\n> continued across lines'
+    writeFileSync(
+      path.join(root, 'CHANGELOG.md'),
+      '# Changelog\n\n## 0.0.23 — 2026-10-03\n\n' + prose + '\n',
+    )
+    writeFileSync(
+      path.join(root, 'README.md'),
+      ('# README\n\n' + prose + '\n').replaceAll('\n', '\r\n'),
+    )
+    expect(collectDocVersionDrift(root, '0.0.23')).toEqual([])
+
+    // The gate is not weakened: the same CRLF tree with different prose still
+    // reports the body drift.
+    writeFileSync(
+      path.join(root, 'README.md'),
+      '# README\r\n\r\n> **v0.0.23** — stale prose\r\n',
+    )
+    const drift = collectDocVersionDrift(root, '0.0.23')
+    expect(drift).toHaveLength(1)
+    expect(drift[0]?.hint).toContain('release-callout body')
+  })
+
   test('callout drift is not reported before both sides exist (fresh repo)', () => {
     // createRoot writes a bare `# Changelog` with no released section — there
     // is nothing for the README to mirror yet, so the comparison must stay

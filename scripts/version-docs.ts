@@ -1,6 +1,16 @@
 import fs from 'node:fs'
 import path from 'node:path'
 
+// FID-2026-1010-004: the callout helpers moved to their own module when this
+// file crossed the 300-line ceiling. They have no other importers (verified by
+// grep).
+import {
+  findNewestChangelogCallout,
+  findReleaseCalloutBlock,
+  syncReleaseCallouts,
+  withoutCarriageReturns,
+} from './version-callouts'
+
 const EXCLUDED_DIRS = new Set([
   '.git',
   '.savant',
@@ -128,62 +138,6 @@ export function updateDocSurfaces(
   return [...new Set(changed)]
 }
 
-/** The README's release callout: the first contiguous `>` block opened by a `**vX.Y.Z** —` line. */
-export function findReleaseCalloutBlock(
-  content: string,
-): { version: string; block: string } | undefined {
-  const lines = content.split('\n')
-  for (let index = 0; index < lines.length; index += 1) {
-    const match = lines[index]!.match(/^> \*\*v(\d+\.\d+\.\d+)\*\* —/)
-    if (!match) continue
-    let end = index
-    while (end + 1 < lines.length && lines[end + 1]!.startsWith('>')) end += 1
-    return {
-      version: match[1]!,
-      block: lines.slice(index, end + 1).join('\n'),
-    }
-  }
-  return undefined
-}
-
-/**
- * The newest RELEASED CHANGELOG section's callout — the prose owner (T94).
- * The first `## <version> — <date>` heading in the reverse-chronological file
- * opens it; an `Unreleased` accumulation header is not a released section.
- */
-export function findNewestChangelogCallout(
-  changelog: string,
-): { version: string; block: string } | undefined {
-  const heading = changelog.match(/^## \d+\.\d+\.\d+ — /m)
-  if (!heading || heading.index === undefined) return undefined
-  return findReleaseCalloutBlock(changelog.slice(heading.index))
-}
-
-/**
- * Copy the CHANGELOG's newest release callout over the README's release
- * callout. Idempotent; a no-op when either side has no callout yet or they
- * already agree. Returns the relative paths changed.
- */
-export function syncReleaseCallouts(root: string): string[] {
-  let changelog: string
-  let readme: string
-  try {
-    changelog = fs.readFileSync(path.join(root, 'CHANGELOG.md'), 'utf8')
-    readme = fs.readFileSync(path.join(root, 'README.md'), 'utf8')
-  } catch {
-    return []
-  }
-  const owner = findNewestChangelogCallout(changelog)
-  const mirror = findReleaseCalloutBlock(readme)
-  if (!owner || !mirror || owner.block === mirror.block) return []
-  fs.writeFileSync(readmePath(root), readme.replace(mirror.block, owner.block))
-  return ['README.md']
-}
-
-function readmePath(root: string): string {
-  return path.join(root, 'README.md')
-}
-
 /** A document surface that states the product version in prose or a badge. */
 export type DocVersionSurface = {
   file: string
@@ -267,7 +221,12 @@ export function collectDocVersionDrift(
     const mirror = findReleaseCalloutBlock(
       fs.readFileSync(path.join(root, 'README.md'), 'utf8'),
     )
-    if (owner && mirror && owner.block !== mirror.block) {
+    if (
+      owner &&
+      mirror &&
+      withoutCarriageReturns(owner.block) !==
+        withoutCarriageReturns(mirror.block)
+    ) {
       drift.push({
         file: 'README.md',
         version: mirror.version,

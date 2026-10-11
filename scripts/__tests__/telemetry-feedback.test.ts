@@ -77,6 +77,32 @@ describe('learning feedback (FID-2026-1007-012 FID 7)', () => {
     expect(proposals).toEqual([])
   })
 
+  // FID-2026-1010-004: the draft is machine output consumed by `lint:md`, so
+  // the 120-column ceiling is a renderer contract, not a one-off edit of the
+  // file that happened to be on disk. Without this pin the joined single-line
+  // paragraph returns on the next regeneration and fails the markdown gate.
+  test('generated drafts stay within the markdown 120-column ceiling', () => {
+    const root = mkdtempSync(path.join(os.tmpdir(), 'telemetry-fb-'))
+    tempRoots.push(root)
+    const telemetryDir = path.join(root, 'dev', 'telemetry')
+    mkdirSync(telemetryDir, { recursive: true })
+    writeFileSync(
+      path.join(telemetryDir, 'compliance.jsonl'),
+      ledger({ 15: 9, 3: 3 }),
+      'utf8',
+    )
+    const { written } = syncProposals(root, { now: NOW })
+    expect(written).toEqual(['law15-dominance.md'])
+    const draft = readFileSync(
+      path.join(telemetryDir, 'proposals', 'law15-dominance.md'),
+      'utf8',
+    )
+    const longestLine = Math.max(
+      ...draft.split('\n').map((line) => line.length),
+    )
+    expect(longestLine).toBeLessThanOrEqual(120)
+  })
+
   test('sync writes drafts and clears stale ones', () => {
     const root = mkdtempSync(path.join(os.tmpdir(), 'telemetry-fb-'))
     tempRoots.push(root)

@@ -85,6 +85,16 @@ function proposalsDir(rootDir: string): string {
 }
 
 function draftFor(proposal: DominanceProposal, generatedAt: string): string {
+  // FID-2026-1010-004: the review paragraph is emitted PRE-WRAPPED. These
+  // drafts are machine output and `lint:md` enforces MD013's 120-column
+  // ceiling, so the wrap has to live in the renderer — the previous joined
+  // single-line form failed the markdown gate the moment it was written.
+  const question = [
+    `Is Law ${proposal.law} right but the gate UX fighting the model? Consider`,
+    'a harness-smoothing candidate: clearer steering text, a narrower gate',
+    'predicate, or better pre-violation guidance — then route through the',
+    'normal FID process if warranted.',
+  ].join('\n')
   return (
     `# Draft: Law ${proposal.law} dominates violations (telemetry feedback)\n\n` +
     `> DRAFT — not a FID, not registered, not approved. Scribe/operator pickup only.\n\n` +
@@ -92,10 +102,7 @@ function draftFor(proposal: DominanceProposal, generatedAt: string): string {
     `share ${(proposal.share * 100).toFixed(1)}% > ${(FEEDBACK_DOMINANCE_SHARE * 100).toFixed(0)}%)\n` +
     `- Generated: ${generatedAt}\n\n` +
     `## Question for review\n\n` +
-    `Is Law ${proposal.law} right but the gate UX fighting the model? ` +
-    `Consider a harness-smoothing candidate: clearer steering text, a narrower ` +
-    `gate predicate, or better pre-violation guidance — then route through ` +
-    `the normal FID process if warranted.\n`
+    `${question}\n`
   )
 }
 

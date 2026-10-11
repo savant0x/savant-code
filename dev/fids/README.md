@@ -5,12 +5,14 @@ operator decision, implementation, runtime review, or closure evidence.
 
 ## Current active FIDs
 
-**Two active FIDs remain (2026-10-11):**
+**One active FID remains (2026-10-11):**
 
-- [FID-2026-1010-001](FID-2026-1010-001-tokenharbor-catalog-live-realignment.md) —
-  verified catalog work; completion audit says full-repository gates remain.
 - [FID-2026-1010-004](FID-2026-1010-004-release-readiness-repair.md) —
   analyzed; R7/R8/A2 and external acceptance boundaries remain open.
+
+FID-2026-1010-001 was already marked closed and recorded as archived in SCOPE;
+its file was moved here on 2026-10-11 to reconcile the active queue and
+repository validator.
 
 The operator cancelled the icon-integration and sidebar work on 2026-10-11.
 Five FIDs are archived as operator-declined; their prior implementation and

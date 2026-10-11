@@ -3,10 +3,11 @@
 **Filename:** `FID-2026-1010-001-tokenharbor-catalog-live-realignment.md`
 **ID:** FID-2026-1010-001
 **Severity:** medium
-**Status:** verified
+**Status:** closed
 **Created:** 2026-10-10 02:13
+**Closed:** 2026-10-11
 **Automation level:** 3
-**YAGNI-Compliance:** Pending
+**YAGNI-Compliance:** Verified
 
 ---
 
@@ -344,9 +345,24 @@ being rerun; no closure or new live vendor probe is claimed by this update.
 
 ## Resolution
 
-Implemented and previously audited; record remains active pending committed
-closure evidence. This structural repair preserves all historical findings,
-the conservative NEEDS-REVIEW pins and the registered realignment scope.
+Closed and archived 2026-10-11 on local commit `f6c2048d` (path-scoped, six
+files). No push was performed; every push requires separate operator
+authorization under ECHO G1.
+
+The completion pass re-ran all ten declared gates live before the commit:
+typecheck `common` and `cli` exit 0; the five cli catalog suites plus
+`common/src/__tests__/model-config.test.ts` are 59 pass / 0 fail;
+`scripts/provider-docs-drift.ts` exit 0; `quality:report` PASS (1,502
+baselined files). A residual-reference sweep found no contradiction: every
+surviving `th-orchestra` mention is either a synthetic test fixture (an
+arbitrary id exercising grouping/routing mechanics, not a catalog-membership
+assertion) or archival/historical prose, and the remaining `static (17 models)`
+cell is UnoRouter's own row. The `docs/Model Context Window Review.md` table
+row is a point-in-time research record of the pre-realignment heuristic era
+and is deliberately left unmodified.
+
+This record preserves all historical findings, the conservative NEEDS-REVIEW
+pins and the registered realignment scope.
 
 ## Related Documents
 
@@ -360,4 +376,20 @@ the conservative NEEDS-REVIEW pins and the registered realignment scope.
 
 ## Lessons Learned
 
-Pending closure.
+1. **A checked-in snapshot with no enforcing check rots silently.** The root
+   cause was never routing — it was a `static` catalog whose refresh comment
+   ("refresh this checked-in snapshot when the public models page changes")
+   carried no test. The strongest fix was the Verifier's own finding: export
+   `TOKENHARBOR_NAMES` and pin it bidirectionally against the catalog map, so
+   an id added without a name, or a name left behind, fails loudly. The guard
+   now exists because the failure mode it prevents is the record's own premise.
+2. **A roster-absence removal is a snapshot fact, never a permanent ban.**
+   `gemini-3.6-flash` was removed as roster-absent and is now callable again, so
+   this record re-added it and inverted the two assertions that pinned its
+   absence. Removing an id is reversible by design; a test that asserts
+   absence forever would have blocked the correction.
+3. **A machine-readable register entry is a parsed artifact, not prose.** The
+   scope-targets entry for this record had to keep at least one backticked glob
+   on its head line — continuation lines are additive only, and a head ending
+   at the colon contributes zero patterns and fails closed (see
+   `dev/LEARNINGS.md`).

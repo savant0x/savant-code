@@ -156,17 +156,50 @@ describe('terminal command process diagnostics', () => {
       'windows-stubborn-grandchild.ts',
     )
     const bashPath = (value: string) => value.replaceAll('\\', '/')
-    const isAlive = (pid: number) => {
+    const heartbeatPaths = [`${pidFile}.parent`, `${pidFile}.grandchild`]
+    const readHeartbeat = (path: string): string | undefined => {
       try {
-        process.kill(pid, 0)
-        return true
+        return readFileSync(path, 'utf8')
       } catch {
-        return false
+        return undefined
       }
+    }
+    const waitForHeartbeatStop = async (): Promise<string[]> => {
+      const lastValues = new Map(
+        heartbeatPaths.map((path) => [path, readHeartbeat(path)]),
+      )
+      const unchangedSince = new Map(
+        heartbeatPaths.map((path) => [path, Date.now()]),
+      )
+      const deadline = Date.now() + 5_000
+      while (Date.now() < deadline) {
+        await new Promise((resolve) => setTimeout(resolve, 100))
+        const now = Date.now()
+        for (const path of heartbeatPaths) {
+          const value = readHeartbeat(path)
+          if (value !== lastValues.get(path)) {
+            lastValues.set(path, value)
+            unchangedSince.set(path, now)
+          }
+        }
+        const active = heartbeatPaths.filter(
+          (path) => now - (unchangedSince.get(path) ?? now) < 500,
+        )
+        if (active.length === 0) return []
+      }
+      return heartbeatPaths.filter((path) => {
+        const value = readHeartbeat(path)
+        return (
+          value !== undefined &&
+          value === lastValues.get(path) &&
+          Date.now() - (unchangedSince.get(path) ?? Date.now()) < 500
+        )
+      })
     }
     const controller = new AbortController()
     let parentPid: number | undefined
     let grandchildPid: number | undefined
+    let confirmedFixturePids: string[] | undefined
 
     try {
       const existingPids = new Set(
@@ -202,29 +235,34 @@ describe('terminal command process diagnostics', () => {
       expect(() => process.kill(shellPid!, 0)).not.toThrow()
       expect(() => process.kill(parentPid!, 0)).not.toThrow()
       expect(() => process.kill(grandchildPid!, 0)).not.toThrow()
+      expect(readHeartbeat(`${pidFile}.parent`)).toStartWith(`${parentPid}:`)
+      expect(readHeartbeat(`${pidFile}.grandchild`)).toStartWith(
+        `${grandchildPid}:`,
+      )
 
       controller.abort()
       await run
 
-      const stoppedDeadline = Date.now() + 5_000
-      while (
-        Date.now() < stoppedDeadline &&
-        (isAlive(shellPid!) || isAlive(parentPid!) || isAlive(grandchildPid!))
-      ) {
-        await new Promise((resolve) => setTimeout(resolve, 25))
-      }
-      expect(() => process.kill(shellPid!, 0)).toThrow()
-      expect(() => process.kill(parentPid!, 0)).toThrow()
-      expect(() => process.kill(grandchildPid!, 0)).toThrow()
+      confirmedFixturePids = await waitForHeartbeatStop()
+      expect(confirmedFixturePids).toEqual([])
     } finally {
       controller.abort()
-      if (parentPid) {
+      const [parentBeforeCleanup, grandchildBeforeCleanup] =
+        heartbeatPaths.map(readHeartbeat)
+      await new Promise((resolve) => setTimeout(resolve, 150))
+      if (
+        parentPid &&
+        parentBeforeCleanup !== readHeartbeat(`${pidFile}.parent`)
+      ) {
         spawnSync('taskkill.exe', ['/pid', String(parentPid), '/t', '/f'], {
           stdio: 'ignore',
           windowsHide: true,
         })
       }
-      if (grandchildPid) {
+      if (
+        grandchildPid &&
+        grandchildBeforeCleanup !== readHeartbeat(`${pidFile}.grandchild`)
+      ) {
         spawnSync('taskkill.exe', ['/pid', String(grandchildPid), '/t', '/f'], {
           stdio: 'ignore',
           windowsHide: true,

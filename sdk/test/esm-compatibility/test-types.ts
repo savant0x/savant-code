@@ -29,10 +29,15 @@ import type {
   )
 
   // Test 3: Test actual instantiation would work (without requiring API key)
+  // FID-2026-1010-004: `apiKey` was removed from `SavantCodeClientOptions` when
+  // the backend-mode surface was retired (FID-2026-0929-005, commit 06220bc6:
+  // direct mode is the product), and this fixture kept the removed field — so
+  // the shipped consumer declaration test failed against its own published
+  // types.
   type ClientOptions = ConstructorParameters<typeof ClientClass>[0]
 
   const mockOptions: ClientOptions = {
-    apiKey: 'test-key',
+    cwd: '/tmp/savant-code-consumer',
   }
 
   // This should compile without errors

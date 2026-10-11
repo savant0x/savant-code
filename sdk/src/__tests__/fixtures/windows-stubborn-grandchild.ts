@@ -1,26 +1,40 @@
 import { spawn } from 'child_process'
-import { writeFileSync } from 'fs'
+import { existsSync, writeFileSync } from 'fs'
 
-const pidFile = process.argv[2]
+const mode = process.argv[2]
+const pidFile = mode === 'grandchild' ? process.argv[3] : mode
 if (!pidFile) throw new Error('PID file path is required')
 
-// A detached grandchild survives if only the Git Bash shell parent is killed.
-// The Windows cancellation test verifies that the terminal tool kills the
-// complete tree instead.
-const grandchild = spawn(
-  process.execPath,
-  ['-e', 'setInterval(() => {}, 1_000)'],
-  {
-    detached: true,
-    stdio: 'ignore',
-    windowsHide: true,
-  },
-)
-if (!grandchild.pid) throw new Error('Failed to start grandchild')
+function keepHeartbeat(path: string): void {
+  let sequence = 0
+  const write = () => writeFileSync(path, `${process.pid}:${sequence++}`)
+  write()
+  setInterval(write, 50)
+}
 
-grandchild.unref()
-writeFileSync(
-  pidFile,
-  JSON.stringify({ parentPid: process.pid, grandchildPid: grandchild.pid }),
-)
-setInterval(() => {}, 1_000)
+if (mode === 'grandchild') {
+  keepHeartbeat(`${pidFile}.grandchild`)
+} else {
+  const grandchild = spawn(
+    process.execPath,
+    [import.meta.path, 'grandchild', pidFile],
+    { detached: true, stdio: 'ignore', windowsHide: true },
+  )
+  const grandchildPid = grandchild.pid
+  if (!grandchildPid) throw new Error('Failed to start grandchild')
+  grandchild.unref()
+
+  keepHeartbeat(`${pidFile}.parent`)
+  const grandchildHeartbeat = `${pidFile}.grandchild`
+  const readyDeadline = Date.now() + 5_000
+  while (!existsSync(grandchildHeartbeat) && Date.now() < readyDeadline) {
+    Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 10)
+  }
+  if (!existsSync(grandchildHeartbeat)) {
+    throw new Error('Grandchild heartbeat did not start')
+  }
+  writeFileSync(
+    pidFile,
+    JSON.stringify({ parentPid: process.pid, grandchildPid }),
+  )
+}
