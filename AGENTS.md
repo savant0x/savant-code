@@ -10,7 +10,7 @@ Savant-Code is the multi-agent AI coding assistant built on the ECHO Protocol v0
 - **TypeScript monorepo** (`strict: true`, `noImplicitReturns: true`)
 - **Bun runtime + package manager** (≥ 1.3.11; root pins `1.3.14` per `engines.bun`)
 - **OpenTUI + React CLI** (`@opentui/core` 0.5.3, `react` ^19)
-- **JS/TS SDK** — embeddable via `SavantClient`
+- **JS/TS SDK** — embeddable via `SavantCodeClient`
 - **Composable agent runtime** — ECHO 10-agent roster with separation of duties
 - **ECHO Protocol v0.2.0** — single bootstrap file
 
@@ -48,7 +48,10 @@ filesystem entries in `agents/`.
 | `packages/code-map/` | `@savant-code/code-map` | tree-sitter code indexing, language detection |
 | `packages/knowledge-graph/` | `@savant-code/knowledge-graph` | Deterministic codebase knowledge-graph engine (indexer, queries, clustering, export serializer) |
 | `packages/llm-providers/` | `@savant-code/llm-providers` | Public LLM provider shims |
-| `sdk/` | `@savant-code/sdk` | Public SDK — `SavantClient`, types, build + verify scripts |
+| `packages/design-systems/` | `@savant-code/design-systems` | Offline design-system presets and visual contracts |
+| `packages/connectors/` | `@savant-code/connectors` | Connector layer — catalog + connector tool meta-family |
+| `sdk/` | `@savant-code/sdk` | Public SDK — `SavantCodeClient`, types, build + verify scripts |
+| `scripts/tmux/` | `@savant-code/tmux-scripts` | tmux CLI helpers used in interactive test runs |
 
 ## Conventions
 
@@ -56,7 +59,9 @@ filesystem entries in `agents/`.
 - Prefer dependency injection over module mocking.
 - Run interactive CLI tests in tmux.
 - Do not force-push `main`.
-- The full typecheck gate must pass before any merge: `bun run typecheck` (chains all 13 workspaces).
+- The full typecheck gate must pass before any merge: `bun run typecheck` (chains the 13
+  typechecked workspaces plus the `scripts/` tree; `savant-free` and `scripts/tmux` are
+  registered workspaces with no leg — T186).
 - New FIDs follow the format `dev/fids/FID-YYYY-MMDD-NNN-{title}.md`.
 
 ## Docs
@@ -117,7 +122,7 @@ key facts:
 ## Validation
 
 ```bash
-# Typecheck (HARD GATE) — chains all 13 workspaces
+# Typecheck (HARD GATE) — chains 13 workspaces + the scripts tree
 bun run typecheck
 
 # SDK test suite (HARD GATE)

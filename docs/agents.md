@@ -14,7 +14,7 @@ Savant Code doesn't use a single model guessing at your code. It deploys a team 
 **Phase:** ALL
 **Role:** Routes work, enforces protocol, spawns agents
 
-The Orchestrator is the central coordinator. It receives user requests, assesses complexity, and decides which agents to spawn. It enforces the ECHO Protocol and ensures every change follows the Perfection Loop.
+The Orchestrator is the central coordinator. It receives user requests, assesses complexity, and decides which agents to spawn. It enforces the ECHO Protocol and routes work through the appropriate workflow; complex changes use the Perfection Loop.
 
 **Capabilities:**
 

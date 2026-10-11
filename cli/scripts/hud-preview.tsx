@@ -67,7 +67,7 @@ export async function captureHud(options: {
 
 async function exportComparison(): Promise<void> {
   const captures: HudCapture[] = []
-  for (const design of ['circuit', 'holographic'] as const) {
+  for (const design of ['circuit', 'holographic', 'holo'] as const) {
     for (const options of [
       { art: 'blocks', height: 40 },
       { art: 'blocks', height: 24 },
@@ -115,6 +115,7 @@ async function livePreview(): Promise<void> {
   renderer.keyInput.on('keypress', (key) => {
     if (key.name === '1') design = 'circuit'
     else if (key.name === '2') design = 'holographic'
+    else if (key.name === '3') design = 'holo'
     else if (key.name === 'b') folded = !folded
     else if (key.name === 'a') art = art === 'blocks' ? 'text' : 'blocks'
     else if (key.name === 'q') {

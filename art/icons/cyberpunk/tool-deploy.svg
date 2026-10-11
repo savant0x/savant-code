@@ -1,4 +1,10 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none" role="img" aria-label="Deploy tool — rocket">
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  viewBox="0 0 64 64"
+  fill="none"
+  role="img"
+  aria-label="Deploy tool — rocket"
+>
   <!-- SAVANT // CYBERDECK — hand-authored vector geometry, no external assets -->
   <defs>
     <filter id="glow" x="-40%" y="-40%" width="180%" height="180%">
@@ -10,12 +16,31 @@
     </filter>
   </defs>
   <!-- rocket body -->
-  <path d="M32 8 C38 16 38 28 32 36 C26 28 26 16 32 8 Z" stroke="#18faf9" stroke-width="3" stroke-linejoin="round" />
+  <path
+    d="M32 8 C38 16 38 28 32 36 C26 28 26 16 32 8 Z"
+    stroke="#18faf9"
+    stroke-width="3"
+    stroke-linejoin="round"
+  />
   <!-- window -->
   <circle cx="32" cy="20" r="3" stroke="#4fa8ff" stroke-width="2" />
   <!-- fins -->
-  <path d="M26 30 L18 40 L26 36" stroke="#18faf9" stroke-width="3" stroke-linejoin="round" />
-  <path d="M38 30 L46 40 L38 36" stroke="#18faf9" stroke-width="3" stroke-linejoin="round" />
+  <path
+    d="M26 30 L18 40 L26 36"
+    stroke="#18faf9"
+    stroke-width="3"
+    stroke-linejoin="round"
+  />
+  <path
+    d="M38 30 L46 40 L38 36"
+    stroke="#18faf9"
+    stroke-width="3"
+    stroke-linejoin="round"
+  />
   <!-- exhaust flame -->
-  <polygon points="32,40 28,48 32,53 36,48" fill="#ff2bd6" filter="url(#glow)" />
+  <polygon
+    points="32,40 28,48 32,53 36,48"
+    fill="#ff2bd6"
+    filter="url(#glow)"
+  />
 </svg>

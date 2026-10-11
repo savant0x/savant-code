@@ -1,4 +1,10 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none" role="img" aria-label="Circuit motif — traces and nodes">
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  viewBox="0 0 64 64"
+  fill="none"
+  role="img"
+  aria-label="Circuit motif — traces and nodes"
+>
   <!-- SAVANT // CYBERDECK — hand-authored vector geometry, no external assets -->
   <defs>
     <filter id="glow" x="-40%" y="-40%" width="180%" height="180%">
@@ -10,9 +16,21 @@
     </filter>
   </defs>
   <!-- top trace -->
-  <path d="M12 12 L28 12 L34 18 L52 18" stroke="#18faf9" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
+  <path
+    d="M12 12 L28 12 L34 18 L52 18"
+    stroke="#18faf9"
+    stroke-width="2.5"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  />
   <!-- bottom trace -->
-  <path d="M12 52 L28 52 L34 46 L52 46" stroke="#18faf9" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
+  <path
+    d="M12 52 L28 52 L34 46 L52 46"
+    stroke="#18faf9"
+    stroke-width="2.5"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  />
   <!-- end nodes -->
   <circle cx="12" cy="12" r="2.5" fill="#ff2bd6" />
   <circle cx="52" cy="18" r="2.5" fill="#ff2bd6" />

@@ -2,77 +2,105 @@ import { describe, expect, it } from 'bun:test'
 
 import { collectQualityIssues, type QualityBaseline } from './quality-report'
 
+// FID-2026-1010-004: every case below calls `collectQualityIssues`, which walks
+// the whole repository (every source root) on each invocation — measured at
+// 1.8–10.3s per case depending on machine load, against bun's 5s default
+// per-test timeout. On a loaded machine two cases timed out; on a quiet rerun a
+// different case did (6.3s). No assertion failed in any run — the clock did.
+// The ceiling is now explicit instead of inherited from a default sized for
+// unit tests. Assertions are untouched.
+const SCAN_TIMEOUT_MS = 30_000
+
+function scanTest(name: string, body: () => void): void {
+  it(name, body, SCAN_TIMEOUT_MS)
+}
+
 describe('quality ratchet', () => {
-  it('enforces the absolute ceiling even when the historical baseline is higher', () => {
-    const issues = collectQualityIssues({
-      maxFileLines: 10,
-      trackedFiles: { 'scripts/quality-report.ts': 10_000 },
-    })
+  scanTest(
+    'enforces the absolute ceiling even when the historical baseline is higher',
+    () => {
+      const issues = collectQualityIssues({
+        maxFileLines: 10,
+        trackedFiles: { 'scripts/quality-report.ts': 10_000 },
+      })
 
-    expect(
-      issues.some(
-        (issue) =>
-          issue.file === 'scripts/quality-report.ts' &&
-          /^\d+ lines exceeds absolute maximum 10$/.test(issue.message),
-      ),
-    ).toBe(true)
-  })
+      expect(
+        issues.some(
+          (issue) =>
+            issue.file === 'scripts/quality-report.ts' &&
+            /^\d+ lines exceeds absolute maximum 10$/.test(issue.message),
+        ),
+      ).toBe(true)
+    },
+  )
 
-  it('includes project-owned hidden source roots in the absolute check', () => {
-    const issues = collectQualityIssues({
-      maxFileLines: 10,
-      trackedFiles: { '.agents/types/tools.ts': 10_000 },
-    })
+  scanTest(
+    'includes project-owned hidden source roots in the absolute check',
+    () => {
+      const issues = collectQualityIssues({
+        maxFileLines: 10,
+        trackedFiles: { '.agents/types/tools.ts': 10_000 },
+      })
 
-    expect(
-      issues.some(
-        (issue) =>
-          issue.file === '.agents/types/tools.ts' &&
-          /^\d+ lines exceeds absolute maximum 10$/.test(issue.message),
-      ),
-    ).toBe(true)
-  })
+      expect(
+        issues.some(
+          (issue) =>
+            issue.file === '.agents/types/tools.ts' &&
+            /^\d+ lines exceeds absolute maximum 10$/.test(issue.message),
+        ),
+      ).toBe(true)
+    },
+  )
 
-  it('excludes git-ignored build-output directories from the scan', () => {
-    // FID-2026-0819-005 Loop 145: sdk/dist/*.d.ts is generated output, not
-    // project-owned source; the walk must not count it.
-    const issues = collectQualityIssues({
-      maxFileLines: 10,
-      trackedFiles: { 'sdk/dist/index.d.ts': 10_000 },
-    })
+  scanTest(
+    'excludes git-ignored build-output directories from the scan',
+    () => {
+      // FID-2026-0819-005 Loop 145: sdk/dist/*.d.ts is generated output, not
+      // project-owned source; the walk must not count it.
+      const issues = collectQualityIssues({
+        maxFileLines: 10,
+        trackedFiles: { 'sdk/dist/index.d.ts': 10_000 },
+      })
 
-    expect(issues.some((issue) => issue.file === 'sdk/dist/index.d.ts')).toBe(
-      false,
-    )
-  })
+      expect(issues.some((issue) => issue.file === 'sdk/dist/index.d.ts')).toBe(
+        false,
+      )
+    },
+  )
 
   // Operator ruling 2026-09-13: the per-file growth ratchet is removed —
   // under-cap files may grow freely; only the absolute ceiling fails.
-  it('does NOT report growth of an under-cap file past its historical baseline', () => {
-    const issues = collectQualityIssues({
-      maxFileLines: 10_000,
-      trackedFiles: { 'scripts/quality-report.ts': 1 },
-    })
+  scanTest(
+    'does NOT report growth of an under-cap file past its historical baseline',
+    () => {
+      const issues = collectQualityIssues({
+        maxFileLines: 10_000,
+        trackedFiles: { 'scripts/quality-report.ts': 1 },
+      })
 
-    expect(issues).toEqual([])
-  })
+      expect(issues).toEqual([])
+    },
+  )
 
-  it('reports an over-cap file at the absolute maximum even with a stale low baseline', () => {
-    const issues = collectQualityIssues({
-      maxFileLines: 10,
-      trackedFiles: { 'scripts/quality-report.ts': 1 },
-    })
+  scanTest(
+    'reports an over-cap file at the absolute maximum even with a stale low baseline',
+    () => {
+      const issues = collectQualityIssues({
+        maxFileLines: 10,
+        trackedFiles: { 'scripts/quality-report.ts': 1 },
+      })
 
-    expect(
-      issues.some(
-        (issue) =>
-          issue.file === 'scripts/quality-report.ts' &&
-          /^\d+ lines exceeds absolute maximum 10$/.test(issue.message),
-      ),
-    ).toBe(true)
-  })
+      expect(
+        issues.some(
+          (issue) =>
+            issue.file === 'scripts/quality-report.ts' &&
+            /^\d+ lines exceeds absolute maximum 10$/.test(issue.message),
+        ),
+      ).toBe(true)
+    },
+  )
 
-  it('rejects the unsupported approvedGrowth field', () => {
+  scanTest('rejects the unsupported approvedGrowth field', () => {
     const legacyBaseline = JSON.parse(
       '{"maxFileLines":300,"trackedFiles":{},"approvedGrowth":{}}',
     ) as QualityBaseline
@@ -85,52 +113,58 @@ describe('quality ratchet', () => {
   })
 
   // FID-2026-0819-005 (operator decision): data-constant exemptions.
-  it('exempts a rationaled data constant from the absolute ceiling but keeps it growth-frozen', () => {
-    // scripts/quality-report.ts really exists (~175 lines) and is scanned;
-    // the pin below its actual size proves growth-freezing still fires.
-    const issues = collectQualityIssues({
-      maxFileLines: 10,
-      trackedFiles: { 'scripts/quality-report.ts': 10 },
-      dataConstantExemptions: {
-        'scripts/quality-report.ts': 'generated data payload',
-      },
-    })
+  scanTest(
+    'exempts a rationaled data constant from the absolute ceiling but keeps it growth-frozen',
+    () => {
+      // scripts/quality-report.ts really exists (~175 lines) and is scanned;
+      // the pin below its actual size proves growth-freezing still fires.
+      const issues = collectQualityIssues({
+        maxFileLines: 10,
+        trackedFiles: { 'scripts/quality-report.ts': 10 },
+        dataConstantExemptions: {
+          'scripts/quality-report.ts': 'generated data payload',
+        },
+      })
 
-    // No absolute-ceiling violation for the exempt file.
-    expect(
-      issues.some(
-        (issue) =>
-          issue.file === 'scripts/quality-report.ts' &&
-          issue.message.includes('absolute maximum'),
-      ),
-    ).toBe(false)
-    // But growth past the pinned baseline still fails the ratchet.
-    expect(
-      issues.some(
-        (issue) =>
-          issue.file === 'scripts/quality-report.ts' &&
-          /^\d+ lines exceeds baseline 10$/.test(issue.message),
-      ),
-    ).toBe(true)
-  })
+      // No absolute-ceiling violation for the exempt file.
+      expect(
+        issues.some(
+          (issue) =>
+            issue.file === 'scripts/quality-report.ts' &&
+            issue.message.includes('absolute maximum'),
+        ),
+      ).toBe(false)
+      // But growth past the pinned baseline still fails the ratchet.
+      expect(
+        issues.some(
+          (issue) =>
+            issue.file === 'scripts/quality-report.ts' &&
+            /^\d+ lines exceeds baseline 10$/.test(issue.message),
+        ),
+      ).toBe(true)
+    },
+  )
 
-  it('fails a data-constant exemption whose file no longer exists', () => {
-    const issues = collectQualityIssues({
-      maxFileLines: 300,
-      trackedFiles: {},
-      dataConstantExemptions: {
-        'common/src/constants/deleted.ts': 'gone',
-      },
-    })
+  scanTest(
+    'fails a data-constant exemption whose file no longer exists',
+    () => {
+      const issues = collectQualityIssues({
+        maxFileLines: 300,
+        trackedFiles: {},
+        dataConstantExemptions: {
+          'common/src/constants/deleted.ts': 'gone',
+        },
+      })
 
-    expect(issues).toContainEqual({
-      file: 'common/src/constants/deleted.ts',
-      message:
-        'stale dataConstantExemptions entry: file is missing from the source tree',
-    })
-  })
+      expect(issues).toContainEqual({
+        file: 'common/src/constants/deleted.ts',
+        message:
+          'stale dataConstantExemptions entry: file is missing from the source tree',
+      })
+    },
+  )
 
-  it('fails a data-constant exemption that is no longer needed', () => {
+  scanTest('fails a data-constant exemption that is no longer needed', () => {
     const issues = collectQualityIssues({
       maxFileLines: 300,
       trackedFiles: {},
@@ -148,7 +182,7 @@ describe('quality ratchet', () => {
     ).toBe(true)
   })
 
-  it('fails a data-constant exemption with an empty rationale', () => {
+  scanTest('fails a data-constant exemption with an empty rationale', () => {
     const issues = collectQualityIssues({
       maxFileLines: 300,
       trackedFiles: {},

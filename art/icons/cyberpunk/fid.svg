@@ -1,4 +1,10 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none" role="img" aria-label="FID — Feature Implementation Document">
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  viewBox="0 0 64 64"
+  fill="none"
+  role="img"
+  aria-label="FID — Feature Implementation Document"
+>
   <!-- SAVANT // CYBERDECK — hand-authored vector geometry, no external assets -->
   <defs>
     <filter id="glow" x="-40%" y="-40%" width="180%" height="180%">
@@ -10,12 +16,28 @@
     </filter>
   </defs>
   <!-- document with folded corner -->
-  <path d="M18 10 L40 10 L52 22 L52 54 L18 54 Z" stroke="#18faf9" stroke-width="3" stroke-linejoin="round" />
-  <path d="M40 10 L40 22 L52 22" stroke="#ff2bd6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+  <path
+    d="M18 10 L40 10 L52 22 L52 54 L18 54 Z"
+    stroke="#18faf9"
+    stroke-width="3"
+    stroke-linejoin="round"
+  />
+  <path
+    d="M40 10 L40 22 L52 22"
+    stroke="#ff2bd6"
+    stroke-width="2"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  />
   <!-- code lines: the middle one is the active line -->
   <g stroke-linecap="round">
     <path d="M24 30 L40 30" stroke="#18faf9" stroke-width="2" />
-    <path d="M24 36 L46 36" stroke="#ff2bd6" stroke-width="2" filter="url(#glow)" />
+    <path
+      d="M24 36 L46 36"
+      stroke="#ff2bd6"
+      stroke-width="2"
+      filter="url(#glow)"
+    />
     <path d="M24 42 L36 42" stroke="#18faf9" stroke-width="2" />
   </g>
   <!-- perfection-loop phase dots: idle, active, audit, complete -->

@@ -9,7 +9,7 @@ export function PerfectionLoop({ fidsDir }: { fidsDir?: string } = {}) {
   const theme = useTheme()
   const { fids, isLoading } = useFids(fidsDir)
   return (
-    <SidebarSection title="FID Perfection Loop" count={fids.length}>
+    <SidebarSection title="Perfection Loop" count={fids.length}>
       {isLoading ? (
         <text fg={theme.muted}>Loading FIDs…</text>
       ) : !fids.length ? (

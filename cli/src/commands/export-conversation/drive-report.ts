@@ -1,6 +1,7 @@
 import fs from 'node:fs'
 import path from 'node:path'
 
+import { ico } from './export-icons'
 import { escapeHtml } from './format'
 
 import type { DriveCertification } from '@savant-code/common/types/auto-drive'
@@ -126,7 +127,7 @@ export function renderDriveReportHtml(params: {
 
     sections.push(
       `<section class="drive-report">\n` +
-        `<h2><i class="fa-solid fa-gauge-high" aria-hidden="true"></i> Auto Drive</h2>\n` +
+        `<h2>${ico('autoDriveHeader')} Auto Drive</h2>\n` +
         `<dl class="dr-meta-grid">\n${meta.join('\n')}\n</dl>\n` +
         renderCertificationHtml(drive.certification) +
         `\n</section>`,
@@ -139,7 +140,7 @@ export function renderDriveReportHtml(params: {
       .join('\n')
     sections.push(
       `<section class="drive-report">\n` +
-        `<h2><i class="fa-solid fa-list-ol" aria-hidden="true"></i> Run Log</h2>\n` +
+        `<h2>${ico('runLogHeader')} Run Log</h2>\n` +
         `<p class="dr-source">Source: <span class="dr-file">${escapeHtml(runLog.fileName)}</span></p>\n` +
         `<ul class="dr-runlog">\n${items}\n</ul>\n` +
         `</section>`,

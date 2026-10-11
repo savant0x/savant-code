@@ -91,6 +91,7 @@ Or configure one directly:
 | Vercel AI Gateway | `/provider vercel` | `AI_GATEWAY_API_KEY` (keyless live model catalog; the key may also come from `.env.local`/shell — shell takes precedence) |
 | Clean APIs | `/provider cleanapis` | `CLEANAPIS_API_KEY` (authenticated live model catalog; OpenAI-compatible at `https://cleanapis.com/v1`) |
 | CodeCraft API | `/provider codecraft` | `CODECRAFT_API_KEY` (authenticated live model catalog; OpenAI chat at `https://codecraftapi.com/v1`) |
+| Mistral AI | `/provider mistral` | `MISTRAL_API_KEY` (authenticated live model catalog; OpenAI chat at `https://api.mistral.ai/v1`) |
 | xKiro | `/provider xkiro` | `XKIRO_API_KEY` (public live chat catalog; explicit Messages/chat routing at `https://api.xkiro.com/v1`; paid models require account entitlement) |
 | ChatAnywhere | `/provider chatanywhere` | `CHATANYWHERE_API_KEY` (OpenAI-compatible gateway on a static 27-model chat roster at `https://api.chatanywhere.tech/v1`; free-key tier) |
 | Cloudflare Workers AI | `/provider cloudflare` | `CLOUDFLARE_API_TOKEN` + `CLOUDFLARE_ACCOUNT_ID` (two credentials — the `/provider` flow prompts for the token, then the account id; env vars take precedence; switch via `/model cloudflare/...`, e.g. `/model cloudflare/meta/llama-3.3-70b-instruct-fp8-fast`) |

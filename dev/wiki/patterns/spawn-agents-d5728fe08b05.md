@@ -7,9 +7,9 @@
 - **Tool:** spawn_agents
 - **Dedup key:** `sha256:d5728fe08b05b1d1a13132009cf7b83f860ed8014f695814dfce11bbbb819b59`
 - **Sample line:** `Incomplete arguments for tool spawn_agents; retry the tool call with a complete arguments object.`
-- **Recurrences (14d window):** 6 (total 15)
+- **Recurrences (14d window):** 7 (total 16)
 - **First seen:** 2026-09-17T03:18:09.211Z
-- **Last seen:** 2026-10-05T07:36:12.940Z
+- **Last seen:** 2026-10-09T21:54:21.043Z
 - **Routing:** promote via FID when resolved+verified (hybrid routing rule)
 
 ## Evidence
@@ -20,3 +20,4 @@
 - 2026-10-04 — recurrences 4 (total 13), first 2026-09-27, last 2026-09-28
 - 2026-10-04 — recurrences 5 (total 14), first 2026-09-27, last 2026-10-04
 - 2026-10-05 — recurrences 6 (total 15), first 2026-09-27, last 2026-10-05
+- 2026-10-10 — recurrences 7 (total 16), first 2026-09-27, last 2026-10-09

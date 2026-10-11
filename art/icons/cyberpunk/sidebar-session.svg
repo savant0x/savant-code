@@ -1,19 +1,42 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none" role="img" aria-label="Session — persistent session state">
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  viewBox="0 0 64 64"
+  fill="none"
+  role="img"
+  aria-label="Session — persistent session state"
+>
   <defs>
     <filter id="glow" x="-40%" y="-40%" width="180%" height="180%">
       <feGaussianBlur stdDeviation="2.5" result="blur" />
-      <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
+      <feMerge>
+        <feMergeNode in="blur" />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
     </filter>
   </defs>
   <!-- persistent container: the session pod -->
-  <rect x="12" y="14" width="40" height="36" rx="2" stroke="#18faf9" stroke-width="3" />
+  <rect
+    x="12"
+    y="14"
+    width="40"
+    height="36"
+    rx="2"
+    stroke="#18faf9"
+    stroke-width="3"
+  />
   <!-- state layers inside -->
   <g stroke="#4fa8ff" stroke-width="1.5" opacity="0.7">
     <path d="M18 22 L46 22" />
     <path d="M18 30 L46 30" />
   </g>
   <!-- the live state: glowing core row -->
-  <path d="M18 40 L34 40" stroke="#ff2bd6" stroke-width="2.5" stroke-linecap="round" filter="url(#glow)" />
+  <path
+    d="M18 40 L34 40"
+    stroke="#ff2bd6"
+    stroke-width="2.5"
+    stroke-linecap="round"
+    filter="url(#glow)"
+  />
   <circle cx="44" cy="40" r="2.5" fill="#ff2bd6" />
   <!-- persistence: always-on indicator -->
   <circle cx="32" cy="56" r="2" fill="#3dff9a" filter="url(#glow)" />

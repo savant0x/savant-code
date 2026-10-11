@@ -1,4 +1,10 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none" role="img" aria-label="Status command — gauge">
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  viewBox="0 0 64 64"
+  fill="none"
+  role="img"
+  aria-label="Status command — gauge"
+>
   <!-- SAVANT // CYBERDECK — hand-authored vector geometry, no external assets -->
   <defs>
     <filter id="glow" x="-40%" y="-40%" width="180%" height="180%">
@@ -10,13 +16,39 @@
     </filter>
   </defs>
   <!-- gauge arc -->
-  <path d="M16 44 A20 20 0 0 1 48 44" stroke="#18faf9" stroke-width="3" stroke-linecap="round" />
+  <path
+    d="M16 44 A20 20 0 0 1 48 44"
+    stroke="#18faf9"
+    stroke-width="3"
+    stroke-linecap="round"
+  />
   <!-- needle -->
-  <path d="M32 44 L40 28" stroke="#ff2bd6" stroke-width="3" stroke-linecap="round" filter="url(#glow)" />
+  <path
+    d="M32 44 L40 28"
+    stroke="#ff2bd6"
+    stroke-width="3"
+    stroke-linecap="round"
+    filter="url(#glow)"
+  />
   <circle cx="32" cy="44" r="2.5" fill="#ff2bd6" />
   <!-- baseline -->
-  <path d="M14 44 L50 44" stroke="#18faf9" stroke-width="2" stroke-linecap="round" />
+  <path
+    d="M14 44 L50 44"
+    stroke="#18faf9"
+    stroke-width="2"
+    stroke-linecap="round"
+  />
   <!-- scale ticks -->
-  <path d="M20 36 L23 39" stroke="#4fa8ff" stroke-width="1.5" stroke-linecap="round" />
-  <path d="M44 36 L41 39" stroke="#4fa8ff" stroke-width="1.5" stroke-linecap="round" />
+  <path
+    d="M20 36 L23 39"
+    stroke="#4fa8ff"
+    stroke-width="1.5"
+    stroke-linecap="round"
+  />
+  <path
+    d="M44 36 L41 39"
+    stroke="#4fa8ff"
+    stroke-width="1.5"
+    stroke-linecap="round"
+  />
 </svg>

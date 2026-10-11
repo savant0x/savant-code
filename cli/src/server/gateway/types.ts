@@ -51,9 +51,7 @@ export type GatewayOptions = {
   }) => boolean
   /** FID-2026-1007-012 FID 5 — DI: compliance-aggregates reader used by the
    *  read-only RPC method. Defaults to the project ledger. */
-  loadTelemetryAggregates?: (
-    windowDays: number | 'all',
-  ) => ComplianceAggregates
+  loadTelemetryAggregates?: (windowDays: number | 'all') => ComplianceAggregates
   /** Optional logger. */
   logger?: {
     info?: (...args: unknown[]) => void

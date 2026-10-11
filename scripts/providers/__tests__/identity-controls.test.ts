@@ -48,7 +48,7 @@ const VALID = JSON.stringify({
 })
 
 describe('sweep control manifest (FID-2026-1007-016)', () => {
-  test('an undefined path means uncontrolled (today\'s behavior)', () => {
+  test("an undefined path means uncontrolled (today's behavior)", () => {
     expect(loadSweepControls(undefined)).toBeNull()
   })
 
@@ -61,9 +61,7 @@ describe('sweep control manifest (FID-2026-1007-016)', () => {
   })
 
   test('a missing file refuses loudly (never silently uncontrolled)', () => {
-    expect(() => loadSweepControls('/nope/missing.json')).toThrow(
-      /not found/,
-    )
+    expect(() => loadSweepControls('/nope/missing.json')).toThrow(/not found/)
   })
 
   test('non-JSON refuses', () => {
@@ -75,7 +73,9 @@ describe('sweep control manifest (FID-2026-1007-016)', () => {
   test('version drift refuses', () => {
     expect(() =>
       loadSweepControls(
-        manifestFile(JSON.stringify({ version: 'sweep-controls/2', entries: {} })),
+        manifestFile(
+          JSON.stringify({ version: 'sweep-controls/2', entries: {} }),
+        ),
       ),
     ).toThrow(/version unsupported/)
   })

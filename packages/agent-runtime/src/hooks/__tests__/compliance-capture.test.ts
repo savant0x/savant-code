@@ -130,9 +130,7 @@ describe('compliance capture (FID-2026-1007-012 FID 2)', () => {
     expect(
       buildComplianceEvent({ ...OBSERVATION, strikeCount: 3 }),
     ).toMatchObject({ strikeCount: 3 })
-    expect(buildComplianceEvent(OBSERVATION)).not.toHaveProperty(
-      'strikeCount',
-    )
+    expect(buildComplianceEvent(OBSERVATION)).not.toHaveProperty('strikeCount')
   })
 
   test('an undefined root reports disabled without touching disk', () => {

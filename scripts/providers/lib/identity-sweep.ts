@@ -104,7 +104,9 @@ export async function runSweep(
     }
     console.warn(
       `  ~ ${route.model}: controls armed` +
-        (entry.capturedAt === undefined ? '' : ` (captured ${entry.capturedAt})`),
+        (entry.capturedAt === undefined
+          ? ''
+          : ` (captured ${entry.capturedAt})`),
     )
     return { controls, endpoints }
   })

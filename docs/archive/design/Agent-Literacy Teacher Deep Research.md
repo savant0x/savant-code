@@ -5,8 +5,8 @@
 > **Superseded on 2026-08-13:** The homegrown curriculum decision discarded
 > freeCodeCamp extraction as an implementation dependency. This prompt is
 > retained as historical research input only. The authoritative plan is
-> [`dev/build-orders/2026-08-13-agent-steering-teacher-build-order.md`](../../dev/build-orders/2026-08-13-agent-steering-teacher-build-order.md)
-> and the homegrown architecture guide.
+> [`dev/build-orders/2026-08-13-agent-steering-teacher-build-order.md`](../../../dev/build-orders/archive/2026-08-13-agent-steering-teacher-build-order.md)
+> and the [current agent-steering teacher overview](../../design/agent-steering-teacher-overview.md).
 
 **Prepared:** 2026-08-13
 **Target system:** Savant-Code (TypeScript/Bun multi-agent AI coding assistant, ECHO Protocol v0.2.0) — see attached files

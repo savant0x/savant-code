@@ -123,6 +123,18 @@ export const KIOSAPI_CONTEXT_WINDOW_FALLBACKS: ReadonlyArray<
   // step-3.7-flash: 2-of-3 vote 262,144 (hcnsec + unorouter) over OR-live
   // 256,000.
   ['kiosapi/step-3.7-flash', 262_144],
+  // step-5-preview / -free (FID-2026-1010-003): OR-live 2026-10-10 for upstream
+  // stepfun/step-5-preview reads context_length 1,000,000 (top_provider agrees),
+  // modality text+image+video->text, max_completion_tokens 64,000, reasoning
+  // mandatory. No row existed for either id, so the ladder resolved the
+  // operator's model to the conservative 200k default — the same 5x undersize
+  // as the qwen3.8-flash-free row below (operator report 2026-10-10: "set to
+  // 200k when the model actual window is 1m"). Single-source row per this
+  // file's row-value rule (KiosAPI publishes no window fields). Both ids are
+  // pinned because kiosapi serves the bare and the :free variant, as with the
+  // grok-4.5 / grok-4.5-free pair below.
+  ['kiosapi/step-5-preview', 1_000_000],
+  ['kiosapi/step-5-preview-free', 1_000_000],
   ['kiosapi/north-mini-code', 256_000],
   ['kiosapi/dots-3-note-preview', 512_000],
   // --- Poolside (OR-live: paid laguna-s-2.1 1,048,576, matching the

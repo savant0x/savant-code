@@ -1,4 +1,10 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none" role="img" aria-label="Orchestrator — ECHO agent role: protocol enforcement hub">
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  viewBox="0 0 64 64"
+  fill="none"
+  role="img"
+  aria-label="Orchestrator — ECHO agent role: protocol enforcement hub"
+>
   <!-- SAVANT // CYBERDECK — hand-authored vector geometry, no external assets -->
   <defs>
     <filter id="glow" x="-40%" y="-40%" width="180%" height="180%">
@@ -28,9 +34,22 @@
     <circle cx="9" cy="19" r="2" />
   </g>
   <!-- outer dashed ring -->
-  <circle cx="32" cy="32" r="22" stroke="#4fa8ff" stroke-width="1.5" stroke-dasharray="3 4" opacity="0.6" />
+  <circle
+    cx="32"
+    cy="32"
+    r="22"
+    stroke="#4fa8ff"
+    stroke-width="1.5"
+    stroke-dasharray="3 4"
+    opacity="0.6"
+  />
   <!-- hexagonal hub -->
-  <polygon points="32,16 46,24 46,40 32,48 18,40 18,24" stroke="#18faf9" stroke-width="3" stroke-linejoin="round" />
+  <polygon
+    points="32,16 46,24 46,40 32,48 18,40 18,24"
+    stroke="#18faf9"
+    stroke-width="3"
+    stroke-linejoin="round"
+  />
   <!-- core -->
   <circle cx="32" cy="32" r="4" fill="#ff2bd6" filter="url(#glow)" />
 </svg>

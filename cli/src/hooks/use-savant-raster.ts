@@ -13,7 +13,10 @@
  * resettable).
  */
 
-import { SAVANT_ICON_PNG_DATA_URI, type SavantIconName } from '../constants/savant-icons'
+import {
+  SAVANT_ICON_PNG_DATA_URI,
+  type SavantIconName,
+} from '../constants/savant-icons'
 import { detectTerminalImageSupport } from '../utils/terminal-images'
 
 const RE_KEY = new RegExp(`^ICON_`)
@@ -28,9 +31,7 @@ function toKey(name: SavantIconName): keyof typeof SAVANT_ICON_PNG_DATA_URI {
  * Resolve the raster data URI for an icon under the current terminal.
  * Returns `null` when the terminal has no inline-image protocol.
  */
-export function savantRasterDataUri(
-  name: SavantIconName,
-): string | null {
+export function savantRasterDataUri(name: SavantIconName): string | null {
   const protocol = detectTerminalImageSupport()
   if (protocol === 'none') return null
   const uri = SAVANT_ICON_PNG_DATA_URI[toKey(name)]

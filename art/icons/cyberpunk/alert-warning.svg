@@ -1,16 +1,37 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none" role="img" aria-label="Alert: warning — attention required">
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  viewBox="0 0 64 64"
+  fill="none"
+  role="img"
+  aria-label="Alert: warning — attention required"
+>
   <defs>
     <filter id="glow" x="-40%" y="-40%" width="180%" height="180%">
       <feGaussianBlur stdDeviation="2.5" result="blur" />
-      <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
+      <feMerge>
+        <feMergeNode in="blur" />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
     </filter>
   </defs>
   <!-- warning: the triangle with the acid edge -->
-  <path d="M32 12 L54 50 L10 50 Z" stroke="#f3e600" stroke-width="3" stroke-linejoin="round" />
-  <path d="M32 24 L32 38" stroke="#f3e600" stroke-width="3" stroke-linecap="round" filter="url(#glow)" />
+  <path
+    d="M32 12 L54 50 L10 50 Z"
+    stroke="#f3e600"
+    stroke-width="3"
+    stroke-linejoin="round"
+  />
+  <path
+    d="M32 24 L32 38"
+    stroke="#f3e600"
+    stroke-width="3"
+    stroke-linecap="round"
+    filter="url(#glow)"
+  />
   <circle cx="32" cy="45" r="2" fill="#f3e600" />
   <!-- HUD tick accents -->
   <g stroke="#f3e600" stroke-width="1.5" opacity="0.5">
-    <path d="M8 54 L14 54" /><path d="M50 54 L56 54" />
+    <path d="M8 54 L14 54" />
+    <path d="M50 54 L56 54" />
   </g>
 </svg>

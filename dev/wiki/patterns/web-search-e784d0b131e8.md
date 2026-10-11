@@ -7,12 +7,13 @@
 - **Tool:** web_search
 - **Dedup key:** `sha256:e784d0b131e8451ebd9694293e1619499f4a4d1cb23d8112fa3c14957ee8fa73`
 - **Sample line:** `No web search results were returned. Add a research API key (Serper, Parallel, Tavily, Exa, or Firecrawl) in the UI for higher-quality results, or retry later.`
-- **Recurrences (14d window):** 14 (total 17)
+- **Recurrences (14d window):** 19 (total 22)
 - **First seen:** 2026-09-19T04:58:45.338Z
-- **Last seen:** 2026-10-05T03:22:23.313Z
+- **Last seen:** 2026-10-09T21:44:09.790Z
 - **Routing:** promote via FID when resolved+verified (hybrid routing rule)
 
 ## Evidence
 
 - 2026-09-19 — recurrences 3 (total 3), first 2026-09-19, last 2026-09-19
 - 2026-10-05 — recurrences 14 (total 17), first 2026-10-05, last 2026-10-05
+- 2026-10-10 — recurrences 19 (total 22), first 2026-10-05, last 2026-10-09

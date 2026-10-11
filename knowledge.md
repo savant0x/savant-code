@@ -17,10 +17,11 @@ conventions, and gotchas.
 - **TypeScript monorepo** (`strict: true`), **Bun runtime + package manager**
   (pinned `1.3.14`).
 - Key workspaces: `cli/` (TUI + commands), `sdk/` (public SDK +
-  `SavantClient`), `common/` (shared types/tools),
+  `SavantCodeClient`), `common/` (shared types/tools),
   `packages/agent-runtime/` (agent loop + tool executor + LLM integration),
   `agents/` (bundled agent definitions), plus
-  `packages/{knowledge-graph,code-map,database,llm-providers}` and `evals/`.
+  `packages/{knowledge-graph,code-map,database,llm-providers,design-systems,
+  connectors}`, `desktop/`, and `evals/`.
 - **Data flow:** CLI → `createRunConfig` → SDK `run()` → agent-runtime step
   loop → tool executor (native + custom) → EHEL enforcement → back through
   `PrintModeEvent` stream.
@@ -35,8 +36,10 @@ conventions, and gotchas.
 
 - Formatting/linting: Prettier + ESLint (`bun x eslint . --max-warnings 0`) +
   markdownlint (`bun run lint:md`). All three are hard pre-push gates.
-- Typecheck gate: **×4** must pass before any merge — `sdk`, `common`,
-  `packages/agent-runtime`, `cli`.
+- Typecheck gate: `bun run typecheck` must pass before any merge (chains 13 of
+  the 15 registered workspaces + `typecheck:scripts`; `savant-free` and
+  `scripts/tmux` have no leg — T186); `/verify` covers the four core
+  workspaces (`sdk`, `common`, `agent-runtime`, `cli`).
 - New FIDs follow `dev/fids/FID-YYYY-MMDD-NNN-{title}.md`; close only after
   review boundaries resolve, then move to `dev/fids/archive/` and update
   `CHANGELOG.md`.

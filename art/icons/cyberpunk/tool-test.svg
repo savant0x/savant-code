@@ -1,4 +1,10 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none" role="img" aria-label="Test tool — flask with passing check">
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  viewBox="0 0 64 64"
+  fill="none"
+  role="img"
+  aria-label="Test tool — flask with passing check"
+>
   <!-- SAVANT // CYBERDECK — hand-authored vector geometry, no external assets -->
   <defs>
     <filter id="glow" x="-40%" y="-40%" width="180%" height="180%">
@@ -10,10 +16,31 @@
     </filter>
   </defs>
   <!-- flask -->
-  <path d="M28 10 L36 10 L36 20 L48 44 L16 44 L28 20 Z" stroke="#18faf9" stroke-width="3" stroke-linejoin="round" />
+  <path
+    d="M28 10 L36 10 L36 20 L48 44 L16 44 L28 20 Z"
+    stroke="#18faf9"
+    stroke-width="3"
+    stroke-linejoin="round"
+  />
   <!-- liquid surface -->
-  <path d="M23 34 L41 34" stroke="#ff2bd6" stroke-width="2" stroke-linecap="round" />
-  <polygon points="23,34 41,34 46,44 18,44" fill="#18faf9" fill-opacity="0.12" />
+  <path
+    d="M23 34 L41 34"
+    stroke="#ff2bd6"
+    stroke-width="2"
+    stroke-linecap="round"
+  />
+  <polygon
+    points="23,34 41,34 46,44 18,44"
+    fill="#18faf9"
+    fill-opacity="0.12"
+  />
   <!-- pass check -->
-  <path d="M25 40 L28 43 L34 37" stroke="#18faf9" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" filter="url(#glow)" />
+  <path
+    d="M25 40 L28 43 L34 37"
+    stroke="#18faf9"
+    stroke-width="2.5"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    filter="url(#glow)"
+  />
 </svg>

@@ -1,0 +1,799 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>SAVANT sidebar style samples</title>
+    <style>
+      :root {
+        --bg: #050508;
+        --surface: #0b0b11;
+        --surface-2: #14141c;
+        --border: #20202a;
+        --fg: #e4e4e8;
+        --muted: #8f8f99;
+        --cyan: #18faf9;
+        --magenta: #ff2bd6;
+        --blue: #4fa8ff;
+        --green: #3dff9a;
+        --amber: #ff9500;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        padding: 32px;
+        background: var(--bg);
+        color: var(--fg);
+        font:
+          13px/1.5 ui-monospace,
+          Menlo,
+          Consolas,
+          monospace;
+      }
+      h1 {
+        font:
+          600 18px/1.25 system-ui,
+          sans-serif;
+        margin: 0 0 4px;
+      }
+      .lede {
+        color: var(--muted);
+        margin: 0 0 24px;
+        max-width: 70ch;
+      }
+      .grid {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 28px;
+        align-items: flex-start;
+      }
+      .sample {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+      .sample-label {
+        color: var(--muted);
+        font-size: 12px;
+        letter-spacing: 0.04em;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 24px;
+        height: 24px;
+        padding: 0 6px;
+        border: 1px solid var(--cyan);
+        border-radius: 4px;
+        color: var(--cyan);
+        font-weight: 700;
+        font-size: 13px;
+      }
+      .sidebar {
+        width: 320px;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 4px;
+        overflow: hidden;
+      }
+      .row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .muted {
+        color: var(--muted);
+      }
+      .traffic {
+        display: inline-flex;
+        gap: 5px;
+      }
+      .traffic i {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        display: inline-block;
+      }
+      .traffic i:nth-child(1) {
+        background: var(--green);
+      }
+      .traffic i:nth-child(2) {
+        background: var(--amber);
+      }
+      .traffic i:nth-child(3) {
+        background: var(--magenta);
+      }
+      .ico {
+        width: 18px;
+        height: 18px;
+        flex: none;
+      }
+      .ico-lg {
+        width: 40px;
+        height: 40px;
+        flex: none;
+      }
+      .ico-sm {
+        width: 14px;
+        height: 14px;
+        flex: none;
+      }
+      .section-title {
+        font-weight: 600;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        font-size: 11px;
+      }
+      .count {
+        margin-left: auto;
+        color: var(--muted);
+      }
+      .chev {
+        margin-left: auto;
+        width: 12px;
+        height: 12px;
+        transition: transform 0.2s ease;
+      }
+      .sec.collapsed .chev {
+        transform: rotate(-90deg);
+      }
+      .sec.collapsed + .body {
+        display: none;
+      }
+      .sec {
+        cursor: pointer;
+        user-select: none;
+      }
+      .kv {
+        display: grid;
+        grid-template-columns: 96px 1fr;
+        gap: 2px 8px;
+      }
+      .footer {
+        color: var(--muted);
+        font-size: 11px;
+      }
+      .cmd {
+        background: var(--bg);
+        border: 1px solid var(--border);
+        border-radius: 4px;
+        padding: 8px 10px;
+      }
+      .phase-tag {
+        color: var(--magenta);
+      }
+
+      /* Context block: the live token-meter bar, then "Savant" and the version */
+      .context {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 4px;
+        padding: 10px 12px 12px;
+        border-top: 1px solid var(--border);
+      }
+      .meter-label {
+        color: var(--primary, var(--cyan));
+        color: var(--cyan);
+        font-size: 12px;
+      }
+      .meter {
+        width: 240px;
+        height: 8px;
+        background: #14141c;
+        border-radius: 2px;
+        overflow: hidden;
+      }
+      .meter span {
+        display: block;
+        height: 100%;
+        width: 42%;
+        background: var(--cyan);
+      }
+      .brand {
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        color: var(--fg);
+        margin-top: 4px;
+      }
+      .brand-version {
+        color: var(--muted);
+        font-size: 11px;
+      }
+      .brand-stack {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 2px;
+      }
+
+      /* Shared header (design 2): centered S-mark over a glow, version line below */
+      .head {
+        padding: 16px 12px 10px;
+        text-align: center;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 6px;
+        background: radial-gradient(
+          circle at 50% 0%,
+          #0f2b2e 0%,
+          var(--surface) 70%
+        );
+      }
+      .head .ico-lg {
+        margin: 0 auto;
+      }
+
+      /* Raised panels shared by designs 8-15: every section and body is a bordered card */
+      .d8 .sec,
+      .d9 .sec,
+      .d10 .sec,
+      .d11 .sec,
+      .d12 .sec,
+      .d13 .sec,
+      .d14 .sec,
+      .d15 .sec,
+      .d8 .body,
+      .d9 .body,
+      .d10 .body,
+      .d11 .body,
+      .d12 .body,
+      .d13 .body,
+      .d14 .body,
+      .d15 .body {
+        margin: 6px 8px;
+        border: 1px solid #1d3442;
+        border-radius: 6px;
+        background: var(--surface-2);
+      }
+      .d8 .body,
+      .d9 .body,
+      .d10 .body,
+      .d11 .body,
+      .d12 .body,
+      .d13 .body,
+      .d14 .body,
+      .d15 .body {
+        margin-bottom: 6px;
+      }
+
+      /* 8. Holo Frame: rounded inner panels with a magenta highlight */
+      .d8 .head {
+        padding: 14px 12px;
+        flex-direction: column;
+        text-align: center;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+      }
+      .d8 .sec {
+        padding: 8px 10px;
+        border-color: #3a1733;
+      }
+      .d8 .sec .section-title {
+        color: var(--magenta);
+      }
+      .d8 .body {
+        padding: 8px 10px;
+        border-color: #3a1733;
+      }
+
+      /* 9. Signal Gutter: cyan gutter with stepped section markers */
+      .d9 {
+        border-left: 4px solid var(--cyan);
+      }
+      .d9 .head {
+        padding: 14px 12px;
+        flex-direction: column;
+        text-align: center;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        border-bottom: 1px solid #1a2a2c;
+        background: linear-gradient(90deg, #0a1517 0%, var(--surface) 75%);
+      }
+      .d9 .sec {
+        position: relative;
+        padding: 8px 10px 8px 16px;
+        border-color: #1a2a2c;
+      }
+      .d9 .sec::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 8px;
+        bottom: 8px;
+        width: 2px;
+        background: var(--cyan);
+        opacity: 0.6;
+      }
+      .d9 .sec .section-title {
+        color: var(--cyan);
+      }
+      .d9 .body {
+        padding: 8px 10px 8px 16px;
+        border-color: #1a2a2c;
+      }
+
+      /* 10. Orbit Rail: magenta glow header, dot markers on each section */
+      .d10 .head {
+        padding: 14px 12px;
+        flex-direction: column;
+        text-align: center;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        background: radial-gradient(
+          circle at 0% 50%,
+          #2a0f26 0%,
+          var(--surface) 65%
+        );
+      }
+      .d10 .sec {
+        position: relative;
+        padding: 8px 10px 8px 26px;
+        border-color: #2a0f26;
+      }
+      .d10 .sec::before {
+        content: '';
+        position: absolute;
+        left: 11px;
+        top: 50%;
+        width: 6px;
+        height: 6px;
+        margin-top: -3px;
+        border-radius: 50%;
+        background: var(--magenta);
+      }
+      .d10 .sec .section-title {
+        color: var(--magenta);
+      }
+      .d10 .body {
+        padding: 8px 10px 8px 26px;
+        border-color: #2a0f26;
+      }
+
+      /* 11. Stacked Plates: layered dark plates with a cyan rim on each section */
+      .d11 .head {
+        padding: 12px;
+        flex-direction: column;
+        text-align: center;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        background: #0a0a10;
+        border-bottom: 1px solid var(--cyan);
+        box-shadow: inset 0 -6px 12px -10px rgba(24, 250, 249, 0.5);
+      }
+      .d11 .sec {
+        background: #0d0d15;
+        border-color: #181824;
+        border-top: 1px solid var(--cyan);
+        border-radius: 3px 3px 0 0;
+        padding: 8px 10px;
+      }
+      .d11 .sec .section-title {
+        color: var(--fg);
+      }
+      .d11 .body {
+        background: #0d0d15;
+        border-color: #181824;
+        border-radius: 0 0 3px 3px;
+        padding: 8px 10px;
+      }
+
+      /* 12. Amber Ticker: amber hairline header, ticker-style section titles */
+      .d12 .head {
+        padding: 12px;
+        flex-direction: column;
+        text-align: center;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        border-bottom: 1px solid #2a2014;
+        background: linear-gradient(90deg, #120e07 0%, var(--surface) 70%);
+      }
+      .d12 .sec {
+        padding: 8px 10px;
+        border-color: #2a2014;
+      }
+      .d12 .sec .section-title {
+        color: var(--amber);
+        letter-spacing: 0.12em;
+      }
+      .d12 .sec .section-title::before {
+        content: '▸ ';
+        color: var(--amber);
+      }
+      .d12 .body {
+        padding: 8px 10px;
+        border-color: #2a2014;
+      }
+
+      /* 13. Pulse Lattice: dotted section texture, green status titles */
+      .d13 .head {
+        padding: 12px;
+        flex-direction: column;
+        text-align: center;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        border-bottom: 1px solid var(--border);
+      }
+      .d13 .sec {
+        padding: 8px 10px;
+        border-color: #1c2a24;
+        background-image: radial-gradient(#1c2a24 1px, transparent 1px);
+        background-size: 10px 10px;
+      }
+      .d13 .sec .section-title {
+        color: var(--green);
+      }
+      .d13 .body {
+        padding: 8px 10px;
+        border-color: #1c2a24;
+      }
+
+      /* 14. Ember Frame: double outer frame with amber rule */
+      .d14 {
+        outline: 1px solid var(--amber);
+        outline-offset: 4px;
+      }
+      .d14 .head {
+        padding: 14px 12px;
+        flex-direction: column;
+        text-align: center;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        border-bottom: 1px solid var(--amber);
+      }
+      .d14 .sec {
+        padding: 8px 10px;
+        border-color: #2a2014;
+      }
+      .d14 .sec .section-title {
+        color: var(--fg);
+      }
+      .d14 .sec .ico {
+        filter: drop-shadow(0 0 2px var(--amber));
+      }
+      .d14 .body {
+        padding: 8px 10px 10px;
+        border-color: #2a2014;
+      }
+
+      /* 15. Prism Stack: gradient section headers, magenta to cyan */
+      .d15 .head {
+        padding: 12px;
+        flex-direction: column;
+        text-align: center;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        background: linear-gradient(90deg, #2a0f26 0%, #0b1a1c 100%);
+        border-bottom: 1px solid var(--border);
+      }
+      .d15 .sec {
+        padding: 8px 10px;
+        border-color: var(--border);
+        background: linear-gradient(90deg, #1a0d18 0%, var(--surface) 70%);
+      }
+      .d15 .sec .section-title {
+        background: linear-gradient(90deg, var(--magenta), var(--cyan));
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+      }
+      .d15 .body {
+        padding: 8px 10px;
+        border-color: var(--border);
+      }
+    </style>
+  </head>
+  <body>
+    <h1>SAVANT sidebar — style samples</h1>
+    <p class="lede">
+      Each sample uses the original full-resolution cyberpunk SVGs from
+      <code>art/icons/cyberpunk/</code>, unchanged. The logo is the company
+      logo, <code>art/savant-logo.png</code>. Logos are never redrawn. Click a
+      section header to expand or collapse it. Pick a sample by its number.
+    </p>
+
+    <div class="grid" id="samples"></div>
+
+    <template id="tpl-sidebar">
+      <div class="sidebar">
+        <div class="head">
+          <div class="brand-stack">
+            <img
+              class="ico-lg savant-logo"
+              src="../../art/savant-logo.png"
+              alt="SAVANT logo"
+            />
+            <div class="brand">Savant</div>
+            <div class="brand-version">v0.0.35</div>
+          </div>
+        </div>
+
+        <div class="sec" data-fold>
+          <div class="row">
+            <img
+              class="ico"
+              src="../../art/icons/cyberpunk/sidebar-activity.svg"
+              alt=""
+            />
+            <span class="section-title">Activity detail</span>
+            <img
+              class="chev"
+              src="../../art/icons/cyberpunk/nav-up.svg"
+              alt=""
+            />
+          </div>
+        </div>
+        <div class="body">
+          <div class="row">
+            <img
+              class="ico-sm"
+              src="../../art/icons/cyberpunk/phase-red.svg"
+              alt=""
+            /><span class="phase-tag">RED</span
+            ><span class="muted">investigating</span>
+          </div>
+          <div class="kv" style="margin-top: 6px">
+            <span class="muted">Model</span
+            ><span>tokenharbor/claude-haiku-5.5</span>
+            <span class="muted">Mode</span><span>HYBRID · $0.25</span>
+          </div>
+        </div>
+
+        <div class="sec" data-fold>
+          <div class="row">
+            <img
+              class="ico"
+              src="../../art/icons/cyberpunk/cmd-agents.svg"
+              alt=""
+            />
+            <span class="section-title">Active agents</span>
+            <span class="count">2</span>
+          </div>
+        </div>
+        <div class="body">
+          <div class="row">
+            <img
+              class="ico-sm"
+              src="../../art/icons/cyberpunk/status-active.svg"
+              alt=""
+            /><span>Forge</span><span class="muted">active</span>
+          </div>
+          <div class="row">
+            <img
+              class="ico-sm"
+              src="../../art/icons/cyberpunk/status-idle.svg"
+              alt=""
+            /><span>Verifier</span><span class="muted">waiting</span>
+          </div>
+        </div>
+
+        <div class="sec" data-fold>
+          <div class="row">
+            <img
+              class="ico"
+              src="../../art/icons/cyberpunk/tool-bash.svg"
+              alt=""
+            />
+            <span class="section-title">Tools</span>
+            <span class="count">3</span>
+          </div>
+        </div>
+        <div class="body">
+          <div class="row">
+            <span class="muted">●</span><span>run_terminal_command</span>
+          </div>
+          <div class="row">
+            <span class="muted">●</span><span>read_files</span>
+          </div>
+          <div class="row">
+            <span class="muted">○</span><span class="muted">web_search</span>
+          </div>
+        </div>
+
+        <div class="sec" data-fold>
+          <div class="row">
+            <img
+              class="ico"
+              src="../../art/icons/cyberpunk/sidebar-fid.svg"
+              alt=""
+            />
+            <span class="section-title">FIDs</span>
+            <span class="count">6</span>
+          </div>
+        </div>
+        <div class="sec" data-fold>
+          <div class="row">
+            <img
+              class="ico"
+              src="../../art/icons/cyberpunk/sidebar-history.svg"
+              alt=""
+            />
+            <span class="section-title">History</span>
+            <span class="count">12</span>
+          </div>
+        </div>
+        <div class="body history">
+          <div class="row">
+            <span class="muted">14:02</span><span>read_files</span>
+          </div>
+          <div class="row">
+            <span class="muted">14:03</span><span>glob</span>
+          </div>
+          <div class="row">
+            <span class="muted">14:05</span><span>str_replace</span>
+          </div>
+          <div class="row">
+            <span class="muted">14:07</span><span>run_terminal_command</span>
+          </div>
+          <div class="row">
+            <span class="muted">14:09</span><span>write_file</span>
+          </div>
+        </div>
+        <div class="sec" data-fold>
+          <div class="row">
+            <img
+              class="ico"
+              src="../../art/icons/cyberpunk/sidebar-session.svg"
+              alt=""
+            />
+            <span class="section-title">Session</span>
+          </div>
+        </div>
+        <div class="body">
+          <div class="kv">
+            <span class="muted">Compaction</span><span>42% · ok</span>
+            <span class="muted">Compactions</span><span>1</span>
+            <span class="muted">Cache</span><span>68% hit</span>
+          </div>
+        </div>
+
+        <div class="body">
+          <div class="cmd">
+            <div class="row">
+              <img
+                class="ico-sm"
+                src="../../art/icons/cyberpunk/tool-bash.svg"
+                alt=""
+              />
+              <span class="muted">run_terminal_command</span>
+              <span class="traffic" style="margin-left: auto"
+                ><i></i><i></i><i></i
+              ></span>
+            </div>
+            <div class="row" style="margin-top: 4px">
+              <img
+                class="ico-sm"
+                src="../../art/icons/cyberpunk/obj-folder.svg"
+                alt=""
+              />
+              <span class="muted">cwd /savant-code</span>
+              <img
+                class="ico-sm"
+                src="../../art/icons/cyberpunk/obj-clock.svg"
+                alt=""
+                style="margin-left: auto"
+              />
+              <span class="muted">30s</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="sec" data-fold>
+          <div class="row">
+            <img
+              class="ico"
+              src="../../art/icons/cyberpunk/obj-file.svg"
+              alt=""
+            />
+            <span class="section-title">Files Changed</span>
+            <span class="count">+2 / ~3</span>
+          </div>
+        </div>
+        <div class="body">
+          <div class="kv">
+            <span class="muted">Created</span><span>2</span>
+            <span class="muted">Modified</span><span>3</span>
+          </div>
+        </div>
+
+        <div class="context">
+          <div class="meter-label">Context · 42% of window</div>
+          <div class="meter"><span></span></div>
+        </div>
+      </div>
+    </template>
+
+    <script>
+      // Each class applies its own CSS to a clone of the same markup.
+      const designs = [
+        {
+          id: 'd8',
+          name: 'Holo Frame',
+          note: 'Raised inner panels with a magenta highlight. Selected.',
+        },
+        {
+          id: 'd9',
+          name: 'Signal Gutter',
+          note: 'Cyan gutter with raised panels and stepped markers.',
+        },
+        {
+          id: 'd10',
+          name: 'Orbit Rail',
+          note: 'Magenta glow header with raised panels and dot markers.',
+        },
+        {
+          id: 'd11',
+          name: 'Stacked Plates',
+          note: 'Layered dark plates with a cyan rim on each section.',
+        },
+        {
+          id: 'd12',
+          name: 'Amber Ticker',
+          note: 'Amber header with raised panels and ticker titles.',
+        },
+        {
+          id: 'd13',
+          name: 'Pulse Lattice',
+          note: 'Raised panels with a dotted texture and green titles.',
+        },
+        {
+          id: 'd14',
+          name: 'Ember Frame',
+          note: 'Outer amber frame with raised panels.',
+        },
+        {
+          id: 'd15',
+          name: 'Prism Stack',
+          note: 'Raised panels with gradient titles, magenta to cyan.',
+        },
+      ]
+      const numbers = [8, 9, 10, 11, 12, 13, 14, 15]
+      const tpl = document.getElementById('tpl-sidebar')
+      const host = document.getElementById('samples')
+      designs.forEach((d, i) => {
+        const wrap = document.createElement('div')
+        wrap.className = 'sample'
+        const label = document.createElement('div')
+        label.className = 'sample-label'
+        const badge = document.createElement('span')
+        badge.className = 'badge'
+        badge.textContent = String(numbers[i])
+        const text = document.createElement('span')
+        text.textContent = d.name + ' — ' + d.note
+        label.append(badge, text)
+        const frame = tpl.content.firstElementChild.cloneNode(true)
+        frame.classList.add(d.id)
+        frame.querySelectorAll('[data-fold]').forEach((header) => {
+          header.addEventListener('click', () => {
+            header.classList.toggle('collapsed')
+          })
+        })
+        wrap.append(label, frame)
+        host.append(wrap)
+      })
+    </script>
+  </body>
+</html>

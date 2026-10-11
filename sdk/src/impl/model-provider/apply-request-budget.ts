@@ -43,7 +43,7 @@ export function applyModelRequestBudget(
     .replace(/\/+$/, '')
   const endpointId = createHash('sha256').update(endpoint).digest('hex')
   const routeId = `${params.modelRoute?.providerId ?? result.model.provider}:${result.model.modelId}:${endpointId}`
-return {
+  return {
     ...result,
     model: withRequestTokenBudget(result.model, {
       catalogId,

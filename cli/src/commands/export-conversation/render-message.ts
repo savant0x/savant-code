@@ -4,6 +4,7 @@
 
 import { LOGO_DATA_URI } from './branding'
 import { buildMessageCopyText } from './copy-text'
+import { ico } from './export-icons'
 import { escapeHtml } from './format'
 import { renderBlockHtml } from './render-blocks'
 import { renderMarkdownLikeHtml } from './render-text'
@@ -56,7 +57,7 @@ export function renderMessageHtml(message: ChatMessage, index: number): string {
   }
   const attachmentHtml =
     attachments.length > 0
-      ? `<div class="attachments muted"><i class="fa-solid fa-paperclip" aria-hidden="true"></i> ${attachments.map((a) => `<span>${a}</span>`).join('<br/>')}</div>`
+      ? `<div class="attachments muted">${ico('attachmentNotice')} ${attachments.map((a) => `<span>${a}</span>`).join('<br/>')}</div>`
       : ''
 
   const contentWrapper = contentHtml
@@ -65,13 +66,13 @@ export function renderMessageHtml(message: ChatMessage, index: number): string {
 
   const markerHtml =
     message.variant === 'user'
-      ? '<i class="fa-solid fa-user" aria-hidden="true"></i>'
+      ? ico('userMarker')
       : message.variant === 'error'
-        ? '<i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i>'
+        ? ico('warningMarker')
         : `<img class="row-logo" src="${LOGO_DATA_URI}" alt="Savant"/>`
 
   return `<div class="row ${roleClass}" id="msg-${index}">
-  <button type="button" class="copy-btn" title="Copy message" aria-label="Copy message" data-copy="${escapeHtml(copyPayload)}" onclick="copyMessage(this)"><i class="fa-solid fa-copy" aria-hidden="true"></i><span>Copy</span></button>
+  <button type="button" class="copy-btn" title="Copy message" aria-label="Copy message" data-copy="${escapeHtml(copyPayload)}" onclick="copyMessage(this)">${ico('copyButton')}<span>Copy</span></button>
   <div class="row-head">
     <span class="row-marker">${markerHtml}</span>
     <span class="row-role">${roleLabel}</span>

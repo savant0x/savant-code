@@ -1,5 +1,22 @@
 # Changelog
 
+## 2026-10-11 — Project audit: typecheck-coverage drift (T185)
+
+### Fixed
+
+- Corrected the typecheck-coverage claim on three surfaces. `CONTRIBUTING.md`
+  said "All 11 workspaces must exit 0"; `AGENTS.md` (twice) and `knowledge.md`
+  said the chain covers "all 13 workspaces". The root `typecheck` and `test`
+  chains each cover 13 of the 15 registered workspaces — `savant-free` (17
+  tracked TS/TSX files) and `scripts/tmux` (11) carry no leg and declare no
+  `typecheck` script. The uncovered pair is registered as T186, blocked on an
+  operator ruling because adding a leg changes the fail-closed release gate
+  battery. `docs/agents-and-tools.md` was re-measured against
+  `common/src/tools/constants.ts` and is accurate (`toolNames` 59, 4 Composio +
+  4 connector; `publishedTools` 38), so its "Last verified: 2026-10-10" claim
+  stands; the remaining audit findings are recorded in
+  `dev/session-summaries/2026-10-11-project-audit-doc-drift.md`.
+
 ## 2026-10-11 — Release-readiness repair (FID-2026-1010-004 archived)
 
 ### Fixed

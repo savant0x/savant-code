@@ -1,102 +1,21 @@
 import { TextAttributes } from '@opentui/core'
 import React from 'react'
 
+import {
+  HOLO_PANEL_BORDER,
+  HOLO_PANEL_FILL,
+  HOLO_SUBTITLE,
+  HOLO_TITLE,
+} from './hud-preview-holo'
 import { HudMark } from './hud-preview-marks'
+import { HUD_MARKS, PreviewSection } from './hud-preview-section'
 import { TrafficLightPanel } from '../src/components/traffic-light-panel'
 import { useTheme } from '../src/hooks/use-theme'
 
-import type { SavantIconName } from '../src/constants/savant-icons'
+import type { HudArt, HudDesign } from './hud-preview-section'
 
 export { HudMark } from './hud-preview-marks'
-
-export type HudDesign = 'circuit' | 'holographic'
-export type HudArt = 'blocks' | 'text'
-
-const marks: Array<{ title: string; icon: SavantIconName; count: string }> = [
-  { title: 'Active agents', icon: 'ICON_CmdAgents', count: '2' },
-  { title: 'Session', icon: 'ICON_SidebarSession', count: '' },
-  { title: 'Loop', icon: 'ICON_SidebarLoop', count: '' },
-  { title: 'Trust Matrix', icon: 'ICON_SidebarTrustMatrix', count: '1' },
-  { title: 'Tools', icon: 'ICON_ActivityTool', count: '8' },
-  { title: 'Files', icon: 'ICON_ObjFile', count: '+1 / ~2' },
-  { title: 'Active FIDs', icon: 'ICON_SidebarFid', count: '4' },
-  { title: 'History', icon: 'ICON_SidebarHistory', count: '12' },
-]
-
-function PreviewSection({
-  title,
-  icon,
-  count,
-  design,
-  art,
-  expanded,
-  toggle,
-}: (typeof marks)[number] & {
-  design: HudDesign
-  art: HudArt
-  expanded: boolean
-  toggle: () => void
-}) {
-  const theme = useTheme()
-  return (
-    <box flexDirection="column" flexShrink={0}>
-      <box
-        id={`preview-section-${title}`}
-        flexDirection="row"
-        alignItems="center"
-        gap={1}
-        focusable
-        onMouseDown={toggle}
-        onKeyDown={(key) => {
-          if (['return', 'enter', 'space'].includes(key.name)) toggle()
-        }}
-        {...(design === 'holographic'
-          ? { border: ['bottom'] as const, borderColor: theme.border }
-          : { border: false })}
-        backgroundColor={
-          design === 'holographic' ? theme.surfaceHover : undefined
-        }
-      >
-        <text fg={theme.primary}>{expanded ? '[-]' : '[+]'}</text>
-        <HudMark name={icon} art={art} />
-        <text
-          fg={theme.foreground}
-          attributes={TextAttributes.BOLD}
-          flexShrink={1}
-        >
-          {title}
-        </text>
-        <text marginLeft="auto" fg={theme.muted}>
-          {count}
-        </text>
-      </box>
-      {expanded && (
-        <box paddingLeft={4} flexDirection="column">
-          {title === 'Active agents' ? (
-            <>
-              <box flexDirection="row" alignItems="center" gap={1}>
-                <HudMark name="ICON_Forge" art={art} />
-                <text fg={theme.foreground}>Forge</text>
-                <text marginLeft="auto" fg={theme.success}>
-                  active
-                </text>
-              </box>
-              <box flexDirection="row" alignItems="center" gap={1}>
-                <HudMark name="ICON_VerifierBold" art={art} />
-                <text fg={theme.foreground}>Verifier</text>
-                <text marginLeft="auto" fg={theme.muted}>
-                  waiting
-                </text>
-              </box>
-            </>
-          ) : (
-            <text fg={theme.muted}>Synthetic {title.toLowerCase()} detail</text>
-          )}
-        </box>
-      )}
-    </box>
-  )
-}
+export type { HudArt, HudDesign } from './hud-preview-section'
 
 export function HudSidebar({
   design,
@@ -113,6 +32,7 @@ export function HudSidebar({
 }) {
   const theme = useTheme()
   const holographic = design === 'holographic'
+  const holo = design === 'holo'
   const [folds, setFolds] = React.useState<Record<string, boolean>>({
     'Active agents': true,
   })
@@ -129,15 +49,32 @@ export function HudSidebar({
       paddingLeft={1}
       paddingRight={1}
     >
-      <box flexDirection="row" alignItems="center" flexShrink={0}>
-        <HudMark name="ICON_LogoS" art={art} large={holographic && !folded} />
+      <box
+        flexDirection={holo ? 'column' : 'row'}
+        alignItems="center"
+        flexShrink={0}
+        gap={holo ? 1 : 0}
+      >
+        <HudMark
+          name="ICON_LogoS"
+          art={art}
+          large={(holographic || holo) && !folded}
+        />
         {!folded && (
-          <box flexDirection="column" flexGrow={1}>
+          <box
+            flexDirection="column"
+            flexGrow={holo ? 0 : 1}
+            alignItems={holo ? 'center' : undefined}
+          >
             <text fg={theme.primary} attributes={TextAttributes.BOLD}>
               SAVANT
             </text>
-            <text fg={theme.muted}>
-              {holographic ? 'HOLOGRAPHIC OPS' : 'CIRCUIT COMMAND'}
+            <text fg={holo ? HOLO_TITLE : theme.muted}>
+              {holographic
+                ? 'HOLOGRAPHIC OPS'
+                : holo
+                  ? HOLO_SUBTITLE
+                  : 'CIRCUIT COMMAND'}
             </text>
           </box>
         )}
@@ -157,10 +94,13 @@ export function HudSidebar({
         flexGrow={1}
         scrollX={false}
         scrollbarOptions={{ visible: false }}
-        contentOptions={{ flexDirection: 'column', gap: holographic ? 1 : 0 }}
+        contentOptions={{
+          flexDirection: 'column',
+          gap: holographic || holo ? 1 : 0,
+        }}
       >
         {folded ? (
-          marks.map((mark) => (
+          HUD_MARKS.map((mark) => (
             <box
               key={mark.title}
               alignItems="center"
@@ -178,9 +118,10 @@ export function HudSidebar({
           <>
             <box
               flexDirection="column"
-              border={holographic ? true : ['left']}
-              borderStyle={holographic ? 'rounded' : 'single'}
-              borderColor={theme.secondary}
+              border={holographic || holo ? true : ['left']}
+              borderStyle={holographic || holo ? 'rounded' : 'single'}
+              borderColor={holo ? HOLO_PANEL_BORDER : theme.secondary}
+              backgroundColor={holo ? HOLO_PANEL_FILL : undefined}
               paddingLeft={1}
               paddingRight={1}
               flexShrink={0}
@@ -188,7 +129,10 @@ export function HudSidebar({
               <box flexDirection="row" alignItems="center" gap={1}>
                 <HudMark name="ICON_ActivityTool" art={art} />
                 <box flexDirection="column">
-                  <text fg={theme.foreground} attributes={TextAttributes.BOLD}>
+                  <text
+                    fg={holo ? HOLO_TITLE : theme.foreground}
+                    attributes={TextAttributes.BOLD}
+                  >
                     Activity detail
                   </text>
                   <text fg={theme.primary}>Reading files</text>
@@ -199,7 +143,7 @@ export function HudSidebar({
               <text fg={theme.foreground}>{'Model   synthetic/model'}</text>
               <text fg={theme.muted}>{'Mode    HYBRID · $0.25'}</text>
             </box>
-            {marks.map((mark) => (
+            {HUD_MARKS.map((mark) => (
               <PreviewSection
                 key={mark.title}
                 {...mark}
@@ -227,12 +171,12 @@ export function HudSidebar({
         flexDirection="column"
         alignItems="center"
         border={['top']}
-        borderColor={theme.border}
+        borderColor={holo ? HOLO_PANEL_BORDER : theme.border}
         flexShrink={0}
       >
         <text fg={theme.muted}>v0.0.35</text>
         {!folded && <text fg={theme.foreground}>Context · 70/100 · 70%</text>}
-        <text fg={theme.warning}>
+        <text fg={holo ? HOLO_TITLE : theme.warning}>
           {folded ? '[|||||..]' : '[||||||||||||||......]'}
         </text>
         <text fg={theme.muted}>

@@ -1,4 +1,10 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none" role="img" aria-label="Commit command — node graph with branch">
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  viewBox="0 0 64 64"
+  fill="none"
+  role="img"
+  aria-label="Commit command — node graph with branch"
+>
   <!-- SAVANT // CYBERDECK — hand-authored vector geometry, no external assets -->
   <defs>
     <filter id="glow" x="-40%" y="-40%" width="180%" height="180%">
@@ -10,13 +16,24 @@
     </filter>
   </defs>
   <!-- rail -->
-  <path d="M10 32 L54 32" stroke="#18faf9" stroke-width="2" stroke-linecap="round" />
+  <path
+    d="M10 32 L54 32"
+    stroke="#18faf9"
+    stroke-width="2"
+    stroke-linecap="round"
+  />
   <!-- rail nodes -->
   <circle cx="22" cy="32" r="3.5" fill="#18faf9" />
   <circle cx="42" cy="32" r="3.5" fill="#18faf9" />
   <!-- commit node -->
   <circle cx="32" cy="32" r="5" fill="#ff2bd6" filter="url(#glow)" />
   <!-- branch -->
-  <path d="M42 32 L42 18 L48 18" stroke="#18faf9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+  <path
+    d="M42 32 L42 18 L48 18"
+    stroke="#18faf9"
+    stroke-width="2"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  />
   <circle cx="50" cy="18" r="2" fill="#4fa8ff" />
 </svg>

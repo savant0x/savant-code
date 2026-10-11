@@ -176,6 +176,15 @@ describe('provider setup', () => {
     expect(getConfiguredProviderNames()).toContain('bai')
   })
 
+  test('saves Mistral AI credentials for direct-provider mode (FID-2026-1009-005)', () => {
+    saveProviderApiKey('mistral', '  test-mistral-key  ')
+
+    expect(process.env.MISTRAL_API_KEY).toBe('test-mistral-key')
+    expect(process.env.DIRECT_PROVIDER).toBe('mistral')
+    expect(process.env.INFERENCE_BASE_URL).toBe('https://api.mistral.ai/v1')
+    expect(getConfiguredProviderNames()).toContain('mistral')
+  })
+
   test('saves OpenRouter credentials for direct-provider mode', () => {
     saveProviderApiKey('openrouter', '  test-openrouter-key  ')
 

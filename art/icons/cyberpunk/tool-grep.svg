@@ -1,4 +1,10 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none" role="img" aria-label="Grep tool — search lens over text lines">
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  viewBox="0 0 64 64"
+  fill="none"
+  role="img"
+  aria-label="Grep tool — search lens over text lines"
+>
   <!-- SAVANT // CYBERDECK — hand-authored vector geometry, no external assets -->
   <defs>
     <filter id="glow" x="-40%" y="-40%" width="180%" height="180%">
@@ -10,14 +16,39 @@
     </filter>
   </defs>
   <!-- text lines being searched -->
-  <path d="M14 18 L40 18" stroke="#4fa8ff" stroke-width="2" stroke-linecap="round" />
-  <path d="M14 26 L34 26" stroke="#4fa8ff" stroke-width="2" stroke-linecap="round" />
-  <path d="M14 34 L30 34" stroke="#4fa8ff" stroke-width="2" stroke-linecap="round" />
+  <path
+    d="M14 18 L40 18"
+    stroke="#4fa8ff"
+    stroke-width="2"
+    stroke-linecap="round"
+  />
+  <path
+    d="M14 26 L34 26"
+    stroke="#4fa8ff"
+    stroke-width="2"
+    stroke-linecap="round"
+  />
+  <path
+    d="M14 34 L30 34"
+    stroke="#4fa8ff"
+    stroke-width="2"
+    stroke-linecap="round"
+  />
   <!-- search lens -->
   <circle cx="30" cy="36" r="11" stroke="#18faf9" stroke-width="3" />
   <!-- highlighted match inside lens -->
-  <path d="M22 36 L38 36" stroke="#ff2bd6" stroke-width="1.5" stroke-linecap="round" />
+  <path
+    d="M22 36 L38 36"
+    stroke="#ff2bd6"
+    stroke-width="1.5"
+    stroke-linecap="round"
+  />
   <!-- lens handle -->
-  <path d="M38 44 L45 51" stroke="#18faf9" stroke-width="3" stroke-linecap="round" />
+  <path
+    d="M38 44 L45 51"
+    stroke="#18faf9"
+    stroke-width="3"
+    stroke-linecap="round"
+  />
   <circle cx="47.5" cy="53.5" r="2.5" fill="#ff2bd6" />
 </svg>

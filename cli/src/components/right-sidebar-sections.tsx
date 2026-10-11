@@ -3,6 +3,7 @@ import React from 'react'
 import {
   formatCacheUsage,
   formatToolHistoryEvent,
+  toolDisplayName,
   resolveActiveAgentDisplay,
 } from './right-sidebar-format'
 import { SidebarSessionSummary } from './right-sidebar-summary'
@@ -28,17 +29,20 @@ export function SidebarActiveAgents({
   agent,
   isStreaming,
   isWaitingForResponse,
+  isThinking = false,
 }: {
   agentStack: AgentInfo[]
   agent: string
   isStreaming: boolean
   isWaitingForResponse: boolean
+  isThinking?: boolean
 }) {
   const agents = resolveActiveAgentDisplay(
     agentStack,
     agent,
     isStreaming,
     isWaitingForResponse,
+    isThinking,
   )
   if (!agents.length) return null
   return (
@@ -69,7 +73,7 @@ export function SidebarToolsList({
           fg={theme.foreground}
           wrapMode="word"
           selectable={false}
-        >{`${glyph('statusActive')} ${tool}`}</text>
+        >{`${glyph('statusActive')} ${toolDisplayName(tool)}`}</text>
       ))}
       {available.map((tool) => (
         <text
@@ -77,7 +81,7 @@ export function SidebarToolsList({
           fg={theme.muted}
           wrapMode="word"
           selectable={false}
-        >{`${glyph('statusInactive')} ${tool}`}</text>
+        >{`${glyph('statusInactive')} ${toolDisplayName(tool)}`}</text>
       ))}
     </SidebarSection>
   )
@@ -137,10 +141,7 @@ export function SidebarHistoryTimeline({
   return (
     <SidebarSection title="History" count={toolHistory.length}>
       {toolHistory.length ? (
-        <Timeline
-          events={toolHistory.slice(-5).map(formatToolHistoryEvent)}
-          maxItems={5}
-        />
+        <Timeline events={toolHistory.map(formatToolHistoryEvent)} />
       ) : (
         <text fg={theme.muted} selectable={false}>
           (empty)

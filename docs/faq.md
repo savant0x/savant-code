@@ -226,8 +226,9 @@ an agenda + a lesson-derived draft skill.
 
 ### Are Auto Drive and Discord Rich Presence fully shipped?
 
-The code and tests are implemented and all repository gates pass, but the two
-features are still `verified` (not `closed`) while live smoke tests and
-independent review are in flight. See the Auto Drive program FIDs
-(`dev/fids/FID-2026-0818-001` master + children `002`–`009`) for the exact
-status of each step.
+The Auto Drive program and Discord Rich Presence FIDs (`001`–`010`) are closed;
+their implementation, repository gates, and required review are recorded in
+the archived FIDs. Closure records the scope and evidence of that work. For
+feature details, see the sections above; for the exact resolution evidence,
+see the [Auto Drive master FID](../dev/fids/archive/FID-2026-0818-001-auto-drive-master.md)
+and the [documentation FID](../dev/fids/archive/FID-2026-0818-010-auto-drive-discord-docs-and-faq.md).

@@ -41,7 +41,7 @@
     "providers:identity": "bun scripts/providers/identity-gauntlet.ts",
     "providers:parity": "bun scripts/provider-catalog-parity.ts",
     "providers:parity:check": "bun scripts/provider-catalog-parity.ts --check",
-"window-coverage:check": "bun scripts/window-coverage-check.ts",
+    "window-coverage:check": "bun scripts/window-coverage-check.ts",
     "window-coverage:fix": "bun scripts/window-coverage-check.ts --fix",
     "icon-palette:check": "bun scripts/icon-palette-check.ts",
     "generate:provider-docs": "bun run scripts/generate-provider-reference.ts",

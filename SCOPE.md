@@ -13,6 +13,11 @@ recorded decision or external dependency requires it.
 
 ## Open items
 
+- [ ] **Release v0.0.35.** Commit all current intended worktree changes, then
+      publish all 189 existing local commits and the release commit via the
+      public release pipeline. Verify the full release preview and gates first.
+      **Automation level: 3.**
+
 - [ ] **T185. Public-release content and bloat audit.** Compare README/docs with
       current code, commands, package publication, and validation gates. Review
       the identified debug logs, generated databases, duplicate website file,
@@ -20,6 +25,29 @@ recorded decision or external dependency requires it.
       FIDs. Complete safe stale-content fixes and approved cleanup, then run
       repository, hygiene, lint, formatting, and version checks.
       **Automation level: 3.**
+
+- [ ] **T186. Two registered workspaces sit outside every typecheck and test
+      chain.** `package.json` registers 15 workspaces, but the root `typecheck`
+      and `test` chains each cover 13; `savant-free` (17 tracked TS/TSX files,
+      including `savant-free/cli/build.ts` and its e2e suites) and
+      `scripts/tmux` (11 tracked TS/TSX files under `tmux-viewer/`) have no leg,
+      and neither workspace declares a `typecheck` script. The doc surfaces
+      asserting "all 13 workspaces" were corrected this pass to state the real
+      coverage.
+      **Blocker:** adding a leg changes the fail-closed release gate battery
+      (`protocol.config.yaml` `type_check`/`test` plus the root scripts), and
+      `savant-free`'s disposition is operator-owned under T122 — both need an
+      operator ruling. **Automation level: 1.**
+
+- [ ] **T187. Five trusted skills carry no `version` frontmatter.**
+      `bun run skills:check` reports 0 errors / 35 warnings, five of them
+      `missing 'version' frontmatter (legacy default 0.1.0; add it on the next
+      edit)` for `release-workflow`, `savant-design`, `savant-design-systems`,
+      `savant-motion`, and `startup-playbook`.
+      **Blocker:** `.agents/skills/**` is the operator-only release surface
+      (`/skills trust`); an agent write to a SKILL.md is a skills mutation, so
+      the frontmatter addition belongs to the operator's next edit.
+      **Automation level: 1.**
 
 ### Providers and routing
 
@@ -115,8 +143,11 @@ recorded decision or external dependency requires it.
 `packages/agent-runtime/src/run-agent-step/step.ts`,
   `evals/v2/src/runner.ts`, `sdk/src/run/types.ts`
 - T185: `README.md`, `README.zh-CN.md`, `knowledge.md`, `AGENTS.md`,
+  `CONTRIBUTING.md`,
   `docs/**`, `cli/release/README.md`, `WINDOWS.md`, `desktop/README.md`,
   `sdk/README.md`, `common/src/templates/initial-agents-dir/README.md`,
   `cli/src/utils/constants.ts`, `dev/scratchpad/**`, `debug/**`,
   `firebase-debug.log`, `database.db`, `database.db-wal`, `database.db-shm`,
   `website/index-2.html`, `SCOPE.md`, `CHANGELOG.md`, `dev/session-summaries/**`
+- T186: (no write surface — blocked pending the operator ruling on the gate chain)
+- T187: (no write surface — operator-owned skills surface)

@@ -4,6 +4,7 @@
 **ID:** FID-2026-1009-006
 **Severity:** high
 **Status:** closed
+**Commit/State:** c89de4aeb60621c084358df9a72cd29fb9aade92
 > Implementation is committed locally as `c89de4ae`; every declared gate
 > passes. Closure is recorded below. No push was performed.
 **Created:** 2026-10-09 19:40

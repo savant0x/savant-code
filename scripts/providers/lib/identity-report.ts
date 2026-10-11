@@ -182,7 +182,9 @@ export function renderMatrixReport(
   lines.push('')
   lines.push('## Routes')
   lines.push('')
-  lines.push('| Model | Route | Served label | Label | Probes | ms | Failure | Verdict |')
+  lines.push(
+    '| Model | Route | Served label | Label | Probes | ms | Failure | Verdict |',
+  )
   lines.push('| --- | --- | --- | --- | --- | --- | --- | --- |')
   for (const row of matrix.rows) lines.push(matrixRow(row))
   const flagged = matrix.rows.filter((row) => row.label === 'mismatch')

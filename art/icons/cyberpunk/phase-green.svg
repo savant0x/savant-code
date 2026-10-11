@@ -1,4 +1,10 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none" role="img" aria-label="GREEN phase — implementing fixes">
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  viewBox="0 0 64 64"
+  fill="none"
+  role="img"
+  aria-label="GREEN phase — implementing fixes"
+>
   <!-- SAVANT // CYBERDECK — hand-authored vector geometry, no external assets -->
   <defs>
     <filter id="glow" x="-40%" y="-40%" width="180%" height="180%">
@@ -10,11 +16,21 @@
     </filter>
   </defs>
   <!-- code brackets being written -->
-  <g stroke="#18faf9" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+  <g
+    stroke="#18faf9"
+    stroke-width="3"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  >
     <path d="M24 20 L14 32 L24 44" />
     <path d="M40 20 L50 32 L40 44" />
   </g>
-  <path d="M34 16 L30 48" stroke="#4fa8ff" stroke-width="2" stroke-linecap="round" />
+  <path
+    d="M34 16 L30 48"
+    stroke="#4fa8ff"
+    stroke-width="2"
+    stroke-linecap="round"
+  />
   <!-- terminal nodes at the bracket tips -->
   <g fill="#ff2bd6">
     <circle cx="14" cy="32" r="2" />

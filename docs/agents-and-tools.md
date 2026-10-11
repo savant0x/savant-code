@@ -1,13 +1,14 @@
 # Agents and Tools
 
-> **Last verified:** 2026-09-18 — source reads of all agent definitions + `common/src/tools/constants.ts`
-> (`toolNames` 55 incl. 4 Composio / `publishedTools` 38) + `packages/agent-runtime/src/tools/tool-executor/`.
-> Counts re-verified live this date.
+> **Last verified:** 2026-10-10 — source reads of the agent helper definitions,
+> `common/src/tools/constants.ts` (`toolNames` 59, including 4 Composio and 4
+> connector tools; `publishedTools` 38), and the tool executor.
 
 ## Agents
 
-The Savant harness ships 10 canonical agents + 6 helper tool-library agents
-from the `agents/` workspace. Each agent is a
+The Savant harness ships 10 canonical agents + 6 infrastructure helpers from
+the `agents/` workspace. A separate Thinker variant is listed for context and
+is not part of that helper count. Each agent is a
 `SecretAgentDefinition` with a restricted tool set — no agent may perform another agent's role (ECHO Law: Separation of
 Duties).
 
@@ -38,6 +39,8 @@ spawned by free-tier prompts.)
 | **tmux-cli** | `tmux-cli` | `run_terminal_command`, `read_files`, `set_output`, `add_message` | Orchestrator (interactive CLI testing) |
 | **browser-use** | `browser-use` | `set_output`, `run_terminal_command`, `add_message` | Orchestrator (browser automation) |
 | **Context Pruner** | `context-pruner` | *(no explicit toolNames — uses `set_messages` via runtime)* | Orchestrator (auto-spawned for long sessions) |
+| **GitHub** | `github` | GitHub MCP tools; `set_output`, `add_message` | Orchestrator (read-only remote GitHub operations) |
+| **Database** | `database` | `list_tables`, `describe_table`, `execute_query`, `analyze_query`, `set_output`, `add_message` | Orchestrator (SQLite inspection with adapter-enforced safety) |
 | **Thinker (Gemini w/ files)** | `thinker-with-files-gemini` | *(no model-visible tools; `read_files` via `programmaticToolNames`)* | Free tier (reasoning with file context, FID-2026-0803-001 ECHO-2) |
 
 ### Directory Layout
@@ -191,9 +194,21 @@ input schema, output schema, and an `endsAgentStep` flag.
 > `ENABLE_COMPOSIO_TOOLS` gate flag was removed as dead code (FID-2026-0802-005 L18); only a comment remains
 > at `agents/savant/savant.ts:27`.
 
+#### Connector meta-tools
+
+The connector runtime registers a fixed four-tool interface over the in-repo
+`@savant-code/connectors` catalog:
+
+| Tool | Description |
+|------|-------------|
+| `connector_search` | Search providers and their endpoints |
+| `connector_describe` | Read an endpoint's input contract |
+| `connector_invoke` | Invoke a validated endpoint through the connector engine |
+| `connector_credentials` | Report credential names and whether they are present; never return values |
+
 ### Tool Count
 
-- **Total registered tools:** 55 (including 4 Composio meta-tools)
+- **Total registered tools:** 59 (including 4 Composio and 4 connector meta-tools)
 - **Published tools (available to agents):** 38
 - **FSM-gated tools:** 3 (`write_file`, `str_replace`, `apply_patch` →
   GREEN + SELF_CORRECT; `run_terminal_command` → AUDIT + GREEN + SELF_CORRECT)

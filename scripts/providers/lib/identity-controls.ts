@@ -53,10 +53,7 @@ function isEndpoint(value: unknown): value is SweepControlEndpoint {
 function isEntry(value: unknown): value is SweepControlEntry {
   if (typeof value !== 'object' || value === null) return false
   const record = value as Record<string, unknown>
-  if (
-    record.sameModel !== undefined &&
-    !isEndpoint(record.sameModel)
-  ) {
+  if (record.sameModel !== undefined && !isEndpoint(record.sameModel)) {
     return false
   }
   if (

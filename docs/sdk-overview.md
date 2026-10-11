@@ -269,7 +269,7 @@ The SDK is where inference happens. `getModelForRequest()` dispatches on model-i
 (`openai/`, `openrouter/`, `tokenrouter/`, `tokenharbor/`, `nvidia/`,
 `commandcode/`, `nous/`, `kiosapi/`, `apinex/`, `orcarouter/`, `bai/`, `hcnsec/`, `tokenbom/`,
 `infron/`, `unorouter/`, `bazaarlink/`, `atria/`, `intern/`, `chatanywhere/`, `vercel/`, `cleanapis/`, `codecraft/`, `xkiro/`,
-`cloudflare/`, bare slugs). The default path is the
+`mistral/`, `cloudflare/`, bare slugs). The default path is the
 generic OpenAI-compatible adapter targeting
 `INFERENCE_BASE_URL`. Full detail and the provider-adding runbook live in
 `docs/archive/design/Adding New Providers.md` — that refactor is engine work inside
@@ -302,7 +302,7 @@ an explicit `resetOpenRouterApiKeyCache()` hook.
 | `INFERENCE_BASE_URL` | OpenAI-compatible inference base URL (required — no backend fallback; FID-2026-0929-005) |
 | `INFERENCE_API_KEY` | Custom-endpoint credential — required when `INFERENCE_BASE_URL` names a custom endpoint (the endpoint's only auth; the active provider's key chain is never sent there; fails fast naming the variable); last link of the OpenRouter credential chain |
 | `OR_MASTER_KEY`, `OPENROUTER_API_KEY` | OpenRouter credentials (master-key exchange / regular key) |
-| `TOKENROUTER_API_KEY`, `TOKENHARBOR_API_KEY`, `NVIDIA_API_KEY`, `COMMAND_CODE_API_KEY`, `KIOSAPI_API_KEY`, `APINEX_API_KEY`, `OPENAI_API_KEY`, `ORCAROUTER_API_KEY`, `BAI_API_KEY`, `HCNSEC_API_KEY`, `TOKENBOM_API_KEY`, `ATRIA_API_KEY`, `INTERN_API_KEY`, `INFRON_API_KEY`, `UNOROUTER_API_KEY`, `BAZAARLINK_API_KEY`, `NOUS_API_KEY`, `AI_GATEWAY_API_KEY`, `CLEANAPIS_API_KEY`, `CODECRAFT_API_KEY`, `XKIRO_API_KEY`, `CHATANYWHERE_API_KEY` | Gateway provider keys; registry-resolved (`credentials.envVar` → `process.env` in `sdk/src/impl/model-provider.ts`); Nous uses the direct OpenAI-compatible API and does not imply Portal OAuth |
+| `TOKENROUTER_API_KEY`, `TOKENHARBOR_API_KEY`, `NVIDIA_API_KEY`, `COMMAND_CODE_API_KEY`, `KIOSAPI_API_KEY`, `APINEX_API_KEY`, `OPENAI_API_KEY`, `ORCAROUTER_API_KEY`, `BAI_API_KEY`, `HCNSEC_API_KEY`, `TOKENBOM_API_KEY`, `ATRIA_API_KEY`, `INTERN_API_KEY`, `INFRON_API_KEY`, `UNOROUTER_API_KEY`, `BAZAARLINK_API_KEY`, `NOUS_API_KEY`, `AI_GATEWAY_API_KEY`, `CLEANAPIS_API_KEY`, `CODECRAFT_API_KEY`, `MISTRAL_API_KEY`, `XKIRO_API_KEY`, `CHATANYWHERE_API_KEY` | Gateway provider keys; registry-resolved (`credentials.envVar` → `process.env` in `sdk/src/impl/model-provider.ts`); Nous uses the direct OpenAI-compatible API and does not imply Portal OAuth |
 | `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID` | Cloudflare Workers AI |
 | `SAVANT_CODE_BYOK_OPENROUTER` | BYOK OpenRouter header override (`x-openrouter-api-key`) |
 | `SAVANT_CODE_RG_PATH`, `SAVANT_CODE_WASM_DIR` | Native asset paths |

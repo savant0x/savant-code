@@ -1,4 +1,10 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none" role="img" aria-label="Syncing status — counter-rotating arcs">
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  viewBox="0 0 64 64"
+  fill="none"
+  role="img"
+  aria-label="Syncing status — counter-rotating arcs"
+>
   <!-- SAVANT // CYBERDECK — hand-authored vector geometry, no external assets -->
   <defs>
     <filter id="glow" x="-40%" y="-40%" width="180%" height="180%">
@@ -10,9 +16,19 @@
     </filter>
   </defs>
   <!-- upper arc -->
-  <path d="M18 26 A14 14 0 0 1 46 26" stroke="#18faf9" stroke-width="3" stroke-linecap="round" />
+  <path
+    d="M18 26 A14 14 0 0 1 46 26"
+    stroke="#18faf9"
+    stroke-width="3"
+    stroke-linecap="round"
+  />
   <polygon points="41,21 49,26 41,31" fill="#ff2bd6" filter="url(#glow)" />
   <!-- lower arc -->
-  <path d="M46 38 A14 14 0 0 1 18 38" stroke="#18faf9" stroke-width="3" stroke-linecap="round" />
+  <path
+    d="M46 38 A14 14 0 0 1 18 38"
+    stroke="#18faf9"
+    stroke-width="3"
+    stroke-linecap="round"
+  />
   <polygon points="23,33 15,38 23,43" fill="#ff2bd6" filter="url(#glow)" />
 </svg>

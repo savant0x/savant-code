@@ -56,7 +56,21 @@ export const EXPORT_CSS_PART_2_A = `
     gap: 6px;
   }
 
-  .tool-badge .fa-terminal { font-size: 0.85em; }
+  /* Inline family icons (FID-2026-1009-004 Phase 1) — one sizing rule
+     replaces the FA glyph rules; marks render at their authored palette. */
+  .svg-ico {
+    display: inline-flex;
+    align-items: center;
+    vertical-align: -0.125em;
+  }
+  .svg-ico svg { width: 1em; height: 1em; display: block; }
+  .tool-badge .svg-ico svg { width: 0.85em; height: 0.85em; }
+  .row-marker .svg-ico svg { width: 1.2em; height: 1.2em; }
+  .agent-header .svg-ico svg, .plan-header .svg-ico svg,
+  .drive-report h2 .svg-ico svg {
+    width: 1.1em;
+    height: 1.1em;
+  }
 
   .tool-input {
     color: var(--muted-2);

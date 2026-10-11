@@ -4,6 +4,7 @@
  * All inline text is HTML-escaped before formatting so raw `<script>` or other
  * markup in a message can never inject into the exported document.
  */
+import { ico } from './export-icons'
 import { escapeHtml } from './format'
 
 export function renderTextBlockHtml(text: string, textType?: string): string {
@@ -11,7 +12,7 @@ export function renderTextBlockHtml(text: string, textType?: string): string {
   if (!trimmed) return ''
   if (textType === 'reasoning') {
     return `<details class="row-thinking">
-  <summary><i class="fa-solid fa-brain thinking-icon" aria-hidden="true"></i><span class="thinking-badge">Thinking</span></summary>
+  <summary>${ico('thinkingIcon')}<span class="thinking-badge">Thinking</span></summary>
   <div class="thinking-body">${renderMarkdownLikeHtml(trimmed)}</div>
 </details>`
   }

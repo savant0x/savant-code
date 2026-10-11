@@ -88,7 +88,7 @@ export function trimPromptToFit(
   params: LanguageModelV2CallOptions,
   contextWindow: number,
 ): LanguageModelV2CallOptions | null {
-const reserve = Math.min(
+  const reserve = Math.min(
     MAX_SAFETY_RESERVE,
     Math.ceil(contextWindow * RESERVE_FRACTION),
   )
@@ -102,7 +102,8 @@ const reserve = Math.min(
   // Drop one oldest non-system message at a time (never the final turn).
   while (countRequestInputTokens({ ...params, prompt }) > inputBudget) {
     const dropIndex = prompt.findIndex(
-      (message, index) => message.role !== 'system' && index < prompt.length - 1,
+      (message, index) =>
+        message.role !== 'system' && index < prompt.length - 1,
     )
     if (dropIndex === -1) return null
     prompt = [...prompt.slice(0, dropIndex), ...prompt.slice(dropIndex + 1)]

@@ -3,6 +3,11 @@
 
 # **Architectural Retrofit: Self-Improving Harness and Autonomous Skill Generation within the Savant-Code ECHO Protocol**
 
+> **Historical proposal.** This plan predates the shipped self-improving
+> harness. It describes work that was proposed, not the current implementation.
+> For current behavior and operator commands, see the
+> [self-improving harness guide](../self-improving-harness.md).
+
 The structural evolution of multi-agent coding assistants demands a transition from reactive, human-steered execution to proactive, self-governing capability development. The Savant-Code framework, currently operating under the ECHO Protocol v0.2.0, enforces rigorous software engineering standards through a ten-agent roster, a deterministic Feature Implementation Document (FID) lifecycle, and mechanical verification gates1. While the existing framework ensures that no code is written without convergent verification, it relies entirely on human operators or static prompt directives to expand its capability matrix. The system lacks the architecture to mechanically observe its own tool execution failures, synthesize reusable procedural knowledge, and autonomously generate durable capabilities without human authoring1.  
 The integration of a self-improvement loop and an agent-authored skill subsystem requires retrofitting concepts from leading experimental frameworks—namely, the OpenClaw self-improving-agent skill3, the Hermes autonomous skill-building system4, the RangeKing/self-evolving-agent capability ladder5, and the sudokrang/aceforge tool-observation pipeline6. However, integrating these paradigms directly into Savant-Code would violate its fundamental architectural invariants: the prohibition of silent mutations, the strict 16,384-token context tail budget, the zero-trust agentic provenance (ZTAP) layer, and the absolute prohibition of secondary in-process large language models (LLMs)1.  
 This report provides a comprehensive, expert-level architectural blueprint for retrofitting a proactive self-improvement harness and a secure, agent-driven skill generation subsystem into Savant-Code. The design strictly maps community demand against the ECHO Protocol's immutable laws, establishing a highly governed, computationally efficient, and verifiable evolution pipeline.

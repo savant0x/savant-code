@@ -63,6 +63,7 @@ Or select one of the supported gateway providers directly:
 | Infron | `/provider infron` or `DIRECT_PROVIDER=infron` | `INFRON_API_KEY` | Hosted gateway |
 | Intern InkStone | `/provider intern` or `DIRECT_PROVIDER=intern` | `INTERN_API_KEY` | Hosted gateway |
 | KiosAPI | `/provider kiosapi` or `DIRECT_PROVIDER=kiosapi` | `KIOSAPI_API_KEY` | OpenAI-compatible gateway (live catalog) |
+| Mistral AI | `/provider mistral` or `DIRECT_PROVIDER=mistral` | `MISTRAL_API_KEY` | Hosted gateway |
 | Nous Research | `/provider nous` or `DIRECT_PROVIDER=nous` | `NOUS_API_KEY` | OpenAI-compatible direct inference; Portal OAuth is separate |
 | Ollama | Automatic detection | `OLLAMA_HOST` (optional) | Local inference; no API key required |
 | OrcaRouter | `/provider orcarouter` or `DIRECT_PROVIDER=orcarouter` | `ORCAROUTER_API_KEY` | Multi-provider gateway with a live model catalog (free tier currently gated vendor-side on GitHub account linkage) |
@@ -173,6 +174,7 @@ AI_GATEWAY_API_KEY=dummy-ai-gateway-key-replace-me
 CLEANAPIS_API_KEY=dummy-cleanapis-api-key-replace-me
 CODECRAFT_API_KEY=dummy-codecraft-api-key-replace-me
 XKIRO_API_KEY=dummy-xkiro-api-key-replace-me
+MISTRAL_API_KEY=dummy-mistral-api-key-replace-me
 CHATANYWHERE_API_KEY=dummy-chatanywhere-api-key-replace-me
 # Cloudflare needs TWO credentials (token + account id):
 CLOUDFLARE_API_TOKEN=cloudflare-dummy-replace-me
@@ -271,7 +273,7 @@ Retention is bounded to the most recent 20 turns, restore paths are revalidated,
 - `--permission-mode safe|prompt|unsafe` selects the startup policy.
 - `/permissions` (aliases `/sandbox` and `/safety`) views or changes the policy.
 - `safe` denies risky tools; `prompt` currently also denies them because interactive confirmations are not yet implemented; `unsafe` allows them explicitly.
-- `HYBRID`, `SCAFFOLD`, `STRICT`, and `ANALYZE` modes change the execution scope at runtime (hovering the toggle shows each mode's contract). `HYBRID` (default) is the frictionless flow: you write directly while the harness deterministically enforces Law 1/3 and the Verifier criteria at `warn`, and the full Perfection Loop auto-engages past the 20-line threshold. `STRICT` guarantees the full ceremony on **every** code change: Recorder creates a FID, RED (Detective) analyzes, GREEN (Forge) writes, AUDIT (Verifier) double-checks with Law-4 reachability greps, and Recorder archives the FID with a CHANGELOG entry. Use `STRICT` for security-sensitive or long-lived code (auth, payments, migrations); use `HYBRID` for day-to-day building and exploration.
+- `HYBRID`, `SCAFFOLD`, `STRICT`, and `ANALYZE` modes change the execution scope at runtime (hovering the toggle shows each mode's contract). `HYBRID` (default) is the frictionless flow: you write directly while the harness deterministically enforces Law 1/3 and the Verifier criteria at `warn`, and the full Perfection Loop auto-engages past the 100-line threshold. `STRICT` guarantees the full ceremony on **every** code change: Recorder creates a FID, RED (Detective) analyzes, GREEN (Forge) writes, AUDIT (Verifier) double-checks with Law-4 reachability greps, and Recorder archives the FID with a CHANGELOG entry. Use `STRICT` for security-sensitive or long-lived code (auth, payments, migrations); use `HYBRID` for day-to-day building and exploration.
 
 ### Planning, review, and goals
 
@@ -346,7 +348,7 @@ Commands can be entered with `/`; aliases are shown in parentheses.
 | `/interview` | Create a structured specification |
 | `/plan` | Create an implementation plan |
 | `/review` | Review code changes |
-| `/goal` (`/g`) | Iterate toward a verifiable goal |
+| `/goal` (`/g`) | Start or manage a durable, budgeted goal run (`status`, `pause`, `resume`, `cancel`) |
 | `/loop` (`/repeat`) | Schedule recurring checks; use `status` or `stop` |
 | `/verify` (`/typecheck`) | Run all four core workspace typechecks or one selected workspace |
 | `/permissions` (`/sandbox`, `/safety`) | View or set the tool permission mode |
@@ -365,7 +367,7 @@ Commands can be entered with `/`; aliases are shown in parentheses.
 | `/bash` (`!`) | Run a shell command or enter Bash mode |
 | `/image` (`/img`, `/attach`) | Attach an image for supported multimodal models |
 | `/init` | Create starter agent types and `knowledge.md` |
-| `/login` / `/logout` | Authenticate or end the current session |
+| `/logout` (`/signout`) | End the current session and sign out |
 | `/exit` (`/quit`, `/q`) | Quit the CLI |
 
 ## Usage Examples

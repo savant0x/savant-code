@@ -162,46 +162,6 @@ Complex git commands may have issues with Windows path handling or shell escapin
 
 ---
 
-### Issue: Login Browser Window Fails to Open
-
-**Symptom**:
-```text
-Press ENTER to open your browser and finish logging in...
-
-Caught exception: Error: Executable not found in $PATH: "start"
-Error: Executable not found in $PATH: "start"
-TLCWeb > Unable to login. Please try again by typing "login" in the terminal.
-```
-
-**Cause**:
-When running SavantCode in Git Bash (MINGW64), the `start` command is not available in PATH. The browser auto-open
-feature fails.
-
-**Solutions**:
-
-1. **Manually open the login URL** (easiest):
-   - SavantCode displays the login URL after the error
-   - Copy the full URL starting with `https://savant-code.com/login?auth_code=...`
-   - Paste into your browser
-   - Complete login in browser
-   - Return to terminal - login will succeed
-
-2. **Use native Windows terminals**:
-   - PowerShell: `powershell`
-   - Command Prompt: `cmd`
-   - These have `start` command available
-
-3. **Clear cache if login still fails** (per issue #299):
-   ```powershell
-   npm cache clean --force
-   npm uninstall -g savant-code
-   npm install -g savant-code
-   ```
-
-**Reference**: Issue [#299](https://github.com/savant0x/savant-code/issues/299)
-
----
-
 ### Message: "Update available: error → [version]"
 
 **What it means**:

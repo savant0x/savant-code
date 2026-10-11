@@ -17,6 +17,9 @@
 
 import { memo } from 'react'
 
+import { phaseIcon } from '../icon-names'
+import { SavantIcon } from '../SavantIcon'
+
 import type { CurrentActivity } from '../../state/transcript-store'
 import type { JSX } from 'react'
 
@@ -70,11 +73,15 @@ export const PhaseStepper = memo(function PhaseStepper({
         // give the ACTIVE chip a vivid, phase-coloured glow — not a faint
         // neutral tint. `fsm-active` stays adjacent to the base class for
         // the static-markup test assertions.
+        const mark = phaseIcon(name)
         return (
           <span
             key={name}
             className={`fsm-chip${lit ? ' fsm-active' : ''} fsm-${name}`}
           >
+            {/* FID-2026-1009-004 Phase 3: the family's phase mark rides the
+                chip; chips keep their text labels for readability. */}
+            {mark ? <SavantIcon name={mark} className="fsm-mark" /> : null}
             {name}
           </span>
         )

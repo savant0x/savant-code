@@ -2,6 +2,7 @@
  * Per-content-block HTML renderers for the exported report.
  */
 
+import { ico } from './export-icons'
 import {
   escapeHtml,
   formatAgentName,
@@ -23,12 +24,12 @@ export function renderToolBlockHtml(
   const hasOutput = output.trim().length > 0
 
   if (!hasInput && !hasOutput) {
-    return `<div class="tool-block"><span class="tool-badge"><i class="fa-solid fa-terminal" aria-hidden="true"></i> ${escapeHtml(name)}</span> <em class="muted">(no input or output)</em></div>`
+    return `<div class="tool-block"><span class="tool-badge">${ico('toolBadge')} ${escapeHtml(name)}</span> <em class="muted">(no input or output)</em></div>`
   }
 
   const inputSection = hasInput
     ? `<details open>
-    <summary><i class="fa-solid fa-arrow-right" aria-hidden="true"></i> Input</summary>
+    <summary>${ico('inputSummary')} Input</summary>
     <pre><code class="language-json">${escapeHtml(inputText)}</code></pre>
   </details>`
     : ''
@@ -37,14 +38,14 @@ export function renderToolBlockHtml(
     ? (() => {
         const rendered = renderToolOutput(output)
         return `<details>
-    <summary><i class="fa-solid fa-arrow-down" aria-hidden="true"></i> Output</summary>
+    <summary>${ico('outputSummary')} Output</summary>
     <pre><code class="${rendered.lang ? `language-${rendered.lang}` : ''}">${escapeHtml(rendered.body)}</code></pre>
   </details>`
       })()
     : ''
 
   return `<div class="tool-block">
-  <div class="tool-header"><span class="tool-badge"><i class="fa-solid fa-terminal" aria-hidden="true"></i> ${escapeHtml(name)}</span></div>
+  <div class="tool-header"><span class="tool-badge">${ico('toolBadge')} ${escapeHtml(name)}</span></div>
   ${inputSection}
   ${outputSection}
 </div>`
@@ -65,7 +66,7 @@ export function renderAgentBlockHtml(
     .map((child) => renderBlockHtml(child))
     .join('\n')
   return `<div class="agent-block">
-  <div class="agent-header"><i class="fa-solid fa-share-nodes" aria-hidden="true"></i> ${header}</div>
+  <div class="agent-header">${ico('agentHeader')} ${header}</div>
   ${promptHtml}
   ${contentHtml}
   ${childrenHtml}
@@ -78,7 +79,7 @@ export function renderPlanBlockHtml(
   const content = block.content?.trim()
   if (!content) return ''
   return `<div class="plan-block">
-  <div class="plan-header"><i class="fa-solid fa-list-check" aria-hidden="true"></i> Plan</div>
+  <div class="plan-header">${ico('planHeader')} Plan</div>
   ${renderMarkdownLikeHtml(content)}
 </div>`
 }
@@ -116,11 +117,11 @@ export function renderBlockHtml(block: ContentBlock): string {
     case 'ask-user':
       return renderAskUserBlockHtml(block)
     case 'image':
-      return `<p class="muted"><i class="fa-solid fa-image" aria-hidden="true"></i> [Image: ${escapeHtml(block.filename ?? block.mediaType ?? 'unknown')}]</p>`
+      return `<p class="muted">${ico('imageNotice')} [Image: ${escapeHtml(block.filename ?? block.mediaType ?? 'unknown')}]</p>`
     case 'agent-list': {
       const names = block.agents.map((a) => a.displayName).join(', ')
       return names
-        ? `<p class="muted"><i class="fa-solid fa-users" aria-hidden="true"></i> [Available agents: ${escapeHtml(names)}]</p>`
+        ? `<p class="muted">${ico('agentListNotice')} [Available agents: ${escapeHtml(names)}]</p>`
         : ''
     }
     default:

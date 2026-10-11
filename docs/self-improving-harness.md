@@ -290,4 +290,4 @@ a lesson-derived draft skill have not yet been operator-confirmed.
 ---
 
 *Architecture decisions and the full Perfection Loop record:
-[`dev/fids/FID-2026-0824-012-self-improving-harness-and-agent-created-skills.md`](../dev/fids/FID-2026-0824-012-self-improving-harness-and-agent-created-skills.md).*
+[`dev/fids/archive/FID-2026-0824-012-self-improving-harness-and-agent-created-skills.md`](../dev/fids/archive/FID-2026-0824-012-self-improving-harness-and-agent-created-skills.md).*

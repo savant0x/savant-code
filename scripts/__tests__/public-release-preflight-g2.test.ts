@@ -96,9 +96,7 @@ describe('checkG2CommitHashes', () => {
         commitState: 'abc1234',
       }),
     })
-    expect(checkG2CommitHashes(root, tagRun('2026-10-01')).findings).toEqual(
-      [],
-    )
+    expect(checkG2CommitHashes(root, tagRun('2026-10-01')).findings).toEqual([])
   })
 
   it('skips a closed FID predating the release tag even with an empty field', () => {
@@ -109,9 +107,7 @@ describe('checkG2CommitHashes', () => {
         commitState: null,
       }),
     })
-    expect(checkG2CommitHashes(root, tagRun('2026-10-01')).findings).toEqual(
-      [],
-    )
+    expect(checkG2CommitHashes(root, tagRun('2026-10-01')).findings).toEqual([])
   })
 
   it('treats a missing Closed Date as in-window (safe direction)', () => {
@@ -129,9 +125,7 @@ describe('checkG2CommitHashes', () => {
     archiveWith(root, {
       'FID-2026-0803-002-x.md': fidRecord({ commitState: null }),
     })
-    expect(checkG2CommitHashes(root, tagRun('2026-10-01')).findings).toEqual(
-      [],
-    )
+    expect(checkG2CommitHashes(root, tagRun('2026-10-01')).findings).toEqual([])
   })
 
   it('checks a dateless record whose filename postdates the tag', () => {
@@ -152,9 +146,7 @@ describe('checkG2CommitHashes', () => {
         commitState: null,
       }),
     })
-    expect(checkG2CommitHashes(root, tagRun('2026-10-01')).findings).toEqual(
-      [],
-    )
+    expect(checkG2CommitHashes(root, tagRun('2026-10-01')).findings).toEqual([])
   })
 
   it('blocks the template placeholder value', () => {
@@ -179,9 +171,7 @@ describe('checkG2CommitHashes', () => {
         commitState: null,
       }),
     })
-    expect(checkG2CommitHashes(root, tagRun('2026-10-01')).findings).toEqual(
-      [],
-    )
+    expect(checkG2CommitHashes(root, tagRun('2026-10-01')).findings).toEqual([])
   })
 
   it('blocks when release tags cannot be listed (fail-closed)', () => {
@@ -201,9 +191,7 @@ describe('checkG2CommitHashes', () => {
       'FID-2026-1008-002-x.md': fidRecord({ commitState: null }),
     })
     seedBaseline(root, ['FID-2026-1008-001-x.md', 'FID-2026-1008-002-x.md'])
-    expect(checkG2CommitHashes(root, tagRun('2026-10-01')).findings).toEqual(
-      [],
-    )
+    expect(checkG2CommitHashes(root, tagRun('2026-10-01')).findings).toEqual([])
   })
 
   it('blocks new gaps alongside a baseline', () => {

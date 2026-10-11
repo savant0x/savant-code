@@ -75,7 +75,7 @@ bun run dev:savant-free
 Verify your work before opening a PR:
 
 ```bash
-bun run typecheck      # All 11 workspaces must exit 0
+bun run typecheck      # All 13 typechecked workspaces must exit 0
 bun test               # All workspace test suites must pass
 bun x eslint . --max-warnings 0
 bun run lint:md        # Markdownlint must pass

@@ -228,8 +228,7 @@ function collectRunUsage(
       ? {
           inputTokens: total.inputTokens + sample.inputTokens,
           outputTokens: total.outputTokens + sample.outputTokens,
-          cachedInputTokens:
-            total.cachedInputTokens + sample.cachedInputTokens,
+          cachedInputTokens: total.cachedInputTokens + sample.cachedInputTokens,
           totalTokens: total.totalTokens + sample.totalTokens,
         }
       : { ...sample }

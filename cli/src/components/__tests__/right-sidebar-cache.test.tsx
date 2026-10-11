@@ -116,7 +116,7 @@ describe('sidebar cache row (FID-2026-1007-009)', () => {
         }),
       ),
     )
-    expect(value).toBe('80% (800/1.0k)')
+    expect(value).toBe('80% (800/1k)')
   })
 
   test('rejected samples are surfaced rather than hidden', () => {
@@ -131,7 +131,7 @@ describe('sidebar cache row (FID-2026-1007-009)', () => {
         }),
       ),
     )
-    expect(value).toBe('80% (800/1.0k) +1 invalid')
+    expect(value).toBe('80% (800/1k) +1 invalid')
   })
 
   test('the value travels the run-snapshot path, not a test prop', () => {
@@ -147,6 +147,6 @@ describe('sidebar cache row (FID-2026-1007-009)', () => {
     // The summary the sidebar selects is the one the run snapshot carries...
     expect(published?.model).toBe('anthropic/claude-4')
     // ...and rendering it produces the row from that snapshot value.
-    expect(cacheRowValue(render(published))).toBe('75% (1.5k/2.0k)')
+    expect(cacheRowValue(render(published))).toBe('75% (1.5k/2k)')
   })
 })

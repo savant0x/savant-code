@@ -1,4 +1,10 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none" role="img" aria-label="Call tool — arrow into a port box">
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  viewBox="0 0 64 64"
+  fill="none"
+  role="img"
+  aria-label="Call tool — arrow into a port box"
+>
   <!-- SAVANT // CYBERDECK — hand-authored vector geometry, no external assets -->
   <defs>
     <filter id="glow" x="-40%" y="-40%" width="180%" height="180%">
@@ -10,9 +16,19 @@
     </filter>
   </defs>
   <!-- target box -->
-  <path d="M32 18 L52 18 L52 46 L32 46 Z" stroke="#18faf9" stroke-width="3" stroke-linejoin="round" />
+  <path
+    d="M32 18 L52 18 L52 46 L32 46 Z"
+    stroke="#18faf9"
+    stroke-width="3"
+    stroke-linejoin="round"
+  />
   <!-- call arrow -->
-  <path d="M12 32 L28 32" stroke="#18faf9" stroke-width="3" stroke-linecap="round" />
+  <path
+    d="M12 32 L28 32"
+    stroke="#18faf9"
+    stroke-width="3"
+    stroke-linecap="round"
+  />
   <polygon points="24,27 30,32 24,37" fill="#ff2bd6" filter="url(#glow)" />
   <!-- port node -->
   <circle cx="32" cy="32" r="2" fill="#ff2bd6" />

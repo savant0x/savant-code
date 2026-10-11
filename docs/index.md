@@ -1,7 +1,7 @@
 <!-- markdownlint-disable MD013 -->
 # Savant Code
 
-**A terminal-native multi-agent AI coding assistant that audits every change before it touches your repo.**
+**A terminal-native AI coding assistant that scopes, implements, and verifies engineering work through ECHO.**
 
 Built with TypeScript/Bun, governed by the ECHO Protocol, and designed for local-first use with Ollama or any OpenAI-compatible provider.
 
@@ -9,9 +9,9 @@ Built with TypeScript/Bun, governed by the ECHO Protocol, and designed for local
 
 ## Why Savant Code?
 
-Most coding agents work as a single model guessing at your code. They generate changes, maybe run a linter, and hope for the best. When they fail, they fail silently — or worse, they fail confidently.
+Many coding agents rely on a single model to generate and check its own changes. When that check misses something, the failure can be silent — or confidently wrong.
 
-Savant Code takes a different approach. It uses **10 specialized agents** with strict separation of duties to audit every change before it reaches your files.
+Savant Code routes complex changes through **10 specialized agents** with strict separation of duties. Routine work follows the ECHO Hybrid workflow and its verification gates.
 
 **The core insight:** Code quality isn't a model problem, it's a configuration problem. Models will keep getting smarter, but they'll also keep failing in unexpected ways because unexpected failure modes are fundamental to non-deterministic systems. The solution isn't waiting for GPT-6 — it's engineering a harness that catches mistakes structurally.
 
@@ -59,7 +59,8 @@ Each agent has exactly the tools it needs — no more. Detective gets read-only 
 
 ## The ECHO Perfection Loop
 
-Every code change follows a strict pipeline:
+Complex changes follow the FID Perfection Loop. Routine work uses Hybrid Mode
+and remains subject to the core ECHO laws and applicable verification gates:
 
 1. **RED** — Identify ALL failures and issues with evidence (Detective phase)
 2. **GREEN** — Fix with minimal, surgical changes (Forge phase)
@@ -68,7 +69,7 @@ Every code change follows a strict pipeline:
 5. **SELF-CORRECT** — Fix any blockers found during audit
 6. **COMPLETE** — Document results, archive tracking (Recorder phase)
 
-No code is written without a plan. No plan is accepted without audit. No audit passes without evidence. This isn't optional — it's enforced by the protocol.
+Complex work is implemented only after its FID converges. Audits require evidence.
 
 ---
 
@@ -79,7 +80,7 @@ No code is written without a plan. No plan is accepted without audit. No audit p
 - **Context compaction** — 4-layer progressive auto-compaction with a single trigger authority keeps sessions running through large codebases; `/compact` forces an immediate compact-and-stop pass
 - **Checkpoint & Rewind** — Persistent per-turn edit checkpoints with `/rewind` modes for code, conversation, both, or session fork
 - **Fail-closed streaming** — Incomplete or malformed tool calls are rejected, not coerced
-- **Provider flexibility** — Works with Ollama (local-first), OpenRouter (default boot provider, free tier `openrouter/free`), OpenAI, TokenHarbor, TokenRouter, NVIDIA NIM, CommandCode, Nous Research, Cloudflare Workers AI, KiosAPI, APInex, OrcaRouter, B.AI, HCNSec, TokenBom, Infron, UnoRouter, BazaarLink, Atria AI, Intern InkStone, Vercel AI Gateway, Clean APIs, CodeCraft API, xKiro, ChatAnywhere, or any OpenAI-compatible API
+- **Provider flexibility** — Works with Ollama (local-first), OpenRouter (default boot provider, free tier `openrouter/free`), OpenAI, TokenHarbor, TokenRouter, NVIDIA NIM, CommandCode, Nous Research, Cloudflare Workers AI, KiosAPI, APInex, OrcaRouter, B.AI, HCNSec, TokenBom, Infron, UnoRouter, BazaarLink, Atria AI, Intern InkStone, Vercel AI Gateway, Clean APIs, CodeCraft API, Mistral AI, xKiro, ChatAnywhere, or any OpenAI-compatible API
 - **Research (web search + docs)** — `web_search`, `read_docs`, and `deep_research` work keylessly out of the box (Qwant + DuckDuckGo search; a self-populating local SQLite docset cache), with optional Bring-Your-Own-Key sources (`/research-keys`) and keyless version-aware freshness
 - **GitHub integration** — Read-only PR/issue/CI review via official MCP server
 - **Database helper** — 4 native tools with adapter-enforced safety (read-only by default, LIMIT injection, SQL redaction)
@@ -91,7 +92,7 @@ No code is written without a plan. No plan is accepted without audit. No audit p
 - **Agent-Steering Teacher (`/learn`)** — local-first exercises for directing and reviewing an AI coding agent, with a capability-sandboxed execution boundary and ZTAP-signed versioned progression
 - **Zero-Trust Agentic Provenance (ZTAP)** — per-role Ed25519-signed write receipts at the native write boundary, an append-only hash-only session ledger, a read-only live Trust Matrix, and `/attest` JSON + offline HTML receipts (see the [ZTAP guide](design/zero-trust-agentic-provenance.md))
 - **Durable budgeted goal mode** — `/goal <objective> [--budget tokens=N turns=N time=MS]` drives a budgeted, resumable goal run with token/turn/wall-clock ceilings and an honest `<untrusted_objective>` injection boundary (see the [goal-mode guide](design/goal-mode.md))
-- **Auto Drive (`/auto-drive`)** — clarify → plan → approve → run-to-completion autonomous execution that decomposes the plan into a FID backlog, runs it in dependency order, and certifies completion (aliases `/auto`, `/drive`, `/autodrive`; see the [Auto Drive blueprint](design/Auto Drive Architecture Blueprint.md) and the [FAQ](faq.md))
+- **Auto Drive (`/auto-drive`)** — clarify → plan → approve → run-to-completion autonomous execution that decomposes the plan into a FID backlog, runs it in dependency order, and certifies completion (aliases `/auto`, `/drive`, `/autodrive`; see the [FAQ](faq.md) and the [historical design proposal](design/Auto Drive Architecture Blueprint.md))
 - **Discord Rich Presence (`/presence`)** — externalizes the active agent, phase, project basename, and model to Discord with a mechanical privacy boundary (paths, arguments, FID titles, and search queries redacted; fail-closed Zod fallback) — see the [Discord Presence blueprint](design/Discord Presence For Savant-Code.md)
 - **Savant Desktop (Tauri v2)** — a native desktop shell wrapping the same engine: Rust sidecar supervisor, structured chat surface, the 3D command deck (a neon-noir office where the 10-agent cast mirrors live chat activity in real time), and the Auto Drive dashboard — see [`desktop/README.md`](../desktop/README.md)
 - **Extensible hook system** — a project-scoped `hooks:` block in `protocol.config.yaml` runs external commands at the tool-executor lifecycle (`PreToolUse`/`PostToolUse`/session/subagent events), composing with the EHEL gate and fail-open by default (see the [hook-system guide](design/hook-system.md))
@@ -123,7 +124,7 @@ No code is written without a plan. No plan is accepted without audit. No audit p
 - [Zero-Trust Agentic Provenance](design/zero-trust-agentic-provenance.md)
 - [Hook System](design/hook-system.md)
 - [Goal Mode](design/goal-mode.md)
-- [Auto Drive](design/Auto Drive Architecture Blueprint.md)
+- [Auto Drive FAQ](faq.md#auto-drive)
 - [Discord Rich Presence](design/Discord Presence For Savant-Code.md)
 - [Desktop Shell](../desktop/README.md)
 - [FAQ](faq.md)

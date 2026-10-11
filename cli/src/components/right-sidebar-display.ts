@@ -1,7 +1,9 @@
 import stringWidth from 'string-width'
 
 import { activityMapping, phaseMapping } from './savant-ui/echo/phase-info'
+import { resolveThemeColor } from './savant-ui/icon-theme-keys'
 
+import type { ChatTheme } from '../types/theme-system'
 import type { StatusIndicatorState } from '../utils/status-indicator-state'
 
 export type SidebarDensity = 'minimal' | 'compact' | 'spacious'
@@ -75,4 +77,16 @@ export function sidebarPhase(phase: string) {
   return mapping.label === 'IDLE' && phase !== 'idle'
     ? `Unknown phase: ${phase}`
     : `ECHO · ${mapping.label}`
+}
+
+/**
+ * The FSM phase line's color — the phase's OWN theme token
+ * (FID-2026-1009-007: the pre-v0.0.5 per-phase coloring, restored through
+ * the theme instead of hardcoded hex). `phase-info.ts` owns the
+ * phase → colorKey mapping; `resolveThemeColor` is the one legal resolver
+ * and never throws (Law 14). An unknown phase falls back to the idle
+ * mapping (muted).
+ */
+export function sidebarPhaseColor(theme: ChatTheme, phase: string): string {
+  return resolveThemeColor(theme, phaseMapping(phase).colorKey)
 }

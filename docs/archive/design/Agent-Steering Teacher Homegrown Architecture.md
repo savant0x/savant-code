@@ -2,11 +2,11 @@
 
 # Agent-Steering Teacher — Homegrown Architecture
 
-**Status:** Authoritative design — implemented, Nova-audited **PASS**, and operator-closed (FID-2026-0813-011..020 archived 2026-08-13). See [`agent-steering-teacher-overview.md`](agent-steering-teacher-overview.md) for the complete overview.
+**Status:** Historical architecture — implementation and review were closed under FID-2026-0813-011..020. See the [current agent-steering teacher overview](../../design/agent-steering-teacher-overview.md) for the maintained product guidance.
 **Date:** 2026-08-13
 **Supersedes:** `Agent-Steering Teacher Architecture.md` and the fCC-centered
 research prompt
-**Build order:** `dev/build-orders/2026-08-13-agent-steering-teacher-build-order.md`
+**Build order:** [`dev/build-orders/2026-08-13-agent-steering-teacher-build-order.md`](../../../dev/build-orders/archive/2026-08-13-agent-steering-teacher-build-order.md)
 **Scope:** Local-first Savant-Code teacher for agent-output literacy
 
 ## 1. Product definition

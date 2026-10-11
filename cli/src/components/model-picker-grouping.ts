@@ -20,6 +20,13 @@ export interface HeaderItem {
   provider: ModelProvider | null
   /** Display text (provider uppercased, or the synthetic section title). */
   label: string
+  /**
+   * FID-2026-1009-005: a registered provider whose live catalog fetch failed
+   * or returned no rows. The group header still renders — a keyed provider
+   * must never vanish from /model silently — but it carries no selectable
+   * rows (free-text `/model <id>` still routes through the registry).
+   */
+  unavailable?: boolean
 }
 
 export type ListItem = ModelItem | HeaderItem
@@ -39,7 +46,22 @@ export function getProviderOrder(provider: ModelProvider): number {
   return deriveProviderOrder(getEffectiveProviderRegistry(), provider)
 }
 
-export function buildGroupedItems(models: OpenRouterModel[]): ListItem[] {
+/**
+ * Build the picker's display list.
+ *
+ * FID-2026-1009-005: `unavailableProviderIds` names registered providers
+ * whose live catalog contributed zero rows (a failed or empty fetch — the
+ * CodeCraft stale-key class, where the provider vanished from /model with
+ * only a developer-facing logger warning). Each such id renders as an
+ * UNAVAILABLE group header so the provider stays visible with a degraded
+ * state; the ids come from the existing coverage seam
+ * (`computeCatalogGaps` — keyed live providers with no rows), never a
+ * parallel detector. Ids that DO have rows are ignored here.
+ */
+export function buildGroupedItems(
+  models: OpenRouterModel[],
+  unavailableProviderIds: readonly string[] = [],
+): ListItem[] {
   // FID-2026-1007-017: the ⭐ FREE MODELS section hoists only the entries that
   // carry the free token THEMSELVES and renders NO key lane — the free-key
   // provider appears as an ordinary provider group (with its ⭐ rows), not as a
@@ -93,6 +115,21 @@ export function buildGroupedItems(models: OpenRouterModel[]): ListItem[] {
     for (const model of group) {
       items.push({ type: 'model', model, provider })
     }
+  }
+
+  // FID-2026-1009-005: keyed-but-rowless live providers render as
+  // UNAVAILABLE group headers (alphabetical among themselves, after the
+  // populated groups) — never silently absent.
+  const unavailable = unavailableProviderIds
+    .filter((id) => !byProvider.has(id as ModelProvider))
+    .sort((a, b) => a.localeCompare(b))
+  for (const provider of unavailable) {
+    items.push({
+      type: 'header',
+      provider: provider as ModelProvider,
+      label: `${provider.toUpperCase()} — UNAVAILABLE`,
+      unavailable: true,
+    })
   }
 
   return items

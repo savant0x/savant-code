@@ -1,4 +1,10 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none" role="img" aria-label="Edit tool — pencil">
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  viewBox="0 0 64 64"
+  fill="none"
+  role="img"
+  aria-label="Edit tool — pencil"
+>
   <!-- SAVANT // CYBERDECK — hand-authored vector geometry, no external assets -->
   <defs>
     <filter id="glow" x="-40%" y="-40%" width="180%" height="180%">
@@ -10,9 +16,19 @@
     </filter>
   </defs>
   <!-- pencil body: thick diagonal stroke -->
-  <path d="M22 44 L42 24" stroke="#18faf9" stroke-width="7" stroke-linecap="round" />
+  <path
+    d="M22 44 L42 24"
+    stroke="#18faf9"
+    stroke-width="7"
+    stroke-linecap="round"
+  />
   <!-- writing tip -->
   <polygon points="16,50 25,47 19,41" fill="#ff2bd6" filter="url(#glow)" />
   <!-- eraser -->
-  <path d="M42 24 L46 20" stroke="#ff2bd6" stroke-width="5" stroke-linecap="round" />
+  <path
+    d="M42 24 L46 20"
+    stroke="#ff2bd6"
+    stroke-width="5"
+    stroke-linecap="round"
+  />
 </svg>

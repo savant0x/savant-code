@@ -1,4 +1,10 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none" role="img" aria-label="Verifier — ECHO agent role: double-audit validation shield">
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  viewBox="0 0 64 64"
+  fill="none"
+  role="img"
+  aria-label="Verifier — ECHO agent role: double-audit validation shield"
+>
   <!-- SAVANT // CYBERDECK — hand-authored vector geometry, no external assets -->
   <defs>
     <filter id="glow" x="-40%" y="-40%" width="180%" height="180%">
@@ -10,11 +16,28 @@
     </filter>
   </defs>
   <!-- shield -->
-  <path d="M32 8 L50 15 L50 31 C50 43 42 51 32 56 C22 51 14 43 14 31 L14 15 Z" stroke="#18faf9" stroke-width="3" stroke-linejoin="round" />
+  <path
+    d="M32 8 L50 15 L50 31 C50 43 42 51 32 56 C22 51 14 43 14 31 L14 15 Z"
+    stroke="#18faf9"
+    stroke-width="3"
+    stroke-linejoin="round"
+  />
   <!-- inner shield detail -->
-  <path d="M32 14 L44 19.5 L44 31 C44 40.5 38 46.5 32 50 C26 46.5 20 40.5 20 31 L20 19.5 Z" stroke="#4fa8ff" stroke-width="1.5" opacity="0.7" />
+  <path
+    d="M32 14 L44 19.5 L44 31 C44 40.5 38 46.5 32 50 C26 46.5 20 40.5 20 31 L20 19.5 Z"
+    stroke="#4fa8ff"
+    stroke-width="1.5"
+    opacity="0.7"
+  />
   <!-- circuit check with terminal nodes -->
-  <path d="M22 33 L29 39 L43 23" stroke="#ff2bd6" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" filter="url(#glow)" />
+  <path
+    d="M22 33 L29 39 L43 23"
+    stroke="#ff2bd6"
+    stroke-width="3"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    filter="url(#glow)"
+  />
   <g fill="#ff2bd6">
     <circle cx="22" cy="33" r="2" />
     <circle cx="43" cy="23" r="2" />

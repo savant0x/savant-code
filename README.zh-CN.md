@@ -12,16 +12,6 @@
 
 </div>
 
-> **尚未发布 — 2026-10-03：** CodeCraft API 与 xKiro 已接入 `/provider` 和
-> 实时模型选择器，CleanAPIs 的目录元数据映射已完善。`/model` 的模型与分组行
-> 现在固定为一行，滚动与窗口缩放时选中项保持可见，显示截断不会改变完整模型 ID。
-> 模型信息包含已报告的限制、价格、能力、访问等级与推理选项；未知值不会被编造。
-> xKiro 的目录可见性不代表账户拥有付费模型权限。此外：持久的提供商通知服务上线（`/notifications`
-> 收件箱：模型增删改、健康/下线日期、配额与优惠窗口），网关支持重连事件重放，请求 token
-> 预算在所有模型调用上强制执行，自定义 `INFERENCE_BASE_URL` 端点仅由 `INFERENCE_API_KEY`
-> 授权。参见
-> [提供商与模型说明](docs/providers.md)和[更新日志](CHANGELOG.md)。
-
 > **v0.0.35** —— **OpenAI 平台直连成为一等提供商**：平台 `sk-` 密钥
 > （`/provider openai`、`OPENAI_API_KEY`）将 `openai/<id>`（OpenAI 激活时也包括裸 id）
 > 经 **Responses API** 路由到 api.openai.com，而 ChatGPT 订阅 OAuth 通道对其白名单模型
@@ -187,6 +177,7 @@ ollama serve
 | Vercel AI Gateway | `/provider vercel` | `AI_GATEWAY_API_KEY` | 托管网关（免密钥的实时模型目录） |
 | Clean APIs | `/provider cleanapis` | `CLEANAPIS_API_KEY` | 托管网关（密钥认证的实时模型目录） |
 | CodeCraft API | `/provider codecraft` | `CODECRAFT_API_KEY` | OpenAI 兼容网关（密钥认证的实时模型目录） |
+| Mistral AI | `/provider mistral` | `MISTRAL_API_KEY` | OpenAI 兼容网关（密钥认证的实时模型目录） |
 | xKiro | `/provider xkiro` | `XKIRO_API_KEY` | 实时聊天模型目录；Anthropic 模型使用 Messages，其余模型使用 OpenAI 聊天 |
 | ChatAnywhere | `/provider chatanywhere` | `CHATANYWHERE_API_KEY` | OpenAI 兼容托管网关（静态 27 模型聊天白名单；免费密钥层每日 10,000 积分；`https://api.chatanywhere.tech/v1`） |
 | Cloudflare | `/provider cloudflare` | `CLOUDFLARE_API_TOKEN` + `CLOUDFLARE_ACCOUNT_ID` | Workers AI 网关；`/provider` 流程先提示输入令牌，再输入账户 ID（环境变量优先） |
@@ -257,7 +248,7 @@ MCP 工具发现、模式切换（`HYBRID` / `SCAFFOLD` / `STRICT` / `ANALYZE`�
 | ------------- | -------------------------------- | ------------------------------------------------ |
 | 运行时        | Bun                              | 1.3.14 (engines `>=1.3.11`)                      |
 | 语言          | TypeScript                       | 5.5.4 (`strict: true`, `noImplicitReturns: true`) |
-| TUI           | OpenTUI + React 19               | `@opentui/core` 0.2.2, `react` ^19.0.0           |
+| TUI           | OpenTUI + React 19               | `@opentui/core` 0.5.3, `react` ^19.0.0           |
 | 状态管理      | Zustand + Immer                  | zustand ^5.0.8, immer ^10.1.3                    |
 | 校验          | Zod                              | ^4.2.1                                           |
 | LLM SDK       | Vercel AI SDK                    | `ai` ^5.0.52 + `@ai-sdk/anthropic` 2.0.50        |
@@ -284,7 +275,7 @@ MCP 工具发现、模式切换（`HYBRID` / `SCAFFOLD` / `STRICT` / `ANALYZE`�
 - **`/init` 命令** —— 生成 `.agents/types/{agent-definition,tools,util-types}.ts` 以及一份入门
   `knowledge.md`。
 - **斜杠命令** —— `/new`、`/history`、`/bash`、`/goal`、`/loop`、`/feedback`、`/rewind`、
-  `/theme:toggle`、`/design`、`/login`、`/logout`、`/exit`，以及各智能体专属命令。
+  `/theme:toggle`、`/design`、`/logout`、`/exit`，以及各智能体专属命令。
 - **可加载设计系统库** —— 离线 `savant-design-systems` 技能包含 74 个约 2 MB 的预设，支持 `/design list`、
   `/design use`、`/design create`、`/design edit`、`/design import`、草稿恢复与重置。只有当前设计契约会进入
   agent 上下文；自定义系统经过校验、版本化保存，并在 EHEL 写入边界进行检查。详细架构、交互式创建/编辑、
@@ -356,7 +347,7 @@ MCP 工具发现、模式切换（`HYBRID` / `SCAFFOLD` / `STRICT` / `ANALYZE`�
   计算并注入其消息历史（零工具契约不变）；`/graph-export` 写出品牌化、完全离线的交互式 HTML 报告，复用
   `/export` 设计系统（FID-2026-0806-002）。
 - **ECHO Harness 强制执行层（EHEL）** —— 在工具执行器层面结构化执行全部 15 条 ECHO 定律。写入前门禁在违规
-  发生前拦截（Law 1：先读后写、Law 3：先验证后继续、Law 7：先搜索后创建、Law 8：意图日志、20 行阈值的 FID
+  发生前拦截（Law 1：先读后写、Law 3：先验证后继续、Law 7：先搜索后创建、Law 8：意图日志、100 行阈值的 FID
   Recorder 门禁）。轮次结束批量运行写入后扫描器（Law 5、6、9、10、12、14、15）。轮次结束检查 Law 4 调用图可达性。
   FID 完整性校验器带强制性的未解答问题。模式驱动：**Hybrid** = Law 1-4 拦截 + Law 5-15 建议；**Strict** =
   全部 15 条拦截。只有 2 个智能体拥有写工具（Orchestrator + Recorder）。紧急绕过：智能体请求、用户确认
@@ -365,8 +356,7 @@ MCP 工具发现、模式切换（`HYBRID` / `SCAFFOLD` / `STRICT` / `ANALYZE`�
   与机械式 Verifier 判据（10+ 行 / 2+ 文件 / 新 API / 安全敏感 / Forge）：非阻塞 `compliance_warning`
   收据 + 纠正性引导，让运行中的智能体自行修正；当写入触及活动 FID 时升级为始终启用（FID-2026-0804-009）。
 - **可读的编辑 diff** —— 编辑块将新增行染成 50% 霓虹绿、删除行染成 50% 霓虹红（与主题背景混合），并在
-  复制按钮旁显示 `[-N/+M]` 增删计数器；完整 ECHO Perfection Loop 的触发门槛从 75 行降至 20 行
-  （FID-2026-0804-010）。
+  复制按钮旁显示 `[-N/+M]` 增删计数器（FID-2026-0804-010）。
 - **上下文压缩** —— 4 层渐进式自动压缩：L0（总结旧轮次）、L1（压缩工具结果）、L2（裁剪过期上下文）、
   L3（激进缩减）。在保留关键上下文的同时降低 token 用量。
 - **上下文窗口解析** —— 网关模型（例如 `tokenharbor/mimo-v2.5`）在运行时从 OpenRouter 目录解析其真实
@@ -375,7 +365,7 @@ MCP 工具发现、模式切换（`HYBRID` / `SCAFFOLD` / `STRICT` / `ANALYZE`�
 - **网关提供商** —— 通过 `@savant-code/llm-providers` 支持 OpenRouter、TokenRouter、TokenHarbor、NVIDIA NIM、
   CommandCode、Nous Research、KiosAPI、APInex、OrcaRouter、B.AI、HCNSec、
 TokenBom、Infron、Intern InkStone、ChatAnywhere、
-UnoRouter、BazaarLink、Atria AI、OpenAI、Vercel AI Gateway、Clean APIs、CodeCraft API、xKiro 与
+UnoRouter、BazaarLink、Atria AI、OpenAI、Vercel AI Gateway、Clean APIs、CodeCraft API、Mistral AI、xKiro 与
   Cloudflare Workers AI。Nous Research 使用 OpenAI 兼容直连
   API；Portal OAuth 是独立集成。
 - **默认模型** —— 通过 OpenRouter 使用 `openrouter/free`（可通过 `/model` 配置）。
@@ -559,7 +549,7 @@ SAVANT_GRAPH_EXPORT_TOTAL_MEDIA_BYTES=<正整数>
 
 | 模式 | 智能体 | 契约 |
 | --- | --- | --- |
-| `HYBRID`（默认） | `savant` | 直接、低摩擦地编写，受 harness 约束：以 `warn` 级别产生确定性的 Law 1/3 + Verifier 判据收据，超过 20 行仪式阈值时完整 Perfection Loop 自动升级（FID-2026-0804-009/010）。 |
+| `HYBRID`（默认） | `savant` | 直接、低摩擦地编写，受 harness 约束：以 `warn` 级别产生确定性的 Law 1/3 + Verifier 判据收据，超过 100 行仪式阈值时完整 Perfection Loop 自动升级（FID-2026-0804-009/010）。 |
 | `SCAFFOLD` | `savant-scaffold` | 伞形 FID 项目初始化；搭建一次后交还 HYBRID。 |
 | `STRICT` | `savant-strict` | **每一次**代码改动都执行完整 ECHO 仪式——每次改动建 FID、Forge 编写、Verifier 审计、Law-4 grep。 |
 | `ANALYZE` | `savant-analyze` | 只读：搜索、检查与推理，不写文件。 |
@@ -584,14 +574,14 @@ STRICT 下也保持无仪式。
 
 | 考量 | `HYBRID` | `STRICT` |
 | --- | --- | --- |
-| 速度 | 最快——自由编写；超过 20 行时完整循环自动介入 | 较慢——每次改动都要付出完整循环的代价 |
+| 速度 | 最快——自由编写；超过 100 行时完整循环自动介入 | 较慢——每次改动都要付出完整循环的代价 |
 | 摩擦 | 最小——harness 只警告与引导，从不阻塞 | 最大——仪式是强制的，而非可选 |
 | 审计轨迹 | 仅升级的改动有 FID | 每次改动一个 FID，附带 CHANGELOG 条目归档 |
-| 验证 | `warn` 级 harness 收据 + 超过 20 行时自我升级 | 每次改动都有 Verifier + Law-4 grep |
+| 验证 | `warn` 级 harness 收据 + 超过 100 行时自我升级 | 每次改动都有 Verifier + Law-4 grep |
 | 最适合 | 日常构建、探索、原型、快速迭代 | 安全敏感或长期维护的代码、付费 API 面、团队审查、任何需要持久审计轨迹的场景 |
 
 **经验法则：** 如果改动出错会带来损失——认证、支付、迁移、任何要交付给用户的东西——请使用 `STRICT`。
-如果是在探索或快速迭代，`HYBRID` 是正确的默认：harness 仍然监视 Law 1/3 与 Verifier 判据，超过 20 行阈值
+如果是在探索或快速迭代，`HYBRID` 是正确的默认：harness 仍然监视 Law 1/3 与 Verifier 判据，超过 100 行阈值
 时完整循环仍然会介入。
 
 ---
@@ -606,14 +596,17 @@ STRICT 下也保持无仪式。
 | `cli/`                    | `@savant-code/cli`            | CLI 源码——UI、命令、状态、hooks、OpenTUI/React 组件             |
 | `common/`                 | `@savant-code/common`         | 共享类型、工具定义、工具函数                                    |
 | `evals/`                  | `@savant-code/evals`          | ECHO 原生 benchmark v2 运行器 + 遗留 eval fixtures              |
+| `savant-free/`            | `@savant-code/savant-free`    | 免费变体的 CLI 发布与其 e2e 测试                                 |
 | `packages/agent-runtime/` | `@savant-code/agent-runtime`  | agent 循环、工具执行器、LLM API 集成                            |
+| `packages/design-systems/`| `@savant-code/design-systems` | 离线设计系统预设与视觉契约                                       |
 | `packages/code-map/`      | `@savant-code/code-map`       | tree-sitter 代码索引、语言检测                                  |
 | `packages/database/`      | `@savant-code/database`       | 数据库抽象层                                                     |
 | `packages/knowledge-graph/` | `@savant-code/knowledge-graph` | 确定性代码知识图谱引擎（索引器、查询、聚类、导出序列化器）         |
 | `packages/llm-providers/` | `@savant-code/llm-providers`  | 公开 LLM 提供商适配层                                           |
+| `packages/connectors/`    | `@savant-code/connectors`     | 连接器层——目录 + 连接器工具元族                                  |
 | `sdk/`                    | `@savant-code/sdk`            | 公开 SDK——`SavantCodeClient`、类型、构建 + 验证脚本             |
 | `desktop/`                | `@savant-code/desktop`        | Tauri v2 桌面外壳——Rust sidecar 监管器、React 19 渲染器、3D 指挥甲板 |
-| `scripts/tmux/`           | `@savant-code/tmux`           | 交互式测试运行中使用的 tmux CLI 辅助工具                         |
+| `scripts/tmux/`           | `@savant-code/tmux-scripts`   | 交互式测试运行中使用的 tmux CLI 辅助工具                         |
 
 <!-- markdownlint-enable MD013 MD060 -->
 
@@ -715,6 +708,7 @@ savant-code
 /provider cleanapis
 /provider codecraft
 /provider xkiro
+/provider mistral
 /provider cloudflare
 ```
 
@@ -723,7 +717,7 @@ savant-code
 `BAI_API_KEY`、`HCNSEC_API_KEY`、`TOKENBOM_API_KEY`、`ATRIA_API_KEY`、`INTERN_API_KEY`、`INFRON_API_KEY`、
 `UNOROUTER_API_KEY`、
 `BAZAARLINK_API_KEY`、`CHATANYWHERE_API_KEY`、`AI_GATEWAY_API_KEY`、
-`CLEANAPIS_API_KEY`、`CODECRAFT_API_KEY`、`XKIRO_API_KEY` 与
+`CLEANAPIS_API_KEY`、`CODECRAFT_API_KEY`、`XKIRO_API_KEY`、`MISTRAL_API_KEY` 与
 `CLOUDFLARE_API_TOKEN`。密钥提示为遮罩输入，并将密钥全局存储在
 Savant-Code 配置的 `credentials.json` 中；不会加入
 聊天记录。shell 环境变量优先于已存储的密钥，因此 CI 与托管环境可以不使用本地持久化来配置提供商。高级直接提供商
@@ -743,8 +737,8 @@ OpenRouter 可使用 `OPENROUTER_API_KEY` 或 `SAVANT_CODE_BYOK_OPENROUTER`。
 | `bun run build:sdk`               | 构建 SDK 用于 npm 发布          |
 | `bun run --cwd=cli build:binary`  | 从 `cli/` 构建 CLI 二进制       |
 | `bun run ci`                      | 构建 SDK 与发布产物             |
-| `bun test`                        | 运行测试套件                    |
-| `bun x tsc --noEmit`              | 类型检查                        |
+| `bun run test`                    | 运行测试套件                    |
+| `bun run typecheck`               | 类型检查（全部工作区）          |
 | `bun x eslint . --max-warnings 0` | Lint                            |
 
 <!-- markdownlint-enable MD013 MD060 -->
@@ -764,10 +758,13 @@ OpenRouter 可使用 `OPENROUTER_API_KEY` 或 `SAVANT_CODE_BYOK_OPENROUTER`。
 | `/export`（`/save`） | 将对话写入自包含的品牌化 HTML 报告 |
 | `/graph refresh`（`/graph`） | 重新索引代码知识图谱并显示摘要统计（`--full` 全量重建） |
 | `/graph-export`（`/graph:export`） | 将代码知识图谱写入品牌化的交互式离线 HTML 报告 |
+| `/attest`（`/trust-receipt`） | 导出并校验当前项目的签名 ZTAP 信任回执 |
+| `/learn`（`/teacher`） | 通过引导式练习，练习指导与审查 AI 编程代理 |
 | `/interview` | 将想法整理为结构化规格 |
 | `/plan` | 创建实现计划 |
 | `/review` | 审查代码改动 |
-| `/goal`（`/g`） | 持续迭代直到可验证目标满足 |
+| `/compact` | 立即强制一次上下文压缩（压缩并停止） |
+| `/goal`（`/g`） | 启动或管理持久的、带预算的 goal 运行（`status`、`pause`、`resume`、`cancel`） |
 | `/auto-drive`（`/auto`、`/drive`、`/autodrive`） | 启动或管理 Auto Drive 运行 —— 澄清、计划、批准，然后运行至完成 |
 | `/loop`（`/repeat`） | 按周期运行提示；使用 `stop` 或 `status` |
 | `/verify`（`/typecheck`） | 运行四个受支持的核心工作区类型检查，可全部运行或指定一个 |
@@ -786,10 +783,14 @@ OpenRouter 可使用 `OPENROUTER_API_KEY` 或 `SAVANT_CODE_BYOK_OPENROUTER`。
 | `/feedback`（`/bug`、`/report`） | 打开反馈流程 |
 | `/telemetry`（`/analytics`） | 查看或修改远程分析同意状态 |
 | `/theme:toggle` | 在亮色与暗色主题间切换 |
+| `/design`（`/ds`） | 列出、选择、创建、编辑、导入、校验、恢复、丢弃与重置设计系统 |
+| `/skills` | 列出、查看、信任、取消信任或回滚智能体自建技能（仅操作员的发布边界） |
 | `/bash`（`!`） | 运行 shell 命令或进入 Bash 模式 |
 | `/image`（`/img`、`/attach`） | 为支持多模态的模型附加图片 |
 | `/init` | 创建入门智能体类型与 `knowledge.md` |
-| `/login` / `/logout` | 登录或结束当前会话 |
+| `/connect` | 连接 ChatGPT 账号（OAuth） |
+| `/end-session` | 结束免费会话（可切换模型） |
+| `/logout`（`/signout`） | 结束当前会话并登出 |
 | `/exit`（`/quit`、`/q`） | 退出 CLI |
 
 ---
@@ -822,6 +823,10 @@ OpenRouter 可使用 `OPENROUTER_API_KEY` 或 `SAVANT_CODE_BYOK_OPENROUTER`。
 | `dev/fids/`                | 功能实现文档（FID）                            |
 | `dev/session-summaries/`   | 会话审计轨迹                                  |
 | `dev/LEARNINGS.md`         | 跨会话经验                                    |
+| `dev/agenda.md`            | 会话结束学习议程（≤50 行）                    |
+| `dev/experiences/`         | 原始经验轨迹（启动不载入，已去重）            |
+| `.agents/skills/`          | 技能 + `versions/` + `VERSIONS.jsonl` + `.quarantine/` |
+| `docs/self-improving-harness.md` | 自我改进 harness + 智能体自建技能（完整指南） |
 
 <!-- markdownlint-enable MD060 -->
 
@@ -845,10 +850,10 @@ OpenRouter 可使用 `OPENROUTER_API_KEY` 或 `SAVANT_CODE_BYOK_OPENROUTER`。
 bun run build:sdk && bun run ci
 
 # 测试
-bun test
+bun run test
 
 # 类型检查
-bun x tsc --noEmit
+bun run typecheck
 
 # Lint
 bun x eslint . --max-warnings 0
@@ -879,7 +884,7 @@ CLI 默认**开启远程分析与错误报告**（FID-2026-0806-015）。CLI 会
 - [`protocol.config.yaml`](protocol.config.yaml) — 构建命令、质量基准
 - [`CHANGELOG.md`](CHANGELOG.md) — 发布历史
 - [`docs/code-universe-export.md`](docs/code-universe-export.md) — `/export` 对话报告与 `/graph-export` Code Universe 指南
-- [`docs/launch/landing/index.html`](docs/launch/landing/index.html) — 公开落地页
+- [`docs/archive/launch/index.html`](docs/archive/launch/index.html) — 公开落地页（归档的发布产物）
 - [`dev/LEARNINGS.md`](dev/LEARNINGS.md) — 跨会话经验
 - [`dev/session-summaries/`](dev/session-summaries/) — 会话审计轨迹
 

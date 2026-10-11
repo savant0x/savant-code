@@ -9,6 +9,7 @@ import {
   fetchGatewayModels,
   getCachedGatewayModels,
 } from '../../utils/openrouter-models'
+import { computeCatalogGaps } from '../../utils/openrouter-models/gateway-coverage'
 import {
   activateConfiguredProvider,
   applyModelPickerSelection,
@@ -72,8 +73,14 @@ export const MODEL_PROVIDER_COMMANDS = [
       const opened = await openModelPicker({
         readCached: getCachedGatewayModels,
         refresh: () => fetchGatewayModels(),
-        open: (models) => useModelPickerStore.getState().open(models),
-        setModels: (models) => useModelPickerStore.getState().setModels(models),
+        // FID-2026-1009-005: keyed live providers with zero rows render as
+        // UNAVAILABLE groups — a configured provider never vanishes from
+        // /model silently (the CodeCraft stale-key class).
+        readUnavailable: (models) => computeCatalogGaps(models),
+        open: (models, unavailable) =>
+          useModelPickerStore.getState().open(models, undefined, unavailable),
+        setModels: (models, unavailable) =>
+          useModelPickerStore.getState().setModels(models, unavailable),
         isOpen: () => useModelPickerStore.getState().isOpen,
       })
       if (!opened) {

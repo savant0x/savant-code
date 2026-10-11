@@ -1,13 +1,27 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none" role="img" aria-label="Alert: info — informational notice">
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  viewBox="0 0 64 64"
+  fill="none"
+  role="img"
+  aria-label="Alert: info — informational notice"
+>
   <defs>
     <filter id="glow" x="-40%" y="-40%" width="180%" height="180%">
       <feGaussianBlur stdDeviation="2.5" result="blur" />
-      <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
+      <feMerge>
+        <feMergeNode in="blur" />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
     </filter>
   </defs>
   <circle cx="32" cy="32" r="18" stroke="#4fa8ff" stroke-width="3" />
   <circle cx="32" cy="20" r="2.5" fill="#4fa8ff" />
-  <path d="M32 28 L32 44" stroke="#4fa8ff" stroke-width="3" stroke-linecap="round" />
+  <path
+    d="M32 28 L32 44"
+    stroke="#4fa8ff"
+    stroke-width="3"
+    stroke-linecap="round"
+  />
   <!-- terminal dot at the base -->
   <circle cx="32" cy="47" r="1.5" fill="#18faf9" opacity="0.7" />
 </svg>

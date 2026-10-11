@@ -100,7 +100,7 @@ test('design concepts embed the original SVG bytes without reconstruction', () =
   expect(html).toContain('Not OpenTUI screenshots')
 })
 
-for (const design of ['circuit', 'holographic'] as const) {
+for (const design of ['circuit', 'holographic', 'holo'] as const) {
   test(`${design} native full preview retains status, artwork and traffic lights`, async () => {
     const capture = await captureHud({ design, art: 'blocks' })
     expect(capture.text).toContain('SYNTHETIC DESIGN PREVIEW')
@@ -126,3 +126,21 @@ for (const design of ['circuit', 'holographic'] as const) {
     expect(folded.text).toContain('70% demo')
   })
 }
+
+test('holo design renders raised panels, magenta titles and a centered masthead', async () => {
+  const capture = await captureHud({ design: 'holo', art: 'text' })
+  expect(capture.text).toContain('SAVANT')
+  expect(capture.text).toContain('HOLO FRAME · ONE MIND')
+  expect(capture.text).toContain('Activity detail')
+  // Rounded panel corners from borderStyle="rounded".
+  expect(capture.text).toMatch(/[╭╮╰╯]/)
+  const spans = capture.frame.lines.flatMap((line) => line.spans)
+  const hasColor = (rgba: { toInts: () => number[] }, rgb: number[]) => {
+    const [r, g, b] = rgba.toInts()
+    return r === rgb[0] && g === rgb[1] && b === rgb[2]
+  }
+  // Magenta section titles (#ff2bd6).
+  expect(spans.some((span) => hasColor(span.fg, [255, 43, 214]))).toBe(true)
+  // Raised panel fill (#14141c).
+  expect(spans.some((span) => hasColor(span.bg, [20, 20, 28]))).toBe(true)
+})

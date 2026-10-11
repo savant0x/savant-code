@@ -169,7 +169,7 @@ describe('native sidebar interaction', () => {
       expect(scroll.scrollTop).toBeGreaterThan(0)
       setup.controller.focusSection('Tools')
       await setup.flush()
-      expect(setup.captureCharFrame()).toContain('read_files')
+      expect(setup.captureCharFrame()).toContain('Read files')
       setup.resize(100, 24)
       useThemeStore.getState().setThemeName('dark')
       await setup.flush()

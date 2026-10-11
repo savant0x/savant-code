@@ -1,17 +1,48 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none" role="img" aria-label="FID — Flaw Identification Document, verified fix">
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  viewBox="0 0 64 64"
+  fill="none"
+  role="img"
+  aria-label="FID — Flaw Identification Document, verified fix"
+>
   <defs>
     <filter id="glow" x="-40%" y="-40%" width="180%" height="180%">
       <feGaussianBlur stdDeviation="2.5" result="blur" />
-      <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
+      <feMerge>
+        <feMergeNode in="blur" />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
     </filter>
   </defs>
   <!-- document frame with notched corner (cyberdeck grammar) -->
-  <path d="M14 8 L42 8 L50 16 L50 56 L14 54 Z" stroke="#18faf9" stroke-width="3" stroke-linejoin="round" />
-  <path d="M42 8 L42 16 L50 16" stroke="#4fa8ff" stroke-width="1.5" opacity="0.7" />
+  <path
+    d="M14 8 L42 8 L50 16 L50 56 L14 54 Z"
+    stroke="#18faf9"
+    stroke-width="3"
+    stroke-linejoin="round"
+  />
+  <path
+    d="M42 8 L42 16 L50 16"
+    stroke="#4fa8ff"
+    stroke-width="1.5"
+    opacity="0.7"
+  />
   <!-- the flaw: a crack in the document -->
-  <path d="M22 20 L28 28 L24 34 L30 42" stroke="#ff2bd6" stroke-width="2.5" stroke-linecap="round" filter="url(#glow)" />
+  <path
+    d="M22 20 L28 28 L24 34 L30 42"
+    stroke="#ff2bd6"
+    stroke-width="2.5"
+    stroke-linecap="round"
+    filter="url(#glow)"
+  />
   <!-- the fix: verification checkmark over the crack -->
-  <path d="M34 44 L38 48 L46 38" stroke="#3dff9a" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
+  <path
+    d="M34 44 L38 48 L46 38"
+    stroke="#3dff9a"
+    stroke-width="3"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  />
   <!-- text lines -->
   <g stroke="#4fa8ff" stroke-width="1.5" opacity="0.5">
     <path d="M20 50 L36 51" />

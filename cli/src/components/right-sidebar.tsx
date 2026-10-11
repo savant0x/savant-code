@@ -9,7 +9,7 @@ import {
   isSidebarFocusCycleKey,
   SidebarFocusContext,
 } from './right-sidebar-focus'
-import { formatCompactionStatus } from './right-sidebar-format'
+import { formatCompactionStatus, formatCost } from './right-sidebar-format'
 import { SidebarHeader } from './right-sidebar-header'
 import {
   SidebarActiveAgents,
@@ -19,10 +19,7 @@ import {
   SidebarSession,
   SidebarToolsList,
 } from './right-sidebar-sections'
-import {
-  SidebarContextSummary,
-  SidebarSessionSummary,
-} from './right-sidebar-summary'
+import { SidebarContextSummary } from './right-sidebar-summary'
 import { SidebarSupporting } from './right-sidebar-supporting'
 import { useSidebarTheme as useTheme } from './right-sidebar-theme'
 import { Branding } from './savant-ui/branding'
@@ -33,7 +30,9 @@ import {
 import { useFids } from '../hooks/use-fids'
 import { useChatStore } from '../state/chat-store'
 import { glyph } from '../utils/glyphs'
+import { getVersion } from '../utils/version'
 import { AgentStatus } from './savant-ui/echo/agent-status'
+import { KeyValueRow } from './savant-ui/primitives/key-value-row'
 import { SidebarSection } from './savant-ui/primitives/sidebar-section'
 
 import type { SidebarFocusController } from './right-sidebar-focus'
@@ -70,13 +69,23 @@ export interface RightSidebarProps {
   width?: number
 }
 
+/**
+ * Split a fully-qualified model slug into its provider prefix and the model
+ * remainder at the first `/`. A slug with no `/` carries no provider prefix —
+ * the whole string is the model (Law 14: every input shape resolves).
+ */
+function splitModelSlug(model: string): { provider?: string; model: string } {
+  const slash = model.indexOf('/')
+  if (slash <= 0) return { model }
+  return { provider: model.slice(0, slash), model: model.slice(slash + 1) }
+}
+
 /** A bounded operational summary above a stable, scrollable detail tree. */
 export const RightSidebar = React.memo(function RightSidebar(
   props: RightSidebarProps,
 ) {
   const theme = useTheme()
   const width = props.width ?? 40
-  const contentCells = width - 3
   const localController = React.useMemo(
     () => createSidebarFocusController(),
     [],
@@ -123,21 +132,15 @@ export const RightSidebar = React.memo(function RightSidebar(
     ),
   )
 
+  const modelSlug = splitModelSlug(props.model)
   const devMode = useChatStore((s) => s.devMode)
+  const activityKind = useChatStore((s) => s.activity.kind)
   const compaction = useChatStore((s) => s.compactionStatus)
   const compactionCount = useChatStore((s) => s.compactionCount)
   const cacheUsage = useChatStore(
     (s) => s.runState?.sessionState?.mainAgentState?.cacheUsage,
   )
   const { fids, archivedCount, isLoading } = useFids(props.fidsDir)
-  const session = (
-    <SidebarSessionSummary
-      {...props}
-      bounded={density === 'spacious'}
-      cells={contentCells}
-      showContext={false}
-    />
-  )
 
   return (
     <SidebarFocusContext.Provider value={controller}>
@@ -183,13 +186,6 @@ export const RightSidebar = React.memo(function RightSidebar(
               <Branding text="S" font="tiny" />
             </box>
           )}
-          <AgentStatus
-            lifecycle={props.lifecycle}
-            compact={density !== 'spacious'}
-            cells={contentCells - 2}
-            hideDetail
-          />
-          {density === 'spacious' && session}
         </box>
         {allocatedHeight > 1 && (
           <scrollbox
@@ -216,25 +212,34 @@ export const RightSidebar = React.memo(function RightSidebar(
               ) : (
                 <Branding text="S" font="tiny" />
               ))}
-            {density !== 'spacious' && session}
             {devMode && (
               <text fg={theme.error} attributes={TextAttributes.BOLD}>
                 [DEV MODE]
               </text>
             )}
-            <SidebarSection title="Activity detail" id="Status">
+            {/* FID-2026-1009-007: the single home for live status. The
+                fixed area above no longer repeats the activity/phase/
+                model/mode facts (the duplication the operator reported);
+                the section is default-expanded so the status is visible
+                without a click, and the phase line carries the phase's
+                own color (AgentStatus). */}
+            <SidebarSection title="Activity detail" id="Status" defaultExpanded>
               <AgentStatus lifecycle={props.lifecycle} detailOnly />
-              {density === 'spacious' && (
-                <text fg={theme.foreground} wrapMode="word">
-                  {props.model}
-                </text>
+              {modelSlug.provider && (
+                <KeyValueRow label="Provider" value={modelSlug.provider} />
               )}
+              <KeyValueRow label="Model" value={modelSlug.model} />
+              <KeyValueRow
+                label="Mode"
+                value={`${props.mode} · ${formatCost(props.cost)}`}
+              />
             </SidebarSection>
             <SidebarActiveAgents
               agentStack={props.agentStack}
               agent={props.agent}
               isStreaming={props.isStreaming}
               isWaitingForResponse={props.isWaitingForResponse}
+              isThinking={activityKind === 'thinking'}
             />
             <SidebarSession
               {...props}
@@ -266,13 +271,22 @@ export const RightSidebar = React.memo(function RightSidebar(
           </scrollbox>
         )}
         {density === 'spacious' && (
-          <box
-            flexDirection="column"
-            flexShrink={0}
-            border={['top']}
-            borderColor={theme.border}
-          >
-            <SidebarContextSummary {...props} showVersion />
+          <box flexDirection="column" flexShrink={0}>
+            <box alignItems="center" flexShrink={0}>
+              <text
+                id="sidebar-version"
+                fg={theme.muted}
+                selectable={false}
+              >{`v${getVersion()}`}</text>
+            </box>
+            <box
+              flexDirection="column"
+              flexShrink={0}
+              border={['top']}
+              borderColor={theme.border}
+            >
+              <SidebarContextSummary {...props} />
+            </box>
           </box>
         )}
       </box>

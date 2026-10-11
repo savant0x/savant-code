@@ -2618,3 +2618,64 @@ body {
 .trigger-create-btn {
   align-self: flex-start;
 }
+
+/* --- Inline family icons (FID-2026-1009-004 Phase 3) -------------------- */
+
+/* Base mark: sized by SPRINT context. Splash mark is larger; chip and
+   roster marks text-scale. SVGs keep their authored neon palette — no
+   currentColor recoloring here (single-truth palette contract). */
+.savant-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.savant-icon svg {
+  width: 1em;
+  height: 1em;
+  display: block;
+}
+
+.savant-mark {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 10px;
+}
+
+.savant-mark .savant-icon svg {
+  width: 56px;
+  height: 56px;
+  filter: drop-shadow(0 0 12px rgba(24, 250, 249, 0.35));
+}
+
+.fsm-mark {
+  margin-right: 5px;
+}
+
+.fsm-mark svg {
+  width: 11px;
+  height: 11px;
+}
+
+.fsm-active .fsm-mark svg {
+  filter: drop-shadow(0 0 3px rgba(24, 250, 249, 0.5));
+}
+
+.roster-icon {
+  width: 14px;
+  height: 14px;
+}
+
+.roster-icon svg {
+  width: 14px;
+  height: 14px;
+}
+
+.roster-icon-active svg {
+  filter: drop-shadow(0 0 4px rgba(57, 255, 20, 0.45));
+}
+
+.roster-icon-standby svg {
+  opacity: 0.45;
+}

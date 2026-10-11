@@ -1,4 +1,10 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none" role="img" aria-label="Retrying status — circular arrow">
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  viewBox="0 0 64 64"
+  fill="none"
+  role="img"
+  aria-label="Retrying status — circular arrow"
+>
   <!-- SAVANT // CYBERDECK — hand-authored vector geometry, no external assets -->
   <defs>
     <filter id="glow" x="-40%" y="-40%" width="180%" height="180%">
@@ -10,7 +16,12 @@
     </filter>
   </defs>
   <!-- retry arc -->
-  <path d="M20 32 A12 12 0 1 1 32 44" stroke="#18faf9" stroke-width="3" stroke-linecap="round" />
+  <path
+    d="M20 32 A12 12 0 1 1 32 44"
+    stroke="#18faf9"
+    stroke-width="3"
+    stroke-linecap="round"
+  />
   <!-- arrow head -->
   <polygon points="28,40 36,44 28,48" fill="#ff2bd6" filter="url(#glow)" />
   <!-- center dot -->

@@ -1,4 +1,10 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none" role="img" aria-label="Scribe — ECHO agent role: documentation synthesis">
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  viewBox="0 0 64 64"
+  fill="none"
+  role="img"
+  aria-label="Scribe — ECHO agent role: documentation synthesis"
+>
   <!-- SAVANT // CYBERDECK — hand-authored vector geometry, no external assets -->
   <defs>
     <filter id="glow" x="-40%" y="-40%" width="180%" height="180%">
@@ -10,14 +16,43 @@
     </filter>
   </defs>
   <!-- pen nib -->
-  <polygon points="32,8 43,21 38,38 32,46 26,38 21,21" stroke="#18faf9" stroke-width="3" stroke-linejoin="round" fill="#18faf9" fill-opacity="0.08" />
+  <polygon
+    points="32,8 43,21 38,38 32,46 26,38 21,21"
+    stroke="#18faf9"
+    stroke-width="3"
+    stroke-linejoin="round"
+    fill="#18faf9"
+    fill-opacity="0.08"
+  />
   <!-- nib slit and breather hole -->
-  <path d="M32 19 L32 32" stroke="#18faf9" stroke-width="1.5" stroke-linecap="round" />
+  <path
+    d="M32 19 L32 32"
+    stroke="#18faf9"
+    stroke-width="1.5"
+    stroke-linecap="round"
+  />
   <circle cx="32" cy="23" r="1.5" fill="#ff2bd6" />
   <!-- writing traces -->
-  <path d="M14 52 L34 52 L38 56" stroke="#18faf9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+  <path
+    d="M14 52 L34 52 L38 56"
+    stroke="#18faf9"
+    stroke-width="2"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  />
   <circle cx="40" cy="56" r="1.8" fill="#ff2bd6" />
-  <path d="M14 58 L46 58" stroke="#ff2bd6" stroke-width="2" stroke-linecap="round" />
+  <path
+    d="M14 58 L46 58"
+    stroke="#ff2bd6"
+    stroke-width="2"
+    stroke-linecap="round"
+  />
   <circle cx="48" cy="58" r="1.8" fill="#ff2bd6" />
-  <path d="M20 62 L40 62" stroke="#4fa8ff" stroke-width="1.5" stroke-linecap="round" opacity="0.6" />
+  <path
+    d="M20 62 L40 62"
+    stroke="#4fa8ff"
+    stroke-width="1.5"
+    stroke-linecap="round"
+    opacity="0.6"
+  />
 </svg>

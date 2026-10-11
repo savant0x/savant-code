@@ -1,4 +1,10 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none" role="img" aria-label="Detective — ECHO agent role: codebase analysis scanner">
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  viewBox="0 0 64 64"
+  fill="none"
+  role="img"
+  aria-label="Detective — ECHO agent role: codebase analysis scanner"
+>
   <!-- SAVANT // CYBERDECK — hand-authored vector geometry, no external assets -->
   <defs>
     <filter id="glow" x="-40%" y="-40%" width="180%" height="180%">
@@ -18,6 +24,12 @@
     <path d="M20 32 L30 32" />
   </g>
   <!-- circuit handle: diagonal trace, 90-degree elbow, terminal node -->
-  <path d="M38 38 L46 46 L53 46" stroke="#18faf9" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
+  <path
+    d="M38 38 L46 46 L53 46"
+    stroke="#18faf9"
+    stroke-width="3"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  />
   <circle cx="55.5" cy="46" r="2.5" fill="#ff2bd6" filter="url(#glow)" />
 </svg>

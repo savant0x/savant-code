@@ -2,6 +2,10 @@
 
 # **Architectural Blueprint for Savant-Code "Auto Drive": Autonomous End-to-End Execution**
 
+> **Historical design proposal.** This document records an early architecture
+> proposal and includes components that are not the shipped design. For current
+> operator guidance, see the [FAQ](../faq.md) and [feature reference](../features.md).
+
 ## **The Paradigmatic Shift to Goal-Driven Autonomy**
 
 The evolution of multi-agent coding harnesses has rapidly progressed from interactive, prompt-driven assistants to highly autonomous execution engines capable of transforming abstract objectives into production-ready software. This architectural blueprint outlines the integration of an "Auto Drive" system within the Savant-Code framework, a governed TypeScript/Bun terminal agent harness defined by its strict adherence to the ECHO Protocol v0.2.01. The primary objective of this integration is to enable an operator to provide a singular, high-level end goal—such as the creation of a social network or the implementation of a complex authentication module—and allow the harness to autonomously decompose the objective, plan the architecture, execute the implementation, verify the resulting code, and ship the final product without intermediate human intervention1.  

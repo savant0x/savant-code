@@ -1,17 +1,38 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none" role="img" aria-label="Run: fix — repair in progress">
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  viewBox="0 0 64 64"
+  fill="none"
+  role="img"
+  aria-label="Run: fix — repair in progress"
+>
   <defs>
     <filter id="glow" x="-40%" y="-40%" width="180%" height="180%">
       <feGaussianBlur stdDeviation="2.5" result="blur" />
-      <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
+      <feMerge>
+        <feMergeNode in="blur" />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
     </filter>
   </defs>
   <!-- fix: the repair loop — rotation with a wrench-trace -->
-  <path d="M46 24 A18 18 0 1 0 50 38" stroke="#18faf9" stroke-width="3" stroke-linecap="round" />
+  <path
+    d="M46 24 A18 18 0 1 0 50 38"
+    stroke="#18faf9"
+    stroke-width="3"
+    stroke-linecap="round"
+  />
   <!-- wrench head: circuit elbow -->
-  <path d="M50 38 L44 38 M50 38 L50 32" stroke="#ff2bd6" stroke-width="3" stroke-linecap="round" filter="url(#glow)" />
+  <path
+    d="M50 38 L44 38 M50 38 L50 32"
+    stroke="#ff2bd6"
+    stroke-width="3"
+    stroke-linecap="round"
+    filter="url(#glow)"
+  />
   <!-- sparks at the repair point -->
   <g stroke="#f3e600" stroke-width="1.5" opacity="0.8">
-    <path d="M16 18 L20 22" /><path d="M14 28 L19 28" />
+    <path d="M16 18 L20 22" />
+    <path d="M14 28 L19 28" />
   </g>
   <!-- terminal node -->
   <circle cx="46" cy="24" r="2" fill="#ff2bd6" />

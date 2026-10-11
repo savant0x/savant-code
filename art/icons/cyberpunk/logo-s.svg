@@ -1,4 +1,10 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none" role="img" aria-label="SAVANT wordmark glyph — S with circuit tail">
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  viewBox="0 0 64 64"
+  fill="none"
+  role="img"
+  aria-label="SAVANT wordmark glyph — S with circuit tail"
+>
   <!-- SAVANT // CYBERDECK — the S-monogram: minimal identity mark -->
   <defs>
     <filter id="glow" x="-40%" y="-40%" width="180%" height="180%">
@@ -11,9 +17,14 @@
   </defs>
 
   <!-- The S: single stroke, circuit-trace elbows (90-degree angles, not curves) -->
-  <path d="M44 14 L24 14 L24 30 L40 34 L40 46 L20 46"
-        stroke="#18faf9" stroke-width="4" stroke-linecap="round" stroke-linejoin="miter"
-        filter="url(#glow)" />
+  <path
+    d="M44 14 L24 14 L24 30 L40 34 L40 46 L20 46"
+    stroke="#18faf9"
+    stroke-width="4"
+    stroke-linecap="round"
+    stroke-linejoin="miter"
+    filter="url(#glow)"
+  />
 
   <!-- terminal nodes: entry and exit of the S-trace -->
   <circle cx="44" cy="14" r="2.5" fill="#ff2bd6" />

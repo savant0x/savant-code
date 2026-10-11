@@ -9,6 +9,11 @@
  * run died on RequestInputBudgetError (estimate 1,347,990 vs window
  * 1,000,000). Split from window-truth.test.ts to respect the 300-line
  * quality ceiling (FID-2026-0919-019 seam-split precedent).
+ *
+ * FID-2026-1010-003 — the same defect class returned on the model the
+ * operator was running: `kiosapi/step-5-preview` had no row either, so the
+ * ladder closed on the 200k default while upstream reads 1,000,000. The
+ * two pins below are the regression guard for that report.
  */
 
 import fs from 'node:fs'
@@ -23,6 +28,24 @@ import { describe, expect, test } from 'bun:test'
 describe('FID-2026-1003-008: kiosapi roster windows', () => {
   test('the operator-bug row resolves 1M from the fallback table', () => {
     expect(getContextWindowFallback('kiosapi/qwen3.8-flash-free')).toEqual({
+      contextWindow: 1_000_000,
+      source: 'fallback-table',
+    })
+  })
+
+  // FID-2026-1010-003: the operator was running step-5-preview through
+  // kiosapi and watched the sidebar report a 200k window on a model whose
+  // upstream capability is 1M. OpenRouter live read 2026-10-10 for upstream
+  // `stepfun/step-5-preview`: context_length 1,000,000, top_provider agrees,
+  // modality text+image+video->text, max_completion_tokens 64,000.
+  test('step-5-preview resolves 1M, not the 200k default', () => {
+    expect(getContextWindowFallback('kiosapi/step-5-preview')).toEqual({
+      contextWindow: 1_000_000,
+      source: 'fallback-table',
+    })
+    // The :free id is a separate roster entry and must be pinned too, or
+    // KiosAPI's free tier silently re-lands on the 5x-small denominator.
+    expect(getContextWindowFallback('kiosapi/step-5-preview-free')).toEqual({
       contextWindow: 1_000_000,
       source: 'fallback-table',
     })

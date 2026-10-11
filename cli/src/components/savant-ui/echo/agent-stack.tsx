@@ -43,9 +43,10 @@ function formatAgentName(name: string): string {
  * terminal, unmapped id, missing constant — degrades to `null` and the row
  * renders the existing status glyph exactly as before).
  */
-function rosterIconSequence(
-  rawName: string,
-): { sequence: string | null; icon: SavantIconName | null } {
+function rosterIconSequence(rawName: string): {
+  sequence: string | null
+  icon: SavantIconName | null
+} {
   const icon = agentIcon(rawName)
   if (!icon) return { sequence: null, icon: null }
   if (!supportsInlineImages()) return { sequence: null, icon }

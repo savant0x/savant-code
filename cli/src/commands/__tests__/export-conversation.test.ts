@@ -63,7 +63,7 @@ describe('handleExportConversationCommand', () => {
     } as unknown as RouterParams
   }
 
-  test('exports a branded HTML report with logo, Font Awesome, and tokens', async () => {
+  test('exports a branded HTML report with logo, inline family icons, and tokens', async () => {
     useChatStore.setState({
       messages: [
         {
@@ -109,10 +109,18 @@ describe('handleExportConversationCommand', () => {
     expect(html).toContain('<div class="row-content">')
     expect(html).not.toContain('row-body')
 
-    // Font Awesome 6.7.2 is inlined as base64 webfonts — no CDN, fully offline
+    // FID-2026-1009-004 Phase 1 (Q1 full replacement): Font Awesome is gone
+    // entirely — no FA CSS, no webfonts, no CDN — every icon is an inline
+    // family SVG from art/icons/cyberpunk/ (no external assets, fully offline).
     expect(html).not.toContain('cdn.jsdelivr.net')
-    expect(html).toContain('url(data:font/woff2;base64,')
-    expect(html).toContain('Font Awesome 6 Free')
+    expect(html).not.toContain('Font Awesome')
+    expect(html).not.toContain('font/woff2')
+    expect(html).not.toContain('class="fa-')
+    expect(html).toContain('svg-ico')
+    // The family's 64x64 canvas is the stable identity of an inlined
+    // family SVG; the opening tag's whitespace is not asserted — the SVG
+    // sources are prettier-formatted (T179), so the tag wraps.
+    expect(html).toContain('viewBox="0 0 64 64"')
 
     // Neon Slate brand token + cyan tool badge (not purple)
     expect(html).toContain('--brand: #18faf9')
@@ -163,7 +171,10 @@ describe('handleExportConversationCommand', () => {
     expect(html).toContain(
       `<img class="row-logo" src="${CHARACTER_LOGO_DATA_URI}"`,
     )
-    expect(html).toContain('fa-user')
+    // FID-2026-1009-004 Phase 1: user rows render the family's
+    // Orchestrator Solid mark, not an FA user glyph.
+    expect(html).not.toContain('fa-user')
+    expect(html).toContain('Orchestrator solid — protocol enforcement hub')
     expect(html).toContain('>Savant</span>')
 
     // Timestamp is MM-DD-YYYY 12h AM/PM EST

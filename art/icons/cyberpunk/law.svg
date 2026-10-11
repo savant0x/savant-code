@@ -1,4 +1,10 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none" role="img" aria-label="Law — the ECHO protocol laws">
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  viewBox="0 0 64 64"
+  fill="none"
+  role="img"
+  aria-label="Law — the ECHO protocol laws"
+>
   <!-- SAVANT // CYBERDECK — hand-authored vector geometry, no external assets -->
   <defs>
     <filter id="glow" x="-40%" y="-40%" width="180%" height="180%">
@@ -10,11 +16,36 @@
     </filter>
   </defs>
   <!-- gavel head -->
-  <rect x="22" y="12" width="16" height="16" rx="3" transform="rotate(45 30 20)" stroke="#18faf9" stroke-width="3" />
+  <rect
+    x="22"
+    y="12"
+    width="16"
+    height="16"
+    rx="3"
+    transform="rotate(45 30 20)"
+    stroke="#18faf9"
+    stroke-width="3"
+  />
   <!-- head band -->
-  <rect x="26.5" y="16.5" width="7" height="7" rx="1.5" transform="rotate(45 30 20)" stroke="#4fa8ff" stroke-width="1.5" opacity="0.7" />
+  <rect
+    x="26.5"
+    y="16.5"
+    width="7"
+    height="7"
+    rx="1.5"
+    transform="rotate(45 30 20)"
+    stroke="#4fa8ff"
+    stroke-width="1.5"
+    opacity="0.7"
+  />
   <!-- handle with circuit elbow and terminal node -->
-  <path d="M30 31 L43 43 L49 43" stroke="#18faf9" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
+  <path
+    d="M30 31 L43 43 L49 43"
+    stroke="#18faf9"
+    stroke-width="3"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  />
   <circle cx="51.5" cy="43" r="2" fill="#ff2bd6" filter="url(#glow)" />
   <!-- impact ticks radiating from the striking face -->
   <g stroke="#ff2bd6" stroke-width="2" stroke-linecap="round">

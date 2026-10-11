@@ -90,6 +90,7 @@ history. The supported hosted providers are:
 | Infron | `/provider infron` or `DIRECT_PROVIDER=infron` | `INFRON_API_KEY` | Hosted gateway |
 | Intern InkStone | `/provider intern` or `DIRECT_PROVIDER=intern` | `INTERN_API_KEY` | Hosted gateway |
 | KiosAPI | `/provider kiosapi` or `DIRECT_PROVIDER=kiosapi` | `KIOSAPI_API_KEY` | OpenAI-compatible gateway (live catalog) |
+| Mistral AI | `/provider mistral` or `DIRECT_PROVIDER=mistral` | `MISTRAL_API_KEY` | Hosted gateway |
 | Nous Research | `/provider nous` or `DIRECT_PROVIDER=nous` | `NOUS_API_KEY` | OpenAI-compatible direct inference; Portal OAuth is separate |
 | Ollama | Automatic detection | `OLLAMA_HOST` (optional) | Local inference; no API key required |
 | OrcaRouter | `/provider orcarouter` or `DIRECT_PROVIDER=orcarouter` | `ORCAROUTER_API_KEY` | Multi-provider gateway with a live model catalog (free tier currently gated vendor-side on GitHub account linkage) |
@@ -257,7 +258,7 @@ pass.
   `.agents/types/{agent-definition,tools,util-types}.ts` and a starter
   `knowledge.md`.
 - **Slash commands** — `/new`, `/history`, `/bash`, `/goal`, `/loop`,
-  `/feedback`, `/rewind`, `/theme:toggle`, `/login`, `/logout`, `/exit`, plus
+  `/feedback`, `/rewind`, `/theme:toggle`, `/logout`, `/exit`, plus
   agent-specific commands.
 - **Provider setup** — `/provider` opens an interactive dropdown picker showing
   all providers with ✓/✗ configuration status. Select a provider to enter its
@@ -396,8 +397,8 @@ code 2 blocks a tool.
 - **ECHO Harness Enforcement Layer (EHEL)** — structural enforcement of all
   15 ECHO laws at the tool-executor level. Pre-write gates block violations
   before they happen (Law 1: read-before-touch, Law 3: verify-before-proceed,
-  Law 7: search-before-create, Law 8: log-intent, FID Recorder gate with
-  20-line threshold). Post-write scanners batched at turn end (Laws 5, 6, 9,
+  Law 7: search-before-create, Law 8: log-intent, FID
+  Recorder gate above 100 lines). Post-write scanners batched at turn end (Laws 5, 6, 9,
   10, 12, 14, 15). Law 4 call-graph reachability at turn end. FID completeness
   validator with mandatory Unanswered Questions. Mode-driven: **Hybrid** =
   Laws 1-4 blocking + Laws 5-15 advisory; **Strict** = all 15 blocking.
@@ -427,8 +428,7 @@ code 2 blocks a tool.
   [teacher guide](docs/design/agent-steering-teacher-guide.md).
 - **Readable edit diffs** — edit blocks tint added lines 50% neon green and
   removed lines 50% neon red (blended against the theme background) and show a
-  `[-N/+M]` add/remove counter beside the copy button; the full ECHO Perfection
-  Loop now triggers at 20 lines instead of 75 (FID-2026-0804-010).
+  `[-N/+M]` add/remove counter beside the copy button (FID-2026-0804-010).
 - **Context compaction** — 4-layer progressive auto-compaction: L0 (summarize
   old turns), L1 (compress tool results), L2 (prune stale context), L3
   (aggressive reduction). Preserves critical context while reducing token usage.
@@ -446,7 +446,7 @@ code 2 blocks a tool.
 OrcaRouter, B.AI, HCNSec, TokenBom, Infron, Intern InkStone, ChatAnywhere,
   UnoRouter,
   BazaarLink, Atria AI,
-  OpenAI, Vercel AI Gateway, Clean APIs, CodeCraft API, xKiro, and Cloudflare Workers AI via
+  OpenAI, Vercel AI Gateway, Clean APIs, CodeCraft API, Mistral AI, xKiro, and Cloudflare Workers AI via
   `@savant-code/llm-providers`. Nous Research uses the direct OpenAI-compatible API; Portal OAuth
   is a separate integration.
 - **Default model** — `openrouter/free` via OpenRouter (configurable via
@@ -784,8 +784,10 @@ threshold.
 | `packages/database/`      | `@savant-code/database`      | Database abstraction layer                                        |
 | `packages/knowledge-graph/` | `@savant-code/knowledge-graph` | Deterministic codebase knowledge-graph engine (indexer, queries, clustering, export serializer) |
 | `packages/llm-providers/` | `@savant-code/llm-providers` | Public LLM provider shims                                         |
+| `packages/connectors/`    | `@savant-code/connectors`    | Connector layer — catalog + connector tool meta-family            |
 | `sdk/`                    | `@savant-code/sdk`           | Public SDK — `SavantCodeClient`, types, build + verify scripts    |
-| `scripts/tmux/`           | `@savant-code/tmux`          | tmux CLI helpers used in interactive test runs                    |
+| `desktop/`                | `@savant-code/desktop`       | Tauri v2 desktop shell — sidecar supervisor + React renderer      |
+| `scripts/tmux/`           | `@savant-code/tmux-scripts`  | tmux CLI helpers used in interactive test runs                    |
 
 <!-- markdownlint-enable MD013 MD060 -->
 
@@ -891,6 +893,7 @@ picker or choose one directly:
 /provider cleanapis
 /provider codecraft
 /provider xkiro
+/provider mistral
 /provider cloudflare
 ```
 
@@ -902,6 +905,7 @@ The supported environment variables are `OPENAI_API_KEY`, `OPENROUTER_API_KEY`,
 `ATRIA_API_KEY`, `INTERN_API_KEY`, `INFRON_API_KEY`, `UNOROUTER_API_KEY`,
 `BAZAARLINK_API_KEY`,
 `AI_GATEWAY_API_KEY`, `CLEANAPIS_API_KEY`, `CODECRAFT_API_KEY`, `XKIRO_API_KEY`,
+`MISTRAL_API_KEY`,
 `CHATANYWHERE_API_KEY`,
 `CLOUDFLARE_API_TOKEN`. The key
 prompt is masked and stores the key globally in the Savant-Code config
@@ -926,8 +930,8 @@ naming the variable. OpenRouter can use `OPENROUTER_API_KEY` or
 | `bun run build:sdk`               | Build the SDK for npm publish    |
 | `bun run --cwd=cli build:binary`  | Build the CLI binary from `cli/` |
 | `bun run ci`                      | Build SDK and release artifacts  |
-| `bun test`                        | Run the test suite               |
-| `bun x tsc --noEmit`              | Type check                       |
+| `bun run test`                    | Run the test suite               |
+| `bun run typecheck`               | Type check (all workspaces)      |
 | `bun x eslint . --max-warnings 0` | Lint                             |
 
 <!-- markdownlint-enable MD013 MD060 -->
@@ -973,10 +977,11 @@ Commands can be entered with `/`; aliases are shown in parentheses.
 | `/telemetry` (`/analytics`) | View or change remote analytics consent |
 | `/theme:toggle` | Switch between light and dark themes |
 | `/design` (`/ds`) | List, select, create, edit, import, validate, resume, discard, and reset design systems |
+| `/skills` | List, show, trust, untrust, or roll back agent-authored skills (operator-only release boundary) |
 | `/bash` (`!`) | Run a shell command or enter Bash mode |
 | `/image` (`/img`, `/attach`) | Attach an image for supported multimodal models |
 | `/init` | Create starter agent types and `knowledge.md` |
-| `/login` / `/logout` | Authenticate or end the current session |
+| `/logout` (`/signout`) | End the current session and sign out |
 | `/connect` | Connect a ChatGPT account (OAuth) |
 | `/end-session` | End a free session (lets you switch model) |
 | `/exit` (`/quit`, `/q`) | Quit the CLI |
@@ -1036,10 +1041,10 @@ Call-Graph Reachability) + 11 extended code laws. `strict: true` in TypeScript.
 bun run build:sdk && bun run ci
 
 # Test
-bun test
+bun run test
 
 # Type check
-bun x tsc --noEmit
+bun run typecheck
 
 # Lint
 bun x eslint . --max-warnings 0

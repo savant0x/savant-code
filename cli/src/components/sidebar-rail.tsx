@@ -12,7 +12,6 @@ import {
 import { RailControl } from './right-sidebar-rail-control'
 import { useSidebarTheme as useTheme } from './right-sidebar-theme'
 import { Branding } from './savant-ui/branding'
-import { SavantMark } from './savant-ui/savant-mark'
 import { createChatScrollbarOptions } from '../chat/styles'
 import { useFids } from '../hooks/use-fids'
 import { useChatStore } from '../state/chat-store'
@@ -196,7 +195,7 @@ export function SidebarRail({
             selectable={false}
           >
             <box marginRight={1} selectable={false}>
-              <SavantMark fallback={<Branding font="tiny" text="S" color="primary" />} />
+              <Branding font="tiny" text="S" color="primary" />
             </box>
           </box>
         </box>

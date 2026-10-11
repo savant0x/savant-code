@@ -18,13 +18,26 @@ interface ModelPickerStore {
   isOpen: boolean
   query: string
   models: OpenRouterModel[]
+  /**
+   * FID-2026-1009-005: registered providers whose live catalog contributed
+   * zero rows (keyed but fetch-failed/empty). Rendered as UNAVAILABLE group
+   * headers so a configured provider never vanishes from /model silently.
+   */
+  unavailableProviders: readonly string[]
   selectedIndex: number
-  open: (models: OpenRouterModel[], preferredProvider?: ModelProvider) => void
+  open: (
+    models: OpenRouterModel[],
+    preferredProvider?: ModelProvider,
+    unavailableProviders?: readonly string[],
+  ) => void
   close: () => void
   setQuery: (query: string) => void
   setSelectedIndex: (index: number) => void
   /** Replace rows while open (FID-2026-1008-005 background refresh). */
-  setModels: (models: OpenRouterModel[]) => void
+  setModels: (
+    models: OpenRouterModel[],
+    unavailableProviders?: readonly string[],
+  ) => void
 }
 
 function getProvider(model: OpenRouterModel): ModelProvider {
@@ -47,23 +60,33 @@ export const useModelPickerStore = create<ModelPickerStore>((set) => ({
   isOpen: false,
   query: '',
   models: [],
+  unavailableProviders: [],
   selectedIndex: 0,
-  open: (models, preferredProvider) =>
+  open: (models, preferredProvider, unavailableProviders) =>
     set({
       isOpen: true,
       query: '',
       models,
+      unavailableProviders: unavailableProviders ?? [],
       selectedIndex:
         preferredProvider == null
           ? 0
           : findPreferredProviderIndex(models, preferredProvider),
     }),
-  close: () => set({ isOpen: false, query: '', models: [], selectedIndex: 0 }),
+  close: () =>
+    set({
+      isOpen: false,
+      query: '',
+      models: [],
+      unavailableProviders: [],
+      selectedIndex: 0,
+    }),
   setQuery: (query) => set({ query, selectedIndex: 0 }),
   setSelectedIndex: (index) => set({ selectedIndex: index }),
-  setModels: (models) =>
+  setModels: (models, unavailableProviders) =>
     set((state) => ({
       models,
+      unavailableProviders: unavailableProviders ?? state.unavailableProviders,
       selectedIndex: Math.min(
         state.selectedIndex,
         Math.max(0, models.length - 1),

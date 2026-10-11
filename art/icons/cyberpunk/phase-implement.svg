@@ -1,4 +1,10 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none" role="img" aria-label="IMPLEMENT phase — writing the fix">
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  viewBox="0 0 64 64"
+  fill="none"
+  role="img"
+  aria-label="IMPLEMENT phase — writing the fix"
+>
   <!-- SAVANT // CYBERDECK — hand-authored vector geometry, no external assets -->
   <defs>
     <filter id="glow" x="-40%" y="-40%" width="180%" height="180%">
@@ -10,12 +16,22 @@
     </filter>
   </defs>
   <!-- code fragment -->
-  <g stroke="#18faf9" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+  <g
+    stroke="#18faf9"
+    stroke-width="3"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  >
     <path d="M20 22 L12 32 L20 42" />
     <path d="M34 22 L42 32 L34 42" />
   </g>
   <!-- the fix landing: arrow into the fragment -->
-  <path d="M46 32 L54 32" stroke="#18faf9" stroke-width="3" stroke-linecap="round" />
+  <path
+    d="M46 32 L54 32"
+    stroke="#18faf9"
+    stroke-width="3"
+    stroke-linecap="round"
+  />
   <polygon points="50,27 58,32 50,37" fill="#ff2bd6" filter="url(#glow)" />
   <circle cx="12" cy="32" r="2" fill="#ff2bd6" />
 </svg>

@@ -132,3 +132,84 @@ describe('model page FREE MODELS section (FID-2026-1007-017)', () => {
     ])
   })
 })
+
+// FID-2026-1009-005 — the visibility invariant: a registered provider whose
+// live catalog contributed zero rows (a failed or empty fetch — the
+// CodeCraft stale-key class, where the provider vanished from /model with
+// only a developer-facing logger warning) renders as an UNAVAILABLE group
+// header. It is never silently absent, and the header is never selectable.
+describe('model picker UNAVAILABLE provider groups (FID-2026-1009-005)', () => {
+  test('a keyed-but-rowless provider renders an UNAVAILABLE group header', () => {
+    const items = buildGroupedItems(
+      [model('openai/kept', 'Kept', 'openrouter')],
+      ['mistral'],
+    )
+    const unavailable = items.filter(
+      (item) => item.type === 'header' && item.unavailable,
+    )
+    expect(unavailable).toHaveLength(1)
+    expect(unavailable[0]).toMatchObject({
+      type: 'header',
+      provider: 'mistral',
+      label: 'MISTRAL — UNAVAILABLE',
+      unavailable: true,
+    })
+    // The degraded group carries no selectable rows — free-text
+    // `/model mistral/<id>` still routes through the registry.
+    expect(
+      items.some(
+        (item) => item.type === 'model' && item.provider === 'mistral',
+      ),
+    ).toBe(false)
+  })
+
+  test('an unavailable id that HAS rows is ignored (no duplicate group)', () => {
+    const items = buildGroupedItems(
+      [model('mistral/codestral-2508', 'Codestral', 'mistral')],
+      ['mistral'],
+    )
+    expect(
+      items.some((item) => item.type === 'header' && item.unavailable),
+    ).toBe(false)
+    const headers = items.filter((item) => item.type === 'header')
+    expect(headers).toHaveLength(1)
+    expect(headers[0]).toMatchObject({ provider: 'mistral', label: 'MISTRAL' })
+    expect('unavailable' in headers[0]).toBe(false)
+  })
+
+  test('unavailable groups sort alphabetically after the populated groups', () => {
+    const items = buildGroupedItems(
+      [model('openai/kept', 'Kept', 'openrouter')],
+      ['vercel', 'mistral'],
+    )
+    const headers = items
+      .filter((item) => item.type === 'header')
+      .map((item) => (item.type === 'header' ? item.provider : null))
+    expect(headers).toEqual(['openrouter', 'mistral', 'vercel'])
+  })
+
+  test('the registry x picker path: mistral is live and gap-computable', async () => {
+    // The picker's unavailable set derives from the existing coverage seam
+    // over the LIVE registry — never a parallel detector. `mistral` is a
+    // live-catalog registry entry (FID-2026-1009-005), so a keyed fetch
+    // failure makes it a gap, and the gap is what the picker renders.
+    const { computeGaps, liveProviderIds } =
+      await import('../../utils/openrouter-models/gateway-coverage')
+    expect(liveProviderIds()).toContain('mistral')
+    const gaps = computeGaps(
+      [model('openai/kept', 'Kept', 'openrouter')],
+      new Set(['mistral', 'openai']),
+      liveProviderIds(),
+    )
+    expect(gaps).toContain('mistral')
+    expect(gaps).not.toContain('openai')
+    // An UNKEYED rowless provider is never a gap — absence without a key is
+    // "provider awaits key", not a visibility defect.
+    const unkeyed = computeGaps(
+      [model('openai/kept', 'Kept', 'openrouter')],
+      new Set(['openai']),
+      liveProviderIds(),
+    )
+    expect(unkeyed).not.toContain('mistral')
+  })
+})

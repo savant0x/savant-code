@@ -4,7 +4,7 @@
  * Reads the Cytoscape.js minified dist previously downloaded to
  * /tmp/cytoscape.min.js (or CYTO_DIST), escapes it for a TS template-literal
  * constant, and emits the generated module — so the `/graph-export` HTML is
- * fully offline (no CDN dependency), matching the FONT_AWESOME_ALL_CSS
+ * fully offline (no CDN dependency), matching the export-path embedding
  * inlining pattern.
  *
  * Cytoscape.js v3.30.2 — MIT License (Copyright (c) 2016-2024, The Cytoscape

@@ -14,7 +14,8 @@ Ten canonical agents coordinate through ECHO with explicit separation of duties.
 
 ## ECHO Perfection Loop
 
-Every code change follows a formal Finite State Machine:
+Complex changes follow a formal FID Finite State Machine. Routine work uses
+Hybrid Mode; the core ECHO laws and applicable verification gates still apply.
 
 1. **RED** — Identify ALL failures and issues with evidence
 2. **GREEN** — Implement minimal, surgical changes
@@ -24,7 +25,7 @@ Every code change follows a formal Finite State Machine:
 5. **SELF-CORRECT** — Fix any blockers found during audit
 6. **COMPLETE** — Document results, archive tracking
 
-No code is written without a plan. No plan is accepted without audit. No audit passes without evidence.
+Complex work is implemented only after its FID converges. Audits require evidence.
 
 ---
 
@@ -58,10 +59,10 @@ goal + budget consumption.
 `/auto-drive "<goal>"` (aliases `/auto`, `/drive`, `/autodrive`) turns a
 one-sentence goal into an approved, fully-specified plan and then runs it to
 completion autonomously — clarify → pre-build plan → one-time operator
-Confirmation (Law 2) → autonomous execution. See the
-[Auto Drive blueprint](design/Auto Drive Architecture Blueprint.md) for the
-architecture and the [FAQ](faq.md) for the `/goal` vs `/auto-drive`
-distinction.
+confirmation (Law 2) → autonomous execution. See the
+[FAQ](faq.md) for operator guidance and the `/goal` vs `/auto-drive`
+distinction. The linked [architecture proposal](design/Auto Drive Architecture Blueprint.md)
+is historical and is not the implementation contract.
 
 - **Clarity** — if the goal is already a detailed spec it skips straight to
   planning; otherwise it drives the interview ceremony (context gathering +
@@ -126,10 +127,7 @@ Turns can never silently run away to the 200-step cap:
   end after 6 such continuations (`Turn auto-ended: no operator input…`).
 - **Auto Drive / goal-engine carve-out** — autonomous continuation is real
   product behavior: the breaker and the enforcement surrender are bypassed
-  entirely while a drive (`/auto-drive`) or active goal (`/goal`) run is in
-  progress, so the feature is never killed by the safety net.
-
-## Checkpoint and Rewind
+  entirely while a drive (`/auto-drive`) or active goal (`/goal`) run is  in progress, so the feature is never killed by the safety net.
 
 ---
 
@@ -209,6 +207,7 @@ Works with multiple inference providers:
 - **Vercel AI Gateway** — Managed multi-provider gateway with a keyless live model catalog (`AI_GATEWAY_API_KEY`; OpenAI Chat Completions at `https://ai-gateway.vercel.sh/v1`)
 - **Clean APIs** — OpenAI-compatible hosted gateway with an authenticated live model catalog (`CLEANAPIS_API_KEY`; OpenAI Chat Completions at `https://cleanapis.com/v1`)
 - **CodeCraft API** — Authenticated live model catalog and OpenAI chat (`CODECRAFT_API_KEY`; `https://codecraftapi.com/v1`)
+- **Mistral AI** — Authenticated live model catalog and OpenAI chat (`MISTRAL_API_KEY`; `https://api.mistral.ai/v1`)
 - **xKiro** — Public live chat catalog (`XKIRO_API_KEY`; `https://api.xkiro.com/v1`). Anthropic model IDs use Messages; other IDs use OpenAI chat. Vendor namespaces remain intact. Catalog tiers describe requirements; paid-model access depends on the account.
 - **ChatAnywhere** — OpenAI-compatible hosted gateway on a static 27-model chat roster (`CHATANYWHERE_API_KEY`; `https://api.chatanywhere.tech/v1`; free-key tier: 10,000 points/day per the vendor's GPT_API_free docs)
 - **OpenAI** — Platform API keys via `/provider openai` or `OPENAI_API_KEY`; Responses API at `https://api.openai.com/v1`, with an authenticated live catalog
@@ -577,21 +576,24 @@ for the full design.
 | `/health`                                       | Check provider, Ollama, model, and permission status                                  |
 | `/mode`                                         | List the four modes and their contracts                                               |
 | `/model`                                        | Select or switch the active model                                                     |
-| `/provider`                                     | Configure a hosted provider key                                                       || `/provider free`                                | List free-model lanes you have (and haven't) wired                                      |
+| `/provider`                                     | Configure a hosted provider key                                                       |
+| `/provider free`                                | List free-model lanes you have (and haven't) wired                                      |
 | `/notifications`                                | Open the provider notification inbox (route warnings, deltas, health/removal, quota/offers) |
 | `/bash`                                         | Run a shell command                                                                   |
 | `/image`                                        | Attach an image for multimodal models                                                 |
 | `/init`                                         | Create starter agent types and knowledge.md                                           |
-| `/login` / `/logout`                            | Authenticate or end the current session                                               |
+| `/logout` (`/signout`)                         | End the current session and sign out                                                  |
 | `/contribute`                                   | Add yourself to CONTRIBUTORS.md and open a PR                                         |
 | `/telemetry`                                    | Show or change remote analytics consent                                               |
 | `/diagnostics`                                  | Show local CLI resource usage                                                         |
 | `/ads:enable` / `/ads:disable`                  | Toggle contextual ads                                                                 |
 | `/theme:toggle`                                 | Toggle between light and dark mode                                                    |
 | `/design`                                       | List, select, create, edit, or reset the active design system                         |
+| `/skills`                                       | List, show, trust, untrust, or roll back agent-authored skills (operator boundary)     |
 | `/release`                                      | Run the public release flow: `/release preview \| diagnose \| go \| resume \| status` |
 | `/feedback`                                     | Share general feedback about SavantCode                                               |
-| `/publish`                                      | Publish an agent to the registry                                                      || `/connect`                                      | Connect a ChatGPT account (OAuth)                                                     |
+| `/publish`                                      | Publish an agent to the registry                                                      |
+| `/connect`                                      | Connect a ChatGPT account (OAuth)                                                     |
 | `/end-session`                                  | End a free session (lets you switch model)                                            |
 | `/exit`                                         | Quit the CLI                                                                          |
 

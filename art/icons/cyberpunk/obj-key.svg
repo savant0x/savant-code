@@ -1,4 +1,10 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none" role="img" aria-label="Key object — circle and shaft">
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  viewBox="0 0 64 64"
+  fill="none"
+  role="img"
+  aria-label="Key object — circle and shaft"
+>
   <!-- SAVANT // CYBERDECK — hand-authored vector geometry, no external assets -->
   <defs>
     <filter id="glow" x="-40%" y="-40%" width="180%" height="180%">
@@ -12,10 +18,25 @@
   <!-- bow -->
   <circle cx="20" cy="32" r="8" stroke="#18faf9" stroke-width="3" />
   <!-- shaft -->
-  <path d="M28 32 L50 32" stroke="#18faf9" stroke-width="3" stroke-linecap="round" />
+  <path
+    d="M28 32 L50 32"
+    stroke="#18faf9"
+    stroke-width="3"
+    stroke-linecap="round"
+  />
   <!-- teeth -->
-  <path d="M42 32 L42 38" stroke="#ff2bd6" stroke-width="2.5" stroke-linecap="round" />
-  <path d="M48 32 L48 40" stroke="#ff2bd6" stroke-width="2.5" stroke-linecap="round" />
+  <path
+    d="M42 32 L42 38"
+    stroke="#ff2bd6"
+    stroke-width="2.5"
+    stroke-linecap="round"
+  />
+  <path
+    d="M48 32 L48 40"
+    stroke="#ff2bd6"
+    stroke-width="2.5"
+    stroke-linecap="round"
+  />
   <!-- bow dot -->
   <circle cx="20" cy="32" r="2.5" fill="#ff2bd6" filter="url(#glow)" />
 </svg>

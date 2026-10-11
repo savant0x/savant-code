@@ -1,4 +1,10 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none" role="img" aria-label="RED phase — investigating the codebase">
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  viewBox="0 0 64 64"
+  fill="none"
+  role="img"
+  aria-label="RED phase — investigating the codebase"
+>
   <!-- SAVANT // CYBERDECK — hand-authored vector geometry, no external assets -->
   <defs>
     <filter id="glow" x="-40%" y="-40%" width="180%" height="180%">
@@ -10,7 +16,12 @@
     </filter>
   </defs>
   <!-- code document under investigation -->
-  <path d="M30 12 L46 12 L56 22 L56 54 L30 54 Z" stroke="#18faf9" stroke-width="3" stroke-linejoin="round" />
+  <path
+    d="M30 12 L46 12 L56 22 L56 54 L30 54 Z"
+    stroke="#18faf9"
+    stroke-width="3"
+    stroke-linejoin="round"
+  />
   <g stroke="#4fa8ff" stroke-width="1.5" stroke-linecap="round">
     <path d="M36 30 L48 30" />
     <path d="M36 36 L52 36" />
@@ -18,7 +29,17 @@
   </g>
   <!-- investigator lens overlapping the document corner -->
   <circle cx="26" cy="40" r="10" stroke="#18faf9" stroke-width="3" />
-  <path d="M21 36 L31 36" stroke="#ff2bd6" stroke-width="1.5" stroke-linecap="round" />
-  <path d="M33 47 L41 55" stroke="#18faf9" stroke-width="3" stroke-linecap="round" />
+  <path
+    d="M21 36 L31 36"
+    stroke="#ff2bd6"
+    stroke-width="1.5"
+    stroke-linecap="round"
+  />
+  <path
+    d="M33 47 L41 55"
+    stroke="#18faf9"
+    stroke-width="3"
+    stroke-linecap="round"
+  />
   <circle cx="43.5" cy="57.5" r="2.5" fill="#ff2bd6" filter="url(#glow)" />
 </svg>

@@ -24,13 +24,19 @@ import {
 import type { AuditFinding, CheckResult } from './audit-types'
 
 /** Injected git runner; the default shells out, tests inject fakes. */
-export type GitRun = (root: string, args: string[]) => {
+export type GitRun = (
+  root: string,
+  args: string[],
+) => {
   status: number
   stdout: string
   stderr: string
 }
 
-function defaultRun(root: string, args: string[]): {
+function defaultRun(
+  root: string,
+  args: string[],
+): {
   status: number
   stdout: string
   stderr: string
@@ -52,8 +58,7 @@ const FID_FILE = /^FID-.*\.md$/
 const STATUS_LINE = /^\*\*Status:\*\*.*$/m
 const STATUS_COMMIT = /\bcommit ([0-9a-f]{7,40})\b/
 const CLOSED_DATE = /^-\s*\*\*Closed Date:\*\*\s*(\d{4}-\d{2}-\d{2})/m
-const COMMIT_STATE =
-  /^-\s*\*\*Commit\/State:\*\*\s*(.+?)\s*$/m
+const COMMIT_STATE = /^-\s*\*\*Commit\/State:\*\*\s*(.+?)\s*$/m
 const COMMIT_STATE_PLACEHOLDER = 'Git SHA or state description'
 // Pre-gate history grandfathered by filename (FID-2026-1007-014 Loop 4):
 // only NEW gaps fail, mirroring changelog-coverage-baseline.json. Shrink
@@ -75,7 +80,10 @@ export function lastReleaseTagDate(
 ): { ok: true; date: string | null } | { ok: false; message: string } {
   const tags = run(root, ['tag', '--list', 'v*', '--sort=-v:refname'])
   if (tags.status !== 0) {
-    return { ok: false, message: 'unable to list release tags (git tag failed)' }
+    return {
+      ok: false,
+      message: 'unable to list release tags (git tag failed)',
+    }
   }
   const first = tags.stdout
     .split(/\r?\n/)
@@ -219,7 +227,9 @@ export function checkG5BundleState(
   opts?: { bundleDir?: string },
 ): CheckResult {
   const bundleDir =
-    opts?.bundleDir ?? process.env.SAVANT_BUNDLE_DIR ?? SAVANT_BUNDLE_DIR_DEFAULT
+    opts?.bundleDir ??
+    process.env.SAVANT_BUNDLE_DIR ??
+    SAVANT_BUNDLE_DIR_DEFAULT
   const marker = run(root, ['rev-parse', '--verify', BACKUP_MARKER_TAG])
   if (marker.status !== 0) {
     return block(
@@ -259,7 +269,11 @@ export function checkG5BundleState(
     }
   }
   const head = run(root, ['rev-parse', 'HEAD'])
-  if (head.status === 0 && head.stdout.trim() !== sha && head.stdout.trim() !== '') {
+  if (
+    head.status === 0 &&
+    head.stdout.trim() !== sha &&
+    head.stdout.trim() !== ''
+  ) {
     findings.push({
       check: 'g5-bundle-state',
       severity: 'warn',

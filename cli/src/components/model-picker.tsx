@@ -7,6 +7,7 @@ import { getPickerViewport, normalizeSelectableIndex } from './picker-viewport'
 import { createChatScrollbarOptions } from '../chat/styles'
 import { useTerminalDimensions } from '../hooks/use-terminal-dimensions'
 import { useTheme } from '../hooks/use-theme'
+import { useModelPickerStore } from '../state/model-picker-store'
 
 import type { OpenRouterModel } from '../utils/openrouter-models'
 import type { KeyEvent, ScrollBoxRenderable } from '@opentui/core'
@@ -48,6 +49,9 @@ export const ModelPicker: React.FC<ModelPickerProps> = ({
 }) => {
   const theme = useTheme()
   const { terminalWidth } = useTerminalDimensions()
+  const unavailableProviders = useModelPickerStore(
+    (s) => s.unavailableProviders,
+  )
 
   const filteredModels = useMemo(() => {
     const q = query.trim().toLowerCase()
@@ -58,8 +62,8 @@ export const ModelPicker: React.FC<ModelPickerProps> = ({
   }, [models, query])
 
   const items = useMemo(
-    () => buildGroupedItems(filteredModels),
-    [filteredModels],
+    () => buildGroupedItems(filteredModels, unavailableProviders),
+    [filteredModels, unavailableProviders],
   )
 
   const effectiveSelectedIndex = useMemo(

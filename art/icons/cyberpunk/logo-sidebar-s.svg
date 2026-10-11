@@ -1,0 +1,23 @@
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  viewBox="0 0 30 20"
+  role="img"
+  aria-label="SAVANT S — sidebar brand glyph (OpenTUI tiny font)"
+>
+  <!-- Built cell-for-cell from fonts.tiny.chars.S: row 1 "█▀▀", row 2 "▄▄█".
+       Each character cell is 10x10 units; each half-cell is 10x5 units. -->
+  <g fill="#18faf9">
+    <!-- row 1, col 1: █ (full cell) -->
+    <rect x="0" y="0" width="10" height="10" />
+    <!-- row 1, col 2: ▀ (top half) -->
+    <rect x="10" y="0" width="10" height="5" />
+    <!-- row 1, col 3: ▀ (top half) -->
+    <rect x="20" y="0" width="10" height="5" />
+    <!-- row 2, col 1: ▄ (bottom half) -->
+    <rect x="0" y="15" width="10" height="5" />
+    <!-- row 2, col 2: ▄ (bottom half) -->
+    <rect x="10" y="15" width="10" height="5" />
+    <!-- row 2, col 3: █ (full cell) -->
+    <rect x="20" y="10" width="10" height="10" />
+  </g>
+</svg>

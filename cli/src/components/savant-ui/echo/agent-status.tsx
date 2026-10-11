@@ -2,6 +2,7 @@ import { TextAttributes } from '@opentui/core'
 import React from 'react'
 
 import { activityIcon } from './agent-icons'
+import { phaseMapping } from './phase-info'
 import { savantRasterDataUri } from '../../../hooks/use-savant-raster'
 import { useChatStore } from '../../../state/chat-store'
 import { glyph } from '../../../utils/glyphs'
@@ -12,7 +13,7 @@ import {
 import {
   sidebarActivity,
   sidebarEllipsis,
-  sidebarPhase,
+  sidebarPhaseColor,
 } from '../../right-sidebar-display'
 import { SidebarFocusContext } from '../../right-sidebar-focus'
 import { SidebarActivityAccent } from '../../right-sidebar-motion'
@@ -68,15 +69,18 @@ export function AgentStatus({
         ? (activity.query ?? '')
         : activity.kind === 'subagent'
           ? (activity.agentType ?? '')
-          : activity.kind === 'thinking'
-            ? (activity.model ?? '')
-            : ''
+          : ''
   const color =
     display.tone === 'warning'
       ? theme.warning
       : display.tone === 'active'
         ? theme.primary
         : theme.muted
+  // FID-2026-1009-007: the FSM phase line carries the phase's OWN color
+  // again (the pre-v0.0.5 behavior). The per-phase colorKeys live in
+  // phase-info.ts; sidebarPhaseColor resolves them through the theme and
+  // never throws (Law 14). An unknown phase falls back to the idle mapping.
+  const phaseColor = sidebarPhaseColor(theme, phase)
   if (detailOnly)
     return (
       <box flexDirection="column">
@@ -85,8 +89,8 @@ export function AgentStatus({
             {detail}
           </text>
         )}
-        <text fg={theme.muted} wrapMode="word" selectable={false}>
-          {sidebarPhase(phase)}
+        <text fg={phaseColor} wrapMode="word" selectable={false}>
+          {`Phase · ${phaseMapping(phase).label}`}
         </text>
       </box>
     )
@@ -114,7 +118,8 @@ export function AgentStatus({
             const iconSeq = activityIconSequence(activity.kind, {
               agentType:
                 activity.kind === 'subagent' ? activity.agentType : undefined,
-              toolName: activity.kind === 'tool' ? activity.toolName : undefined,
+              toolName:
+                activity.kind === 'tool' ? activity.toolName : undefined,
             })
             const glyphChar = glyph(
               display.tone === 'idle'
@@ -156,8 +161,8 @@ export function AgentStatus({
             </text>
           )}
           {!compact && (
-            <text fg={theme.muted} selectable={false}>
-              {sidebarEllipsis(sidebarPhase(phase), cells)}
+            <text fg={phaseColor} selectable={false}>
+              {sidebarEllipsis(`Phase · ${phaseMapping(phase).label}`, cells)}
             </text>
           )}
         </box>

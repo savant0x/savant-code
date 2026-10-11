@@ -106,7 +106,14 @@ describe('handleExportConversationCommand', () => {
     await handleExportConversationCommand(makeParams(), outputPath)
 
     const html = fs.readFileSync(outputPath, 'utf8')
-    expect(html).toContain('fa-terminal')
+    // FID-2026-1009-004 Phase 1: the terminal badge is the family's
+    // obj-terminal mark (dev-object-mark) — no FA glyphs remain. The
+    // assertion pins the family's 64x64 canvas (the stable identity),
+    // not the opening tag's whitespace — the SVG sources are
+    // prettier-formatted (T179), so the tag wraps.
+    expect(html).toContain('svg-ico')
+    expect(html).toContain('viewBox="0 0 64 64"')
+    expect(html).not.toContain('fa-terminal')
     expect(html).toContain('Read Files')
     expect(html).toContain('line one')
   })
@@ -140,7 +147,9 @@ describe('handleExportConversationCommand', () => {
 
     const html = fs.readFileSync(outputPath, 'utf8')
     expect(html).toContain('Subagent: Detective')
-    expect(html).toContain('fa-share-nodes')
+    // FID-2026-1009-004 Phase 1: the agent header carries the family's
+    // orchestrator mark (echo-agent) — no FA glyphs remain.
+    expect(html).not.toContain('fa-share-nodes')
     expect(html).toContain('Analysis complete')
   })
 })

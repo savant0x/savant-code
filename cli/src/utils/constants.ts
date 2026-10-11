@@ -136,7 +136,8 @@ export const MAIN_AGENT_ID = 'main-agent'
  *
  * Four-position execution-scope axis (FID-2026-0805-001):
  * - HYBRID is the default: harness-bounded direct writing (FID-009 Law 1/3
- *   receipts at warn; FID-010 20-line ceremony threshold).
+ *   receipts at warn; 100-line ceremony threshold per the 2026-08-23
+ *   operator directive — supersedes FID-010's 20-line bar).
  * - SCAFFOLD is an opt-in umbrella-FID mode for first-time project scaffolding.
  * - STRICT runs the full ECHO Perfection Loop for every change (FID per change,
  *   Forge writes, Verifier audits, Recorder archives).

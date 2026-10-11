@@ -1,4 +1,10 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none" role="img" aria-label="Todo tool — list with checkboxes">
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  viewBox="0 0 64 64"
+  fill="none"
+  role="img"
+  aria-label="Todo tool — list with checkboxes"
+>
   <!-- SAVANT // CYBERDECK — hand-authored vector geometry, no external assets -->
   <defs>
     <filter id="glow" x="-40%" y="-40%" width="180%" height="180%">
@@ -10,14 +16,52 @@
     </filter>
   </defs>
   <!-- list frame -->
-  <path d="M16 14 L48 14 L48 50 L16 50 Z" stroke="#18faf9" stroke-width="3" stroke-linejoin="round" />
+  <path
+    d="M16 14 L48 14 L48 50 L16 50 Z"
+    stroke="#18faf9"
+    stroke-width="3"
+    stroke-linejoin="round"
+  />
   <!-- checked item -->
-  <path d="M21 20 L28 20 L28 27 L21 27 Z" stroke="#18faf9" stroke-width="2" stroke-linejoin="round" />
-  <path d="M22.5 23.5 L24 25 L27 21" stroke="#ff2bd6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" filter="url(#glow)" />
-  <path d="M33 23.5 L43 23.5" stroke="#18faf9" stroke-width="2" stroke-linecap="round" />
+  <path
+    d="M21 20 L28 20 L28 27 L21 27 Z"
+    stroke="#18faf9"
+    stroke-width="2"
+    stroke-linejoin="round"
+  />
+  <path
+    d="M22.5 23.5 L24 25 L27 21"
+    stroke="#ff2bd6"
+    stroke-width="2"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    filter="url(#glow)"
+  />
+  <path
+    d="M33 23.5 L43 23.5"
+    stroke="#18faf9"
+    stroke-width="2"
+    stroke-linecap="round"
+  />
   <!-- unchecked item -->
-  <path d="M21 33 L28 33 L28 40 L21 40 Z" stroke="#18faf9" stroke-width="2" stroke-linejoin="round" />
-  <path d="M33 36.5 L43 36.5" stroke="#4fa8ff" stroke-width="1.5" stroke-linecap="round" />
+  <path
+    d="M21 33 L28 33 L28 40 L21 40 Z"
+    stroke="#18faf9"
+    stroke-width="2"
+    stroke-linejoin="round"
+  />
+  <path
+    d="M33 36.5 L43 36.5"
+    stroke="#4fa8ff"
+    stroke-width="1.5"
+    stroke-linecap="round"
+  />
   <!-- in-progress item -->
-  <path d="M21 45 L43 45" stroke="#4fa8ff" stroke-width="1.5" stroke-linecap="round" stroke-dasharray="3 3" />
+  <path
+    d="M21 45 L43 45"
+    stroke="#4fa8ff"
+    stroke-width="1.5"
+    stroke-linecap="round"
+    stroke-dasharray="3 3"
+  />
 </svg>

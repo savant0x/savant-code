@@ -1,3 +1,5 @@
+import { SavantIcon } from './components/SavantIcon'
+
 import type { JSX } from 'react'
 
 interface SplashScreenProps {
@@ -68,6 +70,11 @@ export function SplashScreen(props: SplashScreenProps): JSX.Element {
         <span className="light light-cyan" />
         <span className="light light-green" />
         <span className="light light-amber" />
+      </div>
+      {/* FID-2026-1009-004 Phase 3: the splash gains the family's identity
+          mark above the wordmark — same source as every other surface. */}
+      <div className="savant-mark" aria-hidden="true">
+        <SavantIcon name="ICON_Logo" />
       </div>
       <h1 className="wordmark">Savant</h1>
       <p className="wordmark-sub">Desktop</p>
