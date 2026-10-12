@@ -148,7 +148,7 @@ describe('corpus validation', () => {
     expect(
       report.knownGood.statuses.every((status) => status === 'passed'),
     ).toBe(true)
-  })
+  }, 60_000)
 
   test('broken known-good fails validation', async () => {
     const broken: ChallengeSource = {

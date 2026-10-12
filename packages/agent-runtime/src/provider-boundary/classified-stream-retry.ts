@@ -74,14 +74,17 @@ export async function* runWithClassifiedRetry<C, R>(
     attempt++
     let emitted = false
     let consumerError = false
-    const stream = params.create()
+    let stream: AsyncGenerator<C, R> | undefined
     let completed = false
     let primaryFailure = false
     try {
+      stream = params.create()
       let next = await stream.next()
       while (!next.done) {
         emitted = true
-        try { yield next.value } catch (error) {
+        try {
+          yield next.value
+        } catch (error) {
           consumerError = true
           throw error
         }
@@ -113,8 +116,10 @@ export async function* runWithClassifiedRetry<C, R>(
       }
       await sleep(retryDelayMs(attempt, params.policy))
     } finally {
-      if (!completed) {
-        try { await stream.return(undefined as R) } catch (error) {
+      if (stream && !completed) {
+        try {
+          await stream.return(undefined as R)
+        } catch (error) {
           if (!primaryFailure) throw error
           params.onUnknownShape?.('Stream cleanup failed after primary failure')
         }
