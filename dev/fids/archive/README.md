@@ -3,6 +3,20 @@
 This directory contains closed or historically completed FIDs. Files here are
 an audit record, not an active work queue.
 
+## 2026-10-12 closure — managed temporary scratchpad
+
+- [`FID-2026-1012-006-managed-temporary-scratchpad.md`](FID-2026-1012-006-managed-temporary-scratchpad.md)
+  closed with all five steps resolved: the lifecycle manager, cross-process
+  coordination, the CLI/SDK sweep points, `/scratchpad status|clean`, and the
+  scratchpad cleanup itself (reports promoted, pending probes moved into the
+  typechecked `scripts` tree, T147's write surface repointed). Its three declared
+  gates pass live (common suite 9/9, SDK suite 3/3, `quality:report` PASS over
+  1502 baselined files). Closing also repaired the move's fallout: the relocated
+  probe needed a module marker for its top-level `await` (TS1375), which had
+  broken the scripts typecheck **and** FID-2026-1012-004's declared
+  `scripts-typecheck-check` gate, and the probe's header still documented the
+  old scratchpad run path.
+
 ## 2026-10-12 closure — Tiarina Cloud is a built-in gateway
 
 - [`FID-2026-1012-005-tiarina-cloud-provider.md`](FID-2026-1012-005-tiarina-cloud-provider.md)

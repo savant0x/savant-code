@@ -153,6 +153,8 @@ export async function getAgentPrompt<T extends StringField>(
 
   // Add tool instructions, spawnable agents, and output schema prompts to instructionsPrompt
   if (promptType.type === 'instructionsPrompt' && agentState.agentType) {
+    addendum +=
+      '\n\nScratchpad lifecycle: dev/scratchpad is temporary storage, including active/ and archive/. Idle cleanup expires files after 24 hours and prunes older files above 32 MiB or 1,000 files, with a one-hour grace. Promote needed reports, reusable probes and project memory to their durable project locations before ending work. Never use scratch paths as the sole evidence for an open task or as persistent memory. Live native Savant runs protect temporary files while executing; resumed runs must tolerate missing temporary artifacts.'
     // Add subagent tools message when using parent's tools for prompt caching
     if (useParentTools) {
       addendum += `\n\nYou are a subagent that only has access to the following tools: ${toolNames.length > 0 ? toolNames.join(', ') : 'none'}. Previously referenced tools in the conversation may have only been available to the parent agent. Do not attempt to use any other tools besides these listed here. You will only get tool errors if you do. Each tool's full description (params, examples, constraints) is in your tool schemas — read it before calling.\n\n${buildPhaseAvailabilityNote(toolNames)}`

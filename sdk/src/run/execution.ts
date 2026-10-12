@@ -9,6 +9,7 @@ import {
   createErrorRunStateFrom,
 } from './cancelled-state'
 import { buildWiredAgentRuntime } from './execution/runtime-assembly'
+import { withRunScratchpad } from './execution/scratchpad'
 import {
   resolveAgentIdentity,
   resolveSessionState,
@@ -36,7 +37,7 @@ export async function run(options: RunExecutionOptions): Promise<RunState> {
     })
   }
 
-  return runOnce(options)
+  return withRunScratchpad(options, runOnce)
 }
 
 async function runOnce({

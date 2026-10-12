@@ -1,5 +1,45 @@
 # Changelog
 
+## 2026-10-12 — Managed temporary scratchpad (FID-2026-1012-006)
+
+### Added
+
+- `dev/scratchpad` is now managed temporary storage rather than an unmanaged
+  drawer. A native lifecycle manager in `common` expires idle files after 24
+  hours and prunes above 32 MiB / 1,000 files with a one-hour grace, never
+  follows links, never removes anything outside the scratch root, and preserves
+  the root `README`/`.gitkeep`.
+- `/scratchpad status` and `/scratchpad clean` give the operator the same
+  policy in the CLI; `clean` is not a force-delete command. Both variants get
+  the command because it rides `CORE_SLASH_COMMANDS`.
+- Live native runs hold a whole-root lease, so an executing agent never loses
+  its own temporary files (including terminal-created flat files the sweep
+  never scanned). Dead owners are reclaimable, a reused PID conservatively
+  protects, and malformed coordination data blocks deletion with an explicit
+  diagnostic instead of guessing. Injected filesystems never trigger host
+  housekeeping, and housekeeping failures warn rather than crash a run.
+- The sweep runs at CLI startup, every five minutes while idle, and
+  before/after native SDK runs, releasing protection on success, failure and
+  cancellation.
+
+### Changed
+
+- `scripts/hygiene.ts` now reports only root-level scratchpad clutter; expiring
+  nested files is the runtime manager's job, not the lint's.
+- Agent instructions and `docs/scratchpad.md` state that scratch is temporary
+  **including the legacy archive directory** — "age archive into another
+  archive" does not bound growth — and name the durable homes for reports
+  (`dev/test-prompts/archive/`, `dev/session-summaries/`) and reusable probes
+  (`scripts/providers/audit-probes/`).
+
+### Fixed
+
+- The probe that moved out of the gitignored scratchpad into the typechecked
+  `scripts` tree had no module marker, so its top-level `await` (TS1375) broke
+  the scripts typecheck — which also failed FID-2026-1012-004's declared
+  `scripts-typecheck-check` gate. The marker and the probe's stale
+  run-path documentation are both corrected.
+
 ## 2026-10-12 — Tiarina Cloud is a built-in gateway (FID-2026-1012-005)
 
 ### Added

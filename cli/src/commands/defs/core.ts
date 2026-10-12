@@ -25,6 +25,7 @@ import {
   formatProcessDiagnostics,
 } from '../process-diagnostics'
 import { runBashCommand } from '../router'
+import { handleScratchpadCommand } from '../scratchpad'
 import { handleSkillsCommand } from '../skills'
 import { handleTelemetryCommand } from '../telemetry'
 
@@ -32,6 +33,10 @@ import { handleTelemetryCommand } from '../telemetry'
 // copy, export, feedback, bash, login, logout, exit. Split out of
 // command-registry.ts (FID-2026-0805-003).
 export const CORE_COMMANDS = [
+  defineCommandWithArgs({
+    name: 'scratchpad',
+    handler: handleScratchpadCommand,
+  }),
   defineCommand({
     name: 'ads:enable',
     handler: (params) => {

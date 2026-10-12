@@ -138,13 +138,13 @@ function isIntentionalLine(relative: string, line: string): boolean {
 /**
  * P36 (FID-2026-0901-006, operator: "looking in this folder it looks like
  * absolute madness - is this not auto-managed?"): the scratchpad is a
- * convention-managed area — its root must stay at README + active/ +
+ * temporary area — its root must stay at README + active/ +
  * archive/ (+ .gitkeep for git). Loose probes, specs, screenshots, and
  * ad-hoc folders at the root are how it decayed into 35+ orphans across
  * sessions. Enforced mechanically here: every foreign root entry is a
- * `scratchpad-clutter` issue. Sessions must drop live artifacts in /tmp (or
- * a purpose folder under archive/) — never at the root. Hygiene never
- * deletes; the operator decides retention.
+ * `scratchpad-clutter` issue. Runtime housekeeping expires nested files in
+ * both active/ and archive/. Durable reports and reusable probes belong in
+ * project documentation or scripts, never in scratch. This scan only reports.
  */
 const SCRATCHPAD_ROOT_ENTRIES = new Set([
   'README.md',
@@ -165,7 +165,7 @@ export function collectScratchpadIssues(
       code: 'scratchpad-clutter',
       file: `dev/scratchpad/${entry}`,
       message:
-        'Scratchpad root must stay README + active/ + archive/ — move this under archive/ (or active/ for reusable validation tooling). Live probes belong in /tmp.',
+        'Scratchpad root must stay README + active/ + archive/. Nested files are temporary; durable reports and reusable probes belong outside scratch.',
     })
   }
   return issues

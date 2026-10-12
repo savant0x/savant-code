@@ -1,4 +1,5 @@
 import { CHATGPT_OAUTH_ENABLED } from '@savant-code/common/constants/chatgpt-oauth'
+import { manageScratchpad } from '@savant-code/common/util/scratchpad'
 import {
   getChatGptOAuthCredentials,
   getValidChatGptOAuthCredentials,
@@ -7,7 +8,7 @@ import {
 import { enableMapSet } from 'immer'
 
 import { initializeThemeStore } from '../hooks/use-theme'
-import { setProjectRoot } from '../project-files'
+import { setProjectRoot, tryGetProjectRoot } from '../project-files'
 import { initializeDirenv } from './init-direnv'
 import { bootPresence } from '../state/presence'
 import { initAnalytics } from '../utils/analytics'
@@ -38,6 +39,24 @@ export async function initializeApp(params: { cwd?: string }): Promise<void> {
 
   // Initialize direnv environment before anything else
   initializeDirenv()
+
+  // Shared with native SDK runs; idle housekeeping never blocks a live lease.
+  const sweep = async () => {
+    const report = await manageScratchpad(tryGetProjectRoot() ?? baseCwd, {
+      clean: true,
+    })
+    if (report.warning) logger.warn(report.warning)
+    if (report.removedFiles) logger.debug('Scratchpad housekeeping', report)
+  }
+  await sweep()
+  const scratchpadTimer = setInterval(
+    () => {
+      void sweep()
+    },
+    5 * 60 * 1000,
+  )
+  scratchpadTimer.unref()
+  process.once('exit', () => clearInterval(scratchpadTimer))
 
   enableMapSet()
   initializeThemeStore()

@@ -185,9 +185,11 @@ recorded decision or external dependency requires it.
 - T62-followups: `dev/scratchpad/active/t62*.ts` (the catalog itself is
   gateway-side; the local write surface is the probe scripts — verified
   2026-10-02: no local catalog directory exists)
-- T147: `dev/scratchpad/active/gateway-catalog-probe.ts`,
+- T147: `scripts/providers/audit-probes/gateway-catalog-probe.ts`,
   `dev/session-summaries/2026-10-06-geaix-excelnt-probe.md`,
   `dev/fids/**` (the integration FID)
+  (the probe path moved out of the gitignored scratchpad into the typechecked
+  scripts tree under FID-2026-1012-006 step 5)
 
 - T122: (no write surface — operator-owned)
 - T164-D: `common/src/types/print-mode.ts`,

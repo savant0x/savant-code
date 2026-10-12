@@ -11,6 +11,12 @@ import type { SlashCommand } from './slash-commands'
  */
 export const CORE_SLASH_COMMANDS: SlashCommand[] = [
   {
+    id: 'scratchpad',
+    label: 'scratchpad',
+    description:
+      'Inspect or expire temporary files: /scratchpad status | clean',
+  },
+  {
     id: 'help',
     label: 'help',
     description: 'Display keyboard shortcuts and tips',
