@@ -634,9 +634,14 @@ recall.
 - gate: `bun run generate:provider-docs:check`
 - gate: `bun run window-coverage:check`
 - gate: `bun run providers:parity` (+ `providers:parity:check`)
-- gate: `cd cli && bun test src/utils/openrouter-models/__tests__/fid-2026-1012-005-tiarina.test.ts src/utils/openrouter-models/__tests__/window-truth-tiarina.test.ts src/utils/openrouter-models/__tests__/window-coverage-register.test.ts`
-- gate: `cd common && bun test src/providers/__tests__/provider-registry.test.ts src/providers/__tests__/provider-fact-evidence.test.ts src/providers/__tests__/validate-provider-registry.test.ts src/providers/__tests__/provider-audit.test.ts`
-- gate: `bun test scripts/__tests__/provider-docs-counts-drift.test.ts scripts/__tests__/provider-registry-doc.test.ts scripts/__tests__/provider-catalog-parity.test.ts`
+- gate: `cd cli && bun test` over the three tiarina-related suites
+  (`fid-2026-1012-005-tiarina.test.ts`, `window-truth-tiarina.test.ts`,
+  `window-coverage-register.test.ts`)
+- gate: `cd common && bun test` over the four registry suites
+  (`provider-registry.test.ts`, `provider-fact-evidence.test.ts`,
+  `validate-provider-registry.test.ts`, `provider-audit.test.ts`)
+- gate: `bun test scripts/__tests__/provider-docs-counts-drift.test.ts` +
+  `provider-registry-doc.test.ts` + `provider-catalog-parity.test.ts`
 - gate: `bun scripts/validate-repository.ts` + `bun scripts/scope-register-check.ts` + `bun scripts/scope-guard-check.ts`
 - gate: keyed production-chain acceptance (SDK `getModelForRequest` +
   `generateText`, `tiarina/glm-5.3-flash:free`)
@@ -736,6 +741,48 @@ Two facts a reviewer should not have to rediscover:
 
 > When the status is set to **closed**, move this file to `dev/fids/archive/`
 > and append the CHANGELOG entry.
+
+### Gauntlet receipts (operator-run, advisory — 2026-10-12, free routes only)
+
+Run **after** closure, on the five `:free` routes only; no paid id was
+contacted. Invocation: `bun run providers:identity -- --provider tiarina
+--models deepseek-v4.1-flash:free,deepseek-v4-flash:free,glm-5.3-flash:free,
+qwen3.8-flash:free,mimo-v2.6-flash:free --deep` (exit 0 — advisory either way).
+
+```text
+swept 5 routes: ok 2, unavailable 2, failed 1
+served-label: 2 match, 0 mismatch
+controls: 0/5 routes armed (no manifest — all rows inconclusive)
+
+| Model                  | Route       | Served label             | Probes | ms    | Failure |
+| glm-5.3-flash:free     | ok          | glm-5.3-flash:free       | 5/5    | 8115  | —       |
+| deepseek-v4-flash:free | ok          | deepseek-v4-flash:free   | 5/5    | 1075  | —       |
+| deepseek-v4.1-flash:free | unavailable | —                      | 0/5    | —     | http-429 |
+| mimo-v2.6-flash:free   | unavailable | —                        | 0/5    | —     | http-429 |
+| qwen3.8-flash:free     | failed      | —                        | 0/5    | —     | http-502 |
+```
+
+Read honestly, that is: **zero label mismatches** across the free roster, two
+routes answering all five identity vectors, two quota refusals (429 — funding,
+not a dead route), and one upstream origin failure (502 — a route, not the
+host; the sibling `glm-5.3-flash:free` answered in the same minute). Every
+verdict is `inconclusive` rather than `pass`, because no control manifest was
+armed — the tool's own rule is that a `match` label is not proof of identity (a
+proxy can echo any label). This replaces the loop's `NEEDS-REVIEW` gauntlet note
+in Missed Questions #8 and the AUDIT paragraph above: the check **ran**, and its
+limit is named rather than assumed away. A mismatch would have forced human
+review and a separate FID; there were none.
+
+The **quality** gauntlet did not run, and cannot:
+`bun run providers:quality -- ai.tiarina.cloud` exits 2 with
+`no candidate 'ai.tiarina.cloud' in dev/provider-candidates/candidates.json —
+run the harvest first`. The host is not a tracked discovery candidate (the same
+boundary the Root Cause section records), so the coding rubric has no endpoint
+to resolve. Registering one is a discovery-pipeline change, not part of this
+integration.
+
+Reports are written to `dev/provider-identity/` — which `.gitignore:63`
+ignores by design, so this section is the durable receipt.
 
 ## Lessons Learned
 
