@@ -1,4 +1,4 @@
-# FID: The failure-class remediation program — every recorded class gets an owner, and none closes before it stops recurring
+# FID: The open-work master plan — every active record and register item sequenced into waves an operator can run
 
 **Filename:** `FID-2026-1012-022-failure-class-remediation-master-plan.md`
 **ID:** FID-2026-1012-022
@@ -26,6 +26,16 @@ recurring for a declared window. The master closes only when every child is clos
 capture pipeline changes: the hook, `experiences:dedup`, the agenda, `lessons:to-skills` and
 `lessons:features` keep running exactly as they do, because they are the instrument that finds the
 defects — the problem was never that they were wrong, it was that nothing acted on what they found.
+
+**This record is the program of record for all open work, not only the ledger.** Twenty-four register
+items were open on 2026-10-12 — fifteen active FIDs (`-010` … `-024`, this record among them) and nine
+register tasks that carry no FID at all (the local `0.0.36` development line, T186, T187, T119, T175,
+T171, T173, T62-followups and T122). All of them are sequenced here in
+three chains, with each item's prerequisites declared as machine-readable metadata, its exit gate
+named, and its **blocker** called out. The point of the record is one sentence an operator can act on:
+point an automation run at `FID-2026-1012-022`, activate automation, and the agent works the waves in
+order — stopping only at the operator-gated items listed under "What stops for you", which no
+automation level can pass.
 
 ## Environment
 
@@ -262,6 +272,114 @@ and the pipeline-targeting refactor, and they are explicitly **not** a substitut
 7. **Keep the pipeline running.** No change to the hook, the dedup script, the agenda or the two
    producers as part of this program; if the targeting refactor needs to touch them, that is Lane V's
    work under its own records.
+8. **Draft the Chain C children as their waves begin** — the register items (T122, T186, T119, T175,
+   T171, T173, T62-followups, T187) have write surfaces and no owner, so each gets its child FID from
+   the same template the twelve existing children use, with its RED measured from the real tree.
+9. **Keep the status column current.** This master is the index an operator reads; a wave that closes
+   without updating it has not closed.
+
+### Work order
+
+Two chains, one program. Chain A is the class lanes (RC1–RC7); Chain B is Lane V, the ledger
+artifact and the operator's line of sight to it. The chains are independent of each other; within each
+chain every arrow below is a **real prerequisite**, and each is declared as `**Depends On:**` metadata
+on the child so `scripts/fid-ledger.ts` validates that the dependency exists and that the chain has no
+cycle (`fid.graph.dependency-missing`, `fid.graph.dependency-cycle`). This table is the schedule;
+a child's own RED re-measure is what proves its row is finished.
+
+**Chain A — the class lanes.**
+
+| Wave | Child | Depends on | Deliverable | Exit gate |
+|---|---|---|---|---|
+| A0 | `-024` (7 classes / 36 records) | — | The class identity: a stable key with expected/unexpected, first/last seen, and the **fix boundary**; it closes its own seven fossil classes with no code change | class-key and horizon tests; the census probe |
+| A0 | `-023` (13 / 27) | `-024` | One timeout policy with a bounded escalation, a timeout error that reports the budget it hit, and an abort attributed to the executed tool | recurrence probe over the 13 classes |
+| A1 | `-017` (18 / 193 — 35% of the capture) | `-024` | A per-tool argument budget, a legal split shape for the bulk tools, and the re-send advice removed for every truncation cause | recurrence probe: the family does not reappear in the window |
+| A1 | `-018` (11 / 181) | `-024` | One taxonomy for every fetch outcome, negative caching, and a fallback instead of a repeated try | recurrence probe over the 11 classes |
+| A1 | `-019` (6 / 50) | `-024`, `-023` | Capability preflight and loud degradation — a timeout or a missing binary never reads as "found nothing" | recurrence probe over the 6 classes |
+| A1 | `-020` (13 / 72) | `-024` | Diagnostic edit responses: a mismatch carries the evidence needed to repair it | recurrence probe over the 13 classes |
+| A2 | `-021` | `-017`, `-018`, `-019`, `-020` | The recurrence-to-fix machinery: the class-coverage check in `validate:repository`, the recurrence-probe contract, lesson-last ordering | the check fails on a fixture whose top class has no owner |
+
+The four A1 lanes are mutually independent once A0 has landed — `-018`'s own ordering records that it
+is independent of `-017`, and `-016`… `-020` share no surface — so they may be worked in any order or
+in parallel; `-017` is listed first because it is 35% of everything captured. `-021` must not be worked
+before A1 has owners, or `validate:repository` reds on a known-open set (its own record says so).
+
+**Chain B — Lane V, the artifact and its visibility.** The order is the design review's §5 suggested
+order, resolved against the records' own prerequisites.
+
+| Wave | Child | Depends on | Deliverable |
+|---|---|---|---|
+| B0 | `-011` (ceiling is enforced by nothing) | — | The size ceiling moves into `learnings:check` / `validate:repository`, and retirement emits a machine-readable move record |
+| B0 | `-014` (rule catalogue and ledger disagree) | — | Rule-first schema with an explicit boot tier, and the promotion target consolidation needs |
+| B1 | `-012` (retirement strands references) | `-011` | By-title references resolve across live + retired; the seven admission issues that make `lessons:features --check` red are fixed |
+| B1 | `-013` (lesson evidence rots) | `-011` | Structural vs reproduction references, resolved by tier; ephemeral anchors rejected |
+| B1 | `-010` (the boot read has no size contract) | `-011`, `-014` | A generated, bounded boot digest with its own asserted budget |
+| B2 | `-016` (redundant families inflate the boot read) | `-010`, `-014` | Consolidation of the five redundant families onto the rule tier — operator-approved |
+| B2 | `-015` (the lesson→feature pipeline is red and unowned) | `-012` | The pipeline check becomes a repo gate with an owner — **last**, because wiring it earlier reds the repository on a known-red store |
+
+**Chain C — the register items that have no record yet.** These are open work with a write surface and
+no owner, which is why they have sat unstarted. Each one's child FID is drafted, converged and executed
+under this master's authority at its wave; the operator's activation of the program **is** the approval
+for that draft (automation level 2, drafting automatable and approval given in advance by the
+activation), and the child's id is recorded in this table when it exists.
+
+| Wave | Item | Depends on | Deliverable | Exit gate | Automation |
+|---|---|---|---|---|---|
+| C0 | Local `0.0.36` development line | — | Keep post-release work landing locally on `main` under `## 0.0.36` | `version:check` PASS; the changelog section carries every landing | 3 |
+| C1 | T122 — Savant-Free removal | — | Workspace registration, CLI surface, agents, common, docs, release tooling and e2e suites removed; its own child FID drafted at wave start | the removal's own FID gates; the aggregate `ci` leg stops being red by design | 1 → **operator must call it** |
+| C2 | T186 — the two workspaces outside every chain | T122 | The remaining `scripts/tmux` leg added, so the chains cover every registered workspace | `bun run typecheck` and `bun run test` cover all registered workspaces | 1 until T122 lands, then 3 |
+| C3 | T119 — provider live-list probes (no purchase) | — | Every registered provider's live model list probed over its free endpoint | probe output recorded against `docs/providers.md` and in a session summary | 3 |
+| C4 | T173 — KiosAPI window rows for five exact feed ids | — | Live-probed window values for the five ids instead of the conservative 200k default | the five rows land with probe evidence | 3 |
+| C5 | T171 — harvested-candidate auto-wire | — | Re-derive the item against the current discovery wizard, then reuse the prefill when selecting a discovery-only provider | `cli/src/utils/__tests__/provider-wizard-discovery.test.ts` green over the re-derivation | 3 for the re-derivation, **1 for the ruling** |
+| C6 | T175 — sweep control manifest + control-armed re-run | — | The six external inputs (manifest content, funding, ToS, budget, verdict naming, rotation source) answered concretely | a control-armed re-run whose verdicts are named | **1 — external inputs** |
+| C7 | T62-followups — TokenHarbor / TokenRouter | — | TokenHarbor's identity re-run after its allowance resets; TokenRouter's self-identification | both cells resolved in the catalog | 3 once credits allow, **1 for the top-up** |
+| C8 | T187 — `version` frontmatter on the remaining skills | — | The six `coding-*` skills carry a version | `skills:check` down to zero version warnings | **1 — `.agents/skills/**` is the operator's `/skills trust` surface** |
+
+### Status board (the agent updates this; it is what an operator reads)
+
+| Item | Chain · wave | Record | Status (2026-10-12) |
+|---|---|---|---|
+| Local `0.0.36` development line | C0 | register item | open — dev-line maintenance live; the cut is operator-called |
+| T122 — Savant-Free removal | C1 | *drafted at wave start* | blocked — operator must call it |
+| T186 — typecheck/test legs | C2 | *drafted at wave start* | blocked — on T122 |
+| T119 — provider live-list probes | C3 | *drafted at wave start* | ready — level 3, no external input |
+| T173 — KiosAPI window rows | C4 | *drafted at wave start* | ready — level 3, live probe |
+| T171 — harvested-candidate auto-wire | C5 | *drafted at wave start* | open — re-derivation is agent work, then an operator ruling |
+| T175 — sweep control manifest | C6 | *drafted at wave start* | blocked — six external inputs |
+| T62-followups — TokenHarbor / TokenRouter | C7 | *drafted at wave start* | blocked — provider credits |
+| T187 — skills `version` frontmatter | C8 | *drafted at wave start* | blocked — operator `/skills trust` surface |
+| FID-2026-1012-024 — class taxonomy and horizon | A0 | `-024` | converged (design); worked first |
+| FID-2026-1012-023 — execution reliability | A0 | `-023` | converged (design) |
+| FID-2026-1012-017 — emission (193 records) | A1 | `-017` | converged (design) |
+| FID-2026-1012-018 — fetch (181) | A1 | `-018` | converged (design) |
+| FID-2026-1012-019 — capability integrity (50) | A1 | `-019` | converged (design) |
+| FID-2026-1012-020 — edit-path friction (72) | A1 | `-020` | converged (design) |
+| FID-2026-1012-021 — the recurrence-to-fix loop | A2 | `-021` | converged (design) |
+| FID-2026-1012-011 — ceiling ungated | B0 | `-011` | converged (design) |
+| FID-2026-1012-014 — rule catalogue vs ledger | B0 | `-014` | converged (design) |
+| FID-2026-1012-012 — retirement strands references | B1 | `-012` | converged (design) |
+| FID-2026-1012-013 — lesson evidence rot | B1 | `-013` | converged (design) |
+| FID-2026-1012-010 — boot-read size contract | B1 | `-010` | converged (design) |
+| FID-2026-1012-016 — redundant lesson families | B2 | `-016` | converged (design); consolidation is operator-approved |
+| FID-2026-1012-015 — pipeline red and unowned | B2 | `-015` | converged (design); worked last |
+
+**The automation contract.** Session ceiling is `protocol.config.yaml` → `session.autonomy_level`
+(3). An item runs unattended when its level is ≤ the ceiling and it is not on the operator-gated list;
+no level lifts the G-laws, credential handling, Law 3 or the project-directory boundary. Per item the
+agent: re-runs the item's RED measurement and records it verbatim; drafts the child FID if the item has
+none; converges it; implements it; runs the declared gates; records the evidence in the child; closes
+and archives the child with its CHANGELOG entry; and updates the **status board** above. The master is
+the index, never a gate of its own.
+
+**What stops for you** (the automation halts here and does nothing else in that chain): the `0.0.36`
+release cut; T122's removal call; T186 until T122 lands; T175's six external inputs; T62's credit
+top-up; T171's ruling on the verdict gate and the consent shape; T187's `/skills trust` grant.
+
+**Wave boundaries.** At the close of every wave, and in the master's own closing pass, re-run the census
+command in §Evidence and the allocation check: a class that appeared since the census must be owned
+before the wave closes, and the master cannot close while any class above the bar is unowned. Chain C
+waves carry their own exit gate instead (the wave table names it), because they are artifact work
+rather than class work.
 
 ### Convergence rule (each child)
 
@@ -401,8 +519,13 @@ the closure format when it flips to `fixed`.
   `docs/design/learnings-root-cause-matrix.md` for the root-cause matrix and the feature set.
 - **Children (14):** `FID-2026-1012-010` … `-021` (Lane V and RCs 1–5) plus `FID-2026-1012-023`
   (RC6, execution control) and `FID-2026-1012-024` (RC7, class taxonomy and horizon).
-- **Ordering:** `023` and `024` first (they make the instrument honest), then `017`, then `018`, `019`,
-  `020`; `021` wires the gate once `017`–`020` have owners, or the repository reds on a known-open set.
+- **Ordering:** the schedule is `### Work order` above — Chain A (`023`/`024` make the instrument
+  honest, then the four independent class lanes, then `021` wires the gate once `017`–`020` have
+  owners) and Chain B (Lane V, the review's §5 order). Every edge is declared as `**Depends On:**`
+  metadata, so the ledger validates it.
+- **Resolved this pass:** `SCOPE.md` read the `010`/`014` edge backwards ("010 blocks FID-014's tier");
+  the review's §5 order is authoritative and states the direction `014` → `010` — the digest needs a
+  tier to select from.
 
 ## Lessons Learned
 

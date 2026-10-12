@@ -8,6 +8,7 @@
 **Automation level:** 3
 **YAGNI-Compliance:** Verified
 **Master FID:** FID-2026-1012-022 (The failure-class remediation program)
+**Depends On:** FID-2026-1012-011
 
 ---
 

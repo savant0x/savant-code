@@ -130,8 +130,10 @@ the ledger's value is real only if it is visible and it is not hidden; they are 
 class fix, and the six programme lanes are.
 
 - [ ] **FID-2026-1012-010. The boot read has no size contract.** Rows A1/A2 → feature F1
-      (generated bounded boot digest) and F5 (measured budget). Blocks FID-014's tier and
-      FID-016's scope decision. **Automation level: 3.**
+      (generated bounded boot digest) and F5 (measured budget). **Consumes** FID-014's rule tier and
+      FID-011's enforceable ceiling, and blocks FID-016's scope decision — the earlier wording here
+      (“blocks FID-014's tier”) read that edge backwards; the review's §5 order and the record's own
+      `**Depends On:**` line now state the resolved direction. **Automation level: 3.**
 
 - [ ] **FID-2026-1012-011. The ledger's size ceiling is enforced by nothing.** Rows A3/A4 →
       feature F3 (gated, logged lifecycle). Unblocks FID-012's move record.
@@ -174,10 +176,13 @@ child is closed. Nothing in the capture pipeline changes — the hook, `experien
 session-end review, `lessons:to-skills` and `lessons:features` keep running, because they are the
 instrument that finds the defects; the gap was that nothing acted on what they found.
 
-- [ ] **FID-2026-1012-022. Failure-class remediation program (master).** The census, the per-class
-      ownership, the convergence rule and the closure condition. Children: `-010`…`-021` (Lane V +
-      RC1–RC5), `-023` (RC6), `-024` (RC7). Not gateable itself; closes only when every child is
-      closed and the closing pass re-runs the allocation. **Automation level: 2.**
+- [ ] **FID-2026-1012-022. Open-work master plan (build order + status board).** Sequences **all 24
+      open register items** — the fifteen active records and the nine tasks without one — into three
+      chains with declared dependencies, exit gates, automation levels and blockers, plus the census
+      that gives every failure class an owner (68 classes / 559 records across six lanes). Children:
+      `-010`…`-021`, `-023`, `-024`; Chain C tasks get children drafted at wave start. Not gateable
+      itself; closes only when every child is closed and the closing pass re-runs the allocation.
+      Pointing an automation run at this record **is** the operating instruction. **Automation level: 2.**
 
 - [ ] **FID-2026-1012-017. The incomplete-arguments class has never been fixed at its
       source.** RC1 — **18 classes / 193 records** (35% of the capture; nine tools, 40+ sessions,
@@ -215,6 +220,19 @@ instrument that finds the defects; the gap was that nothing acted on what they f
       → E7. **Automation level: 3.**
 
 ### Build orders (formalized as FIDs 2026-10-07)
+
+The build order for **every open item in this register** — the fifteen active records and the nine
+tasks that carry none — lives in the master record `FID-2026-1012-022` (`### Work order` for the
+schedule, `### Status board` for current state), so there is exactly one place an automation run can
+be pointed at. Its three chains: **A**, the failure-class lanes (`-024` → `-023`; `-024` →
+`-017`/`-018`/`-019`/`-020`; then `-021`); **B**, the learnings-store artifact — Lane V (`-011` and
+`-014` first, then `-012`, `-013` and `-010`, then `-016`, with `-015` last); **C**, the register
+tasks (`T122` → `T186`, plus `T119`, `T173`, `T171`, `T175`, `T62-followups`, `T187` and the local
+`0.0.36` development line). Every edge is declared as `**Depends On:**` metadata on the child, so the
+ledger validates the graph and rejects a cycle. Chain C items run under child FIDs drafted at their
+wave start; the operator-gated items — the `0.0.36` cut, `T122`, `T186`, `T171`'s ruling, `T175`,
+`T62`'s credits and `T187` — are named in the master's "What stops for you", and nothing automates
+past them.
 
 ## Machine-readable scope targets
 
