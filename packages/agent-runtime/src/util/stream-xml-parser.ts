@@ -196,9 +196,6 @@ export function parseStreamChunk(
       const legacyStartIndex = text.indexOf(legacyStartToolTag)
       const foreign = findForeignToolCallTag(text)
       const foreignStartIndex = foreign?.index ?? -1
-      const hasCanonicalStart = canonicalStartIndex !== -1
-      const hasLegacyStart = legacyStartIndex !== -1
-
       const earliestStart = [
         { index: canonicalStartIndex, kind: 'canonical' as const },
         { index: legacyStartIndex, kind: 'legacy' as const },

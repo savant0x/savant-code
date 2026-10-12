@@ -15,6 +15,34 @@ import {
 import type { AgentTemplate } from '../types'
 
 describe('getAgentPrompt', () => {
+  test('an inherited Thinker phase note advertises only its own tools', async () => {
+    const agentTemplate = createMockAgentTemplate({
+      id: 'thinker',
+      toolNames: ['sequentialthinking', 'end_turn'],
+      inheritParentSystemPrompt: true,
+    })
+    const result = await getAgentPrompt({
+      agentTemplate,
+      promptType: { type: 'instructionsPrompt' },
+      fileContext: createMockFileContext(),
+      agentState: createMockAgentState('thinker'),
+      agentTemplates: { thinker: agentTemplate },
+      additionalToolDefinitions: async () => ({}),
+      logger: createMockLogger(),
+      useParentTools: true,
+    })
+
+    expect(result).toContain(
+      'only has access to the following tools: sequentialthinking, end_turn',
+    )
+    const phaseNote = result?.split('Phase availability:')[1]?.split('\n')[0]
+    expect(phaseNote).toBeDefined()
+    expect(phaseNote).toContain('sequentialthinking (Thinker only)')
+    expect(phaseNote).not.toContain('read_files')
+    expect(phaseNote).not.toContain('run_readonly_command')
+    expect(phaseNote).not.toContain('write_file')
+  })
+
   test('replaces CURRENT_DATE with the current date and time when formatting prompts', async () => {
     const agentTemplate = createMockAgentTemplate({
       id: 'date-agent',
