@@ -48,4 +48,25 @@ describe('researcher-web agent definition', () => {
     expect(prompt).toContain('30 tool calls per minute')
     expect(prompt).toContain('never from memory')
   })
+
+  test('routes literature through MCP before applying the web research workflow', () => {
+    const instructions = definition.instructionsPrompt ?? ''
+    expect(instructions).toContain('For scholarly literature questions')
+    expect(instructions).toContain('fetched paper records')
+    expect(instructions).toContain('For web research questions')
+    expect(instructions).toContain('For web-based answers')
+    expect(instructions).not.toContain(
+      'HARD RULE: You may not write your final answer',
+    )
+  })
+
+  test('uses the MCP parameter names and values rather than HTTP search arguments', () => {
+    const prompt = definition.systemPrompt ?? ''
+    expect(prompt).toContain('abstracts="none"')
+    expect(prompt).toContain('abstracts="full"')
+    expect(prompt).toContain('limit=10-20')
+    expect(prompt).toContain('breadth=20-30')
+    expect(prompt).not.toContain('abstracts=false')
+    expect(prompt).not.toContain('k=')
+  })
 })
