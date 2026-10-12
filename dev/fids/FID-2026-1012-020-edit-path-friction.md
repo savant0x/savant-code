@@ -7,6 +7,7 @@
 **Created:** 2026-10-12 20:15
 **Automation level:** 3
 **YAGNI-Compliance:** Verified
+**Master FID:** FID-2026-1012-022 (The failure-class remediation program)
 
 ---
 
@@ -20,7 +21,8 @@ sessions (last seen 2026-10-11). Neither message carries the evidence needed to 
 call — no nearby match, no whitespace or line-ending diagnosis, no check against the content the
 session last read — so the model's only move is to guess again, and the retry loop spends its
 next tool call regenerating the same edit. No lesson covers either class (`grep -ci 'old string'
-dev/LEARNINGS.md` returns 0), which is why 48 recorded failures have produced no fix.
+dev/LEARNINGS.md` returns 0), which is why the lane runs to **13 classes and 72 records** in the
+`FID-2026-1012-022` census and has produced no fix.
 
 ## Environment
 

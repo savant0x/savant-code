@@ -7,6 +7,7 @@
 **Created:** 2026-10-12 20:15
 **Automation level:** 3
 **YAGNI-Compliance:** Verified
+**Master FID:** FID-2026-1012-022 (The failure-class remediation program)
 
 ---
 
@@ -15,11 +16,12 @@
 `read_url | Failed to fetch URL: 404 Not Found` is the **single largest recorded failure class
 in this repository**: **114 hits across 18 distinct sessions**, last seen 2026-10-10. Together
 with the tool's other outcomes — `No readable text found at URL` (25/7), `403` (10/7), `401`
-(9/8), `429` (7/3) and `Response exceeded 2000000 bytes` (7/6) — roughly **172 records** sit on
-one tool. The ledger covers it with **zero** mentions: `grep -ci 'Failed to fetch URL'
-dev/LEARNINGS.md` returns 0. The class is a flat per-call error with no taxonomy, no negative
-caching and no signal that a URL should not be tried again, so a hallucinated or mangled URL is
-re-attempted across sessions and nothing accumulates.
+(9/8), `429` (7/3) and `Response exceeded 2000000 bytes` (7/6) — the lane runs to **11 classes and
+181 records** on one tool, its allocation in the `FID-2026-1012-022` census. The ledger covers it
+with **zero** mentions: `grep -ci 'Failed to fetch URL' dev/LEARNINGS.md` returns 0. The class is a
+flat per-call error with no taxonomy, no negative caching and no signal that a URL should not be
+tried again, so a hallucinated or mangled URL is re-attempted across sessions and nothing
+accumulates.
 
 ## Environment
 

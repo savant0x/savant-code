@@ -123,7 +123,11 @@ Full review: `docs/design/learnings-boot-loading-and-lifecycle-review.md`. The l
 boot-read artifact (`agents/savant/system-prompt.ts:117` reads it 0-EOF in every mode) at
 77,195 chars / 1,174 lines — 23% under the 100,000-char read boundary that once truncated it
 at boot (`CHANGELOG.md:3464`) and 26 lines under a retirement cap no gate enforces. Seven
-records own the repairs; each carries its evidence and its feature in the review's §3/§4.
+records own the repairs; each carries its evidence and its feature in the review's §3/§4. All seven are
+children of the remediation master `FID-2026-1012-022` as **Lane V** — the artifact, the operator's
+line of sight to it, and the pipeline's targeting. Operator ruling 2026-10-12: they are kept, because
+the ledger's value is real only if it is visible and it is not hidden; they are not a substitute for a
+class fix, and the six programme lanes are.
 
 - [ ] **FID-2026-1012-010. The boot read has no size contract.** Rows A1/A2 → feature F1
       (generated bounded boot digest) and F5 (measured budget). Blocks FID-014's tier and
@@ -152,38 +156,63 @@ records own the repairs; each carries its evidence and its feature in the review
       needs operator approval because the ledger is an operator-facing boot surface.
       **Automation level: 3** for the enumeration, **1** for the consolidation.
 
-### Root-cause fixes from the trace ledger (2026-10-12)
+### Failure-class remediation program (master `FID-2026-1012-022`, 2026-10-12)
 
 The ledger's purpose is dog-fooding: each entry records a real failure so the class can be
-fixed. The classes are now measured from the mechanical capture
-(`dev/experiences/raw-traces.jsonl`: 559 records / 70 classes / 195 sessions, 27 classes at
-the repo's own ≥3-session bar) and cross-checked against the ledger's coverage. Matrix and
-fixes: `docs/design/learnings-root-cause-matrix.md`. Five records own the root causes; each
-fix declares a recurrence assertion instead of a one-off verification, and a lesson is written
-only once that assertion holds — so the ledger records what was fixed, not what failed.
+fixed. The classes are measured from the mechanical capture
+(`dev/experiences/raw-traces.jsonl`: **559 records / 68 classes / 195 sessions**, 2026-08-24 →
+2026-10-12, 27 classes at the repo's own ≥3-session bar; the instrument — `toolName` + the first 70
+characters of the error line — and its slice-sensitivity table are in `FID-2026-1012-022` §Evidence)
+and cross-checked against the ledger's coverage. Matrix and root causes:
+`docs/design/learnings-root-cause-matrix.md`. One **master** record holds the census and the
+per-class allocation — **every one of the 68 classes has exactly one owning child, 559 of 559
+records, zero unassigned** — and each child declares a recurrence assertion instead of a one-off
+verification, so the ledger records what was fixed, not what failed. All twelve records dated
+2026-10-12 (`-010` … `-021`) are children of the master, as are the two added with it (`-023`,
+`-024`); a child closes only when its classes stop recurring, and the master closes only when every
+child is closed. Nothing in the capture pipeline changes — the hook, `experiences:dedup`, the
+session-end review, `lessons:to-skills` and `lessons:features` keep running, because they are the
+instrument that finds the defects; the gap was that nothing acted on what they found.
+
+- [ ] **FID-2026-1012-022. Failure-class remediation program (master).** The census, the per-class
+      ownership, the convergence rule and the closure condition. Children: `-010`…`-021` (Lane V +
+      RC1–RC5), `-023` (RC6), `-024` (RC7). Not gateable itself; closes only when every child is
+      closed and the closing pass re-runs the allocation. **Automation level: 2.**
 
 - [ ] **FID-2026-1012-017. The incomplete-arguments class has never been fixed at its
-      source.** RC1 (rows 2/4/5/8/10/11/16) → E1: 193 records / 35% of all recorded failures
-      across nine tools, 16 of them dated today, after the class was learned on 2026-08-16
-      and its lesson retired out of the boot read. **Automation level: 3.**
+      source.** RC1 — **18 classes / 193 records** (35% of the capture; nine tools, 40+ sessions,
+      16 of them dated today) → E1. Learned 2026-08-16, and its lesson was retired out of the boot
+      read on 2026-10-12 while the class still fired. **Automation level: 3.**
 
 - [ ] **FID-2026-1012-018. read_url is the top recorded class, covered by no lesson and no
-      owner.** RC2 (rows 1/6/13) → E2: 114 × 404 across 18 sessions plus ~58 more
-      status/extraction records, ledger coverage zero. **Automation level: 3.**
-
-- [ ] **FID-2026-1012-019. Three tools degrade silently, breaking a rule the ledger already
-      states.** RC3 (rows 7/12/14/15) → E3: a missing research key, a missing ripgrep binary
-      and an exit-0/zero-match search are all indistinguishable from "found nothing".
+      owner.** RC2 — **11 classes / 181 records** (404 114×/18 sessions, plus 403, 401, 429, 405,
+      503, extraction, oversize, private-address and DNS shapes; ledger coverage zero) → E2.
       **Automation level: 3.**
 
-- [ ] **FID-2026-1012-020. Edit-path friction is reported, not diagnosed.** RC4 (rows 3/9) →
-      E4: 48 `str_replace` records with no ledger coverage. **Automation level: 3.**
+- [ ] **FID-2026-1012-019. Three tools degrade silently, breaking a rule the ledger already
+      states.** RC3 — **6 classes / 50 records**: a missing research key, a missing ripgrep binary
+      in two class shapes, an exit-0/zero-match search and two ripgrep argument failures, all
+      indistinguishable from "found nothing" → E3. **Automation level: 3.**
+
+- [ ] **FID-2026-1012-020. Edit-path friction is reported, not diagnosed.** RC4 — **13 classes /
+      72 records** (`str_replace` mismatch, no-op, patch failure, multi-occurrence, readonly;
+      `apply_patch` path failures; `list_directory`) → E4. **Automation level: 3.**
 
 - [ ] **FID-2026-1012-021. Nothing closes the loop from recurrence to fix.** RC5 → E5: the
-      system that turns a recurring class into an owned repair, asserts the class stopped,
-      and only then writes the lesson. Must not wire its coverage check before 017–020 have
-      owners. **Automation level: 2** (drafting a defect FID is automatable; approving one is
-      the operator's).
+      machinery that turns a recurring class into an owned repair, asserts the class stopped, and
+      only then writes the lesson. Must not wire its coverage check before 017–020 have owners.
+      **Automation level: 2** (drafting a defect FID is automatable; approving one is the
+      operator's).
+
+- [ ] **FID-2026-1012-023. Command execution has no reliability contract.** RC6 — **13 classes /
+      27 records**: nine timeout budgets (10 s … 2400 s) discovered one turn at a time, and an
+      abort recorded under `run_readonly_command` whose message names `run_terminal_command` → E6.
+      **Automation level: 3.**
+
+- [ ] **FID-2026-1012-024. Failure classes have no horizon.** RC7 — **7 classes / 36 records**
+      whose newest record is 2026-09-09 (the date the wrapper was removed) with none in the 33
+      days since; the census cannot tell a fossil from a defect, so no child can close on evidence
+      → E7. **Automation level: 3.**
 
 ### Build orders (formalized as FIDs 2026-10-07)
 
@@ -231,6 +260,14 @@ only once that assertion holds — so the ledger records what was fixed, not wha
   `scripts/lesson-feature-pipeline.ts`, `scripts/session-end-review.ts`,
   `scripts/validate-repository.ts`, `dev/agenda.md`, `dev/experiences/**`,
   `docs/design/learnings-root-cause-matrix.md`
+- FID-2026-1012-022: `dev/fids/**`, `SCOPE.md`, `docs/design/**`, `dev/experiences/**`,
+  `dev/agenda.md`
+- FID-2026-1012-023: `sdk/src/tools/run-terminal-command.ts`, `sdk/src/run-state/**`,
+  `packages/agent-runtime/src/tools/**`, `packages/agent-runtime/src/run-agent-step/**`,
+  `common/src/types/contracts/**`
+- FID-2026-1012-024: `common/src/types/experience.ts`, `common/src/util/experiences.ts`,
+  `packages/agent-runtime/src/hooks/**`, `packages/agent-runtime/src/tools/tool-executor/**`,
+  `scripts/experiences-dedup.ts`, `scripts/session-end-review.ts`, `dev/experiences/**`
 - Release-0.0.36: `VERSION`, `package.json`, `agents/package.json`,
   `cli/package.json`, `cli/release/package.json`, `common/package.json`,
   `common/src/constants/protocol-bundle.generated.ts`, `desktop/package.json`,

@@ -7,6 +7,7 @@
 **Created:** 2026-10-12 20:15
 **Automation level:** 3
 **YAGNI-Compliance:** Verified
+**Master FID:** FID-2026-1012-022 (The failure-class remediation program)
 
 ---
 
@@ -19,8 +20,11 @@ this class on **2026-08-16** — the lesson "A retry that re-emits the same over
 is not recovery" — and on 2026-10-12 that lesson was **retired out of the boot read** into
 `dev/LEARNINGS-RETIRED.md:1373` while the class was still firing. Every mechanism in the tree
 acts *after* the arguments have already been cut: the runtime steers and re-sends with a
-three-strike budget, so the class can only be retried, never prevented. This record fixes the
-class at its source and replaces one-off verification with a recurrence assertion.
+three-strike budget, so the class can only be retried, never prevented.
+
+This record owns **one lane of the remediation program `FID-2026-1012-022`** — 18 classes and 193
+records of its 68-class census — and fixes the class at its source, replacing one-off verification
+with a recurrence assertion.
 
 ## Environment
 
@@ -213,7 +217,8 @@ the recurrence probe, the affected workspaces' typechecks and `quality`.
 > was built.
 
 - [x] Measurements re-checked: the aggregation over `dev/experiences/raw-traces.jsonl` returned
-      559 records / 70 classes / 195 sessions, 193 `Incomplete arguments for tool` records, 16
+      559 records / 68 classes / 195 sessions (instrument: `toolName` + the first 70 characters of the
+      error line, sensitivity table in `FID-2026-1012-022`), 193 `Incomplete arguments for tool` records, 16
       of them dated 2026-10-12, and the per-tool counts listed above; the retired lesson was
       located at `dev/LEARNINGS-RETIRED.md:1373` with its 2026-08-16 date.
 - [x] Every cited mechanism path exists at `main` @ `bee0610d`

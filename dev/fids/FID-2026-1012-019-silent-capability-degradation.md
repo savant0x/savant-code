@@ -7,6 +7,7 @@
 **Created:** 2026-10-12 20:15
 **Automation level:** 3
 **YAGNI-Compliance:** Verified
+**Master FID:** FID-2026-1012-022 (The failure-class remediation program)
 
 ---
 
@@ -38,8 +39,9 @@ surface. The agent's next decision is therefore made on a false premise: "found 
 ### Problem
 
 The trace ledger records one immutable row per tool failure. Aggregated over its 559 records
-(70 classes, 195 distinct sessions), four classes share one shape — a capability that did not
-run, reported as a capability that ran:
+(68 classes, 195 distinct sessions), this lane's **six classes — 50 records** in the
+`FID-2026-1012-022` allocation — share one shape: a capability that did not run, reported as a
+capability that ran:
 
 - **`web_search` returns an empty result set when no research key is configured.** The notice
   it returns instructs the *operator* to add a key; it does not tell the agent that the search
@@ -52,7 +54,9 @@ run, reported as a capability that ran:
   available to the caller says success, and the agent concludes the codebase does not contain
   what the class of defect says it might.
 - **`run_readonly_command` reports only "timed out after 30 seconds".** The bound is named but
-  the work state is not: was it slow, blocked, or waiting on input, and what was it doing.
+  the work state is not: was it slow, blocked, or waiting on input, and what was it doing. The
+  class itself is owned by `FID-2026-1012-023`; what this record keeps from it is the reading
+  rule — a timeout must never read as "found nothing".
 
 None of the four is covered by a lesson. The ledger's coverage of the general rule is real but
 was written for a worktree control, not for the tool surface, so the class survived it.

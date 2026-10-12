@@ -7,6 +7,7 @@
 **Created:** 2026-10-12 20:15
 **Automation level:** 2
 **YAGNI-Compliance:** Verified
+**Master FID:** FID-2026-1012-022 (The failure-class remediation program)
 
 ---
 
@@ -16,12 +17,14 @@ The repository records every tool failure mechanically, detects which classes re
 routes what it learned to artifacts that are **not fixes** — a draft skill, a product
 candidate, an advisory agenda line. Nothing turns a recurring class into an owned repair, and
 nothing ever checks that a class **stopped** recurring. The evidence is in the numbers: 27 of
-70 recorded classes sit at or above the repository's own promotion bar, the agenda has carried
+68 recorded classes sit at or above the repository's own promotion bar, the agenda has carried
 `read_files 41 / read_url 24 / web_search 19` while none of those three has a lesson, an
 owning FID or a fix, and every governed lesson in the ledger names an owning FID — which
 proves the lesson is written *after* a fix rather than driving one. The ledger therefore
 documents the past instead of driving the next change, and its length measures how many
-classes are still running unfixed.
+classes are still running unfixed. This record is the **machinery** of the remediation program
+`FID-2026-1012-022`: the master holds the census and the per-class allocation (all 68 classes across
+six lanes), while this record holds the loop that keeps a class open until it stops recurring.
 
 ## Environment
 
@@ -187,7 +190,7 @@ fixed/verified set that `validate:repository` live-runs.
 
 ### Loop 1 — RED (2026-10-12)
 
-- **RED:** recurrence is detected and routed away from repair. 27 of 70 classes sit at the
+- **RED:** recurrence is detected and routed away from repair. 27 of 68 classes sit at the
   ≥3-distinct-session bar; the agenda's three carried classes have no owner; 193 records (35%
   of the capture) belong to a family the ledger learned on 2026-08-16 and whose lesson was
   retired out of the boot read while the class fired 16 times on 2026-10-12; and 5 of the 6
@@ -230,7 +233,7 @@ fixed/verified set that `validate:repository` live-runs.
 > has been implemented, so what follows records what was CHECKED at the cited `HEAD` — not what
 > was built.
 
-- [x] Measured at `bee0610d` from the real capture: 559 records / 70 classes / 195 distinct
+- [x] Measured at `bee0610d` from the real capture: 559 records / 68 classes / 195 distinct
       sessions, 27 classes at the ≥3-distinct-session bar, 193 incomplete-argument records with
       16 dated 2026-10-12, and 34 of 34 governed lessons carrying `**Owning FID:**`.
 - [x] The five zero-coverage greps were run against the live `dev/LEARNINGS.md`
