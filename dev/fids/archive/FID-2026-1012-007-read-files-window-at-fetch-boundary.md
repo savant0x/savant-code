@@ -80,8 +80,13 @@ past-EOF, non-positive limit, `>100k` reconstruction with a matching
 SHA-256), the SDK boundary (a window past the cap returns the real lines;
 the cap still applies; the 10MB and ignored-file rules still apply; an
 unwindowed read keeps the previous notice; the override receives the
-window), and the runtime handler (the window reaches `requestFiles`, the
-response is not sliced twice, embedded reads are windowed locally).
+window), the runtime handler (the window reaches `requestFiles`, the response
+is not sliced twice, embedded reads are windowed locally), and the composed
+seam production actually runs: the runtime handler wired to the SDK boundary
+exactly as `agent-runtime-impl.ts` wires it, windowing a real 3,000-line file
+on disk past the cap. The third acceptance criterion (a window past the 100k
+prefix returns the real lines through the production SDK/runtime path) is
+asserted in that composed flow, not only in its two halves.
 
 ## Verification Gates
 
@@ -97,8 +102,8 @@ response is not sliced twice, embedded reads are windowed locally).
 
 ### Verification Receipt
 
-- fingerprint: sha256:6cca0cd6d978d1957c6499be518bd6a3ce5982ae2bfcd585e8f45cf11cf6f732
-- verified: 2026-10-12T20:35:35.283Z
+- fingerprint: sha256:1c95be4cf0b71d1022f1a7a43e978e9ee4d90202f7dab6379ab7bc80550d6da8
+- verified: 2026-10-12T20:57:18.858Z
 - typecheck common: exit 0
 - typecheck sdk: exit 0
 - typecheck packages/agent-runtime: exit 0
@@ -176,10 +181,11 @@ windowed caller; `requestOptionalFile` (`:120-127`) intentionally passes none.
 The CLI's `overrideTools` block (`cli/src/utils/savant-code-client.ts:76-118`)
 overrides only `ask_user`, so the production CLI uses the SDK boundary.
 
-Focused verification: 9 pass (shared extractor), 8 pass (SDK boundary),
-20 pass across the four runtime files it touches — 0 fail. Full workspace
-suites after the change: common 853 pass / 4 skip, SDK 618 pass / 1 skip,
-agent-runtime 2020 pass, all 0 fail. Root typecheck, ESLint, Markdown lint,
+Focused verification: 9 pass (shared extractor), 9 pass (SDK boundary,
+including the handler → SDK seam on a real file), 20 pass across the four
+runtime files it touches — 0 fail. Full workspace suites after the change:
+common 853 pass / 4 skip, SDK 619 pass / 1 skip, agent-runtime 2020 pass, all
+0 fail. Root typecheck, ESLint, Markdown lint,
 formatting, `quality:report` and `validate:repository` pass.
 
 Boundaries recorded honestly: an `overrideTools.read_files` implementation that

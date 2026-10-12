@@ -59,8 +59,9 @@ Two P1 candidates from the lesson-driven feature pipeline
   embedded grounding reads that never cross that boundary. Traversal refusal,
   gitignore filtering, the 10MB skip and the cap are unchanged and re-pinned.
   Commits `303c6838` + `e3bea01e` (ceiling split). Receipt 9/9 live at the
-  archived path; 9 new extractor tests, 8 SDK-boundary tests, and the runtime
-  handler/forwarding pins, with common 853 / SDK 618 / agent-runtime 2020 pass.
+  archived path; 9 new extractor tests, 9 SDK-boundary tests (including the
+  handler → SDK seam against a real file past the cap) and the runtime
+  handler/forwarding pins, with common 853 / SDK 619 / agent-runtime 2020 pass.
 
 - [`FID-2026-1012-008-child-agent-compaction-and-window-propagation.md`](FID-2026-1012-008-child-agent-compaction-and-window-propagation.md)
   (`LF-002`, high): a spawned child builds its own `ContextCompactor`, and the

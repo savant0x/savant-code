@@ -1,5 +1,9 @@
 import crypto from 'node:crypto'
+import fs from 'node:fs/promises'
+import os from 'node:os'
+import path from 'node:path'
 
+import { handleReadFiles } from '@savant-code/agent-runtime/tools/handlers/tool/read-files'
 import { READ_FILES_MAX_CHARS } from '@savant-code/common/constants/read-files'
 import { FILE_READ_STATUS } from '@savant-code/common/old-constants'
 import * as projectFileTree from '@savant-code/common/project-file-tree'
@@ -212,6 +216,51 @@ describe('getFiles line windows (LF-001)', () => {
     })
 
     expect(result['big.md']).toBe(FILE_READ_STATUS.IGNORED)
+  })
+
+  // LF-001 acceptance, as ONE flow rather than two halves: the runtime handler
+  // asks the SDK boundary for a window, wired exactly as production wires it
+  // (sdk/src/run/agent-runtime-impl.ts requestFiles), against a real file.
+  test('serves a page past the cap through the handler → SDK seam', async () => {
+    const directory = await fs.mkdtemp(path.join(os.tmpdir(), 'savant-window-'))
+    const lines = Array.from(
+      { length: 3000 },
+      (_, index) => `LINE-${index + 1} ${'y'.repeat(40)}`,
+    )
+    await fs.writeFile(
+      path.join(directory, 'ledger.md'),
+      `${lines.join('\n')}\n`,
+      'utf8',
+    )
+
+    try {
+      const result = await handleReadFiles({
+        previousToolCallFinished: Promise.resolve(),
+        toolCall: { input: { paths: ['ledger.md'], offset: 2000, limit: 2 } },
+        agentState: { protocolSource: 'local' },
+        fileContext: { projectRoot: directory, tokenCallers: {} },
+        requestFiles: (params: {
+          filePaths: string[]
+          offset?: number
+          limit?: number
+        }) =>
+          readFiles({
+            ...params,
+            cwd: directory,
+            fs: fs as unknown as SavantCodeFileSystem,
+          }),
+      } as never)
+
+      const [entry] = result.output as Array<{
+        value: Array<{ path: string; content: string }>
+      }>
+      expect(entry.value[0]?.path).toBe('ledger.md')
+      expect(entry.value[0]?.content).toBe(
+        `${lines.slice(1999, 2001).join('\n')}\n`,
+      )
+    } finally {
+      await fs.rm(directory, { recursive: true, force: true })
+    }
   })
 
   test('forwards the window to an override, which owns its response', async () => {
