@@ -1385,8 +1385,12 @@
   scripts/validation-gates.ts → symbol:repositoryValidationGates
 - **Invariant:** Every source import must resolve from the repo's own node_modules after
   `bun install --frozen-lockfile`; a resolution that only works from a node_modules outside the repo is a defect.
-- **Guard:** `cli-bundle-resolution` release gate (`bun build cli/src/index.tsx --target=bun`) — the exact
-  phase that failed in CI now fails the release gates before shipping, not the post-release binary workflow.
+- **Guard:** `cli-bundle-resolution` release gate (`bun run scripts/cli-bundle-resolution-check.ts`) — the
+  exact phase that failed in CI now fails the release gates before shipping, not the post-release binary
+  workflow. The gate bundles inside a pristine install of the frozen lockfile and fails when any module the
+  bundler loaded resolved from a `node_modules` OUTSIDE that tree, so a stray install up the ancestor chain
+  (measured: a `node_modules` in the user profile, which defeated every working-tree form of this check) is a
+  failure rather than a rescue.
 - **Verification:** The gate exits non-zero on an undeclared import; `import.meta.resolve` of every
   dependency points under the repo root, never a parent-directory node_modules.
 - **Scope:** release

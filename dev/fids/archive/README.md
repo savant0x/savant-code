@@ -33,7 +33,10 @@ an audit record, not an active work queue.
   pristine install of the frozen lockfile and fails when any module it loaded resolved
   from outside that tree. Measured teeth: the pre-change command exits 0 on an import only
   the stray profile `node_modules` provides, while the new gate exits 1 naming 28 such
-  modules. All eight declared gates passed live.
+  modules. All eight declared gates passed live. Closed on local commit `ad27c153`; no push
+  was performed. One documentary drift was corrected in the follow-up index commit: the
+  record carried the pre-final sizes of the rewritten probe and its suite (195 / 153 where
+  the committed files measure 199 / 183).
 
 ## 2026-10-11 incident closure — `v0.0.35` binary backfill
 

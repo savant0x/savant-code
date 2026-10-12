@@ -31,6 +31,7 @@ This catalog provides stable names for lessons that explain those authorities.
 ## Rule: dependency-resolution-repo-bound
 
 - **Authority:** `scripts/validation-manifest.ts`
+- **Engine:** `scripts/clean-install-bundle.ts` (pristine tree + resolution provenance)
 - **Validation:** `bun run release:public:diagnose` (cli-bundle-resolution gate)
 
 ## Rule: dispatch-ref-branch-or-tag

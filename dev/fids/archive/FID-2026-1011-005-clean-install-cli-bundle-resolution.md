@@ -105,8 +105,8 @@ resolves every input against the tree root rather than pattern-matching a path s
 - `scripts/clean-install-bundle.ts` (new — 187 lines: scratch root, tree
   materialization, provenance helpers, the release build's step definitions)
 - `scripts/cli-bundle-resolution-check.ts` (rewritten — was a 44-line `runProbe`
-  delegation, now the sequence and the verdict)
-- `scripts/__tests__/clean-install-bundle.test.ts` (new — 153 lines, 15 tests)
+  delegation, now 199 lines: the sequence and the verdict)
+- `scripts/__tests__/clean-install-bundle.test.ts` (new — 183 lines, 15 tests)
 - `scripts/validation-gates.ts` (`cli-bundle-resolution` now runs the probe)
 - `scripts/gate-declarability-registry.ts` (`proves` clause restated)
 - `package.json` (`bundle:resolution`)
@@ -243,7 +243,9 @@ itself.
   the old eighteen-line gate comment.
 - **GREEN:** Reduced the contract comment to its load-bearing lines (the pristine-install
   reason and the pin to the module docs), netting the file to 286 lines.
-- **AUDIT:** `quality: PASS (1502 baselined files)`; the new files are 187 / 195 / 153.
+- **AUDIT:** `quality: PASS (1502 baselined files)`; the new files are 187 / 199 / 183
+  (`wc -l`, measured on the committed bytes — the 195 / 153 recorded here during the loop
+  were the sizes before the last edits landed, and the closure commit corrected them).
 - **ADVERSARIAL:** The cost is real and stated rather than smoothed over: the gate now
   takes **1m49s** (copy ≈8s, full install, SDK build, agent prebuild, bundle ≈2s) against
   ~2s before. It is a release-battery gate, not a pre-push gate — `.githooks/pre-push`
@@ -272,10 +274,10 @@ itself.
 
 ### Implementation Evidence (REQUIRED for `closed`)
 
-- [x] **Commit SHA:** landed in the FID's own commit (see `Resolution`)
+- [x] **Commit SHA:** landed in the FID's own commit — local `ad27c153` (see `Resolution`)
 - [x] **File:line ranges:** `scripts/clean-install-bundle.ts:1-187`,
-      `scripts/cli-bundle-resolution-check.ts:1-195`,
-      `scripts/__tests__/clean-install-bundle.test.ts:1-153`,
+      `scripts/cli-bundle-resolution-check.ts:1-199`,
+      `scripts/__tests__/clean-install-bundle.test.ts:1-183`,
       `scripts/validation-gates.ts:189-203` (gate),
       `scripts/gate-declarability-registry.ts:90-95` (audited entry)
 - [x] **Gate output:** pasted under `Code Verification Evidence`
@@ -335,6 +337,8 @@ package.json  "bundle:resolution": "bun scripts/cli-bundle-resolution-check.ts"
 ## Resolution
 
 - **Closed Date:** 2026-10-11
+- **Closing Commit:** local `ad27c153` (`feat(gates): cli-bundle-resolution runs inside a
+  pristine install`). No push was performed — `main` is 8 commits ahead of `origin/main`.
 - **Fix Description:** `cli-bundle-resolution` now materializes the release file set into
   a scratch tree, installs the frozen lockfile there, runs the release build's prebundle
   steps, bundles there, and fails when any module the bundler loaded resolved outside that
