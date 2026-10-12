@@ -3,6 +3,26 @@
 This directory contains closed or historically completed FIDs. Files here are
 an audit record, not an active work queue.
 
+## 2026-10-12 closure — Tiarina Cloud is a built-in gateway
+
+- [`FID-2026-1012-005-tiarina-cloud-provider.md`](FID-2026-1012-005-tiarina-cloud-provider.md)
+  closed with the loop's conformance decision reversed on measurement: the plan
+  was a live catalog by analogy with the newest provider, and the keyed probe
+  showed `chatanywhere`'s exact shape instead (19 rows, none carrying a window),
+  so the catalog is the checked-in allowlist with 18 cross-gateway window rows
+  and one documented no-row id. The registry entry went to a new
+  `registry-partitioned-3.ts` (the second partition was 267/300 and the entry
+  carries its probe receipt). Every declared gate passed on the final tree
+  (full typecheck, eslint, lint:md, prettier, both provider-doc gates,
+  `window-coverage:check`, `providers:parity` reporting `tiarina: 19` with a
+  clean pairing check, 17 + 44 + 24 focused tests) and the keyed acceptance
+  round-trip ran through the PRODUCTION chain, not the raw endpoint:
+  `tiarina/glm-5.3-flash:free` → `finishReason: stop`, text `TIARINA-CHAIN-OK`.
+  Two residues were recorded rather than hidden: the census regeneration also
+  refreshed a stale 2026-10-06 committed subset, and `.env.example:152`'s
+  unregistered `T146` citation stays for the operator because every `.env*`
+  surface is outside the register item's approved write surface.
+
 ## 2026-10-12 closure — public release no longer gates on the unpublished SDK
 
 - [`FID-2026-1011-002-public-release-excludes-sdk.md`](FID-2026-1011-002-public-release-excludes-sdk.md)

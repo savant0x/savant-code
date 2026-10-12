@@ -24,6 +24,7 @@ import {
   fetchInternModels,
   fetchUnorouterModels,
 } from './static-catalogs-gateways'
+import { fetchTiarinaModels } from './tiarina'
 
 import type { GatewayLiveCatalogs } from './gateway-live-results'
 import type { OpenRouterModel } from './types'
@@ -64,6 +65,10 @@ export function assembleGatewayCatalog(
     // FID-2026-1007-005: the provider was registered, catalogued and window-
     // covered, and this fan-out never asked for it — the picker had no rows.
     ...fetchChatanywhereModels(),
+    // FID-2026-1012-005: the same lesson applied up front — the static builder
+    // is wired in the same change that registers the provider, and the census
+    // pairing check (providers:parity) proves the rows reach the picker.
+    ...fetchTiarinaModels(),
     ...live.customModels,
   ]
   combined.sort((a, b) => a.id.localeCompare(b.id))

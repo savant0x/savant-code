@@ -227,3 +227,39 @@ export const chatanywhereModels = {
 } as const
 export type ChatanywhereModel =
   (typeof chatanywhereModels)[keyof typeof chatanywhereModels]
+
+/**
+ * Tiarina Cloud catalog (FID-2026-1012-005) — the AI Gateway of the Indonesian
+ * PaaS at ai.tiarina.cloud, on its full measured chat roster (all 19 ids the
+ * keyed /v1/models probe returned 2026-10-12, `ids.txt` under
+ * dev/scratchpad/active/tiarina-2026-10-12/). Every row carried only
+ * `id/object/created/owned_by` — **0 of 19 publish a window field** — so this
+ * checked-in set is the source of truth and the exact-id windows live in the
+ * context-window-table-tiarina seam (cross-gateway consensus; the chatanywhere
+ * precedent). The gateway serves bare upstream ids and the `:free` /
+ * `:cloudflare` suffixed ids are separate roster entries, not aliases.
+ * The vendor's "Anthropic compatible" claim is refuted on the wire (keyed
+ * POST /v1/messages -> 404), so no Anthropic-shaped id is catalogued here.
+ */
+export const tiarinaModels = {
+  tiarina_deepseek_v4_1_flash: 'tiarina/deepseek-v4.1-flash',
+  tiarina_deepseek_v4_1_flash_free: 'tiarina/deepseek-v4.1-flash:free',
+  tiarina_deepseek_v4_flash_free: 'tiarina/deepseek-v4-flash:free',
+  tiarina_deepseek_v4_pro: 'tiarina/deepseek-v4-pro',
+  tiarina_deepseek_v4_pro_cloudflare: 'tiarina/deepseek-v4-pro:cloudflare',
+  tiarina_kimi_k3: 'tiarina/kimi-k3',
+  tiarina_kimi_k2_7_code: 'tiarina/kimi-k2.7-code',
+  tiarina_kimi_k2_6: 'tiarina/kimi-k2.6',
+  tiarina_glm_5_3: 'tiarina/glm-5.3',
+  tiarina_glm_5_3_cloudflare: 'tiarina/glm-5.3:cloudflare',
+  tiarina_glm_5_3_flash_free: 'tiarina/glm-5.3-flash:free',
+  tiarina_glm_5_2: 'tiarina/glm-5.2',
+  tiarina_glm_4_7_flash: 'tiarina/glm-4.7-flash',
+  tiarina_qwen3_8_flash: 'tiarina/qwen3.8-flash',
+  tiarina_qwen3_8_flash_free: 'tiarina/qwen3.8-flash:free',
+  tiarina_qwen3_7_plus: 'tiarina/qwen3.7-plus',
+  tiarina_qwen3_8_max: 'tiarina/qwen3.8-max',
+  tiarina_mimo_v2_6_flash_free: 'tiarina/mimo-v2.6-flash:free',
+  tiarina_gpt_oss_120b: 'tiarina/gpt-oss-120b',
+} as const
+export type TiarinaModel = (typeof tiarinaModels)[keyof typeof tiarinaModels]

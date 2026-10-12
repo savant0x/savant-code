@@ -64,6 +64,7 @@ export {
   fetchUnorouterModels,
 } from './openrouter-models/static-catalogs-gateways'
 export { fetchChatanywhereModels } from './openrouter-models/chatanywhere'
+export { fetchTiarinaModels } from './openrouter-models/tiarina'
 export {
   findGatewayModel,
   formatModelInfo,

@@ -1,5 +1,52 @@
 # Changelog
 
+## 2026-10-12 — Tiarina Cloud is a built-in gateway (FID-2026-1012-005)
+
+### Added
+
+- `tiarina` (`Tiarina Cloud`, `https://ai.tiarina.cloud/v1`, `TIARINA_API_KEY`)
+  is registered as a hosted gateway: it appears in `/provider`, routes
+  `tiarina/<model-id>`, and shows up in the generated `.env.example` block,
+  `README.md`, `cli/release/README.md` and `docs/providers.md` registry table.
+  No adapter and no SDK change — the request router is registry-driven, which
+  the new keyed round-trip through the production chain proves end to end.
+- The catalog is the checked-in 19-id allowlist the keyed `/v1/models` probe
+  returned rather than a live fetch — the same call the repo made for
+  ChatAnywhere, for the same measured reason: not one of those 19 rows publishes
+  a context window, so a live catalog would still need the identical
+  fallback-table section. The suffixed `:free` and `:cloudflare` ids are rowed as
+  the separate roster entries they are.
+- Window coverage: a new `context-window-table-tiarina` seam carries 18 rows,
+  each read off existing cross-gateway rows for the same upstream model (two of
+  them pinned at the conservative minimum of two disagreeing >=2-row groups),
+  plus one documented no-row id that keeps the flagged 200k default.
+  `NO_PUBLISH_GATEWAY_IDS` membership is what mechanically enforces the seam
+  file and its window-truth suite.
+- The provider's own tests: `fid-2026-1012-005-tiarina.test.ts` (windows compared
+  against an independent oracle, never against the table the builder reads) and
+  `window-truth-tiarina.test.ts` (roster windows, variant inheritance, total
+  19-id coverage, seam-wiring census). The suite also asserts what this shape
+  does NOT have: zero exception-manifest entries.
+
+### Changed
+
+- The closed-world registry pins widened from twenty-six providers to
+  twenty-seven (twenty-five setup providers to twenty-six).
+- `provider-catalog-census.json` was regenerated with `providers:parity` — the
+  committed copy was a stale 2026-10-06 subset, so the file now carries the full
+  current assembly including `tiarina: 19`.
+
+### Fixed
+
+- `docs/adding-a-provider.md`'s live-catalog example resolved its key with
+  `process.env.MYPROVIDER_API_KEY`, while every shipped wrapper calls
+  `resolveProviderApiKey(providerId)` — the seam that also sees a key entered
+  through `/provider`. Following the runbook literally produced a catalog that
+  401s for every wizard-configured user.
+- Still open for the operator: `.env.example:152` cites task `T146`, which is not
+  registered (the register carries that work as `T147`); every `.env*` surface is
+  operator-owned under `no-write-dotenv`, so the one-character fix is left to them.
+
 ## 2026-10-12 — Scholarly research through the public Scholars Reading List MCP service (FID-2026-1012-001)
 
 ### Added

@@ -17,6 +17,7 @@
  */
 import { PROVIDER_REGISTRY_PARTITION } from './registry-partitioned'
 import { PROVIDER_REGISTRY_PARTITION_2 } from './registry-partitioned-2'
+import { PROVIDER_REGISTRY_PARTITION_3 } from './registry-partitioned-3'
 
 import type { ProviderConfig } from './types'
 
@@ -189,12 +190,13 @@ export const PROVIDER_REGISTRY = {
     order: 4,
   },
   // kiosapi/apinex/orcarouter/bai and later entries live in
-  // ./registry-partitioned and ./registry-partitioned-2 (300-line file
-  // splits) and are spread in — Object.keys order is preserved: the
-  // partition entries follow ollama, and the inline object ends
-  // immediately after the spreads.
+  // ./registry-partitioned, ./registry-partitioned-2 and
+  // ./registry-partitioned-3 (300-line file splits) and are spread in —
+  // Object.keys order is preserved: the partition entries follow ollama, and
+  // the inline object ends immediately after the spreads.
   ...PROVIDER_REGISTRY_PARTITION,
   ...PROVIDER_REGISTRY_PARTITION_2,
+  ...PROVIDER_REGISTRY_PARTITION_3,
 } as const satisfies Record<string, ProviderConfig>
 
 /** Literal union of registry ids, e.g. 'tokenharbor' | 'commandcode'. */

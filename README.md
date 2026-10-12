@@ -94,6 +94,7 @@ history. The supported hosted providers are:
 | Nous Research | `/provider nous` or `DIRECT_PROVIDER=nous` | `NOUS_API_KEY` | OpenAI-compatible direct inference; Portal OAuth is separate |
 | Ollama | Automatic detection | `OLLAMA_HOST` (optional) | Local inference; no API key required |
 | OrcaRouter | `/provider orcarouter` or `DIRECT_PROVIDER=orcarouter` | `ORCAROUTER_API_KEY` | Multi-provider gateway with a live model catalog (free tier currently gated vendor-side on GitHub account linkage) |
+| Tiarina Cloud | `/provider tiarina` or `DIRECT_PROVIDER=tiarina` | `TIARINA_API_KEY` | Hosted gateway |
 | TokenBom | `/provider tokenbom` or `DIRECT_PROVIDER=tokenbom` | `TOKENBOM_API_KEY` | OpenAI-compatible gateway on an audited static 7-model allowlist |
 | TokenHarbor | `/provider tokenharbor` or `DIRECT_PROVIDER=tokenharbor` | `TOKENHARBOR_API_KEY` | OpenAI-compatible hosted gateway |
 | UnoRouter | `/provider unorouter` or `DIRECT_PROVIDER=unorouter` | `UNOROUTER_API_KEY` | Hosted gateway |
@@ -442,8 +443,8 @@ code 2 blocks a tool.
 - **Universal copy buttons** — hover-to-copy on code blocks, tool outputs, and
   file diffs throughout the TUI.
 - **Gateway providers** — OpenRouter, TokenRouter, TokenHarbor, NVIDIA NIM,
-  CommandCode, Nous Research, KiosAPI, APInex,
-OrcaRouter, B.AI, HCNSec, TokenBom, Infron, Intern InkStone, ChatAnywhere,
+  CommandCode, Nous Research, KiosAPI, APInex,  OrcaRouter, B.AI, HCNSec, TokenBom, Infron, Intern InkStone, ChatAnywhere,
+  Tiarina Cloud,
   UnoRouter,
   BazaarLink, Atria AI,
   OpenAI, Vercel AI Gateway, Clean APIs, CodeCraft API, Mistral AI, xKiro, and Cloudflare Workers AI via
@@ -887,6 +888,7 @@ picker or choose one directly:
 /provider infron
 /provider intern
 /provider chatanywhere
+/provider tiarina
 /provider unorouter
 /provider bazaarlink
 /provider vercel
@@ -907,6 +909,7 @@ The supported environment variables are `OPENAI_API_KEY`, `OPENROUTER_API_KEY`,
 `AI_GATEWAY_API_KEY`, `CLEANAPIS_API_KEY`, `CODECRAFT_API_KEY`, `XKIRO_API_KEY`,
 `MISTRAL_API_KEY`,
 `CHATANYWHERE_API_KEY`,
+`TIARINA_API_KEY`,
 `CLOUDFLARE_API_TOKEN`. The key
 prompt is masked and stores the key globally in the Savant-Code config
 `credentials.json`; it is not added to chat history. Shell environment variables

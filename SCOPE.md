@@ -113,7 +113,11 @@ recorded decision or external dependency requires it.
 
 - [ ] **T147. Geaix/Excelnt live probe and registry integration.** The operator
       must provide a live gateway key for the probe before integration begins.
-      Both vendors lacked active keys at last check. **Automation level: 1.**
+      Both vendors lacked active keys at last check. Residue also awaiting the
+      operator: `.env.example:152` cites task `T146`, which is not registered
+      (this register carries that work as T147) — a one-character fix left
+      untaken on purpose, because every `.env*` surface is operator-owned under
+      the steering rule `no-write-dotenv`. **Automation level: 1.**
 
 ### Harness and process
 
@@ -184,6 +188,7 @@ recorded decision or external dependency requires it.
 - T147: `dev/scratchpad/active/gateway-catalog-probe.ts`,
   `dev/session-summaries/2026-10-06-geaix-excelnt-probe.md`,
   `dev/fids/**` (the integration FID)
+
 - T122: (no write surface — operator-owned)
 - T164-D: `common/src/types/print-mode.ts`,
 `packages/agent-runtime/src/run-agent-step/step.ts`,

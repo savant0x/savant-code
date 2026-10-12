@@ -210,6 +210,7 @@ Works with multiple inference providers:
 - **Mistral AI** — Authenticated live model catalog and OpenAI chat (`MISTRAL_API_KEY`; `https://api.mistral.ai/v1`)
 - **xKiro** — Public live chat catalog (`XKIRO_API_KEY`; `https://api.xkiro.com/v1`). Anthropic model IDs use Messages; other IDs use OpenAI chat. Vendor namespaces remain intact. Catalog tiers describe requirements; paid-model access depends on the account.
 - **ChatAnywhere** — OpenAI-compatible hosted gateway on a static 27-model chat roster (`CHATANYWHERE_API_KEY`; `https://api.chatanywhere.tech/v1`; free-key tier: 10,000 points/day per the vendor's GPT_API_free docs)
+- **Tiarina Cloud** — OpenAI-compatible hosted gateway on a static 19-model chat roster (`TIARINA_API_KEY`; `https://ai.tiarina.cloud/v1`; free-key tier)
 - **OpenAI** — Platform API keys via `/provider openai` or `OPENAI_API_KEY`; Responses API at `https://api.openai.com/v1`, with an authenticated live catalog
 - **NVIDIA NIM** — NVIDIA-hosted inference
 - **CommandCode** — OpenAI-compatible hosted inference

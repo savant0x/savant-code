@@ -52,6 +52,7 @@ closed if this section drifts from the registry.
 | Nous Research | `nous` | gateway | `NOUS_API_KEY` | `https://inference-api.nousresearch.com/v1` | openai | live |
 | Ollama | `ollama` | local | — | `http://localhost:11434/v1` | openai | none |
 | OrcaRouter | `orcarouter` | gateway | `ORCAROUTER_API_KEY` | `https://api.orcarouter.ai/v1` | openai | live |
+| Tiarina Cloud | `tiarina` | gateway | `TIARINA_API_KEY` | `https://ai.tiarina.cloud/v1` | openai | static (19 models; evidence: console-verified 2026-10-12) |
 | TokenBom | `tokenbom` | gateway | `TOKENBOM_API_KEY` | `https://tokenbom.com/v1` | openai | static (7 models) |
 | TokenHarbor | `tokenharbor` | gateway | `TOKENHARBOR_API_KEY` | `https://tokenharbor.ai/v1` | openai | static (68 models) |
 | UnoRouter | `unorouter` | gateway | `UNOROUTER_API_KEY` | `https://api.unorouter.com/v1` | openai | static (17 models) |

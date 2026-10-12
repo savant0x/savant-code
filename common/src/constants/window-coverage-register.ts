@@ -62,6 +62,7 @@ export const NO_PUBLISH_GATEWAY_IDS: readonly string[] = [
   'bai',
   'chatanywhere',
   'kiosapi',
+  'tiarina',
 ]
 
 export const WINDOW_COVERAGE_REGISTER: ReadonlyMap<
@@ -261,6 +262,13 @@ export const WINDOW_COVERAGE_REGISTER: ReadonlyMap<
       // `runtime-published`; `runtime-partial` is the truthful default.
       disposition: 'runtime-partial',
       note: 'Live catalog auth-gated (401 keyless, probed 2026-10-09); 46 rows authenticated, chat rows publish max_context_length via the dedicated parser (cli/src/utils/openrouter-models/mistral.ts). Mixed roster (embeddings/moderation/OCR/audio) — full-roster census pending before runtime-published.',
+    },
+  ],
+  [
+    'tiarina',
+    {
+      disposition: 'table-section',
+      note: 'Static 19-model catalog (FID-2026-1012-005). The keyed /v1/models publishes NO window fields (row shape id/object/created/owned_by — 19 rows, 0 window fields, probed 2026-10-12); 18 exact-id rows are cross-gateway consensus in the context-window-table-tiarina seam and 1 id (glm-4.7-flash) is documented no-row.',
     },
   ],
 ])

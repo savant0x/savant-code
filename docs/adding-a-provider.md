@@ -202,6 +202,9 @@ Then four things, all mandatory:
    ```ts
    import { deriveLiveCatalogUrl } from '@savant-code/common/providers/derive'
    import { PROVIDER_REGISTRY } from '@savant-code/common/providers/registry'
+
+   import { resolveProviderApiKey } from '../provider-credentials'
+
    import { createLiveCatalogFetcher } from './live-catalog'
 
    const url = deriveLiveCatalogUrl(PROVIDER_REGISTRY, 'myprovider')
@@ -211,8 +214,14 @@ Then four things, all mandatory:
      url,
      logLabel: 'MyProvider',
      parse: (json) => normalize(json),
-     // Only for an AUTHENTICATED catalog. Never read .env.local here.
-     resolveKey: () => process.env.MYPROVIDER_API_KEY,
+     // Only for an AUTHENTICATED catalog. Never read `process.env` (and never
+     // `.env.local`) here: `resolveProviderApiKey(providerId)` is the seam that
+     // ALSO sees a key entered through `/provider` (the registry-driven
+     // env-var-then-stored-key precedence, FID-2026-1006-001), and it never
+     // logs key material. Reading the env var directly silently 401s every
+     // user who configured the provider through the wizard — the drift this
+     // runbook carried until 2026-10-12.
+     resolveKey: () => resolveProviderApiKey('myprovider'),
    })
 
    export const fetchMyProviderModels = fetcher.fetchModels

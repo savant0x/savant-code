@@ -15,6 +15,7 @@ import {
   hcnsecModels,
   infronModels,
   internModels,
+  tiarinaModels,
   tokenbomModels,
   tokenharborModels,
   tokenrouterModels,
@@ -34,4 +35,5 @@ export const MODEL_CATALOGS = {
   atria: atriaModels,
   intern: internModels,
   chatanywhere: chatanywhereModels,
+  tiarina: tiarinaModels,
 } as const

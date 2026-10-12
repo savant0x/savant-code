@@ -18,6 +18,7 @@ import { APINEX_CONTEXT_WINDOW_FALLBACKS } from './context-window-table-apinex'
 import { BAI_CONTEXT_WINDOW_FALLBACKS } from './context-window-table-bai'
 import { CHATANYWHERE_CONTEXT_WINDOW_FALLBACKS } from './context-window-table-chatanywhere'
 import { KIOSAPI_CONTEXT_WINDOW_FALLBACKS } from './context-window-table-kiosapi'
+import { TIARINA_CONTEXT_WINDOW_FALLBACKS } from './context-window-table-tiarina'
 import { TOKENHARBOR_CONTEXT_WINDOW_FALLBACKS } from './context-window-table-tokenharbor'
 
 export const CONTEXT_WINDOW_FALLBACKS: ReadonlyMap<string, number> = new Map([
@@ -268,4 +269,9 @@ export const CONTEXT_WINDOW_FALLBACKS: ReadonlyMap<string, number> = new Map([
   // no window fields — cross-gateway consensus rows; no-row ids documented
   // in the section file) ---
   ...CHATANYWHERE_CONTEXT_WINDOW_FALLBACKS,
+  // --- tiarina: seam-split (FID-2026-1012-005; the gateway publishes no
+  // window fields — cross-gateway consensus rows, two of them pinned at the
+  // conservative minimum of two disagreeing >=2-row groups; the one no-row id
+  // (glm-4.7-flash) is documented in the section file) ---
+  ...TIARINA_CONTEXT_WINDOW_FALLBACKS,
 ])

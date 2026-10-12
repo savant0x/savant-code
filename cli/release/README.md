@@ -67,6 +67,7 @@ Or select one of the supported gateway providers directly:
 | Nous Research | `/provider nous` or `DIRECT_PROVIDER=nous` | `NOUS_API_KEY` | OpenAI-compatible direct inference; Portal OAuth is separate |
 | Ollama | Automatic detection | `OLLAMA_HOST` (optional) | Local inference; no API key required |
 | OrcaRouter | `/provider orcarouter` or `DIRECT_PROVIDER=orcarouter` | `ORCAROUTER_API_KEY` | Multi-provider gateway with a live model catalog (free tier currently gated vendor-side on GitHub account linkage) |
+| Tiarina Cloud | `/provider tiarina` or `DIRECT_PROVIDER=tiarina` | `TIARINA_API_KEY` | Hosted gateway |
 | TokenBom | `/provider tokenbom` or `DIRECT_PROVIDER=tokenbom` | `TOKENBOM_API_KEY` | OpenAI-compatible gateway on an audited static 7-model allowlist |
 | TokenHarbor | `/provider tokenharbor` or `DIRECT_PROVIDER=tokenharbor` | `TOKENHARBOR_API_KEY` | OpenAI-compatible hosted gateway |
 | UnoRouter | `/provider unorouter` or `DIRECT_PROVIDER=unorouter` | `UNOROUTER_API_KEY` | Hosted gateway |
@@ -176,6 +177,7 @@ CODECRAFT_API_KEY=dummy-codecraft-api-key-replace-me
 XKIRO_API_KEY=dummy-xkiro-api-key-replace-me
 MISTRAL_API_KEY=dummy-mistral-api-key-replace-me
 CHATANYWHERE_API_KEY=dummy-chatanywhere-api-key-replace-me
+TIARINA_API_KEY=dummy-tiarina-api-key-replace-me
 # Cloudflare needs TWO credentials (token + account id):
 CLOUDFLARE_API_TOKEN=cloudflare-dummy-replace-me
 CLOUDFLARE_ACCOUNT_ID=cloudflare-account-dummy-replace-me

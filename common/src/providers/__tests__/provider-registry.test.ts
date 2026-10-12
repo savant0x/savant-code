@@ -23,7 +23,7 @@ import type { ProviderConfig } from '../types'
  * as its first argument so tests inject a fixture instead of the singleton).
  */
 describe('PROVIDER_REGISTRY (FID-2026-0809-001 Phase 1)', () => {
-  test('covers all twenty-six current providers', () => {
+  test('covers all twenty-seven current providers', () => {
     expect(Object.keys(PROVIDER_REGISTRY).sort()).toEqual([
       'apinex',
       'atria',
@@ -45,6 +45,7 @@ describe('PROVIDER_REGISTRY (FID-2026-0809-001 Phase 1)', () => {
       'openai',
       'openrouter',
       'orcarouter',
+      'tiarina',
       'tokenbom',
       'tokenharbor',
       'tokenrouter',
@@ -106,6 +107,7 @@ describe('PROVIDER_REGISTRY (FID-2026-0809-001 Phase 1)', () => {
       'intern',
       'chatanywhere',
       'mistral',
+      'tiarina',
     ]) {
       expect(deriveProviderOrder(PROVIDER_REGISTRY, id)).toBe(4)
     }
@@ -113,7 +115,7 @@ describe('PROVIDER_REGISTRY (FID-2026-0809-001 Phase 1)', () => {
     expect(deriveProviderOrder(PROVIDER_REGISTRY, 'unknown')).toBe(4)
   })
 
-  test('setup config derives exactly the twenty-five current setup providers', () => {
+  test('setup config derives exactly the twenty-six current setup providers', () => {
     const setup = deriveSetupConfig(PROVIDER_REGISTRY)
     expect(Object.keys(setup).sort()).toEqual([
       'apinex',
@@ -135,6 +137,7 @@ describe('PROVIDER_REGISTRY (FID-2026-0809-001 Phase 1)', () => {
       'openai',
       'openrouter',
       'orcarouter',
+      'tiarina',
       'tokenbom',
       'tokenharbor',
       'tokenrouter',
