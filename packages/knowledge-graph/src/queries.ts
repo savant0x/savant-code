@@ -32,32 +32,40 @@ type WalkRow = { id: number; path: string; parent: number; depth: number }
 
 /** Indexed adjacency lookup; duplicate edge kinds collapse before visiting. */
 function* walkFrontiers(params: {
-  db: Database; start: number; maxDepth: number; directed: boolean
+  db: Database
+  start: number
+  maxDepth: number
+  directed: boolean
 }): Generator<WalkRow[]> {
   const { db, start, directed } = params
   const maxDepth = Number.isFinite(params.maxDepth)
     ? Math.min(MAX_TRAVERSAL_DEPTH, Math.max(0, Math.floor(params.maxDepth)))
     : MAX_TRAVERSAL_DEPTH
-  const adjacency = db.query(directed
-    ? `SELECT DISTINCT f.id, f.path FROM edges e JOIN files f ON f.id = e.target_id
+  const adjacency = db.query(
+    directed
+      ? `SELECT DISTINCT f.id, f.path FROM edges e JOIN files f ON f.id = e.target_id
        WHERE e.source_id = ? ORDER BY f.path`
-    : `SELECT DISTINCT f.id, f.path FROM files f JOIN (
+      : `SELECT DISTINCT f.id, f.path FROM files f JOIN (
          SELECT target_id AS id FROM edges WHERE source_id = ?1
          UNION SELECT source_id AS id FROM edges WHERE target_id = ?1
-       ) e ON e.id = f.id ORDER BY f.path`)
+       ) e ON e.id = f.id ORDER BY f.path`,
+  )
   const visited = new Set([start])
   let frontier = [start]
   for (let depth = 1; depth <= maxDepth && frontier.length > 0; depth++) {
     const layer: WalkRow[] = []
     for (const parent of frontier) {
-      const neighbors = adjacency.all(parent) as Array<{ id: number; path: string }>
+      const neighbors = adjacency.all(parent) as Array<{
+        id: number
+        path: string
+      }>
       for (const neighbor of neighbors) {
         if (visited.has(neighbor.id)) continue
         visited.add(neighbor.id)
         layer.push({ ...neighbor, parent, depth })
       }
     }
-    layer.sort((a, b) => a.path < b.path ? -1 : a.path > b.path ? 1 : 0)
+    layer.sort((a, b) => (a.path < b.path ? -1 : a.path > b.path ? 1 : 0))
     yield layer
     frontier = layer.map((row) => row.id)
   }
@@ -82,7 +90,12 @@ export function queryBlastRadius(params: {
   const cap = Number.isFinite(limit) ? Math.max(0, Math.floor(limit)) : 1000
   if (cap === 0) return []
   const result: Array<{ path: string; depth: number }> = []
-  for (const layer of walkFrontiers({ db, start: file.id, maxDepth, directed: false })) {
+  for (const layer of walkFrontiers({
+    db,
+    start: file.id,
+    maxDepth,
+    directed: false,
+  })) {
     result.push(...layer.map((row) => ({ path: row.path, depth: row.depth })))
     if (result.length >= cap) break
   }
@@ -176,7 +189,9 @@ export function queryDomainClusters(params: {
 }): ClusterRow[] {
   const { db, limit = 100 } = params
 
-  const rows = db.query(`
+  const rows = db
+    .query(
+      `
     WITH clusters AS (
       SELECT cluster_id AS clusterId,
         COUNT(DISTINCT CASE WHEN type = 'file' THEN file_id END) AS fileCount,
@@ -195,13 +210,23 @@ export function queryDomainClusters(params: {
     SELECT c.*, r.path FROM clusters c LEFT JOIN ranked r
       ON r.cluster_id = c.clusterId AND r.rank <= 5
     ORDER BY c.fileCount DESC, c.clusterId ASC, r.path ASC
-  `).all(Number.isFinite(limit) ? Math.max(0, Math.floor(limit)) : 100) as Array<{
-    clusterId: number; fileCount: number; nodeCount: number; path: string | null
+  `,
+    )
+    .all(
+      Number.isFinite(limit) ? Math.max(0, Math.floor(limit)) : 100,
+    ) as Array<{
+    clusterId: number
+    fileCount: number
+    nodeCount: number
+    path: string | null
   }>
   const clusters = new Map<number, ClusterRow>()
   for (const row of rows) {
     const cluster = clusters.get(row.clusterId) ?? {
-      clusterId: row.clusterId, fileCount: row.fileCount, nodeCount: row.nodeCount, files: [],
+      clusterId: row.clusterId,
+      fileCount: row.fileCount,
+      nodeCount: row.nodeCount,
+      files: [],
     }
     if (row.path !== null) cluster.files.push(row.path)
     clusters.set(row.clusterId, cluster)
@@ -231,7 +256,12 @@ export function queryReachability(params: {
   }
 
   const discovered = new Map<number, WalkRow>()
-  for (const layer of walkFrontiers({ db, start: from.id, maxDepth, directed: true })) {
+  for (const layer of walkFrontiers({
+    db,
+    start: from.id,
+    maxDepth,
+    directed: true,
+  })) {
     for (const row of layer) discovered.set(row.id, row)
     const target = discovered.get(to.id)
     if (!target) continue
@@ -241,7 +271,11 @@ export function queryReachability(params: {
       chain.push(current.path)
       current = discovered.get(current.parent)
     }
-    return { reachable: true, depth: target.depth, path: [fromPath, ...chain.reverse()] }
+    return {
+      reachable: true,
+      depth: target.depth,
+      path: [fromPath, ...chain.reverse()],
+    }
   }
   return { reachable: false, depth: null, path: null }
 }

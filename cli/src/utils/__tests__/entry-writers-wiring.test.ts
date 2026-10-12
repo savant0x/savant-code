@@ -30,7 +30,9 @@ describe('entry-class writers wiring (FID-2026-1006-003 WP5)', () => {
     expect(dbStorage).toContain("getEntriesByKind(session.id, 'label')")
     // The override audit the tool executor parked on agentState is drained.
     expect(dbStorage).toContain('writeSteeringOverrideAudits(session.id')
-    expect(dbStorage).toContain('mainAgentState.pendingSteeringOverrideAudits =')
+    expect(dbStorage).toContain(
+      'mainAgentState.pendingSteeringOverrideAudits =',
+    )
     expect(dbStorage).not.toContain('pendingSteeringOverrideAudits = []')
   })
 

@@ -18,15 +18,22 @@ import type { Database } from 'bun:sqlite'
 export const DEFAULT_MAX_FILE_BYTES = 1_000_000
 
 /** Default parse fn backed by code-map's tree-sitter layer. */
-export const defaultParseFile: ParseFileFn = async (_filePath, fullPath, source) => {
+export const defaultParseFile: ParseFileFn = async (
+  _filePath,
+  fullPath,
+  source,
+) => {
   try {
     const { getLanguageConfig } =
       await import('@savant-code/code-map/languages')
     const { parseTokens } = await import('@savant-code/code-map/parse')
     const languageConfig = await getLanguageConfig(fullPath)
     if (!languageConfig) return null
-    const parsed = parseTokens(fullPath, languageConfig,
-      source === undefined ? undefined : () => source)
+    const parsed = parseTokens(
+      fullPath,
+      languageConfig,
+      source === undefined ? undefined : () => source,
+    )
     return { identifiers: parsed.identifiers, calls: parsed.calls }
   } catch {
     // Parsing is best-effort: graph assembly (imports/extends) still works.
@@ -41,9 +48,8 @@ export const nodeFsAdapter: SavantCodeFileSystem = fs.promises
 export const PARSE_CONCURRENCY = 6
 
 /**
- * Runs `fn` over `items` with bounded concurrency, preserving result order.
- * The cursor increment is atomic on the single-threaded event loop, so each
- * item is processed exactly once.
+ * Bounded concurrency preserves result order; the single-threaded cursor
+ * assigns each item exactly once.
  */
 export async function mapWithConcurrency<T, R>(
   items: readonly T[],
@@ -68,15 +74,13 @@ export type IndexScanState = {
   filePaths: string[]
   stalePaths: string[]
   baselineVersion: number
-  /** FID-2026-1002-006: only NEW or CHANGED files' content is materialized;
-   *  unchanged-baseline files are never read. */
+  /** FID-2026-1002-006: unchanged-baseline files are never read. */
   sources: Map<string, string>
   hashByPath: Map<string, string>
   changedPaths: string[]
   parsedFiles: Map<string, { identifiers: string[]; calls: string[] }>
   existingByPath: Map<string, ExistingRow>
-  /** True when the DB predates the v2 stat columns (legacy row set) — the
-   *  caller must backfill with one full pass. */
+  /** Legacy v1 stat baseline requires one full backfill pass. */
   needsBackfill: boolean
   /** Live stat per enumerated path (the v2 read-skip baseline input). */
   statByPath: Map<string, { mtimeMs: number; size: number }>
@@ -87,11 +91,8 @@ export type IndexScanState = {
 }
 
 /**
- * Scan phase of the incremental update pass (steps 1–4): enumerate the
- * project, delete rows for files no longer on disk, decide the changed set
- * with a stat pre-filter + sha256 truth (FID-2026-1002-006), and re-parse
- * changed/new files only. The DB-write phases (upsert, tokens, edges,
- * clustering) live in the parent `updateKnowledgeGraph`.
+ * Scan steps 1–4: enumerate, identify stale paths, stat/hash-compare, and parse
+ * changed/new files (FID-2026-1002-006). updateKnowledgeGraph owns DB writes.
  */
 export async function scanIndexState(params: {
   projectRoot: string
@@ -112,7 +113,9 @@ export async function scanIndexState(params: {
     fullRebuild,
   } = params
 
-  const baselineVersion = (db.query('PRAGMA data_version').get() as { data_version: number }).data_version
+  const baselineVersion = (
+    db.query('PRAGMA data_version').get() as { data_version: number }
+  ).data_version
   let complete = false
   // 1. Enumerate the project (ignore rules honored). The graph's own home
   // (.savant/) is always excluded — the DB must never index itself, and the
@@ -120,9 +123,12 @@ export async function scanIndexState(params: {
   const fileTree: FileTreeNode[] = await getProjectFileTree({
     projectRoot,
     fs: fsImpl,
-    onScanComplete: (value) => { complete = value },
+    onScanComplete: (value) => {
+      complete = value
+    },
   })
-  if (!complete) throw new Error('Graph refresh requires complete project enumeration')
+  if (!complete)
+    throw new Error('Graph refresh requires complete project enumeration')
   // Paths are normalized to forward slashes for storage and querying:
   // getProjectFileTree returns platform-native separators (backslashes on
   // Windows), but every resolver/query in this package speaks posix — and the
@@ -189,7 +195,8 @@ export async function scanIndexState(params: {
     PARSE_CONCURRENCY,
   )
 
-  if (statByPath.size !== filePaths.length) throw new Error('Graph source stat failed; retry refresh')
+  if (statByPath.size !== filePaths.length)
+    throw new Error('Graph source stat failed; retry refresh')
   const readSource = async (filePath: string): Promise<string | null> => {
     const fullPath = path.join(projectRoot, filePath)
     try {
@@ -199,14 +206,21 @@ export async function scanIndexState(params: {
       const source = await fsImpl.readFile(fullPath, 'utf8')
       const after = await fsImpl.stat(fullPath)
       const baseline = statByPath.get(filePath)
-      if (!baseline || st.size !== baseline.size || st.mtimeMs !== baseline.mtimeMs ||
-          after.size !== st.size || after.mtimeMs !== st.mtimeMs ||
-          Buffer.byteLength(source, 'utf8') > maxFileBytes) {
+      if (
+        !baseline ||
+        st.size !== baseline.size ||
+        st.mtimeMs !== baseline.mtimeMs ||
+        after.size !== st.size ||
+        after.mtimeMs !== st.mtimeMs ||
+        Buffer.byteLength(source, 'utf8') > maxFileBytes
+      ) {
         throw new Error('Graph source changed while being read')
       }
       return source
     } catch {
-      throw new Error('Graph source could not be read consistently; retry refresh')
+      throw new Error(
+        'Graph source could not be read consistently; retry refresh',
+      )
     }
   }
 
@@ -254,7 +268,11 @@ export async function scanIndexState(params: {
     finalPlan.changedPaths,
     PARSE_CONCURRENCY,
     async (filePath) => {
-      const parsed = await parseFile(filePath, path.join(projectRoot, filePath), sources.get(filePath))
+      const parsed = await parseFile(
+        filePath,
+        path.join(projectRoot, filePath),
+        sources.get(filePath),
+      )
       if (parsed) {
         parsedFiles.set(filePath, parsed)
       }

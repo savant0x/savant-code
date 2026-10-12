@@ -69,7 +69,8 @@ export class GatewayConnectionController {
   }
 
   connect(config: GatewayConfig): void {
-    const sameOwner = this.config?.port === config.port && this.config.token === config.token
+    const sameOwner =
+      this.config?.port === config.port && this.config.token === config.token
     if (this.connection !== null || this.reconnectTimer !== null) this.close()
     if (!sameOwner) this.eventCursor = null
     this.replayInFlight = false
@@ -94,14 +95,18 @@ export class GatewayConnectionController {
     let disconnected = false
     const onOpen = (): void => {
       if (generation !== this.generation || disconnected) return
-      if (!assigned) { opened = true; return }
+      if (!assigned) {
+        opened = true
+        return
+      }
       this.events.setStatus('authenticating')
       void this.handshake(this.connection, generation)
     }
     const socket = this.factory(url, {
       onOpen,
       onMessage: (raw: string) => {
-        if (generation === this.generation && !disconnected) this.handleFrame(raw)
+        if (generation === this.generation && !disconnected)
+          this.handleFrame(raw)
       },
       onClose: () => {
         if (generation !== this.generation || disconnected) return
@@ -132,7 +137,10 @@ export class GatewayConnectionController {
     this.events.setStatus('offline')
   }
 
-  private async handshake(socket: TransportConnection | null, generation: number): Promise<void> {
+  private async handshake(
+    socket: TransportConnection | null,
+    generation: number,
+  ): Promise<void> {
     if (this.config === null || socket === null) return
     try {
       const result = await this.requests.send(
@@ -225,7 +233,8 @@ export class GatewayConnectionController {
         })
       }
     } catch {
-      if (generation === this.generation) this.events.onReplayGap({ reason: 'replay request failed' })
+      if (generation === this.generation)
+        this.events.onReplayGap({ reason: 'replay request failed' })
     } finally {
       if (generation === this.generation) this.replayInFlight = false
     }

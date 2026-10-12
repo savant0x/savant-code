@@ -22,9 +22,7 @@ const { getDb } = await import('@savant-code/database')
 const { saveChatStateToDb } = await import('../db-storage')
 const { writeSteeringOverrideAudits } = await import('../entry-writers')
 
-import type {
-  SteeringOverrideAuditRecord,
-} from '@savant-code/common/types/session-state'
+import type { SteeringOverrideAuditRecord } from '@savant-code/common/types/session-state'
 import type { RunState } from '@savant-code/sdk'
 
 afterAll(() => {
@@ -44,9 +42,30 @@ beforeEach(() => {
   chatId = `chat-${Math.random().toString(36).slice(2)}`
   sessionId = createSession(chatId, 'agent', { test: 'persistence' }).id
   overrides = [
-    { id: 'audit-1', ruleId: 'r1', reason: 'why 1', toolName: 'read', agentId: 'a', at: 1 },
-    { id: 'audit-2', ruleId: 'r2', reason: 'why 2', toolName: 'read', agentId: 'a', at: 2 },
-    { id: 'audit-3', ruleId: 'r3', reason: 'why 3', toolName: 'read', agentId: 'a', at: 3 },
+    {
+      id: 'audit-1',
+      ruleId: 'r1',
+      reason: 'why 1',
+      toolName: 'read',
+      agentId: 'a',
+      at: 1,
+    },
+    {
+      id: 'audit-2',
+      ruleId: 'r2',
+      reason: 'why 2',
+      toolName: 'read',
+      agentId: 'a',
+      at: 2,
+    },
+    {
+      id: 'audit-3',
+      ruleId: 'r3',
+      reason: 'why 3',
+      toolName: 'read',
+      agentId: 'a',
+      at: 3,
+    },
   ]
 })
 
@@ -72,8 +91,14 @@ describe('FID-2026-1011-006 R15 steering-override retention', () => {
 
     expect(state.pendingSteeringOverrideAudits).toEqual([])
     expect(
-      getEntriesByKind(sessionId, 'custom').map((entry) => entry.id).sort(),
-    ).toEqual([entryIdFor('audit-1'), entryIdFor('audit-2'), entryIdFor('audit-3')])
+      getEntriesByKind(sessionId, 'custom')
+        .map((entry) => entry.id)
+        .sort(),
+    ).toEqual([
+      entryIdFor('audit-1'),
+      entryIdFor('audit-2'),
+      entryIdFor('audit-3'),
+    ])
     // Audit rows are never conversation context.
     expect(getInContextMessages(sessionId)).toHaveLength(0)
 
@@ -100,7 +125,9 @@ describe('FID-2026-1011-006 R15 steering-override retention', () => {
     // Only the failing record comes back for retry; the other two are durable.
     expect(failed.map((audit) => audit.id)).toEqual(['audit-2'])
     expect(
-      getEntriesByKind(sessionId, 'custom').map((entry) => entry.id).sort(),
+      getEntriesByKind(sessionId, 'custom')
+        .map((entry) => entry.id)
+        .sort(),
     ).toEqual([entryIdFor('audit-1'), entryIdFor('audit-3')])
 
     // The retry keeps the same event identity: one more row, never a duplicate.
@@ -110,8 +137,14 @@ describe('FID-2026-1011-006 R15 steering-override retention', () => {
       ]),
     ).toEqual([])
     expect(
-      getEntriesByKind(sessionId, 'custom').map((entry) => entry.id).sort(),
-    ).toEqual([entryIdFor('audit-1'), entryIdFor('audit-2'), entryIdFor('audit-3')])
+      getEntriesByKind(sessionId, 'custom')
+        .map((entry) => entry.id)
+        .sort(),
+    ).toEqual([
+      entryIdFor('audit-1'),
+      entryIdFor('audit-2'),
+      entryIdFor('audit-3'),
+    ])
     expect(getInContextMessages(sessionId)).toHaveLength(0)
   })
 })
@@ -126,7 +159,10 @@ describe('FID-2026-1011-006 R16 compaction boundary bookmarks', () => {
 
   test('boundaries are identified by owner and ordinal, not by label count', () => {
     const unrelated = createLabelEntry(sessionId, 'before-refactor')
-    const state: Record<string, unknown> = { compactionMetrics: { events: 3 }, runId: 'run-a' }
+    const state: Record<string, unknown> = {
+      compactionMetrics: { events: 3 },
+      runId: 'run-a',
+    }
 
     save(makeRunState(state))
     expect(compactionLabels()).toEqual([
@@ -144,7 +180,9 @@ describe('FID-2026-1011-006 R16 compaction boundary bookmarks', () => {
 
     // A boundary whose write did not land is repaired on the next save —
     // the gap does not survive because the ordinal is recomputed.
-    getDb().exec(`DELETE FROM message_history WHERE id = 'compaction:${sessionId}:run-a:2'`)
+    getDb().exec(
+      `DELETE FROM message_history WHERE id = 'compaction:${sessionId}:run-a:2'`,
+    )
     expect(compactionLabels()).toHaveLength(2)
     save(makeRunState(state))
     expect(compactionLabels()).toHaveLength(3)

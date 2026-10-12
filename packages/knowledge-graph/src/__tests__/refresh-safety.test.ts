@@ -13,20 +13,32 @@ import type { Database } from 'bun:sqlite'
 
 let root = ''
 let db: Database | undefined
-const tables = ['files', 'nodes', 'edges', 'file_calls', 'file_imports', 'file_extends']
+const tables = [
+  'files',
+  'nodes',
+  'edges',
+  'file_calls',
+  'file_imports',
+  'file_extends',
+]
 function project(): { projectRoot: string; db: Database } {
   root = fs.mkdtempSync(path.join(os.tmpdir(), 'graph-safety-'))
-  fs.writeFileSync(path.join(root, 'a.ts'), "import './b'\nexport function Alpha() { Beta() }")
+  fs.writeFileSync(
+    path.join(root, 'a.ts'),
+    "import './b'\nexport function Alpha() { Beta() }",
+  )
   fs.writeFileSync(path.join(root, 'b.ts'), 'export function Beta() {}')
   process.env.SAVANT_CODE_GRAPH_DB_PATH = path.join(root, '.savant', 'graph.db')
   db = openGraphDatabase(root)
   return { projectRoot: root, db }
 }
 function snapshot() {
-  return tables.map(table => db!.query(`SELECT * FROM ${table}`).all())
+  return tables.map((table) => db!.query(`SELECT * FROM ${table}`).all())
 }
 async function removeFixture(directory: string): Promise<void> {
-  for (const entry of await fs.promises.readdir(directory, { withFileTypes: true })) {
+  for (const entry of await fs.promises.readdir(directory, {
+    withFileTypes: true,
+  })) {
     const child = path.join(directory, entry.name)
     if (entry.isDirectory()) await removeFixture(child)
     else {
@@ -49,8 +61,12 @@ async function removeFixture(directory: string): Promise<void> {
   try {
     await fs.promises.rmdir(directory)
   } catch (error) {
-    if (!(error instanceof Error) || !('code' in error) ||
-        error.code !== 'ENOENT') throw error
+    if (
+      !(error instanceof Error) ||
+      !('code' in error) ||
+      error.code !== 'ENOENT'
+    )
+      throw error
   }
 }
 
@@ -69,24 +85,43 @@ describe('FID-2026-1011-006 refresh safety', () => {
   test('default parser consumes non-cwd admitted source once', async () => {
     const params = project()
     let reads = 0
-    const readFile = (async (...args: Parameters<typeof nodeFsAdapter.readFile>) => {
+    const readFile = (async (
+      ...args: Parameters<typeof nodeFsAdapter.readFile>
+    ) => {
       if (String(args[0]).endsWith('a.ts')) reads++
       return nodeFsAdapter.readFile(...args)
     }) as typeof nodeFsAdapter.readFile
-    await updateKnowledgeGraph({ ...params, fs: { ...nodeFsAdapter, readFile } })
-    expect(queryNodeEdges({ db: params.db, filePath: 'a.ts' }).symbols.map(s => s.name)).toContain('Alpha')
+    await updateKnowledgeGraph({
+      ...params,
+      fs: { ...nodeFsAdapter, readFile },
+    })
+    expect(
+      queryNodeEdges({ db: params.db, filePath: 'a.ts' }).symbols.map(
+        (s) => s.name,
+      ),
+    ).toContain('Alpha')
     expect(reads).toBe(1)
   })
 
   test('virtual admitted source overrides disk through the default parser', async () => {
     const params = project()
-    const readFile = (async (...args: Parameters<typeof nodeFsAdapter.readFile>) => {
+    const readFile = (async (
+      ...args: Parameters<typeof nodeFsAdapter.readFile>
+    ) => {
       const source = await nodeFsAdapter.readFile(...args)
       return typeof source === 'string' && String(args[0]).endsWith('a.ts')
-        ? source.replace('Alpha', 'Omega') : source
+        ? source.replace('Alpha', 'Omega')
+        : source
     }) as typeof nodeFsAdapter.readFile
-    await updateKnowledgeGraph({ ...params, fs: { ...nodeFsAdapter, readFile } })
-    expect(queryNodeEdges({ db: params.db, filePath: 'a.ts' }).symbols.map(s => s.name)).toContain('Omega')
+    await updateKnowledgeGraph({
+      ...params,
+      fs: { ...nodeFsAdapter, readFile },
+    })
+    expect(
+      queryNodeEdges({ db: params.db, filePath: 'a.ts' }).symbols.map(
+        (s) => s.name,
+      ),
+    ).toContain('Omega')
   })
 
   test('root/subdirectory enumeration failures preserve every table', async () => {
@@ -96,27 +131,43 @@ describe('FID-2026-1011-006 refresh safety', () => {
     await updateKnowledgeGraph(params)
     const old = snapshot()
     for (const failed of [root, path.join(root, 'nested')]) {
-      const readdir = (async (...args: Parameters<typeof nodeFsAdapter.readdir>) => {
-        if (String(args[0]) === failed) throw new Error('injected enumeration failure')
+      const readdir = (async (
+        ...args: Parameters<typeof nodeFsAdapter.readdir>
+      ) => {
+        if (String(args[0]) === failed)
+          throw new Error('injected enumeration failure')
         return nodeFsAdapter.readdir(...args)
       }) as typeof nodeFsAdapter.readdir
-      await expect(updateKnowledgeGraph({ ...params, fs: { ...nodeFsAdapter, readdir } })).rejects.toThrow('complete')
+      await expect(
+        updateKnowledgeGraph({ ...params, fs: { ...nodeFsAdapter, readdir } }),
+      ).rejects.toThrow('complete')
       expect(snapshot()).toEqual(old)
     }
   })
 
   for (const [table, operation] of [
-    ['files', 'DELETE'], ['nodes', 'INSERT'], ['file_calls', 'INSERT'],
-    ['file_imports', 'INSERT'], ['edges', 'DELETE'], ['edges', 'INSERT'], ['nodes', 'UPDATE'],
+    ['files', 'DELETE'],
+    ['nodes', 'INSERT'],
+    ['file_calls', 'INSERT'],
+    ['file_imports', 'INSERT'],
+    ['edges', 'DELETE'],
+    ['edges', 'INSERT'],
+    ['nodes', 'UPDATE'],
   ]) {
     test(`${table} ${operation} failure rolls back the entire refresh`, async () => {
       const params = project()
       await updateKnowledgeGraph(params)
       const old = snapshot()
-      params.db.exec(`CREATE TRIGGER injected_failure BEFORE ${operation} ON ${table}
+      params.db
+        .exec(`CREATE TRIGGER injected_failure BEFORE ${operation} ON ${table}
         BEGIN SELECT RAISE(ABORT, 'injected mutation failure'); END`)
-      fs.writeFileSync(path.join(root, 'a.ts'), "import './b'\nexport function Changed() { Beta() }")
-      await expect(updateKnowledgeGraph(params)).rejects.toThrow('injected mutation failure')
+      fs.writeFileSync(
+        path.join(root, 'a.ts'),
+        "import './b'\nexport function Changed() { Beta() }",
+      )
+      await expect(updateKnowledgeGraph(params)).rejects.toThrow(
+        'injected mutation failure',
+      )
       expect(snapshot()).toEqual(old)
     })
   }
@@ -126,14 +177,21 @@ describe('FID-2026-1011-006 refresh safety', () => {
     await updateKnowledgeGraph(params)
     const old = snapshot()
     fs.unlinkSync(path.join(root, 'b.ts'))
-    const readdir = (async (...args: Parameters<typeof nodeFsAdapter.readdir>) => {
-      if (String(args[0]) === root) return Array.from({ length: 10_001 }, () => 'a.ts')
+    const readdir = (async (
+      ...args: Parameters<typeof nodeFsAdapter.readdir>
+    ) => {
+      if (String(args[0]) === root)
+        return Array.from({ length: 10_001 }, () => 'a.ts')
       return nodeFsAdapter.readdir(...args)
     }) as typeof nodeFsAdapter.readdir
-    await expect(updateKnowledgeGraph({ ...params, fs: { ...nodeFsAdapter, readdir } })).rejects.toThrow('complete')
+    await expect(
+      updateKnowledgeGraph({ ...params, fs: { ...nodeFsAdapter, readdir } }),
+    ).rejects.toThrow('complete')
     expect(snapshot()).toEqual(old)
     expect((await updateKnowledgeGraph(params)).filesDeleted).toBe(1)
-    expect(params.db.query('SELECT path FROM files ORDER BY path').all()).toEqual([{ path: 'a.ts' }])
+    expect(
+      params.db.query('SELECT path FROM files ORDER BY path').all(),
+    ).toEqual([{ path: 'a.ts' }])
   })
 
   test('read/stat race cannot certify same-content freshness', async () => {
@@ -142,12 +200,17 @@ describe('FID-2026-1011-006 refresh safety', () => {
     const old = snapshot()
     const file = path.join(root, 'a.ts')
     fs.utimesSync(file, new Date(), new Date(Date.now() + 2000))
-    const readFile = (async (...args: Parameters<typeof nodeFsAdapter.readFile>) => {
+    const readFile = (async (
+      ...args: Parameters<typeof nodeFsAdapter.readFile>
+    ) => {
       const result = await nodeFsAdapter.readFile(...args)
-      if (String(args[0]) === file) fs.utimesSync(file, new Date(), new Date(Date.now() + 4000))
+      if (String(args[0]) === file)
+        fs.utimesSync(file, new Date(), new Date(Date.now() + 4000))
       return result
     }) as typeof nodeFsAdapter.readFile
-    await expect(updateKnowledgeGraph({ ...params, fs: { ...nodeFsAdapter, readFile } })).rejects.toThrow('source')
+    await expect(
+      updateKnowledgeGraph({ ...params, fs: { ...nodeFsAdapter, readFile } }),
+    ).rejects.toThrow('source')
     expect(snapshot()).toEqual(old)
   })
 
@@ -155,13 +218,19 @@ describe('FID-2026-1011-006 refresh safety', () => {
     const params = project()
     await updateKnowledgeGraph(params)
     const reader = openGraphDatabase(root)
-    const oldEdges = reader.query('SELECT * FROM edges ORDER BY source_id,target_id,type').all()
+    const oldEdges = reader
+      .query('SELECT * FROM edges ORDER BY source_id,target_id,type')
+      .all()
     let observed = 0
     const exec = params.db.exec.bind(params.db)
     params.db.exec = (sql) => {
       const result = exec(sql)
       if (sql === 'DELETE FROM edges') {
-        expect(reader.query('SELECT * FROM edges ORDER BY source_id,target_id,type').all()).toEqual(oldEdges)
+        expect(
+          reader
+            .query('SELECT * FROM edges ORDER BY source_id,target_id,type')
+            .all(),
+        ).toEqual(oldEdges)
         observed++
       }
       return result
@@ -188,7 +257,9 @@ describe('FID-2026-1011-006 refresh safety', () => {
     }
     fs.writeFileSync(path.join(root, 'a.ts'), 'export function Changed() {}')
     try {
-      await expect(updateKnowledgeGraph({ ...params, parseFile })).rejects.toThrow('Graph changed')
+      await expect(
+        updateKnowledgeGraph({ ...params, parseFile }),
+      ).rejects.toThrow('Graph changed')
       expect(snapshot()).toEqual(expected)
     } finally {
       writer.close()
@@ -199,12 +270,20 @@ describe('FID-2026-1011-006 refresh safety', () => {
     const params = project()
     await updateKnowledgeGraph(params)
     const old = snapshot()
-    fs.utimesSync(path.join(root, 'a.ts'), new Date(), new Date(Date.now() + 2000))
-    const readFile = (async (...args: Parameters<typeof nodeFsAdapter.readFile>) => {
+    fs.utimesSync(
+      path.join(root, 'a.ts'),
+      new Date(),
+      new Date(Date.now() + 2000),
+    )
+    const readFile = (async (
+      ...args: Parameters<typeof nodeFsAdapter.readFile>
+    ) => {
       if (String(args[0]).endsWith('a.ts')) throw new Error('read failure')
       return nodeFsAdapter.readFile(...args)
     }) as typeof nodeFsAdapter.readFile
-    await expect(updateKnowledgeGraph({ ...params, fs: { ...nodeFsAdapter, readFile } })).rejects.toThrow('source')
+    await expect(
+      updateKnowledgeGraph({ ...params, fs: { ...nodeFsAdapter, readFile } }),
+    ).rejects.toThrow('source')
     expect(snapshot()).toEqual(old)
   })
 })

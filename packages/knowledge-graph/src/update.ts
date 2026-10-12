@@ -21,26 +21,14 @@ import type { Database } from 'bun:sqlite'
 /**
  * Codebase knowledge-graph indexer (FID-2026-0806-002 Phase 1).
  *
- * In-process, incremental, deterministic:
- * 1. Enumerate project files honoring ignore rules (project-file-tree).
- * 2. Stat-prefilter + hash-compare against the `files` table — only new or
- *    changed files are read, hashed, or parsed (FID-2026-1002-006).
- * 3. Delete rows for files no longer on disk (FK cascade prunes nodes/edges).
- * 4. Re-parse only changed/new files via code-map (`parseFile`), building
- *    symbol nodes, and persist their import/extend tokens.
- * 5. Rebuild the corpus edge set (CALLS/IMPORTS/EXTENDS) ENTIRELY from
- *    persisted per-file tokens, resolving against the current index state —
- *    no source reads for unchanged files (FID-2026-1002-006).
- * 6. Run the Louvain pass and write cluster ids back to nodes.
- *
- * The parse function is injectable so tests can stub tree-sitter; the default
- * uses code-map's tree-sitter layer. Token extraction (imports/extends) uses
- * the same regex extractors as before — only the delivery mechanism for
- * unchanged files moved from re-read + re-regex to persisted rows.
- *
- * Steps 1–4 live in `update-scan.ts` (`scanIndexState`); the DB-write phases
- * (upsert, tokens, edges, clustering) remain here (FID-2026-0819-005 Loop
- * 127).
+ * Deterministic scanIndexState honors ignore rules, stat/hash-compares, and
+ * reads/parses only changed/new files (FID-2026-1002-006).
+ * This module atomically deletes stale rows (FK cascade), upserts symbols
+ * and import/extend tokens, rebuilds CALLS/IMPORTS/EXTENDS from persisted
+ * tokens, and writes Louvain clusters. Unchanged files require no reads.
+ * Parsing is injectable; defaults use code-map tree-sitter. Import/extend
+ * regexes run once per content change. Scan/write split: FID-2026-0819-005
+ * Loop 127; scanIndexState owns steps 1–4, this module owns DB mutations.
  */
 
 export interface UpdateGraphParams {
@@ -104,20 +92,41 @@ export async function updateKnowledgeGraph(
   const { stats } = scan
 
   db.transaction(() => {
-    const version = (db.query('PRAGMA data_version').get() as { data_version: number }).data_version
-    const rows = db.query('SELECT id, path, hash, mtime_ms, bytes FROM files').all() as Array<{
-      id: number; path: string; hash: string; mtime_ms: number | null; bytes: number | null
+    const version = (
+      db.query('PRAGMA data_version').get() as { data_version: number }
+    ).data_version
+    const rows = db
+      .query('SELECT id, path, hash, mtime_ms, bytes FROM files')
+      .all() as Array<{
+      id: number
+      path: string
+      hash: string
+      mtime_ms: number | null
+      bytes: number | null
     }>
-    if (version !== scan.baselineVersion || rows.length !== scan.existingByPath.size ||
-        rows.some((row) => {
-          const old = scan.existingByPath.get(row.path)
-          return !old || old.id !== row.id || old.hash !== row.hash ||
-            old.mtimeMs !== row.mtime_ms || old.bytes !== row.bytes
-        })) throw new Error('Graph changed during scan; retry refresh')
+    if (
+      version !== scan.baselineVersion ||
+      rows.length !== scan.existingByPath.size ||
+      rows.some((row) => {
+        const old = scan.existingByPath.get(row.path)
+        return (
+          !old ||
+          old.id !== row.id ||
+          old.hash !== row.hash ||
+          old.mtimeMs !== row.mtime_ms ||
+          old.bytes !== row.bytes
+        )
+      })
+    )
+      throw new Error('Graph changed during scan; retry refresh')
     const remove = db.prepare('DELETE FROM files WHERE path = ?')
     for (const stale of scan.stalePaths) remove.run(stale)
     upsertChangedFiles({ db, scan })
-    if (scan.wasFullRebuild || scan.changedPaths.length > 0 || scan.stalePaths.length > 0) {
+    if (
+      scan.wasFullRebuild ||
+      scan.changedPaths.length > 0 ||
+      scan.stalePaths.length > 0
+    ) {
       rebuildEdges({ db })
       assignClustersToNodes({ db, assignments: computeClusters({ db }) })
     }
@@ -145,12 +154,8 @@ export async function updateKnowledgeGraph(
   return stats
 }
 
-/**
- * Step 4b: upsert file rows (with the v2 stat baseline) + nodes + call/
- * import/extend tokens for every changed/new file. Prune the old subtree
- * first (single DELETE; FK cascade removes stale
- * nodes/edges/file_calls/file_imports/file_extends).
- */
+/** Step 4b: FK-cascade prune, then upsert changed files, stat baselines,
+ *  nodes and call/import/extend tokens. */
 function upsertChangedFiles(params: {
   db: Database
   scan: Awaited<ReturnType<typeof scanIndexState>>
@@ -176,51 +181,56 @@ function upsertChangedFiles(params: {
     'INSERT INTO file_extends (file_id, parent) VALUES (?, ?)',
   )
 
-  const updateStat = db.prepare('UPDATE files SET mtime_ms = ?, bytes = ? WHERE id = ?')
+  const updateStat = db.prepare(
+    'UPDATE files SET mtime_ms = ?, bytes = ? WHERE id = ?',
+  )
   for (const filePath of filePaths) {
-      const source = sources.get(filePath)
-      if (source === undefined) continue
-      const existing = existingByPath.get(filePath)
-      // FID-2026-0815-009 (F-12): reuse the scan-loop hash (no re-hash).
-      const hash = hashByPath.get(filePath) as string
-      if (!effectiveFullRebuild && existing && existing.hash === hash) {
-        const stat = scan.statByPath.get(filePath)
-        if (stat && (stat.mtimeMs !== existing.mtimeMs || stat.size !== existing.bytes)) {
-          updateStat.run(stat.mtimeMs, stat.size, existing.id)
-        }
-        continue // unchanged content: preserve ids/nodes/derived state
-      }
-
-      pruneStmt.run(filePath)
+    const source = sources.get(filePath)
+    if (source === undefined) continue
+    const existing = existingByPath.get(filePath)
+    // FID-2026-0815-009 (F-12): reuse the scan-loop hash (no re-hash).
+    const hash = hashByPath.get(filePath) as string
+    if (!effectiveFullRebuild && existing && existing.hash === hash) {
       const stat = scan.statByPath.get(filePath)
-      const insertResult = insertFileStmt.run(
-        filePath,
-        hash,
-        stat?.mtimeMs ?? null,
-        stat?.size ?? null,
-      ) as { lastInsertRowid: number }
-      const fileId = Number(insertResult.lastInsertRowid)
+      if (
+        stat &&
+        (stat.mtimeMs !== existing.mtimeMs || stat.size !== existing.bytes)
+      ) {
+        updateStat.run(stat.mtimeMs, stat.size, existing.id)
+      }
+      continue // unchanged content: preserve ids/nodes/derived state
+    }
 
-      const parsed = parsedFiles.get(filePath)
-      if (parsed) {
-        for (const identifier of parsed.identifiers) {
-          insertNodeStmt.run(fileId, NODE_TYPES.SYMBOL, identifier)
-        }
-        for (const call of parsed.calls) {
-          insertCallStmt.run(fileId, call)
-        }
+    pruneStmt.run(filePath)
+    const stat = scan.statByPath.get(filePath)
+    const insertResult = insertFileStmt.run(
+      filePath,
+      hash,
+      stat?.mtimeMs ?? null,
+      stat?.size ?? null,
+    ) as { lastInsertRowid: number }
+    const fileId = Number(insertResult.lastInsertRowid)
+
+    const parsed = parsedFiles.get(filePath)
+    if (parsed) {
+      for (const identifier of parsed.identifiers) {
+        insertNodeStmt.run(fileId, NODE_TYPES.SYMBOL, identifier)
       }
-      // FID-2026-1002-006: persist the import/extend tokens for every
-      // changed file — the raw-source extractors run ONCE per content
-      // change, never again until the content changes.
-      for (const token of extractRelativeImportSpecifiers(source)) {
-        insertImportStmt.run(fileId, token)
+      for (const call of parsed.calls) {
+        insertCallStmt.run(fileId, call)
       }
-      for (const { parent } of extractExtendsRelations(source)) {
-        insertExtendsStmt.run(fileId, parent)
-      }
-      // Anchor node so files with no symbols still appear in node queries.
-      insertNodeStmt.run(fileId, NODE_TYPES.FILE, filePath)
+    }
+    // FID-2026-1002-006: persist the import/extend tokens for every
+    // changed file — the raw-source extractors run ONCE per content
+    // change, never again until the content changes.
+    for (const token of extractRelativeImportSpecifiers(source)) {
+      insertImportStmt.run(fileId, token)
+    }
+    for (const { parent } of extractExtendsRelations(source)) {
+      insertExtendsStmt.run(fileId, parent)
+    }
+    // Anchor node so files with no symbols still appear in node queries.
+    insertNodeStmt.run(fileId, NODE_TYPES.FILE, filePath)
   }
 }
 
@@ -271,18 +281,15 @@ function rebuildEdges({ db }: { db: Database }): void {
     'INSERT INTO edges (source_id, target_id, type, weight) VALUES (?, ?, ?, ?)',
   )
   for (const [key, entry] of edges) {
-      const [source, target] = key.split('\u0000')
-      const sourceId = idByPath.get(source)
-      const targetId = idByPath.get(target)
-      if (sourceId === undefined || targetId === undefined) continue
-      insertEdgeStmt.run(sourceId, targetId, entry.type, entry.weight)
+    const [source, target] = key.split('\u0000')
+    const sourceId = idByPath.get(source)
+    const targetId = idByPath.get(target)
+    if (sourceId === undefined || targetId === undefined) continue
+    insertEdgeStmt.run(sourceId, targetId, entry.type, entry.weight)
   }
 }
 
-/**
- * Lightweight synonym for updateKnowledgeGraph used by callers that want the
- * "refresh" verb (keeps the API self-documenting).
- */
+/** Lightweight refresh synonym for updateKnowledgeGraph. */
 export function refreshKnowledgeGraph(
   params: UpdateGraphParams,
 ): Promise<IndexStats> {

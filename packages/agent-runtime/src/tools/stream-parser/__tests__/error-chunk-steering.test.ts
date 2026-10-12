@@ -120,7 +120,10 @@ describe('native-incomplete strike-one steering (FID-2026-0909-007)', () => {
         chunk: nativeIncompleteChunk('read_files'),
         errorMessages,
         loggerWarn: () => {},
-        agentTemplate: { ...getTemplate(), toolNames: ['code_search', 'write_file'] },
+        agentTemplate: {
+          ...getTemplate(),
+          toolNames: ['code_search', 'write_file'],
+        },
         runId: 'test-run',
       })
 

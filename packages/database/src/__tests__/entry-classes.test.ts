@@ -151,15 +151,27 @@ describe('entry classes: excludeFromContext on raw-output entries', () => {
 describe('FID-2026-1011-006 mutable conversations', () => {
   it('updates stable content without moving history or overwriting audits', () => {
     const id = `mutable:${sessionId}`
-    saveConversationMessages(sessionId, [{ id, role: 'assistant', content: 'initial' }])
+    saveConversationMessages(sessionId, [
+      { id, role: 'assistant', content: 'initial' },
+    ])
     const created = getMessage(id)?.created_at
-    saveConversationMessages(sessionId, [{ id, role: 'assistant', content: 'final' }])
+    saveConversationMessages(sessionId, [
+      { id, role: 'assistant', content: 'final' },
+    ])
     expect(getMessage(id)?.content).toBe('final')
     expect(getMessage(id)?.created_at).toBe(created)
     const audit = createCustomEntry(sessionId, { secret: 'audit' })
-    expect(() => saveConversationMessages(sessionId, [{ id: audit.id, role: 'assistant', content: 'bad' }])).toThrow('owner')
+    expect(() =>
+      saveConversationMessages(sessionId, [
+        { id: audit.id, role: 'assistant', content: 'bad' },
+      ]),
+    ).toThrow('owner')
     const other = createSession('other', 'agent', {})
-    expect(() => saveConversationMessages(other.id, [{ id, role: 'assistant', content: 'bad' }])).toThrow('owner')
+    expect(() =>
+      saveConversationMessages(other.id, [
+        { id, role: 'assistant', content: 'bad' },
+      ]),
+    ).toThrow('owner')
     expect(getMessage(id)?.content).toBe('final')
     expect(getInContextMessages(sessionId)).toHaveLength(1)
   })

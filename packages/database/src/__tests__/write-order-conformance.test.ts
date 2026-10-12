@@ -50,8 +50,12 @@ beforeEach(() => {
 describe('FID-2026-1011-006 observer isolation', () => {
   it('observer failure cannot undo successful SQL or stop healthy observers', () => {
     let healthy = 0
-    const removeBad = observeCommits(() => { throw new Error('observer') })
-    const removeGood = observeCommits(() => { healthy++ })
+    const removeBad = observeCommits(() => {
+      throw new Error('observer')
+    })
+    const removeGood = observeCommits(() => {
+      healthy++
+    })
     try {
       const session = createSession('observer-chat', 'agent', {})
       expect(session.chat_id).toBe('observer-chat')
@@ -59,7 +63,10 @@ describe('FID-2026-1011-006 observer isolation', () => {
       expect(commitJournal()).toHaveLength(1)
       expect(() => runCommit('INSERT INTO missing_table VALUES (1)')).toThrow()
       expect(commitJournal()).toHaveLength(1)
-    } finally { removeBad(); removeGood() }
+    } finally {
+      removeBad()
+      removeGood()
+    }
   })
 })
 

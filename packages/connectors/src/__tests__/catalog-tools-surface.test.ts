@@ -25,7 +25,9 @@ afterEach(() => {
 /** A private directory of real bundle copies for the cache-identity cases. */
 function bundleCopies(count: number): string[] {
   bundleTemp = fs.mkdtempSync(path.join(os.tmpdir(), 'connectors-bundles-'))
-  const source = fileURLToPath(new URL('../catalog/catalog.json', import.meta.url))
+  const source = fileURLToPath(
+    new URL('../catalog/catalog.json', import.meta.url),
+  )
   return Array.from({ length: count }, (_unused, index) => {
     const target = path.join(bundleTemp!, `catalog-${index}.json`)
     fs.copyFileSync(source, target)
@@ -35,8 +37,7 @@ function bundleCopies(count: number): string[] {
 
 /**
  * Catalog tool-surface suite (FID-2026-0930-003 gate): the checked-in
- * compiled bundle loads and the tool-facing runtime entry serves
- * `connector_search` / `connector_describe` / `connector_invoke` (replay,
+ * compiled bundle serves connector_search/describe/invoke (replay,
  * zero network). The tinyfish replay settles `{credits:{},evidence:{}}`
  * through the FREE model — the same offline gate the FID declares.
  */
@@ -206,7 +207,12 @@ describe('executeEndpoint replay (zero network)', () => {
         bundle,
         provider: 'tinyfish',
         endpoint: 'tinyfish#search',
-        input: { queryParams: { query: 'NVIDIA Q4 FY2025 revenue', domain_type: 'news' } },
+        input: {
+          queryParams: {
+            query: 'NVIDIA Q4 FY2025 revenue',
+            domain_type: 'news',
+          },
+        },
         mode: 'live',
         fetch: async (input) => {
           injected.push(input)

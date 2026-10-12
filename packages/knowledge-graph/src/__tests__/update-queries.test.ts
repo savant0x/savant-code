@@ -141,32 +141,47 @@ describe('FID-2026-1011-006 traversal contracts', () => {
       (1,'start','x'),(2,'end','x'),(3,'middle','x'),(4,'alternate','x'),(5,'isolated','x');
       INSERT INTO edges VALUES (1,3,'IMPORTS',1),(3,2,'IMPORTS',1),
       (1,4,'IMPORTS',1),(4,2,'IMPORTS',1),(1,4,'CALLS',2),(2,1,'IMPORTS',1);`)
-    expect(queryReachability({ db, fromPath: 'start', toPath: 'end' }).path)
-      .toEqual(['start', 'alternate', 'end'])
-    expect(queryReachability({ db, fromPath: 'start', toPath: 'end', maxDepth: 1 }).reachable)
-      .toBe(false)
-    expect(queryReachability({ db, fromPath: 'start', toPath: 'isolated' }).reachable)
-      .toBe(false)
+    expect(
+      queryReachability({ db, fromPath: 'start', toPath: 'end' }).path,
+    ).toEqual(['start', 'alternate', 'end'])
+    expect(
+      queryReachability({ db, fromPath: 'start', toPath: 'end', maxDepth: 1 })
+        .reachable,
+    ).toBe(false)
+    expect(
+      queryReachability({ db, fromPath: 'start', toPath: 'isolated' })
+        .reachable,
+    ).toBe(false)
     expect(queryBlastRadius({ db, filePath: 'start', limit: 0 })).toEqual([])
     expect(queryBlastRadius({ db, filePath: 'start', maxDepth: 0 })).toEqual([])
     expect(queryBlastRadius({ db, filePath: 'start', limit: 2 })).toEqual([
-      { path: 'alternate', depth: 1 }, { path: 'end', depth: 1 },
+      { path: 'alternate', depth: 1 },
+      { path: 'end', depth: 1 },
     ])
-    db.exec('DELETE FROM files WHERE id = 4; INSERT INTO files(id,path,hash) VALUES (8,\'alternate\',\'x\');')
-    expect(queryReachability({ db, fromPath: 'start', toPath: 'end' }).path)
-      .toEqual(['start', 'middle', 'end'])
+    db.exec(
+      "DELETE FROM files WHERE id = 4; INSERT INTO files(id,path,hash) VALUES (8,'alternate','x');",
+    )
+    expect(
+      queryReachability({ db, fromPath: 'start', toPath: 'end' }).path,
+    ).toEqual(['start', 'middle', 'end'])
   })
 
   test('dense graph expands vertices rather than simple paths', () => {
     const root = makeProject({})
     db = makeDb(root)
     for (let i = 1; i <= 9; i++) {
-      db.query('INSERT INTO files(id,path,hash) VALUES (?,?,?)').run(i, `f${i}`, 'x')
+      db.query('INSERT INTO files(id,path,hash) VALUES (?,?,?)').run(
+        i,
+        `f${i}`,
+        'x',
+      )
       for (let j = 1; j < i; j++) {
         db.query('INSERT INTO edges VALUES (?,?,?,?)').run(j, i, 'IMPORTS', 1)
       }
     }
-    expect(queryBlastRadius({ db, filePath: 'f1', limit: 1 })).toEqual([{ path: 'f2', depth: 1 }])
+    expect(queryBlastRadius({ db, filePath: 'f1', limit: 1 })).toEqual([
+      { path: 'f2', depth: 1 },
+    ])
     expect(queryBlastRadius({ db, filePath: 'f1' })).toHaveLength(8)
   })
 
@@ -174,9 +189,17 @@ describe('FID-2026-1011-006 traversal contracts', () => {
     const root = makeProject({})
     db = makeDb(root)
     for (let i = 1; i <= 3; i++) {
-      db.query('INSERT INTO files(id,path,hash) VALUES (?,?,?)').run(i, `f${i}`, 'x')
-      db.query('INSERT INTO nodes(file_id,type,name,cluster_id) VALUES (?,?,?,?)').run(i, 'file', `f${i}`, 7)
-      db.query('INSERT INTO nodes(file_id,type,name,cluster_id) VALUES (?,?,?,?)').run(i, 'symbol', `S${i}`, 7)
+      db.query('INSERT INTO files(id,path,hash) VALUES (?,?,?)').run(
+        i,
+        `f${i}`,
+        'x',
+      )
+      db.query(
+        'INSERT INTO nodes(file_id,type,name,cluster_id) VALUES (?,?,?,?)',
+      ).run(i, 'file', `f${i}`, 7)
+      db.query(
+        'INSERT INTO nodes(file_id,type,name,cluster_id) VALUES (?,?,?,?)',
+      ).run(i, 'symbol', `S${i}`, 7)
     }
     expect(queryDomainClusters({ db })).toEqual([
       { clusterId: 7, fileCount: 3, nodeCount: 6, files: ['f1', 'f2', 'f3'] },

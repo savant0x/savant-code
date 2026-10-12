@@ -72,11 +72,7 @@ function lastId(server: FakeServer): number {
   return (JSON.parse(raw) as { id: number }).id
 }
 
-function helloReply(
-  id: number,
-  projectId: string,
-  eventSeq?: number,
-): unknown {
+function helloReply(id: number, projectId: string, eventSeq?: number): unknown {
   return {
     jsonrpc: '2.0',
     id,
@@ -116,7 +112,11 @@ describe('FID-2026-1011-006 connection generations', () => {
 
     // Frames and closes arriving from the retired socket are inert.
     requireHandlers(a).onMessage(
-      JSON.stringify({ jsonrpc: '2.0', method: 'event', params: [{ type: 'text', text: 'stale' }] }),
+      JSON.stringify({
+        jsonrpc: '2.0',
+        method: 'event',
+        params: [{ type: 'text', text: 'stale' }],
+      }),
     )
     requireHandlers(a).onClose()
     b.deliver(helloReply(lastId(b), 'repo-b'))
@@ -172,7 +172,9 @@ describe('FID-2026-1011-006 connection generations', () => {
     handlers.onClose()
     handlers.onClose()
     handlers.onClose()
-    expect(statuses.filter((status) => status === 'reconnecting')).toHaveLength(1)
+    expect(statuses.filter((status) => status === 'reconnecting')).toHaveLength(
+      1,
+    )
     client.close()
     expect(client.getStatus()).toBe('offline')
   })

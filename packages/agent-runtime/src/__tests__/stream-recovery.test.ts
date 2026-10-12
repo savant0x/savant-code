@@ -85,13 +85,30 @@ describe('FID-2026-1011-006 iterator ownership', () => {
     let finalized = 0
     let recoveries = 0
     const source = async function* (): AsyncGenerator<Chunk, string> {
-      try { yield { type: 'reasoning', text: 'thought' }; return 'end' }
-      finally { finalized++ }
+      try {
+        yield { type: 'reasoning', text: 'thought' }
+        return 'end'
+      } finally {
+        finalized++
+      }
     }
-    const wrapper = runTurnWithRecovery({ logicalTurnId: 'x', originalInput: 'x',
-      create: () => runWithClassifiedRetry({ create: source, policy: resolveRetryPolicy(undefined) }),
-      createRecovery: () => { recoveries++; return answerStream('no') },
-      observeChunk: observe, closeKindOf, onAccounting: () => {}, budget: GOOD_BUDGET })
+    const wrapper = runTurnWithRecovery({
+      logicalTurnId: 'x',
+      originalInput: 'x',
+      create: () =>
+        runWithClassifiedRetry({
+          create: source,
+          policy: resolveRetryPolicy(undefined),
+        }),
+      createRecovery: () => {
+        recoveries++
+        return answerStream('no')
+      },
+      observeChunk: observe,
+      closeKindOf,
+      onAccounting: () => {},
+      budget: GOOD_BUDGET,
+    })
     await wrapper.next()
     await wrapper.return('cancelled')
     expect(finalized).toBe(1)
@@ -100,11 +117,24 @@ describe('FID-2026-1011-006 iterator ownership', () => {
 
   test('return closes the recovery leg', async () => {
     let finalized = false
-    const wrapper = runTurnWithRecovery({ logicalTurnId: 'x', originalInput: 'x',
-      create: () => reasoningThenCut('thought'), createRecovery: () => (async function* () {
-        try { yield { type: 'text', text: 'answer' }; return 'end' }
-        finally { finalized = true }
-      })(), observeChunk: observe, closeKindOf, onAccounting: () => {}, budget: GOOD_BUDGET })
+    const wrapper = runTurnWithRecovery({
+      logicalTurnId: 'x',
+      originalInput: 'x',
+      create: () => reasoningThenCut('thought'),
+      createRecovery: () =>
+        (async function* () {
+          try {
+            yield { type: 'text', text: 'answer' }
+            return 'end'
+          } finally {
+            finalized = true
+          }
+        })(),
+      observeChunk: observe,
+      closeKindOf,
+      onAccounting: () => {},
+      budget: GOOD_BUDGET,
+    })
     await wrapper.next()
     await wrapper.next()
     await wrapper.return('cancelled')

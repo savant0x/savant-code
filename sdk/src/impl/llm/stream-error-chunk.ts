@@ -34,7 +34,9 @@ type AiSdkErrorChunk = {
  * Returns null for non-object errors and hostile shapes (the factory's own
  * contract).
  */
-export function classifyNativeToolCallError(error: unknown):
+export function classifyNativeToolCallError(
+  error: unknown,
+):
   | ReturnType<typeof normalizeNativeToolCallStreamError>
   | ReturnType<typeof normalizeUnavailableToolStreamError> {
   if (typeof error !== 'object' || error === null) return null

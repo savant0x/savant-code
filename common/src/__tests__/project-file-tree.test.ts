@@ -72,21 +72,40 @@ describe('getProjectFileTree', () => {
     const root = path.resolve('/repo')
     const fs = createFsWithFiles(root, ['a.ts', 'b.ts'])
     const outcomes: boolean[] = []
-    await getProjectFileTree({ projectRoot: root, fs, onScanComplete: value => outcomes.push(value) })
-    await getProjectFileTree({ projectRoot: root, fs, maxFiles: 1, onScanComplete: value => outcomes.push(value) })
+    await getProjectFileTree({
+      projectRoot: root,
+      fs,
+      onScanComplete: (value) => outcomes.push(value),
+    })
+    await getProjectFileTree({
+      projectRoot: root,
+      fs,
+      maxFiles: 1,
+      onScanComplete: (value) => outcomes.push(value),
+    })
     const home = os.homedir()
-    await getProjectFileTree({ projectRoot: home,
-      fs: createFsWithFiles(home, ['a/b/c/d.ts']), onScanComplete: value => outcomes.push(value) })
+    await getProjectFileTree({
+      projectRoot: home,
+      fs: createFsWithFiles(home, ['a/b/c/d.ts']),
+      onScanComplete: (value) => outcomes.push(value),
+    })
     expect(outcomes).toEqual([true, false, false])
   })
 
   it('reports unreadable ignore files as incomplete rather than certifying deletions', async () => {
     const root = path.resolve('/repo')
     const base = createFsWithFiles(root, ['.gitignore', 'a.ts'])
-    const readFile = (async () => { throw new Error('permission denied') }) as typeof base.readFile
+    const readFile = (async () => {
+      throw new Error('permission denied')
+    }) as typeof base.readFile
     let complete = true
-    await getProjectFileTree({ projectRoot: root, fs: { ...base, readFile },
-      onScanComplete: value => { complete = value } })
+    await getProjectFileTree({
+      projectRoot: root,
+      fs: { ...base, readFile },
+      onScanComplete: (value) => {
+        complete = value
+      },
+    })
     expect(complete).toBe(false)
   })
 

@@ -73,7 +73,9 @@ export async function* runTurnWithRecovery<C, R>(
       params.observeChunk(turn, next.value)
       if ((next.value as { type?: unknown }).type === 'error')
         sawErrorFrame = true
-      try { yield next.value } catch (error) {
+      try {
+        yield next.value
+      } catch (error) {
         consumerError = true
         throw error
       }
@@ -88,7 +90,9 @@ export async function* runTurnWithRecovery<C, R>(
     close = { kind: params.closeKindOf(error), sawErrorFrame }
   } finally {
     if (!originalCompleted) {
-      try { await stream.return(undefined as R) } catch (error) {
+      try {
+        await stream.return(undefined as R)
+      } catch (error) {
         if (thrown === undefined) throw error
       }
     }
@@ -135,8 +139,11 @@ export async function* runTurnWithRecovery<C, R>(
     let next = await recovery.next()
     while (!next.done) {
       params.observeChunk(recoveryTurn, next.value)
-      if ((next.value as { type?: string }).type === 'error') recoveryErrorFrame = true
-      try { yield next.value } catch (error) {
+      if ((next.value as { type?: string }).type === 'error')
+        recoveryErrorFrame = true
+      try {
+        yield next.value
+      } catch (error) {
         consumerError = true
         throw error
       }
@@ -156,7 +163,9 @@ export async function* runTurnWithRecovery<C, R>(
     throw new StreamCutError()
   } finally {
     if (!recoveryCompleted) {
-      try { await recovery.return(undefined as R) } catch (error) {
+      try {
+        await recovery.return(undefined as R)
+      } catch (error) {
         if (!recoveryFailed) throw error
       }
     }

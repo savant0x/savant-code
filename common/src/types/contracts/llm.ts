@@ -37,7 +37,8 @@ export function isUnavailableToolError(
   }
   const candidate = value as { type: string; toolName: string }
   return (
-    candidate.type === 'tool-unavailable' && typeof candidate.toolName === 'string'
+    candidate.type === 'tool-unavailable' &&
+    typeof candidate.toolName === 'string'
   )
 }
 

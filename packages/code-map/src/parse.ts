@@ -43,12 +43,19 @@ export async function getFileTokenScores(
   let totalParsedBytes = 0
 
   for (const filePath of filePaths) {
-    if (parsedFiles >= MAX_PARSE_FILES || totalParsedBytes >= MAX_TOTAL_PARSE_BYTES) break
+    if (
+      parsedFiles >= MAX_PARSE_FILES ||
+      totalParsedBytes >= MAX_TOTAL_PARSE_BYTES
+    )
+      break
     const fullPath = path.join(projectRoot, filePath)
     const languageConfig = await getLanguageConfig(fullPath)
     if (!languageConfig) continue
     const parsed = await parseTokensForScoring({
-      filePath, fullPath, languageConfig, readFile,
+      filePath,
+      fullPath,
+      languageConfig,
+      readFile,
       remainingBytes: MAX_TOTAL_PARSE_BYTES - totalParsedBytes,
     })
     if (parsed.skipped) continue

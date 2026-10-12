@@ -73,9 +73,13 @@ export function runCommit(
   }
   journal.push(record)
   for (const observer of observers) {
-    try { observer(record) } catch {
+    try {
+      observer(record)
+    } catch {
       // No message/SQL bindings: diagnostics cannot expose domain payloads.
-      process.emitWarning('Database commit observer failed', { code: 'SAVANT_COMMIT_OBSERVER' })
+      process.emitWarning('Database commit observer failed', {
+        code: 'SAVANT_COMMIT_OBSERVER',
+      })
     }
   }
   return record.changes

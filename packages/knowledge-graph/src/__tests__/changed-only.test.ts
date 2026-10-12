@@ -149,7 +149,11 @@ describe('FID-2026-1011-006 stat baseline', () => {
     const { fsImpl, getReads } = countingFs()
     await update(projectRoot, db, fsImpl)
     const old = db.query('SELECT id FROM files').get()
-    fs.utimesSync(path.join(projectRoot, 'a.ts'), new Date(), new Date(Date.now() + 2000))
+    fs.utimesSync(
+      path.join(projectRoot, 'a.ts'),
+      new Date(),
+      new Date(Date.now() + 2000),
+    )
     await update(projectRoot, db, fsImpl)
     const reads = getReads()
     const changes = db.query('SELECT total_changes() AS changes').get()

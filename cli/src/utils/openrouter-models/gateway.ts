@@ -135,46 +135,46 @@ export async function fetchGatewayModels(
   const buildToken = ++gatewayBuildToken
 
   const inflight = (async () => {
-  // FID-2026-0815-007 (F-09): warm-start disk cache. When the in-memory cache
-  // is cold, a fresh on-disk catalog is loaded synchronously so the model
-  // picker + model-info block have metadata without paying the network RTT.
-  // FID-2026-1006-001 M2: coverage-validate the snapshot before serving it —
-  // a keyed live provider contributing zero rows means the snapshot predates
-  // the key and would hide that provider from /model with no signal.
-  if (!forceRefresh && gatewayCache === null) {
-    const disk = loadGatewayCatalogFromDisk()
-    if (disk && disk.catalog.length > 0) {
-      const gaps = await computeCatalogGaps(disk.catalog)
-      if (gaps.length === 0) {
-        if (buildToken === gatewayBuildToken) {
-          gatewayCache = disk.catalog
-          gatewayCacheAt = disk.savedAt
-          notifyGatewayCatalogListeners(disk.catalog)
+    // FID-2026-0815-007 (F-09): warm-start disk cache. When the in-memory cache
+    // is cold, a fresh on-disk catalog is loaded synchronously so the model
+    // picker + model-info block have metadata without paying the network RTT.
+    // FID-2026-1006-001 M2: coverage-validate the snapshot before serving it —
+    // a keyed live provider contributing zero rows means the snapshot predates
+    // the key and would hide that provider from /model with no signal.
+    if (!forceRefresh && gatewayCache === null) {
+      const disk = loadGatewayCatalogFromDisk()
+      if (disk && disk.catalog.length > 0) {
+        const gaps = await computeCatalogGaps(disk.catalog)
+        if (gaps.length === 0) {
+          if (buildToken === gatewayBuildToken) {
+            gatewayCache = disk.catalog
+            gatewayCacheAt = disk.savedAt
+            notifyGatewayCatalogListeners(disk.catalog)
+          }
+          return disk.catalog
         }
-        return disk.catalog
-      }
-      if (gatewayRefreshCooledDown()) {
-        // A rebuild ran recently and still left a gap (e.g. 401). Serve the
-        // snapshot rather than thrash the upstream within the cooldown.
+        if (gatewayRefreshCooledDown()) {
+          // A rebuild ran recently and still left a gap (e.g. 401). Serve the
+          // snapshot rather than thrash the upstream within the cooldown.
+          logger.warn(
+            { providers: gaps },
+            'Gateway warm-start snapshot has coverage gaps; serving snapshot (refresh cooled down)',
+          )
+          if (buildToken === gatewayBuildToken) {
+            gatewayCache = disk.catalog
+            gatewayCacheAt = disk.savedAt
+            notifyGatewayCatalogListeners(disk.catalog)
+          }
+          return disk.catalog
+        }
+        markGatewayRefreshAttempt()
         logger.warn(
           { providers: gaps },
-          'Gateway warm-start snapshot has coverage gaps; serving snapshot (refresh cooled down)',
+          'Gateway warm-start snapshot missing keyed live providers; rebuilding',
         )
-        if (buildToken === gatewayBuildToken) {
-          gatewayCache = disk.catalog
-          gatewayCacheAt = disk.savedAt
-          notifyGatewayCatalogListeners(disk.catalog)
-        }
-        return disk.catalog
+        // Fall through to the full refresh path.
       }
-      markGatewayRefreshAttempt()
-      logger.warn(
-        { providers: gaps },
-        'Gateway warm-start snapshot missing keyed live providers; rebuilding',
-      )
-      // Fall through to the full refresh path.
     }
-  }
 
     const { orResult, nvidiaResult, restResults } =
       await fetchGatewayLiveCatalogs(forceRefresh)

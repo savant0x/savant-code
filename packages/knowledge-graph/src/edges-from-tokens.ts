@@ -1,4 +1,8 @@
-import { accumulateEdge, isCrossDirectory, resolveRelativeImport } from './extract'
+import {
+  accumulateEdge,
+  isCrossDirectory,
+  resolveRelativeImport,
+} from './extract'
 import { CROSS_DIRECTORY_PENALTY, EDGE_WEIGHTS } from './types'
 
 import type { EdgeAccumulator } from './extract'
@@ -85,7 +89,13 @@ export function buildEdgesFromTokens(params: {
     for (const parent of parents) {
       const definingFile = params.symbolIndex.get(parent)?.[0]
       if (!definingFile) continue
-      accumulateEdge(edges, filePath, definingFile, 'EXTENDS', EDGE_WEIGHTS.EXTENDS)
+      accumulateEdge(
+        edges,
+        filePath,
+        definingFile,
+        'EXTENDS',
+        EDGE_WEIGHTS.EXTENDS,
+      )
     }
   }
   for (const [key, entry] of edges) {

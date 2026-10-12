@@ -85,7 +85,9 @@ export async function getProjectFileTree(params: {
       fullDirPath: fullPath,
       projectRoot,
       fs,
-      onIncomplete: () => { complete = false },
+      onIncomplete: () => {
+        complete = false
+      },
     })
     const mergedIgnore = ignore.default().add(currentIgnore).add(parsedIgnore)
 

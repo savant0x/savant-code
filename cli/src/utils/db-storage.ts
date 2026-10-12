@@ -86,9 +86,14 @@ export function saveChatStateToDb(
     // INSERT OR IGNORE deduplicates re-persisted messages instead of appending
     // duplicate rows on every save.
     if (session && messages.length > 0) {
-      saveConversationMessages(session.id, messages.map(message => ({
-        id: message.id, role: message.variant, content: message.content,
-      })))
+      saveConversationMessages(
+        session.id,
+        messages.map((message) => ({
+          id: message.id,
+          role: message.variant,
+          content: message.content,
+        })),
+      )
     }
     // FID-2026-1006-003 WP5: the tool executor has no database access, so a
     // steering override rides on agentState until this save drains it into a
@@ -112,11 +117,14 @@ export function saveChatStateToDb(
     // records only the newly completed boundaries, never a duplicate.
     const compactionEvents = mainAgentState?.compactionMetrics?.events ?? 0
     if (session && compactionEvents > 0) {
-      const recorded = new Set(getEntriesByKind(session.id, 'label').map(entry => entry.id))
+      const recorded = new Set(
+        getEntriesByKind(session.id, 'label').map((entry) => entry.id),
+      )
       const owner = mainAgentState?.runId ?? session.id
       for (let n = 1; n <= compactionEvents; n += 1) {
         const id = `compaction:${session.id}:${owner}:${n}`
-        if (!recorded.has(id)) writeCompactionLabel(`compaction boundary ${n}`, session.id, id)
+        if (!recorded.has(id))
+          writeCompactionLabel(`compaction boundary ${n}`, session.id, id)
       }
     }
     // FID-006 DB2: persist only the delta over the session's previous total;

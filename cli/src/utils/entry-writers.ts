@@ -115,7 +115,11 @@ export function writeSteeringOverrideAudits(
   for (const audit of audits) {
     try {
       audit.id ??= randomUUID()
-      createCustomEntry(sessionId, { kind: 'steering_override', ...audit }, `steering:${sessionId}:${audit.id}`)
+      createCustomEntry(
+        sessionId,
+        { kind: 'steering_override', ...audit },
+        `steering:${sessionId}:${audit.id}`,
+      )
     } catch (error) {
       failed.push(audit)
       reportFailure('steering-override', error)

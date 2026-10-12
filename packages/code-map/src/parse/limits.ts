@@ -49,11 +49,22 @@ export function loadSourceWithinLimits(params: {
         const buffer = Buffer.alloc(Math.min(bytes, cap) + 1)
         let count = 0
         while (count < buffer.length) {
-          const read = fs.readSync(descriptor, buffer, count, buffer.length - count, null)
+          const read = fs.readSync(
+            descriptor,
+            buffer,
+            count,
+            buffer.length - count,
+            null,
+          )
           if (read === 0) break
           count += read
         }
-        if (count > cap || count !== bytes || fs.fstatSync(descriptor).size !== bytes) return null
+        if (
+          count > cap ||
+          count !== bytes ||
+          fs.fstatSync(descriptor).size !== bytes
+        )
+          return null
         code = buffer.subarray(0, count).toString('utf8')
         bytes = Buffer.byteLength(code, 'utf8')
       } finally {

@@ -1,9 +1,6 @@
 import { captureModelRoute } from '@savant-code/common/providers/model-route'
 
-import {
-  loadSavantCodeModelPreference,
-  saveModelSelection,
-} from './settings'
+import { loadSavantCodeModelPreference, saveModelSelection } from './settings'
 
 import type { ProviderSetupInfo } from '@savant-code/common/providers/derive'
 

@@ -70,20 +70,23 @@ export function loadLaunchBundle(
   }
   const pending = loadBundleFile(key)
   cachedBundles.set(key, pending)
-  void pending.then(() => {
-    if (cachedBundles.get(key) !== pending) return
-    fulfilledBundles.add(key)
-    for (const candidate of cachedBundles.keys()) {
-      if (fulfilledBundles.size <= MAX_CACHED_BUNDLES) break
-      if (!fulfilledBundles.delete(candidate)) continue
-      cachedBundles.delete(candidate)
-    }
-  }, () => {
-    if (cachedBundles.get(key) === pending) {
-      cachedBundles.delete(key)
-      fulfilledBundles.delete(key)
-    }
-  })
+  void pending.then(
+    () => {
+      if (cachedBundles.get(key) !== pending) return
+      fulfilledBundles.add(key)
+      for (const candidate of cachedBundles.keys()) {
+        if (fulfilledBundles.size <= MAX_CACHED_BUNDLES) break
+        if (!fulfilledBundles.delete(candidate)) continue
+        cachedBundles.delete(candidate)
+      }
+    },
+    () => {
+      if (cachedBundles.get(key) === pending) {
+        cachedBundles.delete(key)
+        fulfilledBundles.delete(key)
+      }
+    },
+  )
   return pending
 }
 

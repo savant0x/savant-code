@@ -38,14 +38,18 @@ export function createRunSettlement(options: {
   // snapshot can never overwrite the final state persisted by the host.
   let settled = false
   const report = (message: string): void => {
-    try { options.logger?.debug?.({}, message) } catch {
+    try {
+      options.logger?.debug?.({}, message)
+    } catch {
       // Diagnostics cannot change the terminal outcome.
     }
   }
   const settle = (): boolean => {
     if (settled) return false
     settled = true
-    try { options.onSettled?.() } catch {
+    try {
+      options.onSettled?.()
+    } catch {
       report('Run settlement cleanup failed')
     }
     return true
@@ -55,7 +59,8 @@ export function createRunSettlement(options: {
   }
 
   const rejectRunWithHandlerError = (error: unknown) => {
-    if (settle()) _reject(error instanceof Error ? error : new Error(String(error)))
+    if (settle())
+      _reject(error instanceof Error ? error : new Error(String(error)))
   }
 
   const dispatch = async (fn: () => void | Promise<void>) => {
