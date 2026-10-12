@@ -91,6 +91,7 @@ export async function parseGitignore(params: {
   fullDirPath: string
   projectRoot: string
   fs: SavantCodeFileSystem
+  onIncomplete?: () => void
 }): Promise<ignore.Ignore> {
   const { fullDirPath, projectRoot, fs } = params
 
@@ -110,6 +111,7 @@ export async function parseGitignore(params: {
     try {
       ignoreContent = await fs.readFile(ignoreFilePath, 'utf8')
     } catch (error) {
+      params.onIncomplete?.()
       // Ignore file may be inaccessible or deleted after existence check.
       // Log with context for debugging, but continue without these ignore rules.
       logFileTreeError(

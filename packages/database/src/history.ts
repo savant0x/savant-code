@@ -2,6 +2,7 @@ import crypto from 'crypto'
 
 import { runCommit } from './commit-journal'
 import { mapMessageHistory } from './entry-classes'
+import { getDb } from './index'
 import { prepare, requireRow } from './sqlite'
 
 import type { MessageHistory } from './entry-classes'
@@ -42,6 +43,28 @@ export function createMessage(
     getMessage(messageId),
     `read back message ${messageId} after insert`,
   )
+}
+
+/** Mutable conversation only: audits and other sessions never share ownership. */
+export function saveConversationMessages(
+  sessionId: string,
+  messages: readonly { id: string; role: string; content: string }[],
+): void {
+  getDb().transaction(() => {
+    for (const message of messages) {
+      const content = JSON.stringify(message.content)
+      const existing = prepare('SELECT session_id, entry_kind, role, content FROM message_history WHERE id = ?')
+        .get(message.id) as { session_id: string; entry_kind: string; role: string; content: string } | null
+      if (existing && (existing.session_id !== sessionId || existing.entry_kind !== 'message')) {
+        throw new Error('Conversation message identity belongs to another owner')
+      }
+      if (existing?.role === message.role && existing.content === content) continue
+      runCommit(`INSERT INTO message_history(id,session_id,role,content) VALUES (?,?,?,?)
+        ON CONFLICT(id) DO UPDATE SET role=excluded.role, content=excluded.content
+        WHERE message_history.session_id=excluded.session_id AND message_history.entry_kind='message'`,
+        [message.id, sessionId, message.role, content])
+    }
+  })()
 }
 
 export function getMessage(id: string): MessageHistory | null {

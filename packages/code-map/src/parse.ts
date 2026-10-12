@@ -2,7 +2,6 @@ import * as fs from 'fs'
 import * as path from 'path'
 
 import { getLanguageConfig } from './languages'
-import { mapWithConcurrency } from './parse/concurrency'
 import {
   MAX_PARSE_FILE_BYTES,
   MAX_PARSE_FILES,
@@ -29,9 +28,6 @@ export type { FileTokenData, TokenCallerMap } from './parse/types'
 
 export const DEBUG_PARSING = false
 
-/** FID-2026-0815-009 (F-12): bounded fan-out for the per-file pipeline. */
-const PARSE_CONCURRENCY = 6
-
 export async function getFileTokenScores(
   projectRoot: string,
   filePaths: string[],
@@ -39,60 +35,26 @@ export async function getFileTokenScores(
 ): Promise<FileTokenData> {
   const startTime = Date.now()
 
-  // FID-2026-0815-009 (F-12): fan the per-file pipeline (language-config
-  // lookup + read + tree-sitter parse) out over a bounded pool, then apply the
-  // file-count / byte caps in an ordered walk. The walk reproduces the prior
-  // sequential cap semantics exactly (a file is included iff it has a language
-  // config, fits within the remaining byte budget, and the count budget is not
-  // exhausted); only the I/O is parallelized, so the produced scores are
-  // byte-identical to the sequential run.
-  const allResults = await mapWithConcurrency(
-    filePaths,
-    PARSE_CONCURRENCY,
-    async (
-      filePath,
-    ): Promise<{
-      scores: Record<string, number>
-      calls: string[]
-      bytes: number
-    } | null> => {
-      const fullPath = path.join(projectRoot, filePath)
-      const languageConfig = await getLanguageConfig(fullPath)
-      if (!languageConfig) return null
-
-      const parsed = await parseTokensForScoring({
-        filePath,
-        fullPath,
-        languageConfig,
-        readFile,
-        // The total byte cap is applied in the ordered walk below; only the
-        // per-file cap is enforced here.
-        remainingBytes: MAX_TOTAL_PARSE_BYTES,
-      })
-      if (parsed.skipped) return null
-
-      const { scores, calls } = scoreFileTokens(fullPath, parsed)
-      return { scores, calls, bytes: parsed.bytes }
-    },
-  )
-
+  // Admit in caller order before parsing; output caps must bound actual work.
   const tokenScores: Record<string, Record<string, number>> = {}
   const externalCalls: Record<string, number> = {}
   const fileCallsMap = new Map<string, string[]>()
   let parsedFiles = 0
   let totalParsedBytes = 0
 
-  for (let i = 0; i < allResults.length; i++) {
-    const result = allResults[i]
-    if (!result) continue
-    if (parsedFiles >= MAX_PARSE_FILES) break
-    if (totalParsedBytes + result.bytes > MAX_TOTAL_PARSE_BYTES) continue
-
+  for (const filePath of filePaths) {
+    if (parsedFiles >= MAX_PARSE_FILES || totalParsedBytes >= MAX_TOTAL_PARSE_BYTES) break
+    const fullPath = path.join(projectRoot, filePath)
+    const languageConfig = await getLanguageConfig(fullPath)
+    if (!languageConfig) continue
+    const parsed = await parseTokensForScoring({
+      filePath, fullPath, languageConfig, readFile,
+      remainingBytes: MAX_TOTAL_PARSE_BYTES - totalParsedBytes,
+    })
+    if (parsed.skipped) continue
     parsedFiles++
-    totalParsedBytes += result.bytes
-
-    const filePath = filePaths[i]
-    const { scores, calls } = result
+    totalParsedBytes += parsed.bytes
+    const { scores, calls } = scoreFileTokens(fullPath, parsed)
     tokenScores[filePath] = scores
     fileCallsMap.set(filePath, calls)
 

@@ -134,6 +134,7 @@ export async function fetchGatewayModels(
   // one, so a later publish always wins.
   const buildToken = ++gatewayBuildToken
 
+  const inflight = (async () => {
   // FID-2026-0815-007 (F-09): warm-start disk cache. When the in-memory cache
   // is cold, a fresh on-disk catalog is loaded synchronously so the model
   // picker + model-info block have metadata without paying the network RTT.
@@ -175,7 +176,6 @@ export async function fetchGatewayModels(
     }
   }
 
-  const inflight = (async () => {
     const { orResult, nvidiaResult, restResults } =
       await fetchGatewayLiveCatalogs(forceRefresh)
     // FID-2026-1001-001: the settled ladder and the merge order live in their
@@ -214,10 +214,21 @@ export async function fetchGatewayModels(
 }
 
 /**
- * Test-only: clear all in-memory catalog caches + in-flight requests so tests
- * start from a known state. Not used in production.
+ * FID-2026-1011-006 R20: drop the process-wide catalog after a CREDENTIAL
+ * mutation. A keyed live provider contributes rows only when its key resolves,
+ * so the merged catalog — and the warm-start snapshot written from it — is
+ * stale the moment a credential changes. Scoped to that one event (never to a
+ * picker read), and it carries no key material: no value, name or digest from
+ * a credential reaches the cache, its metadata, or a log line.
  */
-export function __resetOpenRouterModelsCacheForTest(): void {
+/**
+ * Drop every per-provider catalog cache. A credential change is only fully
+ * honoured once the provider fetchers are dropped too — the merged catalog is
+ * rebuilt FROM them, so clearing the merge cache alone would rebuild the same
+ * rows (measured: the refresh issued no new request). One list, two callers
+ * (Law 13).
+ */
+function resetProviderCatalogCaches(): void {
   __resetOpenRouterCacheForTest()
   __resetNvidiaCacheForTest()
   __resetNousCacheForTest()
@@ -233,6 +244,33 @@ export function __resetOpenRouterModelsCacheForTest(): void {
   __resetXkiroCacheForTest()
   // Step 9 remainder: lazily-built custom fetchers are cache state too.
   __resetCustomCatalogsForTest()
+}
+
+export function invalidateGatewayCatalog(): void {
+  // Supersede any build that is already in flight, so a pre-mutation refresh
+  // cannot publish its own result into the cache afterwards (the ownership
+  // rule below applies here too).
+  gatewayBuildToken += 1
+  gatewayCache = null
+  gatewayCacheAt = 0
+  gatewayInflight = null
+  modelRequestLimits.replaceCatalog([])
+  resetProviderCatalogCaches()
+  try {
+    // The snapshot is served at cold boot, before any network call, so it must
+    // go with the in-memory cache.
+    fs.rmSync(gatewayCatalogCachePath(), { force: true })
+  } catch {
+    // Best-effort: an unwritable snapshot is rebuilt by the next refresh.
+  }
+}
+
+/**
+ * Test-only: clear all in-memory catalog caches + in-flight requests so tests
+ * start from a known state. Not used in production.
+ */
+export function __resetOpenRouterModelsCacheForTest(): void {
+  resetProviderCatalogCaches()
   gatewayCache = null
   modelRequestLimits.replaceCatalog([])
   gatewayCacheAt = 0

@@ -54,6 +54,25 @@ console.log('Total:', formatCurrency(total));
     expect(typeof result.tokenCallers).toBe('object')
   })
 
+  it('never reads a path whose language is unknown and reads each admitted file once', async () => {
+    const reads: string[] = []
+    const result = await getFileTokenScores(
+      '/tmp/test-project',
+      ['src/notes.txt', 'src/app.ts', 'src/notes.txt'],
+      async (filePath: string) => {
+        reads.push(filePath)
+        return 'export function app() { return helper() }\n'
+      },
+    )
+
+    // Unknown language is a skip, not a read: it consumes neither I/O nor a
+    // successful-parse slot.
+    expect(reads).not.toContain('src/notes.txt')
+    expect(result.tokenScores['src/notes.txt']).toBeUndefined()
+    // No admitted path is read twice, whatever the language layer resolves.
+    expect(new Set(reads).size).toBe(reads.length)
+  })
+
   it('should continue scoring when a provided reader rejects for one file', async () => {
     const result = await getFileTokenScores(
       '/tmp/test-project',

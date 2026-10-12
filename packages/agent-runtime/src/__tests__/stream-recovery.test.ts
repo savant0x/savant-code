@@ -4,6 +4,8 @@
  */
 import { describe, expect, test } from 'bun:test'
 
+import { runWithClassifiedRetry } from '../provider-boundary/classified-stream-retry'
+import { resolveRetryPolicy } from '../provider-boundary/retry-policy'
 import { StreamCutError, accumulateChunk } from '../stream-recovery/outcome'
 import { runTurnWithRecovery } from '../stream-recovery/recovery-executor'
 import {
@@ -77,6 +79,38 @@ function run(params: {
     },
   }
 }
+
+describe('FID-2026-1011-006 iterator ownership', () => {
+  test('return closes the nested retry source without starting recovery', async () => {
+    let finalized = 0
+    let recoveries = 0
+    const source = async function* (): AsyncGenerator<Chunk, string> {
+      try { yield { type: 'reasoning', text: 'thought' }; return 'end' }
+      finally { finalized++ }
+    }
+    const wrapper = runTurnWithRecovery({ logicalTurnId: 'x', originalInput: 'x',
+      create: () => runWithClassifiedRetry({ create: source, policy: resolveRetryPolicy(undefined) }),
+      createRecovery: () => { recoveries++; return answerStream('no') },
+      observeChunk: observe, closeKindOf, onAccounting: () => {}, budget: GOOD_BUDGET })
+    await wrapper.next()
+    await wrapper.return('cancelled')
+    expect(finalized).toBe(1)
+    expect(recoveries).toBe(0)
+  })
+
+  test('return closes the recovery leg', async () => {
+    let finalized = false
+    const wrapper = runTurnWithRecovery({ logicalTurnId: 'x', originalInput: 'x',
+      create: () => reasoningThenCut('thought'), createRecovery: () => (async function* () {
+        try { yield { type: 'text', text: 'answer' }; return 'end' }
+        finally { finalized = true }
+      })(), observeChunk: observe, closeKindOf, onAccounting: () => {}, budget: GOOD_BUDGET })
+    await wrapper.next()
+    await wrapper.next()
+    await wrapper.return('cancelled')
+    expect(finalized).toBe(true)
+  })
+})
 
 describe('bounded stream recovery (FID-2026-1005-007)', () => {
   test('one bounded recovery per turn; its answer becomes the turn result', async () => {

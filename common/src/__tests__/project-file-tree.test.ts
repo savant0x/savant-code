@@ -68,6 +68,28 @@ describe('getProjectFileTree', () => {
     expect(paths.some((p) => p.includes('.hidden'))).toBe(false)
   })
 
+  it('reports complete scans and file/depth truncation without changing array callers', async () => {
+    const root = path.resolve('/repo')
+    const fs = createFsWithFiles(root, ['a.ts', 'b.ts'])
+    const outcomes: boolean[] = []
+    await getProjectFileTree({ projectRoot: root, fs, onScanComplete: value => outcomes.push(value) })
+    await getProjectFileTree({ projectRoot: root, fs, maxFiles: 1, onScanComplete: value => outcomes.push(value) })
+    const home = os.homedir()
+    await getProjectFileTree({ projectRoot: home,
+      fs: createFsWithFiles(home, ['a/b/c/d.ts']), onScanComplete: value => outcomes.push(value) })
+    expect(outcomes).toEqual([true, false, false])
+  })
+
+  it('reports unreadable ignore files as incomplete rather than certifying deletions', async () => {
+    const root = path.resolve('/repo')
+    const base = createFsWithFiles(root, ['.gitignore', 'a.ts'])
+    const readFile = (async () => { throw new Error('permission denied') }) as typeof base.readFile
+    let complete = true
+    await getProjectFileTree({ projectRoot: root, fs: { ...base, readFile },
+      onScanComplete: value => { complete = value } })
+    expect(complete).toBe(false)
+  })
+
   it('scans regular project roots without a depth limit', async () => {
     // FID-2026-0803-003 CMN-2: resolve the root so win32 mock keys (drive-
     // rooted) agree with the scan's resolved projectRoot.

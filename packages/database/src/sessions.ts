@@ -176,11 +176,11 @@ export function updateSessionPinned(
   )
 }
 
-export function getSessionsByChatId(chatId: string): Session[] {
+export function getSessionsByChatId(chatId: string, limit?: number): Session[] {
   const stmt = prepare(
-    'SELECT * FROM sessions WHERE chat_id = ? ORDER BY created_at DESC, rowid DESC',
+    'SELECT * FROM sessions WHERE chat_id = ? ORDER BY created_at DESC, rowid DESC LIMIT ?',
   )
-  const rows = stmt.all(chatId) as Record<string, unknown>[]
+  const rows = stmt.all(chatId, limit === undefined ? -1 : Math.max(0, Math.floor(limit))) as Record<string, unknown>[]
   return rows.map(mapSession)
 }
 

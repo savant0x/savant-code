@@ -13,6 +13,7 @@
  * (`envParamsResolver`); values never surface through this module.
  */
 import { readFile } from 'node:fs/promises'
+import { resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 import {
@@ -52,19 +53,44 @@ export async function loadBundleFile(path: string): Promise<Bundle> {
   return parsed.data
 }
 
-let cachedBundle: Promise<Bundle> | undefined
+const cachedBundles = new Map<string, Promise<Bundle>>()
+const fulfilledBundles = new Set<string>()
+const MAX_CACHED_BUNDLES = 16
 
 /** The launch catalog bundle, loaded once per process. */
 export function loadLaunchBundle(
   path: string = defaultBundlePath(),
 ): Promise<Bundle> {
-  cachedBundle ??= loadBundleFile(path)
-  return cachedBundle
+  const key = resolve(path)
+  const cached = cachedBundles.get(key)
+  if (cached) {
+    cachedBundles.delete(key)
+    cachedBundles.set(key, cached)
+    return cached
+  }
+  const pending = loadBundleFile(key)
+  cachedBundles.set(key, pending)
+  void pending.then(() => {
+    if (cachedBundles.get(key) !== pending) return
+    fulfilledBundles.add(key)
+    for (const candidate of cachedBundles.keys()) {
+      if (fulfilledBundles.size <= MAX_CACHED_BUNDLES) break
+      if (!fulfilledBundles.delete(candidate)) continue
+      cachedBundles.delete(candidate)
+    }
+  }, () => {
+    if (cachedBundles.get(key) === pending) {
+      cachedBundles.delete(key)
+      fulfilledBundles.delete(key)
+    }
+  })
+  return pending
 }
 
 /** Test hook — forget the cached bundle (a re-load picks up new bytes). */
 export function resetBundleCache(): void {
-  cachedBundle = undefined
+  cachedBundles.clear()
+  fulfilledBundles.clear()
 }
 
 export interface CatalogSearchFilter {
@@ -227,7 +253,7 @@ export async function executeEndpoint(
 ): Promise<RunCompleted> {
   const mode = opts.mode ?? 'live'
   const doc = describeEndpoint(opts.bundle, opts.provider, opts.endpoint)
-  let fetchFn: ExecuteEndpointOptions['fetch']
+  let fetchFn: ExecuteEndpointOptions['fetch'] = opts.fetch
   if (mode === 'replay') {
     if (!isRecordedFixtureSource(opts.fixture)) {
       throw new Error(

@@ -160,15 +160,10 @@ export function assignClustersToNodes(params: {
     'UPDATE nodes SET cluster_id = ? WHERE file_id = ?',
   )
 
-  db.exec('BEGIN')
-  try {
+  db.transaction(() => {
     clearStmt.run()
     for (const [fileId, clusterId] of assignments) {
       updateStmt.run(clusterId, fileId)
     }
-    db.exec('COMMIT')
-  } catch (error) {
-    db.exec('ROLLBACK')
-    throw error
-  }
+  })()
 }

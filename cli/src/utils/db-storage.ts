@@ -3,7 +3,7 @@ import {
   getSession,
   updateSession,
   updateSessionModel,
-  createMessage,
+  saveConversationMessages,
   getInContextMessages,
   getEntriesByKind,
   createCostRecord,
@@ -57,7 +57,7 @@ export function saveChatStateToDb(
   let session: { id: string } | null = null
   try {
     if (runState.sessionState) {
-      const existingSessions = getSessionsByChatId(chatId)
+      const existingSessions = getSessionsByChatId(chatId, 1)
       if (existingSessions.length > 0) {
         session = existingSessions[0]
         updateSession(session.id, runState.sessionState)
@@ -86,9 +86,9 @@ export function saveChatStateToDb(
     // INSERT OR IGNORE deduplicates re-persisted messages instead of appending
     // duplicate rows on every save.
     if (session && messages.length > 0) {
-      for (const message of messages) {
-        createMessage(session.id, message.variant, message.content, message.id)
-      }
+      saveConversationMessages(session.id, messages.map(message => ({
+        id: message.id, role: message.variant, content: message.content,
+      })))
     }
     // FID-2026-1006-003 WP5: the tool executor has no database access, so a
     // steering override rides on agentState until this save drains it into a
@@ -102,8 +102,8 @@ export function saveChatStateToDb(
       auditedOverrides &&
       auditedOverrides.length > 0
     ) {
-      writeSteeringOverrideAudits(session.id, auditedOverrides)
-      mainAgentState.pendingSteeringOverrideAudits = []
+      mainAgentState.pendingSteeringOverrideAudits =
+        writeSteeringOverrideAudits(session.id, auditedOverrides)
     }
     // FID-2026-1006-003 WP5: a `label` bookmark at each COMPLETED compaction
     // boundary. The runtime already counts every completed compaction on
@@ -112,9 +112,11 @@ export function saveChatStateToDb(
     // records only the newly completed boundaries, never a duplicate.
     const compactionEvents = mainAgentState?.compactionMetrics?.events ?? 0
     if (session && compactionEvents > 0) {
-      const recorded = getEntriesByKind(session.id, 'label').length
-      for (let n = recorded + 1; n <= compactionEvents; n += 1) {
-        writeCompactionLabel(`compaction boundary ${n}`, session.id)
+      const recorded = new Set(getEntriesByKind(session.id, 'label').map(entry => entry.id))
+      const owner = mainAgentState?.runId ?? session.id
+      for (let n = 1; n <= compactionEvents; n += 1) {
+        const id = `compaction:${session.id}:${owner}:${n}`
+        if (!recorded.has(id)) writeCompactionLabel(`compaction boundary ${n}`, session.id, id)
       }
     }
     // FID-006 DB2: persist only the delta over the session's previous total;
@@ -164,7 +166,7 @@ export function saveChatStateToDb(
 // Load chat state from database
 export function loadChatStateFromDb(chatId: string): DbChatState | null {
   try {
-    const sessions = getSessionsByChatId(chatId)
+    const sessions = getSessionsByChatId(chatId, 1)
     if (sessions.length === 0) {
       return null
     }
@@ -210,7 +212,7 @@ export function getCostSummary(chatId: string): {
   costRecords: CostTracking[]
 } {
   try {
-    const sessions = getSessionsByChatId(chatId)
+    const sessions = getSessionsByChatId(chatId, 1)
     if (sessions.length === 0) {
       return { totalCredits: 0, totalDirectCredits: 0, costRecords: [] }
     }

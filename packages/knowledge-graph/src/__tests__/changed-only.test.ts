@@ -142,6 +142,24 @@ afterEach(() => {
   tempDbPath = undefined
 })
 
+describe('FID-2026-1011-006 stat baseline', () => {
+  test('touch-only refresh advances stat baseline and subsequent pass writes nothing', async () => {
+    const projectRoot = makeProject({ 'a.ts': 'class A {}' })
+    db = makeDb(projectRoot)
+    const { fsImpl, getReads } = countingFs()
+    await update(projectRoot, db, fsImpl)
+    const old = db.query('SELECT id FROM files').get()
+    fs.utimesSync(path.join(projectRoot, 'a.ts'), new Date(), new Date(Date.now() + 2000))
+    await update(projectRoot, db, fsImpl)
+    const reads = getReads()
+    const changes = db.query('SELECT total_changes() AS changes').get()
+    await update(projectRoot, db, fsImpl)
+    expect(getReads()).toBe(reads)
+    expect(db.query('SELECT total_changes() AS changes').get()).toEqual(changes)
+    expect(db.query('SELECT id FROM files').get()).toEqual(old)
+  })
+})
+
 describe('changed-only refresh (FID-2026-1002-006)', () => {
   test('second pass over an unchanged tree performs ZERO content reads', async () => {
     const projectRoot = makeProject({

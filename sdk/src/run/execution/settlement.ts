@@ -37,27 +37,32 @@ export function createRunSettlement(options: {
   // Snapshot support: stop emitting the moment the run settles so a late
   // snapshot can never overwrite the final state persisted by the host.
   let settled = false
-  const resolve = (value: RunReturnType) => {
+  const report = (message: string): void => {
+    try { options.logger?.debug?.({}, message) } catch {
+      // Diagnostics cannot change the terminal outcome.
+    }
+  }
+  const settle = (): boolean => {
+    if (settled) return false
     settled = true
-    options.onSettled?.()
-    resolvePromise(value)
+    try { options.onSettled?.() } catch {
+      report('Run settlement cleanup failed')
+    }
+    return true
+  }
+  const resolve = (value: RunReturnType) => {
+    if (settle()) resolvePromise(value)
   }
 
   const rejectRunWithHandlerError = (error: unknown) => {
-    if (settled) return
-    _reject(error instanceof Error ? error : new Error(String(error)))
+    if (settle()) _reject(error instanceof Error ? error : new Error(String(error)))
   }
 
   const dispatch = async (fn: () => void | Promise<void>) => {
     try {
       await fn()
     } catch (error) {
-      options.logger?.debug?.(
-        {
-          error: error instanceof Error ? error.message : String(error),
-        },
-        'Event/stream handler threw; rejecting run',
-      )
+      report('Event/stream handler threw; rejecting run')
       rejectRunWithHandlerError(error)
     }
   }

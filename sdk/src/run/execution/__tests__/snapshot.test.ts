@@ -1,9 +1,11 @@
 import { describe, expect, test } from 'bun:test'
 
 import { STATE_SNAPSHOT_INTERVAL_MS } from '../../types'
+import { createRunSettlement } from '../settlement'
 import { startStateSnapshotting } from '../snapshot'
 
 import type { RunState } from '../../../run-state'
+import type { RunReturnType } from '../../types'
 import type { SessionState } from '@savant-code/common/types/session-state'
 
 function makeSessionState(): SessionState {
@@ -147,6 +149,41 @@ describe('startStateSnapshotting (FID-2026-0814-006 freshness)', () => {
     emit()
     emit()
     expect(emitted).toBe(before)
+  })
+})
+
+describe('FID-2026-1011-006 settlement ownership', () => {
+  test('handler rejection stops snapshots exactly once despite cleanup failure', async () => {
+    let cleanup = 0
+    const sessionState = makeSessionState()
+    let emitted = 0
+    const snapshots = startStateSnapshotting({ sessionState, getCancelledRunState,
+      onStateSnapshot: () => { emitted++ } })
+    const settlement = createRunSettlement({ onSettled: () => {
+      cleanup++
+      snapshots.stop()
+      throw new Error('cleanup failure')
+    } })
+    const primary = new Error('handler failure')
+    const outcome = settlement.promise.catch(error => error)
+    await settlement.dispatch(async () => { throw primary })
+    expect(await outcome).toBe(primary)
+    sessionState.mainAgentState.contextTokenCount++
+    snapshots.emit()
+    await settlement.dispatch(() => { throw new Error('late') })
+    expect(cleanup).toBe(1)
+    expect(emitted).toBe(1)
+  })
+
+  test('repeated resolve and late handler rejection are first-terminal-wins', async () => {
+    let cleanup = 0
+    const settlement = createRunSettlement({ onSettled: () => { cleanup++ } })
+    const value = { output: { type: 'error', message: 'final' } } as RunReturnType
+    settlement.resolve(value)
+    settlement.resolve(value)
+    await settlement.dispatch(() => { throw new Error('late') })
+    expect(await settlement.promise).toBe(value)
+    expect(cleanup).toBe(1)
   })
 })
 

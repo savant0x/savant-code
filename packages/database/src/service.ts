@@ -24,6 +24,7 @@ export {
   createEntry,
   createLabelEntry,
   createMessage,
+  saveConversationMessages,
   createModelChangeEntry,
   createThinkingLevelChangeEntry,
   getEntriesByKind,

@@ -103,12 +103,25 @@ export async function updateKnowledgeGraph(
   })
   const { stats } = scan
 
-  await upsertChangedFiles({ db, scan })
-  await rebuildEdges({ db })
-
-  // 6. Louvain clustering + cluster_id write-back.
-  const clusterAssignments = computeClusters({ db })
-  assignClustersToNodes({ db, assignments: clusterAssignments })
+  db.transaction(() => {
+    const version = (db.query('PRAGMA data_version').get() as { data_version: number }).data_version
+    const rows = db.query('SELECT id, path, hash, mtime_ms, bytes FROM files').all() as Array<{
+      id: number; path: string; hash: string; mtime_ms: number | null; bytes: number | null
+    }>
+    if (version !== scan.baselineVersion || rows.length !== scan.existingByPath.size ||
+        rows.some((row) => {
+          const old = scan.existingByPath.get(row.path)
+          return !old || old.id !== row.id || old.hash !== row.hash ||
+            old.mtimeMs !== row.mtime_ms || old.bytes !== row.bytes
+        })) throw new Error('Graph changed during scan; retry refresh')
+    const remove = db.prepare('DELETE FROM files WHERE path = ?')
+    for (const stale of scan.stalePaths) remove.run(stale)
+    upsertChangedFiles({ db, scan })
+    if (scan.wasFullRebuild || scan.changedPaths.length > 0 || scan.stalePaths.length > 0) {
+      rebuildEdges({ db })
+      assignClustersToNodes({ db, assignments: computeClusters({ db }) })
+    }
+  }).immediate()
 
   stats.nodeCount = (
     db.query('SELECT COUNT(*) AS c FROM nodes').get() as { c: number }
@@ -138,10 +151,10 @@ export async function updateKnowledgeGraph(
  * first (single DELETE; FK cascade removes stale
  * nodes/edges/file_calls/file_imports/file_extends).
  */
-async function upsertChangedFiles(params: {
+function upsertChangedFiles(params: {
   db: Database
   scan: Awaited<ReturnType<typeof scanIndexState>>
-}): Promise<void> {
+}): void {
   const { db, scan } = params
   const { filePaths, sources, hashByPath, parsedFiles, existingByPath } = scan
   const effectiveFullRebuild = scan.wasFullRebuild
@@ -163,16 +176,19 @@ async function upsertChangedFiles(params: {
     'INSERT INTO file_extends (file_id, parent) VALUES (?, ?)',
   )
 
-  db.exec('BEGIN')
-  try {
-    for (const filePath of filePaths) {
+  const updateStat = db.prepare('UPDATE files SET mtime_ms = ?, bytes = ? WHERE id = ?')
+  for (const filePath of filePaths) {
       const source = sources.get(filePath)
       if (source === undefined) continue
       const existing = existingByPath.get(filePath)
       // FID-2026-0815-009 (F-12): reuse the scan-loop hash (no re-hash).
       const hash = hashByPath.get(filePath) as string
       if (!effectiveFullRebuild && existing && existing.hash === hash) {
-        continue // unchanged — already counted
+        const stat = scan.statByPath.get(filePath)
+        if (stat && (stat.mtimeMs !== existing.mtimeMs || stat.size !== existing.bytes)) {
+          updateStat.run(stat.mtimeMs, stat.size, existing.id)
+        }
+        continue // unchanged content: preserve ids/nodes/derived state
       }
 
       pruneStmt.run(filePath)
@@ -205,11 +221,6 @@ async function upsertChangedFiles(params: {
       }
       // Anchor node so files with no symbols still appear in node queries.
       insertNodeStmt.run(fileId, NODE_TYPES.FILE, filePath)
-    }
-    db.exec('COMMIT')
-  } catch (error) {
-    db.exec('ROLLBACK')
-    throw error
   }
 }
 
@@ -217,7 +228,7 @@ async function upsertChangedFiles(params: {
  * Step 5: rebuild the full corpus edge set ENTIRELY from persisted tokens +
  * DB-resident knowledge (FID-2026-1002-006): no source reads.
  */
-async function rebuildEdges({ db }: { db: Database }): Promise<void> {
+function rebuildEdges({ db }: { db: Database }): void {
   const fileRows = db.query('SELECT id, path FROM files').all() as Array<{
     id: number
     path: string
@@ -259,19 +270,12 @@ async function rebuildEdges({ db }: { db: Database }): Promise<void> {
   const insertEdgeStmt = db.prepare(
     'INSERT INTO edges (source_id, target_id, type, weight) VALUES (?, ?, ?, ?)',
   )
-  db.exec('BEGIN')
-  try {
-    for (const [key, entry] of edges) {
+  for (const [key, entry] of edges) {
       const [source, target] = key.split('\u0000')
       const sourceId = idByPath.get(source)
       const targetId = idByPath.get(target)
       if (sourceId === undefined || targetId === undefined) continue
       insertEdgeStmt.run(sourceId, targetId, entry.type, entry.weight)
-    }
-    db.exec('COMMIT')
-  } catch (error) {
-    db.exec('ROLLBACK')
-    throw error
   }
 }
 

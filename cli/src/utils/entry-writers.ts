@@ -13,6 +13,7 @@
  * Every write is fail-open: the database is an audit/fallback store, so a
  * failed write is reported and never allowed to fail a turn or a chat switch.
  */
+import { randomUUID } from 'node:crypto'
 import path from 'path'
 
 import {
@@ -46,7 +47,7 @@ function reportFailure(step: string, error: unknown): void {
 export function resolveCurrentSessionId(): string | null {
   try {
     const chatId = path.basename(resolveCurrentChatDir())
-    const sessions = getSessionsByChatId(chatId)
+    const sessions = getSessionsByChatId(chatId, 1)
     return sessions.length > 0 ? sessions[0].id : null
   } catch (error) {
     reportFailure('resolve-session', error)
@@ -91,10 +92,11 @@ export function writeModelChangeEntries(
 export function writeCompactionLabel(
   label: string,
   sessionId: string | null = resolveCurrentSessionId(),
+  id?: string,
 ): void {
   if (!sessionId) return
   try {
-    createLabelEntry(sessionId, label)
+    createLabelEntry(sessionId, label, id)
   } catch (error) {
     reportFailure('compaction-label', error)
   }
@@ -102,18 +104,22 @@ export function writeCompactionLabel(
 
 /**
  * Drain the overrides the tool executor audited during the run into durable
- * `custom` entries. The caller clears the source list once this returns,
- * which is what keeps each override recorded exactly once.
+ * `custom` entries. Return failed records so the caller retains them for retry;
+ * durable event ids keep retries idempotent without merging distinct events.
  */
 export function writeSteeringOverrideAudits(
   sessionId: string,
   audits: readonly SteeringOverrideAuditRecord[],
-): void {
+): SteeringOverrideAuditRecord[] {
+  const failed: SteeringOverrideAuditRecord[] = []
   for (const audit of audits) {
     try {
-      createCustomEntry(sessionId, { kind: 'steering_override', ...audit })
+      audit.id ??= randomUUID()
+      createCustomEntry(sessionId, { kind: 'steering_override', ...audit }, `steering:${sessionId}:${audit.id}`)
     } catch (error) {
+      failed.push(audit)
       reportFailure('steering-override', error)
     }
   }
+  return failed
 }

@@ -9,6 +9,8 @@
  * an orderable durable entry.
  */
 export type SteeringOverrideAuditRecord = {
+  /** Durable event identity; optional only for legacy snapshots. */
+  id?: string
   ruleId: string
   reason: string
   toolName: string

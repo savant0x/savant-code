@@ -9,6 +9,10 @@ import { hasProviderCredentials } from '@savant-code/common/providers/readiness'
 import { PROVIDER_REGISTRY } from '@savant-code/common/providers/registry'
 import { resetOpenRouterApiKeyCache } from '@savant-code/sdk'
 
+import { invalidateGatewayCatalog } from './openrouter-models/gateway'
+// The routing/activation effects of a saved primary key live in their own
+// module (extracted at the quality ceiling); this file owns the key store.
+import { activateProviderRouting } from './provider-routing-activation'
 import {
   readCredentialsRecord,
   readStoredProviderKeys,
@@ -191,6 +195,10 @@ export function saveProviderApiKey(provider: string, apiKey: string): void {
 
   activateProviderRouting(provider, config)
 
+  // FID-2026-1011-006 R20: the model catalog is keyed on credentials, so the
+  // process cache must not outlive the mutation that changed them.
+  invalidateGatewayCatalog()
+
   if (provider === 'openrouter') {
     resetOpenRouterApiKeyCache()
   }
@@ -237,40 +245,9 @@ export function saveProviderApiKeyExtra(
         captureModelRoute(provider),
       )
   }
-}
-
-/** Apply the direct-provider routing/activation effects of a saved primary key. */
-function activateProviderRouting(
-  provider: string,
-  config: ProviderSetupInfo,
-): void {
-  const shellProvider = process.env.DIRECT_PROVIDER?.trim()
-  const shellBaseUrl = process.env.INFERENCE_BASE_URL?.trim()
-  let activated = false
-
-  if (!shellProvider && !shellBaseUrl) {
-    process.env.DIRECT_PROVIDER = provider
-    process.env.INFERENCE_BASE_URL = config.baseUrl
-    activated = true
-  } else if (shellProvider === provider && !shellBaseUrl) {
-    process.env.INFERENCE_BASE_URL = config.baseUrl
-    activated = true
-  } else if (shellProvider === provider && shellBaseUrl === config.baseUrl) {
-    activated = true
-  }
-
-  if (activated) {
-    // Phase 4 single-setting state: the selection is persisted as
-    // activeProvider (the registry derives the base URL and env var). The
-    // legacy directProvider/directProviderBaseUrl fields are no longer written
-    // for gateway providers — only the local (Ollama) path keeps them.
-    // Step 9 (FID-2026-0910-004 D8): the effective-setup lookup above
-    // validated the id; no cast needed at the settings seam.
-    saveModelSelection(
-      loadSavantCodeModelPreference() ?? 'openrouter/free',
-      captureModelRoute(provider),
-    )
-  }
+  // FID-2026-1011-006 R20: an extra credential (e.g. a base URL key) also
+  // changes what the provider's catalog can serve.
+  invalidateGatewayCatalog()
 }
 
 /**

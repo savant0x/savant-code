@@ -31,6 +31,8 @@ export async function getProjectFileTree(params: {
   projectRoot: string
   maxFiles?: number
   fs: SavantCodeFileSystem
+  /** Completeness certificate for deletion-sensitive consumers. */
+  onScanComplete?: (complete: boolean) => void
 }): Promise<FileTreeNode[]> {
   const withDefaults = { maxFiles: DEFAULT_MAX_FILES, ...params }
   const { projectRoot, fs } = withDefaults
@@ -72,6 +74,7 @@ export async function getProjectFileTree(params: {
   ]
   let totalFiles = 0
   let dirsScanned = 0
+  let complete = true
 
   while (queue.length > 0 && totalFiles < maxFiles && dirsScanned < maxDirs) {
     const head = queue.shift()
@@ -82,13 +85,17 @@ export async function getProjectFileTree(params: {
       fullDirPath: fullPath,
       projectRoot,
       fs,
+      onIncomplete: () => { complete = false },
     })
     const mergedIgnore = ignore.default().add(currentIgnore).add(parsedIgnore)
 
     try {
       const files = await fs.readdir(fullPath)
       for (const file of files) {
-        if (totalFiles >= maxFiles) break
+        if (totalFiles >= maxFiles) {
+          complete = false
+          break
+        }
 
         const filePath = path.join(fullPath, file)
         const relativeFilePath = path.relative(projectRoot, filePath)
@@ -114,6 +121,8 @@ export async function getProjectFileTree(params: {
                 ignore: mergedIgnore,
                 depth: depth + 1,
               })
+            } else {
+              complete = false
             }
           } else {
             const lastReadTime = stats.atimeMs
@@ -126,6 +135,7 @@ export async function getProjectFileTree(params: {
             totalFiles++
           }
         } catch (error) {
+          complete = false
           // File may be inaccessible due to permissions or may have been deleted.
           // Log with context for debugging, but continue building the tree.
           logFileTreeError(
@@ -136,6 +146,7 @@ export async function getProjectFileTree(params: {
         }
       }
     } catch (error) {
+      complete = false
       // Directory may be inaccessible due to permissions.
       // Log with context for debugging, but continue building the tree.
       logFileTreeError(
@@ -145,6 +156,7 @@ export async function getProjectFileTree(params: {
       )
     }
   }
+  params.onScanComplete?.(complete && queue.length === 0)
   return root.children
 }
 

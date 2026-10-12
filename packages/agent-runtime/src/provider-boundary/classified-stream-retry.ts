@@ -73,18 +73,27 @@ export async function* runWithClassifiedRetry<C, R>(
   for (;;) {
     attempt++
     let emitted = false
+    let consumerError = false
+    const stream = params.create()
+    let completed = false
+    let primaryFailure = false
     try {
-      const stream = params.create()
       let next = await stream.next()
       while (!next.done) {
         emitted = true
-        yield next.value
+        try { yield next.value } catch (error) {
+          consumerError = true
+          throw error
+        }
         next = await stream.next()
       }
+      completed = true
       params.breaker?.recordSuccess()
       params.onSuccess?.()
       return next.value
     } catch (error) {
+      primaryFailure = true
+      if (consumerError) throw error
       const verdict = classifyFailure(error)
       params.breaker?.recordOutcome(verdict)
       params.onFailure?.(verdict, error)
@@ -103,6 +112,13 @@ export async function* runWithClassifiedRetry<C, R>(
         throw new ClassifiedProviderError(verdict, error)
       }
       await sleep(retryDelayMs(attempt, params.policy))
+    } finally {
+      if (!completed) {
+        try { await stream.return(undefined as R) } catch (error) {
+          if (!primaryFailure) throw error
+          params.onUnknownShape?.('Stream cleanup failed after primary failure')
+        }
+      }
     }
   }
 }

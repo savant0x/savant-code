@@ -13,6 +13,7 @@ import {
   fetchGatewayModels,
   getCachedGatewayModels,
 } from '../openrouter-models'
+import { saveProviderApiKey } from '../provider-key-store'
 import {
   makeJsonResponse,
   registerGatewayCatalogLifecycle,
@@ -40,6 +41,30 @@ describe('openrouter-models gateway cache ownership', () => {
     expect(returned.length).toBeGreaterThan(0)
     // ...but the shared cache was not written by the superseded build.
     expect(getCachedGatewayModels()).toEqual([])
+  })
+
+  test('a credential mutation drops the catalog it was assembled with (FID-2026-1011-006 R20)', async () => {
+    const fetchMock = mock(() =>
+      Promise.resolve(
+        makeJsonResponse({
+          data: [{ id: 'openrouter/pre-rotation', name: 'Before' }],
+        }),
+      ),
+    )
+    // @ts-expect-error - mock fetch
+    globalThis.fetch = fetchMock
+    await fetchGatewayModels(true)
+    expect(getCachedGatewayModels().length).toBeGreaterThan(0)
+
+    // The production key-mutation seam: a rotated credential cannot leave the
+    // catalog assembled from the previous key in place (a keyed provider
+    // contributes rows only while its key resolves).
+    saveProviderApiKey('openrouter', 'rotated-key')
+    expect(getCachedGatewayModels()).toEqual([])
+
+    const callsBefore = fetchMock.mock.calls.length
+    await fetchGatewayModels()
+    expect(fetchMock.mock.calls.length).toBeGreaterThan(callsBefore)
   })
 
   test('the in-flight slot clears on settle, so a later call rebuilds (FID-2026-1007-006)', async () => {

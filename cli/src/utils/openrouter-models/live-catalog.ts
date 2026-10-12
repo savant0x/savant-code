@@ -49,6 +49,7 @@ export interface LiveCatalogFetcher {
 export function createLiveCatalogFetcher<TResponse = unknown>(
   options: LiveCatalogFetcherOptions<TResponse>,
 ): LiveCatalogFetcher {
+  let generation = 0
   let cachedCatalog: OpenRouterModel[] | null = null
   let cachedAt = 0
   let inflight: Promise<OpenRouterModel[]> | null = null
@@ -68,6 +69,7 @@ export function createLiveCatalogFetcher<TResponse = unknown>(
       return inflight
     }
 
+    const owner = generation
     inflight = (async () => {
       try {
         const headers: Record<string, string> = { Accept: 'application/json' }
@@ -87,8 +89,10 @@ export function createLiveCatalogFetcher<TResponse = unknown>(
         // trust boundary (the network), matching the caller's declared shape.
         const json = (await resp.json()) as TResponse
         const parsed = options.parse(json)
-        cachedCatalog = parsed
-        cachedAt = Date.now()
+        if (owner === generation) {
+          cachedCatalog = parsed
+          cachedAt = Date.now()
+        }
         return parsed
       } catch (error) {
         logger.warn(
@@ -98,7 +102,7 @@ export function createLiveCatalogFetcher<TResponse = unknown>(
         // Degrade: prefer stale cache, else empty (free-text fallback).
         return cachedCatalog ?? []
       } finally {
-        inflight = null
+        if (owner === generation) inflight = null
       }
     })()
 
@@ -113,6 +117,7 @@ export function createLiveCatalogFetcher<TResponse = unknown>(
 
   /** Test-only: clear the cache + in-flight request. */
   const resetForTest = (): void => {
+    generation++
     cachedCatalog = null
     cachedAt = 0
     inflight = null

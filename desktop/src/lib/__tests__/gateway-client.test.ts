@@ -105,6 +105,27 @@ describe('backoffDelayMs', () => {
 })
 
 describe('GatewayClient', () => {
+  test('superseded close and hello callbacks cannot invalidate the current socket', async () => {
+    const a = makeFakeServer()
+    const b = makeFakeServer()
+    let calls = 0
+    const client = new GatewayClient({ factory: (url, handlers) =>
+      makeFactory(calls++ === 0 ? a : b)(url, handlers) })
+    client.connect({ port: 5151, token: 'a' })
+    requireHandlers(a).onOpen()
+    client.connect({ port: 5152, token: 'b' })
+    expect(a.closed).toBe(true)
+    requireHandlers(b).onOpen()
+    const hello = JSON.parse(lastSent(b)) as { id: number }
+    requireHandlers(a).onClose()
+    b.deliver({ jsonrpc: '2.0', id: hello.id,
+      result: { protocolVersion: 1, capabilities: ['hello'], projectId: 'b' } })
+    await flush()
+    expect(client.getStatus()).toBe('ready')
+    expect(client.getProjectId()).toBe('b')
+    expect(b.closed).toBe(false)
+    client.close()
+  })
   test('handshake sends hello-first with token and reaches ready', async () => {
     const server = makeFakeServer()
     const statuses: string[] = []

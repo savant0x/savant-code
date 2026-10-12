@@ -6,9 +6,8 @@ import type { Database } from 'bun:sqlite'
 /**
  * Read-only graph queries (FID-2026-0806-002 Phase 1/3).
  *
- * Blast radius + reachability use a recursive CTE with:
- * - `instr(path, ':' || id || ':')` cycle detection (path-visited guard), and
- * - a depth cap (MAX_TRAVERSAL_DEPTH = 50).
+ * Blast radius + reachability use globally visited breadth-first frontiers.
+ * Each vertex expands at most once, with depth capped at 50.
  *
  * Law 4 honesty: these are deterministic proofs *over the indexed snapshot*,
  * bounded by index freshness and parser-query coverage — not absolute.
@@ -29,6 +28,41 @@ export function getFileByPath(db: Database, filePath: string): FileRow | null {
   )
 }
 
+type WalkRow = { id: number; path: string; parent: number; depth: number }
+
+/** Indexed adjacency lookup; duplicate edge kinds collapse before visiting. */
+function* walkFrontiers(params: {
+  db: Database; start: number; maxDepth: number; directed: boolean
+}): Generator<WalkRow[]> {
+  const { db, start, directed } = params
+  const maxDepth = Number.isFinite(params.maxDepth)
+    ? Math.min(MAX_TRAVERSAL_DEPTH, Math.max(0, Math.floor(params.maxDepth)))
+    : MAX_TRAVERSAL_DEPTH
+  const adjacency = db.query(directed
+    ? `SELECT DISTINCT f.id, f.path FROM edges e JOIN files f ON f.id = e.target_id
+       WHERE e.source_id = ? ORDER BY f.path`
+    : `SELECT DISTINCT f.id, f.path FROM files f JOIN (
+         SELECT target_id AS id FROM edges WHERE source_id = ?1
+         UNION SELECT source_id AS id FROM edges WHERE target_id = ?1
+       ) e ON e.id = f.id ORDER BY f.path`)
+  const visited = new Set([start])
+  let frontier = [start]
+  for (let depth = 1; depth <= maxDepth && frontier.length > 0; depth++) {
+    const layer: WalkRow[] = []
+    for (const parent of frontier) {
+      const neighbors = adjacency.all(parent) as Array<{ id: number; path: string }>
+      for (const neighbor of neighbors) {
+        if (visited.has(neighbor.id)) continue
+        visited.add(neighbor.id)
+        layer.push({ ...neighbor, parent, depth })
+      }
+    }
+    layer.sort((a, b) => a.path < b.path ? -1 : a.path > b.path ? 1 : 0)
+    yield layer
+    frontier = layer.map((row) => row.id)
+  }
+}
+
 /**
  * Blast radius: every file reachable from `filePath` within `maxDepth` hops
  * over UNDIRECTED edges (both dependency and dependent directions — a change
@@ -45,39 +79,14 @@ export function queryBlastRadius(params: {
   const file = getFileByPath(db, filePath)
   if (!file) return []
 
-  const depth = Math.min(Math.max(1, maxDepth), MAX_TRAVERSAL_DEPTH)
-
-  // Recursive CTE: start at the file node, walk undirected edges, track a
-  // visited-path string to break cycles. We join edges twice (source/target)
-  // so traversal is undirected.
-  const rows = db
-    .query(
-      `WITH RECURSIVE reach(node_id, depth, path) AS (
-         SELECT ?1, 0, ':' || ?1 || ':'
-         UNION ALL
-         SELECT e.target_id, r.depth + 1, r.path || e.target_id || ':'
-         FROM edges e
-         JOIN reach r ON e.source_id = r.node_id
-         WHERE r.depth < ?2
-           AND instr(r.path, ':' || e.target_id || ':') = 0
-         UNION ALL
-         SELECT e.source_id, r.depth + 1, r.path || e.source_id || ':'
-         FROM edges e
-         JOIN reach r ON e.target_id = r.node_id
-         WHERE r.depth < ?2
-           AND instr(r.path, ':' || e.source_id || ':') = 0
-       )
-       SELECT f.path, MIN(r.depth) AS depth
-       FROM reach r
-       JOIN files f ON f.id = r.node_id
-       WHERE r.node_id != ?1
-       GROUP BY f.id
-       ORDER BY depth ASC, f.path ASC
-       LIMIT ?3`,
-    )
-    .all(file.id, depth, limit) as Array<{ path: string; depth: number }>
-
-  return rows
+  const cap = Number.isFinite(limit) ? Math.max(0, Math.floor(limit)) : 1000
+  if (cap === 0) return []
+  const result: Array<{ path: string; depth: number }> = []
+  for (const layer of walkFrontiers({ db, start: file.id, maxDepth, directed: false })) {
+    result.push(...layer.map((row) => ({ path: row.path, depth: row.depth })))
+    if (result.length >= cap) break
+  }
+  return result.slice(0, cap)
 }
 
 /**
@@ -167,54 +176,37 @@ export function queryDomainClusters(params: {
 }): ClusterRow[] {
   const { db, limit = 100 } = params
 
-  const rows = db
-    .query(
-      `WITH file_clusters AS (
-         SELECT n.file_id, n.cluster_id, f.path
-         FROM nodes n
-         JOIN files f ON f.id = n.file_id
-         WHERE n.type = 'file' AND n.cluster_id IS NOT NULL
-       ),
-       clusters AS (
-         SELECT
-           cluster_id,
-           COUNT(DISTINCT file_id) AS file_count,
-           COUNT(*) AS node_count
-         FROM file_clusters
-         GROUP BY cluster_id
-       )
-       SELECT
-         c.cluster_id AS clusterId,
-         c.file_count AS fileCount,
-         c.node_count AS nodeCount
-       FROM clusters c
-       ORDER BY c.file_count DESC, c.cluster_id ASC
-       LIMIT ?`,
+  const rows = db.query(`
+    WITH clusters AS (
+      SELECT cluster_id AS clusterId,
+        COUNT(DISTINCT CASE WHEN type = 'file' THEN file_id END) AS fileCount,
+        COUNT(*) AS nodeCount
+      FROM nodes WHERE cluster_id IS NOT NULL GROUP BY cluster_id
+      ORDER BY fileCount DESC, clusterId ASC LIMIT ?
+    ), representatives AS (
+      SELECT DISTINCT n.cluster_id, f.path FROM nodes n
+      JOIN files f ON f.id = n.file_id
+      JOIN clusters c ON c.clusterId = n.cluster_id WHERE n.type = 'file'
+    ), ranked AS (
+      SELECT cluster_id, path,
+        ROW_NUMBER() OVER (PARTITION BY cluster_id ORDER BY path) AS rank
+      FROM representatives
     )
-    .all(limit) as Array<{
-    clusterId: number
-    fileCount: number
-    nodeCount: number
+    SELECT c.*, r.path FROM clusters c LEFT JOIN ranked r
+      ON r.cluster_id = c.clusterId AND r.rank <= 5
+    ORDER BY c.fileCount DESC, c.clusterId ASC, r.path ASC
+  `).all(Number.isFinite(limit) ? Math.max(0, Math.floor(limit)) : 100) as Array<{
+    clusterId: number; fileCount: number; nodeCount: number; path: string | null
   }>
-
-  // Representative files per cluster (top 5 by path).
-  return rows.map((row) => {
-    const files = db
-      .query(
-        `SELECT f.path FROM nodes n
-         JOIN files f ON f.id = n.file_id
-         WHERE n.type = 'file' AND n.cluster_id = ?
-         ORDER BY f.path ASC
-         LIMIT 5`,
-      )
-      .all(row.clusterId) as Array<{ path: string }>
-    return {
-      clusterId: row.clusterId,
-      fileCount: row.fileCount,
-      nodeCount: row.nodeCount,
-      files: files.map((f) => f.path),
+  const clusters = new Map<number, ClusterRow>()
+  for (const row of rows) {
+    const cluster = clusters.get(row.clusterId) ?? {
+      clusterId: row.clusterId, fileCount: row.fileCount, nodeCount: row.nodeCount, files: [],
     }
-  })
+    if (row.path !== null) cluster.files.push(row.path)
+    clusters.set(row.clusterId, cluster)
+  }
+  return [...clusters.values()]
 }
 
 /**
@@ -238,49 +230,18 @@ export function queryReachability(params: {
     return { reachable: true, depth: 0, path: [fromPath] }
   }
 
-  const depth = Math.min(Math.max(1, maxDepth), MAX_TRAVERSAL_DEPTH)
-
-  // BFS-shaped recursive CTE with path tracking. We take the minimum-depth
-  // path (shortest directed dependency chain), cycle-guarded.
-  const rows = db
-    .query(
-      `WITH RECURSIVE search(node_id, depth, path_ids, path_str) AS (
-         SELECT e.target_id, 1, CAST(e.target_id AS TEXT), ':' || e.source_id || ':' || e.target_id || ':'
-         FROM edges e
-         WHERE e.source_id = ?1
-         UNION ALL
-         SELECT e.target_id, s.depth + 1,
-                s.path_ids || ',' || e.target_id,
-                s.path_str || e.target_id || ':'
-         FROM edges e
-         JOIN search s ON e.source_id = s.node_id
-         WHERE s.depth < ?2
-           AND instr(s.path_str, ':' || e.target_id || ':') = 0
-       )
-       SELECT s.path_ids, s.depth
-       FROM search s
-       WHERE s.node_id = ?3
-       ORDER BY s.depth ASC
-       LIMIT 1`,
-    )
-    .all(from.id, depth, to.id) as Array<{ path_ids: string; depth: number }>
-
-  const best = rows[0]
-  if (!best) {
-    return { reachable: false, depth: null, path: null }
+  const discovered = new Map<number, WalkRow>()
+  for (const layer of walkFrontiers({ db, start: from.id, maxDepth, directed: true })) {
+    for (const row of layer) discovered.set(row.id, row)
+    const target = discovered.get(to.id)
+    if (!target) continue
+    const chain: string[] = []
+    let current: WalkRow | undefined = target
+    while (current) {
+      chain.push(current.path)
+      current = discovered.get(current.parent)
+    }
+    return { reachable: true, depth: target.depth, path: [fromPath, ...chain.reverse()] }
   }
-
-  const ids = best.path_ids.split(',').map(Number)
-  const pathRows = db
-    .query(
-      `SELECT path FROM files WHERE id IN (${ids.map(() => '?').join(',')})`,
-    )
-    .all(...ids) as Array<{ path: string }>
-  const pathByFile = pathRows.map((r) => r.path)
-  const idToPath = new Map<number, string>(
-    ids.map((id, i) => [id, pathByFile[i]]),
-  )
-  const chain = [fromPath, ...ids.map((id) => idToPath.get(id) ?? String(id))]
-
-  return { reachable: true, depth: best.depth, path: chain }
+  return { reachable: false, depth: null, path: null }
 }

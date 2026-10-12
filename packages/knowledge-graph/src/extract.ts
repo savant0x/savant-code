@@ -47,7 +47,7 @@ export function resolveRelativeImport(
   filePaths: ReadonlySet<string>,
 ): string | null {
   const dir = path.posix.dirname(fromFilePath.replaceAll('\\', '/'))
-  const resolved = path.posix.normalize(path.posix.join(dir, specifier))
+  const resolved = path.posix.normalize(path.posix.join(dir, specifier.replaceAll('\\', '/')))
 
   // Avoid escaping the project root via ../
   if (resolved.startsWith('..')) return null

@@ -35,6 +35,7 @@ export class GatewayConnectionController {
   private reconnectAttempt = 0
   private reconnectTimer: ReturnType<typeof setTimeout> | null = null
   private manualClose = false
+  private generation = 0
 
   constructor(
     private readonly factory: TransportFactory,
@@ -68,6 +69,10 @@ export class GatewayConnectionController {
   }
 
   connect(config: GatewayConfig): void {
+    const sameOwner = this.config?.port === config.port && this.config.token === config.token
+    if (this.connection !== null || this.reconnectTimer !== null) this.close()
+    if (!sameOwner) this.eventCursor = null
+    this.replayInFlight = false
     this.manualClose = false
     this.reconnectAttempt = 0
     this.config = config
@@ -83,25 +88,42 @@ export class GatewayConnectionController {
       this.reconnectAttempt === 0 ? 'connecting' : 'reconnecting',
     )
     const url = `ws://127.0.0.1:${this.config.port}/ws`
-    this.connection = this.factory(url, {
-      onOpen: () => {
-        this.events.setStatus('authenticating')
-        void this.handshake(this.connection)
-      },
+    const generation = ++this.generation
+    let assigned = false
+    let opened = false
+    let disconnected = false
+    const onOpen = (): void => {
+      if (generation !== this.generation || disconnected) return
+      if (!assigned) { opened = true; return }
+      this.events.setStatus('authenticating')
+      void this.handshake(this.connection, generation)
+    }
+    const socket = this.factory(url, {
+      onOpen,
       onMessage: (raw: string) => {
-        this.handleFrame(raw)
+        if (generation === this.generation && !disconnected) this.handleFrame(raw)
       },
       onClose: () => {
+        if (generation !== this.generation || disconnected) return
+        disconnected = true
         this.handleDisconnect('socket closed')
       },
       onError: () => {
         // Detail-free by spec; the following close event drives recovery.
       },
     })
+    assigned = true
+    if (disconnected || generation !== this.generation) socket.close()
+    else {
+      this.connection = socket
+      if (opened) onOpen()
+    }
   }
 
   close(): void {
     this.manualClose = true
+    this.generation++
+    this.replayInFlight = false
     this.clearReconnectTimer()
     const connection = this.connection
     this.connection = null
@@ -110,7 +132,7 @@ export class GatewayConnectionController {
     this.events.setStatus('offline')
   }
 
-  private async handshake(socket: TransportConnection | null): Promise<void> {
+  private async handshake(socket: TransportConnection | null, generation: number): Promise<void> {
     if (this.config === null || socket === null) return
     try {
       const result = await this.requests.send(
@@ -118,13 +140,14 @@ export class GatewayConnectionController {
         helloRequest(this.nextId(), this.config.token),
         this.requestTimeoutMs,
       )
+      if (generation !== this.generation) return
       const parsed = helloResultSchema.safeParse(result)
       if (
         !parsed.success ||
         parsed.data.protocolVersion !== GATEWAY_PROTOCOL_VERSION
       ) {
         // Fail-closed: never stream against an unexpected contract version.
-        this.connection?.close()
+        socket.close()
         return
       }
       this.onHello(parsed.data.projectId, parsed.data.capabilities)
@@ -133,7 +156,7 @@ export class GatewayConnectionController {
       this.events.setStatus('ready')
     } catch {
       // Auth rejected (-32001/-32003) or timed out — close drives backoff.
-      this.connection?.close()
+      if (generation === this.generation) socket.close()
     }
   }
 
@@ -175,6 +198,7 @@ export class GatewayConnectionController {
    *  this ordered socket, so it lands before any batch flushed after the
    *  server's snapshot — applying it in order is race-free. */
   private async replayMissed(): Promise<void> {
+    const generation = this.generation
     const cursor = this.eventCursor
     const socket = this.connection
     if (cursor === null || socket === null) return
@@ -185,6 +209,7 @@ export class GatewayConnectionController {
         replayEventsRequest(this.nextId(), cursor),
         this.requestTimeoutMs,
       )
+      if (generation !== this.generation) return
       const parsed = replayResultSchema.safeParse(result)
       if (!parsed.success) {
         this.events.onReplayGap({ reason: 'replay result failed validation' })
@@ -200,9 +225,9 @@ export class GatewayConnectionController {
         })
       }
     } catch {
-      this.events.onReplayGap({ reason: 'replay request failed' })
+      if (generation === this.generation) this.events.onReplayGap({ reason: 'replay request failed' })
     } finally {
-      this.replayInFlight = false
+      if (generation === this.generation) this.replayInFlight = false
     }
   }
 
@@ -226,6 +251,8 @@ export class GatewayConnectionController {
 
   private handleDisconnect(reason: string): void {
     this.connection = null
+    const generation = ++this.generation
+    this.replayInFlight = false
     this.requests.rejectAll(`connection lost: ${reason}`)
     if (this.manualClose) {
       this.events.setStatus('offline')
@@ -236,7 +263,7 @@ export class GatewayConnectionController {
     this.events.setStatus('reconnecting')
     this.reconnectTimer = setTimeout(() => {
       this.reconnectTimer = null
-      this.openSocket()
+      if (generation === this.generation && !this.manualClose) this.openSocket()
     }, delay)
   }
 

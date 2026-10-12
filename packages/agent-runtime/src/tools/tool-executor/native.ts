@@ -102,7 +102,7 @@ export async function executeToolCall<T extends ToolName>(
       auditSteeringOverride: (record) => {
         logger.warn(record, 'steering: overridden by audited marker')
         const audits = agentState.pendingSteeringOverrideAudits ?? []
-        audits.push({ ...record, at: Date.now() })
+        audits.push({ ...record, id: generateCompactId(), at: Date.now() })
         agentState.pendingSteeringOverrideAudits = audits
       },
     })

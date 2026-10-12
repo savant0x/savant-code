@@ -18,21 +18,15 @@ import type { Database } from 'bun:sqlite'
 export const DEFAULT_MAX_FILE_BYTES = 1_000_000
 
 /** Default parse fn backed by code-map's tree-sitter layer. */
-export const defaultParseFile: ParseFileFn = async (filePath, fullPath) => {
+export const defaultParseFile: ParseFileFn = async (_filePath, fullPath, source) => {
   try {
     const { getLanguageConfig } =
       await import('@savant-code/code-map/languages')
     const { parseTokens } = await import('@savant-code/code-map/parse')
     const languageConfig = await getLanguageConfig(fullPath)
     if (!languageConfig) return null
-    const readFile = (p: string): string | null => {
-      try {
-        return fs.readFileSync(p, 'utf8')
-      } catch {
-        return null
-      }
-    }
-    const parsed = parseTokens(filePath, languageConfig, readFile)
+    const parsed = parseTokens(fullPath, languageConfig,
+      source === undefined ? undefined : () => source)
     return { identifiers: parsed.identifiers, calls: parsed.calls }
   } catch {
     // Parsing is best-effort: graph assembly (imports/extends) still works.
@@ -72,6 +66,8 @@ export async function mapWithConcurrency<T, R>(
 
 export type IndexScanState = {
   filePaths: string[]
+  stalePaths: string[]
+  baselineVersion: number
   /** FID-2026-1002-006: only NEW or CHANGED files' content is materialized;
    *  unchanged-baseline files are never read. */
   sources: Map<string, string>
@@ -116,13 +112,17 @@ export async function scanIndexState(params: {
     fullRebuild,
   } = params
 
+  const baselineVersion = (db.query('PRAGMA data_version').get() as { data_version: number }).data_version
+  let complete = false
   // 1. Enumerate the project (ignore rules honored). The graph's own home
   // (.savant/) is always excluded — the DB must never index itself, and the
   // FID hygiene requirement keeps it out of the repository too.
   const fileTree: FileTreeNode[] = await getProjectFileTree({
     projectRoot,
     fs: fsImpl,
+    onScanComplete: (value) => { complete = value },
   })
+  if (!complete) throw new Error('Graph refresh requires complete project enumeration')
   // Paths are normalized to forward slashes for storage and querying:
   // getProjectFileTree returns platform-native separators (backslashes on
   // Windows), but every resolver/query in this package speaks posix — and the
@@ -178,20 +178,7 @@ export async function scanIndexState(params: {
   const stalePaths = existingRows
     .filter((row) => !filePathSet.has(row.path))
     .map((row) => row.path)
-  if (stalePaths.length > 0) {
-    const deleteStmt = db.prepare('DELETE FROM files WHERE path = ?')
-    db.exec('BEGIN')
-    try {
-      for (const p of stalePaths) {
-        deleteStmt.run(p)
-      }
-      db.exec('COMMIT')
-    } catch (error) {
-      db.exec('ROLLBACK')
-      throw error
-    }
-    stats.filesDeleted = stalePaths.length
-  }
+  stats.filesDeleted = stalePaths.length
 
   // 4. Stat pre-filter, bounded reads, and the deterministic change walk
   // (planning logic lives in index-path-plan.ts, FID-2026-1002-006).
@@ -202,14 +189,24 @@ export async function scanIndexState(params: {
     PARSE_CONCURRENCY,
   )
 
-  const readSource = async (fullPath: string): Promise<string | null> => {
+  if (statByPath.size !== filePaths.length) throw new Error('Graph source stat failed; retry refresh')
+  const readSource = async (filePath: string): Promise<string | null> => {
+    const fullPath = path.join(projectRoot, filePath)
     try {
       const st = await fsImpl.stat(fullPath)
       const size = typeof st.size === 'number' ? st.size : 0
       if (size > maxFileBytes) return null
-      return await fsImpl.readFile(fullPath, 'utf8')
+      const source = await fsImpl.readFile(fullPath, 'utf8')
+      const after = await fsImpl.stat(fullPath)
+      const baseline = statByPath.get(filePath)
+      if (!baseline || st.size !== baseline.size || st.mtimeMs !== baseline.mtimeMs ||
+          after.size !== st.size || after.mtimeMs !== st.mtimeMs ||
+          Buffer.byteLength(source, 'utf8') > maxFileBytes) {
+        throw new Error('Graph source changed while being read')
+      }
+      return source
     } catch {
-      return null
+      throw new Error('Graph source could not be read consistently; retry refresh')
     }
   }
 
@@ -230,7 +227,7 @@ export async function scanIndexState(params: {
     plan.readTargets,
     PARSE_CONCURRENCY,
     async (filePath) => {
-      const source = await readSource(path.join(projectRoot, filePath))
+      const source = await readSource(filePath)
       if (source === null) return
       sources.set(filePath, source)
       hashByPath.set(filePath, hasher.hash(source))
@@ -257,7 +254,7 @@ export async function scanIndexState(params: {
     finalPlan.changedPaths,
     PARSE_CONCURRENCY,
     async (filePath) => {
-      const parsed = await parseFile(filePath, path.join(projectRoot, filePath))
+      const parsed = await parseFile(filePath, path.join(projectRoot, filePath), sources.get(filePath))
       if (parsed) {
         parsedFiles.set(filePath, parsed)
       }
@@ -266,6 +263,8 @@ export async function scanIndexState(params: {
 
   return {
     filePaths,
+    stalePaths,
+    baselineVersion,
     sources,
     hashByPath,
     changedPaths: finalPlan.changedPaths,

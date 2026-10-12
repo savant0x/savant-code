@@ -1,6 +1,11 @@
-import { resolveRelativeImport } from './extract'
+import { accumulateEdge, isCrossDirectory, resolveRelativeImport } from './extract'
+import { CROSS_DIRECTORY_PENALTY, EDGE_WEIGHTS } from './types'
 
+import type { EdgeAccumulator } from './extract'
 import type { Database } from 'bun:sqlite'
+
+export type { EdgeAccumulator } from './extract'
+export type { EdgeType } from './types'
 
 /**
  * Token-driven edge derivation (FID-2026-1002-006): the exact weight,
@@ -9,14 +14,6 @@ import type { Database } from 'bun:sqlite'
  * over raw sources to persisted per-file token rows. Only unchanged files
  * change delivery — re-read + re-regex becomes persisted-at-last-mutation.
  */
-
-export type EdgeType = 'CALLS' | 'IMPORTS' | 'EXTENDS'
-export type EdgeAccumulator = Map<string, { type: EdgeType; weight: number }>
-
-const CALL_WEIGHT = 2.0
-const IMPORT_WEIGHT = 1.0
-const EXTENDS_WEIGHT = 1.0
-const CROSS_DIRECTORY_PENALTY = 0.5
 
 /** Load one per-file token table into a path→tokens map. */
 export function loadTokensByFile(
@@ -49,22 +46,7 @@ export function resolveImportToken(
   fromFilePath: string,
   filePaths: ReadonlySet<string>,
 ): string | null {
-  const posix = specifier.replaceAll('\\', '/')
-  const lastSlash = fromFilePath.lastIndexOf('/')
-  const dir = lastSlash === -1 ? '' : fromFilePath.slice(0, lastSlash)
-  const joined = dir === '' ? posix : `${dir}/${posix}`
-  const segments: string[] = []
-  for (const seg of joined.split('/')) {
-    if (seg === '' || seg === '.') continue
-    if (seg === '..') {
-      segments.pop()
-      continue
-    }
-    segments.push(seg)
-  }
-  const resolved = segments.join('/')
-  if (resolved.startsWith('..') || resolved === '') return null
-  return resolveRelativeImport(`./${resolved}`, `./x.ts`, filePaths)
+  return resolveRelativeImport(specifier, fromFilePath, filePaths)
 }
 
 /**
@@ -84,43 +66,26 @@ export function buildEdgesFromTokens(params: {
   symbolIndex: ReadonlyMap<string, string[]>
 }): EdgeAccumulator {
   const edges: EdgeAccumulator = new Map()
-  const accumulate = (
-    source: string,
-    target: string,
-    type: EdgeType,
-    weight: number,
-  ): void => {
-    if (source === target) return
-    const key = `${source}\u0000${target}\u0000${type}`
-    const existing = edges.get(key)
-    if (existing) existing.weight += weight
-    else edges.set(key, { type, weight })
-  }
-  const isCrossDirectory = (a: string, b: string): boolean => {
-    const dirA = a.split('/')[0] ?? ''
-    const dirB = b.split('/')[0] ?? ''
-    return dirA !== dirB
-  }
 
   for (const [filePath, calls] of [...params.callsByFile].sort()) {
     for (const call of calls) {
       const definingFile = params.symbolIndex.get(call)?.[0]
       if (!definingFile) continue
-      accumulate(filePath, definingFile, 'CALLS', CALL_WEIGHT)
+      accumulateEdge(edges, filePath, definingFile, 'CALLS', EDGE_WEIGHTS.CALLS)
     }
   }
   for (const [filePath, imports] of [...params.importsByFile].sort()) {
     for (const specifier of imports) {
       const resolved = resolveImportToken(specifier, filePath, params.filePaths)
       if (!resolved) continue
-      accumulate(filePath, resolved, 'IMPORTS', IMPORT_WEIGHT)
+      accumulateEdge(edges, filePath, resolved, 'IMPORTS', EDGE_WEIGHTS.IMPORTS)
     }
   }
   for (const [filePath, parents] of [...params.extendsByFile].sort()) {
     for (const parent of parents) {
       const definingFile = params.symbolIndex.get(parent)?.[0]
       if (!definingFile) continue
-      accumulate(filePath, definingFile, 'EXTENDS', EXTENDS_WEIGHT)
+      accumulateEdge(edges, filePath, definingFile, 'EXTENDS', EDGE_WEIGHTS.EXTENDS)
     }
   }
   for (const [key, entry] of edges) {

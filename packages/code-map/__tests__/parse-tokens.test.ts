@@ -2,17 +2,28 @@
 // Sibling of the Loop 324 decomposition (extraction/dedup logic lives in
 // parse-extraction; integration suites in parse-integration).
 
+import fs from 'node:fs'
+import os from 'node:os'
+import path from 'node:path'
+
 import {
   createMockTreeSitterCaptures,
   createMockTreeSitterParser,
   createMockTreeSitterQuery,
   createMockTree,
 } from '@savant-code/common/testing/mocks/tree-sitter'
-import { describe, it, expect } from 'bun:test'
+import { afterEach, describe, it, expect } from 'bun:test'
 
 import { parseTokens } from '../src/parse'
 
 import type { LanguageConfig } from '../src/languages-common'
+
+let tempRoot: string | undefined
+
+afterEach(() => {
+  if (tempRoot) fs.rmSync(tempRoot, { recursive: true, force: true })
+  tempRoot = undefined
+})
 
 describe('parse module - parseTokens', () => {
   it('should handle valid language config and file content', () => {
@@ -67,6 +78,82 @@ describe('parse module - parseTokens', () => {
       calls: [],
     })
     expect(mockParser.parse).not.toHaveBeenCalled()
+  })
+
+  it('admits UTF-8 bytes, not characters, at the read boundary', () => {
+    const mockParser = createMockTreeSitterParser()
+    const mockLanguageConfig: LanguageConfig = {
+      extensions: ['.ts'],
+      wasmFile: 'tree-sitter-typescript.wasm',
+      queryText: 'mock query',
+      parser: mockParser,
+      query: createMockTreeSitterQuery(),
+    }
+
+    // Six characters, twelve UTF-8 bytes: the byte budget must reject it.
+    const result = parseTokens(
+      'test.ts',
+      mockLanguageConfig,
+      () => '\u00e9'.repeat(6),
+      { maxBytes: 10 },
+    )
+
+    expect(result).toEqual({ numLines: 0, identifiers: [], calls: [] })
+    expect(mockParser.parse).not.toHaveBeenCalled()
+  })
+
+  it('rejects a candidate that exceeds the remaining total budget', () => {
+    const mockParser = createMockTreeSitterParser()
+    const mockLanguageConfig: LanguageConfig = {
+      extensions: ['.ts'],
+      wasmFile: 'tree-sitter-typescript.wasm',
+      queryText: 'mock query',
+      parser: mockParser,
+      query: createMockTreeSitterQuery(),
+    }
+
+    const result = parseTokens(
+      'test.ts',
+      mockLanguageConfig,
+      () => 'const x = 1',
+      { maxBytes: 100, remainingBytes: 5 },
+    )
+
+    expect(result).toEqual({ numLines: 0, identifiers: [], calls: [] })
+    expect(mockParser.parse).not.toHaveBeenCalled()
+  })
+
+  it('rejects an oversized disk file from its stat size before parsing it', () => {
+    tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'code-map-limits-'))
+    const oversized = path.join(tempRoot, 'big.ts')
+    const admitted = path.join(tempRoot, 'small.ts')
+    fs.writeFileSync(oversized, '\u00e9'.repeat(50))
+    fs.writeFileSync(admitted, 'const x = 1')
+    const mockParser = createMockTreeSitterParser({
+      tree: createMockTree(),
+    })
+    const mockLanguageConfig: LanguageConfig = {
+      extensions: ['.ts'],
+      wasmFile: 'tree-sitter-typescript.wasm',
+      queryText: 'mock query',
+      parser: mockParser,
+      query: createMockTreeSitterQuery({
+        captures: createMockTreeSitterCaptures([]),
+      }),
+    }
+
+    // No reader: the real filesystem admission path (stat + bounded read).
+    const rejected = parseTokens(oversized, mockLanguageConfig, undefined, {
+      maxBytes: 20,
+    })
+    expect(rejected).toEqual({ numLines: 0, identifiers: [], calls: [] })
+    expect(mockParser.parse).not.toHaveBeenCalled()
+
+    const accepted = parseTokens(admitted, mockLanguageConfig, undefined, {
+      maxBytes: 20,
+    })
+    expect(mockParser.parse).toHaveBeenCalledTimes(1)
+    expect(accepted.numLines).toBe(1)
   })
 
   it('should handle null file content gracefully', () => {

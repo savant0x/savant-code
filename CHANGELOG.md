@@ -1,5 +1,23 @@
 # Changelog
 
+## 2026-10-11 — `cli-bundle-resolution` runs against a pristine install (FID-2026-1011-005)
+
+### Fixed
+
+- `cli-bundle-resolution` bundled the CLI in the working tree, so `bun build` resolved
+  imports against whatever `node_modules` the machine had. Measured on this machine: an
+  import no manifest declares and no lockfile install provides — present only in a stray
+  `C:\Users\spenc\node_modules` — let the gate exit 0, the same mechanism that supplied
+  `ajv/dist/2020.js` at v0.0.35. The gate now materializes the release file set into a
+  scratch tree, installs the frozen lockfile there, runs the release build's own prebundle
+  steps, and fails when any module the bundler loaded resolved outside that tree (or when
+  the module graph records nothing). Cost: ~1m49s, in the release battery only — the
+  pre-push hook does not run the gate contract.
+- The root gate contract now invokes the probe (`bun run
+  scripts/cli-bundle-resolution-check.ts`), the engine's rules are pinned by
+  `scripts/__tests__/clean-install-bundle.test.ts` (15 tests), and the operator can run it
+  by hand as `bun run bundle:resolution`.
+
 ## 2026-10-11 — Release gate for undeclared imports (T188, FID-2026-1011-004)
 
 ### Added

@@ -60,6 +60,7 @@ export interface ParsedFile {
 export type ParseFileFn = (
   filePath: string,
   fullPath: string,
+  source?: string,
 ) => ParsedFile | null | Promise<ParsedFile | null>
 
 /** Summary returned by an indexing pass. */

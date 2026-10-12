@@ -42,7 +42,23 @@ export function loadSourceWithinLimits(params: {
       // the two (or is unreadable) is a skip, not a parse error (TOCTOU,
       // CM-7, FID-2026-0803-006).
       bytes = fs.statSync(filePath).size
-      code = fs.readFileSync(filePath, 'utf8')
+      const cap = Math.min(maxBytes, remainingBytes)
+      if (bytes > cap) return null
+      const descriptor = fs.openSync(filePath, 'r')
+      try {
+        const buffer = Buffer.alloc(Math.min(bytes, cap) + 1)
+        let count = 0
+        while (count < buffer.length) {
+          const read = fs.readSync(descriptor, buffer, count, buffer.length - count, null)
+          if (read === 0) break
+          count += read
+        }
+        if (count > cap || count !== bytes || fs.fstatSync(descriptor).size !== bytes) return null
+        code = buffer.subarray(0, count).toString('utf8')
+        bytes = Buffer.byteLength(code, 'utf8')
+      } finally {
+        fs.closeSync(descriptor)
+      }
     } catch {
       return null
     }

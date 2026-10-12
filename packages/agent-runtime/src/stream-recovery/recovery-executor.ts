@@ -64,21 +64,34 @@ export async function* runTurnWithRecovery<C, R>(
   let thrown: unknown
 
   // Physical request #1 — the original turn.
+  const stream = params.create()
+  let originalCompleted = false
+  let consumerError = false
   try {
-    const stream = params.create()
     let next = await stream.next()
     while (!next.done) {
       params.observeChunk(turn, next.value)
       if ((next.value as { type?: unknown }).type === 'error')
         sawErrorFrame = true
-      yield next.value
+      try { yield next.value } catch (error) {
+        consumerError = true
+        throw error
+      }
       next = await stream.next()
     }
+    originalCompleted = true
     result = next.value as R
     close = { kind: 'done', sawErrorFrame }
   } catch (error) {
     thrown = error
+    if (consumerError) throw error
     close = { kind: params.closeKindOf(error), sawErrorFrame }
+  } finally {
+    if (!originalCompleted) {
+      try { await stream.return(undefined as R) } catch (error) {
+        if (thrown === undefined) throw error
+      }
+    }
   }
 
   const outcome = classifyStreamOutcome(turn, close)
@@ -114,16 +127,26 @@ export async function* runTurnWithRecovery<C, R>(
   }
   const recoveryTurn = emptyAccumulation()
   let recoveryResult: R | undefined
+  let recoveryCompleted = false
+  let recoveryFailed = false
+  let recoveryErrorFrame = false
+  const recovery = params.createRecovery(request)
   try {
-    const recovery = params.createRecovery(request)
     let next = await recovery.next()
     while (!next.done) {
       params.observeChunk(recoveryTurn, next.value)
-      yield next.value
+      if ((next.value as { type?: string }).type === 'error') recoveryErrorFrame = true
+      try { yield next.value } catch (error) {
+        consumerError = true
+        throw error
+      }
       next = await recovery.next()
     }
+    recoveryCompleted = true
     recoveryResult = next.value as R
-  } catch {
+  } catch (error) {
+    recoveryFailed = true
+    if (consumerError) throw error
     params.onAccounting({
       logicalTurnId: params.logicalTurnId,
       physicalRequestIndex: params.physicalRequestCount?.() ?? 2,
@@ -131,10 +154,16 @@ export async function* runTurnWithRecovery<C, R>(
       outcome: 'recovery-failed',
     })
     throw new StreamCutError()
+  } finally {
+    if (!recoveryCompleted) {
+      try { await recovery.return(undefined as R) } catch (error) {
+        if (!recoveryFailed) throw error
+      }
+    }
   }
   const recoveryOutcome = classifyStreamOutcome(recoveryTurn, {
     kind: 'done',
-    sawErrorFrame: false,
+    sawErrorFrame: recoveryErrorFrame,
   })
   const recovered = recoveryOutcome === 'normal' && recoveryTurn.bodyChars > 0
   params.onAccounting({
