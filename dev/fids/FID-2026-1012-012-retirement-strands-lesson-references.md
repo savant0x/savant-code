@@ -1,0 +1,250 @@
+# FID: Retirement strands every by-title reference to a lesson
+
+**Filename:** `FID-2026-1012-012-retirement-strands-lesson-references.md`
+**ID:** FID-2026-1012-012
+**Severity:** high
+**Status:** converged
+**Created:** 2026-10-12 19:05
+**Automation level:** 3
+**YAGNI-Compliance:** Verified
+
+---
+
+## Summary
+
+Retirement is the only mechanism that keeps `dev/LEARNINGS.md` inside its boot-read budget, and
+it works by moving whole lessons out of the live ledger into `dev/LEARNINGS-RETIRED.md` verbatim.
+Every other artifact that cites a lesson does so **by title** — a display string — so a move
+silently breaks the reference. The measurable consequence is already on the tree: `bun run
+lessons:features --check` fails with 7 admission issues because the lesson titles cited by
+`LF-001`, `LF-003`, `LF-005` and `LF-006` in `dev/feature-pipeline/candidates.json` now exist
+only in the retired archive. Nothing resolves a title across the live+retired pair, and the only
+audit trail of what moved is git history. This record is the index and the move record that
+close the pair (review §3 D1, E3; features F3, F6).
+
+## Environment
+
+- **OS:** Windows 11 (win32), Git Bash
+- **Language/Runtime:** TypeScript 5.5.4, Bun 1.3.14
+- **Tool Versions:** repo scripts as of `main` @ `14d48820`
+- **Commit/State:** `main` @ `14d48820` (the retirement that stranded the references landed in
+  `ac4bad20`)
+
+## Detailed Description
+
+### Problem
+
+Lesson identity is a title string. `dev/feature-pipeline/candidates.json` stores each
+candidate's `lessons[]` as titles, and the admission check in
+`scripts/lesson-feature-pipeline.ts` (`reviewFeaturePipeline`) treats a title that is absent
+from the live ledger as an admission issue. When retirement moved 972 lines out of the ledger
+into `dev/LEARNINGS-RETIRED.md`, seven cited titles left the live file with them, and the
+pipeline went red with no code change on either side.
+
+The retired file is the correct destination — retirement is move-only and appends verbatim, so
+nothing was lost. The defect is that the *reference* cannot follow the move: there is no index
+spanning the two files, and no consumer reads the retired file at all. `LF-006` is worth
+noting on its own: it is the draft candidate titled "Detect stale lesson guidance against
+current executable authority", reded by an instance of the very class it proposes to fix.
+
+### Expected Behavior
+
+A by-title reference to a lesson resolves wherever that lesson lives. Retirement remains
+move-only and lossless, but it becomes *auditable*: what moved, when, why, and where to is
+recorded in a machine-readable form rather than only in git history. A reference to a lesson
+that is both retired and superseded fails closed and names the replacement rather than
+reporting the title as missing.
+
+### Root Cause
+
+References between artifacts are by title, and retirement is a file-to-file move. There is no
+mapping from a title to its location, so a consumer can only search one file, and a move is
+observable only by the absence it leaves behind. The pipeline's evidence pinning
+(`sha256` over each evidence path) makes its *source* snapshots drift-detectable, but its
+`lessons[]` array — a list of display strings — participates in no such check.
+
+### Evidence
+
+```text
+$ bun run lessons:features --check
+lesson-features: FAIL (37 lessons, 6 candidates)
+LF-001: Missing lesson: Files over the 100k-character tool read limit break every in-place edit path
+LF-003: Missing lesson: A retry that re-emits the same oversized tool call is not recovery
+LF-003: Missing lesson: A suppression key that can legitimately be null cannot distinguish "inactive" from "active with no identity"
+LF-005: Missing lesson: The test renderer is not a proxy for the production renderer
+LF-005: Missing lesson: A FID's Verification section is a contract — each promised test must exist before "verified"
+LF-006: Missing lesson: A ledger ruling inherits the freshness of its evidence
+LF-006: Missing lesson: A policy scrub must sweep the rule text and its generator anchors, not just the artifacts
+exit 1
+
+# every one of the seven titles, located by file
+$ grep -cF "<title>" dev/LEARNINGS.md; grep -cF "<title>" dev/LEARNINGS-RETIRED.md
+Files over the 100k-character tool read limit break every in-place edit path   live=0 retired=1
+A retry that re-emits the same oversized tool call is not recovery             live=0 retired=1
+A suppression key that can legitimately be null cannot distinguish "inactive"… live=0 retired=1
+The test renderer is not a proxy for the production renderer                   live=0 retired=1
+A FID's Verification section is a contract — each promised test must exist…     live=0 retired=2
+A ledger ruling inherits the freshness of its evidence                         live=0 retired=1
+A policy scrub must sweep the rule text and its generator anchors, not just…    live=0 retired=1
+
+# the move itself (today)
+$ git show --stat --oneline ac4bad20 -- dev/LEARNINGS.md dev/LEARNINGS-RETIRED.md
+ dev/LEARNINGS-RETIRED.md | 1057 ++++++++++++++++++++++++++++++++++++++
+ dev/LEARNINGS.md         |  972 ------------------------------------------
+$ grep -c '^## Lesson:' dev/LEARNINGS.md            → 37
+$ grep -c '^## Lesson:' dev/LEARNINGS-RETIRED.md    → 37   (74 headings before the move)
+
+# a reference that could have followed the move, and did not
+$ grep -rn 'LEARNINGS-RETIRED' scripts/*.ts
+(no matches — no consumer reads the retired file)
+```
+
+## Impact Assessment
+
+### Affected Components
+
+- `dev/feature-pipeline/candidates.json` (candidate `lessons[]` references)
+- `scripts/lesson-feature-pipeline.ts` (admission check; `reviewFeaturePipeline`)
+- `scripts/lessons-to-skills.ts` (`loadLessons` / `parseLessons` read the live file only)
+- `scripts/learnings-retire.ts` (the move, and its only audit trail)
+- `dev/LEARNINGS.md` + `dev/LEARNINGS-RETIRED.md` (the pair a resolution must span)
+
+### Risk Level
+
+- [ ] Critical: System crash, data loss, or security vulnerability
+- [x] High: Major feature broken, no workaround
+- [ ] Medium: Feature degraded, workaround exists
+- [ ] Low: Minor issue, cosmetic, or edge case
+
+The pipeline is red today and the workaround (hand-editing the candidate store to restore dead
+titles) loses the reference's meaning: the lesson still exists, so re-pointing at a *different*
+title would silently change what the candidate claims.
+
+## Proposed Solution
+
+### Approach
+
+Give lesson titles one authoritative locator that spans the live ledger and the retired archive,
+have every consumer resolve through it, and make retirement emit a record of the move so the
+locator's own history is auditable without git.
+
+### Steps
+
+1. Add a title→location index spanning `dev/LEARNINGS.md` and `dev/LEARNINGS-RETIRED.md`
+   (title, file, line, date, status, canonical rule) as one authority both scripts import —
+   the retirement path and the two consumers must share it rather than each parsing a file.
+2. Resolve through the index in `lessons:features` (`reviewFeaturePipeline`) and
+   `lessons:to-skills` (`loadLessons` / `parseLessons`), so a retired lesson is found and
+   annotated as retired instead of reported as missing.
+3. Make `learnings-retire` emit a machine-readable move record per retired entry (title, date,
+   reason, destination) appended beside the archive, so the move is auditable without reading
+   git history.
+4. Decide and record the behaviour for a reference to a lesson that is both retired and
+   superseded: fail closed, naming the replacement title (the ledger already carries
+   `Superseded by` for exactly this), never report it as missing.
+5. Pin all of it: a retired title resolves; a superseded-and-retired title fails with the
+   replacement named; a move record is written for each retired entry; the candidate store
+   re-admits cleanly.
+
+### Verification
+
+- `bun run lessons:features --check` reports PASS over the current store, with the four
+  affected candidates (`LF-001`, `LF-003`, `LF-005`, `LF-006`) re-admitted rather than
+  re-pointed by hand.
+- A pin asserts that a title present only in `dev/LEARNINGS-RETIRED.md` resolves to that file
+  and is reported `retired`, and that the same lookup for an absent title still fails closed.
+- A pin over `learnings-retire` asserts one move record per retired entry, with the destination
+  path, and that a re-run over an already-retired entry adds no duplicate record.
+- Test artifacts (paths and gates) are named when this record's repair lands.
+
+## Verification Gates
+
+This record is **pre-implementation** (`converged`, per FID-2026-0915-004), so it declares **no
+gates**: the artifacts its steps create do not exist yet, and a gate that cannot execute is a
+false declaration. Gates are declared in this section when the implementation lands and the
+status flips to `fixed`/`verified` — at that point `quality` is mandatory and each promised
+test path above becomes a `- gate: test <path>` bullet. `fid:verify --check` reports this
+record as outside the verification contract, by design.
+
+## Perfection Loop
+
+### Loop 1 — RED (2026-10-12)
+
+- **RED:** `lessons:features --check` fails with 7 admission issues across `LF-001`, `LF-003`,
+  `LF-005` and `LF-006`; all seven cited titles verified `live=0, retired≥1`; no script in
+  `scripts/` reads `dev/LEARNINGS-RETIRED.md`; the move that caused it (`ac4bad20`, 972 lines,
+  74 headings → 37 + 37) is recorded only in git.
+- **GREEN:** one title index spanning live + retired; both consumers resolve through it;
+  retirement emits a machine-readable move record; a retired-plus-superseded reference fails
+  closed naming the replacement.
+- **AUDIT:** the failure was reproduced from the shipped command rather than inferred, and each
+  title's location was measured with `grep -cF` in both files; the absence of a retired-file
+  reader is a scoped grep returning 0 matches. The move's volume and heading counts are read
+  from `git show --stat` and a heading census, not from the commit message.
+- **ADVERSARIAL:** (a) Could the fix hide a genuinely deleted lesson? No — the index is built
+  from the two files; a title absent from both still fails closed. (b) Would resolving retired
+  titles silently resurrect guidance the retirement demoted? Resolution reports `retired` and
+  does not re-admit a retired entry as boot guidance; only the reference resolves. (c) Is an
+  index a second source of truth? It is derived, and the pins assert it agrees with both files,
+  so a divergence fails rather than drifting.
+- **CHANGE DELTA:** ~0%. This record adds a FID and no code; the reviewed artifacts are
+  untouched.
+
+### Missed Questions
+
+1. Should retirement *rename* rather than move? → No. Renaming the title to keep references
+   valid would break the ledger's other by-title consumer (the candidate store) in the same
+   way and would falsify a record that other lessons cite; a locator is the honest fix.
+2. Should the candidate store cite lessons by a stable id instead of a title? → That is the
+   better long-term shape and belongs to the rule-first tiering in `FID-2026-1012-014`; it is
+   deliberately not required here, because a locator also fixes the references that already
+   exist and cannot be re-keyed without changing what they claim.
+3. Does this overlap `FID-2026-1012-015`? → No. 015 wires the pipeline check into the repo gate
+   and owns its green state; this record supplies the index 015 depends on. Landing the gate
+   first would freeze a red check, so 012 is a prerequisite of 015.
+
+### Code Verification Evidence
+
+> Pre-implementation record: `Status: converged` (FID-2026-0915-004). Nothing in this
+> record has been implemented, so what follows records what was CHECKED at the cited
+> `HEAD` — not what was built.
+
+- [x] Every cited path exists at `main` @ `14d48820`, read directly at review time; the raw
+      measurements live in `docs/design/learnings-boot-loading-and-lifecycle-review.md` §2/§3,
+      which this record expands.
+- [x] Measurements re-checked: `bun run lessons:features --check` exits 1 with
+      `lesson-features: FAIL (37 lessons, 6 candidates)` and 7 admission issues; all seven
+      named titles were checked with `grep -cF` against both `dev/LEARNINGS.md` and
+      `dev/LEARNINGS-RETIRED.md` and read `live=0 / retired≥1`; the moving retirement landed
+      in `ac4bad20` (972 deleted / 1,057 inserted, 74 lesson headings → 37 live + 37 retired).
+- [x] **Not yet true, and deliberately not claimed:** the repair itself, its gates and its
+      receipt. Gates are declared when the status flips to `fixed`/`verified` and the
+      artifacts exist; declaring them now would be a false declaration.
+
+## Boundaries
+
+- This record does **not** claim the references were lost: the lessons exist in
+  `dev/LEARNINGS-RETIRED.md`, verified for all seven titles, and retirement is move-only.
+- It does not repair the ledger, re-admit the four candidates, or change the size ceiling
+  (`FID-2026-1012-011`) or the boot budget (`FID-2026-1012-010`).
+- It does not claim a green pipeline today: `lessons:features --check` is red at `14d48820`
+  with exit 1, and the acceptance above is what would prove the repair.
+- The retire path's own line cap and its operator-run boundary are out of scope; they belong to
+  `FID-2026-1012-011`.
+
+## Resolution
+
+**Not implemented — `Status: converged` (pre-implementation, FID-2026-0915-004).**
+
+This record exists so the finding has an owner, a converged design and a register item with
+write authority; it made no source change. The work described above is implemented by
+whichever pass flips the record to `fixed`, at which point this section is rewritten in the
+closure format (Closed Date / Fix Description / Tests Added / Verification Evidence /
+Archived) and the declared gates are added under `## Verification Gates`.
+
+- **Authorised write surface:** `SCOPE.md` → machine-readable scope targets → this record's
+  line (registered 2026-10-12 with the review).
+- **Design record:** `docs/design/learnings-boot-loading-and-lifecycle-review.md` §3 rows D1 and E3,
+  §4 features F3 and F6.
+- **Ordering:** Prerequisite of FID-2026-1012-015, whose gate must not be wired until these
+  references resolve; consumes the move record FID-2026-1012-011 introduces.

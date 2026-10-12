@@ -117,6 +117,41 @@ recorded decision or external dependency requires it.
       release tooling and the e2e suites, and needs its own FID.
       **Automation level: 1** until the operator calls it.
 
+### Learnings store: boot-read and lifecycle (review 2026-10-12)
+
+Full review: `docs/design/learnings-boot-loading-and-lifecycle-review.md`. The ledger is a
+boot-read artifact (`agents/savant/system-prompt.ts:117` reads it 0-EOF in every mode) at
+77,195 chars / 1,174 lines — 23% under the 100,000-char read boundary that once truncated it
+at boot (`CHANGELOG.md:3464`) and 26 lines under a retirement cap no gate enforces. Seven
+records own the repairs; each carries its evidence and its feature in the review's §3/§4.
+
+- [ ] **FID-2026-1012-010. The boot read has no size contract.** Rows A1/A2 → feature F1
+      (generated bounded boot digest) and F5 (measured budget). Blocks FID-014's tier and
+      FID-016's scope decision. **Automation level: 3.**
+
+- [ ] **FID-2026-1012-011. The ledger's size ceiling is enforced by nothing.** Rows A3/A4 →
+      feature F3 (gated, logged lifecycle). Unblocks FID-012's move record.
+      **Automation level: 3.**
+
+- [ ] **FID-2026-1012-012. Retirement strands by-title references.** Rows D1/E3 → features
+      F3/F6. Prerequisite of FID-015; fixes the 7 admission issues that make
+      `lessons:features --check` red today. **Automation level: 3.**
+
+- [ ] **FID-2026-1012-013. Lesson evidence rots silently.** Rows D2/D3/D4 → feature F4.
+      **Automation level: 3.**
+
+- [ ] **FID-2026-1012-014. The rule catalogue and the ledger disagree.** Rows B2/B3/C1/C2/E2
+      → feature F2 (rule-first schema with an explicit boot tier). **Automation level: 3.**
+
+- [ ] **FID-2026-1012-015. The lesson→feature pipeline is red and unowned.** Row E1 →
+      features F5/F6. Must NOT wire its gate before FID-012 lands, or the repository reds on
+      a known-red store. **Automation level: 3.**
+
+- [ ] **FID-2026-1012-016. Redundant lesson families inflate the boot read.** Row C3 →
+      features F4/F1. Consolidation runs through the existing supersession machinery and
+      needs operator approval because the ledger is an operator-facing boot surface.
+      **Automation level: 3** for the enumeration, **1** for the consolidation.
+
 ### Build orders (formalized as FIDs 2026-10-07)
 
 ## Machine-readable scope targets
@@ -132,8 +167,24 @@ recorded decision or external dependency requires it.
      Only OPEN items carry a line here. A completed item's authority must
      leave with the item: while its globs remain, `loadScopeArtifact` grants
      them to every write, so "present before act" is satisfied by work that
-     finished days ago. Evict the line in the pass that closes the item. -->
+     finished days ago. Evict the     line in the pass that closes the item. -->
 
+- FID-2026-1012-010: `dev/LEARNINGS.md`, `dev/LEARNING-RULES.md`, `scripts/learnings*.ts`,
+  `scripts/generate-protocol-bundle.ts`, `agents/savant/system-prompt.ts`,
+  `common/src/util/boot-contract.ts`, `common/src/util/embedded-protocol.ts`,
+  `common/src/constants/protocol-bundle.generated.ts`, `docs/design/**`
+- FID-2026-1012-011: `scripts/learnings*.ts`, `dev/LEARNINGS.md`,
+  `dev/LEARNINGS-RETIRED.md`
+- FID-2026-1012-012: `scripts/lesson-feature-pipeline.ts`, `scripts/lessons-to-skills.ts`,
+  `scripts/learnings*.ts`, `dev/LEARNINGS.md`, `dev/LEARNINGS-RETIRED.md`,
+  `dev/feature-pipeline/**`, `dev/session-summaries/**`
+- FID-2026-1012-013: `scripts/learnings*.ts`, `dev/LEARNINGS.md`, `dev/LEARNINGS-RETIRED.md`
+- FID-2026-1012-014: `dev/LEARNING-RULES.md`, `dev/LEARNINGS.md`, `scripts/learnings*.ts`,
+  `scripts/generate-protocol-bundle.ts`, `docs/embedded-learnings.md`,
+  `common/src/constants/protocol-bundle.generated.ts`
+- FID-2026-1012-015: `scripts/lesson-feature-pipeline.ts`, `scripts/validate-repository.ts`,
+  `dev/feature-pipeline/**`, `package.json`
+- FID-2026-1012-016: `dev/LEARNINGS.md`, `dev/LEARNING-RULES.md`, `scripts/learnings*.ts`
 - Release-0.0.36: `VERSION`, `package.json`, `agents/package.json`,
   `cli/package.json`, `cli/release/package.json`, `common/package.json`,
   `common/src/constants/protocol-bundle.generated.ts`, `desktop/package.json`,
