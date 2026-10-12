@@ -1,5 +1,48 @@
 # Changelog
 
+## 2026-10-12 — System review: twenty findings repaired and verified (FID-2026-1011-006)
+
+### Fixed
+
+- Knowledge graph: the default parser read relative to the process cwd, so a project
+  outside it silently lost symbol/CALLS evidence; directed reachability rebuilt path order
+  by position from rows that carry no such contract; blast-radius traversal enumerated
+  simple paths, re-exploring every alternate route and blocking its caller synchronously
+  (166-173 ms at nine nodes on an adversarial dense fixture); cluster counts reported file
+  anchors as node counts; a same-content mtime change never advanced the stat baseline; an
+  unchanged refresh still rebuilt edges and clusters; the edge clear committed outside the
+  replacement transaction; and an incomplete enumeration was treated as proof of deletion.
+  Repairs are per-vertex bounded traversal, a completeness certificate on the tree scan, and
+  one whole-refresh transaction that verifies its baseline before writing.
+- Parser: the output caps were applied after the work — twelve files were read to return
+  one — and an oversized file was read to completion before its size was checked. Admission
+  now precedes every read and counts UTF-8 bytes.
+- SDK/runtime: a handler rejection bypassed settlement cleanup, so snapshots kept running
+  after the host had a rejected run; the retry and recovery wrappers drove their sources
+  without closing the owned iterators.
+- Connectors: live invocation ignored its fetch override (the injected function saw zero
+  calls while the global one ran), and the bundle cache keyed on nothing and retained a
+  rejected load.
+- Desktop: a superseded socket's callbacks could close the current connection and reject its
+  requests, and a transport firing its handlers synchronously hit an unassigned socket.
+- Persistence: a stable message id kept its first content forever; a failed steering-audit
+  write was dropped while the code documented a retry; every label row counted as a
+  completed compaction boundary; a throwing commit observer turned an already-committed
+  write into a reported failure; and the persisted import resolver could escape the project
+  root.
+- Catalogs: a reset could be overwritten by an earlier in-flight fetch, and a credential
+  rotation was served from a cache assembled with the previous key.
+
+### Added
+
+- Regression suites at each repaired seam (`refresh-safety`, `edges-from-tokens`,
+  `gateway-client-generation`, `session-entry-persistence`, `live-catalog-generation`) and
+  the FID's declared gate set: 36 gates, all passing, with the verification receipt stamped.
+- `invalidateGatewayCatalog()` drops the merged catalog, the in-flight slot, the on-disk
+  warm-start snapshot and every per-provider cache when a credential changes, wired to both
+  provider-key save paths; `activateProviderRouting` moved to its own module at the quality
+  ceiling.
+
 ## 2026-10-11 — `cli-bundle-resolution` runs against a pristine install (FID-2026-1011-005)
 
 ### Fixed

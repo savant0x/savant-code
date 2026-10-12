@@ -818,7 +818,10 @@ was performed, and no speedup is claimed — the traversal and admission changes
 verified for correctness and bounded work, with the dense-graph fixtures
 demonstrating a mechanism rather than production latency.
 
-Archive: closed at the local commit recorded below.
+Archive: closed at local commit `e289af07` (path-scoped, 50 files: the repairs,
+their regressions, this record, the session summary, `SCOPE.md` and
+`CHANGELOG.md`). No push, tag, release or production-data change exists for this
+FID.
 
 ## Lessons Learned
 

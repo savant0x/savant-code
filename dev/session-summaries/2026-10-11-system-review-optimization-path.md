@@ -98,10 +98,35 @@ Operator approved implementation of all R01-R20 and every acceptance criterion o
 seams, add regressions before claiming repairs, measure resource work and timing,
 and keep all unrelated initial worktree changes intact. No push/release authorized.
 
-## Proposed action and approval boundary
+## Implementation and closure
 
-Correctness first, graph safety/scale second, parser admission third, persistence
-semantics/profiling fourth, followed by complete GREEN/AUDIT and implementation
-verification. Every implementation tranche is blocked pending the operator's
-ruling. Existing registered gate/skill/provider/release work remains unchanged.
-No commit or closure claim is made.
+Operator approved implementation of all R01-R20 and verification of every
+acceptance criterion on 2026-10-11. Implementation followed the tranche order
+below, each tranche finished with its own regressions at the seam it changed:
+
+1. Graph correctness and refresh safety (R01-R07, R18-R19).
+2. Parser admission, SDK settlement, stream iterator ownership, connector
+   fetch/cache ownership (R08-R12).
+3. Desktop connection generations (R13).
+4. Persistence integrity and catalog ownership (R14-R17, R20).
+
+Four checks failed during implementation and were fixed at the cause rather than
+worked around: a test file over the 300-line ceiling (resolver cases extracted);
+a teardown that only failed when the suite ran as a repo-root gate (SQLite removes
+its WAL/SHM file between `readdir` and `unlink`, so `ENOENT` is now the desired
+end state while `EBUSY` still retries); `provider-key-store.ts` over the ceiling
+(`activateProviderRouting` extracted); and a first R20 invalidation that cleared
+only the merge cache, which the end-to-end test proved rebuilds the same rows from
+the still-warm per-provider caches.
+
+Final verification on the committed bytes: `bun run fid:verify` 36/36 PASS with
+the receipt stamped (`/tmp/fid006-verify4.log`), root `bun run typecheck` exit 0,
+root `bun run quality:report` PASS, `bun run lint:md` exit 0. Focused suites, zero
+failures: knowledge-graph 43, code-map 13, sdk 8, agent-runtime 13, connectors 13,
+desktop 22, database 53, cli 60.
+
+Closed at local commit `e289af07`. The record moved to `dev/fids/archive/`, the
+CHANGELOG carries the entry above, and the `SCOPE.md` item and its write targets
+were evicted with the closure. No push, tag, release or production-data change was
+made, and no speedup is claimed: the traversal and admission repairs are verified
+for correctness and bounded work, not for production latency.

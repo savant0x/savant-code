@@ -13,16 +13,6 @@ recorded decision or external dependency requires it.
 
 ## Open items
 
-- [ ] **FID-2026-1011-006. System review and optimization action plan.**
-      Review documentation and analysis are approved by the 2026-10-11 request.
-      Full document Perfection Loop approved 2026-10-11 and completed; the FID
-      is converged. All findings R01-R20 and their proposed implementation remain
-      active, including six sibling findings added by the loop.
-      Implementation of all R01-R20 and verification of every acceptance criterion
-      explicitly approved 2026-10-11: "Approve implementation of all R01–R20 in
-      FID-2026-1011-006 and verify every acceptance criterion."
-      Implementation and verification are active. **Automation level: 2.**
-
 - [ ] **Release v0.0.35.** Commit all current intended worktree changes, then
       publish all 189 existing local commits and the release commit via the
       public release pipeline. Verify the full release preview and gates first.
@@ -139,26 +129,6 @@ recorded decision or external dependency requires it.
      them to every write, so "present before act" is satisfied by work that
      finished days ago. Evict the line in the pass that closes the item. -->
 
-- FID-2026-1011-006: `dev/fids/FID-2026-1011-006-system-review-optimization-path.md`,
-  `dev/session-summaries/2026-10-11-system-review-optimization-path.md`, `SCOPE.md`,
-  `packages/knowledge-graph/src/**`, `common/src/project-file-tree.ts`, `common/src/project-gitignore.ts`,
-  `common/src/__tests__/project-file-tree.test.ts`, `common/src/types/session-state-agent-state.ts`,
-  `common/src/types/session-state-compaction-records.ts`,
-  `packages/agent-runtime/src/tools/tool-executor/native.ts`,
-  `packages/code-map/src/parse.ts`, `packages/code-map/src/parse/**`,
-  `packages/code-map/__tests__/**`, `sdk/src/run/execution/**`,
-  `packages/agent-runtime/src/provider-boundary/classified-stream-retry.ts`,
-  `packages/agent-runtime/src/stream-recovery/**`,
-  `packages/agent-runtime/src/__tests__/stream-recovery.test.ts`,
-  `packages/agent-runtime/src/__tests__/request-budget-recovery.test.ts`,
-  `packages/connectors/src/runtime.ts`, `packages/connectors/src/__tests__/**`,
-  `desktop/src/lib/gateway-client-connection.ts`, `desktop/src/lib/__tests__/gateway-client*.test.ts`,
-  `packages/database/src/**`, `cli/src/utils/db-storage.ts`,
-  `cli/src/utils/entry-writers.ts`, `cli/src/utils/run-state-storage/save.ts`,
-  `cli/src/utils/openrouter-models/**`, `cli/src/utils/provider-key-persistence.ts`,
-  `cli/src/utils/__tests__/entry-writers-wiring.test.ts`,
-  `cli/src/utils/__tests__/openrouter-models-gateway-cache.test.ts`,
-  `cli/src/utils/__tests__/provider-credentials.test.ts`
 - T119: `.env.local`, `docs/providers.md`,
   `dev/session-summaries/2026-10-03-provider-*.md`,
   `dev/scratchpad/active/provider-catalogs-2026-10-03/**`,
