@@ -113,8 +113,19 @@
 ### Changed
 
 - Scoped public release build, typecheck, test, and committed-head validation
-  to the CLI release and its repository dependencies. The full root workspace
-  gates remain available for development and CI.
+  to the CLI release and its repository dependencies. The default release
+  publishes only `savant-code`, but validation ran the SDK build, typecheck,
+  and test chain — so an unpublished workspace could fail the release gate.
+  Added `build:release`, `typecheck:release`, and `test:release` to
+  `package.json` (12 workspace legs each; `build:sdk` filtered at
+  `scripts/validation-gates.ts:276`, root chains swapped for the release
+  chains at `:279,282`). The full root workspace gates remain available for
+  development and CI and are unchanged — release coverage is exactly root
+  coverage minus the `sdk` leg, omitting the same `savant-free, scripts/tmux`
+  pair as the root chains (T186). Verified: `fid:verify --check` 3/3 PASS
+  against the final archived bytes, the recomputed fingerprint matching the
+  stored `sha256:22f98686…` at closure entry, and the focused suites at
+  21 pass / 0 fail.
 
 ## 2026-10-11 — Project audit: typecheck-coverage drift (T185)
 

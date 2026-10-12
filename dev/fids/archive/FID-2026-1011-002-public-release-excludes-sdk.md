@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-1011-002-public-release-excludes-sdk.md`
 **ID:** FID-2026-1011-002
 **Severity:** high
-**Status:** verified
+**Status:** closed
 **Created:** 2026-10-11
 **Automation level:** 3
 **YAGNI-Compliance:** Verified
@@ -101,11 +101,12 @@ the CLI release accurately.
 The public release manifest excludes SDK build/typecheck/test gates; its
 release-specific chains cover all other currently configured release
 workspaces. Focused release manifest and committed-head provenance tests pass
-(21 tests, 68 expectations), as does the scripts typecheck gate.
+(21 tests, 69 expectations when re-measured at closure; the record stated 68),
+as does the scripts typecheck gate.
 
 ### Code Verification Evidence
 
-- `bun test scripts/public-release-gates.test.ts scripts/public-release-provenance.test.ts` — 21 pass, 0 fail, 68 expectations.
+- `bun test scripts/public-release-gates.test.ts scripts/public-release-provenance.test.ts` — 21 pass, 0 fail, 68 expectations (re-measured at closure: 69).
 - `bun run typecheck:scripts` — exit 0.
 - `git diff --check` — exit 0 before commit `6093e7f7`.
 
@@ -114,6 +115,35 @@ workspaces. Focused release manifest and committed-head provenance tests pass
 Commit `6093e7f7` adds release-only validation chains that omit SDK build,
 typecheck, and tests while preserving the full developer and CI chains. Release
 manifest and committed-head proof use the release-specific chains.
+
+Closed 2026-10-12 after re-verifying the record against the codebase rather than
+its metadata:
+
+- `git merge-base --is-ancestor 6093e7f7 HEAD` → ancestor (the implementation
+  commit is in the published line of history).
+- `package.json:75,78` carry `typecheck:release` (12 `--cwd` legs) and
+  `test:release` (12 legs).
+- Measured chain coverage against the 15 registered workspaces: root `typecheck`
+  and `test` cover 13 and omit `savant-free, scripts/tmux` (registered as T186);
+  the release chains cover 12 and omit exactly those two plus `sdk`. The record's
+  claim that the release chains cover every other configured release workspace is
+  therefore exactly true, and the developer chains are unchanged.
+- `scripts/validation-gates.ts:272` defines `publicReleaseValidationGates`,
+  consumed at `scripts/public-release/gates.ts:29`; `build:sdk` is filtered at
+  `:276` and the root chains are swapped for the release chains at `:279,282`.
+- `bun run fid:verify … --check` → 3/3 gates PASS, exit 0, and
+  `bun test scripts/public-release-gates.test.ts
+  scripts/public-release-provenance.test.ts` → 21 pass, 0 fail. The closure
+  check issued a fresh receipt; at closure entry the recomputed fingerprint
+  equalled the stored `sha256:22f98686…`. Editing a record necessarily re-hashes
+  it, so the receipt is evidence and re-stamps on every edit, while the three
+  named gates are what `--check` actually enforces — they were re-run against
+  the final archived bytes and passed.
+
+Archive: closed by a path-scoped local commit that moves this record to
+`dev/fids/archive/`, expands the CHANGELOG entry, evicts the register item with
+its write targets, and indexes the closure in `dev/fids/archive/README.md`. No
+push was performed; the closure hash is recorded by the follow-up index commit.
 
 ## Verification Gates
 

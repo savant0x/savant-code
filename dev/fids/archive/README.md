@@ -3,6 +3,18 @@
 This directory contains closed or historically completed FIDs. Files here are
 an audit record, not an active work queue.
 
+## 2026-10-12 closure — public release no longer gates on the unpublished SDK
+
+- [`FID-2026-1011-002-public-release-excludes-sdk.md`](FID-2026-1011-002-public-release-excludes-sdk.md)
+  closed after re-verifying the 2026-10-11 record against the codebase rather
+  than its metadata. Release coverage was measured at 12 workspace legs against
+  a root coverage of 13 (the root chains already omit `savant-free, scripts/tmux`
+  under T186), i.e. exactly root coverage minus the `sdk` leg, with the
+  developer chains unchanged. All three declared gates passed live and the
+  focused suites ran 21 pass / 0 fail. One documentary drift was corrected: the
+  record said 68 test expectations where the suite reports 69. No push was
+  performed; the closure hash is recorded in the record's Resolution.
+
 ## 2026-10-11 — undeclared-import guard shipped as a release gate (T188)
 
 - [`FID-2026-1011-004-install-independent-undeclared-import-guard.md`](FID-2026-1011-004-install-independent-undeclared-import-guard.md)
@@ -13,6 +25,15 @@ an audit record, not an active work queue.
   ("so this class can't reach a release again"); the gate is now part of the
   fail-closed release battery, so the T188 register item and its write surface
   were removed on closure.
+
+## 2026-10-11 closure — pristine-install `cli-bundle-resolution`
+
+- [`FID-2026-1011-005-clean-install-cli-bundle-resolution.md`](FID-2026-1011-005-clean-install-cli-bundle-resolution.md)
+  closes the residual half named by FID-2026-1011-004: the gate now bundles inside a
+  pristine install of the frozen lockfile and fails when any module it loaded resolved
+  from outside that tree. Measured teeth: the pre-change command exits 0 on an import only
+  the stray profile `node_modules` provides, while the new gate exits 1 naming 28 such
+  modules. All eight declared gates passed live.
 
 ## 2026-10-11 incident closure — `v0.0.35` binary backfill
 
