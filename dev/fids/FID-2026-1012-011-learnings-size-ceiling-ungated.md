@@ -118,6 +118,9 @@ days, with no ceiling in the loop that would have stopped at 1,200.
 
 ### Approach
 
+Loop 2 and `docs/design/perfection-loop-2026-10-12.md` govern implementation where
+they correct the original plan. No age-based class disposition or repair is implied.
+
 Move the ceiling from the tool to the validator, and give retirement a durable record. Both
 ceilings matter: the line ceiling is the ledger's own invariant, and the char ceiling protects
 the boot boundary (FID-2026-1012-010), which truncates on characters rather than lines.
@@ -181,6 +184,22 @@ tree.
   meet at the same boundary from opposite sides: 010 bounds what is *booted*, 011 bounds what
   is *stored*, and the digest makes the ledger's own size less load-bearing over time.
 - **CHANGE DELTA:** n/a — pre-implementation record; no ledger content was edited by this pass.
+
+### Loop 2 — Current-tree review and self-correction (2026-10-12)
+
+- **RED:** `DEFAULT_LINE_CAP` still has only three production references, all inside
+  retirement. `learnings:check` exits 0. The retirement unit is 1,175 split-line
+  segments, not 1,174 newline characters; current headroom is 25 segments.
+- **GREEN:** Apply the shared review contract in `docs/design/perfection-loop-2026-10-12.md`:
+  one policy for 1,200 logical lines and 100,000 JavaScript characters, exact unit labels,
+  and an operator-run character-aware repair. Append move receipts only after verified
+  archival; interruption and retry preserve content and idempotency.
+- **AUDIT:** Existing retirement suite passes within the 45-test scripts baseline;
+  it proves current move behaviour, not the proposed ceiling or receipt transaction.
+- **ADVERSARIAL / missed question:** Does raising `--cap` raise the validator policy?
+  No. Does a byte count prove the character ceiling? No. Pin independent breaches and
+  real write-interruption recovery at the planned paths in the shared artifact table.
+- **CHANGE DELTA:** Planning correction only; no retirement or source edit occurred.
 
 ### Missed Questions
 

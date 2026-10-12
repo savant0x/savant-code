@@ -139,6 +139,9 @@ and the four classes together account for 51 recorded failures across 22 distinc
 
 ### Approach
 
+Loop 2 and `docs/design/perfection-loop-2026-10-12.md` govern implementation where
+they correct the original plan. No age-based class disposition or repair is implied.
+
 One degradation contract, enforced at the producers rather than at each call site: a result
 carries whether the capability ran, and a capability that did not run names itself once, with
 the action that fixes it. Then a run-start self-check so a plan can see its capabilities before
@@ -208,6 +211,23 @@ reaches `fixed`/`verified`, together with the receipt that binds them to the doc
   the invariant is stated once.
 - **CHANGE DELTA:** 0% — pre-implementation. The record converged on a design; no source file
   has been touched.
+
+### Loop 2 — Current-tree review and self-correction (2026-10-12)
+
+- **RED:** Allocation is six classes / 50 records; timeout ownership is FID-023.
+  Search anomalies already return `errorMessage` through close-payload → executor;
+  research exhaustion follows a keyless fallback. These are not silent zero-hit fixes.
+- **GREEN:** Apply `docs/design/perfection-loop-2026-10-12.md`: inspect every producer
+  and consumer, preserve real errors, and distinguish completed-empty, unavailable and
+  incomplete results. Investigate all six shapes, including flags/type failures and
+  host-vs-SDK resolver provenance; do not blame a missing BYOK key without evidence.
+- **AUDIT:** SDK fail-loud/fallback suites pass. That proves truthful reporting for
+  covered fixtures, not repaired search collection. The 26 later code-search failures
+  contradict an age-based resolution claim for the former wrapper class.
+- **ADVERSARIAL / missed question:** Is a loud anomaly a successful search? No.
+  Preflight must not deny unused capabilities or human work. Host attribution and live
+  causes remain explicit NEEDS-REVIEW; planned tests/window are in the shared review.
+- **CHANGE DELTA:** Planning correction only; all six allocated classes remain owned.
 
 ### Missed Questions
 

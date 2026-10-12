@@ -114,6 +114,9 @@ workaround is discovered by the model through repetition, across 25 distinct ses
 
 ### Approach
 
+Loop 2 and `docs/design/perfection-loop-2026-10-12.md` govern implementation where
+they correct the original plan. No age-based class disposition or repair is implied.
+
 Make the failure path carry its own diagnosis. The tool already holds everything needed — the
 current file content, the text the session last read, and the requested old string — so it can
 answer "which of the three causes is this" instead of asking the model to find out.
@@ -173,6 +176,23 @@ reaches `fixed`/`verified`, together with the receipt that binds them to the doc
   real failures, so it trains the model to retry work that is already done.
 - **CHANGE DELTA:** 0% — pre-implementation. The record converged on a design; no source file
   has been touched.
+
+### Loop 2 — Current-tree review and self-correction (2026-10-12)
+
+- **RED:** All 13 classes / 72 records remain owned. Exact mismatch/no-op sites are
+  `process-str-replace.ts:254` / `:133`. Injecting a frozen successful client result into
+  `handleStrReplace` reproduces `Attempted to assign to readonly property.`
+- **GREEN:** Apply `docs/design/perfection-loop-2026-10-12.md`: copy rather than mutate
+  client results; separate identical-success from failed/partial replacements; bound
+  diagnostics and preserve containment. Include SDK `change-file.ts` and apply-patch
+  boundaries plus directory/path failures. Current CRLF/whitespace rescue stays intact.
+- **AUDIT:** A valid identical replacement returns `No change to the file` through
+  the error channel. A missing target has no candidate line. The latest-content promise
+  is not a previous-read snapshot, so staleness is unknown without a revision receipt.
+- **ADVERSARIAL / missed question:** Does a flat readonly error name its mechanism?
+  Not alone; the injected production handler now supplies that reproduction. Do not
+  leak file bodies through diagnostics/logging. Planned tests/window are in the review.
+- **CHANGE DELTA:** Planning correction only; no edit behaviour was changed.
 
 ### Missed Questions
 

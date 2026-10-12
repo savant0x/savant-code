@@ -125,6 +125,9 @@ sdk/src/run-state/child-process.ts:37:    reject(new Error(`Command timed out af
 
 ### Approach
 
+Loop 2 and `docs/design/perfection-loop-2026-10-12.md` govern implementation where
+they correct the original plan. No age-based class disposition or repair is implied.
+
 Give execution a **contract** rather than a number: one timeout policy with a bounded escalation, a
 timeout error that reports the budget and prescribes narrowing or backgrounding, and aborts that name
 the executed tool. Verify with a recurrence assertion — no new timeout/abort records for the lane in
@@ -184,6 +187,22 @@ Declaring a `- gate: test <path>` before the artifact exists would be a false de
   locating it step 2, rather than asserting a mechanism it has not read.
 - **CHANGE DELTA:** 0% source — this record made no code change; it is a converged pre-implementation
   design and one lane of the master's allocation.
+
+### Loop 2 — Current-tree review and self-correction (2026-10-12)
+
+- **RED:** 13 classes / 27 records. The abort site is located at
+  `client-tool-bridge.ts:39`; `run-readonly-command.ts:78` deliberately delegates to
+  terminal execution. Nine budgets do not prove a same-command retry ladder.
+- **GREEN:** Apply `docs/design/perfection-loop-2026-10-12.md`: preserve caller and
+  executed-tool identity; validate finite timeout values and explicit -1 semantics;
+  keep session-init 10-second and normal 30-second defaults. Do not invent a background
+  fallback: the public schema and SDK dispatcher support only SYNC. Never replay a command.
+- **AUDIT:** Nonzero exits reach command verification but not the failure capture
+  predicate. Abort/cancellation and actual process termination need separate receipts.
+- **ADVERSARIAL / missed question:** Can a capped retry duplicate side effects? Yes.
+  Escalate process termination, not execution. Preserve authorized long-running calls
+  and require process-cleanup negative controls at the review's exact planned test paths.
+- **CHANGE DELTA:** Planning correction only; timeout/abort classes remain unresolved.
 
 ### Missed Questions
 

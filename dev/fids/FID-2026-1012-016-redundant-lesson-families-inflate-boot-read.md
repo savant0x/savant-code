@@ -8,7 +8,7 @@
 **Automation level:** 3
 **YAGNI-Compliance:** Verified
 **Master FID:** FID-2026-1012-022 (The failure-class remediation program)
-**Depends On:** FID-2026-1012-010, FID-2026-1012-014
+**Depends On:** FID-2026-1012-010, FID-2026-1012-012, FID-2026-1012-013, FID-2026-1012-014
 
 ---
 
@@ -141,6 +141,9 @@ operator-approved rather than autonomous despite automation level 3.
 
 ### Approach
 
+Loop 2 and `docs/design/perfection-loop-2026-10-12.md` govern implementation where
+they correct the original plan. No age-based class disposition or repair is implied.
+
 Consolidate by SUPERSESSION, not by rewriting history: each family keeps one surviving entry
 carrying the invariant, the guard and the canonical rule, with the incidents it subsumes
 recorded as evidence lines naming their owning FIDs. The superseded titles are retained by the
@@ -214,6 +217,22 @@ suite, a probe for the consolidation's measurement, and the repo-wide `quality` 
   supplies the consolidated set it selects from.
 - **CHANGE DELTA:** ~0% of code. The record's own delta is the enumeration plus the
   nomination; the ledger edit is step 7's approved pass.
+
+### Loop 2 — Current-tree review and self-correction (2026-10-12)
+
+- **RED:** All 37 lessons were read. The proposed family list repeats members and
+  includes a FID's lesson outside the governed ledger; 18 unique mergeable entries
+  are not established. Caller proof, breaker policy and hand-off ownership differ.
+- **GREEN:** Apply `docs/design/perfection-loop-2026-10-12.md`: produce a unique
+  title/invariant/evidence inventory, consolidate only proven identical invariants,
+  and preserve full incidents. Measure selected-digest reduction separately from ledger
+  growth. Consume 012's locator and 013's reference reconciliation before consolidation.
+- **AUDIT:** Existing supersession validation requires a distinct non-superseded target.
+  Keeping bodies and adding metadata cannot promise to reduce ledger lines.
+- **ADVERSARIAL / missed question:** Can a family label justify removing a guard?
+  No. Present the concrete mapping for the recorded level-1 consolidation ruling.
+  All unresolved classes stay owned; planned measurement/tests are in the shared table.
+- **CHANGE DELTA:** Planning correction only; no consolidation or retirement occurred.
 
 ### Missed Questions
 

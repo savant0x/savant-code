@@ -130,6 +130,9 @@ to drive its fix archived the lesson instead.
 
 ### Approach
 
+Loop 2 and `docs/design/perfection-loop-2026-10-12.md` govern implementation where
+they correct the original plan. No age-based class disposition or repair is implied.
+
 Bound the payload before it is emitted, not after it is cut. Three levers, in order of value:
 (1) an explicit per-tool argument budget the model is given and can plan against; (2) a legal
 split shape for the two tools that cannot avoid large payloads (`write_file` / `str_replace`
@@ -195,6 +198,23 @@ the recurrence probe, the affected workspaces' typechecks and `quality`.
   classification already distinguishes causes, and the failure still surfaces.
 - **CHANGE DELTA:** 0% source — this record made no code change; it is a converged
   pre-implementation design.
+
+### Loop 2 — Current-tree review and self-correction (2026-10-12)
+
+- **RED:** Census remains 18 classes / 193 records, 16 on October 12; nine tools is
+  only a subset. Known truncation already receives split advice. Stream capture keeps
+  `chunk.message` but drops cause metadata; the line cannot establish all sub-causes.
+- **GREEN:** Apply `docs/design/perfection-loop-2026-10-12.md`: bounded arguments,
+  atomic revision-checked bulk staging, and provider/child-specific recovery. Preserve
+  schema-error recovery; do not infer truncation from every JSON parse error. Repair
+  spawn steering that assumes shared history even for the no-history Recorder.
+- **AUDIT:** Runtime already forwards `maxOutputTokens`; no missing streaming mapper
+  is claimed. `stream-parser.ts:203` captures only message/tool identity. Baseline gates
+  prove these paths exist, not that the class stopped.
+- **ADVERSARIAL / missed question:** Can changed advice or renamed errors prove repair?
+  No. Assert causes across all 18 owned shapes with exposure and capture coverage.
+  The shared review names the observation window and exact planned test/probe paths.
+- **CHANGE DELTA:** Planning correction only; all emission classes remain unresolved.
 
 ### Missed Questions
 

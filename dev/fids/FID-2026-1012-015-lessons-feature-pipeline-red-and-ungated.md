@@ -8,7 +8,7 @@
 **Automation level:** 3
 **YAGNI-Compliance:** Verified
 **Master FID:** FID-2026-1012-022 (The failure-class remediation program)
-**Depends On:** FID-2026-1012-012
+**Depends On:** FID-2026-1012-012, FID-2026-1012-014, FID-2026-1012-016
 
 ---
 
@@ -124,6 +124,9 @@ Store state (`dev/feature-pipeline/candidates.json`): `LF-001`, `LF-002` `implem
 
 ### Approach
 
+Loop 2 and `docs/design/perfection-loop-2026-10-12.md` govern implementation where
+they correct the original plan. No age-based class disposition or repair is implied.
+
 Fix the store's references first, then make the check enforceable, and keep the fail-open
 notice as a notice. Order matters: adding the gate before the admission issues are resolved
 would red the repository on a store that is already known red.
@@ -194,6 +197,21 @@ declared in the implementation pass, from the verification plan above.
   6-candidate store; measured cost belongs in the implementation pass, not in this claim.
 - **CHANGE DELTA:** ~0% of implementation. This record is authoring-only (converged RED/GREEN
   plan); the change delta applies in the implementation pass.
+
+### Loop 2 — Current-tree review and self-correction (2026-10-12)
+
+- **RED:** Real admission remains red: seven issues, exit 1. This FID now owns the
+  check; empty-queue/no-owner wording is an old snapshot. `--write` still skips a red report.
+- **GREEN:** Apply `docs/design/perfection-loop-2026-10-12.md`: resolve titles first,
+  then wire a standalone pipeline probe into repository validation. Fingerprint live,
+  retired and manifest inputs; render red reports deterministically and retain exit 1.
+  Keep drafts as drafts and keep SessionEnd fail-open.
+- **AUDIT:** Existing admission fixtures pass in the 45-test baseline while the
+  real store fails; `validate:repository` passes because this check is unwired.
+- **ADVERSARIAL / missed question:** Can the repository validator be this FID's probe?
+  No, it re-enters FID verification. Use the independent planned probe named in the
+  shared artifact table, with malformed-store and stale-report negative controls.
+- **CHANGE DELTA:** Planning correction only; no gate is wired onto the known-red store.
 
 ### Missed Questions
 

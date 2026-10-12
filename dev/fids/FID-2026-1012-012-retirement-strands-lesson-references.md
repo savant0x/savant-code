@@ -126,6 +126,9 @@ title would silently change what the candidate claims.
 
 ### Approach
 
+Loop 2 and `docs/design/perfection-loop-2026-10-12.md` govern implementation where
+they correct the original plan. No age-based class disposition or repair is implied.
+
 Give lesson titles one authoritative locator that spans the live ledger and the retired archive,
 have every consumer resolve through it, and make retirement emit a record of the move so the
 locator's own history is auditable without git.
@@ -192,6 +195,22 @@ record as outside the verification contract, by design.
 - **CHANGE DELTA:** ~0%. This record adds a FID and no code; the reviewed artifacts are
   untouched.
 
+### Loop 2 — Current-tree review and self-correction (2026-10-12)
+
+- **RED:** `lessons:features --check` reproduces exit 1 and seven missing titles.
+  The live and retired stores each parse 37 lessons; retired heading titles are unique.
+  The former `retired=2` observation counted textual mentions, not duplicate entries.
+- **GREEN:** Use the shared locator contract in `docs/design/perfection-loop-2026-10-12.md`:
+  preserve all locations for identical duplicate bodies, fail conflicting duplicates,
+  and resolve supersession with cycle detection and an explicit replacement notice.
+  FID-011 owns move-receipt writing; this record owns resolution and its consumers.
+- **AUDIT:** `reviewFeaturePipeline` reads only the live catalogue; the existing
+  admission suite passes while the real store fails. Report both, never substitute one.
+- **ADVERSARIAL / missed question:** Does resolving a retired title promote it?
+  No. Reference reachability and eligibility stay separate; current active issues are
+  not demoted. Exact planned locator/admission tests are in the shared artifact table.
+- **CHANGE DELTA:** Planning correction only; citations and ledger bodies are preserved.
+
 ### Missed Questions
 
 1. Should retirement *rename* rather than move? → No. Renaming the title to keep references
@@ -231,7 +250,7 @@ record as outside the verification contract, by design.
   (`FID-2026-1012-011`) or the boot budget (`FID-2026-1012-010`).
 - It does not claim a green pipeline today: `lessons:features --check` is red at `14d48820`
   with exit 1, and the acceptance above is what would prove the repair.
-- The retire path's own line cap and its operator-run boundary are out of scope; they belong to
+- The retire path's own line cap and its operator-run boundary remain owned by
   `FID-2026-1012-011`.
 
 ## Resolution

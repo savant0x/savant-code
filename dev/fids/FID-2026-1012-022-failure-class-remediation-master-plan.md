@@ -12,7 +12,7 @@
 
 ## Summary
 
-The capture works and the ledger's purpose is real: `dev/experiences/raw-traces.jsonl` holds **559
+The ledger's purpose is real, but capture coverage must be repaired: `dev/experiences/raw-traces.jsonl` holds **559
 failures across 68 classes and 195 sessions** (2026-08-24 → 2026-10-12), recorded mechanically by the
 `PostToolUseFailure` → `experience-capture` hook. What failed is the **consumption** of that record.
 Classes recurred, were detected, were published to `dev/agenda.md`, and then piled up unfixed while
@@ -23,9 +23,9 @@ to exactly one child record** (559 of 559 records, zero unassigned, no double ow
 convergence rule each child must satisfy — a **recurrence assertion measured from the capture**, not a
 green suite — and states the closure condition. A child closes only when its classes have stopped
 recurring for a declared window. The master closes only when every child is closed. Nothing in the
-capture pipeline changes: the hook, `experiences:dedup`, the agenda, `lessons:to-skills` and
-`lessons:features` keep running exactly as they do, because they are the instrument that finds the
-defects — the problem was never that they were wrong, it was that nothing acted on what they found.
+capture pipeline is disabled: the hook, `experiences:dedup`, the agenda, `lessons:to-skills` and
+`lessons:features` keep running. FID-024 repairs capture coverage and classification; FID-014 repairs
+class-to-rule targeting. The instrument itself has defects as well as an unclosed consumption loop.
 
 **This record is the program of record for all open work, not only the ledger.** Twenty-four register
 items were open on 2026-10-12 — fifteen active FIDs (`-010` … `-024`, this record among them) and nine
@@ -245,6 +245,9 @@ Class ids are the numbered rows of this table; a child may cite a row by number 
 
 ### Approach
 
+Loop 2 and `docs/design/perfection-loop-2026-10-12.md` govern implementation where
+they correct the original plan. No age-based class disposition or repair is implied.
+
 Treat the **class** as the unit of work, and make the program an artifact with a census, an owner per
 class, a definition of "fixed" for a class, and a closure condition that cannot be satisfied by a test
 suite. Concretely: one master (this record) holds the census and the allocation; each child owns a
@@ -269,9 +272,9 @@ and the pipeline-targeting refactor, and they are explicitly **not** a substitut
    so the ledger records what stopped failing.
 6. **Gate the census in the repository** (owned by `FID-2026-1012-021`): a class at the bar with no
    owner is an issue named with its count and last-seen date.
-7. **Keep the pipeline running.** No change to the hook, the dedup script, the agenda or the two
-   producers as part of this program; if the targeting refactor needs to touch them, that is Lane V's
-   work under its own records.
+7. **Keep the pipeline running while repairing it.** FID-024 owns capture/classification coverage;
+   FID-014 owns rule targeting; FID-021 consumes those authorities. Their owned changes must preserve
+   the hook's fail-open execution contract without treating incomplete capture as closure evidence.
 8. **Draft the Chain C children as their waves begin** — the register items (T122, T186, T119, T175,
    T171, T173, T62-followups, T187) have write surfaces and no owner, so each gets its child FID from
    the same template the twelve existing children use, with its RED measured from the real tree.
@@ -291,7 +294,7 @@ a child's own RED re-measure is what proves its row is finished.
 
 | Wave | Child | Depends on | Deliverable | Exit gate |
 |---|---|---|---|---|
-| A0 | `-024` (7 classes / 36 records) | — | The class identity: a stable key with expected/unexpected, first/last seen, and the **fix boundary**; it closes its own seven fossil classes with no code change | class-key and horizon tests; the census probe |
+| A0 | `-024` (7 classes / 36 records) | — | Investigate all seven unresolved classes; repair capture coverage, stable identity and the shared recurrence probe before any horizon claim | producer/lifecycle/capture pins; class-key tests; census probe |
 | A0 | `-023` (13 / 27) | `-024` | One timeout policy with a bounded escalation, a timeout error that reports the budget it hit, and an abort attributed to the executed tool | recurrence probe over the 13 classes |
 | A1 | `-017` (18 / 193 — 35% of the capture) | `-024` | A per-tool argument budget, a legal split shape for the bulk tools, and the re-send advice removed for every truncation cause | recurrence probe: the family does not reappear in the window |
 | A1 | `-018` (11 / 181) | `-024` | One taxonomy for every fetch outcome, negative caching, and a fallback instead of a repeated try | recurrence probe over the 11 classes |
@@ -299,9 +302,9 @@ a child's own RED re-measure is what proves its row is finished.
 | A1 | `-020` (13 / 72) | `-024` | Diagnostic edit responses: a mismatch carries the evidence needed to repair it | recurrence probe over the 13 classes |
 | A2 | `-021` | `-017`, `-018`, `-019`, `-020` | The recurrence-to-fix machinery: the class-coverage check in `validate:repository`, the recurrence-probe contract, lesson-last ordering | the check fails on a fixture whose top class has no owner |
 
-The four A1 lanes are mutually independent once A0 has landed — `-018`'s own ordering records that it
-is independent of `-017`, and `-016`… `-020` share no surface — so they may be worked in any order or
-in parallel; `-017` is listed first because it is 35% of everything captured. `-021` must not be worked
+The A1 lanes share contracts and handler surfaces, so implement them sequentially after A0's
+deterministic gates pass; observation windows continue without falsely closing prerequisites.
+`-017` is listed first because it is 35% of everything captured. `-021` must not be worked
 before A1 has owners, or `validate:repository` reds on a known-open set (its own record says so).
 
 **Chain B — Lane V, the artifact and its visibility.** The order is the design review's §5 suggested
@@ -312,10 +315,10 @@ order, resolved against the records' own prerequisites.
 | B0 | `-011` (ceiling is enforced by nothing) | — | The size ceiling moves into `learnings:check` / `validate:repository`, and retirement emits a machine-readable move record |
 | B0 | `-014` (rule catalogue and ledger disagree) | — | Rule-first schema with an explicit boot tier, and the promotion target consolidation needs |
 | B1 | `-012` (retirement strands references) | `-011` | By-title references resolve across live + retired; the seven admission issues that make `lessons:features --check` red are fixed |
-| B1 | `-013` (lesson evidence rots) | `-011` | Structural vs reproduction references, resolved by tier; ephemeral anchors rejected |
+| B2 | `-013` (lesson evidence rots) | `-011`, `-012`, `-014` | Structural/reproduction integrity; durable probes; active legacy lessons reconciled without age-based demotion |
 | B1 | `-010` (the boot read has no size contract) | `-011`, `-014` | A generated, bounded boot digest with its own asserted budget |
-| B2 | `-016` (redundant families inflate the boot read) | `-010`, `-014` | Consolidation of the five redundant families onto the rule tier — operator-approved |
-| B2 | `-015` (the lesson→feature pipeline is red and unowned) | `-012` | The pipeline check becomes a repo gate with an owner — **last**, because wiring it earlier reds the repository on a known-red store |
+| B3 | `-016` (redundant families inflate the boot read) | `-010`, `-012`, `-013`, `-014` | Investigated unique invariants consolidated only under the recorded operator ruling |
+| B4 | `-015` (the lesson→feature pipeline is red and unowned) | `-012`, `-014`, `-016` | The pipeline check becomes a repo gate after resolution/targeting/consolidation are green |
 
 **Chain C — the register items that have no record yet.** These are open work with a write surface and
 no owner, which is why they have sat unstarted. Each one's child FID is drafted, converged and executed
@@ -359,10 +362,10 @@ activation), and the child's id is recorded in this table when it exists.
 | FID-2026-1012-011 — ceiling ungated | B0 | `-011` | converged (design) |
 | FID-2026-1012-014 — rule catalogue vs ledger | B0 | `-014` | converged (design) |
 | FID-2026-1012-012 — retirement strands references | B1 | `-012` | converged (design) |
-| FID-2026-1012-013 — lesson evidence rot | B1 | `-013` | converged (design) |
+| FID-2026-1012-013 — lesson evidence rot | B2 | `-013` | converged (reviewed design; active lessons preserved) |
 | FID-2026-1012-010 — boot-read size contract | B1 | `-010` | converged (design) |
-| FID-2026-1012-016 — redundant lesson families | B2 | `-016` | converged (design); consolidation is operator-approved |
-| FID-2026-1012-015 — pipeline red and unowned | B2 | `-015` | converged (design); worked last |
+| FID-2026-1012-016 — redundant lesson families | B3 | `-016` | converged (reviewed design); concrete consolidation remains operator-gated |
+| FID-2026-1012-015 — pipeline red and unowned | B4 | `-015` | converged (reviewed design); worked last |
 
 **The automation contract.** Session ceiling is `protocol.config.yaml` → `session.autonomy_level`
 (3). An item runs unattended when its level is ≤ the ceiling and it is not on the operator-gated list;
@@ -395,6 +398,12 @@ rather than class work.
   returns to RED with the new evidence rather than closing.
 
 ### Closure condition
+
+Loop 2 and `docs/design/perfection-loop-2026-10-12.md` govern this condition: age and
+missing recent records never establish dormancy or repair. Class lanes require investigated
+causes, deterministic gates and exposure-qualified observation; artifact and machinery children
+require their own committed gates. Dependencies may proceed after deterministic implementation
+without pretending the prerequisite's observation window has completed.
 
 - A **child** closes only when its fix landed, its classes show no new records in the declared window,
   and the lesson is written against the class.
@@ -448,6 +457,24 @@ by whichever pass flips a child to `fixed`/`verified`, on the child's artifacts.
 - **CHANGE DELTA:** this pass changed no source — two new records (`-022`, `-023`, `-024`), the master
   linkage and the census linkage in `SCOPE.md`; the class allocation was verified mechanically.
 
+### Loop 2 — Deep current-tree review and self-correction (2026-10-12)
+
+- **RED:** Census reconciles at `8a063bd9`: 68/559/195, zero unassigned or duplicated.
+  The 27-class bar is lifetime inventory; 18 current patterns meet the filtered 14-day
+  three-session bar. Capture misses real failures and skill targeting self-matches.
+- **GREEN:** Apply `docs/design/perfection-loop-2026-10-12.md` to all 15 records.
+  Investigate every old class; make 024 repair the instrument before recurrence claims;
+  make 014 repair rule links; separate landing dependencies from observation closure.
+  The revised B schedule resolves schema/locator/consolidation overlap sequentially.
+- **AUDIT:** Root typecheck and repository validation exit 0. Real feature admission
+  exits 1 with seven missing titles. Shipped-helper probes reproduce capture omissions,
+  unrelated skill links and the readonly-result mutation; details are in the shared review.
+- **ADVERSARIAL / missed question:** Did no wrapper records prove seven repaired causes?
+  No. Six tools emit later failures; the seventh uses an uncaptured exit-code shape.
+  Retain all 24 register items, all 14 children and every operator hold. No source work,
+  class resolution, FID closure or implementation receipt is claimed by this review.
+- **CHANGE DELTA:** Planning correction only; individual Loop 2 entries record each child.
+
 ### Missed Questions
 
 1. **Should the size records (`-010` … `-016`) be withdrawn, now that they are not class fixes?**
@@ -463,13 +490,12 @@ by whichever pass flips a child to `fixed`/`verified`, on the child's artifacts.
    (`-023` 27 records, `-024` 36 records) are small, self-contained, and each settles a measurement
    question the bigger lanes depend on (`-024` fixes what "a class" means on the capture). Ordering by
    record count alone would fix the census instrument last.
-4. **What if a class is not a defect?** An expected failure (a search 404 during research) must never be
-   counted as a class needing an owner; the capture already separates expected from unexpected, and
-   `-024` owns preserving that distinction in the class identity.
-5. **What happens to a class that is already fixed but still ranks?** `-024` owns the horizon problem —
-   the seven `tool result contains an error` classes are residue from August–September (last seen
-   2026-09-09) and are indistinguishable in the current census from live ones. A child must be able to
-   close a fossil without a code change, and that requires the fix-boundary notion `-024` introduces.
+4. **What if a class is not a defect?** Investigate the outcome and its handling. Capture has no
+   expectedness field today; analysis filters messages too broadly. FID-024 owns contextual
+   classification, preserving unknowns and legitimate outcomes without hiding repeated defects.
+5. **What happens when an old class has no recent records?** `-024` investigates its cause,
+   claimed fix, producer shapes and capture coverage. The seven generic-wrapper classes remain
+   unresolved. A fix boundary or elapsed window cannot replace that investigation.
 
 ### Code Verification Evidence
 
@@ -502,8 +528,8 @@ by whichever pass flips a child to `fixed`/`verified`, on the child's artifacts.
 - The allocation is a classification of classes to lanes by mechanism, derived from the class strings
   listed in the census; a child may hand a class to a sibling lane at RED with the re-measure as
   evidence, but the master's closure pass owns the final check.
-- The pipeline is untouched by this program: the hook, `experiences:dedup`, `session-end-review`,
-  `lessons:to-skills` and `lessons:features` continue to run as they do today.
+- The pipeline continues running; its capture and targeting defects are explicitly owned by
+  FID-024/FID-014 rather than assumed correct. This planning pass makes no pipeline source changes.
 - Nothing was pushed.
 
 ## Resolution

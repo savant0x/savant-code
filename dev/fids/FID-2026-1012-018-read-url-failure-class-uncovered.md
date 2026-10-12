@@ -121,6 +121,9 @@ the artifact whose purpose is to log failures so they can be fixed — has never
 
 ### Approach
 
+Loop 2 and `docs/design/perfection-loop-2026-10-12.md` govern implementation where
+they correct the original plan. No age-based class disposition or repair is implied.
+
 Give fetch outcomes a taxonomy and let the taxonomy drive the next action. The class is cheap
 to fix precisely because it is flat today: four causes and one cache, at two call sites. The
 verification is a **recurrence assertion** over the trace ledger — the class must stop
@@ -182,6 +185,23 @@ the recurrence probe, `typecheck sdk`, and `quality`.
   which do not select content.
 - **CHANGE DELTA:** 0% source — this record made no code change; it is a converged
   pre-implementation design.
+
+### Loop 2 — Current-tree review and self-correction (2026-10-12)
+
+- **RED:** 11 classes / 181 records, including 405/503/PDF/DNS/SSRF outcomes omitted
+  from the narrow steps. Two injected 404 calls make two fetch attempts. HTTP error
+  results still contain only URL/errorMessage; the five status probes reproduce this.
+- **GREEN:** Apply `docs/design/perfection-loop-2026-10-12.md`: classify all owned
+  outcomes, cache within a run, preserve every SSRF redirect check, and retain path
+  slashes and query parameters in identity. Diagnose only causes the response proves;
+  unknown extraction stays unknown. A fallback is advice, never an invented result.
+- **AUDIT:** SDK URL/SSRF baseline passes. The current broad expected-failure filter
+  excludes 404 and extraction errors regardless of context; FID-024 must repair that
+  before this lane's recurrence claim can be trusted.
+- **ADVERSARIAL / missed question:** Does an upstream refusal itself prove a defect?
+  No, nor prove correctness. Investigate handling/repetition and retain the outcome.
+  All 11 classes remain owned; exact planned tests and exposure rules are in the review.
+- **CHANGE DELTA:** Planning correction only; no class is classified dormant or fixed.
 
 ### Missed Questions
 

@@ -8,7 +8,7 @@
 **Automation level:** 3
 **YAGNI-Compliance:** Verified
 **Master FID:** FID-2026-1012-022 (The failure-class remediation program)
-**Depends On:** FID-2026-1012-011
+**Depends On:** FID-2026-1012-011, FID-2026-1012-012, FID-2026-1012-014
 
 ---
 
@@ -126,6 +126,9 @@ which is worse than a red gate, because it reads as verified.
 
 ### Approach
 
+Loop 2 and `docs/design/perfection-loop-2026-10-12.md` govern implementation where
+they correct the original plan. No age-based class disposition or repair is implied.
+
 Model the two reference kinds explicitly and give each the validation it deserves, then decide
 the legacy tail's disposition instead of letting it sit outside every tier.
 
@@ -192,6 +195,22 @@ verification contract, by design.
   consumers still read them as `historical`, so leaving it undecided is the defect.
 - **CHANGE DELTA:** ~0%. This record adds a FID and no code; the reviewed artifacts are
   untouched.
+
+### Loop 2 — Current-tree review and self-correction (2026-10-12)
+
+- **RED:** Both cited scratchpad probes are absent. All 37 live lessons were read;
+  the three below the boundary still declare active status. Two governed guards
+  recommend scripted edits that conflict with the current single-agent Law 1.
+- **GREEN:** Apply `docs/design/perfection-loop-2026-10-12.md`: recover durable
+  reproduction artifacts; migrate the three legacy entries with active status and
+  `Scope: internal`; preserve incident prose while repairing conflicting guidance.
+  Use 012's locator and 014's schema/rule contract before reconciliation.
+- **AUDIT:** `validateStableReferences` checks Evidence only; `Verification` remains
+  prose. `learnings:check` exits 0 despite both absent probes. This is reproduced rot.
+- **ADVERSARIAL / missed question:** Can age justify historical status or a warning?
+  No. Validate the actual as-of commit/blob first; no class or active lesson is demoted
+  from silence. Planned reproduction/validator tests are in the shared artifact table.
+- **CHANGE DELTA:** Planning correction only. Retirement remains operator-owned.
 
 ### Missed Questions
 

@@ -13,18 +13,13 @@
 
 ## Summary
 
-The census that drives this whole program cannot tell a **fixed** class from a **live** one. Seven
-classes — **36 records** of `tool result contains an error` across six tools — rank in the master's
-census with no owner, and every one of them was last seen on or before **2026-09-09**, the date of
-`FID-2026-0909-005`, the record that made the capture extract a tool's real error line instead of the
-wrapper. There has not been a single wrapper record in the **33 days** since. The classes are almost
-certainly fixed; the repository cannot say so, because a class has no **fix boundary** and no last-seen
-horizon in its identity — so a fossil ranks beside a defect, a child can never close on evidence, and
-the operator's census reads as if 36 open defects were unowned. The same identity is the one the
-detector keys on, which is why it is both over-merged (everything collapsed into the wrapper string) and
-over-fragmented (payload-embedded paths and timestamps make every record unique), a tension already
-documented in `docs/design/SkillOpt Integration into Savant.md:62`. This lane fixes the measuring
-instrument: a class must carry what it is, when it was last seen, and what fixed it.
+Seven classes — **36 records across seven tools and 23 sessions** — lost their causes behind
+`tool result contains an error`. They remain unresolved under this owner. The September extractor
+change replaced the wrapper, not the underlying failures. Six tools have later differently worded
+failures; the seventh, `skill_manage`, now emits an exit-code failure the capture predicate misses.
+Deep probes also expose uncaptured nested errors, nonzero exits and read-status failures. Silence
+cannot establish dormancy or repair. This lane investigates all seven, repairs the measuring
+instrument and preserves explicit ownership of every unresolved cause before introducing horizons.
 
 ## Environment
 
@@ -61,9 +56,9 @@ Three defects in the class identity, all of which land on the master's closure c
 
 A class identity that carries (a) **what it is** — a stable class key, not a sliced message, with the
 expected/unexpected distinction preserved, (b) **when it was last seen**, and (c) **what fixed it**, once
-anything did. With that, the census separates live classes from fossils, a child can close a class that
-stopped recurring **without a code change**, and the master's closure pass has something to assert
-against. A wrapper name means the capture could not classify the failure, which is itself a class — "the
+anything did. The census preserves unresolved causes and distinguishes proven repairs only after
+deep investigation, reliable capture and exercised observation. Neither silence nor a date permits
+closure. A wrapper name means the capture could not classify the failure, which is itself a class — "the
 cause was not recorded" — never a name shared by six unrelated mechanisms.
 
 ### Root Cause
@@ -129,13 +124,14 @@ as seven unowned classes, so "fixed" and "abandoned" look identical.
 
 ### Approach
 
-Make the class a first-class, derivable object: a stable class key with an explicit
-**expected/unexpected** dimension; class-level first/last-seen bookkeeping; and a **fix boundary** —
-the commit or date at which a class was repaired, so a class whose newest record precedes its boundary
-is *closed as fixed* with the silent window as its assertion. Keep the existing pipeline in place
-(the hook, `experiences:dedup`, the agenda, the two producers all stay); this lane adds the layer they
-key on. Then use it to close this lane's own seven classes honestly, which is the acceptance test: a
-fossil must be closable **without a code change**.
+Loop 2 and `docs/design/perfection-loop-2026-10-12.md` govern implementation where
+they correct the original plan. No age-based class disposition or repair is implied.
+
+Investigate producer → detector → lifecycle → capture → consumer coverage first. Preserve all seven
+unresolved classes and their unknown original causes; correct known shape blind spots and carry
+available cause metadata. Then introduce stable identity, contextual expectedness and verified fix
+boundaries. A timestamp or missing wrapper cannot close an underlying defect. The shared review's
+producer-shaped pins and exposure-qualified observation contract govern this lane's acceptance.
 
 ### Steps
 
@@ -147,18 +143,18 @@ fossil must be closable **without a code change**.
    the commit that was supposed to end it.
 4. State the wrapper's new meaning: an unclassifiable failure is its own class ("cause not recorded"),
    never a name shared across tools, so the extractor's fallback becomes a signal rather than a label.
-5. Make the census and the agenda report live classes and **fossils with a boundary** separately, and
-   re-derive the master's census from it.
-6. Close this lane's seven classes on evidence: 36 records, newest 2026-09-09 against a fix boundary at
-   `FID-2026-0909-005`, no recurrence in the silent window — and if a wrapper record appears again,
-   reopen the lane instead of closing it.
+5. Make the census and agenda distinguish unresolved causes, verified repairs and incomplete
+   observation. Do not classify a class as dormant from age; preserve the old-to-new identity mapping.
+6. Investigate every one of the seven tool classes against current producers and claimed fixes.
+   Preserve unresolved causes and verify capture coverage before any observation assertion.
+   `FID-2026-0909-005` is an extractor-fix boundary, not proof the underlying failures were repaired.
 7. Only then write the lesson, against the instrument.
 
 ### Verification
 
-Planned: a test for the class key (expected/unexpected preserved; the wrapper maps to the "cause not
-recorded" class and never merges two tools into one class); a test for the horizon (a class whose newest
-record precedes its fix boundary reports as closed, one that follows reports as live); and a probe that
+Planned: producer-shaped detection/extraction and lifecycle capture tests; stable identity tests
+that preserve unknown causes; and horizon tests that refuse closure on a timestamp alone and require
+verified implementation, capture coverage and exercised observation. A recurrence invalidates repair. A probe
 recomputes the census over the real capture, exiting 1 when a class above the bar has no owner or a
 closure claim contradicts the records. The recurrence assertion for this lane is the silent window: no
 `tool result contains an error` record after the declared boundary.
@@ -173,6 +169,9 @@ horizon test, the census probe, the `scripts`/`common`/`agent-runtime` typecheck
 ## Perfection Loop
 
 ### Loop 1 — RED (2026-10-12)
+
+The original horizon-only conclusions below were refuted by Loop 2. They are retained as the
+audit trail of the mistaken premise, not as acceptance criteria or class dispositions.
 
 - **RED:** seven classes / 36 records rank in the master's census with no owner while their newest record
   is **2026-09-09** — the date of the fix that removed the wrapper — with 33 silent days since. Nothing
@@ -198,6 +197,24 @@ horizon test, the census probe, the `scripts`/`common`/`agent-runtime` typecheck
 - **CHANGE DELTA:** 0% source — this record made no code change; it is a converged pre-implementation
   design and one lane of the master's allocation.
 
+### Loop 2 — Deep investigation and self-correction (2026-10-12)
+
+- **RED:** Seven wrapper classes span SEVEN tools / 36 records / 23 sessions.
+  Six tools have later differently worded failures. `skill_manage` has zero later
+  records, but its `stderr`/exit-1 result is invisible to the capture predicate.
+  Batch errors, nonzero exits and actual missing-file reads also evade failure capture.
+- **GREEN:** Apply `docs/design/perfection-loop-2026-10-12.md`: investigate all seven,
+  repair producer-shaped detection/extraction and native cause transport before horizons,
+  narrow context-aware expectedness, and preserve immutable historical records and owners.
+  No old class becomes dormant or fixed because a wrapper stopped being emitted.
+- **AUDIT:** Shipped-helper probes reproduce each blind spot and a parser error at
+  line 404 being excluded. The old mirror suite passes because it tests agreement of
+  two incomplete helpers. Original first lines cannot recover underlying causes.
+- **ADVERSARIAL / missed question:** Can an extractor fix close the failures it hid?
+  No. Require producer → lifecycle → capture pins, verified exposure and explicit
+  ownership of unresolved underlying findings; the review names exact planned artifacts.
+- **CHANGE DELTA:** Planning correction only; all seven classes remain unresolved.
+
 ### Missed Questions
 
 1. **Should the class key be stored at capture time or derived at read time?** Stored, from the
@@ -207,15 +224,15 @@ horizon test, the census probe, the `scripts`/`common`/`agent-runtime` typecheck
    (unknown causes become the "cause not recorded" class, with their date range as the horizon), so the
    historical capture is not rewritten — it is re-read through the new identity, and the master's census
    is regenerated from it.
-3. **Does a fossil need a lesson?** No — a lesson is earned by a class that stopped recurring because of
-   a fix this repository made. A fossil's evidence is the fix boundary and the silent window, recorded in
-   the census.
+3. **Does an old class need investigation?** Yes, including the original lesson and claimed fix.
+   No dormant classification is supported here. A lesson describing a repair requires verified
+   implementation and exercised observation, not merely a boundary dated after old records.
 4. **Is the lane's own class set the acceptance test?** Yes, deliberately: if the layer cannot close
    these seven honestly, it cannot be trusted to close any other lane, and the master's closure condition
    stays unenforceable.
-5. **Should the master's ranking change?** Yes — it must rank live classes by volume and fossils
-   separately; the master's closure pass re-runs the allocation on the then-current capture (its own
-   Boundaries already say a class that appeared since the census must be owned first).
+5. **Should the master's ranking change?** Keep every unresolved class visible regardless of age.
+   Show observation coverage and investigated repair evidence alongside counts. Re-run allocation
+   without letting a renamed key or newly excluded message erase ownership.
 
 ### Code Verification Evidence
 
@@ -241,9 +258,8 @@ horizon test, the census probe, the `scripts`/`common`/`agent-runtime` typecheck
 
 ## Boundaries
 
-- The seven classes' closure is **contingent on the horizon existing**: until it does, this record
-  asserts only that they are unclosable, not that they are fixed. A new wrapper record after the
-  declared boundary reopens the lane.
+- All seven classes remain unresolved until their mechanisms, claimed fixes and capture coverage
+  are investigated. A horizon cannot replace that evidence. A renamed failure remains an owned issue.
 - No change is proposed to the capture hook's fail-open behaviour, to `experiences:dedup`'s
   recurrence threshold, or to the two downstream producers as part of this lane.
 - The 559 historical records are re-read, never rewritten; the capture stays append-only and immutable.

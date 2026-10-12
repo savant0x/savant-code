@@ -13,8 +13,9 @@
 
 ## Summary
 
-`dev/LEARNING-RULES.md` defines 32 canonical rules; the ledger references 11 of them, so 21
-named rules are cited by nothing while 26 of the 34 governed lessons name no rule at all. The
+`dev/LEARNING-RULES.md` defines 32 canonical rules; the ledger references eight of them, so 24
+named rules are cited by nothing. Three further legacy rule references have no catalogue heading;
+26 of the 34 governed lessons name no rule at all. The
 validator only asks whether a *named* rule has exactly one catalogue heading, so it is blind to
 both directions of the disagreement. Every governed lesson is `Scope: internal`, which leaves
 the schema's other two scope values unused and makes the shipped subset
@@ -39,8 +40,8 @@ The rule catalogue and the ledger describe the same rules and agree about almost
 - The catalogue is 193 lines defining **32** `## Rule:` headings, each carrying an
   `**Authority:**` (the module that owns the behaviour) and a `**Validation:**` (the check that
   proves it).
-- The ledger names **11** of those 32 rules: **8** in governed space and **3** in the legacy
-  narrative tail below the boundary. **21 rules are named by no lesson.**
+- The ledger carries **11** rule references: **8** name catalogue rules in governed space;
+  the **3** legacy-only names are absent from the catalogue. **24 catalogue rules have no lesson.**
 - Symmetrically, **26 of the 34 governed lessons carry no `Canonical rule`** — so most lessons
   assert an invariant that belongs to no named authority.
 - `validateCanonicalRuleCatalog` (`scripts/learnings-references.ts`) checks one property only:
@@ -136,6 +137,9 @@ examines a rule no lesson names, and nothing examines a lesson with no rule.
 
 ### Approach
 
+Loop 2 and `docs/design/perfection-loop-2026-10-12.md` govern implementation where
+they correct the original plan. No age-based class disposition or repair is implied.
+
 Make the rule — not the lesson — the loadable unit, and keep the two artifacts in step in both
 directions.
 
@@ -212,6 +216,23 @@ implementation pass, from the verification plan above.
   No — it defines the tier; `FID-2026-1012-010` performs the selection.
 - **CHANGE DELTA:** ~0% of implementation. This record is authoring-only (converged RED/GREEN
   plan); the change delta applies in the implementation pass.
+
+### Loop 2 — Current-tree review and self-correction (2026-10-12)
+
+- **RED:** Catalogue/lesson mismatch persists. A direct `findCandidates` probe returns
+  18 candidates linked to ONE unrelated rule: `library-complete-needs-a-named-consumer`.
+  `lessons-to-skills.ts:146` includes each lesson's own title in its matching input.
+  Exact join: eight of 32 catalogue rules referenced, three absent legacy names, 24 unused.
+- **GREEN:** Apply `docs/design/perfection-loop-2026-10-12.md`: investigate authority,
+  invariant, guard and validation for every rule before tier assignment; never demote
+  unresolved guidance by default. Public projection requires explicit public promotion.
+  Replace self-matching with evidence-backed class/rule links shared with FID-021.
+- **AUDIT:** The real candidate scan proves the targeting defect without drafting or
+  trusting a skill. Catalogue validation still checks named headings only.
+- **ADVERSARIAL / missed question:** Can a matching title prove relevance to a failure?
+  No. Pin unrelated-failure rejection and positive explicit links. Preserve all incident
+  evidence; exact tier/projection test paths are in the shared artifact table.
+- **CHANGE DELTA:** Planning correction only; no skill release or catalogue edit occurred.
 
 ### Missed Questions
 

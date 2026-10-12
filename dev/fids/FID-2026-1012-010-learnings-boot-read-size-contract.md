@@ -118,6 +118,9 @@ against are stated in `docs/design/Savant Self-Improving Architecture Plan.md:23
 
 ### Approach
 
+Loop 2 and `docs/design/perfection-loop-2026-10-12.md` govern implementation where
+they correct the original plan. No age-based class disposition or repair is implied.
+
 Insert a generated selection layer between the audit record and the boot read, and assert its
 size. The boot ritual keeps reading exactly one lessons file; that file becomes a **generated
 boot digest** holding rules and guards — not incident narrative — with a size assertion
@@ -183,6 +186,23 @@ record deliberately does not pretend to a receipt it has not earned.
   digest must select on a tier that record introduces, so the ordering is recorded in the
   review (§5).
 - **CHANGE DELTA:** n/a — pre-implementation record; no ledger content was edited by this pass.
+
+### Loop 2 — Current-tree review and self-correction (2026-10-12)
+
+- **RED:** At `8a063bd9`, the ledger is 76,775 JavaScript characters / 77,195 UTF-8
+  bytes / 1,175 split-line segments. `sdk/src/tools/read-files.ts` already emits
+  `[FILE_TOO_LARGE: ...]`; the silent-truncation premise is incorrect. The deep probe
+  returned 100,171 characters including the marker, with `hasToolResultError=false`.
+- **GREEN:** Govern implementation by `docs/design/perfection-loop-2026-10-12.md`.
+  Pin a 24,000-character digest limit, update mechanical grounding paths and embedded
+  aliases with the prompt, and reject incomplete/status-only reads as completion.
+  The title index aids navigation; it never exempts a file from Read 0-EOF before edit.
+- **AUDIT:** Full root typecheck exits 0. The actual injected SDK read reproduces the
+  marker/completion gap; `result-lifecycle.ts:132` credits path/content-shaped reads.
+- **ADVERSARIAL / missed question:** Can a visible marker still earn false grounding?
+  Yes. Pin the SDK → handler → grounding boundary, not only generated text. Planned
+  test/probe paths are in the shared review's artifact table; no repair is claimed.
+- **CHANGE DELTA:** Planning correction only. Status remains pre-implementation.
 
 ### Missed Questions
 

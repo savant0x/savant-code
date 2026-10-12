@@ -111,7 +111,7 @@ recorded decision or external dependency requires it.
 
 - [ ] **T122. Savant-Free removal.** Operator direction 2026-10-12 (Q12/Q5):
       the savant-free flag/feature is to be removed rather than repaired. The
-      known failing integration is therefore deferred, not fixed, and the
+      known failing integration remains open under the removal decision, and the
       aggregate `ci` leg stays red by design until the removal lands. Removal
       spans the workspace registration, the CLI surface, agents, common, docs,
       release tooling and the e2e suites, and needs its own FID.
@@ -171,10 +171,10 @@ per-class allocation — **every one of the 68 classes has exactly one owning ch
 records, zero unassigned** — and each child declares a recurrence assertion instead of a one-off
 verification, so the ledger records what was fixed, not what failed. All twelve records dated
 2026-10-12 (`-010` … `-021`) are children of the master, as are the two added with it (`-023`,
-`-024`); a child closes only when its classes stop recurring, and the master closes only when every
-child is closed. Nothing in the capture pipeline changes — the hook, `experiences:dedup`, the
-session-end review, `lessons:to-skills` and `lessons:features` keep running, because they are the
-instrument that finds the defects; the gap was that nothing acted on what they found.
+`-024`); class-lane closure requires investigated causes, reliable capture and exercised observation,
+while artifact/machinery children close on their own committed gates. All seven old wrapper classes
+remain unresolved: age and missing records do not establish dormancy. The pipeline keeps running,
+with FID-024 owning capture/expectedness corrections and FID-014 owning class-to-rule targeting.
 
 - [ ] **FID-2026-1012-022. Open-work master plan (build order + status board).** Sequences **all 24
       open register items** — the fifteen active records and the nine tasks without one — into three
@@ -215,9 +215,9 @@ instrument that finds the defects; the gap was that nothing acted on what they f
       **Automation level: 3.**
 
 - [ ] **FID-2026-1012-024. Failure classes have no horizon.** RC7 — **7 classes / 36 records**
-      whose newest record is 2026-09-09 (the date the wrapper was removed) with none in the 33
-      days since; the census cannot tell a fossil from a defect, so no child can close on evidence
-      → E7. **Automation level: 3.**
+      whose old wrapper stopped on 2026-09-09; this does not prove repair. Deep probes find later
+      differently worded failures, uncaptured exit-code/nested errors and overbroad expectedness.
+      Investigate all seven before any disposition → E7. **Automation level: 3.**
 
 ### Build orders (formalized as FIDs 2026-10-07)
 
@@ -235,6 +235,12 @@ wave start; the operator-gated items — the `0.0.36` cut, `T122`, `T186`, `T171
 past them.
 
 ## Machine-readable scope targets
+
+The current operator instruction authorizes the planning review across all fifteen active FIDs;
+implementation begins after that review. Evidence and per-record Loop 2 corrections are in
+`docs/design/perfection-loop-2026-10-12.md`. Additional implementation test/probe surfaces named
+there must be covered by the owning item's targets before source writes begin. Every original
+work item remains active, including the recorded level-1 consolidation and external-input holds.
 
 <!-- FID-2026-1001-003 step 5a: per-item write targets for the Law 2 gate
      (operator-approved 2026-10-02, "present before writing" honored). Each

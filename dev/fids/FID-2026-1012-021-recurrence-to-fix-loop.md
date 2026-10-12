@@ -146,6 +146,9 @@ Every session pays for that.
 
 ### Approach
 
+Loop 2 and `docs/design/perfection-loop-2026-10-12.md` govern implementation where
+they correct the original plan. No age-based class disposition or repair is implied.
+
 Treat a class at the promotion bar as a work item, not a note. Draft a FID for any class at or
 above the bar with no owning FID; require every fix to declare a **recurrence assertion** in the
 capture's own terms; keep the class open until the assertion holds; write the lesson only then;
@@ -213,6 +216,23 @@ fixed/verified set that `validate:repository` live-runs.
   carries the window and the reason it is recorded rather than inferred.
 - **CHANGE DELTA:** ~2% — one new record; no source change yet. The implementation touches the
   dedup/pipeline scripts, `scripts/validate-repository.ts` and the capture's class identity.
+
+### Loop 2 — Current-tree review and self-correction (2026-10-12)
+
+- **RED:** 27 is the lifetime sliced-census bar; the current bounded 14-day window
+  has 18 eligible patterns. Existing owners now cover all 68 recorded classes, but
+  coverage, capture correctness and actual repair are three different properties.
+- **GREEN:** Apply `docs/design/perfection-loop-2026-10-12.md`: consume 024's stable
+  registry/probe and 014's evidence-backed rule links. Draft idempotently, never infer
+  ownership from prose/token overlap, and gate every eligible unexpected class.
+  Replay only isolated copies; do not append fabricated failures to production JSONL.
+- **AUDIT:** `experiences:dedup` reports 23 frequency-qualified patterns, five below
+  the session bar. The real skill scan links all 18 to one unrelated rule. Detector
+  and pipeline PASSes cannot establish successful consumption or repair.
+- **ADVERSARIAL / missed question:** Must coverage wait for every child to close?
+  No: implementation dependencies differ from observation closure. Land the shared
+  probe before consumers, wire coverage after ownership, and keep unresolved work open.
+- **CHANGE DELTA:** Planning correction only. Planned artifacts/window are in the review.
 
 ### Missed Questions
 
