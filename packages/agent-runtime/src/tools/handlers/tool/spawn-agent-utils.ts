@@ -6,6 +6,7 @@ import {
 import { inheritRunGovernance } from './spawn-child-state'
 
 import type { SubagentPropagationSnapshot } from './execute-subagent'
+import type { LoopAgentStepsParams } from '../../../run-agent-step/types'
 import type { AgentTemplate } from '@savant-code/common/types/agent-template'
 import type {
   AgentRuntimeDeps,
@@ -26,6 +27,17 @@ export type SubagentContextParams = AgentRuntimeDeps &
      *  model the budget was resolved for (see the childOutputBudget guards
      *  in spawn-agents-child-run.ts / spawn-agent-inline.ts). */
     maxOutputTokens?: number
+    /**
+     * LF-002 (FID-2026-1012-008): the run's resolved compaction policy
+     * (`protocol.config.yaml` `compression`). It is model-independent, so
+     * every child inherits it. A child that omitted it silently fell back to
+     * default compaction and micro-compacted fetched research records out of
+     * context at 11% of the threshold while the parent's configuration
+     * disabled micro-compaction. The resolved context window is deliberately
+     * NOT part of this structure — it is model-scoped and travels through
+     * `resolveChildContextWindow` instead.
+     */
+    compression?: LoopAgentStepsParams['compression']
     fileContext: ProjectFileContext
     localAgentTemplates: Record<string, AgentTemplate>
     repoId: string | undefined
@@ -89,6 +101,10 @@ export function extractSubagentContextParams(
     // Core context params
     clientSessionId: params.clientSessionId,
     extraSavantCodeMetadata: params.extraSavantCodeMetadata,
+    // LF-002 (FID-2026-1012-008): the child loop builds its own
+    // ContextCompactor (loop-context.ts:239-250) from these fields; without
+    // them it compacted by default while the run had micro-compaction off.
+    compression: params.compression,
     fileContext: params.fileContext,
     localAgentTemplates: params.localAgentTemplates,
     repoId: params.repoId,
@@ -135,6 +151,27 @@ export function resolveChildOutputBudget(
   return modelRouteKey(childTemplate.model, childTemplate.modelRoute) ===
     modelRouteKey(parentTemplate.model, parentTemplate.modelRoute)
     ? maxOutputTokens
+    : undefined
+}
+
+/**
+ * LF-002 (FID-2026-1012-008): the run's resolved context window propagates to
+ * a child only when that child runs the model the window was resolved for —
+ * the same rule and the same reason as `resolveChildOutputBudget`. A foreign
+ * window would size the child's compaction thresholds against a limit its
+ * model does not have (the child previously fell back to 200,000 regardless
+ * of the run's real window), so a different-model child resolves its own.
+ * Both spawn sites call this; the policy half travels through
+ * `extractSubagentContextParams` because it is not model-scoped.
+ */
+export function resolveChildContextWindow(
+  childTemplate: AgentTemplate,
+  parentTemplate: AgentTemplate,
+  contextWindow: number | undefined,
+): number | undefined {
+  return modelRouteKey(childTemplate.model, childTemplate.modelRoute) ===
+    modelRouteKey(parentTemplate.model, parentTemplate.modelRoute)
+    ? contextWindow
     : undefined
 }
 

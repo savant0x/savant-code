@@ -14,6 +14,7 @@ import {
   executeSubagent,
   createAgentState,
   extractSubagentContextParams,
+  resolveChildContextWindow,
   resolveChildOutputBudget,
   withParentModel,
 } from './spawn-agent-utils'
@@ -69,6 +70,16 @@ export const handleSpawnAgentInline = (async (
     agentTemplate,
     parentAgentTemplate,
     params.maxOutputTokens,
+  )
+
+  // LF-002 (FID-2026-1012-008): same propagation as the spawn_agents path —
+  // the inline child also builds its own ContextCompactor. The compaction
+  // POLICY rides `extractSubagentContextParams` (model-independent); the
+  // resolved window is guarded by model route.
+  const childContextWindow = resolveChildContextWindow(
+    agentTemplate,
+    parentAgentTemplate,
+    params.contextWindow,
   )
 
   validateAgentInput(agentTemplate, agentType, prompt, spawnParams)
@@ -161,6 +172,7 @@ export const handleSpawnAgentInline = (async (
     agentState: childAgentState,
     fingerprintId,
     maxOutputTokens: childOutputBudget,
+    contextWindow: childContextWindow,
     parentSystemPrompt: system,
     parentTools: inheritedTools,
     onResponseChunk: (chunk) => {

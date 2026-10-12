@@ -10,6 +10,7 @@ import {
   createAgentState,
   executeSubagent,
   extractSubagentContextParams,
+  resolveChildContextWindow,
   resolveChildOutputBudget,
   withParentModel,
 } from './spawn-agent-utils'
@@ -76,6 +77,15 @@ export async function runSingleSubagent({
     agentTemplate,
     parentAgentTemplate,
     params.maxOutputTokens,
+  )
+
+  // LF-002 (FID-2026-1012-008): the child's ContextCompactor must size its
+  // thresholds from the run's resolved window (same-model guard as the budget
+  // above). The compaction POLICY rides `extractSubagentContextParams`.
+  const childContextWindow = resolveChildContextWindow(
+    agentTemplate,
+    parentAgentTemplate,
+    params.contextWindow,
   )
 
   validateAgentInput(agentTemplate, agentType, prompt, spawnParams)
@@ -145,6 +155,7 @@ export async function runSingleSubagent({
       agentState: childState,
       fingerprintId,
       maxOutputTokens: childOutputBudget,
+      contextWindow: childContextWindow,
       isOnlyChild,
       excludeToolFromMessageHistory: false,
       parentSystemPrompt,
