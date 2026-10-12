@@ -142,8 +142,9 @@ its metadata:
 
 Archive: closed by a path-scoped local commit that moves this record to
 `dev/fids/archive/`, expands the CHANGELOG entry, evicts the register item with
-its write targets, and indexes the closure in `dev/fids/archive/README.md`. No
-push was performed; the closure hash is recorded by the follow-up index commit.
+its write targets, and indexes the closure in `dev/fids/archive/README.md`. The
+closure commit is local `e6defd26` (no push was performed); this record and the
+archive index both name it, so the audit trail resolves without a reflog walk.
 
 ## Verification Gates
 

@@ -12,8 +12,8 @@ an audit record, not an active work queue.
   under T186), i.e. exactly root coverage minus the `sdk` leg, with the
   developer chains unchanged. All three declared gates passed live and the
   focused suites ran 21 pass / 0 fail. One documentary drift was corrected: the
-  record said 68 test expectations where the suite reports 69. No push was
-  performed; the closure hash is recorded in the record's Resolution.
+  record said 68 test expectations where the suite reports 69. Closed on local
+  commit `e6defd26`; no push was performed.
 
 ## 2026-10-11 — undeclared-import guard shipped as a release gate (T188)
 
