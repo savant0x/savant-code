@@ -222,4 +222,39 @@ describe('native-incomplete strike-one steering (FID-2026-0909-007)', () => {
       expect(content.split(SUFFIX).length - 1).toBe(1)
     })
   })
+
+  // FID-2026-1012-009: the vendor-SDK path classified a cut payload as
+  // truncated (no finish reason exists there). The runtime must keep that body
+  // and still append the tool-specific strike-1 steering on top of it, so the
+  // model sees both the right cause and the right corrective action.
+  describe('truncated-arguments class reaches the model intact', () => {
+    it('(j) keeps the split-the-work body and appends read_files steering', () => {
+      const errorMessages: Message[] = []
+      const result = handleStreamErrorChunk({
+        chunk: {
+          type: 'error',
+          message:
+            'Incomplete arguments for tool read_files: the arguments were cut ' +
+            'off before they finished parsing. Split the work into smaller ' +
+            "calls — keep each call's arguments compact.",
+          errorClass: 'native-incomplete',
+          toolName: 'read_files',
+          argumentsTruncated: true,
+        },
+        errorMessages,
+        loggerWarn: () => {},
+        agentTemplate: { ...getTemplate(), toolNames: ['read_files'] },
+        runId: 'test-run',
+      })
+
+      expect(result.hasNativeIncompleteToolCall).toBe(true)
+      expect(result.lastIncompleteToolName).toBe('read_files')
+      const content = errorContentOf(errorMessages[0])
+      expect(content).toContain('cut off before they finished parsing')
+      expect(content).toContain('read fewer files at a time')
+      expect(content).not.toContain(
+        'retry the tool call with a complete arguments object',
+      )
+    })
+  })
 })

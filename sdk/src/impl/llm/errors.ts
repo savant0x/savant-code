@@ -110,6 +110,16 @@ export function normalizeUnavailableToolStreamError(
   }
 }
 
+/**
+ * FID-2026-1012-009: the one piece of recovery advice for a cut payload.
+ * Both truncation causes (a provider's output-cap finish reason, and a JSON
+ * parse failure the classifier observed itself) prescribe the same action, so
+ * the sentence is written once (Law 13) and composed with a truthful cause
+ * clause rather than duplicated.
+ */
+const SPLIT_PAYLOAD_ADVICE =
+  " Split the work into smaller calls — keep each call's arguments compact."
+
 export function normalizeNativeToolCallStreamError(
   value: object,
 ): Extract<StreamErrorChunk, { errorClass: 'native-incomplete' }> | null {
@@ -122,9 +132,19 @@ export function normalizeNativeToolCallStreamError(
   // was exhausted mid-argument — re-sending the same payload truncates
   // again. Steer to split payloads instead of a straight retry.
   const isOutputCapHit = nativeError.finishReason === 'length'
-  const message = isOutputCapHit
-    ? `Incomplete arguments for tool ${nativeError.toolName}: the output token limit was reached before the arguments finished. Split the work into smaller calls — keep each call's arguments compact.`
-    : `Incomplete arguments for tool ${nativeError.toolName}; retry the tool call with a complete arguments object.`
+  // FID-2026-1012-009: the vendor-SDK classification path has no finish reason
+  // to offer, so it marks structural truncation itself (a JSON parse failure).
+  // Both conditions select the same advice — one wording per class (Law 13) —
+  // while the cause clause stays truthful about what was actually observed.
+  const isTruncated = isOutputCapHit || nativeError.argumentsTruncated === true
+  let message: string
+  if (isOutputCapHit) {
+    message = `Incomplete arguments for tool ${nativeError.toolName}: the output token limit was reached before the arguments finished.${SPLIT_PAYLOAD_ADVICE}`
+  } else if (isTruncated) {
+    message = `Incomplete arguments for tool ${nativeError.toolName}: the arguments were cut off before they finished parsing.${SPLIT_PAYLOAD_ADVICE}`
+  } else {
+    message = `Incomplete arguments for tool ${nativeError.toolName}; retry the tool call with a complete arguments object.`
+  }
   return {
     type: 'error',
     message,
@@ -133,5 +153,6 @@ export function normalizeNativeToolCallStreamError(
     ...(nativeError.finishReason !== undefined && {
       finishReason: nativeError.finishReason,
     }),
+    ...(isTruncated && { argumentsTruncated: true }),
   }
 }

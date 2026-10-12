@@ -4,6 +4,7 @@ import { getErrorObject } from '@savant-code/common/util/error'
 import {
   APICallError,
   InvalidToolInputError,
+  JSONParseError,
   NoSuchToolError,
   ToolCallRepairError,
   TypeValidationError,
@@ -47,6 +48,24 @@ export function classifyNativeToolCallError(
     return normalizeUnavailableToolStreamError(error.toolName)
   }
   return normalizeNativeToolCallStreamError(error)
+}
+
+/**
+ * FID-2026-1012-009: was this invalid tool call's input cut mid-document?
+ *
+ * `ai` core already separates the two cases for us. `safeParseJSON` returns a
+ * `JSONParseError` when the arguments never parsed at all and a
+ * `TypeValidationError` when well-formed arguments missed the tool's schema,
+ * and `doParseToolCall` attaches that result as the `InvalidToolInputError`'s
+ * `cause` (verified against the installed ai 5.0.122). Only the parse failure
+ * means the payload was cut — and therefore only that case may prescribe
+ * splitting the work instead of re-sending it. Fail-closed: any other shape,
+ * including a missing cause, keeps today's generic advice.
+ */
+export function isTruncatedToolInput(error: unknown): boolean {
+  if (!InvalidToolInputError.isInstance(error)) return false
+  const cause = (error as { cause?: unknown }).cause
+  return JSONParseError.isInstance(cause)
 }
 
 /**
@@ -108,9 +127,15 @@ export function classifyInvalidToolCall(chunk: {
   if (NoSuchToolError.isInstance(chunk.error)) {
     return normalizeUnavailableToolStreamError(toolName)
   }
+  // FID-2026-1012-009: the vendor path cannot supply a finish reason (the
+  // stream's `finish` part arrives after this classification), so a payload cut
+  // by the output budget used to be reported as if the model had written bad
+  // arguments — and answered with a re-send that truncates identically. The
+  // classifier's own structural evidence distinguishes the two cases.
   return normalizeNativeToolCallStreamError({
     type: 'native-incomplete',
     toolName,
+    ...(isTruncatedToolInput(chunk.error) && { argumentsTruncated: true }),
   })
 }
 

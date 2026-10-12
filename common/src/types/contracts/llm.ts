@@ -49,6 +49,12 @@ export type NativeToolCallError = {
    *  output-cap hit that cut the arguments mid-stream (FID-2026-0909-008).
    *  Present only when the provider actually sent a finish reason. */
   finishReason?: string
+  /** FID-2026-1012-009: the classifier's own structural evidence that the
+   *  arguments never finished — a JSON parse failure, as opposed to a
+   *  well-formed payload that failed the tool's schema. The vendor-SDK path
+   *  has no finish reason to offer, so this is how a cut payload reaches the
+   *  split-the-work advice instead of a plain re-send. */
+  argumentsTruncated?: boolean
 }
 
 export function isNativeToolCallError(
@@ -61,6 +67,14 @@ export function isNativeToolCallError(
   // FID-2026-0909-008: finishReason is optional, but a hostile provider
   // must not be able to smuggle a non-string through the guard.
   if ('finishReason' in value && typeof value.finishReason !== 'string') {
+    return false
+  }
+  // FID-2026-1012-009: same discipline for the truncation discriminator — a
+  // hostile provider must not smuggle a truthy non-boolean through it.
+  if (
+    'argumentsTruncated' in value &&
+    typeof value.argumentsTruncated !== 'boolean'
+  ) {
     return false
   }
   const candidate = value as {
@@ -86,6 +100,9 @@ export type StreamErrorChunk =
       /** Provider finish reason carried through from the native error
        *  ('length' = output-cap hit). See NativeToolCallError. */
       finishReason?: string
+      /** FID-2026-1012-009: the arguments were cut mid-document per the
+       *  classifier's structural evidence. See NativeToolCallError. */
+      argumentsTruncated?: boolean
     }
   | {
       type: 'error'
