@@ -1,5 +1,5 @@
-import path from 'node:path'
 import fs from 'node:fs'
+import path from 'node:path'
 
 import { captureModelRoute } from '@savant-code/common/providers/model-route'
 import { getInitialAgentState } from '@savant-code/common/types/session-state'
@@ -109,7 +109,10 @@ function paperHistory(): Message[] {
   ]
   for (let index = 1; index <= 8; index += 1) {
     messages.push(toolResult('search_papers', `p${index}`))
-    messages.push({ role: 'user', content: [{ type: 'text', text: 'keep going' }] })
+    messages.push({
+      role: 'user',
+      content: [{ type: 'text', text: 'keep going' }],
+    })
   }
   return messages
 }
@@ -138,10 +141,10 @@ describe('subagent compaction propagation (LF-002)', () => {
 
   it('keeps early research evidence in a child that inherited the policy', () => {
     const inherited = extractSubagentContextParams(spawnParams(COMPRESSION))
-    const retained = childCompactor(inherited.compression, 262_144).microCompact(
-      paperHistory(),
-      100_000,
-    )
+    const retained = childCompactor(
+      inherited.compression,
+      262_144,
+    ).microCompact(paperHistory(), 100_000)
 
     expect(retained.messagesCleared).toBe(0)
 
@@ -175,7 +178,9 @@ describe('subagent compaction propagation (LF-002)', () => {
 
     const inherited = resolveChildContextWindow(sameModel, parent, 262_144)
     expect(inherited).toBe(262_144)
-    expect(resolveChildContextWindow(pinnedModel, parent, 262_144)).toBeUndefined()
+    expect(
+      resolveChildContextWindow(pinnedModel, parent, 262_144),
+    ).toBeUndefined()
 
     // The resolved value is what sizes the child's thresholds: the inherited
     // window is strictly larger than the 200,000 fallback a foreign child gets.
@@ -199,10 +204,7 @@ describe('subagent compaction propagation (LF-002)', () => {
     ]
 
     for (const site of spawnSites) {
-      const source = fs.readFileSync(
-        path.join(import.meta.dir, site),
-        'utf8',
-      )
+      const source = fs.readFileSync(path.join(import.meta.dir, site), 'utf8')
       // A third spawn path that forgets either half fails here.
       expect(source).toContain('resolveChildContextWindow(')
       expect(source).toMatch(/contextWindow:\s*childContextWindow/)
@@ -228,7 +230,9 @@ describe('subagent compaction propagation (LF-002)', () => {
 // Sanity: the fixture really is over the micro-compaction pressure gate.
 describe('paperHistory fixture', () => {
   it('holds eight tool results', () => {
-    expect(paperHistory().filter((message) => message.role === 'tool')).toHaveLength(8)
+    expect(
+      paperHistory().filter((message) => message.role === 'tool'),
+    ).toHaveLength(8)
     expect(getInitialAgentState().agentId).toBeDefined()
   })
 })

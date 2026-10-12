@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-1012-003-researcher-acceptance-and-render-recovery.md`
 **ID:** FID-2026-1012-003
 **Severity:** high
-**Status:** verified
+**Status:** closed
 **Created:** 2026-10-12
 **Automation level:** 3
 **YAGNI-Compliance:** Verified
@@ -98,8 +98,8 @@ Declare every resulting test artifact as a bare test gate before verification.
 
 ### Verification Receipt
 
-- fingerprint: sha256:4a8954781e998685feeffbb169133a4c399ce65e37cfe2dbc25f036f17c18049
-- verified: 2026-10-12T17:09:18.787Z
+- fingerprint: sha256:6731e7b5ee302a04868f741038578117ca8aa7b0be3e584be39ef9663ed2b8d8
+- verified: 2026-10-12T20:44:48.679Z
 - typecheck cli: exit 0
 - typecheck packages/agent-runtime: exit 0
 - test packages/agent-runtime/src/__tests__/mcp-schema-recovery.test.ts: exit 0
@@ -185,11 +185,44 @@ Final runtime regression after the non-object-root pin: 2009 pass, zero fail.
 Registered panels also avoid eagerly parsing their unused generic Markdown dump
 on every streamed update; the existing parser now exclusively owns MCP output.
 
-NEEDS-REVIEW: the exact original offending subtree was not logged, and the
-operator's original prompt still needs acceptance on the repaired build.
-Aggregate bun run ci fails at the existing Savant-Free build; that disposition
-is operator-owned under T122. SDK and Windows CLI binary builds pass. These
-boundaries are active in SCOPE.md, so this record is verified, not closed.
+NEEDS-REVIEW, recorded honestly and not claimed as done: the exact original
+offending subtree was never logged (the old logs carry no component stack), so
+the repair is pinned by the shapes it covers — root and nested restored groups,
+the old raw-Markdown host shape, a failing raw-content serializer — rather than
+by reproducing that exact subtree; and the operator's original prompt still
+needs acceptance on the repaired build, which is the operator's own live check.
+
+The build boundary is now characterized instead of merely named. The
+aggregate `bun run ci` red is the FID-2026-0805-002 integrity gate refusing
+this machine's repo `.env.local`, which carries dev `NEXT_PUBLIC_*` values
+(`NEXT_PUBLIC_SAVANT_CODE_APP_URL=http://localhost:3000`): that is the leak
+class the gate exists to refuse, and the documented remedy is a clean shell.
+Verified live in that condition, the Savant-Free leg builds green —
+`SAVANT_FREE_MODE=true bun --no-env-file cli/scripts/build-binary.ts savant-free 0.0.0-dev`
+→ exit 0, `✅ Built savant-free.exe (win32-x64)` — which also runs the SDK
+build leg. T122 (repair the Savant-Free feature or remove it) remains an open,
+operator-owned register item; nothing here resolves it.
+
+### Closure
+
+- **Closed Date:** 2026-10-12
+- **Fix Description:** the schema, parser, panel and containment repairs were
+  implemented and committed earlier (`f3dd0eee`, formatter normalization
+  `285cf3fb`); this pass closes the record on its declared gates and records the
+  two open boundaries above, plus the build-disposition measurement.
+- **Tests Added:** `packages/agent-runtime/src/__tests__/mcp-schema-recovery.test.ts`,
+  `packages/agent-runtime/src/__tests__/researcher-scholars-execution.test.ts`,
+  `cli/src/components/__tests__/transcript-recovery.render.test.tsx`,
+  `cli/src/components/tools/__tests__/mcp-result.render.test.tsx` and the HUD
+  readiness fix inside `cli/scripts/hud-preview.test.tsx`.
+- **Verification Evidence:** eight declared gates exit 0 live at the archived
+  path (receipt below); full CLI suite 4136 pass / 18 skip / 0 fail, SDK 618
+  pass / 1 skip / 0 fail and agent-runtime 2020 pass / 0 fail, all three
+  re-measured live after the FID-2026-1012-007/-008 changes, plus root
+  typecheck, ESLint, Markdown lint, formatting, `quality:report` and
+  `validate:repository`.
+- **Archived:** `dev/fids/archive/FID-2026-1012-003-researcher-acceptance-and-render-recovery.md`, with its
+  CHANGELOG entry and an entry in `dev/fids/archive/README.md`.
 
 ### Loop 3 — repository gate normalization
 

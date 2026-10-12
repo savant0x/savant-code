@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-1012-004-lesson-driven-feature-pipeline.md`
 **ID:** FID-2026-1012-004
 **Severity:** high
-**Status:** verified
+**Status:** closed
 **Created:** 2026-10-12
 **Automation level:** 3
 **YAGNI-Compliance:** Verified
@@ -98,8 +98,8 @@ CI failure remains the existing Savant-Free disposition under T122.
 
 ### Verification Receipt
 
-- fingerprint: sha256:b2cdf4dd05421e8af116b4b52bc0a7a6308c7069a8fd42c2f800209ec98f951a
-- verified: 2026-10-12T18:15:24.820Z
+- fingerprint: sha256:73d496767b84b65e7aed8d03d0578af36f20eea7ae8b5c767325b4b9cfba07e1
+- verified: 2026-10-12T20:46:27.393Z
 - probe scripts/scripts-typecheck-check.ts: exit 0
 - probe scripts/lesson-feature-pipeline.ts: exit 0
 - test scripts/__tests__/lesson-feature-pipeline.test.ts: exit 0
@@ -161,10 +161,47 @@ fixes can change the gap's source without invalidating separate implementation
 proof. Closed FIDs must be archived, carry code evidence, and name a real commit.
 An actual Windows junction proves evidence cannot escape the repository.
 
-The existing aggregate CI blocker remains Savant-Free under T122. This record
-does not claim that the six candidate product fixes have been implemented, or
-that an agent observed the original terminal acceptance checks. The pipeline
-implementation is verified; publication and FID closure are not claimed.
+The aggregate `bun run ci` red is now characterized rather than merely named:
+the Savant-Free leg is refused by the FID-2026-0805-002 integrity gate because
+this machine's repo `.env.local` carries dev `NEXT_PUBLIC_*` values
+(`NEXT_PUBLIC_SAVANT_CODE_APP_URL=http://localhost:3000`) — the exact leak class
+that gate exists to refuse — and the same leg builds green (exit 0, live) under
+the documented clean-shell condition. T122 remains the operator-owned item
+(repair the feature or remove it); nothing here resolves or claims it.
+
+Two of the six candidates this pipeline surfaced are now implemented under
+their own closed records: `LF-001` → FID-2026-1012-007 (commit `303c6838`),
+`LF-002` → FID-2026-1012-008 (commit `7fbecd99`). `dev/feature-pipeline/candidates.json`
+and the regenerated report record them as `implemented` with their owning FIDs,
+and the checker passes over that state (`lesson-features: PASS (74 lessons, 6
+candidates)`). The remaining four (`LF-003`…`LF-006`) stay `draft`: their basis
+is investigation, and this pipeline's own contract makes readiness — not age —
+the implementation authorization.
+
+No agent observed the original terminal acceptance checks in this session, and
+publication is not claimed.
+
+### Closure
+
+- **Closed Date:** 2026-10-12
+- **Fix Description:** the pipeline is implemented and verified: 74 headed
+  lessons inventoried (55 schema-governed), a reviewed six-candidate store with
+  stable IDs, states, evidence snapshots and owning-FID validation, a read-only
+  report/check command with an explicit write mode, and bounded routing notes on
+  the production SessionEnd hook. `LF-001`/`LF-002` are implemented under
+  FID-2026-1012-007 and FID-2026-1012-008.
+- **Tests Added:** `scripts/__tests__/lesson-feature-pipeline.test.ts` and
+  `scripts/__tests__/session-end-review.test.ts` (22 pass, 0 fail), covering
+  candidate admission, source drift, traversal rejection, real hook reachability
+  and malformed-store isolation. The two product fixes carry their own suites in
+  records 007 and 008.
+- **Verification Evidence:** five declared gates exit 0 live at the archived
+  path (see the receipt below); full root typecheck, ESLint, Markdown lint,
+  formatting, `quality:report` and `validate:repository` pass. Ready evidence
+  expired on source drift exactly as designed when the `LF-001`/`LF-002` sources
+  changed, and both were re-admitted as owned implementations instead.
+- **Archived:** `dev/fids/archive/FID-2026-1012-004-lesson-driven-feature-pipeline.md`, with its
+  CHANGELOG entry and an entry in `dev/fids/archive/README.md`.
 
 ## Lessons Learned
 

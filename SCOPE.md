@@ -13,30 +13,6 @@ recorded decision or external dependency requires it.
 
 ## Open items
 
-- [ ] **FID-2026-1012-004. Lesson-driven feature pipeline.** Review all 74
-      lessons and the scholarly acceptance report. Preserve the ledger and
-      connect reviewed feature candidates to the existing session-end/FID loop.
-      Track source freshness, readiness, routing and implementation evidence;
-      distinguish existing guards from verified gaps and unverified proposals.
-      **Automation level: 3.** The operator replaced the proposed ledger cleanup
-      with a feature pipeline. No retirement, skill trust or publication occurs.
-
-- [ ] **FID-2026-1012-003. Researcher acceptance and render recovery.**
-      Investigate the recorded AppRoot text-host failure, contain transcript
-      rendering failures while preserving input and saved history, repair MCP
-      argument/schema handling, and reuse traffic-light panels for MCP results.
-      Verify with real OpenTUI rendering and hermetic runtime regression tests.
-      **Automation level: 3.** Evidence: the supplied run transcript and
-      `debug/cli.jsonl` at 2026-10-12T16:10:17.878Z.
-      Verification also owns the HUD capture's blank-frame race. The operator
-      authorized deletion of the disposable results.md transcript after review.
-      Normalize the 36 pre-existing files named by the full formatting gate;
-      confirm TypeScript AST identity against HEAD before committing them.
-      **Blocker:** aggregate `bun run ci` fails in the existing Savant-Free
-      build (T122's operator-owned disposition); the original failed session's
-      exact component stack was not captured. Repairs are implemented; retain
-      the item until live acceptance and the build disposition are resolved.
-
 - [ ] **Release v0.0.35.** Commit all current intended worktree changes, then
       publish all 189 existing local commits and the release commit via the
       public release pipeline. Verify the full release preview and gates first.
@@ -136,28 +112,6 @@ recorded decision or external dependency requires it.
       **Automation level: 1.**
 
 ## Machine-readable scope targets
-
-- FID-2026-1012-004: `scripts/lesson-feature-*.ts`,
-  `scripts/__tests__/lesson-feature-*.test.ts`, `scripts/session-end-review.ts`,
-  `package.json`, `dev/feature-pipeline/**`, `docs/lesson-feature-pipeline.md`,
-  `dev/fids/**`, `dev/session-summaries/**`
-
-- FID-2026-1012-003: `cli/src/components/**`, `cli/src/utils/savant-code-client.ts`,
-  `cli/scripts/hud-preview.tsx`,
-  `cli/src/utils/__tests__/**`, `packages/agent-runtime/src/tools/**`,
-  `packages/agent-runtime/src/__tests__/**`, `packages/agent-runtime/src/mcp.ts`,
-  `common/src/util/file.ts`, `agents/researcher/**`,
-  `dev/fids/**`, `dev/session-summaries/**`, `CHANGELOG.md`,
-  `cli/src/utils/entry-writers.ts`, `cli/src/utils/db-storage.ts`,
-  `cli/src/utils/openrouter-models/gateway.ts`, `cli/src/utils/provider-routing-activation.ts`,
-  `common/src/__tests__/project-file-tree.test.ts`, `common/src/project-file-tree.ts`,
-  `common/src/types/contracts/llm.ts`, `desktop/src/lib/**`,
-  `packages/agent-runtime/src/stream-recovery/recovery-executor.ts`,
-  `packages/code-map/src/parse.ts`, `packages/code-map/src/parse/limits.ts`,
-  `packages/connectors/src/runtime.ts`, `packages/connectors/src/__tests__/catalog-tools-surface.test.ts`,
-  `packages/database/src/**`, `packages/knowledge-graph/src/**`,
-  `sdk/src/impl/llm/stream-error-chunk.ts`, `sdk/src/run/execution/settlement.ts`,
-  `sdk/src/run/execution/__tests__/snapshot.test.ts`
 
 <!-- FID-2026-1001-003 step 5a: per-item write targets for the Law 2 gate
      (operator-approved 2026-10-02, "present before writing" honored). Each

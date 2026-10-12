@@ -6,7 +6,9 @@
       "id": "LF-001",
       "title": "Read complete large files through real paginated windows",
       "priority": "P1",
-      "state": "ready",
+      "state": "implemented",
+      "fid": "FID-2026-1012-007",
+      "commit": "303c6838",
       "basis": "observed-gap",
       "lessons": [
         "Files over the 100k-character tool read limit break every in-place edit path"
@@ -21,12 +23,12 @@
         {
           "path": "sdk/src/tools/read-files.ts",
           "sha256": "610a0f76523e3a355b4c80bb7d8f1a3636163d8ae7475fbb4c94bcd8dfa0c9f4",
-          "reason": "getFiles caps the original content before returning it."
+          "reason": "getFiles capped the original content before returning it — the pre-fix snapshot that justified this candidate; superseded by FID-2026-1012-007, which now windows this boundary."
         },
         {
           "path": "packages/agent-runtime/src/tools/handlers/tool/read-files.ts",
           "sha256": "6a775ab10ca051eb7f3ba21c1567ac7300c28dedad014d65ddedd040ad6ff8ec",
-          "reason": "handleReadFiles applies sliceLines after requestFiles returns."
+          "reason": "handleReadFiles applied sliceLines after requestFiles returned — the pre-fix snapshot; the handler now forwards the window and slices only embedded reads."
         }
       ]
     },
@@ -34,7 +36,9 @@
       "id": "LF-002",
       "title": "Carry compression policy and model context into child agents",
       "priority": "P1",
-      "state": "ready",
+      "state": "implemented",
+      "fid": "FID-2026-1012-008",
+      "commit": "7fbecd99",
       "basis": "observed-gap",
       "lessons": [
         "A new AgentState field is not a free edit — the compiler makes you classify it",
@@ -51,12 +55,12 @@
         {
           "path": "packages/agent-runtime/src/tools/handlers/tool/spawn-agent-utils.ts",
           "sha256": "d117df5b83ceaea75cc41da501b10ada37c0a73c6a7a627510b220400c75098f",
-          "reason": "extractSubagentContextParams omits the compression/context fields."
+          "reason": "extractSubagentContextParams omitted the compression/context fields — the pre-fix snapshot that justified this candidate; FID-2026-1012-008 now carries the policy and guards the window."
         },
         {
           "path": "packages/agent-runtime/src/run-agent-step/loop-context.ts",
           "sha256": "06ba850a3ff58af026b308107480e65a5120edae8d5019b83970acd583d9e04d",
-          "reason": "The compactor consumes those fields at child loop initialization."
+          "reason": "The compactor consumes those fields at child loop initialization — unchanged, and now fed from the propagated context."
         }
       ]
     },

@@ -3,6 +3,81 @@
 This directory contains closed or historically completed FIDs. Files here are
 an audit record, not an active work queue.
 
+## 2026-10-12 closure — researcher acceptance + lesson feature pipeline
+
+The two remaining active records closed on the operator's directive ("complete
+the work on the fids, once done properly close them"), each in its closure
+format with a fresh 8/8 and 5/5 receipt stamped LIVE at its archived path.
+Closing 004 also completed its own output: two of the six candidates it surfaced
+were implemented and closed as their own records (below), and the store was
+re-admitted to `implemented` with their owning FIDs.
+
+- [`FID-2026-1012-003-researcher-acceptance-and-render-recovery.md`](FID-2026-1012-003-researcher-acceptance-and-render-recovery.md)
+  (`verified` → `closed`): the schema, parser, panel and containment repairs were
+  already committed (`f3dd0eee` + the formatter normalization `285cf3fb`); this
+  pass closes the record on its eight declared gates (all exit 0 at the archived
+  path). Two boundaries are recorded honestly rather than claimed: the exact
+  original offending subtree was never logged (no component stack in the old
+  logs), so the repair is pinned by the shapes it covers, and the operator's
+  original prompt still needs their live acceptance on the repaired build. The
+  cited build blocker is now characterized by measurement: the aggregate
+  `bun run ci` red is the FID-2026-0805-002 integrity gate refusing this
+  machine's repo `.env.local` (dev `NEXT_PUBLIC_SAVANT_CODE_APP_URL`), and the
+  Savant-Free leg builds green (exit 0) under the documented clean-shell
+  condition. T122 stays the operator's open item; nothing here resolves it.
+  Re-measured after the 007/008 changes: CLI 4136 pass / 18 skip / 0 fail, SDK
+  618 / 1 skip / 0 fail, agent-runtime 2020 / 0 fail.
+
+- [`FID-2026-1012-004-lesson-driven-feature-pipeline.md`](FID-2026-1012-004-lesson-driven-feature-pipeline.md)
+  (`verified` → `closed`): the pipeline itself was already verified — 74 headed
+  lessons inventoried (55 schema-governed), a reviewed six-candidate store, a
+  read-only report/check command with an explicit write mode, and bounded
+  routing notes on the production SessionEnd hook (22 focused tests). Its
+  closure note records the store's own evolution: `LF-001` and `LF-002` were
+  implemented under records 007/008, are now `implemented` in
+  `dev/feature-pipeline/candidates.json` with their owning FIDs and commits, and
+  the checker passes over that state; the remaining four candidates stay `draft`
+  because the pipeline's contract makes readiness, not age, the authorization.
+
+## 2026-10-12 closure — read_files windows + child-agent context propagation
+
+Two P1 candidates from the lesson-driven feature pipeline
+(`LF-001`, `LF-002`) were implemented, gated and closed as their own records.
+
+- [`FID-2026-1012-007-read-files-window-at-fetch-boundary.md`](FID-2026-1012-007-read-files-window-at-fetch-boundary.md)
+  (`LF-001`, high): the tool advertised `offset`/`limit`, but the SDK capped a
+  file at 100,000 characters before the runtime sliced lines, so a window past
+  that prefix returned nothing. Measured: `dev/LEARNINGS.md` has 2,147 lines
+  and its capped prefix holds 1,552, so `offset: 1750` came back empty. The
+  window now travels in the file request (`RequestFilesFn` →
+  `getFileReadingUpdates` → `readFiles`/`getFiles`) and one shared,
+  newline-exact extractor (`common/src/util/read-window.ts`) serves it on the
+  complete content before the cap; overlapping pages reconstruct the file
+  byte-for-byte. The response is never sliced twice: the SDK boundary owns
+  filesystem reads (and hands the window to any `overrideTools.read_files`,
+  which owns its own response), while the runtime handler windows only the
+  embedded grounding reads that never cross that boundary. Traversal refusal,
+  gitignore filtering, the 10MB skip and the cap are unchanged and re-pinned.
+  Commits `303c6838` + `e3bea01e` (ceiling split). Receipt 9/9 live at the
+  archived path; 9 new extractor tests, 8 SDK-boundary tests, and the runtime
+  handler/forwarding pins, with common 853 / SDK 618 / agent-runtime 2020 pass.
+
+- [`FID-2026-1012-008-child-agent-compaction-and-window-propagation.md`](FID-2026-1012-008-child-agent-compaction-and-window-propagation.md)
+  (`LF-002`, high): a spawned child builds its own `ContextCompactor`, and the
+  spawn boundary's field whitelist dropped the run's `compression` policy and
+  its resolved `contextWindow` — so a child compacted with micro-compaction ON
+  (`microCompactEnabled ?? true`) while the run had it off, clearing fetched
+  research records at 11% of the threshold, and sized its thresholds from a
+  200,000 fallback (`contextWindow ?? 200_000`) instead of the model's real
+  window. The policy is model-independent and now travels with the child
+  context; the window rides a new `resolveChildContextWindow` guard (the exact
+  analogue of `resolveChildOutputBudget`) at both spawn sites, so a child
+  pinned to a different model still resolves its own. The propagation snapshot
+  deliberately stays identity/governance-only. Commit `7fbecd99` (suite
+  correction in `e3bea01e`); focused suite 6/6 including the control that
+  clears early records without the propagation and a static census over both
+  spawn sites; agent-runtime 2020 pass / 0 fail.
+
 ## 2026-10-12 closure — managed temporary scratchpad
 
 - [`FID-2026-1012-006-managed-temporary-scratchpad.md`](FID-2026-1012-006-managed-temporary-scratchpad.md)

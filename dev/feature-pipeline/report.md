@@ -11,7 +11,7 @@ Inventory: 74 headed lessons; 55 schema-governed.
 
 ### LF-001: Read complete large files through real paginated windows
 
-P1; ready; observed-gap.
+P1; implemented; observed-gap.
 
 The SDK truncates the whole file before the runtime applies line offsets. LEARNINGS line 1750 exists but is beyond the
   truncated prefix, so a valid offset returns empty. Preserve bounded responses by selecting the requested window at the
@@ -23,11 +23,11 @@ Acceptance:
 - The selected response remains capped; traversal, ignored-file and 10MB safety rules remain enforced.
 - Overlapping paginated reads reconstruct the complete file with a matching SHA-256.
 
-Owning FID: not routed.
+Owning FID: FID-2026-1012-007.
 
 ### LF-002: Carry compression policy and model context into child agents
 
-P1; ready; observed-gap.
+P1; implemented; observed-gap.
 
 The parent disables micro-compaction, but the child extractor does not forward compression or contextWindow. The child
   uses default compaction and a 200k context fallback, clearing fetched paper records from model context at 11% of the
@@ -39,7 +39,7 @@ Acceptance:
 - A same-model child receives the resolved context window; a different-model child resolves its own window.
 - A live-style scholarly sequence retains early paper records through synthesis with micro-compaction disabled.
 
-Owning FID: not routed.
+Owning FID: FID-2026-1012-008.
 
 ### LF-003: Prove durable save and resume with nested runtime state
 

@@ -1,5 +1,83 @@
 # Changelog
 
+## 2026-10-12 — Researcher acceptance and the lesson feature pipeline closed (FID-2026-1012-003, FID-2026-1012-004)
+
+### Changed
+
+- **FID-2026-1012-004 (`verified` → `closed`)** on the operator's directive. The
+  feature pipeline itself is unchanged and stays verified: 74 headed lessons
+  (55 schema-governed), six reviewed candidates, the read-only report/check
+  command with its explicit write mode, and bounded routing notes on the
+  production SessionEnd hook. Closing also landed its own output — see the
+  section above for the two implemented candidates.
+- **FID-2026-1012-003 (`verified` → `closed`)**: the researcher-acceptance and
+  render-recovery repairs (MCP schema preservation, typed argument recovery,
+  the shared traffic-light panel for namespaced tools, rich-text normalization
+  and per-group transcript containment) close on their eight declared gates,
+  all exit 0 at the archived path. Two boundaries are recorded rather than
+  claimed: the exact original offending subtree was never logged, so the repair
+  is pinned by the shapes it covers, and the operator's original prompt still
+  needs their live acceptance on the repaired build.
+- The cited build blocker was measured rather than restated: the aggregate
+  `bun run ci` red is the FID-2026-0805-002 integrity gate refusing this
+  machine's repo `.env.local` (dev `NEXT_PUBLIC_SAVANT_CODE_APP_URL`), and the
+  Savant-Free leg builds green under the documented clean-shell condition
+  (`SAVANT_FREE_MODE=true bun --no-env-file cli/scripts/build-binary.ts savant-free 0.0.0-dev`
+  → exit 0). **T122 remains an open, operator-owned item** — repair the
+  Savant-Free feature or remove it; nothing in this pass resolves it.
+- `SCOPE.md` drops the two closed items and their machine-readable targets, as
+  the register's own rule requires.
+
+## 2026-10-12 — read_files windows and child-agent context propagation (FID-2026-1012-007, FID-2026-1012-008)
+
+### Added
+
+- `common/src/util/read-window.ts` — one newline-exact line-window extractor
+  shared by the SDK's read boundary and the runtime handler. A window that ends
+  before EOF keeps its separator, so consecutive pages of a large file
+  concatenate back to the original content byte-for-byte (asserted with a
+  matching SHA-256 over a >100k-character file).
+- `RequestFilesFn` (`common/src/types/contracts/client.ts`) accepts an optional
+  `offset`/`limit` window, forwarded by
+  `packages/agent-runtime/src/get-file-reading-updates.ts` and served by
+  `sdk/src/run/tool-call.ts` → `sdk/src/tools/read-files.ts`. An
+  `overrideTools.read_files` implementation receives the window in its input and
+  owns its response.
+- `resolveChildContextWindow` (`spawn-agent-utils.ts`) — the model-route guard
+  that propagates the run's resolved context window to a child agent running
+  the same model, mirroring `resolveChildOutputBudget`.
+
+### Changed
+
+- `subagentContextParams` now carries the run's `compression` policy into every
+  child agent. The policy is model-independent, so a pinned-model child inherits
+  it too; the model-scoped window is deliberately kept out of the extractor and
+  travels through the guard instead.
+- Embedded grounding reads are windowed locally by the `read_files` handler; the
+  handler no longer slices a filesystem response, because re-slicing an
+  already-windowed response silently drops lines.
+- `sdk/src/run/require-cwd.ts` — `requireCwd` moved verbatim out of
+  `tool-call.ts` to keep the dispatcher under the 300-line absolute maximum.
+
+### Fixed
+
+- **`read_files` returned nothing for a window past the read cap
+  (FID-2026-1012-007).** `offset`/`limit` were applied after the SDK truncated a
+  file at `READ_FILES_MAX_CHARS`, so the tool's documented large-file escape
+  hatch was unreachable: `dev/LEARNINGS.md` has 2,147 lines, its capped prefix
+  holds 1,552, and `offset: 1750` came back empty while the lines were on disk.
+  The window is now served from the complete content at the fetch boundary and
+  the response is still capped; traversal, ignored-file and 10MB rules are
+  re-pinned for windowed reads. Commits `303c6838`, `e3bea01e`.
+- **Child agents compacted by default and sized thresholds from a fallback
+  (FID-2026-1012-008).** The spawn boundary's field whitelist dropped the run's
+  `compression` configuration and resolved `contextWindow`, so a child built its
+  `ContextCompactor` from `undefined`: micro-compaction defaulted ON
+  (`microCompactEnabled ?? true`) while the run had it off — clearing fetched
+  research records mid-synthesis at 11% of the threshold — and the window fell
+  back to 200,000 regardless of the model. Both now reach the child through the
+  routes their scoping demands. Commits `7fbecd99`, `e3bea01e`.
+
 ## 2026-10-12 — Managed temporary scratchpad (FID-2026-1012-006)
 
 ### Added
