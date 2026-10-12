@@ -1,6 +1,6 @@
 # Agents and Tools
 
-> **Last verified:** 2026-10-10 — source reads of the agent helper definitions,
+> **Last verified:** 2026-10-12 — source reads of the agent helper definitions,
 > `common/src/tools/constants.ts` (`toolNames` 59, including 4 Composio and 4
 > connector tools; `publishedTools` 38), and the tool executor.
 
@@ -23,7 +23,7 @@ Duties).
 | 5 | **Recorder** | `recorder` | FID | Create, track, archive FIDs. Update CHANGELOG | `write_file`, `read_files`, `glob`, `code_search`, `set_output` |
 | 6 | **Thinker** | `thinker` | Planning | Deep reasoning via sequential thinking engine | `sequentialthinking`, `end_turn` |
 | 7 | **Scout** | `scout` | Explore | File/code search, glob, read subtrees, context gathering | `glob`, `list_directory`, `read_files`, `read_subtree`, `set_output`, `query_blast_radius`, `query_node_edges`, `query_domain_clusters` |
-| 8 | **Researcher** | `researcher-web` / `researcher-docs` | Research | Web search, documentation lookup | `web_search`, `read_url`, `deep_research` (web) · `read_docs` (docs) |
+| 8 | **Researcher** | `researcher-web` / `researcher-docs` | Research | Web search, scholarly-literature search, documentation lookup | `web_search`, `read_url`, `deep_research` (web) · `scholars-search/search_papers`, `scholars-search/get_papers`, `scholars-search/find_similar_papers`, `scholars-search/citation_walk` (MCP) · `read_docs` (docs) |
 | 9 | **Scribe** | `scribe` | Docs | Session summaries, LESSONS.md, knowledge files | `read_files`, `write_file`, `glob`, `code_search`, `set_output` |
 | 10 | **Adversary** | `adversary` | ADVERSARIAL | Meta-verification: refutes Verifier FAILs, re-audits unevidenced PASSes, resolves citations; verdicts override (FID-2026-0805-004) | `read_files`, `code_search`, `glob`, `list_directory`, `set_output` |
 

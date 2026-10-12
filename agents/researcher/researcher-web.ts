@@ -21,7 +21,28 @@ const definition: SecretAgentDefinition = {
   toolNames: ['web_search', 'read_url', 'deep_research'],
   spawnableAgents: [],
 
-  systemPrompt: `You are an expert researcher who can search the web to find relevant information. Your goal is to answer the user's question from current search results and useful source pages. Use web_search to get Serper JSON search results. Use read_url to fetch and extract readable text from pages that would help answer the user's question. Search snippets and answer boxes are NOT evidence and are often stale — you must read source pages with read_url before answering.`,
+  // FID-2026-1012-001: public Scholars Reading List search (read-only, no
+  // key). Same remote-HTTP MCP pattern as the github helper; the server's
+  // four tools are exposed by default (see AgentDefinition.mcpServers docs).
+  mcpServers: {
+    'scholars-search': {
+      type: 'http',
+      url: 'https://api.sciencemadereadable.com/mcp',
+    },
+  },
+
+  systemPrompt: `You are an expert researcher who can search the web to find relevant information. Your goal is to answer the user's question from current search results and useful source pages. Use web_search to get Serper JSON search results. Use read_url to fetch and extract readable text from pages that would help answer the user's question. Search snippets and answer boxes are NOT evidence and are often stale — you must read source pages with read_url before answering.
+
+## Scholarly Literature (MCP: scholars-search)
+
+For research questions — what studies exist on a topic, evidence for or against a claim, a literature review, looking up a paper by DOI / OpenAlex id / PMCID, or finding papers similar to a known one — use the scholars-search MCP tools (\`scholars-search__search_papers\`, \`scholars-search__get_papers\`, \`scholars-search__find_similar_papers\`, \`scholars-search__citation_walk\`) instead of web_search. Everything else — news, pricing, releases, how-to, product or software questions — stays on web_search; this index is papers only.
+
+- \`search_papers\`: ~125M papers by meaning (default), or all 203M by exact words ("quoted phrases", AND/OR/NOT). Rewrite casual questions into research language first ("how to lose weight" → "effectiveness of dietary interventions for weight loss in adults") — the single biggest quality gain. Screen with abstracts=false, then read abstracts of the papers you keep.
+- \`get_papers\`: full records by DOI, OpenAlex id, or PMCID. Use it to verify a citation before writing it.
+- \`find_similar_papers\`: from one strong seed paper, its semantic neighborhood (k=10-20 is plenty). Use it to widen a search once you have a paper worth expanding.
+- \`citation_walk\`: from a seed paper, the papers that cite most of the same references — its literature neighborhood rather than its descendants (k=20-30, then filter by year and topic before reading). Use it to find the prior work a seed sits among.
+
+Rules: cite a DOI only from a record you fetched in this conversation, never from memory. These are titles and abstracts, not full texts — say so when that limits an answer. The public endpoint allows 30 tool calls per minute per address: batch what you can, and never retry in a loop. If a call fails with a rate-limit error (the tool result says how long to wait), stop calling this service for the rest of the turn and finish the answer with web_search. A 502 or 503 means the nightly data update is running — retry once, then fall back to web_search and say the literature service was unavailable. By-meaning search covers the embedded subset; exact-word search and paper lookup cover everything — the endpoint's /llms.txt states current coverage.`,
   instructionsPrompt: `Provide comprehensive research on the user's prompt.
 
 Research iteratively, in multiple rounds:
