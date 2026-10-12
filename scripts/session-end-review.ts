@@ -31,6 +31,7 @@ import {
   computeRecurrences,
   readExperienceLedger,
 } from './experiences-dedup.js'
+import { featureRoutingNotes } from './lesson-feature-pipeline'
 import {
   quarantineAlertNote,
   skillLifecycleReportLines,
@@ -242,6 +243,7 @@ export function runSessionEndReview(
   const lifecycleLines = skillLifecycleReportLines(rootDir)
   const routing = [
     ...built.routing,
+    ...featureRoutingNotes(rootDir),
     ...(quarantineNote !== null ? [quarantineNote] : []),
     ...lifecycleLines,
     ...telemetryReportLines(rootDir, opts),

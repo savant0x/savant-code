@@ -59,6 +59,7 @@
     "telemetry:feedback": "bun scripts/telemetry-feedback.ts",
     "session-end:review": "bun scripts/session-end-review.ts",
     "lessons:to-skills": "bun scripts/lessons-to-skills.ts",
+    "lessons:features": "bun scripts/lesson-feature-pipeline.ts",
     "learnings:retire": "bun scripts/learnings-retire.ts",
     "skills:evolve": "bun scripts/evolve-skills.ts",
     "quality:report": "bun scripts/quality-report.ts",

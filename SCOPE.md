@@ -13,6 +13,14 @@ recorded decision or external dependency requires it.
 
 ## Open items
 
+- [ ] **FID-2026-1012-004. Lesson-driven feature pipeline.** Review all 74
+      lessons and the scholarly acceptance report. Preserve the ledger and
+      connect reviewed feature candidates to the existing session-end/FID loop.
+      Track source freshness, readiness, routing and implementation evidence;
+      distinguish existing guards from verified gaps and unverified proposals.
+      **Automation level: 3.** The operator replaced the proposed ledger cleanup
+      with a feature pipeline. No retirement, skill trust or publication occurs.
+
 - [ ] **FID-2026-1012-003. Researcher acceptance and render recovery.**
       Investigate the recorded AppRoot text-host failure, contain transcript
       rendering failures while preserving input and saved history, repair MCP
@@ -124,6 +132,11 @@ recorded decision or external dependency requires it.
       **Automation level: 1.**
 
 ## Machine-readable scope targets
+
+- FID-2026-1012-004: `scripts/lesson-feature-*.ts`,
+  `scripts/__tests__/lesson-feature-*.test.ts`, `scripts/session-end-review.ts`,
+  `package.json`, `dev/feature-pipeline/**`, `docs/lesson-feature-pipeline.md`,
+  `dev/fids/**`, `dev/session-summaries/**`
 
 - FID-2026-1012-003: `cli/src/components/**`, `cli/src/utils/savant-code-client.ts`,
   `cli/scripts/hud-preview.tsx`,
