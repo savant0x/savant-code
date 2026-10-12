@@ -339,6 +339,7 @@ activation), and the child's id is recorded in this table when it exists.
 
 | Item | Chain · wave | Record | Status (2026-10-12) |
 |---|---|---|---|
+| FID-2026-1012-022 — this master (the index) | — | `-022` | open — closes last, when every child is closed and the allocation re-runs clean |
 | Local `0.0.36` development line | C0 | register item | open — dev-line maintenance live; the cut is operator-called |
 | T122 — Savant-Free removal | C1 | *drafted at wave start* | blocked — operator must call it |
 | T186 — typecheck/test legs | C2 | *drafted at wave start* | blocked — on T122 |
