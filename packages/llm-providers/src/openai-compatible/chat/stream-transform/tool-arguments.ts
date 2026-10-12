@@ -34,12 +34,29 @@ function hasRequiredToolKeys(
   )
 }
 
+/**
+ * True when the request actually declared this tool name (FID-2026-1012-002).
+ *
+ * Deliberately separate from the completeness predicate below: the two answer
+ * different questions. `isCompleteKnownToolCallArguments` asks "is this call
+ * executable?" and must keep failing closed for an undeclared name; this asks
+ * "was this tool offered at all?". Reporting the second condition as the first
+ * tells the model to shrink a payload that was never the problem, and no retry
+ * can satisfy it — the caller needs the distinction to classify the failure.
+ */
+export function isDeclaredToolName(
+  toolName: string,
+  requiredToolKeys: ReadonlyMap<string, readonly string[]>,
+): boolean {
+  return requiredToolKeys.has(toolName)
+}
+
 export function isCompleteKnownToolCallArguments(
   args: string,
   toolName: string,
   requiredToolKeys: ReadonlyMap<string, readonly string[]>,
 ): boolean {
-  if (!requiredToolKeys.has(toolName)) {
+  if (!isDeclaredToolName(toolName, requiredToolKeys)) {
     return false
   }
 

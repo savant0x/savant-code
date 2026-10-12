@@ -85,6 +85,31 @@ export function classifyChatGptOAuthStreamError<T>(params: {
   return 'fail-fast'
 }
 
+/**
+ * FID-2026-1012-002: the model named a tool the request never declared.
+ *
+ * This is a different failure from a truncated argument object, and the wording
+ * must say so: no payload change can fix a tool that was not offered, and the
+ * model can only recover by calling one of the tools it actually has. The
+ * runtime pairs this message with a corrective retry (see
+ * `tools/stream-parser/error-chunk.ts`) and a one-strike budget
+ * (`run-agent-step/loop/native-strikes.ts`) instead of the three-strike
+ * payload ladder.
+ */
+export function normalizeUnavailableToolStreamError(
+  toolName: string,
+): Extract<StreamErrorChunk, { errorClass: 'tool-unavailable' }> {
+  return {
+    type: 'error',
+    message:
+      `Tool ${toolName} is not available to this agent: the model called a tool ` +
+      'that was not offered for this step. Use one of the tools provided in ' +
+      "this step's tool list.",
+    errorClass: 'tool-unavailable',
+    toolName,
+  }
+}
+
 export function normalizeNativeToolCallStreamError(
   value: object,
 ): Extract<StreamErrorChunk, { errorClass: 'native-incomplete' }> | null {

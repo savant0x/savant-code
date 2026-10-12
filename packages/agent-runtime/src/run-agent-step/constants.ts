@@ -87,6 +87,36 @@ export function buildNativeToolCallExhaustedMessage(
 }
 
 /**
+ * FID-2026-1012-002: the unavailable-tool class gets ONE corrective retry
+ * instead of the payload ladder's budget. The strike counter includes the
+ * current step, so 2 means "the first occurrence steers with the agent's real
+ * tool list; the second fails". Payload advice is deliberately absent — the
+ * arguments were never the problem, and a tool the request never declared
+ * cannot be called by retrying it.
+ */
+export const TOOL_UNAVAILABLE_RECOVERY_MAX_STRIKES = 2
+
+/**
+ * FID-2026-1012-002: the exhausted message for the unavailable-tool class.
+ * The payload-split re-spawn guidance above is wrong here — it tells the parent
+ * to shrink a payload, when the failure was a tool the child never had — so
+ * this message names the class and the tools the agent actually holds.
+ */
+export function buildToolUnavailableExhaustedMessage(
+  toolName: string | undefined,
+  availableToolNames: readonly string[],
+): string {
+  const tool = toolName ? ` (tool: ${toolName})` : ''
+  const available =
+    availableToolNames.length > 0 ? availableToolNames.join(', ') : 'none'
+  return (
+    `Tool call rejected: the model used a tool this agent does not have${tool}. ` +
+    `Its available tools for this step were: ${available}. ` +
+    'Re-spawn with the work scoped to those tools; the tool it named cannot be used.'
+  )
+}
+
+/**
  * FID-2026-0819-004: return the appropriate steering message for a tool at
  * a given strike number. Strike 1 = hint, strike 2 = explicit, 3+ = example.
  * Falls back to the generic message for unknown tools.

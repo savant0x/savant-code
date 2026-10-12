@@ -168,7 +168,12 @@ describe('FID-2026-0912-005: invalid vendor tool-call classification', () => {
     expect(forwardedToolCalls).toHaveLength(0)
   })
 
-  test('classifies an invalid NoSuchToolError tool-call as native-incomplete', async () => {
+  // FID-2026-1012-002: an undeclared tool name is NOT an argument problem. This
+  // case used to be classified `native-incomplete` ("Incomplete arguments for
+  // tool mystery_tool"), which told the model to shrink a payload that was
+  // never the problem and spent the truncation ladder's strikes on a retry no
+  // wording can satisfy. It is now its own class.
+  test('classifies an invalid NoSuchToolError tool-call as tool-unavailable', async () => {
     const unknownToolPart: Part = {
       type: 'tool-call',
       toolCallId: 'call-2',
@@ -186,14 +191,27 @@ describe('FID-2026-0912-005: invalid vendor tool-call classification', () => {
     const { collected, streamError } = await collectChunks([unknownToolPart])
 
     expect(streamError).toBeNull()
-    const nativeError = collected.find(
+    const unavailableError = collected.find(
       (c) =>
         typeof c === 'object' &&
         c !== null &&
-        (c as { errorClass?: string }).errorClass === 'native-incomplete',
-    ) as { toolName?: string } | undefined
-    expect(nativeError).toBeDefined()
-    expect(nativeError?.toolName).toBe('mystery_tool')
+        (c as { errorClass?: string }).errorClass === 'tool-unavailable',
+    ) as { toolName?: string; message?: string } | undefined
+    expect(unavailableError).toBeDefined()
+    expect(unavailableError?.toolName).toBe('mystery_tool')
+    expect(unavailableError?.message).toContain(
+      'is not available to this agent',
+    )
+    // The truncation class must not be claimed for a name that was never
+    // offered: that wording is what sent the model into an unsatisfiable retry.
+    expect(
+      collected.some(
+        (c) =>
+          typeof c === 'object' &&
+          c !== null &&
+          (c as { errorClass?: string }).errorClass === 'native-incomplete',
+      ),
+    ).toBe(false)
 
     const forwardedToolCalls = collected.filter(
       (c) =>

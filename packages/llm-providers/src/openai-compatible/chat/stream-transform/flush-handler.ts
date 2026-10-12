@@ -1,4 +1,7 @@
-import { isCompleteKnownToolCallArguments } from './tool-arguments'
+import {
+  isCompleteKnownToolCallArguments,
+  isDeclaredToolName,
+} from './tool-arguments'
 
 import type { ChatStreamTransformerState } from './state'
 import type { StreamExtractor } from './types'
@@ -40,7 +43,21 @@ export function flushStream(params: {
       id: toolCall.id,
     })
 
-    if (
+    if (!isDeclaredToolName(toolCall.function.name, requiredToolKeys)) {
+      // FID-2026-1012-002: the model named a tool this request never offered.
+      // That is NOT an argument problem — the arguments may be perfectly
+      // well-formed — and it cannot be recovered by any retry, so it must not
+      // be reported as `native-incomplete` (the payload-steering class). The
+      // name-only class carries no finish reason: none of the payload advice
+      // applies to it.
+      controller.enqueue({
+        type: 'error',
+        error: {
+          type: 'tool-unavailable',
+          toolName: toolCall.function.name,
+        },
+      })
+    } else if (
       isCompleteKnownToolCallArguments(
         toolCall.function.arguments,
         toolCall.function.name,

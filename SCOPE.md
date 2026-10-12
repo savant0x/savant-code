@@ -49,6 +49,24 @@ recorded decision or external dependency requires it.
       the frontmatter addition belongs to the operator's next edit.
       **Automation level: 1.**
 
+- [ ] **FID-2026-1012-002. Unavailable-tool calls are misdiagnosed as argument truncation and killed by
+      the strike cap.** A tool name the request never declared is classified as an incomplete-arguments
+      cut (`isCompleteKnownToolCallArguments` returns false before it inspects the arguments), steered
+      with payload advice no retry can satisfy, and the run dies after three strikes naming a tool the
+      agent cannot call. Split the class end to end, give it a bounded recovery policy, remove the
+      subagent-addendum sentence that advertises tools the child lacks, and stop unrecognized
+      tool-call envelopes from leaking `cb_tool_name` JSON to the user.
+      **Automation level: 1** (implementation approval-gated; operator asked for root cause and options
+      first).
+
+- [ ] **FID-2026-1012-001. Scholars-search MCP integration into the Researcher persona.** Wire the
+      public Scholars Reading List search service into `researcher-web` through the existing
+      `mcpServers` remote-HTTP contract (the `github` helper's pattern): four read-only tools, no key,
+      30 calls/min per address. Pins the definition shape with a test and regenerates the bundled
+      agent artifact. Record converged; implementation of the code is blocked on approval of the
+      record.
+      **Automation level: 2.**
+
 ### Providers and routing
 
 - [ ] **T119. Provider account access and identity.** xKiro acceptance needs
@@ -149,5 +167,19 @@ recorded decision or external dependency requires it.
   `cli/src/utils/constants.ts`, `dev/scratchpad/**`, `debug/**`,
   `firebase-debug.log`, `database.db`, `database.db-wal`, `database.db-shm`,
   `website/index-2.html`, `SCOPE.md`, `CHANGELOG.md`, `dev/session-summaries/**`
+- FID-2026-1012-002: `packages/llm-providers/src/openai-compatible/chat/stream-transform/**`,
+  `sdk/src/impl/llm/**`, `common/src/types/contracts/llm.ts`,
+  `packages/agent-runtime/src/tools/stream-parser/**`,
+  `packages/agent-runtime/src/util/stream-xml-parser.ts`,
+  `packages/agent-runtime/src/run-agent-step/**`,
+  `packages/agent-runtime/src/templates/strings.ts`,
+  `dev/scratchpad/active/fid-1012-002-*`, `dev/fids/FID-2026-1012-002-*.md`, `SCOPE.md`,
+  `CHANGELOG.md`, `dev/LEARNINGS.md`
+- FID-2026-1012-001: `agents/researcher/researcher-web.ts`,
+  `agents/researcher/researcher-web.test.ts`,
+  `cli/src/agents/bundled-agents.generated.ts`,
+  `cli/src/agents/bundled-agents.generated-data/**`, `docs/agents-and-tools.md`,
+  `docs/agents.md`, `docs/index.md`, `docs/features.md`, `AGENTS.md`,
+  `dev/fids/FID-2026-1012-001-*.md`, `SCOPE.md`, `CHANGELOG.md`
 - T186: (no write surface — blocked pending the operator ruling on the gate chain)
 - T187: (no write surface — operator-owned skills surface)

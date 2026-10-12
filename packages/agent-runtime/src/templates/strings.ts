@@ -73,6 +73,34 @@ export async function formatPrompt(
   }
   return prompt
 }
+/**
+ * FID-2026-1012-002: the phase-gating note must describe the tools THIS child
+ * has, never the catalog. The previous sentence named `run_readonly_command`
+ * and `read_files`/`glob`/`list_directory`/`code_search` as "available in ALL
+ * phases" inside a message whose first sentence said the opposite — for the
+ * Thinker (whose allowlist is `sequentialthinking`/`end_turn`) it read as an
+ * invitation to call `read_files`, which is the call the recovery ladder then
+ * killed the run over. Naming only the child's own tools keeps the phase
+ * explanation honest.
+ */
+const PHASE_GATED_TOOL_NOTES: Record<string, string> = {
+  write_file: 'write_file (green/self_correct)',
+  str_replace: 'str_replace (green/self_correct)',
+  apply_patch: 'apply_patch (green/self_correct)',
+  run_terminal_command: 'run_terminal_command (green/audit/self_correct)',
+  sequentialthinking: 'sequentialthinking (Thinker only)',
+}
+
+function buildPhaseAvailabilityNote(toolNames: readonly string[]): string {
+  const gated = toolNames
+    .map((toolName) => PHASE_GATED_TOOL_NOTES[toolName])
+    .filter((note): note is string => note !== undefined)
+  if (gated.length === 0) {
+    return 'Phase availability: none of your tools are phase-gated — all of them are available in every phase, including idle and red.'
+  }
+  return `Phase availability: of the tools you have, ${gated.join(', ')} are phase-gated. Every other tool in your list is available in every phase, including idle and red.`
+}
+
 type StringField = 'systemPrompt' | 'instructionsPrompt' | 'stepPrompt'
 
 export async function getAgentPrompt<T extends StringField>(
@@ -127,7 +155,7 @@ export async function getAgentPrompt<T extends StringField>(
   if (promptType.type === 'instructionsPrompt' && agentState.agentType) {
     // Add subagent tools message when using parent's tools for prompt caching
     if (useParentTools) {
-      addendum += `\n\nYou are a subagent that only has access to the following tools: ${toolNames.length > 0 ? toolNames.join(', ') : 'none'}. Previously referenced tools in the conversation may have only been available to the parent agent. Do not attempt to use any other tools besides these listed here. You will only get tool errors if you do. Each tool's full description (params, examples, constraints) is in your tool schemas — read it before calling.\n\nPhase availability: only write_file, str_replace, apply_patch (green/self_correct), run_terminal_command (green/audit/self_correct), and sequentialthinking (Thinker only) are phase-gated. Every other tool — including run_readonly_command (read-only shell inspection: git status/diff/log, grep, ls, typecheck, tests, with \`&&\` chaining) and read_files/glob/list_directory/code_search — is available in ALL phases including idle and red.`
+      addendum += `\n\nYou are a subagent that only has access to the following tools: ${toolNames.length > 0 ? toolNames.join(', ') : 'none'}. Previously referenced tools in the conversation may have only been available to the parent agent. Do not attempt to use any other tools besides these listed here. You will only get tool errors if you do. Each tool's full description (params, examples, constraints) is in your tool schemas — read it before calling.\n\n${buildPhaseAvailabilityNote(toolNames)}`
       addendum += `\n\n## Tool-Call Protocol\n\n${getToolCallFormatInstructions()}`
 
       // For subagents with inheritSystemPrompt, include full spawnable agents spec

@@ -22,6 +22,10 @@ describe('loopAgentSteps - runAgentStep vs runProgrammaticStep behavior', () => 
       const llmOnlyTemplate = {
         ...getTemplate(),
         handleSteps: undefined,
+        // FID-2026-1012-002: the truncation budget applies to a tool the agent
+        // actually has. Without the declaration this call is the
+        // unavailable-tool class and takes the one-retry path instead.
+        toolNames: [...getTemplate().toolNames, 'run_terminal_command'],
       }
       getBaseParams().promptAiSdkStream = async function* () {
         incrLlmCallCount()
@@ -90,6 +94,10 @@ describe('loopAgentSteps - runAgentStep vs runProgrammaticStep behavior', () => 
       const llmOnlyTemplate = {
         ...getTemplate(),
         handleSteps: undefined,
+        // FID-2026-1012-002: declared, so the 3-strike streak arithmetic below
+        // still describes the truncation ladder rather than the
+        // unavailable-tool class.
+        toolNames: [...getTemplate().toolNames, 'sequentialthinking'],
       }
       getBaseParams().promptAiSdkStream = async function* () {
         incrLlmCallCount()
@@ -120,6 +128,48 @@ describe('loopAgentSteps - runAgentStep vs runProgrammaticStep behavior', () => 
       // call 1's streak.
       expect(getLlmCallCount()).toBe(5)
       expect(result.output.type).toBe('error')
+    })
+
+    // FID-2026-1012-002: the class this record separates from truncation. A
+    // name the agent does not have gets ONE corrective retry (strike 1 steers
+    // with the agent's real tool list, strike 2 fails) instead of spending the
+    // payload ladder's three strikes on a call that can never succeed — and the
+    // failure names the class instead of prescribing a payload split.
+    it('gives an undeclared tool one corrective retry, then fails honestly', async () => {
+      const llmOnlyTemplate = {
+        ...getTemplate(),
+        handleSteps: undefined,
+        // Deliberately narrow: read_files is NOT offered to this agent.
+        toolNames: ['code_search'],
+      }
+      getBaseParams().promptAiSdkStream = async function* () {
+        incrLlmCallCount()
+        yield {
+          type: 'error' as const,
+          message: 'Incomplete arguments for tool read_files',
+          errorClass: 'native-incomplete' as const,
+          toolName: 'read_files',
+        }
+        return promptSuccess(`unavailable-${getLlmCallCount()}`)
+      }
+
+      const result = await loopAgentSteps({
+        ...getBaseParams(),
+        agentTemplate: llmOnlyTemplate,
+        localAgentTemplates: { 'test-agent': llmOnlyTemplate },
+      })
+
+      // One corrective retry: two LLM calls, not the three-strike ladder.
+      expect(getLlmCallCount()).toBe(2)
+      expect(result.output.type).toBe('error')
+      if (result.output.type === 'error') {
+        expect(result.output.message).toContain('does not have')
+        expect(result.output.message).toContain('(tool: read_files)')
+        expect(result.output.message).toContain('code_search')
+        // The truncation advice would send the parent to shrink a payload that
+        // was never the problem.
+        expect(result.output.message).not.toContain('split into smaller steps')
+      }
     })
   })
 })

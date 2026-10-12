@@ -203,9 +203,16 @@ export async function runLoopIteration(params: {
       currentAgentState,
       consecutiveNativeIncompleteSteps,
       lastIncompleteToolName,
+      // FID-2026-1012-002: the failure class is decided against THIS agent's
+      // allowlist. A name the agent does not have is an unsatisfiable retry, so
+      // it must not consume the truncation ladder's three strikes.
+      availableToolNames: agentTemplate.toolNames,
     })
     if (strike.exhausted) {
-      stepErrorMessage = buildStepExhaustedError(lastIncompleteToolName)
+      stepErrorMessage = buildStepExhaustedError(
+        lastIncompleteToolName,
+        agentTemplate.toolNames,
+      )
     }
     shouldEndTurn = false
   } else {

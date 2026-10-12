@@ -74,7 +74,14 @@ describe('native-incomplete strike-one steering (FID-2026-0909-007)', () => {
         chunk: nativeIncompleteChunk('code_search'),
         errorMessages,
         loggerWarn: () => {},
-        agentTemplate: getTemplate(),
+        // FID-2026-1012-002: the payload ladder belongs to tools the agent
+        // actually has — the template must declare the tool it calls, or the
+        // call is the unavailable-tool class (corrective text, no payload
+        // advice) instead.
+        agentTemplate: {
+          ...getTemplate(),
+          toolNames: [...getTemplate().toolNames, 'code_search'],
+        },
         runId: 'test-run',
       })
 
@@ -85,19 +92,70 @@ describe('native-incomplete strike-one steering (FID-2026-0909-007)', () => {
       )
     })
 
-    it('(d) keeps the mapped-tool hint at strike 1 (read_files)', () => {
+    it('(d) keeps the mapped-tool hint at strike 1 (read_files, declared)', () => {
       const errorMessages: Message[] = []
       handleStreamErrorChunk({
         chunk: nativeIncompleteChunk('read_files'),
         errorMessages,
         loggerWarn: () => {},
-        agentTemplate: getTemplate(),
+        agentTemplate: {
+          ...getTemplate(),
+          toolNames: [...getTemplate().toolNames, 'read_files'],
+        },
         runId: 'test-run',
       })
 
       expect(errorContentOf(errorMessages[0])).toContain(
         'read fewer files at a time',
       )
+    })
+
+    // FID-2026-1012-002: the two questions the completeness helper used to
+    // answer as one. A tool this agent does not have is not a payload problem:
+    // the correction names the tools it does have, and the payload advice that
+    // no retry can satisfy is never emitted.
+    it('(h) reports the unavailable-tool class instead of payload truncation', () => {
+      const errorMessages: Message[] = []
+      const result = handleStreamErrorChunk({
+        chunk: nativeIncompleteChunk('read_files'),
+        errorMessages,
+        loggerWarn: () => {},
+        agentTemplate: { ...getTemplate(), toolNames: ['code_search', 'write_file'] },
+        runId: 'test-run',
+      })
+
+      expect(result.hasNativeIncompleteToolCall).toBe(true)
+      expect(result.lastIncompleteToolName).toBe('read_files')
+      const content = errorContentOf(errorMessages[0])
+      expect(content).toContain('read_files is not available to this agent')
+      expect(content).toContain(
+        'Your available tools for this step are: code_search, write_file',
+      )
+      expect(content).not.toContain('read fewer files at a time')
+      expect(content).not.toContain('file list is too large')
+      expect(content).not.toContain('read the next file in a separate call')
+    })
+
+    it('(i) keeps the provider-classified message and still names the real tools', () => {
+      const errorMessages: Message[] = []
+      handleStreamErrorChunk({
+        chunk: {
+          type: 'error',
+          message:
+            'Tool read_files is not available to this agent: the model called a tool that was not offered for this step.',
+          errorClass: 'tool-unavailable',
+          toolName: 'read_files',
+        },
+        errorMessages,
+        loggerWarn: () => {},
+        agentTemplate: { ...getTemplate(), toolNames: ['code_search'] },
+        runId: 'test-run',
+      })
+
+      const content = errorContentOf(errorMessages[0])
+      expect(content).toContain('is not available to this agent')
+      expect(content).toContain('code_search')
+      expect(content).not.toContain('split the work into multiple smaller')
     })
   })
 

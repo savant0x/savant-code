@@ -1,3 +1,4 @@
+import { isUnavailableToolError } from '@savant-code/common/types/contracts/llm'
 import { buildArray } from '@savant-code/common/util/array'
 import { getErrorObject } from '@savant-code/common/util/error'
 import {
@@ -8,7 +9,10 @@ import {
   TypeValidationError,
 } from 'ai'
 
-import { normalizeNativeToolCallStreamError } from './errors'
+import {
+  normalizeNativeToolCallStreamError,
+  normalizeUnavailableToolStreamError,
+} from './errors'
 
 /**
  * FID-2026-0913-002: pure error-branch helpers extracted from
@@ -30,10 +34,16 @@ type AiSdkErrorChunk = {
  * Returns null for non-object errors and hostile shapes (the factory's own
  * contract).
  */
-export function classifyNativeToolCallError(
-  error: unknown,
-): ReturnType<typeof normalizeNativeToolCallStreamError> {
+export function classifyNativeToolCallError(error: unknown):
+  | ReturnType<typeof normalizeNativeToolCallStreamError>
+  | ReturnType<typeof normalizeUnavailableToolStreamError> {
   if (typeof error !== 'object' || error === null) return null
+  // FID-2026-1012-002: the provider transform already separated the name-only
+  // class; route it to its own message instead of letting it fall through to
+  // the generic agent-retryable path (which loses the class entirely).
+  if (isUnavailableToolError(error)) {
+    return normalizeUnavailableToolStreamError(error.toolName)
+  }
   return normalizeNativeToolCallStreamError(error)
 }
 
@@ -82,9 +92,20 @@ export function isAgentRetryableToolError(error: unknown): boolean {
  */
 export function classifyInvalidToolCall(chunk: {
   toolName: unknown
-}): ReturnType<typeof normalizeNativeToolCallStreamError> {
+  error?: unknown
+}):
+  | ReturnType<typeof normalizeNativeToolCallStreamError>
+  | ReturnType<typeof normalizeUnavailableToolStreamError> {
   const toolName =
     typeof chunk.toolName === 'string' ? chunk.toolName : 'unknown'
+  // FID-2026-1012-002: `ai` core marks an undeclared tool name with
+  // NoSuchToolError and a truncated/ill-typed argument object with
+  // InvalidToolInputError. Discarding `error` here — as this function used to —
+  // made the two indistinguishable, so every undeclared name was reported to
+  // the model as an oversized payload.
+  if (NoSuchToolError.isInstance(chunk.error)) {
+    return normalizeUnavailableToolStreamError(toolName)
+  }
   return normalizeNativeToolCallStreamError({
     type: 'native-incomplete',
     toolName,

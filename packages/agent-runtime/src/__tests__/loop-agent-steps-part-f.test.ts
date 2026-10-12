@@ -27,6 +27,10 @@ describe('loopAgentSteps - runAgentStep vs runProgrammaticStep behavior', () => 
       const llmOnlyTemplate = {
         ...getTemplate(),
         handleSteps: undefined,
+        // FID-2026-1012-002: the truncation ladder applies to a tool the agent
+        // actually has; an undeclared name is the unavailable-tool class (one
+        // corrective retry), not this ladder.
+        toolNames: [...getTemplate().toolNames, 'sequentialthinking'],
       }
       getBaseParams().promptAiSdkStream = async function* () {
         incrLlmCallCount()
@@ -194,6 +198,9 @@ describe('loopAgentSteps - runAgentStep vs runProgrammaticStep behavior', () => 
       const llmOnlyTemplate = {
         ...getTemplate(),
         handleSteps: undefined,
+        // FID-2026-1012-002: declared, so this is a genuine truncation of a tool
+        // the agent has — the case the payload steering exists for.
+        toolNames: [...getTemplate().toolNames, 'run_terminal_command'],
       }
 
       getBaseParams().promptAiSdkStream = async function* () {
@@ -237,6 +244,12 @@ describe('loopAgentSteps - runAgentStep vs runProgrammaticStep behavior', () => 
       const llmOnlyTemplate = {
         ...getTemplate(),
         handleSteps: undefined,
+        // FID-2026-1012-002: this test is about a tool unknown to the RUNTIME
+        // (provider tool-set drift) while still being one the agent declares —
+        // that is why the drift warning fires and the truncation ladder still
+        // applies. Leaving it undeclared would instead pin the new
+        // unavailable-tool class and make the assertion vacuous.
+        toolNames: [...getTemplate().toolNames, 'not_a_real_tool'],
       }
 
       getBaseParams().promptAiSdkStream = async function* () {

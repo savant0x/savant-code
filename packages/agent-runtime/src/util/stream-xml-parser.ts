@@ -5,15 +5,23 @@
  * Handles partial tags at chunk boundaries using a stateful approach.
  */
 
-import { toolNameParam, toolXmlName } from '@savant-code/common/tools/constants'
+import { toolNameParam } from '@savant-code/common/tools/constants'
+
+// FID-2026-1012-002: the tag vocabulary and the alias/foreign recognition
+// helpers live in `./stream-xml-parser-envelope` (extracted when this module
+// crossed the 300-line ceiling; one definition of each tag).
+import {
+  endToolTag,
+  findForeignToolCallTag,
+  legacyEndToolTag,
+  legacyStartToolTag,
+  normalizeEnvelopeTags,
+  startToolTag,
+} from './stream-xml-parser-envelope'
 
 import type { JSONValue } from '@savant-code/common/types/json'
 
 // Use flexible tag matching without requiring specific newlines
-const startToolTag = `<${toolXmlName}>`
-const endToolTag = `</${toolXmlName}>`
-const legacyStartToolTag = '<tool_call>'
-const legacyEndToolTag = '</tool_call>'
 
 export type ParsedToolCall = {
   toolName: string
@@ -27,6 +35,11 @@ export type StreamParserState = {
   insideToolCall: boolean
   /** Whether we're discarding an unsupported legacy tool-call block */
   insideLegacyToolCall: boolean
+  /**
+   * FID-2026-1012-002: close tag of the foreign block being discarded, when the
+   * opening tag was not the legacy `<tool_call>` form.
+   */
+  foreignCloseTag?: string
 }
 
 export type LegacyToolCallFilterState = {
@@ -133,7 +146,7 @@ export function parseStreamChunk(
   }
 
   // Combine buffer with new chunk
-  let text = state.buffer + chunk
+  let text = normalizeEnvelopeTags(state.buffer + chunk)
   state.buffer = ''
 
   let filteredText = ''
@@ -141,12 +154,16 @@ export function parseStreamChunk(
 
   while (text.length > 0) {
     if (state.insideLegacyToolCall) {
-      // Unsupported legacy calls are discarded and never executed.
-      const endIndex = text.indexOf(legacyEndToolTag)
+      // Unsupported legacy/foreign calls are discarded and never executed —
+      // FID-2026-1012-002: including an unrecognized envelope that carries
+      // protocol JSON, which must not reach the user as prose.
+      const closeTag = state.foreignCloseTag ?? legacyEndToolTag
+      const endIndex = text.toLowerCase().indexOf(closeTag.toLowerCase())
 
       if (endIndex !== -1) {
-        text = text.slice(endIndex + legacyEndToolTag.length)
+        text = text.slice(endIndex + closeTag.length)
         state.insideLegacyToolCall = false
+        state.foreignCloseTag = undefined
       } else {
         state.buffer = text
         text = ''
@@ -171,30 +188,51 @@ export function parseStreamChunk(
         text = ''
       }
     } else {
-      // We're outside a tool call. Select whichever supported/legacy start tag
-      // appears first so an unsupported block cannot leak into visible text.
+      // We're outside a tool call. Select whichever supported/legacy/foreign
+      // start tag appears first so an unsupported block cannot leak into
+      // visible text (FID-2026-0918-era rule, extended by FID-2026-1012-002 to
+      // every tool-call-shaped envelope, not just the two known names).
       const canonicalStartIndex = text.indexOf(startToolTag)
       const legacyStartIndex = text.indexOf(legacyStartToolTag)
+      const foreign = findForeignToolCallTag(text)
+      const foreignStartIndex = foreign?.index ?? -1
       const hasCanonicalStart = canonicalStartIndex !== -1
       const hasLegacyStart = legacyStartIndex !== -1
 
-      if (
-        hasLegacyStart &&
-        (!hasCanonicalStart || legacyStartIndex < canonicalStartIndex)
-      ) {
-        filteredText += text.slice(0, legacyStartIndex)
-        text = text.slice(legacyStartIndex + legacyStartToolTag.length)
-        state.insideLegacyToolCall = true
-      } else if (hasCanonicalStart) {
-        filteredText += text.slice(0, canonicalStartIndex)
-        text = text.slice(canonicalStartIndex + startToolTag.length)
+      const earliestStart = [
+        { index: canonicalStartIndex, kind: 'canonical' as const },
+        { index: legacyStartIndex, kind: 'legacy' as const },
+        { index: foreignStartIndex, kind: 'foreign' as const },
+      ]
+        .filter((candidate) => candidate.index !== -1)
+        .sort((a, b) => a.index - b.index)[0]
+
+      if (earliestStart?.kind === 'canonical') {
+        filteredText += text.slice(0, earliestStart.index)
+        text = text.slice(earliestStart.index + startToolTag.length)
         state.insideToolCall = true
+      } else if (earliestStart?.kind === 'legacy') {
+        filteredText += text.slice(0, earliestStart.index)
+        text = text.slice(earliestStart.index + legacyStartToolTag.length)
+        state.insideLegacyToolCall = true
+      } else if (earliestStart?.kind === 'foreign') {
+        filteredText += text.slice(0, earliestStart.index)
+        text = text.slice(earliestStart.index + (foreign?.length ?? 0))
+        state.insideLegacyToolCall = true
+        state.foreignCloseTag = `</${foreign?.name ?? ''}>`
       } else {
-        // No complete start tag - check whether either tag is split at the
-        // chunk boundary. Keep the longest suffix so the next chunk can finish it.
+        // No complete start tag - check whether a tag is split at the chunk
+        // boundary. Keep the longest suffix so the next chunk can finish it,
+        // including an unfinished `<...` of any shape.
+        const unterminatedTag = (() => {
+          const lastOpen = text.lastIndexOf('<')
+          if (lastOpen === -1) return 0
+          return text.indexOf('>', lastOpen) === -1 ? text.length - lastOpen : 0
+        })()
         const partialStart = Math.max(
           findPartialTagMatch(text, startToolTag),
           findPartialTagMatch(text, legacyStartToolTag),
+          unterminatedTag,
         )
         if (partialStart > 0) {
           filteredText += text.slice(0, -partialStart)

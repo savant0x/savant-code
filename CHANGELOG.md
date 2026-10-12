@@ -1,5 +1,36 @@
 # Changelog
 
+## 2026-10-12 — Unavailable-tool calls are no longer misdiagnosed as argument truncation (FID-2026-1012-002)
+
+### Fixed
+
+- The OpenAI-compatible stream transform answered two questions with one predicate:
+  `isCompleteKnownToolCallArguments` returned `false` for a tool name the request never declared
+  *before* it looked at the arguments, so a call with perfectly well-formed JSON was emitted as
+  `native-incomplete` and the model was told to send a complete argument object — a remedy no retry can
+  satisfy. The vendor path lost the same distinction one layer later, where `classifyInvalidToolCall`
+  read only the tool name and discarded the `ai`-core `NoSuchToolError` that said otherwise. A new
+  `tool-unavailable` class now carries the name-only failure end to end, with its own honest message
+  and a one-retry budget (`TOOL_UNAVAILABLE_RECOVERY_MAX_STRIKES = 2`; the counter includes the current
+  step) instead of the truncation ladder's three strikes.
+- A tool-restricted subagent was also *invited* to call tools it does not have: the subagent addendum's
+  phase-gating sentence named `run_readonly_command` and `read_files`/`glob`/`list_directory`/
+  `code_search` as "available in ALL phases" inside a message whose first sentence said the opposite.
+  The note is now derived from the child's own allowlist, and the allowlist-blind drift check in
+  `packages/agent-runtime/src/tools/stream-parser/error-chunk.ts` compares against the agent's tools,
+  so the class is visible in logs and the ledger instead of silent.
+- Protocol markup reaching the user as prose: the parser recognized only the canonical envelope and one
+  legacy name, so an observed `<SAVANT_TOOL_CALL>` block — a name that has never existed in this
+  repository's history — was passed through with its `cb_tool_name` JSON intact. Known aliases and case
+  variants now normalize to the canonical envelope, and any other tool-call-shaped envelope is
+  discarded rather than rendered.
+- The reported run died at `loop-iteration.ts` naming a `read_files` payload problem for an agent whose
+  tool list is `sequentialthinking`/`end_turn`. The RED-first probe
+  (`dev/scratchpad/active/fid-1012-002-unavailable-tool-probe.ts`) failed with four named issues before
+  the change and passes now; three pre-existing suite fixtures that called tools their template never
+  declared were corrected to declare them, since the truncation ladder they pin applies only to a tool
+  the agent actually has.
+
 ## 2026-10-12 — System review: twenty findings repaired and verified (FID-2026-1011-006)
 
 ### Fixed

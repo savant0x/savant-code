@@ -15,6 +15,32 @@ import type { Message } from '../messages/savant-code-message'
 import type { generateText, streamText, ToolCallPart } from 'ai'
 import type z from 'zod/v4'
 
+/**
+ * A tool name the request never declared (FID-2026-1012-002).
+ *
+ * The completeness predicate asks whether a call is executable; this is the
+ * different condition "the model named a tool that was not offered", which no
+ * amount of payload splitting or retrying can satisfy. Kept as its own error
+ * class so the runtime can steer and budget it differently from a genuine
+ * mid-JSON truncation.
+ */
+export type UnavailableToolError = {
+  type: 'tool-unavailable'
+  toolName: string
+}
+
+export function isUnavailableToolError(
+  value: object,
+): value is UnavailableToolError {
+  if (!('type' in value) || !('toolName' in value)) {
+    return false
+  }
+  const candidate = value as { type: string; toolName: string }
+  return (
+    candidate.type === 'tool-unavailable' && typeof candidate.toolName === 'string'
+  )
+}
+
 export type NativeToolCallError = {
   type: 'native-incomplete'
   toolName: string
@@ -59,6 +85,16 @@ export type StreamErrorChunk =
       /** Provider finish reason carried through from the native error
        *  ('length' = output-cap hit). See NativeToolCallError. */
       finishReason?: string
+    }
+  | {
+      type: 'error'
+      message: string
+      /** FID-2026-1012-002: the model named a tool this request never
+       *  declared. Distinct from `native-incomplete` because the recovery
+       *  action differs — name the available tools, do not advise a smaller
+       *  payload. */
+      errorClass: 'tool-unavailable'
+      toolName: string
     }
 
 export type StreamChunk =
