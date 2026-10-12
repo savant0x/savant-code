@@ -1,6 +1,7 @@
 ---
 name: release-workflow
 description: Release cycle conventions including CHANGELOG format, README maintenance, version bumping, and git workflow.
+version: 0.1.0
 ---
 
 # Release Workflow Standards

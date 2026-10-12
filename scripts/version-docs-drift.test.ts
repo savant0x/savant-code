@@ -174,6 +174,33 @@ describe('documented version surfaces (FID-2026-0919-023)', () => {
     expect(drift[0]?.hint).toContain('release-callout body')
   })
 
+  // Reproduced at the 0.0.36 bump (2026-10-12): the working copy of
+  // CHANGELOG.md is CRLF, the insert anchor was LF-only, and `updateDocSurfaces`
+  // reported the file as changed after writing it back byte-identical. The next
+  // bump then inherited a README blurb label one release behind.
+  test('a CRLF CHANGELOG still opens the new version heading', () => {
+    const root = createRoot('0.0.22')
+    writeFileSync(
+      path.join(root, 'CHANGELOG.md'),
+      '# Changelog\r\n\r\n## Unreleased — 2026-10-11\r\n\r\n- thing\r\n',
+    )
+    const changed = updateDocSurfaces(root, '0.0.22', '0.0.23', '2026-10-12')
+    const changelog = readFileSync(path.join(root, 'CHANGELOG.md'), 'utf8')
+    expect(changelog).toContain('## 0.0.23 — 2026-10-12')
+    expect(changelog).toContain('# Changelog\r\n\r\n## 0.0.23')
+    expect(changed).toContain('CHANGELOG.md')
+  })
+
+  test('a second identical call reports no CHANGELOG write', () => {
+    const root = createRoot('0.0.22')
+    writeFileSync(path.join(root, 'CHANGELOG.md'), '# Changelog\r\n')
+    updateDocSurfaces(root, '0.0.22', '0.0.23', '2026-10-12')
+    const before = readFileSync(path.join(root, 'CHANGELOG.md'), 'utf8')
+    const second = updateDocSurfaces(root, '0.0.23', '0.0.23', '2026-10-12')
+    expect(second).not.toContain('CHANGELOG.md')
+    expect(readFileSync(path.join(root, 'CHANGELOG.md'), 'utf8')).toBe(before)
+  })
+
   test('callout drift is not reported before both sides exist (fresh repo)', () => {
     // createRoot writes a bare `# Changelog` with no released section — there
     // is nothing for the README to mirror yet, so the comparison must stay

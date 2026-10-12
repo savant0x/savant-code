@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.0.36 — 2026-10-12
+
+> **v0.0.36** — **local development line, not yet published** (npm `latest` is
+> still v0.0.35). This bump opens the dated heading so post-release work
+> accumulates in one place, per the no-unreleased-accumulators ruling: the
+> researcher-acceptance and lesson-feature-pipeline closures, the managed
+> scratchpad and provider-inventory passes, and everything else that lands before
+> the v0.0.36 cut. Release notes are written here at cut time; nothing in this
+> section ships until then.
+
 ## 2026-10-12 — Researcher acceptance and the lesson feature pipeline closed (FID-2026-1012-003, FID-2026-1012-004)
 
 ### Changed

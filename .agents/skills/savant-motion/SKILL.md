@@ -15,6 +15,7 @@ description: >
   landing page", "interactive landing page", "make my brand a scroll
   experience", "a unique scroll site", or any request for a site that should
   feel like an experience rather than a document.
+version: 0.1.0
 ---
 
 # savant-motion

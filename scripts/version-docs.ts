@@ -120,11 +120,24 @@ export function updateDocSurfaces(
   // release notes accumulate beneath it and the release ships it as-is.
   const header = `## ${newVersion} — ${today}`
   if (!changelog.includes(`## ${newVersion}`)) {
-    fs.writeFileSync(
-      changelogPath,
-      changelog.replace(/^# Changelog\n/, `# Changelog\n\n${header}\n`),
-    )
-    changed.push('CHANGELOG.md')
+    // The anchor used to be LF-only (`^# Changelog\n`). `.gitattributes`
+    // declares `*.md text eol=lf`, but a Windows working copy is CRLF until
+    // git renormalizes it, so the insert silently matched nothing — and the
+    // file was rewritten byte-identical while still being reported as changed
+    // (reproduced at the 0.0.36 bump, 2026-10-12). Preserve the file's own line
+    // ending and only report a write that actually changed it.
+    const eol = changelog.includes('\r\n') ? '\r\n' : '\n'
+    const anchor = /^# Changelog\r?\n/
+    if (anchor.test(changelog)) {
+      const opened = changelog.replace(
+        anchor,
+        `# Changelog${eol}${eol}${header}${eol}`,
+      )
+      if (opened !== changelog) {
+        fs.writeFileSync(changelogPath, opened)
+        changed.push('CHANGELOG.md')
+      }
+    }
   }
 
   // T94 (operator ruling 2026-10-03: "it's part of the release script system"):

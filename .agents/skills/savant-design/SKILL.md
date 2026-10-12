@@ -1,6 +1,7 @@
 ---
 name: savant-design
 description: Savant Agent Design Constitution — hard gates, advisories, and evidence-based adversarial review for design-related agent work (interfaces, UI polish, typesetting, audits). Agent governance only; does not alter Savant's own UI or HTML export.
+version: 0.1.0
 ---
 
 # Savant Agent Design Constitution

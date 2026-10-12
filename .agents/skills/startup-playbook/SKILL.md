@@ -1,6 +1,7 @@
 ---
 name: startup-playbook
 description: "Evidence-grounded founder operating system derived from Sam Altman's Startup School 2026 interview: use AI leverage to raise ambition, exploit fast technology shifts without abandoning business fundamentals, build evidence-updated conviction and compounding relationships, and evaluate safety, power, and human agency."
+version: 0.1.0
 ---
 
 # Ambitious AI Startups: Leverage, Conviction, and Distributed Power

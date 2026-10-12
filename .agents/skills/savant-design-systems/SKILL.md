@@ -5,6 +5,7 @@ license: Apache-2.0
 metadata:
   built-in-count: "74"
   default-id: savant-cyberpunk
+version: 0.1.0
 ---
 
 # Savant Design Systems

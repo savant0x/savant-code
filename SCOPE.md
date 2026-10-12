@@ -13,17 +13,17 @@ recorded decision or external dependency requires it.
 
 ## Open items
 
-- [ ] **Release v0.0.35.** Commit all current intended worktree changes, then
-      publish all 189 existing local commits and the release commit via the
-      public release pipeline. Verify the full release preview and gates first.
-      **Automation level: 3.**
-
-- [ ] **T185. Public-release content and bloat audit.** Compare README/docs with
-      current code, commands, package publication, and validation gates. Review
-      the identified debug logs, generated databases, duplicate website file,
-      and scratchpad; preserve user-owned resources and evidence cited by active
-      FIDs. Complete safe stale-content fixes and approved cleanup, then run
-      repository, hygiene, lint, formatting, and version checks.
+- [ ] **Local v0.0.36 development line.** `v0.0.35` shipped on 2026-10-11 (GitHub
+      release published, npm `latest` = 0.0.35), which made this item's previous
+      text — publish 189 local commits for v0.0.35 — stale; it is replaced here.
+      Operator ruling 2026-10-12 (Q1/Q2): bump to 0.0.36 system-wide, do **not**
+      cut the release today, keep every post-release commit local on `main`, and
+      let it accumulate under `## 0.0.36` until the cut is called. Local commits
+      are permitted without asking; pushing `main` stays release-only. The bump
+      landed in this pass (`VERSION`, the 17 synchronized manifests,
+      `protocol.config.yaml` project.version, `bun.lock`, the four desktop
+      surfaces, the CHANGELOG heading with its callout, and the documented
+      version surfaces; `version:check` PASS).
       **Automation level: 3.**
 
 - [ ] **T186. Two registered workspaces sit outside every typecheck and test
@@ -34,26 +34,35 @@ recorded decision or external dependency requires it.
       and neither workspace declares a `typecheck` script. The doc surfaces
       asserting "all 13 workspaces" were corrected this pass to state the real
       coverage.
+      **Operator direction 2026-10-12 (Q13):** since `savant-free` is being
+      removed, the correct path is (1) land the T122 removal — workspace
+      registration, CLI surface, release tooling and e2e suites — under its own
+      FID, then (2) add the remaining `scripts/tmux` leg, at which point the
+      chains cover every registered workspace. Until the removal lands the
+      coverage note above stays accurate as written.
       **Blocker:** adding a leg changes the fail-closed release gate battery
-      (`protocol.config.yaml` `type_check`/`test` plus the root scripts), and
-      `savant-free`'s disposition is operator-owned under T122 — both need an
-      operator ruling. **Automation level: 1.**
+      (`protocol.config.yaml` `type_check`/`test` plus the root scripts), and the
+      removal is operator-owned under T122. **Automation level: 1.**
 
-- [ ] **T187. Five trusted skills carry no `version` frontmatter.**
-      `bun run skills:check` reports 0 errors / 35 warnings, five of them
-      `missing 'version' frontmatter (legacy default 0.1.0; add it on the next
-      edit)` for `release-workflow`, `savant-design`, `savant-design-systems`,
-      `savant-motion`, and `startup-playbook`.
-      **Blocker:** `.agents/skills/**` is the operator-only release surface
-      (`/skills trust`); an agent write to a SKILL.md is a skills mutation, so
-      the frontmatter addition belongs to the operator's next edit.
+- [ ] **T187. Remaining skills carry no `version` frontmatter.** Operator
+      authorization 2026-10-12 (Q8): the five named skills — `release-workflow`,
+      `savant-design`, `savant-design-systems`, `savant-motion`,
+      `startup-playbook` — now carry `version: 0.1.0`, taking `skills:check` from
+      35 to 30 warnings. The rule still fires for the six `coding-*` language
+      skills, and the original count was itself understated: the remaining
+      version warnings are not five but the whole hand-written set. Finishing
+      them needs the same explicit operator authorization, because
+      `.agents/skills/**` is the operator-only release surface (`/skills trust`).
       **Automation level: 1.**
 
 ### Providers and routing
 
-- [ ] **T119. Provider account access and identity.** xKiro acceptance needs
-      an operator-provided paid account; a possible fourth provider needs its
-      name or URL. No purchase is authorized. **Automation level: 1.**
+- [ ] **T119. Provider live-list probes (no purchase).** Operator ruling
+      2026-10-12 (Q15): no provider is funded — providers are tested over free
+      endpoints, and a provider the operator has stated as added is already
+      confirmed live and real; what remains is a live model-list probe. That
+      withdraws the previous "needs an operator-provided paid xKiro account"
+      blocker. **Automation level: 3** for the probe.
 
 - [ ] **T175. Sweep control-manifest authorship + control-armed re-run.**
       Open remainder of archived `FID-2026-1007-016`: the seam is built, but
@@ -64,6 +73,10 @@ recorded decision or external dependency requires it.
       `FID-2026-1007-016` Loops 2 and 4.
       **Blocker:** operator manifest content, funding, ToS, budget, naming,
       and rotation source — all external to the repository.
+      **Operator response 2026-10-12 (Q16):** "need more info first" — each of
+      the six inputs has to be explained concretely, with the decision it gates,
+      before it can be answered. The explanation is written up in
+      `dev/operator-decisions.md` (Q16) and the question stays open.
       **Automation level: 1** (no agent action; operator-owned until then).
 
 - [ ] **T171. Harvested-candidate auto-wire.** Open remainder of archived
@@ -72,7 +85,12 @@ recorded decision or external dependency requires it.
       provider; design is in archived `FID-2026-1008-004` Loop 4.
       **Blocker:** operator ruling on the stricter verdict gate (exclude
       `open-relay`) and consent shape (inline wizard with Enter per step
-      versus one confirmation). **Automation level: 1.**
+      versus one confirmation).
+      **Operator response 2026-10-12 (Q17):** "no clue what this even is, are
+      these stale?" — the item is re-derived against the current
+      `cli/src/utils/provider-wizard-discovery.ts` and
+      `cli/src/chat/use-chat-pickers.ts` before the question is asked again.
+      **Automation level: 1.**
 
 - [ ] **T173. KiosAPI window-table rows for five exact feed ids.**
       Open remainder of archived `FID-2026-1008-001`: `gpt-oss-20b`,
@@ -81,35 +99,25 @@ recorded decision or external dependency requires it.
       retain the conservative 200k default.
       **Blocker:** vendor-published window values for these exact ids;
       the previous public-source search did not establish them.
-      **Automation level: 1.**
+      **Operator direction 2026-10-12 (Q18):** always live probe — establish the
+      values by probing the vendor rather than by a public-source search.
+      **Automation level: 3** for the probe.
 
 - [ ] **T62-followups.** TokenHarbor needs a free-cell identity re-run after
       its allowance resets; TokenRouter self-identification needs an operator
       top-up. **Blocker:** provider credits/keys. **Automation level: 1.**
 
-- [ ] **T147. Geaix/Excelnt live probe and registry integration.** The operator
-      must provide a live gateway key for the probe before integration begins.
-      Both vendors lacked active keys at last check. Residue also awaiting the
-      operator: `.env.example:152` cites task `T146`, which is not registered
-      (this register carries that work as T147) — a one-character fix left
-      untaken on purpose, because every `.env*` surface is operator-owned under
-      the steering rule `no-write-dotenv`. **Automation level: 1.**
-
 ### Harness and process
 
-- [ ] **T122. Savant-Free disposition.** Operator decision required: repair
-      the known failing integration or remove the feature. Its references span
-      CLI, agents, common, docs, and release tooling. **Automation level: 1.**
+- [ ] **T122. Savant-Free removal.** Operator direction 2026-10-12 (Q12/Q5):
+      the savant-free flag/feature is to be removed rather than repaired. The
+      known failing integration is therefore deferred, not fixed, and the
+      aggregate `ci` leg stays red by design until the removal lands. Removal
+      spans the workspace registration, the CLI surface, agents, common, docs,
+      release tooling and the e2e suites, and needs its own FID.
+      **Automation level: 1** until the operator calls it.
 
 ### Build orders (formalized as FIDs 2026-10-07)
-
-- [ ] **T164-D. Eval-runner wire-stage usage telemetry.** Open remainder
-      of archived `FID-2026-1007-013`: the print-mode `usage` wire member,
-      emission from the existing `step.ts` hook, and host-facing `onUsage`
-      callback.
-      **Blocker:** a NAMED consumer outside the eval harness plus operator
-      decisions on eval billing keys and wire-stage ratification.
-      **Automation level: 1.**
 
 ## Machine-readable scope targets
 
@@ -126,6 +134,18 @@ recorded decision or external dependency requires it.
      them to every write, so "present before act" is satisfied by work that
      finished days ago. Evict the line in the pass that closes the item. -->
 
+- Release-0.0.36: `VERSION`, `package.json`, `agents/package.json`,
+  `cli/package.json`, `cli/release/package.json`, `common/package.json`,
+  `common/src/constants/protocol-bundle.generated.ts`, `desktop/package.json`,
+  `desktop/src-tauri/tauri.conf.json`, `desktop/src-tauri/Cargo.toml`,
+  `desktop/src-tauri/Cargo.lock`, `evals/package.json`,
+  `savant-free/package.json`, `savant-free/cli/release/package.json`,
+  `scripts/tmux/package.json`, `sdk/package.json`, `packages/**/package.json`,
+  `bun.lock`, `protocol.config.yaml`, `README.md`, `README.zh-CN.md`,
+  `ARCHITECTURE.md`, `CHANGELOG.md`, `docs/**`, `SCOPE.md`, `dev/agenda.md`,
+  `dev/operator-decisions.md`, `dev/fids/**`, `dev/feature-pipeline/**`,
+  `dev/session-summaries/**`, `scripts/version-docs.ts`,
+  `scripts/version-docs-drift.test.ts`, `.agents/skills/**/SKILL.md`
 - T119: `.env.local`, `docs/providers.md`,
   `dev/session-summaries/2026-10-03-provider-*.md`,
   `dev/scratchpad/active/provider-catalogs-2026-10-03/**`,
@@ -139,22 +159,6 @@ recorded decision or external dependency requires it.
 - T62-followups: `dev/scratchpad/active/t62*.ts` (the catalog itself is
   gateway-side; the local write surface is the probe scripts — verified
   2026-10-02: no local catalog directory exists)
-- T147: `scripts/providers/audit-probes/gateway-catalog-probe.ts`,
-  `dev/session-summaries/2026-10-06-geaix-excelnt-probe.md`,
-  `dev/fids/**` (the integration FID)
-  (the probe path moved out of the gitignored scratchpad into the typechecked
-  scripts tree under FID-2026-1012-006 step 5)
-
 - T122: (no write surface — operator-owned)
-- T164-D: `common/src/types/print-mode.ts`,
-`packages/agent-runtime/src/run-agent-step/step.ts`,
-  `evals/v2/src/runner.ts`, `sdk/src/run/types.ts`
-- T185: `README.md`, `README.zh-CN.md`, `knowledge.md`, `AGENTS.md`,
-  `CONTRIBUTING.md`,
-  `docs/**`, `cli/release/README.md`, `WINDOWS.md`, `desktop/README.md`,
-  `sdk/README.md`, `common/src/templates/initial-agents-dir/README.md`,
-  `cli/src/utils/constants.ts`, `dev/scratchpad/**`, `debug/**`,
-  `firebase-debug.log`, `database.db`, `database.db-wal`, `database.db-shm`,
-  `website/index-2.html`, `SCOPE.md`, `CHANGELOG.md`, `dev/session-summaries/**`
-- T186: (no write surface — blocked pending the operator ruling on the gate chain)
+- T186: (no write surface — blocked on the T122 savant-free removal)
 - T187: (no write surface — operator-owned skills surface)
