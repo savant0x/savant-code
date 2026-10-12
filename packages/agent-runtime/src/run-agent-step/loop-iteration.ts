@@ -206,12 +206,12 @@ export async function runLoopIteration(params: {
       // FID-2026-1012-002: the failure class is decided against THIS agent's
       // allowlist. A name the agent does not have is an unsatisfiable retry, so
       // it must not consume the truncation ladder's three strikes.
-      availableToolNames: agentTemplate.toolNames,
+      availableToolNames: Object.keys(ctx.tools),
     })
     if (strike.exhausted) {
       stepErrorMessage = buildStepExhaustedError(
         lastIncompleteToolName,
-        agentTemplate.toolNames,
+        Object.keys(ctx.tools),
       )
     }
     shouldEndTurn = false

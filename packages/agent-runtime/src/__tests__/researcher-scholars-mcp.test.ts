@@ -42,6 +42,23 @@ async function buildResearcherTools(
 }
 
 describe('researcher scholars-search runtime integration', () => {
+  test('stdio MCP discovery retains mixed effects and prompt permission', async () => {
+    const defs = await getMCPToolData({
+      toolNames: [],
+      mcpServers: {
+        local: { type: 'stdio', command: 'unused', args: [], env: {} },
+      },
+      requestMcpToolData: async () => [
+        {
+          name: 'lookup',
+          inputSchema: { type: 'object', properties: {} },
+        },
+      ],
+    })
+    expect(defs['local__lookup'].effect).toBe('mixed')
+    expect(defs['local__lookup'].permission).toBe('prompt')
+  })
+
   test('default MCP exposure reaches the model alongside the native research tools', async () => {
     let discoveries = 0
     const tools = await buildResearcherTools(

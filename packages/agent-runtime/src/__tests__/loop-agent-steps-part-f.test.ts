@@ -244,11 +244,9 @@ describe('loopAgentSteps - runAgentStep vs runProgrammaticStep behavior', () => 
       const llmOnlyTemplate = {
         ...getTemplate(),
         handleSteps: undefined,
-        // FID-2026-1012-002: this test is about a tool unknown to the RUNTIME
-        // (provider tool-set drift) while still being one the agent declares —
-        // that is why the drift warning fires and the truncation ladder still
-        // applies. Leaving it undeclared would instead pin the new
-        // unavailable-tool class and make the assertion vacuous.
+        // A name in the template without a native/custom definition is never
+        // offered by getToolSet. Recovery must use the actual offered set,
+        // so this provider drift gets one corrective retry, not payload retries.
         toolNames: [...getTemplate().toolNames, 'not_a_real_tool'],
       }
 
@@ -269,13 +267,14 @@ describe('loopAgentSteps - runAgentStep vs runProgrammaticStep behavior', () => 
         localAgentTemplates: { 'test-agent': llmOnlyTemplate },
       })
 
-      expect(getLlmCallCount()).toBe(3)
+      expect(getLlmCallCount()).toBe(2)
       expect(warnSpy).toHaveBeenCalledWith(
         expect.objectContaining({ toolName: 'not_a_real_tool' }),
         expect.stringContaining('unknown to the runtime'),
       )
       if (result.output.type === 'error') {
         expect(result.output.message).toContain('(tool: not_a_real_tool)')
+        expect(result.output.message).toContain('this agent does not have')
       }
     })
   })

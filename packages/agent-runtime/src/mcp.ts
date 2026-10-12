@@ -53,7 +53,9 @@ export async function getMCPToolData(params: {
               ),
               endsAgentStep: true,
               description,
-              effect: 'mixed',
+              // Remote MCP dispatch is network I/O; local stdio effects
+              // still need an audited adapter. Neither bypasses permission prompts.
+              effect: mcpConfig.type === 'stdio' ? 'mixed' : 'network',
               permission: 'prompt',
             }
           }

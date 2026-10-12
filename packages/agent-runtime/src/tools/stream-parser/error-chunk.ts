@@ -53,12 +53,15 @@ export function handleStreamErrorChunk(params: {
   errorMessages: Message[]
   loggerWarn: (payload: unknown, message: string) => void
   agentTemplate: AgentTemplate
+  availableToolNames?: readonly string[]
   runId: string
 }): {
   hasNativeIncompleteToolCall: boolean
   lastIncompleteToolName: string | undefined
 } {
   const { chunk, errorMessages, loggerWarn, agentTemplate, runId } = params
+  const availableToolNames =
+    params.availableToolNames ?? agentTemplate.toolNames
   let hasNativeIncompleteToolCall = false
   let lastIncompleteToolName: string | undefined
   const errorClass = 'errorClass' in chunk ? chunk.errorClass : undefined
@@ -72,7 +75,8 @@ export function handleStreamErrorChunk(params: {
     // misread as a payload-size problem.
     if (
       erroredToolName !== undefined &&
-      !toolNames.includes(erroredToolName as ToolName)
+      !toolNames.includes(erroredToolName as ToolName) &&
+      !availableToolNames.includes(erroredToolName)
     ) {
       loggerWarn(
         {
@@ -93,7 +97,7 @@ export function handleStreamErrorChunk(params: {
   // in logs, in the ledger, and in the steering text.
   const isUnavailableToolCall =
     erroredToolName !== undefined &&
-    !agentTemplate.toolNames.includes(erroredToolName as ToolName)
+    !availableToolNames.includes(erroredToolName)
   if (
     errorClass === 'tool-unavailable' ||
     (errorClass === 'native-incomplete' && isUnavailableToolCall)
@@ -104,7 +108,7 @@ export function handleStreamErrorChunk(params: {
         runId,
         toolName: erroredToolName,
         errorClass,
-        availableTools: agentTemplate.toolNames,
+        availableTools: availableToolNames,
       },
       'Model called a tool this agent does not have; reporting the unavailable-tool class instead of argument truncation',
     )
@@ -126,7 +130,7 @@ export function handleStreamErrorChunk(params: {
   // says "Incomplete arguments"); when the class arrived already honest
   // (`tool-unavailable`) its message is kept.
   const steering = isUnavailableToolCall
-    ? ` Your available tools for this step are: ${agentTemplate.toolNames.length > 0 ? agentTemplate.toolNames.join(', ') : 'none'}. Call one of them — a tool outside that list cannot be used, and retrying it will not succeed.`
+    ? ` Your available tools for this step are: ${availableToolNames.length > 0 ? availableToolNames.join(', ') : 'none'}. Call one of them — a tool outside that list cannot be used, and retrying it will not succeed.`
     : errorClass === 'native-incomplete' && erroredToolName !== undefined
       ? getSteeringMessage(erroredToolName, 1)
       : ''

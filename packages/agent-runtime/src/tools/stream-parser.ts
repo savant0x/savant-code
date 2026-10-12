@@ -177,6 +177,7 @@ export async function processStream(params: ProcessStreamParams) {
             )
           },
           agentTemplate,
+          availableToolNames: Object.keys(params.tools),
           runId,
         })
         hasNativeIncompleteToolCall =

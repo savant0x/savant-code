@@ -14,6 +14,7 @@ import { resolveYagniEnforced } from '../../echo/yagni-pre-write-gate'
 import { seedComplianceContext } from '../../hooks/compliance-context'
 import { buildHookInput, getHookEngine } from '../../hooks/engine'
 import { getMCPToolData } from '../../mcp'
+import { MCP_TOOL_SEPARATOR } from '../../mcp-constants'
 import { formatValueForError } from '../../util/format-value'
 import { parseRawCustomToolCall } from '../tool-call-parse'
 
@@ -126,10 +127,8 @@ export async function executeCustomToolCall(
     agentState,
   })
 
-  // Custom tools participate in the same protocol, sandbox, and capability
-  // gates as native tools. The definition set used here is runtime-trusted:
-  // it was either built for this step or rebuilt from host context plus
-  // discovered MCP tools. Caller-supplied metadata cannot downgrade it.
+  // Runtime-trusted definitions participate in the native protocol, sandbox,
+  // and capability gates; caller metadata cannot downgrade them.
   const declaredSafety = trustedDefinitions[toolCall.toolName]
   const declaredEffect = declaredSafety?.effect ?? 'mixed'
   if (!declaredSafety?.effect || !declaredSafety.permission) {
@@ -239,11 +238,15 @@ export async function executeCustomToolCall(
     }
   }
 
-  // Filter out restricted tools - emit error instead of tool call/result.
-  // This prevents the CLI from showing calls that the agent cannot use.
+  const offeredMcpTool =
+    Object.prototype.hasOwnProperty.call(params.tools, toolCall.toolName) &&
+    Object.keys(agentTemplate.mcpServers).some((server) =>
+      toolCall.toolName.startsWith(`${server}${MCP_TOOL_SEPARATOR}`),
+    )
   if (
     !executionPolicy.allowCapabilityOverride &&
-    !agentTemplate.toolNames.includes(toolCall.toolName)
+    !agentTemplate.toolNames.includes(toolCall.toolName) &&
+    !offeredMcpTool
   ) {
     // Emit an error event instead of tool call/result pair
     // The stream parser will convert this to a user message for proper API compliance
@@ -255,7 +258,6 @@ export async function executeCustomToolCall(
     return previousToolCallFinished
   }
 
-  // Only emit tool_call event after permission check passes
   onResponseChunk({
     type: 'tool_call',
     toolCallId: toolCall.toolCallId,

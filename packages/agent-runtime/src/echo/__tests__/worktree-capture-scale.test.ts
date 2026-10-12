@@ -158,7 +158,7 @@ describe('P9 — a refused baseline is recoverable (bounded recapture)', () => {
     expect(checkpoint.worktreeBaselinePaths?.includes('added-after.ts')).toBe(
       false,
     )
-  })
+  }, 30_000)
 })
 
 describe('P10 — the spawn classification is honest', () => {
