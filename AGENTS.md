@@ -29,7 +29,7 @@ filesystem entries in `agents/`.
 | Recorder | FID | Create, track, archive FIDs. Update CHANGELOG. |
 | Thinker | Planning | Sequential reasoning via `sequentialthinking` tool |
 | Scout | Explore | Glob/list_directory/read_files for context gathering |
-| Researcher | Research | Web search + docs lookup |
+| Researcher | Research | Web search + scholarly literature via MCP + docs lookup |
 | Scribe | Docs | Session summaries, LESSONS.md, knowledge files |
 | Adversary | ADVERSARIAL | Meta-verification: refutes Verifier FAILs, re-audits unevidenced PASSes, verdicts override (FID-2026-0805-004) |
 

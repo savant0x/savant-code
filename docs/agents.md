@@ -125,13 +125,18 @@ The Scout uses file system tools to explore the codebase and gather context for 
 ### Researcher (Research Phase)
 
 **Phase:** Research
-**Role:** Web search and documentation lookup
+**Role:** Web search, scholarly literature, and documentation lookup
 
-The Researcher uses web search and documentation lookup to gather external knowledge.
+The Researcher gathers external knowledge through web search, scholarly literature,
+and documentation lookup. Its web persona uses the public Scholars Reading List
+MCP service to search papers, fetch records, find similar papers, and explore
+shared citation neighbourhoods. It verifies paper citations against fetched
+records and falls back to web research when the literature service is unavailable.
 
 **Capabilities:**
 
 - Web search
+- Scholarly literature search and paper lookup through `scholars-search` MCP
 - Documentation lookup
 - Deep research tool
 - Cannot write code

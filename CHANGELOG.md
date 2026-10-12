@@ -1,5 +1,33 @@
 # Changelog
 
+## 2026-10-12 — Scholarly research through the public Scholars Reading List MCP service (FID-2026-1012-001)
+
+### Added
+
+- Medium-severity capability gap resolved: `researcher-web` connects to the
+  public, keyless Scholars Reading List MCP service for paper search, record
+  lookup, similarity search, and shared-reference citation traversal. The native
+  web tools remain available when the literature service cannot be loaded.
+- Definition and runtime regression coverage pins the remote HTTP contract,
+  all four model-visible MCP tools, and native-tool fallback on server failure.
+  The bundled agent is regenerated from its definition.
+
+### Fixed
+
+- Literature questions follow MCP-first research and verify citations against
+  fetched paper records; the old unconditional web-search and three-page rules
+  now apply to web research. Paper claims beyond abstracts require full-text
+  verification. Parameter guidance follows the live MCP schema: string-valued
+  `abstracts`, result `limit`, and citation `breadth`.
+- Researcher capability summaries now include scholarly literature. Completion
+  review verifies the committed implementation and live tool round trips,
+  records the verification receipt, and closes the FID with archive/register cleanup.
+- Remote HTTP/SSE MCP calls now carry network effects with prompt permission;
+  the executor admits discovered tools offered by the current step from the
+  agent's own configured servers. Unowned, unoffered and safe-mode calls stay
+  blocked; stdio tools retain mixed effects. Error recovery checks the actual
+  offered tool set, including MCP tools, rather than only the native name list.
+
 ## 2026-10-12 — Unavailable-tool calls are no longer misdiagnosed as argument truncation (FID-2026-1012-002)
 
 ### Fixed

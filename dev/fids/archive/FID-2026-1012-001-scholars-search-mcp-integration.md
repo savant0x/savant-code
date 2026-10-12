@@ -3,7 +3,8 @@
 **Filename:** `FID-2026-1012-001-scholars-search-mcp-integration.md`
 **ID:** FID-2026-1012-001
 **Severity:** medium
-**Status:** verified
+**Status:** closed
+**Archived:** 2026-10-12
 **Created:** 2026-10-12 01:10
 **Automation level:** 2
 **YAGNI-Compliance:** Existing `mcpServers` contract reused (github-helper precedent); no new
@@ -24,9 +25,9 @@ per minute per address, verified live on 2026-10-12. This FID wires that server 
 remote-HTTP pattern the `github` helper uses), adds the usage discipline to the persona
 prompt, pins the contract with a definition-shape test following
 `agents/github/github.test.ts`, and regenerates the bundled agent artifact. The operator
-selected MCP wiring as the integration path on 2026-10-12; implementation of the code
-itself is blocked on approval of this record. The Perfection Loop below certifies the
-document, not the code.
+selected MCP wiring as the integration path on 2026-10-12. The integration is
+implemented and committed, and the completion review repairs prompt/schema guidance,
+verifies live tool calls and runtime exposure, and completes the closure records.
 
 ## Environment
 
@@ -179,6 +180,10 @@ bundle. Document.
 
 2. **`agents/researcher/researcher-web.ts`** — append to `systemPrompt`:
 
+The original proposal below is retained as review history. Loop 4 supersedes its
+argument examples, coverage claims, and unconditional web-only instructions;
+the committed definition contains the corrected final prompt contract.
+
 ```text
 ## Scholarly Literature (MCP: scholars-search)
 
@@ -203,8 +208,8 @@ the embedded subset; exact-word search and paper lookup cover everything — the
 endpoint's /llms.txt states current coverage.
 ```
 
-`instructionsPrompt` stays unchanged (minimal diff; the system-prompt section carries the
-discipline).
+The original implementation left `instructionsPrompt` unchanged. Completion review
+aligns it with the literature path because its web-only mandate contradicted this section.
 
 3. **`agents/researcher/researcher-web.test.ts`** (new) — definition-shape pin following
    `agents/github/github.test.ts`:
@@ -267,10 +272,9 @@ describe('researcher-web agent definition', () => {
    unchanged, so only `bundled-agents.generated-data/19-researcher-web.ts` differs;
    `bundled-agents.generated.ts` is expected byte-identical (the import list is unchanged).
 5. **Docs:** `docs/agents-and-tools.md` — Researcher row tools column gains the four MCP
-   tools; the "Last verified" line moves to 2026-10-12. Advisory (Loop 2 omission): prose
-   capability summaries at `docs/agents.md:130`, `docs/index.md:52`, `AGENTS.md:32`,
-   `docs/features.md:327` stay technically true but stale — accept the drift knowingly or
-   extend the same edit pass; none becomes false. `CHANGELOG.md` entry at closure.
+   tools; the "Last verified" line moves to 2026-10-12. Completion review also updates
+   capability summaries in `docs/agents.md`, `docs/index.md`, `AGENTS.md`, and
+   `docs/features.md`. `CHANGELOG.md` carries the closure entry.
 6. **Law 4 reachability grep** (post-implementation, pasted into this record):
    `grep -rn "scholars-search" cli/src/agents/bundled-agents.generated-data/19-researcher-web.ts`
    must match; the runtime consumer chain (`additionalToolDefinitions` → `getMCPToolData`
@@ -281,24 +285,39 @@ describe('researcher-web agent definition', () => {
 
 Typecheck (`agents`, `cli`), the new test (`agents/researcher/researcher-web.test.ts`), and the
 repo quality gate. Live smoke of the MCP endpoint was already performed in RED (200 + tool list). A full runtime smoke
-(spawning `researcher-web` against the live service) is deferred to the implementation
-audit and marked NEEDS-REVIEW here — it costs credits and is not required to prove the
-wiring contract.
+(spawning `researcher-web` with an LLM against the live service) remains NEEDS-REVIEW:
+this review instead executes all four MCP tools and the production tool-set builder
+without an LLM request. The wiring and service calls are verified; model selection
+and synthesis are not claimed.
 
 ## Verification Gates
 
 - gate: typecheck agents
 - gate: typecheck cli
 - gate: test agents/researcher/researcher-web.test.ts
+- gate: typecheck packages/agent-runtime
+- gate: test packages/agent-runtime/src/__tests__/researcher-scholars-mcp.test.ts
+- gate: test packages/agent-runtime/src/__tests__/researcher-scholars-execution.test.ts
+- gate: test packages/agent-runtime/src/__tests__/loop-agent-steps-part-f-strikes.test.ts
+- gate: test packages/agent-runtime/src/__tests__/loop-agent-steps-part-f.test.ts
+- gate: test packages/agent-runtime/src/tools/stream-parser/__tests__/error-chunk-steering.test.ts
+- gate: test packages/agent-runtime/src/echo/__tests__/worktree-capture-scale.test.ts
 - gate: quality
 
 ### Verification Receipt
 
-- fingerprint: sha256:86408d432e6aac9b11b81bc6694b9ca5c44a868000b9aac9635c0d4bdf2cfa4b
-- verified: 2026-10-12T06:12:23.035Z
+- fingerprint: sha256:1c5d812a797002e496ea98c489388752c44b8b9f67d863cc3a43580bed7622ff
+- verified: 2026-10-12T07:03:16.787Z
 - typecheck agents: exit 0
 - typecheck cli: exit 0
 - test agents/researcher/researcher-web.test.ts: exit 0
+- typecheck packages/agent-runtime: exit 0
+- test packages/agent-runtime/src/__tests__/researcher-scholars-mcp.test.ts: exit 0
+- test packages/agent-runtime/src/__tests__/researcher-scholars-execution.test.ts: exit 0
+- test packages/agent-runtime/src/__tests__/loop-agent-steps-part-f-strikes.test.ts: exit 0
+- test packages/agent-runtime/src/__tests__/loop-agent-steps-part-f.test.ts: exit 0
+- test packages/agent-runtime/src/tools/stream-parser/__tests__/error-chunk-steering.test.ts: exit 0
+- test packages/agent-runtime/src/echo/__tests__/worktree-capture-scale.test.ts: exit 0
 - quality: exit 0
 
 ## Perfection Loop
@@ -348,6 +367,10 @@ wiring contract.
 
 Implementation exists and every declared gate passes live on the final bytes (2026-10-12):
 
+Original implementation commit: `346d74ca84363a001109afed839fd1d2346b9ac8`.
+Completion review repairs the prompt and adds the runtime test described in Loop 4;
+the original implementation evidence below is historical where the review supersedes it.
+
 - `agents/researcher/researcher-web.ts` —
   `mcpServers: { 'scholars-search': { type: 'http', url: 'https://api.sciencemadereadable.com/mcp' } }` inserted between
   `spawnableAgents` and `systemPrompt`; the "Scholarly Literature (MCP: scholars-search)" section appended to
@@ -363,8 +386,10 @@ Implementation exists and every declared gate passes live on the final bytes (20
 - `docs/agents-and-tools.md` — Researcher row tools column gains the four MCP tools; "Last verified" → 2026-10-12.
 - Gate runs on the final bytes: `typecheck agents` exit 0; `typecheck cli` exit 0;
   `test agents/researcher/researcher-web.test.ts` 3 pass / 0 fail; `quality` PASS (1502 baselined files); eslint (both
-  changed TS files, --max-warnings 0) exit 0; prettier formatted both TS files. No commit exists yet at verified — the
-  receipt below documents the verification that earned the status; the closing commit SHA is recorded at closure.
+  changed TS files, --max-warnings 0) exit 0; prettier formatted both TS files.
+  The initial implementation is committed in `346d74ca`; completion-review code and
+  tests are committed in `7f386adf`; runtime repairs are committed in `f0b8ca82`,
+  with the final eleven-gate receipt above.
 
 ### Code Verification Evidence
 
@@ -378,16 +403,30 @@ Implementation exists and every declared gate passes live on the final bytes (20
 - [x] Production call-graph evidence — the bundled production artifact contains the wiring (grep -c → 2); the runtime
       consumer chain (`additionalToolDefinitions` → `getMCPToolData` → `requestMcpToolData` → `getMCPClient`) is
       pre-existing and was verified by symbol grep in RED (evidence item 6)
-- [x] FID status reflects the actual implementation state (`verified` — implementation exists and gates pass)
+- [x] FID status reflects implementation state (`closed` — committed code exists,
+      eleven declared gates pass, docs and closure records are complete).
 
 ## Resolution
 
-Implemented and verified 2026-10-12. Fix description: `researcher-web` carries the public Scholars Reading List MCP
-server through the existing `mcpServers` contract; the persona prompt gains the Scholarly Literature discipline section;
-the definition shape is pinned by a new test; the bundled agent was regenerated. Tests added: yes —
-`agents/researcher/researcher-web.test.ts` (3 tests). Verification evidence: the four declared gates plus
-eslint/prettier all exit 0 on the final bytes (see Implementation Evidence). Closure (commit SHA, archive, CHANGELOG,
-register eviction) completes in the pass that follows the implementation audit.
+Implemented and verified 2026-10-12. The Researcher uses the public Scholars MCP
+service with schema-correct literature prompts. The runtime dispatches offered
+remote tools from the agent's configured servers, retains permission and protocol
+gates, and classifies recovery against the actual offered tool set. The bundle,
+capability documentation, changelog, and closure records are complete.
+
+**Commit SHA:** `f0b8ca82af7346d2ee153525a2e8fb401cb17528` (runtime repairs);
+`7f386adf66155790ee365d40aa6d0e73ea027a5a` (prompt/schema repairs and tests);
+`346d74ca84363a001109afed839fd1d2346b9ac8` (original wiring).
+
+All eleven declared gates pass, stamped at `2026-10-12T07:03:16.787Z`.
+Full runtime: 1993 pass / 0 fail; agent workspace: 163 pass / 0 fail.
+Full root typecheck, eslint, formatting, markdown lint, and repository validation
+pass. Live calls cover all four MCP tools and production custom-executor dispatch.
+Safe-mode denial, unowned/unoffered rejection, and stdio's mixed effect remain
+pinned. Model-driven selection and synthesis were not exercised.
+The FID is archived, its scope authority removed, and the earlier premature
+closure claim corrected. The receipt precedes closure prose edits and remains
+historical evidence under the closed-FID contract.
 
 ### Loop 2 — Independent audit and adversarial meta-verification
 
@@ -441,11 +480,11 @@ register eviction) completes in the pass that follows the implementation audit.
   evidence item 11.
 - **CHANGE DELTA:** status flip, Step 5 advisory, Loop 2 record — well under the 10% circuit-breaker bound.
 
-### Loop 3 — Final convergence
+### Loop 3 — Original planning convergence (historical)
 
 The document's full specification was audited and meta-verified: one FAIL refuted with
 direct 0-EOF file evidence, four NEEDS-REVIEW resolutions independently confirmed, one
-advisory prose-staleness omission folded in. No blocking findings. Status is
+advisory prose-staleness omission folded in. No blocking findings. Status at that point was
 **converged**: the document loop is complete — this is NOT implementation approval, and
 no code exists. Implementation, gates, Law 4 grep, and closure remain gated on operator
 approval per Resolution. On approval: implement Steps 1-5, run the four declared gates
@@ -454,6 +493,107 @@ via `bun run fid:verify dev/fids/FID-2026-1012-001-scholars-search-mcp-integrati
 close and archive with the CHANGELOG entry.
 
 ## Lessons Learned
+
+### Loop 4 — Completion review (2026-10-12)
+
+**RED:** the operator requested review and completion. Implementation exists in
+`346d74ca84363a001109afed839fd1d2346b9ac8`; all four original gates pass live,
+but the record and register still carry pre-approval/uncommitted claims. The old
+instruction prompt unconditionally starts with web search and requires three
+`read_url` pages, contradicting MCP-first literature research. Live `listTools`
+shows `abstracts` accepts `none | short | full`, not `false`; counts use `limit`,
+and `citation_walk` uses `breadth` and `limit`, not `k`. Four capability summaries
+remain stale and the required changelog/archival/register cleanup is absent.
+
+**GREEN:** align the existing prompt paths: literature starts with MCP search
+and verifies citations with fetched paper records; web research keeps source-page
+verification. Correct parameter guidance and remove hardcoded index coverage.
+Add prompt pins to `agents/researcher/researcher-web.test.ts` and a hermetic
+`packages/agent-runtime/src/__tests__/researcher-scholars-mcp.test.ts` that drives
+the real loader and tool-set builder with injected discovery, asserting four MCP
+tools plus native research tools and native-only fallback on server failure.
+Update the existing doc summaries, regenerate the bundle, then close with actual
+commit evidence, changelog, session record, archive and register eviction.
+
+**AUDIT:** the existing runtime chain was read independently of the definition
+test. An executed live probe built all seven model tools and called the service
+through `common/src/mcp/client.ts`; semantic search and citation traversal return
+real records. The server's own input schemas settle the argument question.
+The repair uses existing seams and retains the web evidence rule; a definition
+test alone would miss runtime exclusion, so the second test pins actual exposure
+and fail-soft behavior. No change to global MCP authorization is required.
+
+**SELF-CORRECT / convergence:** a DOI not-found result is service-level uncertainty,
+not a reason to claim full catalog coverage; use ids returned by search for the
+remaining smoke checks. Model choice and paper synthesis remain unverified by an
+offline pin. The review plan converges with no new production API or dependency;
+implementation is authorized by the operator's request to complete this FID.
+
+**Impact:** prompt behavior changes only for literature research and corrects
+invalid argument advice. Native web research remains available on service failure.
+Docs and closure records follow the code; generated files use the existing generator.
+
+**Executed verification:** the two new prompt pins fail against the original
+definition (3 pass / 2 fail) and pass after the repair (5 pass / 0 fail).
+The hermetic runtime pins pass 2/2. Live discovery and the production tool-set
+builder expose all four MCP tools plus all three native research tools. Live
+`search_papers` returns `W4390591490`; `get_papers` on that id returns its record
+and DOI `10.1039/bk9781837670178-00159`; `find_similar_papers` returns
+`W4290802925`; `citation_walk` on a separate seed returns shared-reference
+neighbours. DOI lookup for `10.1038/nature14539` returned not found while its
+citation walk succeeded; this is a dated service inconsistency, so the prompt
+requires verifying actual records and reporting missing evidence. No LLM
+request was made, and model selection/synthesis is not claimed as verified.
+
+**Loop 4 outcome:** prompt repair and discovery tests pass, but the execution
+audit in Loop 5 finds the delivered capability is still rejected before dispatch.
+
+### Loop 5 — Actual MCP execution audit
+
+**RED:** `mcp.ts` assigns every discovered MCP tool `effect: mixed`;
+`tools/tool-executor/custom.ts` rejects every effect outside read/network, then
+rejects any name absent from `agentTemplate.toolNames`. The secret definition's
+native-only union cannot list the discovered MCP names. Consequently discovery
+and direct client calls pass while real agent execution is blocked. Recovery
+also checks the native list instead of the offered model tool set, misclassifying
+malformed calls to offered MCP tools as unavailable.
+
+**GREEN:** remote HTTP/SSE MCP tools have network effects and retain prompt
+permission; stdio remains mixed. Authorize a runtime-discovered tool only when
+its exact trusted definition exists and its server belongs to this agent's
+configured MCP servers. Unlisted local custom tools remain restricted. Use the
+actual offered model tool names for error steering and loop strike budgets.
+Add executor and recovery pins alongside the existing discovery/fallback test.
+
+**AUDIT / convergence:** this restores the pre-existing default-exposure contract
+without trusting vendor read-only hints or widening the native tool union.
+Network permission prompts, sandbox policy, EHEL and hooks remain in force;
+no local write adapter or generic custom-tool capability is granted. A matching
+server prefix without a discovered definition cannot execute. The plan converges
+before runtime edits; the operator's completion request authorizes this repair.
+
+**Implementation evidence:** real custom-executor pins dispatch the owned,
+offered remote MCP tool and reject unowned, unoffered and safe-mode calls.
+Remote tools retain prompt permission; stdio retains mixed effects. An offered
+MCP truncation stays on the three-strike ladder. Full runtime initially reports
+1992 pass / 1 fail: the remaining fixture lists `not_a_real_tool` in its template
+without a definition, so `getToolSet` never offers it. Its expectation is corrected
+to one corrective retry (two calls), retaining the drift warning and adding the
+honest unavailable-message assertion. This checks the actual request contract.
+
+**Live executor proof:** the repaired `executeCustomToolCall` path dispatched
+`scholars-search__search_papers` through `callMCPTool` against the configured
+public service. Output: `calls: 1`, `results: 1`, events `tool_call, tool_result`,
+and ranked record `W4390591490`. This used an ephemeral test context with
+permission mode `unsafe`; the safe-mode denial pin passes. No persistent
+permission setting changed and no LLM request was made.
+
+**Regression timing finding (automation level 3):** full runtime has one
+five-second timeout in `worktree-capture-scale.test.ts`'s P9 filesystem/git
+recapture test (5592.79 ms); it passes in isolation at 1072.30 ms, 9/9 suite.
+Give this integration test a 30-second harness budget while keeping every
+assertion and the production capture budgets unchanged. This reversible
+maintenance repair is recorded before editing and added to the declared gates.
 
 A "would this repo help our agent?" question is answered by separating the service from
 the code: the repository's value here is its hosted API and MCP endpoint, not its

@@ -322,11 +322,19 @@ The launcher never stops a running session (FID-2026-0806-014):
 
 ---
 
-## Research — web_search / read_docs / deep_research
+## Research — web search, scholarly literature, and docs
 
 The Researcher role is backed by a swappable search/docs adapter, so research
 works in **every** provider mode — including direct-provider mode (no SavantCode
 backend required). Research no longer depends on `DIRECT_PROVIDER`.
+
+`researcher-web` also connects to the public Scholars Reading List MCP service
+for semantic/keyword paper search, DOI/OpenAlex/PMCID record lookup, similar-paper
+search, and shared-reference citation traversal. The four read-only tools require
+no API key. Literature answers use fetched paper records and state abstract-only
+limits; full-text claims still require reading the full source. The public service
+limits calls to 30 per minute per address; rate limits stop further literature
+calls for that turn, and service failures fall back to web research.
 
 ### Keyless by default (zero keys, zero setup)
 

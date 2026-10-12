@@ -49,7 +49,7 @@ Savant Code deploys 10 specialized agents, each with a distinct role and restric
 | **Adversary** | ADVERSARIAL Phase | Read-only devil's advocate that refutes every audit claim and re-checks PASSes with evidence |
 | **Thinker** | Planning | Deep sequential reasoning for complex problems |
 | **Scout** | Explore | Explores codebases to gather context |
-| **Researcher** | Research | Web search and documentation lookup |
+| **Researcher** | Research | Web search, scholarly literature, and documentation lookup |
 | **Recorder** | FID Lifecycle | Manages FID creation, tracking, and archiving |
 | **Scribe** | Documentation | Session summaries and knowledge capture |
 

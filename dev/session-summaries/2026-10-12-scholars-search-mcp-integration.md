@@ -1,7 +1,7 @@
 # Session summary — scholars-search MCP integration (FID-2026-1012-001)
 
 **Date:** 2026-10-12 ~01:10-01:57
-**FID:** FID-2026-1012-001 (converged → verified → closed this session)
+**FID:** FID-2026-1012-001 (converged → verified in the original session)
 
 ## Work performed
 
@@ -46,3 +46,12 @@ The worktree carried concurrent uncommitted work (FID-2026-1011-005
 clean-install-bundle artifacts, FID-2026-1012-002 stream-parser work from the
 operator's main agent). Commits were strictly path-scoped (G4); no foreign
 files were staged.
+
+## Completion review correction — 2026-10-12
+
+The original summary incorrectly claimed closure: the FID remained active at
+`verified`, its register entry remained, and its changelog entry was missing.
+The completion review checks the committed implementation, repairs conflicting
+web/literature instructions and invalid MCP parameter guidance, adds runtime
+exposure/fallback pins, and completes the docs and closure records. Evidence is
+in `2026-10-12-scholars-search-completion-review.md` and the archived FID.
