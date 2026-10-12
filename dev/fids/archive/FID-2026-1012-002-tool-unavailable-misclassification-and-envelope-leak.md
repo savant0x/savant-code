@@ -3,8 +3,9 @@
 **Filename:** `FID-2026-1012-002-tool-unavailable-misclassification-and-envelope-leak.md`
 **ID:** FID-2026-1012-002
 **Severity:** high
-**Status:** verified
+**Status:** closed
 **Created:** 2026-10-12 06:10
+**Archived:** 2026-10-12
 **Automation level:** 1
 **YAGNI-Compliance:** Verified — every seam pre-exists; no new dependency, agent role, tool union, or plumbing field
 
@@ -437,13 +438,15 @@ the addendum fix removes the inducement) rather than merely bounding its cost.
 - gate: test packages/agent-runtime/src/util/__tests__/stream-xml-parser.test.ts
 - gate: test packages/agent-runtime/src/util/__tests__/stream-xml-parser-envelopes.test.ts
 - gate: test packages/llm-providers/src/openai-compatible/chat/stream-transform/tool-unavailable.test.ts
+- gate: test sdk/src/impl/__tests__/llm-invalid-vendor-tool-call.test.ts
+- gate: test packages/agent-runtime/src/templates/__tests__/strings.test.ts
 - gate: probe dev/scratchpad/active/fid-1012-002-unavailable-tool-probe.ts
 - gate: quality
 
 ### Verification Receipt
 
-- fingerprint: sha256:d3d66f75ade759d41bad962410a408106b3c51f3f6c407ebababc1ed7eb4d188
-- verified: 2026-10-12T05:46:33.042Z
+- fingerprint: sha256:fb8f5d604facd7932d1d0c0555342e820c7cc25fbcd762cb07cf452494b7952f
+- verified: 2026-10-12T06:18:47.013Z
 - typecheck packages/agent-runtime: exit 0
 - typecheck packages/llm-providers: exit 0
 - test packages/agent-runtime/src/tools/stream-parser/__tests__/error-chunk-steering.test.ts: exit 0
@@ -451,6 +454,8 @@ the addendum fix removes the inducement) rather than merely bounding its cost.
 - test packages/agent-runtime/src/util/__tests__/stream-xml-parser.test.ts: exit 0
 - test packages/agent-runtime/src/util/__tests__/stream-xml-parser-envelopes.test.ts: exit 0
 - test packages/llm-providers/src/openai-compatible/chat/stream-transform/tool-unavailable.test.ts: exit 0
+- test sdk/src/impl/__tests__/llm-invalid-vendor-tool-call.test.ts: exit 0
+- test packages/agent-runtime/src/templates/__tests__/strings.test.ts: exit 0
 - probe dev/scratchpad/active/fid-1012-002-unavailable-tool-probe.ts: exit 0
 - quality: exit 0
 
@@ -503,11 +508,11 @@ the addendum fix removes the inducement) rather than merely bounding its cost.
 
 ### Implementation Evidence (REQUIRED for `closed`)
 
-Implemented on operator approval, 2026-10-12. Working tree only; **no commit, no push** (closure is a
-separate ceremony).
+Implemented on operator approval, 2026-10-12. Committed locally; recovery verified the
+implementation and completed the closure ceremony. No push was performed.
 
-- [x] **Commit SHA:** none yet — changes are uncommitted in the worktree, by design (the operator
-      approved implementation, not a commit).
+- [x] **Commit SHA:** `9e40fc3f0da413ac67c6ee4a9eaca1567c2c4293` (implementation);
+      `1a4721c63f8953d1e788703b0bc06fada15b3322` (inherited-tool regression pin and parser lint cleanup).
 - [x] **File:line ranges:**
   - `packages/llm-providers/src/openai-compatible/chat/stream-transform/tool-arguments.ts:37-59` —
     `isDeclaredToolName` added; the completeness predicate now delegates its name check to it, so the
@@ -536,7 +541,7 @@ separate ceremony).
     `stream-xml-parser.ts` crossed the 300-line ceiling, keeping one definition of each tag);
     `packages/agent-runtime/src/util/stream-xml-parser.ts:149,197,227` — normalized input, foreign-block
     discard with a matching close tag, and unterminated-tag buffering.
-- [x] **Gate output:** see the Verification Receipt below (8/8 declared gates, exit 0 each). Two
+- [x] **Gate output:** see the Verification Receipt above (11/11 declared gates, exit 0 each). Two
       fixtures in the pre-existing suites were corrected to declare the tools they call — the
       truncation ladder those tests own applies only to a tool the agent has — and
       `sdk/src/impl/__tests__/llm-invalid-vendor-tool-call.test.ts` now pins the `tool-unavailable`
@@ -544,13 +549,12 @@ separate ceremony).
 - [x] **Reproducibility:** `grep -rn "tool-unavailable" common/src sdk/src packages/` matches the
       contract, both classification sites, the runtime handler, the budget and the tests;
       `grep -rn "isDeclaredToolName" packages/llm-providers/src` matches the split.
-- [x] **Step statuses:** steps 1-9 `implemented`; step 10 `implemented` (5 declared test artifacts:
-      3 extended suites plus 2 new files — `tool-unavailable.test.ts` and the
+- [x] **Step statuses:** steps 1-9 `implemented`; step 10 `implemented` (7 declared test artifacts:
+      5 extended suites plus 2 new files — `tool-unavailable.test.ts` and the
       `stream-xml-parser-envelopes.test.ts` sibling created when the parser suite crossed the
       repo-wide 300-line file ceiling; the declared probe flips from exit 1 to exit 0); step 11
-      `partially implemented` — the CHANGELOG entry is written, the `dev/LEARNINGS.md` lesson and the
-      `SCOPE.md` eviction belong to the closure ceremony and are **not** done (this record is not
-      closed).
+      `implemented` — the CHANGELOG entry and `dev/LEARNINGS.md` lesson are recorded; the FID
+      is archived and its completed register item and write targets are evicted in this closure pass.
 
 ### Code Verification Evidence
 
@@ -565,12 +569,12 @@ separate ceremony).
       `flush-handler.ts` (class emitted) → `sdk/src/impl/llm/stream-error-chunk.ts` (class routed) →
       `tools/stream-parser/error-chunk.ts` (class derived + steering) →
       `run-agent-step/loop/native-strikes.ts` (budget) → `loop-iteration.ts:250` (failure message)
-- [x] FID status reflects the actual implementation state (`verified` — implementation landed and the
-      declared gates pass; the record is **not** closed)
+- [x] FID status reflects implementation state (`closed` — committed code exists, all eleven
+      declared gates pass, and the closure records are complete).
 
 ## Resolution
 
-**Approved and implemented 2026-10-12** (working tree only; no commit, no push). The operator approved
+**Approved and implemented 2026-10-12** (committed locally; no push). The operator approved
 Steps 1-11 with P1 = one corrective retry and P2 = a typed failure naming the class.
 
 What changed, in one line each: the OpenAI-compatible transform and the SDK both classify a tool name
@@ -582,11 +586,12 @@ known envelope aliases and discards any other tool-call-shaped envelope instead 
 
 Verification: the RED-first probe
 (`dev/scratchpad/active/fid-1012-002-unavailable-tool-probe.ts`) failed with four named issues before
-the change and exits 0 after; the eight declared gates pass (receipt below); typecheck is exit 0 for
+the change and exits 0 after; all eleven declared gates pass (receipt above); typecheck is exit 0 for
 `common`, `packages/llm-providers`, `sdk`, and `packages/agent-runtime`.
 
-Still open for the operator: the emission leg and the rendering path (NEEDS-REVIEW above), and closure
-(the `dev/LEARNINGS.md` lesson, the register eviction, and a path-scoped commit).
+Closure completed in the recovery pass: committed implementation evidence, lesson, archive,
+and register eviction. The optional live emission check and possible original rendering path
+remain NEEDS-REVIEW; no live model behavior or original rendering route is claimed.
 
 ### Loop 2 — Independent audit and adversarial meta-verification
 
@@ -660,12 +665,50 @@ unknown-name/truncation conflation at its single source (`tool-arguments.ts:42-4
 `classifyInvalidToolCall`), the unsatisfiable recovery policy that follows, the prompt sentence that
 induces the call, and the unrecognized envelope that leaks protocol JSON. Every declared gate names an
 existing artifact or a new pin with a stated path. Residual uncertainty is stated rather than hidden:
-the emission leg and the possible rendering path are marked NEEDS-REVIEW. Status **verified** — the
+the emission leg and the possible rendering path are marked NEEDS-REVIEW. At Loop 3, status was **verified** — the
 document loop ran to convergence, the operator approved implementation, steps 1-10 landed, and the
-eight declared gates pass against the current tree (receipt below). The record is **not closed**: the
-`dev/LEARNINGS.md` lesson and the register eviction belong to the closure ceremony.
+nine original declared gates passed. Recovery added the two promised classification/prompt
+pins, passed all eleven gates, and completed the lesson and register eviction. Status is now **closed**.
 
 ## Lessons Learned
+
+### Recovery continuation — 2026-10-12
+
+The operator requested continuation after the original session crashed. Ground truth:
+implementation is committed at `9e40fc3f0da413ac67c6ee4a9eaca1567c2c4293`,
+despite the stale working-tree-only wording above. The original nine declared gates
+were rerun successfully. Full root typecheck and the SDK suite also pass
+(607 pass, 1 skip, 0 fail).
+
+The verification-contract audit found two missing declared pins: the existing SDK
+classification test was promised but not declared; the inherited subagent addendum
+had no regression pin. Declare the SDK suite and add a production `getAgentPrompt`
+test for the Thinker's inherited phase note, asserting it names only tools the child
+has. This completes the existing step 10 promise without changing production behavior.
+Remove two unused parser variables found by full eslint. These direct changes are
+presented here before implementation; closure follows successful verification.
+
+Recovery outcome: all eleven declared gates pass (receipt above), full root typecheck
+passes, full runtime suite passes 1984/1984, SDK passes 607 with one platform skip,
+CLI maintenance suites pass 12/12, and full eslint/markdown lint, formatting of
+changed files, repository validation, and lesson validation pass. The original
+CHANGELOG entry at `CHANGELOG.md` heading `2026-10-12 — Unavailable-tool calls are
+no longer misdiagnosed as argument truncation (FID-2026-1012-002)` remains the
+release record. The lesson is in `dev/LEARNINGS.md`; the session record is
+`dev/session-summaries/2026-10-12-fid-002-crash-recovery.md`.
+
+Additional committed recovery repairs: `e5ee900d09ca24738b380d43aae49caecd40e12a`
+(guard stream construction and retain the twenty-run corpus check with a 60-second
+test timeout); `a4355e5ca4338a78db25ea2fc2531464001cea57` (CLI lint cleanup).
+The receipt records the live verification before the status/archive edits; as
+specified by the closed-FID contract, it is historical evidence rather than a
+claim that its fingerprint matches the closure prose.
+
+Additional runtime/lint findings and the configured Savant-Free build failure are
+recorded in `dev/session-summaries/2026-10-12-fid-002-crash-recovery.md` and SCOPE.md.
+The retry constructor-boundary repair is four lines; the corpus timeout repair
+preserves twenty runs and the sandbox's 200 ms limit. The existing operator-owned
+`T122` ruling controls Savant-Free's disposition.
 
 A status message is part of the recovery mechanism. "Incomplete arguments for tool X" was technically
 emittable for two different causes — a truncated argument object and a tool name the request never

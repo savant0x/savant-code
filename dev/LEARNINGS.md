@@ -1,5 +1,33 @@
 # LEARNINGS
 
+## Lesson: An unavailable tool needs a different recovery policy from incomplete arguments
+
+- **Date:** 2026-10-12
+- **Failure:** A completeness predicate returned false for an undeclared tool
+  before inspecting its arguments. The runtime called that truncation, advised
+  payload splitting, and exhausted retries on a tool the child could never use.
+  An inherited phase note advertised those unavailable tools; near-miss tool
+  envelopes also reached visible text as protocol JSON.
+- **Evidence:** packages/llm-providers/src/openai-compatible/chat/stream-transform/flush-handler.ts → symbol:flushStream,
+  sdk/src/impl/llm/stream-error-chunk.ts → symbol:classifyInvalidToolCall,
+  packages/agent-runtime/src/run-agent-step/loop/native-strikes.ts → symbol:applyNativeStrikeHandling,
+  packages/agent-runtime/src/templates/strings.ts → symbol:getAgentPrompt
+- **Invariant:** Tool availability and argument completeness are separate facts.
+  Classify the cause where the request's declared tools are known, preserve the
+  distinction through recovery, and derive child instructions from the child's
+  allowlist. A payload retry cannot make an unavailable tool available.
+- **Guard:** Before diagnosing truncation, compare the name with the tools
+  declared for that request. Give unavailable calls one corrective retry listing
+  actual tools, then fail with the real cause. Keep the truncation budget and
+  finish reason intact. Contain protocol envelopes before rendering text.
+- **Verification:** Recovery reran all nine original FID gates successfully;
+  targeted runtime/parser suites 41 pass, provider split 3 pass, SDK suite
+  607 pass / 1 skip / 0 fail. The inherited-prompt test passes 3/3; both it and
+  the SDK classification suite are declared in the FID's gate contract.
+- **Scope:** internal
+- **Owning FID:** FID-2026-1012-002
+- **Status:** active
+
 ## Lesson: A register target line whose globs all sit on continuation lines contributes nothing
 
 - **Date:** 2026-10-10
