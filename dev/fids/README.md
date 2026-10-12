@@ -9,6 +9,14 @@ operator decision, implementation, runtime review, or closure evidence.
 against clean candidate `a74e92e4` with a fresh 26/26 verification receipt;
 see [`archive/README.md`](archive/README.md).
 
+**Closed and archived 2026-10-12 — `FID-2026-1012-009`** on the operator's
+directive ("if the fid is completed, update the changelog and archive it"). The
+vendor-path tool-call truncation classification was implemented as `682399fd`;
+the record was the last active one, so the queue is empty again. Receipt 5/5
+LIVE at the archived path, CHANGELOG entry and archive index entry added, and
+the register item evicted from `SCOPE.md`; see
+[`archive/README.md`](archive/README.md).
+
 FID-2026-1010-001 was already marked closed and recorded as archived in SCOPE;
 its file was moved here on 2026-10-11 to reconcile the active queue and
 repository validator.

@@ -109,15 +109,6 @@ recorded decision or external dependency requires it.
 
 ### Harness and process
 
-- [ ] **Truncated tool-call arguments are steered as if they were ill-typed
-      (FID-2026-1012-009).** The vendor-SDK invalid-tool-call path builds its
-      native-incomplete error without the output-cap discriminator, so the
-      split-the-work advice FID-2026-0909-008 built is unreachable from it: all
-      48 recorded `read_files` native-incomplete failures (2026-10-02 → today)
-      carry the generic "retry with a complete arguments object" text and none
-      the cap text. RED measured; GREEN converged in the FID; implementation
-      pending. **Automation level: 3.**
-
 - [ ] **T122. Savant-Free removal.** Operator direction 2026-10-12 (Q12/Q5):
       the savant-free flag/feature is to be removed rather than repaired. The
       known failing integration is therefore deferred, not fixed, and the
@@ -143,10 +134,6 @@ recorded decision or external dependency requires it.
      them to every write, so "present before act" is satisfied by work that
      finished days ago. Evict the line in the pass that closes the item. -->
 
-- FID-2026-1012-009: `common/src/types/contracts/llm.ts`,
-  `sdk/src/impl/llm/errors.ts`, `sdk/src/impl/llm/stream-error-chunk.ts`,
-  `sdk/src/impl/__tests__/llm-native-tool-call.test.ts`,
-  `packages/agent-runtime/src/tools/stream-parser/__tests__/error-chunk-steering.test.ts`
 - Release-0.0.36: `VERSION`, `package.json`, `agents/package.json`,
   `cli/package.json`, `cli/release/package.json`, `common/package.json`,
   `common/src/constants/protocol-bundle.generated.ts`, `desktop/package.json`,

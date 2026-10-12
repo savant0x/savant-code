@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-1012-009-vendor-invalid-tool-call-truncation-classification.md`
 **ID:** FID-2026-1012-009
 **Severity:** medium
-**Status:** verified
+**Status:** closed
 **Created:** 2026-10-12 18:05
 **Automation level:** 3
 **YAGNI-Compliance:** Verified
@@ -178,8 +178,8 @@ bun run quality:report
 
 ### Verification Receipt
 
-- fingerprint: sha256:73791f1f6d99ad9e8f5a2e03a003542172ddc1c504a49976429fc34e4bd705e4
-- verified: 2026-10-12T22:05:40.597Z
+- fingerprint: sha256:f9053ba12e70a11ea18a9e25546a471e14486185975f57a982c171b0a9c99005
+- verified: 2026-10-12T22:12:48.473Z
 - test sdk/src/impl/__tests__/llm-native-tool-call.test.ts: exit 0
 - test packages/agent-runtime/src/tools/stream-parser/__tests__/error-chunk-steering.test.ts: exit 0
 - typecheck sdk: exit 0
@@ -228,9 +228,33 @@ bun run quality:report
    consumer would be vocabulary without a use. Revisit if the two classes ever
    need different recovery.
 
+### Implementation Evidence (REQUIRED for `closed`)
+
+- [x] **Commit SHA:** `682399fd` — "fix(sdk): classify vendor-path truncation
+      instead of re-sending the payload"; confirmed an ancestor of `HEAD`.
+- [x] **File:line ranges:** `common/src/types/contracts/llm.ts:57` (the
+      `argumentsTruncated` field), `:75-76` (the guard's non-boolean rejection),
+      `:105` (the native-incomplete `StreamErrorChunk` variant);
+      `sdk/src/impl/llm/errors.ts:120` (`SPLIT_PAYLOAD_ADVICE`), `:134` (the
+      output-cap discriminator), `:139` (the truncation discriminator),
+      `:142-146` (the three message selections), `:156` (the flag forwarded onto
+      the error chunk); `sdk/src/impl/llm/stream-error-chunk.ts:65-69`
+      (`isTruncatedToolInput`), `:138` (the flag set from the error's own cause).
+- [x] **Gate output:** the five declared gates exit 0 live at the archived path,
+      and the receipt stamped above covers the final closure bytes.
+- [x] **Reproducibility:** `grep -n 'argumentsTruncated'
+      common/src/types/contracts/llm.ts sdk/src/impl/llm/errors.ts
+      sdk/src/impl/llm/stream-error-chunk.ts` returns the seven lines cited
+      above from the working tree — the classification is present, not merely
+      asserted.
+- [x] **Step statuses:** steps 1-5 all `implemented`; none `blocked` or
+      `deferred`.
+
 ## Resolution
 
-Implemented and verified (2026-10-12).
+Implemented and verified (2026-10-12), closed the same day.
+
+### Code Verification Evidence
 
 - The contract carries `argumentsTruncated?: boolean` on `NativeToolCallError`
   and the native-incomplete `StreamErrorChunk`, with the guard rejecting a
@@ -259,6 +283,36 @@ of the class, because the eight-day ledger cannot attribute its 48 records to
 cause (the capture stores only the error's first line). The next occurrences must
 be read from the ledger to confirm the class text changes; the capture-side
 `errorClass`/truncation field remains open as a follow-up.
+
+### Closure
+
+- **Closed Date:** 2026-10-12
+- **Fix Description:** the vendor-SDK invalid-tool-call path no longer answers a
+  cut payload with a re-send. `classifyInvalidToolCall` now carries the
+  structural discriminator it alone holds — `ai` core's own `JSONParseError`
+  cause — as `argumentsTruncated`, and
+  `normalizeNativeToolCallStreamError` selects the existing split-the-work
+  advice for either truncation cause. Schema/type failures, a missing cause and
+  unrecognised shapes keep today's generic retry text, so the fail-closed
+  default is unchanged. Message and strike-ladder selection only: no tool
+  executes differently and no argument is rewritten.
+- **Tests Added:** `sdk/src/impl/__tests__/llm-native-tool-call.test.ts` (12
+  pass, 0 fail; five new cases) and
+  `packages/agent-runtime/src/tools/stream-parser/__tests__/error-chunk-steering.test.ts`
+  (10 pass, 0 fail; a new runtime-side pin). Repo-wide coverage: root
+  `bun run typecheck` (13 workspaces + `scripts/`), ESLint with
+  `--max-warnings 0` over the five changed files, Markdown lint, and
+  `quality:report`.
+- **Verification Evidence:** the five declared gates exit 0 live at the archived
+  path (receipt above, re-stamped over the closure bytes). Ground truth re-checked
+  against the working tree rather than the record: `682399fd` is an ancestor of
+  `HEAD`, the `argumentsTruncated` classification is present at the seven cited
+  lines, and the ledger counts were re-measured unchanged at 48 `read_files`
+  native-incomplete failures, 48/48 with the generic retry text and 0/48 with
+  the cap text.
+- **Archived:** `dev/fids/archive/FID-2026-1012-009-vendor-invalid-tool-call-truncation-classification.md`,
+  with its CHANGELOG entry and an entry in `dev/fids/archive/README.md`; the
+  register item and its write targets are evicted from `SCOPE.md`.
 
 ## Lessons Learned
 

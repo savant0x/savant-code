@@ -10,6 +10,63 @@
 > the v0.0.36 cut. Release notes are written here at cut time; nothing in this
 > section ships until then.
 
+## 2026-10-12 — Truncated tool calls are steered to split the payload (FID-2026-1012-009)
+
+### Fixed
+
+- **A payload cut by the output budget was answered with a re-send that
+  truncates identically (FID-2026-1012-009).** The output-cap discriminator
+  FID-2026-0909-008 built — `finishReason === 'length'` selecting "split the
+  work into smaller calls" — was unreachable from the path that actually
+  produces these failures: `classifyInvalidToolCall` (the vendor-SDK
+  transformer for `anthropic`, `google` and the rest) received `ai` core's
+  `invalid: true` tool-call part and rebuilt the error by hand as
+  `{ type: 'native-incomplete', toolName }`. The stream's `finish` part arrives
+  after that classification, so no finish reason exists there to branch on. Every
+  one of the 48 `read_files` native-incomplete failures recorded between
+  2026-10-02 and 2026-10-12 carried the generic "retry the tool call with a
+  complete arguments object" text and none the cap text — advice that cannot
+  work on arguments the model never finished writing.
+- The vendor path now carries the discriminator it alone holds. `ai` core
+  already separates the two cases: `safeParseJSON` returns a `JSONParseError`
+  when the arguments never parsed (the document did not close, i.e. the payload
+  was cut) and a `TypeValidationError` when they parsed but missed the tool's
+  schema, and `doParseToolCall` attaches that result as the
+  `InvalidToolInputError`'s `cause`. `isTruncatedToolInput` reads it, and
+  `classifyInvalidToolCall` marks the error `argumentsTruncated`. Schema/type
+  failures, a missing cause and unrecognised shapes stay on the generic retry
+  text, so the fail-closed default is unchanged and no execution path, argument
+  rewrite or strike budget was touched. Message and ladder selection only.
+
+### Added
+
+- `NativeToolCallError` and the native-incomplete `StreamErrorChunk` carry an
+  optional `argumentsTruncated?: boolean`, with `isNativeToolCallError`
+  rejecting a non-boolean value — the same hostile-shape discipline its
+  `finishReason` field already had. Both truncation causes (a provider's
+  output-cap finish reason, and a parse failure the classifier observed itself)
+  select one shared advice sentence with a truthful cause clause per case
+  (Law 13), so the wording cannot drift apart between them.
+
+### Verification
+
+- `sdk/src/impl/__tests__/llm-native-tool-call.test.ts` 12 pass / 0 fail (five
+  new cases: a parse-failure cause selects the split advice; a schema failure
+  and a missing cause keep the generic text; a false flag keeps the generic
+  text; a hostile non-boolean flag is rejected by the guard).
+- `packages/agent-runtime/src/tools/stream-parser/__tests__/error-chunk-steering.test.ts`
+  10 pass / 0 fail, including a new pin that the truncated body survives the
+  runtime and still gains the `read_files` strike-1 steering.
+- Root `bun run typecheck` (13 workspaces + `scripts/`), ESLint `--max-warnings 0`
+  over the changed files, Markdown lint, `quality:report` and the record's five
+  declared gates all exit 0. Implementation: `682399fd`.
+- Boundary recorded rather than claimed: the classification and both message
+  selections are proven at unit level. The eight-day ledger stores only each
+  error's first line, so it cannot retro-attribute its 48 records to cause; the
+  next occurrences must be read from `dev/experiences/raw-traces.jsonl` to
+  confirm the class text changes, and the capture-side `errorClass`/truncation
+  field remains open as a follow-up.
+
 ## 2026-10-12 — Researcher acceptance and the lesson feature pipeline closed (FID-2026-1012-003, FID-2026-1012-004)
 
 ### Changed

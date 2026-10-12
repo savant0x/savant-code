@@ -3,6 +3,32 @@
 This directory contains closed or historically completed FIDs. Files here are
 an audit record, not an active work queue.
 
+## 2026-10-12 closure — vendor-path tool-call truncation classification
+
+One record closed on the operator's directive ("if the fid is completed, update
+the changelog and archive it"), in its closure format with a fresh 5/5 receipt
+stamped LIVE at its archived path. It was the last active record, so the active
+queue is empty again.
+
+- [`FID-2026-1012-009-vendor-invalid-tool-call-truncation-classification.md`](FID-2026-1012-009-vendor-invalid-tool-call-truncation-classification.md)
+  (`verified` → `closed`): the implementation landed as `682399fd`. The output-cap
+  discriminator FID-2026-0909-008 built was unreachable from the vendor-SDK path
+  that produces these failures, so all 48 recorded `read_files` native-incomplete
+  failures (2026-10-02 → 2026-10-12) carried the generic re-send text and none the
+  split-the-work text. The contract, the vendor classifier and the message
+  selector now carry and read `argumentsTruncated`, taken from `ai` core's own
+  `InvalidToolInputError` cause: a `JSONParseError` (the document never closed)
+  selects the split advice, while a `TypeValidationError`, a missing cause and
+  unrecognised shapes keep today's text. 12/12 and 10/10 on the two suites, root
+  typecheck over the 13 workspaces plus `scripts/`, ESLint and `quality:report`
+  clean, and the receipt re-stamped at the archived path over the closure bytes.
+  The boundary is recorded rather than claimed: the classification is proven at
+  unit level, and because the capture stores only each error's first line the
+  ledger cannot retro-attribute its 48 records to cause — the next occurrences
+  must be read from the ledger, and the capture-side `errorClass`/truncation
+  field stays open as a follow-up. The register item and its write targets are
+  evicted from `SCOPE.md`.
+
 ## 2026-10-12 closure — researcher acceptance + lesson feature pipeline
 
 The two remaining active records closed on the operator's directive ("complete
