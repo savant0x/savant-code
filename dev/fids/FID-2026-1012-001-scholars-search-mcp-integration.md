@@ -279,8 +279,8 @@ describe('researcher-web agent definition', () => {
 
 ### Verification
 
-Typecheck (`agents`, `cli`), the new test, and the repo quality gate. Live smoke of the
-MCP endpoint was already performed in RED (200 + tool list). A full runtime smoke
+Typecheck (`agents`, `cli`), the new test (`agents/researcher/researcher-web.test.ts`), and the
+repo quality gate. Live smoke of the MCP endpoint was already performed in RED (200 + tool list). A full runtime smoke
 (spawning `researcher-web` against the live service) is deferred to the implementation
 audit and marked NEEDS-REVIEW here — it costs credits and is not required to prove the
 wiring contract.
@@ -294,8 +294,8 @@ wiring contract.
 
 ### Verification Receipt
 
-- fingerprint: sha256:7e103db0b42e213eb60f12415b0a0e2af9bae93732d4b440987a78ab63a58d58
-- verified: 2026-10-12T05:56:42.754Z
+- fingerprint: sha256:86408d432e6aac9b11b81bc6694b9ca5c44a868000b9aac9635c0d4bdf2cfa4b
+- verified: 2026-10-12T06:12:23.035Z
 - typecheck agents: exit 0
 - typecheck cli: exit 0
 - test agents/researcher/researcher-web.test.ts: exit 0
@@ -342,25 +342,52 @@ wiring contract.
    (`agents/savant/savant.ts`, `cli/src/utils/constants.ts`, free-agent catalog); the MCP
    wiring rides the existing definition.
 8. *Headless/paid-path dependency?* None in this FID — the service is used interactively
-   by the persona only; no automated or billable path calls it.### Implementation Evidence (REQUIRED for `closed`)
+   by the persona only; no automated or billable path calls it.
+
+### Implementation Evidence (REQUIRED for `closed`)
 
 Implementation exists and every declared gate passes live on the final bytes (2026-10-12):
 
-- `agents/researcher/researcher-web.ts` — `mcpServers: { 'scholars-search': { type: 'http', url: 'https://api.sciencemadereadable.com/mcp' } }` inserted between `spawnableAgents` and `systemPrompt`; the "Scholarly Literature (MCP: scholars-search)" section appended to `systemPrompt` (tool-use boundary, query rewriting, screen-then-read, citation depth guidance, rate-limit and 502/503 fallback). `instructionsPrompt` unchanged.
-- `agents/researcher/researcher-web.test.ts` — new definition-shape pin (3 tests): native tools preserved with no write surface; remote-HTTP server type/URL with no auth headers; the four `scholars-search__*` tool names plus `30 tool calls per minute` and `never from memory` in the system prompt.
-- `cli/src/agents/bundled-agents.generated-data/19-researcher-web.ts` — regenerated via `bun run --cwd=cli prebuild:agents` (exit 0); Law 4 grep: `grep -c "scholars-search" cli/src/agents/bundled-agents.generated-data/19-researcher-web.ts` → 2. `bundled-agents.generated.ts` unchanged (the generated bundle is a build artifact, not tracked).
+- `agents/researcher/researcher-web.ts` —
+  `mcpServers: { 'scholars-search': { type: 'http', url: 'https://api.sciencemadereadable.com/mcp' } }` inserted between
+  `spawnableAgents` and `systemPrompt`; the "Scholarly Literature (MCP: scholars-search)" section appended to
+  `systemPrompt` (tool-use boundary, query rewriting, screen-then-read, citation depth guidance, rate-limit and 502/503
+  fallback). `instructionsPrompt` unchanged.
+- `agents/researcher/researcher-web.test.ts` — new definition-shape pin (3 tests): native tools preserved with no write
+  surface; remote-HTTP server type/URL with no auth headers; the four `scholars-search__*` tool names plus
+  `30 tool calls per minute` and `never from memory` in the system prompt.
+- `cli/src/agents/bundled-agents.generated-data/19-researcher-web.ts` — regenerated via
+  `bun run --cwd=cli prebuild:agents` (exit 0); Law 4 grep:
+  `grep -c "scholars-search" cli/src/agents/bundled-agents.generated-data/19-researcher-web.ts` → 2.
+  `bundled-agents.generated.ts` unchanged (the generated bundle is a build artifact, not tracked).
 - `docs/agents-and-tools.md` — Researcher row tools column gains the four MCP tools; "Last verified" → 2026-10-12.
-- Gate runs on the final bytes: `typecheck agents` exit 0; `typecheck cli` exit 0; `test agents/researcher/researcher-web.test.ts` 3 pass / 0 fail; `quality` PASS (1502 baselined files); eslint (both changed TS files, --max-warnings 0) exit 0; prettier formatted both TS files. No commit exists yet at verified — the receipt below documents the verification that earned the status; the closing commit SHA is recorded at closure.
+- Gate runs on the final bytes: `typecheck agents` exit 0; `typecheck cli` exit 0;
+  `test agents/researcher/researcher-web.test.ts` 3 pass / 0 fail; `quality` PASS (1502 baselined files); eslint (both
+  changed TS files, --max-warnings 0) exit 0; prettier formatted both TS files. No commit exists yet at verified — the
+  receipt below documents the verification that earned the status; the closing commit SHA is recorded at closure.
 
 ### Code Verification Evidence
 
-- [x] Files referenced in Affected Components exist (target file read 0-EOF before every edit; generated artifact read; contract files read by symbol)
-- [x] Implementation matches the Proposed Solution — Steps 1-5 implemented verbatim, with the three operator-relayed prompt refinements (Nova review) folded into Step 2's text: tool-use boundary (non-research questions stay on web_search), rate-limit error handling (stop and fall back rather than retry), citation-tool depth/direction guidance (find_similar_papers k=10-20; citation_walk k=20-30 with year/topic filtering)
+- [x] Files referenced in Affected Components exist (target file read 0-EOF before every edit; generated artifact read;
+      contract files read by symbol)
+- [x] Implementation matches the Proposed Solution — Steps 1-5 implemented verbatim, with the three operator-relayed
+      prompt refinements (Nova review) folded into Step 2's text: tool-use boundary (non-research questions stay on
+      web_search), rate-limit error handling (stop and fall back rather than retry), citation-tool depth/direction
+      guidance (find_similar_papers k=10-20; citation_walk k=20-30 with year/topic filtering)
 - [x] Typecheck/tests/lint — typecheck agents exit 0, typecheck cli exit 0, test 3/3 pass, quality PASS, eslint exit 0
-- [x] Production call-graph evidence — the bundled production artifact contains the wiring (grep -c → 2); the runtime consumer chain (`additionalToolDefinitions` → `getMCPToolData` → `requestMcpToolData` → `getMCPClient`) is pre-existing and was verified by symbol grep in RED (evidence item 6)
-- [x] FID status reflects the actual implementation state (`verified` — implementation exists and gates pass)## Resolution
+- [x] Production call-graph evidence — the bundled production artifact contains the wiring (grep -c → 2); the runtime
+      consumer chain (`additionalToolDefinitions` → `getMCPToolData` → `requestMcpToolData` → `getMCPClient`) is
+      pre-existing and was verified by symbol grep in RED (evidence item 6)
+- [x] FID status reflects the actual implementation state (`verified` — implementation exists and gates pass)
 
-Implemented and verified 2026-10-12. Fix description: `researcher-web` carries the public Scholars Reading List MCP server through the existing `mcpServers` contract; the persona prompt gains the Scholarly Literature discipline section; the definition shape is pinned by a new test; the bundled agent was regenerated. Tests added: yes — `agents/researcher/researcher-web.test.ts` (3 tests). Verification evidence: the four declared gates plus eslint/prettier all exit 0 on the final bytes (see Implementation Evidence). Closure (commit SHA, archive, CHANGELOG, register eviction) completes in the pass that follows the implementation audit.
+## Resolution
+
+Implemented and verified 2026-10-12. Fix description: `researcher-web` carries the public Scholars Reading List MCP
+server through the existing `mcpServers` contract; the persona prompt gains the Scholarly Literature discipline section;
+the definition shape is pinned by a new test; the bundled agent was regenerated. Tests added: yes —
+`agents/researcher/researcher-web.test.ts` (3 tests). Verification evidence: the four declared gates plus
+eslint/prettier all exit 0 on the final bytes (see Implementation Evidence). Closure (commit SHA, archive, CHANGELOG,
+register eviction) completes in the pass that follows the implementation audit.
 
 ### Loop 2 — Independent audit and adversarial meta-verification
 
@@ -398,8 +425,20 @@ Implemented and verified 2026-10-12. Fix description: `researcher-web` carries t
   Detective's citation of it was corrupted recall, not fact); character-level test/spec
   convergence confirmed (Step 2's prompt text contains, verbatim, all four
   `scholars-search__*` tool names, `30 tool calls per minute`, and `never from memory`);
-  serialization safe (JSON data + prettier).- **Adversarial OMISSION (advisory, non-blocking):** prose capability summaries at `docs/agents.md:130`, `docs/index.md:52`, `AGENTS.md:32`, `docs/features.md:327` go stale after implementation but remain technically true; folded into Step 5 as an accepted-drift note. No other omission found; no NEEDS-REVIEW remains.
-- **Operator-relayed external review (Nova, 2026-10-12):** verdict approve, with three post-deploy watch items, all folded into Step 2's implemented prompt text before coding: (1) tool over-use — the prompt now draws the research/non-research boundary explicitly ("Everything else — news, pricing, releases, how-to, product or software questions — stays on web_search; this index is papers only"); (2) rate limit under load — the prompt now names the rate-limit error shape ("the tool result says how long to wait") and directs stop-and-fallback rather than retry-looping; (3) citation guidance — `find_similar_papers` and `citation_walk` now carry direction (semantic neighborhood / co-cited prior work) and depth (k=10-20 / k=20-30 with year-topic filtering) instead of "snowball outward". Nova also noted the Thinker spawn failures meant fewer independent design passes; recorded honestly in evidence item 11.
+  serialization safe (JSON data + prettier).
+- **Adversarial OMISSION (advisory, non-blocking):** prose capability
+  summaries at `docs/agents.md:130`, `docs/index.md:52`, `AGENTS.md:32`, `docs/features.md:327` go stale after
+  implementation but remain technically true; folded into Step 5 as an accepted-drift note. No other omission found; no
+  NEEDS-REVIEW remains.
+- **Operator-relayed external review (Nova, 2026-10-12):** verdict approve, with three post-deploy watch items, all
+  folded into Step 2's implemented prompt text before coding: (1) tool over-use — the prompt now draws the
+  research/non-research boundary explicitly ("Everything else — news, pricing, releases, how-to, product or software
+  questions — stays on web_search; this index is papers only"); (2) rate limit under load — the prompt now names the
+  rate-limit error shape ("the tool result says how long to wait") and directs stop-and-fallback rather than
+  retry-looping; (3) citation guidance — `find_similar_papers` and `citation_walk` now carry direction (semantic
+  neighborhood / co-cited prior work) and depth (k=10-20 / k=20-30 with year-topic filtering) instead of "snowball
+  outward". Nova also noted the Thinker spawn failures meant fewer independent design passes; recorded honestly in
+  evidence item 11.
 - **CHANGE DELTA:** status flip, Step 5 advisory, Loop 2 record — well under the 10% circuit-breaker bound.
 
 ### Loop 3 — Final convergence
