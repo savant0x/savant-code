@@ -186,33 +186,20 @@ export function repositoryValidationGates(
       cwd: root,
     },
     {
-      // Bundles the CLI entry with every import resolved — the exact phase that
-      // failed in CI when an undeclared dependency (phantom @noble/hashes) only
-      // resolved from a node_modules outside the repo (FID-2026-0816-001 D-01).
-      // A resolution failure must fail the release gates before shipping, not
-      // the post-release binary workflow. Output lands in the gitignored
-      // cli/bin/ so the worktree-fingerprint check stays clean.
+      // Bundles the CLI entry with every import resolved, inside a PRISTINE
+      // install of the frozen lockfile: the probe materializes the release file
+      // set, installs it, runs the build's own prebundle steps, and fails when
+      // any module it loaded resolved from a node_modules outside that tree.
+      // The earlier form bundled the working tree, so a stray install (measured
+      // on this machine: `C:\Users\spenc\node_modules`) satisfied an undeclared
+      // import and the gate stayed green while CI failed — v0.0.35.
       //
-      // `--external '@opentui/core-*'` keeps the 8 platform-specific native
-      // binaries (declared optionalDependencies, loaded at runtime via dynamic
-      // import) out of the bundle. Only the current-OS binary is ever
-      // installed, so without this the gate false-fails on every single-OS
-      // machine with "Could not resolve: @opentui/core-darwin-x64" etc. — an
-      // environment limitation, not an undeclared import (A–Z v0.0.25 AV-001).
-      // The main `@opentui/core` package does NOT match the wildcard and is
-      // still bundled/resolved, so genuine undeclared-import failures still fire.
+      // The `--external '@opentui/core-*'` rationale, the scratch-tree location
+      // and the provenance check live in `scripts/clean-install-bundle.ts` and
+      // `scripts/cli-bundle-resolution-check.ts`.
       label: 'cli-bundle-resolution',
       command: 'bun',
-      args: [
-        'build',
-        'cli/src/index.tsx',
-        '--production',
-        '--target=bun',
-        '--external',
-        '@opentui/core-*',
-        '--outdir',
-        'cli/bin/.resolution-check',
-      ],
+      args: ['run', 'scripts/cli-bundle-resolution-check.ts'],
       cwd: root,
     },
     {

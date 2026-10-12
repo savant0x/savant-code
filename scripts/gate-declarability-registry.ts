@@ -89,7 +89,8 @@ const RELEASE_CONTRACT: readonly AuditedGate[] = [
   {
     label: 'cli-bundle-resolution',
     source: 'release-contract',
-    proves: 'the CLI entry bundles with every import resolved',
+    proves:
+      'the CLI entry bundles with every import resolved from a pristine install',
     declarations: [probe('scripts/cli-bundle-resolution-check.ts')],
   },
   {

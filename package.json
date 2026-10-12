@@ -64,6 +64,7 @@
     "quality:report": "bun scripts/quality-report.ts",
     "hygiene:check": "bun scripts/hygiene.ts",
     "deps:undeclared": "bun scripts/undeclared-imports-audit.ts",
+    "bundle:resolution": "bun scripts/cli-bundle-resolution-check.ts",
     "design-systems:generate": "bun run scripts/generate-design-systems.ts",
     "design-systems:check": "bun run scripts/generate-design-systems.ts --check",
     "learnings:check": "bun scripts/learnings.ts",

@@ -261,8 +261,12 @@ needs a bump.
   `SAVANT_CODE_RELEASE_PACKAGES`. This also ended the SDK-scope publish wall that
   killed the original 0.0.24 run and forced an out-of-pipeline npm publish.
 - `scripts/validation-manifest.ts` adds the `cli-bundle-resolution` release gate
-  (`bun build cli/src/index.tsx --target=bun`, output to the gitignored `cli/bin/`) —
-  the exact CI failure phase now blocks the release **before** commit/tag/publish.
+  (`bun run scripts/cli-bundle-resolution-check.ts`) — the exact CI failure phase now
+  blocks the release **before** commit/tag/publish. The gate materializes the release
+  file set into a scratch tree, installs the frozen lockfile there, runs the release
+  build's prebundle steps, and bundles; every module the bundler loaded must come from
+  that tree. A resolution supplied by a `node_modules` elsewhere on the machine — the
+  stray ancestor install that kept v0.0.35 green locally — is reported and fails.
 - The asset-verify failure message and the workflow's `source_ref` input now require a
   **branch or tag** (a bare commit SHA fails `actions/checkout`).
 
@@ -286,7 +290,7 @@ needs a bump.
 
 | Layer | Guard |
 | --- | --- |
-| Pre-ship | 14-gate release manifest incl. `cli-bundle-resolution` (`release:public:diagnose`) |
+| Pre-ship | 14-gate release manifest incl. `cli-bundle-resolution` — pristine install + resolution provenance (`release:public:diagnose`) |
 | Publish set | Default = `savant-code` only; SDK opt-in |
 | Post-ship | `verifyReleaseAssets` polls for all 5 tarballs and fails closed |
 | CI | Binary workflow fails loudly per platform; `verify-release-assets` job asserts all 5 |
