@@ -338,7 +338,8 @@ package.json  "bundle:resolution": "bun scripts/cli-bundle-resolution-check.ts"
 
 - **Closed Date:** 2026-10-11
 - **Closing Commit:** local `ad27c153` (`feat(gates): cli-bundle-resolution runs inside a
-  pristine install`). No push was performed — `main` is 8 commits ahead of `origin/main`.
+  pristine install`). No push was performed; the closing commits ahead of `origin/main`
+  stay local.
 - **Fix Description:** `cli-bundle-resolution` now materializes the release file set into
   a scratch tree, installs the frozen lockfile there, runs the release build's prebundle
   steps, bundles there, and fails when any module the bundler loaded resolved outside that
