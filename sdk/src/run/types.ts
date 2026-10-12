@@ -47,6 +47,12 @@ export type OverrideToolHandlers = {
   // Include read_files separately, since it has a different signature.
   read_files?: (input: {
     filePaths: string[]
+    /** LF-001 (FID-2026-1012-007): the 1-indexed line window the caller
+     *  asked for. An override that replaces this tool owns the response: it
+     *  may serve the window, and a host that ignores it returns the whole
+     *  bounded file, exactly as before windows were forwarded. */
+    offset?: number
+    limit?: number
   }) => Promise<Record<string, string | null>>
 }
 

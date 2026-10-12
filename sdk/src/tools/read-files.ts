@@ -1,6 +1,7 @@
 import { READ_FILES_MAX_CHARS } from '@savant-code/common/constants/read-files'
 import { FILE_READ_STATUS } from '@savant-code/common/old-constants'
 import { isFileIgnored } from '@savant-code/common/project-file-tree'
+import { extractLineWindow } from '@savant-code/common/util/read-window'
 
 import { resolveFilePath } from './path-utils'
 
@@ -27,8 +28,18 @@ export async function getFiles(params: {
    * If not provided, the SDK applies gitignore checking automatically.
    */
   fileFilter?: FileFilter
+  /**
+   * LF-001 (FID-2026-1012-007): 1-indexed line window, selected at THIS
+   * boundary so it is applied to the complete file rather than to the
+   * already-truncated prefix. Omitted → whole file (previous behavior).
+   */
+  offset?: number
+  limit?: number
 }) {
-  const { filePaths, cwd, fs, fileFilter } = params
+  const { filePaths, cwd, fs, fileFilter, offset, limit } = params
+  // A requested window is served from the complete content; the response is
+  // still capped afterwards, so a page of a huge file stays bounded.
+  const windowRequested = offset !== undefined || limit !== undefined
   // If caller provides a filter, they own all filtering decisions
   // If not, SDK applies default gitignore checking
   const hasCustomFilter = fileFilter !== undefined
@@ -83,21 +94,24 @@ export async function getFiles(params: {
       }
 
       const content = await fs.readFile(fullPath, 'utf8')
+      const selected = windowRequested
+        ? extractLineWindow(content, offset, limit)
+        : content
 
-      if (content.length > MAX_CHARS) {
-        const truncated = content.slice(0, MAX_CHARS)
+      if (selected.length > MAX_CHARS) {
+        const truncated = selected.slice(0, MAX_CHARS)
         result[relativePath] =
           truncated +
           '\n\n[FILE_TOO_LARGE: This file is ' +
-          fmtNum(content.length) +
+          fmtNum(selected.length) +
           ' chars, exceeding the ' +
           fmtNum(MAX_CHARS) +
           ' char limit. The content above has been truncated. Use other tools to read other sections of the file.]'
       } else {
         // Prepend TEMPLATE marker for example files
         result[relativePath] = isExampleFile
-          ? FILE_READ_STATUS.TEMPLATE + '\n' + content
-          : content
+          ? FILE_READ_STATUS.TEMPLATE + '\n' + selected
+          : selected
       }
     } catch (error) {
       if (

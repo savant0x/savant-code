@@ -44,12 +44,17 @@ function requireCwd(cwd: string | undefined, toolName: string): string {
 
 export async function readFiles({
   filePaths,
+  offset,
+  limit,
   override,
   fileFilter,
   cwd,
   fs,
 }: {
   filePaths: string[]
+  /** LF-001 (FID-2026-1012-007): the requested 1-indexed line window. */
+  offset?: number
+  limit?: number
   override?: NonNullable<
     Required<SavantCodeClientOptions>['overrideTools']['read_files']
   >
@@ -58,10 +63,17 @@ export async function readFiles({
   fs: SavantCodeFileSystem
 }) {
   if (override) {
-    return await override({ filePaths })
+    // An override replaces this tool wholesale, so it receives the window in
+    // its input and owns the result: a host that serves line ranges returns
+    // the window, and one that ignores it returns the whole bounded file it
+    // always did. The production path (no override) windows at the fetch
+    // boundary in getFiles.
+    return await override({ filePaths, offset, limit })
   }
   return getFiles({
     filePaths,
+    offset,
+    limit,
     cwd: requireCwd(cwd, 'read_files'),
     fs,
     fileFilter,

@@ -1,5 +1,6 @@
 import { partitionEmbeddedGroundingReads } from '@savant-code/common/util/embedded-protocol'
 import { jsonToolResult } from '@savant-code/common/util/messages'
+import { extractLineWindow } from '@savant-code/common/util/read-window'
 
 import { getFileReadingUpdates } from '../../../get-file-reading-updates'
 import { renderReadFilesResult } from '../../../util/render-read-files-result'
@@ -16,21 +17,15 @@ import type { ProjectFileContext } from '@savant-code/common/util/file'
 type ToolName = 'read_files'
 
 /**
- * FID-2026-0817-002 B2: slice file content to a 1-indexed line window.
- * `offset` defaults to line 1; `limit` defaults to the end of the file.
- * Reading past EOF yields an empty string (no fabricated lines).
+ * FID-2026-0817-002 B2, shared since LF-001 (FID-2026-1012-007): the
+ * 1-indexed line window. One implementation now serves this handler's
+ * embedded-bundle reads and the SDK's fetch boundary, so the two ends can
+ * never slice differently. `offset` defaults to line 1; `limit` defaults to
+ * the end of the file; reading past EOF yields an empty string (no
+ * fabricated lines); a window that ends before EOF keeps its separator so
+ * consecutive pages concatenate back to the original file.
  */
-export function sliceLines(
-  content: string,
-  offset: number | undefined,
-  limit: number | undefined,
-): string {
-  if (offset === undefined && limit === undefined) return content
-  const lines = content.split('\n')
-  const start = (offset ?? 1) - 1
-  const end = limit === undefined ? lines.length : start + limit
-  return lines.slice(start, end).join('\n')
-}
+export const sliceLines = extractLineWindow
 
 export const handleReadFiles = (async (
   params: {
@@ -39,7 +34,12 @@ export const handleReadFiles = (async (
 
     agentState: AgentState
     fileContext: ProjectFileContext
-  } & ParamsExcluding<typeof getFileReadingUpdates, 'requestedFiles'>,
+  } & ParamsExcluding<
+    typeof getFileReadingUpdates,
+    // LF-001 (FID-2026-1012-007): the window is a property of THIS call's
+    // input, not of the run's params — the request path carries it explicitly.
+    'requestedFiles' | 'offset' | 'limit'
+  >,
 ): Promise<{ output: SavantCodeToolOutput<ToolName> }> => {
   const {
     previousToolCallFinished,
@@ -62,20 +62,30 @@ export const handleReadFiles = (async (
     requestedFiles: paths,
   })
 
-  let addedFiles: { path: string; content: string }[] = embedded
+  // LF-001 (FID-2026-1012-007): the window is applied where the content is
+  // still complete. Filesystem reads carry it into the request (the fetch
+  // boundary slices before it caps at READ_FILES_MAX_CHARS, which is the only
+  // place a window past that cap can still be served), and a responder owns
+  // what it returns — re-slicing a windowed response here would silently
+  // drop lines. Embedded grounding reads never cross that boundary, so they
+  // are windowed here with the same shared function.
+  const windowRequested = offset !== undefined || limit !== undefined
+  const embeddedFiles = windowRequested
+    ? embedded.map((file) => ({
+        ...file,
+        content: sliceLines(file.content, offset, limit),
+      }))
+    : embedded
+
+  let addedFiles: { path: string; content: string }[] = embeddedFiles
   if (remaining.length > 0) {
     const fromFs = await getFileReadingUpdates({
       ...params,
       requestedFiles: remaining,
+      offset,
+      limit,
     })
-    addedFiles = [...embedded, ...fromFs]
-  }
-
-  if (offset !== undefined || limit !== undefined) {
-    addedFiles = addedFiles.map((file) => ({
-      ...file,
-      content: sliceLines(file.content, offset, limit),
-    }))
+    addedFiles = [...embeddedFiles, ...fromFs]
   }
 
   return {

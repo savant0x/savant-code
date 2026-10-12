@@ -109,9 +109,13 @@ export function buildAgentRuntimeImpl(params: {
         inputSchema: toJSONValue(tool.inputSchema),
       }))
     },
-    requestFiles: ({ filePaths }) =>
+    requestFiles: ({ filePaths, offset, limit }) =>
       readFiles({
         filePaths,
+        // LF-001 (FID-2026-1012-007): the runtime handler's window rides the
+        // same request so it is applied to the complete file, not the cap.
+        offset,
+        limit,
         override: overrideTools?.read_files,
         fileFilter,
         cwd,

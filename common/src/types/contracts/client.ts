@@ -26,6 +26,11 @@ export type RequestMcpToolDataFn = (params: {
 
 export type RequestFilesFn = (params: {
   filePaths: string[]
+  /** LF-001 (FID-2026-1012-007): 1-indexed line window. The responder owns
+   *  the window — the read tool's fetch boundary must select these lines
+   *  BEFORE it caps the response, or a window past the cap is unreachable. */
+  offset?: number
+  limit?: number
 }) => Promise<Record<string, string | null>>
 
 export type RequestOptionalFileFn = (params: {
