@@ -1,5 +1,4 @@
 import { getErrorObject } from '@savant-code/common/util/error'
-import { convertJsonSchemaToZod } from 'zod-from-json-schema'
 
 import { MCP_TOOL_SEPARATOR } from './mcp-constants'
 import { markTrustedCustomToolDefinitions } from './tools/tool-executor/trusted-custom-tool-definitions'
@@ -48,9 +47,9 @@ export async function getMCPToolData(params: {
 
           for (const { name, description, inputSchema } of mcpData) {
             writeTo[mcpName + MCP_TOOL_SEPARATOR + name] = {
-              inputSchema: convertJsonSchemaToZod(
-                inputSchema as Record<string, JSONValue>,
-              ),
+              // Preserve nullable unions and bounds for the model. The executor
+              // converts this schema for validation, without a lossy roundtrip.
+              inputSchema: inputSchema as Record<string, JSONValue>,
               endsAgentStep: true,
               description,
               // Remote MCP dispatch is network I/O; local stdio effects

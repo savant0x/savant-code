@@ -1,6 +1,8 @@
 import { endsAgentStepParam } from '@savant-code/common/tools/constants'
 import { toolParams } from '@savant-code/common/tools/list'
+import { jsonValueSchema } from '@savant-code/common/types/json'
 
+import { repairEncodedCustomInput } from './custom-input-recovery'
 import { ensureZodSchema } from './prompts'
 import {
   getToolValidationHint,
@@ -157,6 +159,15 @@ export function parseRawCustomToolCall(params: {
     )
   }
 
+  if (!isJSONObject(parsedInput.input)) {
+    return {
+      toolName,
+      toolCallId: rawToolCall.toolCallId,
+      input: rawToolCall.input,
+      error: `Invalid parameters for ${toolName}: expected a JSON object.`,
+    }
+  }
+
   const processedParameters: Record<string, JSONValue> = {}
   for (const [param, val] of Object.entries(parsedInput.input ?? {})) {
     processedParameters[param] = val
@@ -174,7 +185,12 @@ export function parseRawCustomToolCall(params: {
   const rawSchema = customToolDefs?.[toolName]?.inputSchema
   if (rawSchema) {
     const paramsSchema = ensureZodSchema(rawSchema as Record<string, JSONValue>)
-    const result = paramsSchema.safeParse(processedParameters)
+    let result = paramsSchema.safeParse(processedParameters)
+    if (!result.success) {
+      result = paramsSchema.safeParse(
+        repairEncodedCustomInput(processedParameters, result.error.issues),
+      )
+    }
 
     if (!result.success) {
       return {
@@ -188,9 +204,19 @@ export function parseRawCustomToolCall(params: {
         )}`,
       }
     }
+    const validated = jsonValueSchema.safeParse(result.data)
+    if (!validated.success || !isJSONObject(validated.data)) {
+      return {
+        toolName,
+        toolCallId: rawToolCall.toolCallId,
+        input: rawToolCall.input,
+        error: `Invalid parameters for ${toolName}: validated arguments must be a JSON object.`,
+      }
+    }
+    parsedInput.input = validated.data
   }
 
-  const input = JSON.parse(JSON.stringify(parsedInput.input))
+  const input = { ...parsedInput.input }
   if (endsAgentStepParam in input) {
     delete input[endsAgentStepParam]
   }

@@ -70,6 +70,36 @@ async function setup() {
 }
 
 describe('scholars-search actual execution', () => {
+  test('repairs encoded arrays and numbers before the real executor dispatch', async () => {
+    const { params } = await setup()
+    const defs = await getMCPToolData({
+      toolNames: params.agentTemplate.toolNames,
+      mcpServers: params.agentTemplate.mcpServers,
+      requestMcpToolData: async () => [
+        {
+          name: 'search_papers',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              ids: { type: 'array', items: { type: 'string' }, maxItems: 20 },
+              limit: { type: 'integer', minimum: 1, maximum: 100 },
+            },
+            required: ['ids'],
+          },
+        },
+      ],
+    })
+    await executeCustomToolCall({
+      ...params,
+      customToolDefinitions: defs,
+      input: { ids: '["W4390591490"]', limit: '10' },
+    })
+    expect(params.requestToolCall).toHaveBeenCalledTimes(1)
+    expect(params.requestToolCall.mock.calls[0]?.[0].input).toEqual({
+      ids: ['W4390591490'],
+      limit: 10,
+    })
+  })
   test('dispatches an offered tool from the agent-owned remote server', async () => {
     const { params, chunks, defs } = await setup()
     expect(defs[NAME].effect).toBe('network')

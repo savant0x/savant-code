@@ -8,11 +8,8 @@ import { ImplementorGroup } from './implementor-row'
 import { SingleBlock } from './single-block'
 import { ThinkingBlock } from './thinking-block'
 import { ToolBlockGroup } from './tool-block-group'
+import { containTranscriptNodes } from './transcript-boundary'
 import { useMessageBlockStore } from '../../state/message-block-store'
-import {
-  processBlocks,
-  type BlockProcessorHandlers,
-} from '../../utils/block-processor'
 import {
   getResponseAdForSlot,
   responseAdDisplayCount,
@@ -24,6 +21,7 @@ import {
 import { AdCard } from '../ad-banner'
 
 import type { ContentBlock } from '../../types/chat'
+import type { BlockProcessorHandlers } from '../../utils/block-processor'
 import type { MarkdownPalette } from '../../utils/markdown-renderer'
 import type { ReactNode } from 'react'
 
@@ -245,7 +243,7 @@ export const BlocksRenderer = memo(
         })),
       )
 
-    const nodes = processBlocks(sourceBlocks, handlers)
+    const nodes = containTranscriptNodes(sourceBlocks, handlers, messageId)
     const eligibleAdCount = responseAdSlotCount({ nodeCount: nodes.length })
 
     useEffect(() => {

@@ -14,11 +14,8 @@ import { ImplementorGroup } from './implementor-row'
 import { renderMarkdownContent } from './markdown-content'
 import { ThinkingBlock } from './thinking-block'
 import { ToolBlockGroup } from './tool-block-group'
+import { containTranscriptNodes } from './transcript-boundary'
 import { useTheme } from '../../hooks/use-theme'
-import {
-  processBlocks,
-  type BlockProcessorHandlers,
-} from '../../utils/block-processor'
 import {
   AGENT_BRANCH_HORIZONTAL_INSET,
   getChildContentWidth,
@@ -31,6 +28,7 @@ import type {
   HtmlContentBlock,
   TextContentBlock,
 } from '../../types/chat'
+import type { BlockProcessorHandlers } from '../../utils/block-processor'
 import type { MarkdownPalette } from '../../utils/markdown-renderer'
 
 interface AgentBodyProps {
@@ -254,6 +252,6 @@ export const AgentBody = memo(
       [], // Empty deps - handlers read from propsRef.current
     )
 
-    return processBlocks(nestedBlocks, handlers) as ReactNode[]
+    return containTranscriptNodes(nestedBlocks, handlers, keyPrefix)
   },
 )

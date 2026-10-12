@@ -126,7 +126,13 @@ export function getToolDisplayInfo(toolName: string): {
   }
 
   return {
-    name: TOOL_NAME_OVERRIDES[toolName] ?? capitalizeWords(toolName),
+    name:
+      TOOL_NAME_OVERRIDES[toolName] ??
+      capitalizeWords(
+        toolName.includes('__')
+          ? toolName.split('__').slice(1).join('_')
+          : toolName,
+      ),
     type: 'tool',
   }
 }

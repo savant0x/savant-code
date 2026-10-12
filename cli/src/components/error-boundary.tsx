@@ -1,10 +1,10 @@
-import { Component, type ReactNode } from 'react'
+import { Component, type ErrorInfo, type ReactNode } from 'react'
 
 import { logger } from '../utils/logger'
 
 interface ErrorBoundaryProps {
   children: ReactNode
-  fallback: ReactNode | ((error: Error) => ReactNode)
+  fallback: ReactNode | ((error: Error, retry: () => void) => ReactNode)
   componentName?: string
 }
 
@@ -35,21 +35,27 @@ export class ErrorBoundary extends Component<
     return { error }
   }
 
-  componentDidCatch(error: Error): void {
-    logger.error(
-      {
-        componentName: this.props.componentName ?? 'ErrorBoundary',
-        error: error instanceof Error ? error.message : String(error),
-      },
-      'Render error caught by error boundary',
-    )
+  componentDidCatch(error: Error, info: ErrorInfo): void {
+    try {
+      logger.error(
+        {
+          componentName: this.props.componentName ?? 'ErrorBoundary',
+          error: error instanceof Error ? error.message : String(error),
+          stack: error.stack,
+          componentStack: info.componentStack,
+        },
+        'Render error caught by error boundary',
+      )
+    } catch {
+      // Diagnostics must not turn an isolated render failure into a root failure.
+    }
   }
 
   render(): ReactNode {
     if (this.state.error !== null) {
       const { fallback } = this.props
       return typeof fallback === 'function'
-        ? fallback(this.state.error)
+        ? fallback(this.state.error, () => this.setState({ error: null }))
         : fallback
     }
     return this.props.children

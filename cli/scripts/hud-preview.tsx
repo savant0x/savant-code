@@ -40,9 +40,18 @@ export async function captureHud(options: {
   const root = createRoot(setup.renderer)
   try {
     root.render(<HudScene {...options} />)
-    await setup.renderOnce()
-    await Bun.sleep(20)
-    await setup.renderOnce()
+    // React commits asynchronously; a fixed sleep can capture an empty tree
+    // under suite load. Wait for the actual native layout, with a hard bound.
+    const deadline = Date.now() + 2000
+    while (true) {
+      await Bun.sleep(20)
+      await setup.renderOnce()
+      const sidebar = setup.renderer.root.findDescendantById('preview-sidebar')
+      if (sidebar && sidebar.width > 0) break
+      if (Date.now() >= deadline) {
+        throw new Error('Native HUD preview did not commit within 2000 ms')
+      }
+    }
     await Promise.all(
       imagesIn(setup.renderer.root).map((image) => image.loadPromise),
     )

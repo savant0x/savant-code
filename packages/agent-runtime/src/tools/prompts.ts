@@ -5,6 +5,7 @@ import { getToolCallString } from '@savant-code/common/tools/utils'
 import { buildArray } from '@savant-code/common/util/array'
 import { formatAvailableSkillsXml } from '@savant-code/common/util/skills'
 import { pluralize } from '@savant-code/common/util/string'
+import { jsonSchema } from 'ai'
 import { cloneDeep } from 'lodash'
 import z from 'zod/v4'
 import { convertJsonSchemaToZod } from 'zod-from-json-schema'
@@ -212,8 +213,15 @@ export async function getToolSet(params: {
   const toolDefinitions = await additionalToolDefinitions()
   for (const [toolName, toolDefinition] of Object.entries(toolDefinitions)) {
     const clonedDef = cloneDeep(toolDefinition)
-    // Custom tool inputSchema may be JSON Schema (from SDK) or Zod (from MCP)
-    // Ensure it's a Zod schema for the AI SDK
+    if (!('safeParse' in clonedDef.inputSchema)) {
+      toolSet[toolName] = {
+        ...clonedDef,
+        inputSchema: jsonSchema(clonedDef.inputSchema),
+      }
+      continue
+    }
+    // Existing Zod custom tools retain their guarded conversion path. Raw
+    // JSON Schema above goes directly to the provider, without a Zod roundtrip.
     const zodSchema = ensureZodSchema(
       clonedDef.inputSchema as Record<string, JSONValue>,
     )

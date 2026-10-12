@@ -1,6 +1,7 @@
 import React from 'react'
 
 import { renderMarkdown } from '../../../utils/markdown-renderer'
+import { renderMarkdownContent } from '../../blocks/markdown-content'
 
 import type { ChatTheme } from '../../../types/theme-system'
 import type { ReactNode } from 'react'
@@ -48,7 +49,11 @@ export function RichTextValue({
   }
   return (
     <box style={{ flexDirection: 'column', flexGrow: 1 }}>
-      {renderMarkdown(value, { theme })}
+      {renderMarkdownContent({
+        value: renderMarkdown(value, { theme }),
+        theme,
+        getAttributes: (extra = 0) => extra || undefined,
+      })}
     </box>
   )
 }

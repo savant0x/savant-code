@@ -48,7 +48,7 @@ export const ToolBranch = memo(
       getToolComponent(toolBlock.toolName) !== undefined
     const isCollapsed =
       toolBlock.isCollapsed ??
-      (hasRegisteredComponent
+      (hasRegisteredComponent && !toolBlock.toolName.includes('__')
         ? shouldCollapseToolByDefault(toolBlock.toolName)
         : true)
 
@@ -67,6 +67,7 @@ export const ToolBranch = memo(
       // chrome (e.g. the compact write_file summary).
       isCollapsed,
       onToggle: handleToggle,
+      isStreaming,
     })
 
     const inputContent = `\`\`\`json\n${JSON.stringify(toolBlock.input, null, 2)}\n\`\`\``
@@ -127,18 +128,23 @@ export const ToolBranch = memo(
       },
     }
 
-    const renderableDisplayContent = renderMarkdownContent({
-      value: renderContentWithMarkdown({
-        content: fullContent,
-        isStreaming: false,
-        codeBlockWidth: agentMarkdownOptions.codeBlockWidth,
-        palette: agentMarkdownOptions.palette,
-      }),
-      theme,
-      getAttributes: (extra = 0) => (theme.messageTextAttributes ?? 0) | extra,
-      textColor: theme.foreground,
-      keyPrefix: `${keyPrefix}-content`,
-    })
+    // Registered panels own their output parsing. Do not parse an unused
+    // generic Markdown dump of a large MCP payload on every streamed render.
+    const renderableDisplayContent = toolRenderConfig
+      ? null
+      : renderMarkdownContent({
+          value: renderContentWithMarkdown({
+            content: fullContent,
+            isStreaming: false,
+            codeBlockWidth: agentMarkdownOptions.codeBlockWidth,
+            palette: agentMarkdownOptions.palette,
+          }),
+          theme,
+          getAttributes: (extra = 0) =>
+            (theme.messageTextAttributes ?? 0) | extra,
+          textColor: theme.foreground,
+          keyPrefix: `${keyPrefix}-content`,
+        })
 
     const headerName = displayInfo.name
 

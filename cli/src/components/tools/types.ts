@@ -23,6 +23,7 @@ export type ToolRenderOptions = {
    */
   isCollapsed?: boolean
   onToggle?: () => void
+  isStreaming?: boolean
 }
 
 export type ToolRenderConfig = {

@@ -10,6 +10,7 @@ import {
 import { GlobComponent } from './glob'
 import { GravityIndexComponent } from './gravity-index'
 import { ListDirectoryComponent } from './list-directory'
+import { McpResultComponent } from './mcp-result'
 import { OutputResultComponent } from './output-result'
 import { ReadDocsComponent } from './read-docs'
 import { ReadFilesComponent } from './read-files'
@@ -131,7 +132,10 @@ export function registerToolComponent(component: ToolComponent): void {
 export function getToolComponent(
   toolName: ToolName,
 ): ToolComponent | undefined {
-  return toolComponentRegistry.get(toolName)
+  return (
+    toolComponentRegistry.get(toolName) ??
+    (/^[\w.-]+__[\w.-]+$/.test(toolName) ? McpResultComponent : undefined)
+  )
 }
 
 /**

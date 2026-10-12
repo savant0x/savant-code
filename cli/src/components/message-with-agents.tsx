@@ -1,6 +1,7 @@
 import { memo, useCallback, useMemo, type ReactNode } from 'react'
 import { useShallow } from 'zustand/react/shallow'
 
+import { TranscriptBoundary } from './blocks/transcript-boundary'
 import { MessageBlock } from './message-block'
 import { ModeDivider } from './mode-divider'
 import { useMessageBlockStore } from '../state/message-block-store'
@@ -142,11 +143,13 @@ export const MessageWithAgents = memo(
 
     if (isAgent) {
       return (
-        <AgentMessage
-          message={message}
-          depth={depth}
-          availableWidth={availableWidth}
-        />
+        <TranscriptBoundary label={message.id} rawContent={message.content}>
+          <AgentMessage
+            message={message}
+            depth={depth}
+            availableWidth={availableWidth}
+          />
+        </TranscriptBoundary>
       )
     }
 
@@ -175,38 +178,40 @@ export const MessageWithAgents = memo(
     const showRootPrefix = isUser || isAi
 
     const messageBlock = (
-      <MessageBlock
-        messageId={message.id}
-        blocks={message.blocks}
-        content={message.content}
-        isUser={isUser}
-        isAi={isAi}
-        isLoading={isLoading}
-        timestamp={message.timestamp}
-        isComplete={message.isComplete}
-        completionTime={message.completionTime}
-        credits={message.credits}
-        timerStartTime={timerStartTime}
-        textColor={textColor}
-        timestampColor={timestampColor}
-        markdownOptions={markdownOptions}
-        availableWidth={messageContentWidth}
-        markdownPalette={markdownPalette!}
-        onToggleCollapsed={onToggleCollapsed}
-        onBuildFast={onBuildFast}
-        onBuildMax={onBuildMax}
-        onBuildLite={onBuildLite}
-        onFeedback={onFeedback}
-        onCloseFeedback={onCloseFeedback}
-        validationErrors={message.validationErrors}
-        userError={message.userError}
-        onOpenFeedback={onOpenFeedback}
-        attachments={message.attachments}
-        textAttachments={message.textAttachments}
-        fileAttachments={message.fileAttachments}
-        metadata={message.metadata}
-        isLastMessage={isLastMessage}
-      />
+      <TranscriptBoundary label={message.id} rawContent={message.content}>
+        <MessageBlock
+          messageId={message.id}
+          blocks={message.blocks}
+          content={message.content}
+          isUser={isUser}
+          isAi={isAi}
+          isLoading={isLoading}
+          timestamp={message.timestamp}
+          isComplete={message.isComplete}
+          completionTime={message.completionTime}
+          credits={message.credits}
+          timerStartTime={timerStartTime}
+          textColor={textColor}
+          timestampColor={timestampColor}
+          markdownOptions={markdownOptions}
+          availableWidth={messageContentWidth}
+          markdownPalette={markdownPalette!}
+          onToggleCollapsed={onToggleCollapsed}
+          onBuildFast={onBuildFast}
+          onBuildMax={onBuildMax}
+          onBuildLite={onBuildLite}
+          onFeedback={onFeedback}
+          onCloseFeedback={onCloseFeedback}
+          validationErrors={message.validationErrors}
+          userError={message.userError}
+          onOpenFeedback={onOpenFeedback}
+          attachments={message.attachments}
+          textAttachments={message.textAttachments}
+          fileAttachments={message.fileAttachments}
+          metadata={message.metadata}
+          isLastMessage={isLastMessage}
+        />
+      </TranscriptBoundary>
     )
 
     return (
