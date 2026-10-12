@@ -10,9 +10,6 @@ import { PROVIDER_REGISTRY } from '@savant-code/common/providers/registry'
 import { resetOpenRouterApiKeyCache } from '@savant-code/sdk'
 
 import { invalidateGatewayCatalog } from './openrouter-models/gateway'
-// The routing/activation effects of a saved primary key live in their own
-// module (extracted at the quality ceiling); this file owns the key store.
-import { activateProviderRouting } from './provider-routing-activation'
 import {
   readCredentialsRecord,
   readStoredProviderKeys,
@@ -22,6 +19,9 @@ import {
   persistProviderKey,
   synchronizeAccountRevision,
 } from './provider-key-persistence'
+// The routing/activation effects of a saved primary key live in their own
+// module (extracted at the quality ceiling); this file owns the key store.
+import { activateProviderRouting } from './provider-routing-activation'
 import {
   getActiveProvider,
   loadActiveProvider,

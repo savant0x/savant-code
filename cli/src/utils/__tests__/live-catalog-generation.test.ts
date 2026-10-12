@@ -31,21 +31,10 @@ function modelsResponse(id: string): Response {
   })
 }
 
-function parseModels(json: { data: Array<{ id: string; name: string }> }): OpenRouterModel[] {
+function parseModels(json: {
+  data: Array<{ id: string; name: string }>
+}): OpenRouterModel[] {
   return json.data.map((model) => ({ id: model.id, name: model.name }))
-}
-
-/** A fetcher over an injected fetch, counting requests. */
-function makeFetcher(implementation: () => Promise<Response>) {
-  const fetchMock = mock(implementation)
-  const fetcher = createLiveCatalogFetcher({
-    url: 'https://catalog.test/models',
-    logLabel: 'TestProvider',
-    parse: parseModels as (json: unknown) => OpenRouterModel[],
-    resolveKey: () => 'test-key',
-  })
-  globalThis.fetch = fetchMock as unknown as typeof fetch
-  return { fetcher, fetchMock }
 }
 
 describe('FID-2026-1011-006 catalog ownership', () => {
@@ -87,7 +76,9 @@ describe('FID-2026-1011-006 catalog ownership', () => {
     const second = defer()
     const responses = [first.promise, second.promise]
     let request = 0
-    globalThis.fetch = mock(() => responses[request++]!) as unknown as typeof fetch
+    globalThis.fetch = mock(
+      () => responses[request++]!,
+    ) as unknown as typeof fetch
     const fetcher = createLiveCatalogFetcher({
       url: 'https://catalog.test/models',
       logLabel: 'TestProvider',
@@ -119,12 +110,16 @@ describe('FID-2026-1011-006 catalog ownership', () => {
     })
 
     await fetcher.fetchModels()
-    expect(fetcher.getCachedModels().map((model) => model.id)).toEqual(['cached'])
+    expect(fetcher.getCachedModels().map((model) => model.id)).toEqual([
+      'cached',
+    ])
 
     fail = true
     // Forced refresh bypasses the TTL and takes the failure path.
     expect(await fetcher.fetchModels(true)).toEqual(fetcher.getCachedModels())
-    expect(fetcher.getCachedModels().map((model) => model.id)).toEqual(['cached'])
+    expect(fetcher.getCachedModels().map((model) => model.id)).toEqual([
+      'cached',
+    ])
 
     fetcher.resetForTest()
     expect(await fetcher.fetchModels()).toEqual([])
