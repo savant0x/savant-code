@@ -13,6 +13,7 @@ import {
   getString,
 } from '@savant-code/common/util/param-helpers'
 
+import { requireCwd } from './require-cwd'
 import { isRunPauseError } from './types'
 import { applyPatchTool } from '../tools/apply-patch'
 import { FileChangeSchema, changeFile } from '../tools/change-file'
@@ -32,15 +33,6 @@ import type { ToolName } from '@savant-code/common/tools/constants'
 import type { PublishedClientToolName } from '@savant-code/common/tools/list'
 import type { SavantCodeFileSystem } from '@savant-code/common/types/filesystem'
 import type { ToolResultOutput } from '@savant-code/common/types/messages/content-part'
-
-function requireCwd(cwd: string | undefined, toolName: string): string {
-  if (!cwd) {
-    throw new Error(
-      `cwd is required for the ${toolName} tool. Please provide cwd in SavantCodeClientOptions or override the ${toolName} tool.`,
-    )
-  }
-  return cwd
-}
 
 export async function readFiles({
   filePaths,
@@ -63,11 +55,9 @@ export async function readFiles({
   fs: SavantCodeFileSystem
 }) {
   if (override) {
-    // An override replaces this tool wholesale, so it receives the window in
-    // its input and owns the result: a host that serves line ranges returns
-    // the window, and one that ignores it returns the whole bounded file it
-    // always did. The production path (no override) windows at the fetch
-    // boundary in getFiles.
+    // An override replaces this tool wholesale: it receives the window in its
+    // input and owns the result. The production path (no override) windows at
+    // the fetch boundary in getFiles.
     return await override({ filePaths, offset, limit })
   }
   return getFiles({

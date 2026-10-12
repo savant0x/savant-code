@@ -215,11 +215,13 @@ describe('subagent compaction propagation (LF-002)', () => {
     expect(toolkit).toContain('compression: params.compression')
   })
 
-  it('leaves the propagation snapshot free of model-scoped values', () => {
+  it('leaves the propagation snapshot and the model-scoped window out of the extracted context', () => {
     const child = extractSubagentContextParams(spawnParams(COMPRESSION))
 
     expect(child.propagation).toBeUndefined()
-    expect(child.contextWindow).toBeUndefined()
+    // The window is model-scoped: it travels through resolveChildContextWindow
+    // at the spawn sites, never through this extractor.
+    expect('contextWindow' in child).toBe(false)
   })
 })
 
