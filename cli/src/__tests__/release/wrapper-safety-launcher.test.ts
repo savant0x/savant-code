@@ -220,6 +220,34 @@ describe('shared release launcher safety', () => {
     expect(source.indexOf('applyPendingUpdateIfApproved')).toBeGreaterThan(-1)
   })
 
+  // FID-2026-1011-003: a failed background staging must be REPORTED, not
+  // swallowed. The v0.0.35 release published to npm while its GitHub assets
+  // were missing; the launcher resolved the new version, failed the download,
+  // and said nothing — so every existing install stayed quietly stale.
+  test('reports a failed background update instead of swallowing it', () => {
+    const source = readFileSync(launcherPath, 'utf8')
+    const updateFunction = source.slice(
+      source.indexOf('async function checkForUpdates'),
+    )
+    const catchIndex = updateFunction.indexOf('} catch (error) {')
+    expect(catchIndex).toBeGreaterThan(-1)
+    // Scoped to the catch body: the slice above runs to the end of the file and
+    // would otherwise pick up unrelated fatal paths in later functions.
+    const catchBody = updateFunction.slice(
+      catchIndex,
+      updateFunction.indexOf('/** Offer a pending update'),
+    )
+
+    // The failure is named, with the attempted version and the opt-out...
+    expect(catchBody).toContain('Update check failed for')
+    expect(catchBody).toContain('SAVANT_CODE_NO_AUTO_UPDATE')
+    // ...the best-effort temp-dir cleanup is preserved...
+    expect(catchBody).toContain('fs.rmSync(CONFIG.tempDownloadDir')
+    // ...and reporting never escalates into a fatal path.
+    expect(catchBody).not.toContain('throw')
+    expect(catchBody).not.toContain('process.exit')
+  })
+
   test('cleans up process-stop listeners and timers', async () => {
     const { stopRunningProcess } = createLauncher({
       packageName: 'test',

@@ -1200,11 +1200,17 @@ function createLauncher(productConfig) {
   }
 
   async function checkForUpdates() {
+    // Declared outside the try so the catch can name the version it failed to
+    // stage (FID-2026-1011-003). Both assignments are throw-free.
+    let currentVersion = null
+    let attemptedVersion = null
+
     try {
-      const currentVersion = getCurrentVersion()
+      currentVersion = getCurrentVersion()
 
       const latestVersion = await getLatestVersion()
       if (!latestVersion) return
+      attemptedVersion = latestVersion
 
       if (
         // Download new version if current version is unknown or outdated.
@@ -1238,7 +1244,19 @@ function createLauncher(productConfig) {
       } catch {
         // Best effort after a failed background update.
       }
-      // A staging failure leaves the current process and binary untouched.
+      // FID-2026-1011-003: a staging failure leaves the current process and
+      // binary untouched, but it is NOT silent. v0.0.35 published to npm while
+      // its GitHub release assets were missing, so the launcher resolved the
+      // new version, failed the download, and reported nothing at all — every
+      // existing install kept running its stale binary with no signal. Report
+      // it, and stay non-fatal: the session still starts normally.
+      const detail = error && error.message ? error.message : String(error)
+      term.clearLine()
+      term.writeLine(
+        `Update check failed for ${attemptedVersion ? `v${attemptedVersion}` : 'the latest release'}: ${detail}. ` +
+          `Continuing on ${currentVersion ? `v${currentVersion}` : 'the installed binary'}. ` +
+          'Set SAVANT_CODE_NO_AUTO_UPDATE=1 to skip update checks.',
+      )
     }
   }
 

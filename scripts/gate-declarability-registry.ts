@@ -93,6 +93,12 @@ const RELEASE_CONTRACT: readonly AuditedGate[] = [
     declarations: [probe('scripts/cli-bundle-resolution-check.ts')],
   },
   {
+    label: 'undeclared-imports',
+    source: 'release-contract',
+    proves: 'no import names a package the repository does not declare (T188)',
+    declarations: [probe('scripts/undeclared-imports-audit.ts')],
+  },
+  {
     label: 'typecheck',
     source: 'release-contract',
     proves: 'every workspace and the scripts tree typechecks',

@@ -120,6 +120,7 @@ export function validateGateContract(
     'lockfile',
     'build:sdk',
     'cli-bundle-resolution',
+    'undeclared-imports',
     'typecheck',
     'test',
     'eslint',
@@ -212,6 +213,14 @@ export function repositoryValidationGates(
         '--outdir',
         'cli/bin/.resolution-check',
       ],
+      cwd: root,
+    },
+    {
+      // T188: fails when an import names a package no manifest declares and
+      // only a transitive dependency hoists — the v0.0.24/v0.0.35 class.
+      label: 'undeclared-imports',
+      command: 'bun',
+      args: ['run', 'deps:undeclared'],
       cwd: root,
     },
     {

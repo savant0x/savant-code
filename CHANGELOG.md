@@ -1,5 +1,35 @@
 # Changelog
 
+## 2026-10-11 — Release gate for undeclared imports (T188, FID-2026-1011-004)
+
+### Added
+
+- `undeclared-imports` — a release gate that grades every tracked-source import against
+  the repository's own declarations and NOT against the installed tree, so a mutated or
+  stale `node_modules` can no longer make it pass. That is the class
+  `cli-bundle-resolution` cannot see: at v0.0.35 that gate ran green locally on a leftover
+  ajv v8 `dist/` tree while CI, resolving the committed lockfile, failed on the same
+  import. `scripts/undeclared-imports.ts` (pure detector) and
+  `scripts/undeclared-imports-audit.ts` (collector + probe) read only `git ls-files`, the
+  26 manifests and `bun.lock`. `transitive` (no manifest declares it; only a transitive
+  dependency hoists it — the v0.0.35 `ajv`) and `absent` (not even in the lockfile — the
+  v0.0.24 `@noble/hashes`) fail; cross-workspace and root-declared imports resolve and are
+  not reported.
+
+### Fixed
+
+- The audit found four packages that no manifest declared. Declared them: `picocolors` in
+  `cli` (four files under `cli/src` are bundled into the shipped binary and nothing owned
+  the dependency — it arrived only through `pino`), `picocolors` and `js-yaml` in
+  `scripts/tmux`, and `globals`, `playwright` and `playwright-core` at the root (the eslint
+  config, the HUD browser check, and the desktop browser-smoke fixtures), then regenerated
+  `bun.lock`.
+- `cli/release-core/launcher.js`: a failed background update is now reported instead of
+  swallowed. v0.0.35 published to npm while its release assets were missing, so the
+  launcher resolved the new version, failed the download, and said nothing — every
+  existing install kept running its stale binary with no signal. Still non-fatal: the
+  session starts normally.
+
 ## 2026-10-11 — v0.0.35 shipped without binaries: phantom `ajv` in connectors (FID-2026-1011-003)
 
 ### Fixed

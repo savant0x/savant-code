@@ -44,6 +44,7 @@
     "jimp": "^1.6.0",
     "node-machine-id": "^1.1.12",
     "open": "^10.1.0",
+    "picocolors": "^1.1.1",
     "pino": "9.4.0",
     "posthog-node": "^5.8.0",
     "react": "^19.0.0",

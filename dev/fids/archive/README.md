@@ -3,6 +3,17 @@
 This directory contains closed or historically completed FIDs. Files here are
 an audit record, not an active work queue.
 
+## 2026-10-11 — undeclared-import guard shipped as a release gate (T188)
+
+- [`FID-2026-1011-004-install-independent-undeclared-import-guard.md`](FID-2026-1011-004-install-independent-undeclared-import-guard.md)
+  closed with all seven declared gates passing live (the new
+  `undeclared-imports` probe, its 24-test suite, the gate-declarability suite,
+  the launcher safety suite, the scripts typecheck probe, the lockfile probe and
+  `quality`). The operator ruling that unblocked T188 arrived in-session
+  ("so this class can't reach a release again"); the gate is now part of the
+  fail-closed release battery, so the T188 register item and its write surface
+  were removed on closure.
+
 ## 2026-10-11 incident closure — `v0.0.35` binary backfill
 
 - [`FID-2026-1011-003-v0.0.35-missing-release-binaries-phantom-ajv.md`](FID-2026-1011-003-v0.0.35-missing-release-binaries-phantom-ajv.md)

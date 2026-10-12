@@ -5,5 +5,9 @@
   "type": "module",
   "scripts": {
     "view-session": "bun run tmux-viewer/index.tsx"
+  },
+  "dependencies": {
+    "js-yaml": "^4.1.0",
+    "picocolors": "^1.1.1"
   }
 }

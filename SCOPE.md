@@ -56,17 +56,6 @@ recorded decision or external dependency requires it.
       the frontmatter addition belongs to the operator's next edit.
       **Automation level: 1.**
 
-- [ ] **T188. Install-independent undeclared-import guard.**
-      `cli-bundle-resolution` — the gate `FID-2026-0816-001` G-03 added for the
-      phantom-dependency class — runs `bun build` against the *local* `node_modules`, so a
-      contaminated or stale install defeats it. That is how the v0.0.35 `ajv` phantom
-      passed every local gate (`FID-2026-1011-003`). A manifest-vs-import sweep asserting
-      each workspace's bare specifiers against its own declared dependencies would catch
-      the class without depending on the installed tree.
-      **Blocker:** operator ruling on adding a gate to the fail-closed release validation
-      battery (the T186 precedent).
-      **Automation level: 1.**
-
 ### Providers and routing
 
 - [ ] **T119. Provider account access and identity.** xKiro acceptance needs
@@ -169,7 +158,6 @@ recorded decision or external dependency requires it.
   `website/index-2.html`, `SCOPE.md`, `CHANGELOG.md`, `dev/session-summaries/**`
 - T186: (no write surface — blocked pending the operator ruling on the gate chain)
 - T187: (no write surface — operator-owned skills surface)
-- T188: (no write surface — blocked pending the operator ruling on the gate chain)
 - FID-2026-1011-002: `package.json`, `scripts/validation-gates.ts`,
   `scripts/validation-manifest.ts`, `scripts/public-release/gates.ts`,
   `scripts/public-release/catalog.ts`, `scripts/public-release/provenance.ts`,
