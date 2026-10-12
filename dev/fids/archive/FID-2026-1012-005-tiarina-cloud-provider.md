@@ -784,6 +784,36 @@ integration.
 Reports are written to `dev/provider-identity/` — which `.gitignore:63`
 ignores by design, so this section is the durable receipt.
 
+### Operator closure ruling (2026-10-12)
+
+The operator ran the provider from the CLI: **`glm-5.3-flash:free` answered, and
+`deepseek-v4.1-flash:free` was rate-limited (429)** — "normal behavior for these
+aggregator providers". That is the real-use acceptance this record was
+otherwise missing, and it agrees with the gauntlet's own read: a 429 is
+`unavailable` (quota), never "the provider is down".
+
+Verdict: **complete.** The paid and `:cloudflare` ids are unexercised *by
+operator ruling*, not pending — they are not free ("it's not a free endpoint"),
+and the routing they would exercise is prefix-based and registry-driven, so the
+operator's judgement is that a funded account will reach them. This record
+adopts that ruling and keeps it honest: the paid/channel leg is an **accepted
+residual, not a verification**. Nothing here proves a paid id answers, and no
+paid request was made. That supersedes the loop's `NEEDS-REVIEW` note on
+`:cloudflare` routing in the ADVERSARIAL table — accepted by ruling, with the
+residual named.
+
+Two facts from the run worth keeping with the record:
+
+- **Keys live in `.env.local`, not `.env`** (confirmed by the operator). The
+  generated `.env.example` block is therefore a template: the single residue
+  there — `.env.example:152` citing unregistered `T146` — is cosmetic,
+  operator-owned under `no-write-dotenv`, and tracked as T147 residue in
+  `SCOPE.md`.
+- **Free-lane rate limiting is expected operation, not a defect.** The gauntlet
+  hit 429 on two of five routes and the operator hit it again on
+  `deepseek-v4.1-flash:free`. The free tier works and throttles; routing and the
+  window rows are unaffected.
+
 ## Lessons Learned
 
 - **A dated "not found" is a claim, not a fact.** The 2026-10-07 idea-shelf
