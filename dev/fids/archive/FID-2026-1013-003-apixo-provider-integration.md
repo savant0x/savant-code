@@ -278,11 +278,17 @@ basis for each choice. Nothing is hand-edited in a derived surface.
 > issues), so it is declared `- gate: probe`, which is the documented route for proving a repo-gate
 > check passed.
 
-- [x] **FID status reflects the actual implementation state.** `**Status:**` now reads
-      `verified`: the implementation is on disk, committed, and every declared gate has
-      re-run green on the closure tree. The receipt was stamped by
+- [x] **FID status reflects the actual implementation state.** `**Status:**` reads
+      `closed`: the implementation is on disk, committed, and every declared gate has
+      re-run green on the closure tree. **Receipt provenance, stated precisely:** the
+      receipt below was stamped by
       `bun run fid:verify dev/fids/FID-2026-1013-003-apixo-provider-integration.md --write`
-      against the final document, so the fingerprint matches the bytes a reader sees.
+      before the closure edits (status flip, Implementation Evidence, Loops 2/3,
+      Resolution, Lessons, archive move, and the `6c32495` hash correction), so the
+      stored fingerprint no longer matches the final bytes. That is the documented
+      behaviour of a closed record (FID-2026-0919-021) — the receipt is the record of
+      the verification that earned the status, not a claim about the current bytes.
+      The gates were all re-run live against this tree before the status flipped.
 
 ### Implementation Evidence (REQUIRED for `closed`)
 
