@@ -143,55 +143,21 @@ recorded decision or external dependency requires it.
       `live-catalog` exception, the window-coverage disposition, the three picker
       seams and the doc surfaces land under the FID. **Automation level: 3.**
 
-### Findings owned and closed in the 2026-10-13 exposure pass
-
-Discovered while closing `FID-2026-1012-024`'s refusal/exposure work. Registered here with
-their evidence because no finding inside the project is out of scope, then completed in the
-same pass.
-
-- [x] **T188. `FID-2026-1013-003` carried no `### Code Verification Evidence` section, and one of
-      its declared gates was invalid.** Two separate defects in one record. (i)
-      `scripts/fid-ledger.ts:34` requires that heading on **every** active FID, so its absence alone
-      was the only red in `bun run validate:repository` (`[fid.structure.heading]`). (ii)
-      `- gate: test scripts/window-coverage-check.ts` cannot ever run — `fid:verify` rejects a
-      `gate: test` path that does not match `/\\.test\\.(ts|tsx)$/` — and that script is probe-shaped
-      (`if (import.meta.main) main()`, exit 0 clean / 1 naming issues), so it is now declared
-      `- gate: probe`, the documented route for proving a repo-gate check. Fixed in this pass: all
-      eleven declared gates were then run live and every one exited 0, the results and the Law-4
-      call-graph check are recorded under the heading, and the receipt is stamped (exact
-      `verified:` time in the record). No source change was made to that lane's implementation.
-      **Where the fix lives:** `dev/fids/FID-2026-1013-003-apixo-provider-integration.md` is an
-      **untracked** file owned by the provider-parity lane's pending commit, so no commit from this
-      pass contains it; the gate is green in the working tree and travels with that lane's commit.
-      **Automation level: 3.**
-
-- [x] **T189. Two module-scope registries have no reset in the workspace isolation preload.**
-      `bun scripts/module-state-check.ts` reports
-      `packages/agent-runtime/src/tools/handlers/tool/web-search.ts:23` (`noticeLogs`) and
-      `scripts/providers/audit-probes/parity-tier1-catalog-probe.ts:294` (`measurements`) as uncured
-      mutable containers. The probe is not wired into `validate:repository`, which is why the gate
-      never surfaced it. Both cured in this pass: `web-search.ts` gained a same-file
-      `resetWebSearchNoticeLogs()` seam (the per-session notice cache is exactly the shared-fixture
-      shape FID-2026-1007-001 was filed for) and is now called from the agent-runtime isolation
-      preload; the probe's top-level measurement loop now runs inside a guarded entrypoint, the same
-      shape as its sibling `scripts/window-coverage-check.ts`, because an import previously fired
-      live network probes as a side effect. The probe sits exactly **at** the 300-line ceiling, so
-      the guard is net-zero lines; the wider rationale lives here rather than in the file.
-      Re-measured: `module-state: PASS (2615 files; 192 of 197 resettable bindings wired)`,
-      `quality: PASS`, agent-runtime suite **2,103 pass / 0 fail**. **Where the fix lives:** the two
-      workspace files are tracked and committed by this pass; `scripts/providers/audit-probes/parity-tier1-catalog-probe.ts`
-      is **untracked** (the provider-parity lane's artifact), so its guard travels with that lane's
-      commit — `module-state: PASS` is a working-tree result until then. **Automation level: 3.**
-
-- [x] **T190. `FID-2026-1012-024`'s register write targets lagged its committed work.**
-      The exposure-receipt slice (commit `69a61f08`) wrote `common/src/types/hooks.ts` (the
-      builtin-action allowlist), `protocol.config.yaml` (the `PostToolUse` hook declaration) and
-      `packages/agent-runtime/test/setup-test-isolation.ts` (the cache-reset registration), and the
-      `FID-2026-1012-024` target line named none of them. The work is approved in scope and recorded
-      in that record; the target line is corrected in this pass so the register's authority matches
-      the work rather than lagging it. **Automation level: 3.**
-
 ### Harness and process
+
+- [ ] **Task-id reuse hazard (found 2026-10-13).** The register evicts an item on closure and the
+      repository keeps no record of the numbers it has issued, so a retired id can be reallocated to
+      unrelated work with nothing left to notice it. Measured: `T188` names the 2026-10-11
+      install-independent undeclared-import guard in
+      `dev/fids/archive/FID-2026-1011-004-install-independent-undeclared-import-guard.md:1` and in
+      `dev/session-summaries/2026-10-11-undeclared-import-guard-t188.md:1`, while the register no
+      longer holds that item — this pass allocated `T188`–`T190` from the register's visible maximum
+      and had to evict all three on closure so that one id would not carry two meanings.
+      **Blocker:** the disposition is a design decision the register cannot make for itself — either
+      the register keeps a retired-id ledger, or task ids gain a date epoch so reuse is impossible.
+      Both change a governance surface the operator owns (`SCOPE.md` plus the `scope.*` validators),
+      and the second would renumber live items. Presented, not decided unilaterally.
+      **Automation level: 1.**
 
 - [ ] **T122. Savant-Free removal.** Operator direction 2026-10-12 (Q12/Q5):
       the savant-free flag/feature is to be removed rather than repaired. The
