@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-1012-020-edit-path-friction.md`
 **ID:** FID-2026-1012-020
 **Severity:** medium
-**Status:** converged
+**Status:** fixed
 **Created:** 2026-10-12 20:15
 **Automation level:** 3
 **YAGNI-Compliance:** Verified
@@ -150,9 +150,21 @@ false declaration.
 
 ## Verification Gates
 
-This record is pre-implementation (`Status: converged`, FID-2026-0915-004), so **no gate
-bullets are declared**. Gates are allowlisted shapes only and are declared when the status
-reaches `fixed`/`verified`, together with the receipt that binds them to the document.
+- gate: test packages/agent-runtime/src/__tests__/edit-diagnostics.test.ts
+- gate: test packages/agent-runtime/src/__tests__/process-str-replace-outcomes.test.ts
+- gate: test packages/agent-runtime/src/__tests__/process-str-replace.test.ts
+- gate: typecheck packages/agent-runtime
+- gate: quality
+
+### Verification Receipt
+
+- fingerprint: sha256:a096d2dbe127ef89d93f2ad7b1637c8d77b8146150fab029d1388f8c39f1a33f
+- verified: 2026-10-13T04:41:35.645Z
+- test packages/agent-runtime/src/__tests__/edit-diagnostics.test.ts: exit 0
+- test packages/agent-runtime/src/__tests__/process-str-replace-outcomes.test.ts: exit 0
+- test packages/agent-runtime/src/__tests__/process-str-replace.test.ts: exit 0
+- typecheck packages/agent-runtime: exit 0
+- quality: exit 0
 
 ## Perfection Loop
 
@@ -194,6 +206,50 @@ reaches `fixed`/`verified`, together with the receipt that binds them to the doc
   leak file bodies through diagnostics/logging. Planned tests/window are in the review.
 - **CHANGE DELTA:** Planning correction only; no edit behaviour was changed.
 
+### Loop 3 — Implementation (2026-10-13)
+
+- **RED (re-measured at implementation time, `main` @ `09f0c892`, FID-2026-1012-024's instrument):**
+  the lane's 13 classes are 8 stable causes / **71 records**: `str_replace` `edit-target-missing` 29/13
+  (last 2026-10-11), `str_replace` `edit-noop` 19/12 (last 2026-10-11), `apply_patch` `patch-failed`
+  12/6, `write_file` `patch-failed` 3/2, `str_replace` `patch-failed` 2/1, `str_replace`
+  `immutable-result` 3/1 (last 2026-10-01), `str_replace` `edit-target-ambiguous` 2/2, `list_directory`
+  `directory-missing` 1/1.
+- **GREEN:** the mismatch carries its diagnosis, a mismatch is no longer reported as a no-op, and the
+  handler stops assigning into the caller's result object.
+- **AUDIT:** the five declared gates are listed above and stamped below; the re-measure is verbatim in
+  this entry.
+- **ADVERSARIAL — did the class move, or stop?** **Not stopped.** Every fix lands after the last
+  record of every class, so this record makes no class claim and writes no lesson. Three sub-answers
+  that were established rather than assumed:
+  1. **The mismatch/no-op conflation is the bigger defect, and it is measured.** Loop 2 saw both
+     classes arriving through one channel; the code confirms it: when every replacement failed to
+     match, the old path pushed the match errors **and then appended `No change to the file`**, so
+     `edit-noop` was receiving *mismatch* records and the model was told to treat a failure as done.
+     The two are now separated (`process-str-replace.ts`), and the existing "one replacement fails
+     while another applies" case still settles as a partial success carrying the diagnosis.
+  2. **The no-op stays on the error channel, deliberately, with a cited reason.** A success shape
+     would send the unchanged file through `postStreamProcessing`, which partitions on `'error' in
+     result` and would rewrite the file and open a client round trip for nothing. What changed is the
+     text the model acts on: "completed outcome, not a failure … proceed to the next step instead of
+     retrying". The class identity is unchanged, so the capture will keep counting it until the
+     outcomes are separated at the result-vocabulary level — which is `FID-2026-1012-021`'s machinery,
+     not a rename.
+  3. **The `immutable-result` fix is a real unsafe write; its production trigger is not claimed.**
+     `str-replace.ts:131` assigned into `clientToolResult[0].value` — an object the handler does not
+     own. Loop 2 reproduced the class by injecting a frozen client result; no `Object.freeze` on tool
+     results exists in the runtime today (`grep -rn 'Object.freeze' packages/agent-runtime/src
+     common/src` → fixtures and policy constants only), so the production path that froze that object
+     in the 2026-10-01 session is **unproven**. The mutation is gone; the class is not claimed as
+     explained.
+  4. **Left open, not slipped:** the `apply_patch`/`write_file`/`str_replace` `patch-failed` classes
+     (17 records) already report the path, the attempted strategies and the last error with the
+     re-read action (`sdk/src/tools/apply-patch/diff.ts:157-179`); what they lack is a nearest-candidate
+     diff, which is a larger change than this pass warranted and is listed under Resolution. The one
+     `list_directory` `directory-missing` record is likewise untouched.
+- **CHANGE DELTA:** +1 pure diagnostics module and +2 test files; `process-str-replace.ts`, the
+  `str_replace` handler and one existing expectation changed. No production class claim, no lesson, no
+  `fix-boundaries.json` entry.
+
 ### Missed Questions
 
 1. **Which cause dominates — line endings, staleness, or wrong targets?** → This record does not
@@ -206,7 +262,9 @@ reaches `fixed`/`verified`, together with the receipt that binds them to the doc
 3. **Does this overlap with `FID-2026-1012-019`'s degradation contract?** → The reporting shape
    is shared (name the cause, once, with the action), and the two records should use one result
    vocabulary; they stay separate because the surfaces and the fixes differ — a capability
-   preflight there, edit-content diagnosis here.
+   preflight there, edit-content diagnosis here. Loop 3 kept them separate and reused neither
+   module in the other: `capability-notice.ts` renders a capability's state, `edit-diagnostics.ts`
+   renders the evidence for a failed edit, and each keeps its own stable first line.
 
 ### Code Verification Evidence
 
@@ -235,13 +293,45 @@ reaches `fixed`/`verified`, together with the receipt that binds them to the doc
 
 ## Resolution
 
-**Not implemented — `Status: converged` (pre-implementation, FID-2026-0915-004).**
+**Implemented — `Status: fixed` (deterministic gates green; recurrence assertion OPEN).**
 
-This record exists so the finding has an owner, a converged design and a register item with
-write authority; it made no source change. The work described above is implemented by whichever
-pass flips the record to `fixed`, at which point this section is rewritten in the closure format
-(Closed Date / Fix Description / Tests Added / Verification Evidence / Archived) and the
-declared gates are added under `## Verification Gates`.
+- **Closed Date:** 2026-10-13 (implementation pass; the record stays open in the sense that no class
+  window has run — no lesson is written).
+- **Fix Description.** A failed edit now carries the evidence that repairs it. New pure module
+  `packages/agent-runtime/src/edit-diagnostics.ts` classifies a missing target — `partial-line-match`
+  (a line of the request appears verbatim, so the surrounding block differs), `whitespace-only-difference`
+  (the non-whitespace characters occur but no contiguous block matches), or `no-near-match` — and
+  renders it after the stable first line: the closest line with its number, the file's shape, and the
+  repair action (re-read the region with `read_files offset/limit`, do not resend the same old string).
+  The first line is unchanged on purpose: it is the failure ledger's class identity, so the diagnosis
+  enriches the class instead of renaming it. `process-str-replace.ts` now separates the two outcomes the
+  lane is made of: a run in which every replacement failed to match returns the match errors and its
+  diagnosis and **never** the no-op text, and a run in which the requested edit simply changes nothing
+  returns a message that says so and tells the model to proceed. The `str_replace` handler no longer
+  assigns into the caller's result object — it builds a new value (`str-replace.ts`), removing the
+  `Attempted to assign to readonly property.` path.
+- **Tests Added:** `packages/agent-runtime/src/__tests__/edit-diagnostics.test.ts` (6 cases: verbatim
+  candidate with its line number, whitespace-only classification, absent target, bounded snippet,
+  rendered cause/candidate/action, no candidate line when there is none);
+  `packages/agent-runtime/src/__tests__/process-str-replace-outcomes.test.ts` (3 cases: mismatch is
+  diagnosed and is not a no-op; the closest verbatim line is named when the rescue cannot apply; a
+  no-op reports a completed outcome with proceed advice). One existing expectation in
+  `process-str-replace.test.ts` moved from exact-string equality to the stable first line plus its
+  diagnosis — the message gained evidence by design.
+- **Verification Evidence:** `packages/agent-runtime` **2,075 pass / 0 fail across 318 files** (this
+  lane added 9 net cases) · `bun run --cwd=packages/agent-runtime typecheck` exit 0 · `quality:report`
+  PASS (1,502 baselined files) · ESLint `--max-warnings 0` and Prettier clean on every touched file.
+  Red-measure at `09f0c892`: 563 records / 56 stable classes, this lane's causes live and unstopped
+  (29/19/12/3/3/2/2/1) — pasted verbatim in Loop 3.
+- **Archived:** not archived. Per FID-2026-1012-022's closure condition a child closes only when its
+  classes show no new records in the declared window; the window has not started.
+- **Open, and why this record is not `closed`:** (a) the recurrence window has not run, so no class
+  claim and no fix boundary exist; (b) the `patch-failed` classes (17 records) were not repaired —
+  their message already carries path, strategies, last error and the re-read action, but not a
+  nearest-candidate diff, which is a larger change than this pass warranted; (c) the single
+  `list_directory` `directory-missing` record is untouched; (d) the `immutable-result` mutation is
+  removed without a regression test at the handler boundary (no `handleStrReplace` test harness exists)
+  and without a proven production trigger — both stated as open rather than counted as done.
 
 - **Authorised write surface:** `SCOPE.md` → machine-readable scope targets → this record's
   line (registered 2026-10-12 with the root-cause matrix).

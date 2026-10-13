@@ -1,6 +1,10 @@
 import { READ_FILES_MAX_CHARS } from '@savant-code/common/constants/read-files'
 import { createPatch } from 'diff'
 
+import {
+  diagnoseMissingEdit,
+  renderMissingEditDiagnosis,
+} from './edit-diagnostics'
 import { tryToDoStringReplacementWithExtraIndentation } from './generate-diffs-prompt'
 
 import type { Logger } from '@savant-code/common/types/contracts/logger'
@@ -49,6 +53,8 @@ export async function processStrReplace(params: {
   | { tool: 'str_replace'; path: string; error: string }
 > {
   const { path, replacements, initialContentPromise, logger } = params
+  /** Replacements whose target never matched — a failure, not a no-op. */
+  let failedMatchCount = 0
   const initialContent = await initialContentPromise
   if (initialContent === null) {
     return {
@@ -104,6 +110,7 @@ export async function processStrReplace(params: {
         updatedNewStr = match.newStr
       }
     } else {
+      failedMatchCount += 1
       messages.push(
         withLargeFileGuidance(match.error, normalizedCurrentContent.length),
       )
@@ -121,8 +128,18 @@ export async function processStrReplace(params: {
 
   currentContent = currentContent.replaceAll('\n', lineEnding)
 
-  // If no successful replacements occurred, return error
   if (initialContent === currentContent) {
+    // FID-2026-1012-020: a mismatch is not a no-op. The old code reported both
+    // through one channel and appended "No change to the file" to a message
+    // that already carried the match failures, so a genuine failure read as a
+    // benign no-op and a benign no-op read as a failure.
+    if (failedMatchCount > 0) {
+      return {
+        tool: 'str_replace' as const,
+        path,
+        error: messages.join('\n\n'),
+      }
+    }
     logger.debug(
       {
         path,
@@ -130,7 +147,7 @@ export async function processStrReplace(params: {
       },
       `processStrReplace: No change to ${path}`,
     )
-    messages.push('No change to the file')
+    messages.push(NO_CHANGE_MESSAGE)
     return {
       tool: 'str_replace' as const,
       path,
@@ -251,6 +268,25 @@ const tryMatchOldStr = (params: {
   }
   return {
     success: false,
-    error: `The old string ${JSON.stringify(oldStr)} was not found in the file, skipping. Please try again with a different old string that matches the file content exactly.`,
+    error:
+      `The old string ${JSON.stringify(oldStr)} was not found in the file, ` +
+      `skipping. Please try again with a different old string that matches ` +
+      `the file content exactly.\n\n` +
+      // FID-2026-1012-020: the first line above keeps the class identity the
+      // failure ledger records; the evidence that repairs the call follows it.
+      renderMissingEditDiagnosis(
+        diagnoseMissingEdit({ content: initialContent, oldStr }),
+      ),
   }
 }
+
+/**
+ * A completed, benign outcome — deliberately not a failure. It stays on this
+ * channel because a success shape would send the unchanged file through
+ * `postStreamProcessing` and rewrite it for nothing; what the model needs is the
+ * distinction and the instruction, and both are in the text.
+ */
+const NO_CHANGE_MESSAGE =
+  'No change to the file — the content you described already matches what is ' +
+  'on disk, so there was nothing to apply. This is a completed outcome, not a ' +
+  'failure: proceed to the next step instead of retrying the same edit.'

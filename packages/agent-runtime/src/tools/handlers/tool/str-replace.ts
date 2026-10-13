@@ -126,9 +126,25 @@ export const handleStrReplace = (async (
     requestClientToolCall,
   )
 
-  const value = clientToolResult[0].value
-  if ('messages' in strReplaceResult && 'message' in value) {
-    value.message = [...strReplaceResult.messages, value.message].join('\n\n')
+  // FID-2026-1012-020: never assign into the client's result object. A frozen
+  // or shared client result threw `Attempted to assign to readonly property.`
+  // here and lost the edit result entirely — build a new value instead.
+  const first = clientToolResult[0]
+  const firstValue = first.value
+  if ('messages' in strReplaceResult && 'message' in firstValue) {
+    return {
+      output: [
+        {
+          ...first,
+          value: {
+            ...firstValue,
+            message: [...strReplaceResult.messages, firstValue.message].join(
+              '\n\n',
+            ),
+          },
+        },
+      ],
+    }
   }
 
   return { output: clientToolResult }

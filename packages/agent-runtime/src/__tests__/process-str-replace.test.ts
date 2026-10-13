@@ -14,6 +14,8 @@ const logger: Logger = {
   error: () => {},
 }
 
+// FID-2026-1012-020: the mismatch-versus-no-op outcome cases live in
+// process-str-replace-outcomes.test.ts.
 describe('processStrReplace', () => {
   it('should replace exact string matches', async () => {
     const initialContent = 'const x = 1;\nconst y = 2;\n'
@@ -259,8 +261,14 @@ describe('processStrReplace', () => {
       expect(result.content).toBe(
         'const x = 10;\nconst y = 2;\nconst z = 30;\n',
       )
-      expect(result.messages).toContain(
-        'The old string "const w = 4;" was not found in the file, skipping. Please try again with a different old string that matches the file content exactly.',
+      // FID-2026-1012-020: the stable first line is kept (it is the failure
+      // ledger's class identity) and the diagnosis follows it.
+      const [failureMessage] = result.messages
+      expect(failureMessage).toStartWith(
+        'The old string "const w = 4;" was not found in the file, skipping.',
+      )
+      expect(failureMessage).toContain(
+        'Why: no line of your old string appears',
       )
     }
   })

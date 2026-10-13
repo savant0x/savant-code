@@ -298,7 +298,10 @@ work item remains active, including the recorded level-1 consolidation and exter
   `common/src/util/experience-classes.ts`, `sdk/src/tools/code-search/**`,
   `sdk/src/__tests__/code-search-flags.test.ts`
 - FID-2026-1012-020: `packages/agent-runtime/src/process-str-replace.ts`,
-  `packages/agent-runtime/src/tools/handlers/tool/**`, `sdk/src/run/**`
+  `packages/agent-runtime/src/edit-diagnostics.ts`,
+  `packages/agent-runtime/src/tools/handlers/tool/**`,
+  `packages/agent-runtime/src/__tests__/process-str-replace*.test.ts`,
+  `packages/agent-runtime/src/__tests__/edit-diagnostics.test.ts`, `sdk/src/run/**`
 - FID-2026-1012-021: `scripts/experiences-dedup.ts`, `scripts/lessons-to-skills.ts`,
   `scripts/lesson-feature-pipeline.ts`, `scripts/session-end-review.ts`,
   `scripts/validate-repository.ts`, `dev/agenda.md`, `dev/experiences/**`,
