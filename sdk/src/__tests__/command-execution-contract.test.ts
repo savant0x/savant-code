@@ -1,8 +1,14 @@
+import { promises as fs } from 'node:fs'
+
 import { runReadonlyCommandParams } from '@savant-code/common/tools/params/tool/run-readonly-command'
 import { runTerminalCommandParams } from '@savant-code/common/tools/params/tool/run-terminal-command'
-import { CommandTimeoutError } from '@savant-code/common/util/command-execution'
+import {
+  CommandTimeoutError,
+  commandExecutionMetadata,
+} from '@savant-code/common/util/command-execution'
 import { describe, expect, test } from 'bun:test'
 
+import { handleToolCall } from '../run/tool-call'
 import { runTerminalCommand } from '../tools/run-terminal-command'
 
 /**
@@ -17,6 +23,100 @@ import { runTerminalCommand } from '../tools/run-terminal-command'
  * (FID-2026-1013-002).
  */
 describe('FID-2026-1012-023 command budget and cancellation contract', () => {
+  test('SDK dispatch preserves a real timeout identity in its result', async () => {
+    const result = await handleToolCall({
+      action: {
+        type: 'tool-call-request',
+        requestId: 'timeout-transport-fixture',
+        userInputId: 'fixture',
+        toolName: 'run_terminal_command',
+        input: {
+          command: `bun -e 'await new Promise((resolve) => setTimeout(resolve, 3000))'`,
+          timeout_seconds: 0.5,
+          mode: 'assistant',
+        },
+        timeout: undefined,
+      },
+      overrides: {},
+      customToolDefinitions: {},
+      cwd: process.cwd(),
+      fs,
+    })
+    const parsed = runTerminalCommandParams.outputSchema.parse(result.output)
+    expect(commandExecutionMetadata(parsed[0]?.value)).toEqual({
+      executionOutcome: 'timed-out',
+      executionStarted: true,
+      executedToolName: 'run_terminal_command',
+      terminationState: 'requested',
+      timeoutSeconds: 0.5,
+    })
+    expect(JSON.stringify(parsed)).toContain('was not replayed')
+  })
+
+  test('SDK pre-start cancellation is an error and never invokes an override', async () => {
+    const controller = new AbortController()
+    controller.abort()
+    let executions = 0
+    const result = await handleToolCall({
+      action: {
+        type: 'tool-call-request',
+        requestId: 'cancellation-transport-fixture',
+        userInputId: 'fixture',
+        toolName: 'run_terminal_command',
+        input: { command: 'echo fixture' },
+        timeout: undefined,
+      },
+      overrides: {
+        run_terminal_command: async () => {
+          executions += 1
+          return []
+        },
+      },
+      customToolDefinitions: {},
+      signal: controller.signal,
+      fs,
+    })
+    const parsed = runTerminalCommandParams.outputSchema.parse(result.output)
+    expect(executions).toBe(0)
+    expect(JSON.stringify(parsed)).toContain('errorMessage')
+    expect(commandExecutionMetadata(parsed[0]?.value)).toEqual({
+      executionOutcome: 'cancelled',
+      executionStarted: false,
+      executedToolName: 'run_terminal_command',
+      terminationState: 'not-started',
+    })
+  })
+
+  test('SDK errors omit invalid execution metadata and unrelated exception fields', async () => {
+    const result = await handleToolCall({
+      action: {
+        type: 'tool-call-request',
+        requestId: 'invalid-metadata-fixture',
+        userInputId: 'fixture',
+        toolName: 'run_terminal_command',
+        input: { command: 'echo fixture', mode: 'assistant' },
+        timeout: undefined,
+      },
+      overrides: {
+        run_terminal_command: async () => {
+          throw Object.assign(new Error('host fixture failure'), {
+            executionOutcome: 'invalid',
+            terminationState: 'invalid',
+            timeoutSeconds: Infinity,
+            privatePayload: 'must-not-be-copied',
+          })
+        },
+      },
+      customToolDefinitions: {},
+      fs,
+    })
+    const parsed = runTerminalCommandParams.outputSchema.parse(result.output)
+    expect(commandExecutionMetadata(parsed[0]?.value)).toEqual({})
+    expect(JSON.stringify(result)).toContain('host fixture failure')
+    expect(JSON.stringify(result)).not.toContain('privatePayload')
+    expect(JSON.stringify(result)).not.toContain('must-not-be-copied')
+  })
+
   test.each([NaN, Infinity, -Infinity, -2, -0.5])(
     'invalid budget %s is rejected before execution',
     async (budget) => {

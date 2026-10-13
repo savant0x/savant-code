@@ -7,11 +7,13 @@ import { toolNames } from '@savant-code/common/tools/constants'
 import { clientToolCallSchema } from '@savant-code/common/tools/list'
 import { applyPatchOperationSchema } from '@savant-code/common/tools/params/tool/apply-patch'
 import { jsonObjectSchema } from '@savant-code/common/types/json'
+import { commandExecutionMetadata } from '@savant-code/common/util/command-execution'
 import {
   getOptionalNumber,
   getOptionalString,
   getString,
 } from '@savant-code/common/util/param-helpers'
+import { toJSONValue } from '@savant-code/common/util/type-narrowing'
 
 import { requireCwd } from './require-cwd'
 import { refuseOversizedToolCall } from './tool-call-argument-ceiling'
@@ -59,6 +61,10 @@ export async function handleToolCall({
 }): Promise<{ output: ToolResultOutput[] }> {
   const toolName = action.toolName
   const input = action.input
+  const commandResultFields: Record<string, string> =
+    toolName === 'run_terminal_command' && typeof input.command === 'string'
+      ? { command: input.command }
+      : {}
 
   if (signal?.aborted) {
     return {
@@ -66,7 +72,13 @@ export async function handleToolCall({
         {
           type: 'json',
           value: {
-            message: 'Tool call cancelled: the run was aborted by the user.',
+            ...commandResultFields,
+            errorMessage:
+              'Tool call cancelled: the run was aborted by the user.',
+            executionOutcome: 'cancelled',
+            executionStarted: false,
+            executedToolName: toolName,
+            terminationState: 'not-started',
           },
         },
       ],
@@ -249,10 +261,15 @@ export async function handleToolCall({
       throw error
     }
 
+    const executionMetadata = Object.fromEntries(
+      Object.entries(commandExecutionMetadata(error)).filter(
+        ([, value]) => value !== undefined,
+      ),
+    )
     result = [
       {
         type: 'json',
-        value: {
+        value: toJSONValue({
           errorMessage:
             error &&
             typeof error === 'object' &&
@@ -262,7 +279,9 @@ export async function handleToolCall({
               : typeof error === 'string'
                 ? error
                 : 'Unknown error',
-        },
+          ...commandResultFields,
+          ...executionMetadata,
+        }),
       },
     ]
   }

@@ -171,8 +171,8 @@ remove the records has not fixed the class.
 
 ### Verification Receipt
 
-- fingerprint: sha256:f2164cd9ffe7ee73a4c74048b43b4c5b83e33c8a345a6496550a9799f4c8f1b5
-- verified: 2026-10-13T04:32:15.880Z
+- fingerprint: sha256:fe547f40711695659ded7d499d01e87cde11abad5c921bd4429393c1596fb2fb
+- verified: 2026-10-13T23:30:46.609Z
 - test sdk/src/__tests__/command-execution-contract.test.ts: exit 0
 - test sdk/src/__tests__/run-terminal-command.test.ts: exit 0
 - test sdk/src/__tests__/run-state-child-process.test.ts: exit 0
@@ -300,6 +300,37 @@ remove the records has not fixed the class.
   finding is carried to the session record and the register rather than left in this file.
 - **CHANGE DELTA:** implementation of the Loop 3 contract; the class lanes remain open.
 
+### Loop 5 — SDK outcome transport correction (2026-10-13)
+
+- **RED:** At `d9cee722`, the SDK `handleToolCall` catch copies only the
+  exception message. `CommandTimeoutError` carries the outcome, budget and
+  termination state, but those fields never reach the runtime's result walker.
+  The SDK's pre-aborted dispatch branch also returns a `message` without an
+  error channel, allowing cancellation to look like a successful tool result.
+- **GREEN:** Reuse `commandExecutionMetadata` in the SDK catch, copying only
+  its allowlisted fields alongside the existing error message. Pre-aborted
+  dispatch returns `errorMessage` and cancelled/not-started identity, matching
+  the runtime client bridge. Preserve pause-error propagation and never replay.
+- **AUDIT:** `buildAgentRuntimeImpl` → `handleToolCall` → terminal runner →
+  SDK catch → result lifecycle → shared walker → hook → capture is the actual
+  path. Existing tests cover runner rejection and runtime capture separately;
+  add SDK dispatch controls for a real bounded timeout and pre-start abort.
+  Both controls also expose missing `command` in SDK error envelopes, which
+  the public terminal output schema requires. Restore that field for terminal
+  failures/cancellation without changing other tool envelopes.
+- **ADVERSARIAL:** Do not spread a raw exception or infer expectedness from a
+  timeout. Unknown host errors retain their existing error text; only validated
+  execution metadata is copied. Cancellation must precede overrides and process
+  start. Both changes are within this lane's registered dispatch/test targets.
+- **CHANGE DELTA:** Converged additive correction under automation level 3;
+  no production boundary, capture row or class identity changes are proposed.
+- **IMPLEMENTATION:** Two dispatch controls fail against the prior envelopes
+  and pass after repair; a third pins omission of invalid metadata and unrelated
+  exception fields. Command suite: 11 PASS / zero FAIL. SDK cancellation now
+  has an error channel, terminal errors satisfy their output schema, and the
+  narrowed timeout identity survives SDK conversion. No timeout is automatically
+  labelled expected, and no command is replayed.
+
 ### Review questions
 
 1. **Should the timeout be raised automatically by the runtime, or should the model be told?** Told,
@@ -381,16 +412,16 @@ across 314 files; full root `typecheck` exit 0; `quality:report` PASS; repo-wide
 `eslint . --max-warnings 0` exit 0; `lint:md` exit 0. The declared gates are listed above and stamped
 below.
 
-**Receipt NOT stamped, and why (measured, not excused).** `bun run fid:verify <this record> --write`
+**Historical receipt blocker, resolved before Loop 5.** `bun run fid:verify <this record> --write`
 ran every declared gate live: **10 of 11 pass** (all seven test gates, all three typechecks), and
-`quality` exits 1 with a single violation that is **not this lane's**:
+`quality` originally exited 1 with a single violation outside this lane:
 `scripts/providers/audit-probes/parity-tier1-catalog-probe.ts: 312 lines exceeds absolute maximum 300`
 (an untracked in-flight probe of the provider-parity lane, written during this pass). The quality gate
-is repo-wide and fail-closed, so no receipt can be stamped while that file is over the ceiling — and
+is repo-wide and fail-closed, so no receipt could be stamped while that file was over the ceiling — and
 the file sits outside this record's authorised write surface, so editing it is a Law 2 violation
 rather than a shortcut. The gate list above is kept whole: the honest state is "one gate blocked by a
-foreign file", never a shorter list that passes. When the owning lane splits that file, re-run
-`fid:verify --write` to stamp the receipt against this record's unchanged content.
+foreign file", never a shorter list that passes. The owning lane resolved the blocker;
+the receipt above was stamped. Loop 5 re-runs the complete gate set for this correction.
 
 **Open, and the reason this record is not `closed`:** the 13 classes have not been shown to have
 stopped recurring. The next step is `FID-2026-1012-024`'s instrument's own mechanism — record the fix
