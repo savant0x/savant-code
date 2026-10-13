@@ -184,8 +184,8 @@ Run, all measured on the implementation tree:
 
 ### Verification Receipt
 
-- fingerprint: sha256:dd1314b2d7e60ab870592664ff4aa8b5fd1dd4ffedec8da9a8508f5a0fbb27f7
-- verified: 2026-10-13T05:47:39.679Z
+- fingerprint: sha256:2278b87dc6c0dd2de098b10fc5eb028b2c8551433b7fcf28b57317dfd45a1517
+- verified: 2026-10-13T06:15:52.598Z
 - test scripts/__tests__/fid-surface-coverage.test.ts: exit 0
 - test packages/agent-runtime/src/echo/__tests__/scope-targets.test.ts: exit 0
 - test packages/agent-runtime/src/echo/__tests__/law2-scope-gate.test.ts: exit 0
@@ -294,7 +294,7 @@ Run, all measured on the implementation tree:
 
 ### Implementation Evidence
 
-- [ ] **Commit SHA:** pending operator git execution (working tree)
+- [x] **Commit SHA:** `5144615b` — implementation, tests, wiring and this record's closure edits
 - [x] **File:line ranges:** `scripts/fid-surface-coverage.ts` (collector), `scripts/fid-verify.ts`
       (`coverageStampBlockers` + `main()` call), `scripts/validate-repository.ts` (collector array),
       `packages/agent-runtime/src/echo/scope-targets.ts` (shared parser)
