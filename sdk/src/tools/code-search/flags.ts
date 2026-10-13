@@ -10,6 +10,14 @@ import type { Logger } from '@savant-code/common/types/contracts/logger'
  * (e.g. "cli/src -g '*.ts'"). Non-flag arguments (not starting with '-') break
  * ripgrep's argument structure on Windows, causing patterns to be treated as
  * filenames — so they are moved to `extraSearchPaths` instead.
+ *
+ * FID-2026-1012-019: two structural shapes are dropped rather than passed
+ * through, because the caller appends its own `--` terminator before the
+ * pattern. A model-supplied `--` ("unrecognized flag `--`" / exit 2 once the
+ * duplicate terminator shifts the pattern) and a trailing value-taking flag
+ * with no value (its value would silently become the wrapper's `--`) both
+ * change the search without saying so. Dropping them preserves the caller's
+ * intent and cannot introduce an argument ripgrep did not already receive.
  */
 export function parseSearchFlags(
   flags: string | undefined,
@@ -23,7 +31,18 @@ export function parseSearchFlags(
   const flagsArray: string[] = []
   const extraSearchPaths: string[] = []
   let prevWasFlag = false
-  for (const token of rawFlagsArray) {
+  for (let i = 0; i < rawFlagsArray.length; i++) {
+    const token = rawFlagsArray[i]!
+    if (token === '--') {
+      // FID-2026-1012-019: the terminator is added by the caller.
+      if (logger) {
+        logger.warn(
+          { flags },
+          'code-search: the `--` flag terminator is added by the tool itself and was dropped from the flags parameter.',
+        )
+      }
+      continue
+    }
     if (prevWasFlag) {
       // Previous token was a flag — this token is its value (e.g., -g *.ts, -A 2)
       // Defensive: treat any non-"-" token after a flag as its value,
@@ -68,6 +87,18 @@ export function parseSearchFlags(
         '--no-unicode',
       ].includes(token)
       prevWasFlag = !isBooleanFlag && !token.includes('=')
+      if (prevWasFlag && i === rawFlagsArray.length - 1) {
+        // FID-2026-1012-019: a value-taking flag with no value would take the
+        // caller's `--` as its value and silently change the search.
+        flagsArray.pop()
+        prevWasFlag = false
+        if (logger) {
+          logger.warn(
+            { flags, token },
+            'code-search: a flag expecting a value was given none and was dropped; pass its value or remove the flag.',
+          )
+        }
+      }
     } else {
       // Non-flag argument — likely a directory path misuse. Move to search paths.
       extraSearchPaths.push(token)

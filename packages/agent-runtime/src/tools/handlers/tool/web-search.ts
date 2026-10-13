@@ -1,3 +1,7 @@
+import {
+  createCapabilityNoticeLog,
+  type CapabilityNoticeLog,
+} from '@savant-code/common/util/capability-notice'
 import { jsonToolResult } from '@savant-code/common/util/messages'
 
 import { searchWebSource } from '../../../llm-api/research-sources'
@@ -8,6 +12,24 @@ import type {
   SavantCodeToolOutput,
 } from '@savant-code/common/tools/list'
 import type { Logger } from '@savant-code/common/types/contracts/logger'
+
+/**
+ * FID-2026-1012-019: a degradation is reported once per run scope. Every
+ * failure is still returned as an error — only the repeated advice is dropped,
+ * so a plan cannot spend turn after turn re-reading the same instruction. The
+ * map is bounded and cleared on overflow, so a long-lived process cannot grow
+ * it; the cost of an overflow is one repeated advice line.
+ */
+const noticeLogs = new Map<string, CapabilityNoticeLog>()
+
+function noticeLogFor(scope: string): CapabilityNoticeLog {
+  const existing = noticeLogs.get(scope)
+  if (existing) return existing
+  if (noticeLogs.size >= 32) noticeLogs.clear()
+  const fresh = createCapabilityNoticeLog()
+  noticeLogs.set(scope, fresh)
+  return fresh
+}
 
 export const handleWebSearch = (async (params: {
   previousToolCallFinished: Promise<void>
@@ -73,9 +95,15 @@ export const handleWebSearch = (async (params: {
         },
         'Web search source returned error',
       )
+      const firstReport = noticeLogFor(clientSessionId).claim({
+        capability: 'web_search',
+        reason: source.error,
+      })
       return {
         output: jsonToolResult({
-          errorMessage: source.error,
+          errorMessage: firstReport
+            ? source.error
+            : `${source.error} (already reported earlier in this run; take no further action for it)`,
         }),
         creditsUsed,
       }

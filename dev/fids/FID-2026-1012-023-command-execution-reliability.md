@@ -171,8 +171,8 @@ remove the records has not fixed the class.
 
 ### Verification Receipt
 
-- fingerprint: sha256:0cd056d35dbf18a65a02cd5ba5463b339a30ae39a121f2d1e76552b34ace91dd
-- verified: 2026-10-13T01:54:58.424Z
+- fingerprint: sha256:f2164cd9ffe7ee73a4c74048b43b4c5b83e33c8a345a6496550a9799f4c8f1b5
+- verified: 2026-10-13T04:32:15.880Z
 - test sdk/src/__tests__/command-execution-contract.test.ts: exit 0
 - test sdk/src/__tests__/run-terminal-command.test.ts: exit 0
 - test sdk/src/__tests__/run-state-child-process.test.ts: exit 0
@@ -401,6 +401,14 @@ reason the recurrence probe is deliberately **not** among the declared gates: wh
 no fix boundary, `scripts/experiences-recurrence.ts` truthfully reports `incomplete-observation` and
 exits non-zero, and declaring it would make `fid:verify` red on a correct today-state.
 
+- **Post-fix capture observation (2026-10-13, recorded during FID-2026-1012-019's pass):** the class has
+  **not** stopped. One record landed **after** this fix — `2026-10-13T03:10:27.155Z`,
+  `run_readonly_command`, carrying this record's new contract text (`Command timed out after 600
+  seconds. Termination requested; verify cleanup before another execution. Narrow the command or choose
+  an explicit …`) with `expectedness: undetermined`. That is the legitimate outcome the contract now
+  names — a command that genuinely exceeded its ceiling — rather than a silent failure, but the capture
+  cannot yet tell the two apart, so the class stays open until `FID-2026-1012-024`'s classification
+  separates an expected timeout from a defect. No class claim is made here.
 - **Authorised write surface:** `SCOPE.md` → machine-readable scope targets → this record's line
   (`sdk/src/tools/run-terminal-command.ts`, `sdk/src/run-state/**`, `common/src/util/command-execution.ts`,
   `common/src/types/experience.ts`, `common/src/tools/params/tool/**`,

@@ -18,6 +18,7 @@ import {
   formatOrganicAsDocumentation,
   parseOrganicHits,
 } from './research-format'
+import { buildWebSearchExhaustionNotice } from './research-notice'
 import { searchWeb } from './serper-api'
 import {
   detectVersionCandidates,
@@ -71,6 +72,11 @@ export async function searchWebSource(options: {
   // BYOK sources are primary, tried in priority order. Each returns null on
   // failure so the selector falls through to the next source — a configured
   // key never hard-fails the search.
+  // Every configured provider that ran and produced nothing is named in the
+  // exhaustion notice below — "no results" from a provider that never ran and
+  // from one that answered empty are different facts (FID-2026-1012-019).
+  const ranAndReturnedNothing: string[] = []
+
   const serperKey = readEnvKey('SERPER_API_KEY')
   if (serperKey) {
     const result = await searchWeb({
@@ -83,6 +89,7 @@ export async function searchWebSource(options: {
     if (result) {
       return { result }
     }
+    ranAndReturnedNothing.push('SERPER_API_KEY')
   }
 
   const byokEngines: Array<{
@@ -113,6 +120,7 @@ export async function searchWebSource(options: {
     if (result) {
       return { result }
     }
+    ranAndReturnedNothing.push(engine.key)
   }
 
   // Keyless multi-engine port — the default (no-key) source.
@@ -120,11 +128,14 @@ export async function searchWebSource(options: {
   if (keyless) {
     return { result: keyless }
   }
+
+  const knownKeys = ['SERPER_API_KEY', ...byokEngines.map((e) => e.key)]
   return {
-    error:
-      'No web search results were returned. Add a research API key ' +
-      '(Serper, Parallel, Tavily, Exa, or Firecrawl) in the UI for ' +
-      'higher-quality results, or retry later.',
+    error: buildWebSearchExhaustionNotice({
+      knownKeys,
+      absentKeys: knownKeys.filter((key) => !readEnvKey(key)),
+      ranAndReturnedNothing,
+    }),
   }
 }
 

@@ -357,7 +357,7 @@ activation), and the child's id is recorded in this table when it exists.
 | FID-2026-1012-023 — execution reliability | A0 | `-023` | **fixed** — implementation + 11 declared gates green (sdk 633 PASS, agent-runtime 2,048 PASS, root typecheck, quality, eslint); recurrence window not yet started, so no class claim |
 | FID-2026-1012-017 — emission (193 records) | A1 | `-017` | **fixed** — emission budget, truthful recovery, pre-execution ceiling, spawn steering and bounded revision-guarded bulk staging all implemented with declared gates green and a stamped receipt; recurrence window not started, so **no class claim** |
 | FID-2026-1012-018 — fetch (181) | A1 | `-018` | **fixed** — outcome taxonomy, canonical identity and bounded per-run negative cache implemented with declared gates green and a stamped receipt; recurrence window not started, so **no class claim** |
-| FID-2026-1012-019 — capability integrity (50) | A1 | `-019` | converged (design) |
+| FID-2026-1012-019 — capability integrity (50) | A1 | `-019` | **fixed** — degradation contract + research surface + `code_search` flag guard; 7 declared gates green + receipt stamped; window open (the `search-executable-missing` cause is the **host** resolver's, and the run-start preflight is still open) |
 | FID-2026-1012-020 — edit-path friction (72) | A1 | `-020` | converged (design) |
 | FID-2026-1012-021 — the recurrence-to-fix loop | A2 | `-021` | converged (design) |
 | FID-2026-1012-011 — ceiling ungated | B0 | `-011` | converged (design) |
@@ -489,7 +489,7 @@ battery. Repair that deterministic verification dependency before continuing the
 lanes. No production closure, push or publication is implied by this authority.
 
 Two findings from the `-023` lane are **recorded and still unowned**, so a later wave does not have to
-rediscover them:
+rediscover them — plus a third, measured 2026-10-13 during the `-019` pass:
 
 1. `toMatchObject` with an asymmetric matcher **mutates the received value** on Bun 1.3.14
    (`expect({a:'x'}).toMatchObject({a: expect.stringContaining('x')})` leaves `typeof a === 'object'`).
@@ -499,7 +499,14 @@ rediscover them:
    `scripts/providers/audit-probes/parity-tier1-catalog-probe.ts` is 312 lines against the 300
    absolute maximum, and both fresh parity probes are prettier-dirty. Those files belong to the
    provider-parity lane and were reported rather than edited; the owning lane must split and format
-   them.
+   them. *(2026-10-13: `quality:report` now PASSes over 1,502 baselined files and
+   `validate:repository` exits 0 — the parity lane's files were baselined or split; re-check before
+   relying on this item.)*
+3. **A timeout record landed after the `-023` fix** — `2026-10-13T03:10:27.155Z`,
+   `run_readonly_command`, carrying the new contract text with `expectedness: undetermined`. The class
+   changed shape without leaving: the message is now actionable, but the capture still cannot separate a
+   legitimate 600-second timeout from a defect. That separation is `-024`'s, not a new lane, and `-023`'s
+   record now carries the observation.
 
 ### Original review questions
 

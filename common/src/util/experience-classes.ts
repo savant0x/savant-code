@@ -30,7 +30,12 @@ const CAUSE_PATTERNS: ReadonlyArray<readonly [RegExp, string]> = [
   [/^Failed to apply patch/, 'patch-failed'],
   [/^Failed to execute ripgrep.*ENOENT/, 'search-executable-missing'],
   [/^Code search anomaly:/, 'search-incomplete'],
+  // FID-2026-1012-019 renamed the exhaustion message from an empty-result
+  // claim to a named degradation. New rows key on the new lead; the legacy
+  // pattern stays so the rows already in the capture keep their identity
+  // instead of splitting into a second class.
   [/^No web search results were returned\. Add/, 'research-unavailable'],
+  [/^Web search (?:is unavailable|did not complete)/, 'research-unavailable'],
   [/^No readable text found at URL$/, 'fetch-unextractable'],
   [/^Response (?:exceeded|is too large)/, 'fetch-oversized'],
   [/^Unsupported content type:/, 'fetch-unsupported'],

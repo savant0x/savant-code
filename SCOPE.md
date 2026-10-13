@@ -293,7 +293,10 @@ work item remains active, including the recorded level-1 consolidation and exter
 - FID-2026-1012-018: `sdk/src/tools/read-url/**`, `sdk/src/__tests__/read-url*.test.ts`,
   `common/src/tools/params/tool/**`
 - FID-2026-1012-019: `packages/agent-runtime/src/llm-api/**`, `sdk/src/native/**`,
-  `packages/agent-runtime/src/tools/**`, `common/src/constants/**`
+  `packages/agent-runtime/src/tools/**`, `common/src/constants/**`,
+  `common/src/util/capability-notice.ts`, `common/src/util/__tests__/capability-notice.test.ts`,
+  `common/src/util/experience-classes.ts`, `sdk/src/tools/code-search/**`,
+  `sdk/src/__tests__/code-search-flags.test.ts`
 - FID-2026-1012-020: `packages/agent-runtime/src/process-str-replace.ts`,
   `packages/agent-runtime/src/tools/handlers/tool/**`, `sdk/src/run/**`
 - FID-2026-1012-021: `scripts/experiences-dedup.ts`, `scripts/lessons-to-skills.ts`,

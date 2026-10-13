@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-1012-019-silent-capability-degradation.md`
 **ID:** FID-2026-1012-019
 **Severity:** high
-**Status:** converged
+**Status:** fixed
 **Created:** 2026-10-12 20:15
 **Automation level:** 3
 **YAGNI-Compliance:** Verified
@@ -183,9 +183,25 @@ declarations, the test paths and the receipt are added when this record reaches
 
 ## Verification Gates
 
-This record is pre-implementation (`Status: converged`, FID-2026-0915-004), so **no gate
-bullets are declared**. Gates are allowlisted shapes only and are declared when the status
-reaches `fixed`/`verified`, together with the receipt that binds them to the document.
+- gate: test common/src/util/__tests__/capability-notice.test.ts
+- gate: test packages/agent-runtime/src/llm-api/__tests__/research-sources-web.test.ts
+- gate: test sdk/src/__tests__/code-search-flags.test.ts
+- gate: typecheck common
+- gate: typecheck sdk
+- gate: typecheck packages/agent-runtime
+- gate: quality
+
+### Verification Receipt
+
+- fingerprint: sha256:a110d09a382f2d8f4d59bdb4b630c221f60e8023e9922d887919f741236f89b8
+- verified: 2026-10-13T04:30:01.046Z
+- test common/src/util/__tests__/capability-notice.test.ts: exit 0
+- test packages/agent-runtime/src/llm-api/__tests__/research-sources-web.test.ts: exit 0
+- test sdk/src/__tests__/code-search-flags.test.ts: exit 0
+- typecheck common: exit 0
+- typecheck sdk: exit 0
+- typecheck packages/agent-runtime: exit 0
+- quality: exit 0
 
 ## Perfection Loop
 
@@ -229,11 +245,50 @@ reaches `fixed`/`verified`, together with the receipt that binds them to the doc
   causes remain explicit NEEDS-REVIEW; planned tests/window are in the shared review.
 - **CHANGE DELTA:** Planning correction only; all six allocated classes remain owned.
 
+### Loop 3 — Implementation (2026-10-13)
+
+- **RED (re-measured at implementation time, `main` @ `64ea8c06`):** the capture held 563 records / 56
+  stable classes (FID-2026-1012-024's instrument collapses the 68 legacy aliases). This lane's three
+  savant-side classes: `web_search` `research-unavailable` **24 hits / 7 sessions / last 2026-10-10**;
+  `code_search` `search-executable-missing` **17 hits / 8 sessions / last 2026-10-04**; `code_search`
+  `search-incomplete` **7 hits / 4 sessions / last 2026-10-10**. The timeout class
+  (`run_readonly_command` `timeout`, FID-023's) measured **15 hits / 10 sessions / last 2026-10-13**.
+- **GREEN:** one shared degradation contract (`common/src/util/capability-notice.ts`), the research
+  surface and the `code_search` flag path re-pointed at it, and the notice deduped per run scope.
+- **AUDIT:** the declared gates are listed above and stamped below; the re-measure is verbatim in this
+  entry, not summarised.
+- **ADVERSARIAL — did the class move, or stop?** It has **not** yet stopped: all three classes are
+  live at the last measure, and every fix in this pass lands **after** it. The honest state is
+  "implemented, observation window open", never "class fixed". Two sub-answers this pass established
+  rather than assumed:
+  1. **ENOENT attribution settled (step 6 of the plan).** The recorded text —
+     `Failed to execute ripgrep: ENOENT … Vendored ripgrep not found; ensure @codebuff/sdk is up-to-date
+     or set CODEBUFF_RG_PATH` — appears **nowhere in this repository** (`grep -rn 'Vendored ripgrep|CODEBUFF_RG_PATH'
+     sdk/src common/src packages cli/src` → no match). Savant's own spawn failure reads
+     `Failed to execute ripgrep at "${rgPath}": … Repair with 'bun run --cwd=sdk fetch-ripgrep' or set
+     SAVANT_CODE_RG_PATH.` (`sdk/src/tools/code-search/executor.ts:268`) and its resolver names its own
+     candidates and the workspace-correct repair (`sdk/src/native/ripgrep.ts:204-215`). So the 17
+     `search-executable-missing` records were produced by the **host bundle's** resolver, and this lane
+     fixes nothing there — the class is a host-side cause, recorded so it is not re-derived as savant's.
+  2. **The timeout class changed shape without leaving.** The newest timeout record
+     (`2026-10-13T03:10:27.155Z`, `run_readonly_command`) carries the **new** FID-023 contract text —
+     `Command timed out after 600 seconds. Termination requested; verify cleanup before another execution.
+     Narrow the command or choose an explicit …` — one hour *after* FID-023's fix commit
+     (`653db58d`, 2026-10-12T21:46:52-04:00), with `expectedness: undetermined`. That is the shape 022's
+     convergence rule calls “still open”: a legitimate timeout and a silent one are still one class,
+     because the capture has no expected-outcome field. FID-024 owns separating them; FID-023's record
+     now carries the observation.
+- **CHANGE DELTA:** +1 contract module, +1 extracted notice builder, +3 tests; the research surface,
+  the `web_search` handler, the class registry and the `code_search` flag parser changed. No production
+  class claim, no lesson, no `fix-boundaries.json` entry — the window has not started.
+
 ### Missed Questions
 
-1. **Is the ripgrep ENOENT savant's defect or the host's?** → Unestablished, and deliberately
-   not claimed: the recorded text names `@codebuff/sdk`, while savant ships its own resolver.
-   The step exists to measure it before assignment.
+1. **Is the ripgrep ENOENT savant's defect or the host's?** → **Answered in Loop 3: the host's.**
+   The recorded text names `@codebuff/sdk` and `CODEBUFF_RG_PATH`, and neither string exists in this
+   repository; savant's own resolver and spawn failure name `SAVANT_CODE_RG_PATH` and the
+   workspace-correct repair command. The class stays owned here as a census row, but the cause is the
+   host bundle's resolver — nothing in this lane edits it.
 2. **Is a silent empty result ever the right answer?** → No, and the distinction is the whole
    finding. Zero hits is data; no capability is a missing prerequisite. Collapsing them is what
    the four classes have in common.
@@ -263,7 +318,8 @@ reaches `fixed`/`verified`, together with the receipt that binds them to the doc
 - The trace stores each failure's **first line**, so a class can stand for several sub-causes;
   the counts are volumes, not a root-cause attribution, and step 1 re-measures before any fix.
 - The read-only timeout class's exact call site was not located in this pass — marked
-  NEEDS-REVIEW rather than guessed.
+  NEEDS-REVIEW rather than guessed. Loop 3 located it and left it with its owner: the contract lives in
+  `common/src/util/command-execution.ts` (FID-023); this record keeps only the reading rule.
 - The ripgrep ENOENT attribution is unresolved by design; the record fixes nothing there until
   it is established.
 - No live session was instrumented to reproduce a silent degradation; the classes are measured
@@ -271,13 +327,51 @@ reaches `fixed`/`verified`, together with the receipt that binds them to the doc
 
 ## Resolution
 
-**Not implemented — `Status: converged` (pre-implementation, FID-2026-0915-004).**
+**Implemented — `Status: fixed` (deterministic gates green; recurrence assertion OPEN).**
 
-This record exists so the finding has an owner, a converged design and a register item with
-write authority; it made no source change. The work described above is implemented by whichever
-pass flips the record to `fixed`, at which point this section is rewritten in the closure format
-(Closed Date / Fix Description / Tests Added / Verification Evidence / Archived) and the
-declared gates are added under `## Verification Gates`.
+- **Closed Date:** 2026-10-13 (implementation pass; the record stays open in the sense that the
+  class window has not run — no lesson is written).
+- **Fix Description.** One degradation contract now exists — `common/src/util/capability-notice.ts`:
+  a notice names the capability, states `unavailable` / `did not complete` in its first clause, carries
+  the measured reason, the single resolving action and what the result is **not** evidence of; the
+  lead clause is stable per state so the capture keeps a measurable class. The research surface is its
+  first consumer: on exhaustion `searchWebSource` reports **which providers were configured** and that
+  the keyless port ran and returned nothing (`packages/agent-runtime/src/llm-api/research-notice.ts`,
+  built from the selector's observed state), replacing the message that read as a completed search of
+  lower quality. `web-search.ts` still reports every failure and drops only the repeated advice, via a
+  bounded per-run notice log. `code_search` gained the structural guard this record's plan named: a
+  model-supplied `--` terminator and a trailing value-taking flag with no value are dropped with a
+  warning (`sdk/src/tools/code-search/flags.ts`), because the caller appends its own `--` before the
+  pattern and either shape silently changed the search. `common/src/util/experience-classes.ts` maps
+  the new research lead to the existing `research-unavailable` cause and keeps the legacy pattern, so
+  the 24 recorded rows do not split into a second class.
+- **Tests Added:** `common/src/util/__tests__/capability-notice.test.ts` (7 cases: lead per state,
+  render order, once-per-scope claim, bounded overflow, owner reset);
+  `sdk/src/__tests__/code-search-flags.test.ts` (6 cases: dropped terminator, flags kept around it,
+  dropped trailing value-flag, booleans untouched, non-flag arguments still re-homed, no second
+  terminator forwarded); and two new cases in
+  `packages/agent-runtime/src/llm-api/__tests__/research-sources-web.test.ts` — the no-key notice
+  (`Web search is unavailable: no research provider is configured (checked SERPER_API_KEY, …)`) and the
+  configured-but-empty notice (`Web search did not complete: no configured provider produced a result
+  (SERPER_API_KEY) …`), which is the distinction between "nothing configured" and "configured and
+  empty" that the class is made of.
+- **Verification Evidence:** `common` 866 pass / 4 skip / 0 fail (109 files) · `sdk` 670 pass / 1 skip
+  / 0 fail (106 files) · `packages/agent-runtime` 2,066 pass / 0 fail (316 files) · typecheck `common`,
+  `sdk`, `packages/agent-runtime` all exit 0 · `quality:report` PASS (1,502 baselined files) ·
+  `validate:repository` PASS · ESLint `--max-warnings 0` and Prettier clean on every touched file.
+  Red-measure at `64ea8c06`: 563 records / 56 stable classes; this lane's three classes live and
+  unstopped (24/7, 17/8, 7/4) — pasted verbatim in Loop 3.
+- **Archived:** not archived. Per FID-2026-1012-022's closure condition a child closes only when its
+  classes show no new records in the declared window; the window has not started.
+- **Open, and why this record is not `closed`:** (a) the recurrence window (14 days / 3 sessions) has
+  not run, so no class claim exists and no fix boundary is recorded (`dev/experiences/fix-boundaries.json`
+  stays empty); (b) the run-start capability preflight (plan step 7) is **not implemented** — what
+  landed is the once-per-run notice dedupe, which is the half of step 7 that neither denies unused
+  capabilities nor blocks human work; the preflight needs a prompt-time consumer and is deliberately
+  left to the lane that owns that surface rather than built unowned here; (c) the flags/type failures
+  (`unrecognized file type`, `unrecognized flag`) already surface ripgrep's own actionable stderr
+  through the anomaly path, so no producer-side list of valid types was added — a hardcoded list would
+  rot against the pinned binary. All three are stated as open rather than counted as done.
 
 - **Authorised write surface:** `SCOPE.md` → machine-readable scope targets → this record's
   line (registered 2026-10-12 with the root-cause matrix).

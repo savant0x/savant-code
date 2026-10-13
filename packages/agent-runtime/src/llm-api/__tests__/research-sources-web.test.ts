@@ -220,7 +220,50 @@ describe('searchWebSource', () => {
         fetch,
       })
 
-      expect(result.error).toContain('No web search results were returned')
+      // FID-2026-1012-019: exhaustion is a named degradation, never an empty
+      // result — the first clause says the capability did not run, the notice
+      // names the checked keys, and it states what the result is not evidence of.
+      expect(result.error).toStartWith('Web search is unavailable:')
+      expect(result.error).toContain('no research provider is configured')
+      expect(result.error).toContain('SERPER_API_KEY')
+      expect(result.error).toContain('Add a research API key')
+      expect(result.error).toContain(
+        'not evidence that no matching source exists',
+      )
+      expect(result.result).toBeUndefined()
+    } finally {
+      restoreSerper()
+      restoreParallel()
+      restoreTavily()
+      restoreExa()
+      restoreFirecrawl()
+    }
+  })
+
+  test('a configured provider that returns nothing → incomplete, and it is named', async () => {
+    const restoreSerper = useEnv('SERPER_API_KEY', 'test-key')
+    const restoreParallel = useEnv('PARALLEL_API_KEY', undefined)
+    const restoreTavily = useEnv('TAVILY_API_KEY', undefined)
+    const restoreExa = useEnv('EXA_API_KEY', undefined)
+    const restoreFirecrawl = useEnv('FIRECRAWL_API_KEY', undefined)
+    try {
+      // Serper rejects the key: a provider RAN and produced nothing, which is a
+      // different fact from "no provider is configured" (FID-2026-1012-019).
+      const fetch = fetchRouter([
+        ['google.serper.dev', { body: 'Forbidden', status: 403 }],
+      ])
+
+      const result = await searchWebSource({
+        query: 'bun',
+        logger,
+        fetch,
+      })
+
+      expect(result.error).toStartWith('Web search did not complete:')
+      expect(result.error).toContain(
+        'no configured provider produced a result (SERPER_API_KEY)',
+      )
+      expect(result.error).toContain('the keyless search port returned nothing')
       expect(result.result).toBeUndefined()
     } finally {
       restoreSerper()
