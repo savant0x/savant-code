@@ -20,7 +20,7 @@ Continue ready implementation dependencies while real observation remains open.
 ## Work state
 
 - FID-2026-1012-024: instrument committed at `47a204d0`; class repair remains active.
-- FID-2026-1012-025: harness repair implemented; final gates and committed receipt pending.
+- FID-2026-1012-025: closed and archived; implementation `c4018491`, ten gates pass.
 - Remaining children: active; execute in the master's revised order.
 - Production observation: not yet begun; no class closure is claimed.
 
@@ -69,3 +69,7 @@ Sequential broad verification now passes: scripts 451 PASS / 0 FAIL across 48 fi
 agent-runtime 2,037 PASS / 0 FAIL across 313 files. Full root typecheck passes after
 the harness changes. The earlier contended runtime result is superseded by this
 complete clean rerun; no test or production timeout was raised.
+
+FID-025's ten declared gates pass with a tool-stamped receipt. Its source commit,
+closure record, changelog entry and scope-authority eviction accompany archival.
+The measuring instrument remains committed at `47a204d0`; class repairs remain open.

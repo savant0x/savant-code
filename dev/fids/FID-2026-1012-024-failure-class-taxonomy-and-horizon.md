@@ -259,7 +259,7 @@ audit trail of the mistaken premise, not as acceptance criteria or class disposi
   credential redactor before entering the failure ledger. Record the redaction policy
   on new rows; preserve old immutable rows. A producer-shaped secret pin precedes this repair.
 
-### Implementation questions
+### Missed Questions
 
 1. **Should the class key be stored at capture time or derived at read time?** Stored, from the
    `FID-2026-1012-009` `errorClass` follow-up: deriving it at read time cannot recover the cause from a

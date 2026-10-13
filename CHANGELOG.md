@@ -10,6 +10,22 @@
 > the v0.0.36 cut. Release notes are written here at cut time; nothing in this
 > section ships until then.
 
+## 2026-10-12 — Verification harness drift repaired (FID-2026-1012-025)
+
+### Fixed
+
+- Wire the existing model-picker and compliance-capture resets into their workspace
+  test preloads. Preserve the operator-approved Tauri allowlist with positive and
+  forbidden-command controls, and point the window-census test at the loader's durable
+  measured fixture rather than a removed scratchpad file.
+- Standalone provider probes now run only through guarded entrypoints. Import-safety
+  tests first reproduced attempted requests with a fetch blocker, then pass without
+  requests or credential reads. Both programs share a typed credential reader.
+- Closed and archived at implementation `c4018491fcf0ff7183c009d9bf5b559c84dc329f`.
+  Ten declared gates pass; full root typecheck, lint and quality pass. Sequential broad
+  suites: scripts 451 PASS, agent-runtime 2,037 PASS. No timeout budget was raised.
+  The failure-class remediation master remains active; this closes its harness finding.
+
 ## 2026-10-12 — Truncated tool calls are steered to split the payload (FID-2026-1012-009)
 
 ### Fixed

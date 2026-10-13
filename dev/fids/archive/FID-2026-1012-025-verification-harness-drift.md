@@ -3,8 +3,10 @@
 **Filename:** `FID-2026-1012-025-verification-harness-drift.md`
 **ID:** FID-2026-1012-025
 **Severity:** medium
-**Status:** converged
+**Status:** closed
 **Created:** 2026-10-12
+**Closed:** 2026-10-12
+**Commit:** c4018491fcf0ff7183c009d9bf5b559c84dc329f
 **Automation level:** 3
 **Master FID:** FID-2026-1012-022
 **YAGNI-Compliance:** Verified
@@ -81,10 +83,18 @@ reader provide the implementation without exemptions or test-only production sea
   in gate implementations? No: the corrected-root and isolated runs refute those claims.
 - **CHANGE DELTA:** Pre-write design only; no harness source changed in this loop.
 
-## Verification Gates
+### Loop 3 — Verified implementation and closure
 
-The artifacts exist and their focused checks pass. Stamp the receipt only after every
-declared gate executes successfully against the implemented tree.
+- **GREEN:** Wire both reset seams, restore policy and durable-census pins, guard the
+  two explicit provider programs and share their typed credential reader.
+- **AUDIT:** Ten declared gates pass with a stamped receipt. Full root typecheck,
+  ESLint, Markdown lint and quality pass. Broad scripts: 451 PASS; runtime: 2,037 PASS.
+- **ADVERSARIAL:** Two import tests first fail at the blocked fetch, then pass without
+  touching credentials or making requests. No scanner exemption or timeout increase.
+- **CHANGE DELTA:** Eight source/test files; implementation committed as `c4018491`.
+  Changelog coverage and register-authority removal accompany archival.
+
+## Verification Gates
 
 - gate: test scripts/__tests__/module-state-audit.test.ts
 - gate: test scripts/__tests__/skills-check-false-command-words.test.ts
@@ -97,9 +107,36 @@ declared gate executes successfully against the implemented tree.
 - gate: probe scripts/scripts-typecheck-check.ts
 - gate: quality
 
+### Verification Receipt
+
+- fingerprint: sha256:69a5ced286c5ef93901b253f9f04ead39029dc3f15809f7006be36bef8b9ea7b
+- verified: 2026-10-13T00:44:55.708Z
+- test scripts/__tests__/module-state-audit.test.ts: exit 0
+- test scripts/__tests__/skills-check-false-command-words.test.ts: exit 0
+- test scripts/__tests__/window-coverage-check.test.ts: exit 0
+- test scripts/__tests__/provider-probe-import-safety.test.ts: exit 0
+- test cli/src/utils/__tests__/model-picker-autowire.test.ts: exit 0
+- test packages/agent-runtime/src/hooks/__tests__/compliance-capture.test.ts: exit 0
+- typecheck cli: exit 0
+- typecheck packages/agent-runtime: exit 0
+- probe scripts/scripts-typecheck-check.ts: exit 0
+- quality: exit 0
+
 ## Resolution
 
-Implemented, awaiting final gates and committed receipt. The focused harness battery
+Implemented at `c4018491fcf0ff7183c009d9bf5b559c84dc329f`. The focused harness battery
 passes 30 tests. Import-safety RED produced two real attempted-network failures before
 the guards; both import tests pass with zero fetches after implementation. The live
 module-state audit now passes without adding an exemption.
+
+Sequential broad checks: scripts 451 PASS / 0 FAIL; agent-runtime 2,037 PASS / 0 FAIL.
+Full root typecheck, ESLint, Markdown lint and quality pass. No timeout budget changed.
+All four implementation steps are implemented. The source commit is durable, the
+declared gates are green, and this harness-only record closes without making a
+production recurrence claim. The master and its failure-class lanes remain active.
+
+## Lessons learned
+
+An early audit assertion can conceal later findings. Fix its actual cause, rerun the
+whole battery, and investigate what it uncovers. Policy and evidence pins must consume
+their authoritative sources rather than preserve obsolete assumptions.

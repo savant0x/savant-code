@@ -236,11 +236,6 @@ past them.
 
 ## Machine-readable scope targets
 
-- [ ] **FID-2026-1012-025. Verification harness drift.** Master implementation
-  investigation found unwired model-picker/compliance resets, a stale forbidden-Tauri
-  assertion and a scratchpad-only census fixture. Repair existing seams and durable
-  test references under the master grant. **Automation level: 3.**
-
 Operator authorization: complete the master program at automation level 3 (2026-10-12).
 The planning review is complete; implementation, verification and local commits are authorized.
 Evidence and per-record Loop 2 corrections are in
@@ -302,13 +297,6 @@ work item remains active, including the recorded level-1 consolidation and exter
   `packages/agent-runtime/src/tools/stream-parser/**`,
   `scripts/experiences*.ts`, `scripts/__tests__/experiences*.test.ts`,
   `scripts/session-end-review.ts`, `dev/experiences/**`
-- FID-2026-1012-025: `cli/src/test-setup.ts`,
-  `packages/agent-runtime/test/setup-test-isolation.ts`,
-  `scripts/__tests__/skills-check-false-command-words.test.ts`,
-  `scripts/__tests__/window-coverage-check.test.ts`,
-  `scripts/providers/audit-probes/t62f1-*.ts`,
-  `scripts/providers/audit-probes/credentials.ts`,
-  `scripts/__tests__/provider-probe-import-safety.test.ts`
 - Release-0.0.36: `VERSION`, `package.json`, `agents/package.json`,
   `cli/package.json`, `cli/release/package.json`, `common/package.json`,
   `common/src/constants/protocol-bundle.generated.ts`, `desktop/package.json`,
