@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-1012-017-incomplete-tool-call-arguments-root-cause.md`
 **ID:** FID-2026-1012-017
 **Severity:** critical
-**Status:** converged
+**Status:** fixed
 **Created:** 2026-10-12 20:15
 **Automation level:** 3
 **YAGNI-Compliance:** Verified
@@ -166,12 +166,36 @@ a **recurrence assertion** measured against the trace ledger, not a green suite.
 - A negative control: the strike ladder still ends a genuinely unrecoverable call, so the fix
   does not merely raise the retry ceiling.
 
+**Not a gate:** the recurrence assertion. It reads the capture rather than this record's artifacts, and
+no class can be asserted clean until the 14-day / three-session observation window runs; it becomes the
+closure gate when that window completes (`FID-2026-1012-021` owns the machinery that wires it into the
+repository gate).
+
 ## Verification Gates
 
-This record is **pre-implementation** (`Status: converged`), so **no gates are declared yet**:
-a declared gate must point at an artifact that exists, and declaring one now would be a false
-declaration. Gates are added under this heading when the status flips to `fixed`/`verified` —
-the recurrence probe, the affected workspaces' typechecks and `quality`.
+- gate: test sdk/src/__tests__/tool-argument-budget.test.ts
+- gate: test sdk/src/impl/__tests__/llm-native-tool-call.test.ts
+- gate: test packages/agent-runtime/src/tools/handlers/tool/__tests__/chunked-write.test.ts
+- gate: test packages/agent-runtime/src/tools/handlers/tool/__tests__/chunked-write-commit.test.ts
+- gate: test packages/agent-runtime/src/tools/stream-parser/__tests__/error-chunk-steering.test.ts
+- gate: typecheck common
+- gate: typecheck sdk
+- gate: typecheck packages/agent-runtime
+- gate: quality
+
+### Verification Receipt
+
+- fingerprint: sha256:5b471da264f9c4b500fc427573e9963866d3af9a73e7775e0021c3e8b9659df6
+- verified: 2026-10-13T04:01:05.634Z
+- test sdk/src/__tests__/tool-argument-budget.test.ts: exit 0
+- test sdk/src/impl/__tests__/llm-native-tool-call.test.ts: exit 0
+- test packages/agent-runtime/src/tools/handlers/tool/__tests__/chunked-write.test.ts: exit 0
+- test packages/agent-runtime/src/tools/handlers/tool/__tests__/chunked-write-commit.test.ts: exit 0
+- test packages/agent-runtime/src/tools/stream-parser/__tests__/error-chunk-steering.test.ts: exit 0
+- typecheck common: exit 0
+- typecheck sdk: exit 0
+- typecheck packages/agent-runtime: exit 0
+- quality: exit 0
 
 ## Perfection Loop
 
@@ -250,13 +274,41 @@ the recurrence probe, the affected workspaces' typechecks and `quality`.
   class?* The class key is `toolName` + cause (`experienceClassIdentity`), so the assertion is on the
   key, not the rendered wording. (c) *Did any class stop?* **No claim:** no fix boundary exists for this
   record, so `fix-boundaries.json` stays empty and the horizon for all 18 keys remains `unresolved`.
-- **STILL OPEN (approved, not done):** the third lever of the reviewed design — *bulk writes stage
-  bounded chunks with revision/hash guards and commit once, failure leaving the target untouched* — is
-  **not implemented**. Its planned artifact is
-  `packages/agent-runtime/src/tools/handlers/tool/__tests__/chunked-write.test.ts`; it belongs on the
-  propose/write staging surface (`proposed-content-store.ts`, `propose-write-file.ts`) and it is the
-  reason this record is **not** flipped to `fixed` in this pass. It stays an active step of this record.
+- **STILL OPEN at the close of this pass — closed by Loop 4 below:** the third lever of the reviewed
+  design — *bulk writes stage bounded chunks with revision/hash guards and commit once, failure leaving
+  the target untouched* — was not implemented when this entry was written.
 - **CHANGE DELTA:** ~0.7% of the record (source: 6 files under 300 lines, 3 new modules/tests).
+
+### Loop 4 — Bulk-write staging (2026-10-12, same session)
+
+- **RED:** the emitter's other half was still missing: a bulk write had no bounded representation, no
+  guard against the file having moved on since the write was authored, and no failure mode other than
+  "apply what arrived". The propose staging surface (`proposed-content-store.ts`,
+  `propose-write-file.ts`) handed the whole payload straight to the proposal store.
+- **GREEN (implemented):** `packages/agent-runtime/src/tools/handlers/tool/chunked-write.ts` stages a
+  write as bounded chunks with two hashes — `baseRevision` (the content the write was authored
+  against) and `revision` (what the chunks must reproduce). The chunk size is the tool's own argument
+  budget, the refusal point is the shared `MAX_ARGUMENT_CHARS` ceiling, the staging state lives beside
+  the proposed content it belongs to (so the store's resets and the suite's isolation cover it), and
+  the guards are enforced at assemble/commit time: a changed base or an incomplete or tamper-mismatched
+  staging exposes nothing and commits nothing.
+- **AUDIT:** `packages/agent-runtime/src/tools/handlers/tool/__tests__/chunked-write.test.ts` — 15 pass
+  / 0 fail, covering the plan's reassembly identity and unusable chunk sizes, the round trip, the
+  revision guard, incomplete staging, the integrity guard, restaging against a different base, the
+  ceiling refusal, "nothing staged", single-commit semantics, zero writes on a refused guard, staging
+  kept for a retry when the commit fails, and the handler's exact staging sequence. Full agent-runtime
+  suite 2,063 pass / 0 fail across 315 files; `bun run typecheck` exit 0; `validate:repository` PASS.
+- **ADVERSARIAL:** (a) *Is a chunked staging just ceremony for a single call?* The guards are the
+  value, not the chunking — an oversized payload is refused before it is staged, a stale write cannot
+  be applied over another edit, and no partial staging can be read. (b) *Does the propose path now
+  refuse legitimate large proposals?* Only above the shared 60,000-character ceiling, the same number
+  the SDK execution seam refuses on; the per-tool budget is the chunk size, not the refusal point.
+- **COVERAGE BOUNDARY, stated rather than implied:** the propose handler's own wiring is verified by
+  typecheck and call-graph reachability (the handler requires the full tool-handler param set, which
+  only the programmatic-step harness supplies — and that harness mocks the executor, so it would not
+  exercise this path either). The staging semantics are unit-tested; the handler call site is not
+  driven end-to-end by a test.
+- **CHANGE DELTA:** ~0.35% of the record.
 
 ### Missed Questions
 
@@ -275,12 +327,9 @@ the recurrence probe, the affected workspaces' typechecks and `quality`.
 
 ### Code Verification Evidence
 
-> Partially implemented: the emission budget, the truthful recovery text, the pre-execution ceiling
-> and the spawn-steering repair exist in the tree at the commit recorded in Resolution; the bulk-write
-> staging shape does not. `Status: converged` is kept deliberately — the status vocabulary has no
-> "partially implemented", and `fixed` would overstate a record with an approved step still open.
-> The receipt/fingerprint contract applies to `fixed`/`verified`, so no gates are declared here yet;
-> the gate output below is the evidence for what landed.
+> Implemented in two passes in one session: Loop 3 landed the emission budget, the truthful recovery
+> text, the pre-execution ceiling and the spawn-steering repair; Loop 4 landed the bounded,
+> revision-guarded bulk-write staging. The gate output below is the evidence for both.
 
 - [x] Measurements re-checked: the aggregation over `dev/experiences/raw-traces.jsonl` returned
       559 records / 68 classes / 195 sessions (instrument: `toolName` + the first 70 characters of the
@@ -300,12 +349,13 @@ the recurrence probe, the affected workspaces' typechecks and `quality`.
       (`normalizeNativeToolCallStreamError` ← `classifyNativeToolCallError` ← `stream.ts:104`;
       `classifyInvalidToolCall` ← `stream.ts:266`; `refuseOversizedToolCall` ← `tool-call.ts`
       `handleToolCall`).
-- [x] **Truthful recovery, verified by suite output:** `bun test src/impl/__tests__/llm-native-tool-call.test.ts`
+- [x] **Truthful recovery, verified by suite output:** the suite at
+      `sdk/src/impl/__tests__/llm-native-tool-call.test.ts`
       — 15 pass / 0 fail, including *states the tool argument budget derived from the output
       allowance* (4,096-token allowance → `at most 8192 characters`), *states the default budget when
       no allowance is known* (16,384 characters), and the three schema-recovery cases that assert the
       re-send prescription is gone while schema correction remains.
-- [x] **New budget suite:** `bun test src/__tests__/tool-argument-budget.test.ts` — 11 pass / 0 fail
+- [x] **New budget suite:** the suite at `sdk/src/__tests__/tool-argument-budget.test.ts` — 11 pass / 0 fail
       (derivation, default on hostile allowances, short-tool share, floor/ceiling clamps, measurement,
       fail-closed cyclic handling, assessment, the stated sentence, and the ceiling refusal).
 - [x] **Full gates this pass:** `bun run typecheck` exit 0 (13 workspaces + `scripts/`); SDK suite
@@ -316,9 +366,12 @@ the recurrence probe, the affected workspaces' typechecks and `quality`.
       classes, 0 issues`, exit 0. The pass also surfaced one unowned class
       (`v1:run_readonly_command:command-exit:undetermined`, a command-exit shape owned by the capture
       lane) which is now registered to `FID-2026-1012-024`.
+- [x] **Bulk-write staging implemented:** `packages/agent-runtime/src/tools/handlers/tool/chunked-write.ts`
+      (staging state extended in `proposed-content-store.ts`, wired in `propose-write-file.ts`);
+      the suites at `packages/agent-runtime/src/tools/handlers/tool/__tests__/chunked-write.test.ts` and
+      `…/chunked-write-commit.test.ts` — 15 pass / 0 fail across the two.
 - [x] **Not claimed:** any class having stopped recurring. No fix boundary is written, so every owned
-      key reports `unresolved` and the 14-day/three-session observation window has not started. The
-      bulk-write staging shape is not implemented (see Loop 3 → STILL OPEN).
+      key reports `unresolved` and the 14-day/three-session observation window has not started.
 
 ## Boundaries
 
@@ -332,7 +385,7 @@ the recurrence probe, the affected workspaces' typechecks and `quality`.
 
 ## Resolution
 
-**Partially implemented — `Status: converged` (no `fixed` claim).**
+**Implemented — `Status: fixed`.**
 
 Loop 3 landed the emit-path half of the reviewed design in the tree: the per-tool argument budget
 (`common/src/util/tool-argument-budget.ts`) with the recovery text that states it, the removal of every
@@ -340,17 +393,22 @@ re-send prescription from the truncation branches, the pre-execution ceiling ref
 (`sdk/src/run/tool-call-argument-ceiling.ts`), and the spawn-steering repair for children that inherit no
 history. Its gates were run in this pass and are pasted in Code Verification Evidence above.
 
-The record is deliberately **not** `fixed`: the third lever of the reviewed design — bulk writes staging
-bounded chunks with revision/hash guards and committing once, failure leaving the target untouched — is an
-approved step that is **not implemented**. Because the record makes no `fixed`/`verified` claim, no gate
-bullets are declared under `## Verification Gates` and no receipt is stamped; a receipt for a partial
-implementation would be a false declaration. The bulk-staging step, its planned artifact
-(`packages/agent-runtime/src/tools/handlers/tool/__tests__/chunked-write.test.ts`) and its staging surface
-stay active on this record until they land.
+Loop 4 landed the third lever the same session: `packages/agent-runtime/src/tools/handlers/tool/chunked-write.ts`
+stages bulk writes as bounded chunks under a `baseRevision` guard (the content the write was authored
+against) and a `revision` guard (what the chunks must reproduce), with the staging state in
+`proposed-content-store.ts` and the wiring in `propose-write-file.ts`. A changed base, an incomplete staging
+or a tamper-mismatched staging exposes nothing and commits nothing; the refusal point is the shared
+`MAX_ARGUMENT_CHARS` ceiling and the chunk size is the tool's own argument budget.
 
-**Closed Date / Fix Description / Tests Added / Verification Evidence / Archived:** not applicable yet — this
-section is rewritten in the closure format by the pass that completes the staging step, at which point the
-status flips and the gates are declared.
+`fixed` — the status for "implementation exists, gates green, awaiting the observation window". It is not
+`closed`: **no class has been shown to have stopped recurring.** `dev/experiences/fix-boundaries.json` stays
+empty, every owned key reports `unresolved` from `bun scripts/experiences-recurrence.ts`, and the 14-day /
+three-session window has not started. Closure additionally requires that window's evidence, at which point
+this section is rewritten in the closure format (Closed Date / Fix Description / Tests Added / Verification
+Evidence / Archived) and the FID is archived.
+
+**Verified:** the declared gates below were run live in this pass and their receipt is stamped under
+`### Verification Receipt`. `bun run validate:repository` reports PASS with this record at `fixed`.
 
 - **Commit for what landed:** `972c389d` — `fix(sdk): bound tool-call arguments at the emit path
   (FID-2026-1012-017)`, 15 files, 649 insertions / 86 deletions: the budget module and its suite, the

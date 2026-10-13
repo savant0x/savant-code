@@ -40,14 +40,34 @@ fail · agent-runtime suite 2,048 pass / 0 fail · stream-parser steering suites
 No recurrence claim is made and `fix-boundaries.json` stays empty: the 14-day / three-session
 observation window has not run, and a boundary without exposure receipts would be a false claim.
 
-## Still open on this record
+## Second pass — the staging lever (same session)
 
-1. **Bulk-write chunk staging** (the reviewed design's third lever): bounded chunks with revision/hash
-   guards committed once, failure leaving the target untouched. Planned artifact
-   `packages/agent-runtime/src/tools/handlers/tool/__tests__/chunked-write.test.ts`; staging surface
-   `proposed-content-store.ts` / `propose-write-file.ts`. This is why the record stays `converged`
-   and is not `fixed`, and why no gate bullets are declared yet.
-2. **The rest of wave A1**: `-018` (11 classes / 181), `-019` (6 / 50), `-020` (13 / 72), then `-021`.
+- `packages/agent-runtime/src/tools/handlers/tool/chunked-write.ts` (new) stages a bulk write as bounded
+  chunks under a `baseRevision` guard (the content it was authored against) and a `revision` guard (what
+  the chunks must reproduce); chunk size = the tool's own argument budget, refusal point = the shared
+  `MAX_ARGUMENT_CHARS` ceiling. Staging state lives in `proposed-content-store.ts` (so the store's
+  resets and the suite's process-wide isolation cover it) and the wiring is in `propose-write-file.ts`.
+  A changed base, an incomplete staging or a tamper-mismatched staging exposes nothing and commits
+  nothing.
+- Tests: `…/__tests__/chunked-write.test.ts` + `…/chunked-write-commit.test.ts` (split for the 300-line
+  ceiling) — 15 cases, all passing.
+- **The record flipped to `fixed`** with nine declared gates verified live and its receipt stamped
+  (`bun run fid:verify … --write`), because the three reviewed levers now exist in the tree. It is not
+  `closed`: no class has been shown to stop recurring and the 14-day / three-session window has not
+  started, so `dev/experiences/fix-boundaries.json` stays empty and no class claim is made.
+
+Gates re-run after the staging pass: agent-runtime suite 2,065 pass / 0 fail (316 files) ·
+`validate:repository` PASS · `fid:verify --check` PASS · `eslint . --max-warnings 0` exit 0 · `lint:md`
+exit 0 · Prettier clean.
+
+**Coverage boundary, stated rather than implied:** the `propose_write_file` call site is verified by
+`typecheck` plus call-graph reachability, not by an end-to-end test — the handler takes the full
+tool-handler param set that only the programmatic-step harness supplies, and that harness mocks the
+executor, so it would not exercise this path either.
+
+## Still open
+
+1. **The rest of wave A1**: `-018` (11 classes / 181), `-019` (6 / 50), `-020` (13 / 72), then `-021`.
 
 ## Findings raised, not parked
 

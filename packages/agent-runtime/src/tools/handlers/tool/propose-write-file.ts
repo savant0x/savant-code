@@ -1,5 +1,11 @@
+import { toolArgumentBudget } from '@savant-code/common/util/tool-argument-budget'
 import { createPatch } from 'diff'
 
+import {
+  assembleStagedWrite,
+  contentRevision,
+  stageBoundedWrite,
+} from './chunked-write'
 import {
   getProposedContent,
   setProposedContent,
@@ -53,14 +59,54 @@ export const handleProposeWriteFile = (async (
   // Normalize content (remove leading newline if present)
   const newContent = content.startsWith('\n') ? content.slice(1) : content
 
+  // FID-2026-1012-017: a bulk write is staged as bounded chunks under a revision
+  // guard (the chunk size is the tool's own argument budget and the refusal
+  // point is the shared argument ceiling) so an oversized payload is refused up
+  // front and a write authored against content that has since changed is not
+  // applied over it. Nothing is exposed until the staging reassembles to the
+  // exact staged revision.
+  const staged = stageBoundedWrite({
+    runId,
+    path,
+    content: newContent,
+    baseRevision: contentRevision(initialContent ?? ''),
+    maxChunkChars: toolArgumentBudget({ toolName: 'propose_write_file' })
+      .maxArgumentChars,
+  })
+  if (!staged.ok) {
+    return {
+      output: [
+        {
+          type: 'json',
+          value: { file: path, errorMessage: staged.errorMessage },
+        },
+      ],
+    }
+  }
+  const assembled = assembleStagedWrite({
+    runId,
+    path,
+    currentContent: initialContent ?? '',
+  })
+  if (!assembled.ok) {
+    return {
+      output: [
+        {
+          type: 'json',
+          value: { file: path, errorMessage: assembled.errorMessage },
+        },
+      ],
+    }
+  }
+
   // Store the proposed content for future propose calls on the same file (by runId)
-  setProposedContent(runId, path, Promise.resolve(newContent))
+  setProposedContent(runId, path, Promise.resolve(assembled.content))
 
   await previousToolCallFinished
 
   // Generate unified diff
   const oldContent = initialContent ?? ''
-  let patch = createPatch(path, oldContent, newContent)
+  let patch = createPatch(path, oldContent, assembled.content)
 
   // Strip the header lines, keep only from @@ onwards
   const lines = patch.split('\n')
