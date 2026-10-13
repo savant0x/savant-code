@@ -1,13 +1,11 @@
-import { afterEach, describe, expect, it } from 'bun:test'
+import { describe, expect, it } from 'bun:test'
 
 import { readUrl } from '../tools/read-url'
 import {
   canonicalUrlKey,
   classifyExtractionMiss,
   classifyHttpStatus,
-  clearReadUrlNegativeCache,
   createNegativeCache,
-  readUrlNegativeCache,
 } from '../tools/read-url/outcomes'
 
 import type { FetchLike } from '../tools/read-url'
@@ -18,10 +16,6 @@ import type { FetchLike } from '../tools/read-url'
  * to recognise a repeat, and the guarantee that only run-final outcomes are
  * memoized (a rate limit is advised, never remembered as a dead end).
  */
-
-afterEach(() => {
-  clearReadUrlNegativeCache()
-})
 
 describe('classifyHttpStatus', () => {
   it('classifies the owned statuses with their next action', () => {
@@ -165,6 +159,7 @@ describe('negative cache', () => {
 
 describe('readUrl with the taxonomy', () => {
   it('answers a repeated 404 from the memo instead of fetching again', async () => {
+    const cache = createNegativeCache()
     let calls = 0
     const countingFetch: FetchLike = async () => {
       calls += 1
@@ -178,10 +173,12 @@ describe('readUrl with the taxonomy', () => {
     const first = await readUrl({
       url: 'https://example.com/missing#top',
       fetch: countingFetch,
+      cache,
     })
     const second = await readUrl({
       url: 'https://example.com/missing',
       fetch: countingFetch,
+      cache,
     })
 
     expect(calls).toBe(1)
@@ -195,10 +192,11 @@ describe('readUrl with the taxonomy', () => {
     const secondValue = second[0].value
     if (!('errorMessage' in secondValue)) throw new Error('expected an error')
     expect(secondValue.errorMessage).toContain('already attempted in this run')
-    expect(readUrlNegativeCache.size()).toBe(1)
+    expect(cache.size()).toBe(1)
   })
 
   it('does not memoize a rate limit and still surfaces the advice', async () => {
+    const cache = createNegativeCache()
     let calls = 0
     const fetch429: FetchLike = async () => {
       calls += 1
@@ -209,14 +207,15 @@ describe('readUrl with the taxonomy', () => {
       })
     }
 
-    await readUrl({ url: 'https://example.com/hot', fetch: fetch429 })
+    await readUrl({ url: 'https://example.com/hot', fetch: fetch429, cache })
     const second = await readUrl({
       url: 'https://example.com/hot',
       fetch: fetch429,
+      cache,
     })
 
     expect(calls).toBe(2)
-    expect(readUrlNegativeCache.size()).toBe(0)
+    expect(cache.size()).toBe(0)
     const value = second[0].value
     if (!('errorMessage' in value)) throw new Error('expected an error')
     expect(value.errorMessage.split('\n')[0]).toBe(

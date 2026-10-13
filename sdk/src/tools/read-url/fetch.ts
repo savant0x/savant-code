@@ -18,8 +18,8 @@ import {
   canonicalUrlKey,
   classifyExtractionMiss,
   classifyHttpStatus,
+  createNegativeCache,
   passthroughOutcome,
-  readUrlNegativeCache,
   type FetchOutcome,
   type NegativeCache,
 } from './outcomes'
@@ -77,15 +77,15 @@ export async function readUrl({
   lookupHost,
   resolveDns = fetchImpl === globalThis.fetch,
   signal,
-  cache = readUrlNegativeCache,
+  cache = createNegativeCache(),
 }: {
   url: string
   max_chars?: number
   fetch?: FetchLike
   /**
    * FID-2026-1012-018: the per-run memo of final outcomes. Injectable so a
-   * caller that owns its own run boundary can scope it; the default is the
-   * process-wide cache the CLI's dispatch uses (one process per session).
+   * caller that owns its own run boundary can scope it. Without an injected
+   * cache, a direct call starts with an independent memo.
    */
   cache?: NegativeCache
   /** Override hostname resolution (defaults to node:dns). */

@@ -27,6 +27,7 @@ import { runTerminalCommand } from '../tools/run-terminal-command'
 import type { CustomToolDefinition } from '../custom-tool'
 import type { SavantCodeClientOptions } from './types'
 import type { OnFileWrittenCallback } from '../tools/change-file'
+import type { NegativeCache } from '../tools/read-url/outcomes'
 import type { ServerAction } from '@savant-code/common/actions'
 import type { ToolName } from '@savant-code/common/tools/constants'
 import type { PublishedClientToolName } from '@savant-code/common/tools/list'
@@ -44,6 +45,7 @@ export async function handleToolCall({
   env,
   signal,
   onFileWritten,
+  readUrlCache,
 }: {
   action: ServerAction<'tool-call-request'>
   overrides: NonNullable<SavantCodeClientOptions['overrideTools']>
@@ -53,6 +55,7 @@ export async function handleToolCall({
   env?: Record<string, string>
   signal?: AbortSignal
   onFileWritten?: OnFileWrittenCallback
+  readUrlCache?: NegativeCache
 }): Promise<{ output: ToolResultOutput[] }> {
   const toolName = action.toolName
   const input = action.input
@@ -164,6 +167,7 @@ export async function handleToolCall({
         url: getString(input, 'url'),
         max_chars: getOptionalNumber(input, 'max_chars'),
         signal,
+        cache: readUrlCache,
       })
     } else if (toolName === 'code_search') {
       result = await codeSearch({

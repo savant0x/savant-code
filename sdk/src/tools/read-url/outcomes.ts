@@ -241,15 +241,3 @@ export function createNegativeCache(maxEntries = 100): NegativeCache {
     },
   }
 }
-
-/**
- * The process-wide cache the CLI's tool dispatch uses (one process per session,
- * so its lifetime is the run). Injectable through `readUrl`'s `cache` option for
- * callers that own their own run boundary, and clearable for tests.
- */
-export const readUrlNegativeCache: NegativeCache = createNegativeCache()
-
-/** Drop every memoized outcome — test isolation and explicit run boundaries. */
-export function clearReadUrlNegativeCache(): void {
-  readUrlNegativeCache.reset()
-}

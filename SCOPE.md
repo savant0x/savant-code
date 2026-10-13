@@ -306,7 +306,8 @@ work item remains active, including the recorded level-1 consolidation and exter
   `packages/agent-runtime/src/tools/stream-parser/**`,
   `packages/agent-runtime/src/tools/handlers/tool/**`, `common/src/tools/params/tool/**`
 - FID-2026-1012-018: `sdk/src/tools/read-url/**`, `sdk/src/__tests__/read-url*.test.ts`,
-  `common/src/tools/params/tool/**`
+  `common/src/tools/params/tool/**`, `sdk/src/run/agent-runtime-impl.ts`,
+  `sdk/src/run/tool-call.ts`
 - FID-2026-1012-019: `packages/agent-runtime/src/llm-api/**`, `sdk/src/native/**`,
   `packages/agent-runtime/src/tools/**`, `common/src/constants/**`,
   `common/src/util/capability-notice.ts`, `common/src/util/__tests__/capability-notice.test.ts`,

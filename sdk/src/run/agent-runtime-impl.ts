@@ -6,6 +6,7 @@ import { handleToolCall, readFiles } from './tool-call'
 import { getAgentRuntimeImpl } from '../impl/agent-runtime'
 import { createClientCapabilityProbe } from '../native/capability-preflight'
 import { getProjectPathLookupKeys } from '../tools/path-utils'
+import { createNegativeCache } from '../tools/read-url/outcomes'
 
 import type { CustomToolDefinition } from '../custom-tool'
 import type { OverrideToolHandlers } from './types'
@@ -63,6 +64,8 @@ export function buildAgentRuntimeImpl(params: {
     handlePromptResponseAction,
   } = params
 
+  const readUrlCache = createNegativeCache()
+
   return getAgentRuntimeImpl({
     logger,
     traceWriter,
@@ -95,6 +98,7 @@ export function buildAgentRuntimeImpl(params: {
         env,
         signal,
         onFileWritten,
+        readUrlCache,
       })
     },
     checkpointDir,

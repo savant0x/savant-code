@@ -164,17 +164,19 @@ closure gate when that window completes (`FID-2026-1012-021` owns the machinery)
 - gate: test sdk/src/__tests__/read-url.test.ts
 - gate: test sdk/src/__tests__/read-url-ssrf.test.ts
 - gate: test sdk/src/__tests__/read-url-outcomes.test.ts
+- gate: test sdk/src/__tests__/read-url-run-cache.test.ts
 - gate: typecheck sdk
 - gate: typecheck common
 - gate: quality
 
 ### Verification Receipt
 
-- fingerprint: sha256:1d7f75cd95f20e0b66092f5cbe9c4429a1f779d7c0d8e413db302c83a388c0d2
-- verified: 2026-10-13T05:44:22.264Z
+- fingerprint: sha256:bfce01bbb7a855d9759efeb51499be071d8fdc2bdd4b645f3a8a3b21cb36503a
+- verified: 2026-10-13T23:19:55.941Z
 - test sdk/src/__tests__/read-url.test.ts: exit 0
 - test sdk/src/__tests__/read-url-ssrf.test.ts: exit 0
 - test sdk/src/__tests__/read-url-outcomes.test.ts: exit 0
+- test sdk/src/__tests__/read-url-run-cache.test.ts: exit 0
 - typecheck sdk: exit 0
 - typecheck common: exit 0
 - quality: exit 0
@@ -261,6 +263,40 @@ closure gate when that window completes (`FID-2026-1012-021` owns the machinery)
   correction recorded for `FID-2026-1012-017`.
 - **CHANGE DELTA:** ~0.6% of the record.
 
+### Loop 4 — Run-boundary correction (2026-10-13)
+
+- **RED:** At `09264a0b`, `readUrl` defaults to the process-wide
+  `readUrlNegativeCache`. Its reset function has only test callers. The production
+  SDK dispatcher supplies no cache, although `runOnce` builds a fresh runtime
+  implementation for each invocation. Loop 3's claim that one process means one
+  run is false for the embeddable client and the long-lived CLI.
+- **GREEN:** Allocate one bounded negative cache in `buildAgentRuntimeImpl`, pass
+  it through `handleToolCall` to `readUrl`, and remove the process-wide singleton.
+  Direct reads without an injected cache have independent lifetimes. Children
+  sharing the runtime callback share its cache; a fresh invocation, including a
+  resumed invocation, revalidates URLs. No serialized cache or public run option
+  is added. Existing repeated-read tests must supply their intended shared cache.
+- **AUDIT:** `runOnce` → `buildWiredAgentRuntime` → `buildAgentRuntimeImpl` →
+  `requestToolCall` → `handleToolCall` → `readUrl` is reachable. Source searches
+  find singleton/reset consumers only in fetch and its outcome test. Add controls
+  through the real runtime dispatcher: repeat suppression within a run, a fresh
+  fetch in another runtime, and a late repeat in the first runtime proving the
+  second run did not clear its state. Direct-reader isolation gets its own pin.
+- **ADVERSARIAL:** Clearing a global at run start would break concurrent runs;
+  closure-owned caches avoid that race. Overrides retain dispatch precedence.
+  Transient outcomes remain uncached, first failure lines remain unchanged,
+  and every network attempt retains SSRF validation. This correction makes no
+  horizon/expectedness change and establishes no production repair assertion.
+- **CHANGE DELTA:** Converged additive correction under the existing level-3
+  authorization; SCOPE now includes the two production dispatch seams.
+- **IMPLEMENTATION EVIDENCE:** Both new controls failed before the correction
+  (another runtime received the memoized 404; independent readers made only one
+  fetch), then passed. Four URL suites: 37 PASS / zero FAIL. Full SDK:
+  693 PASS / one platform SKIP / zero FAIL. All seven expanded FID gates PASS.
+  Manual re-read confirms override precedence and SSRF checks are unchanged;
+  there is no process-wide cache left. Live census: 589 rows / 58 stable classes,
+  zero issues; all eleven fetch classes remain unresolved with unchanged counts.
+
 ### Missed Questions
 
 1. Why is this class absent from the ledger while classes with a fraction of its volume have
@@ -292,7 +328,8 @@ closure gate when that window completes (`FID-2026-1012-021` owns the machinery)
       `sdk/src/tools/read-url/fetch.ts`, `sdk/src/tools/read-url/response-body.ts`; production callers
       confirmed by grep (`classifyHttpStatus` ← `fetch.ts` `!response.ok`; `classifyExtractionMiss` ←
       `fetch.ts` empty-extraction branch; `canonicalUrlKey`/`readUrlNegativeCache` ← `readUrl` entry;
-      `readUrl` ← `sdk/src/run/tool-call.ts`).
+      `readUrl` ← `sdk/src/run/tool-call.ts`). Loop 4 replaces the singleton with
+      `createNegativeCache` ← `buildAgentRuntimeImpl` → `handleToolCall` → `readUrl`.
 - [x] **Suites green this pass:** the three `read-url` suites at
       `sdk/src/__tests__/read-url.test.ts`, `sdk/src/__tests__/read-url-ssrf.test.ts` and
       `sdk/src/__tests__/read-url-outcomes.test.ts` — 35 pass / 0 fail; full SDK suite 664 pass / 0 fail
@@ -325,6 +362,11 @@ model should take, a not-found is final for the run and points at a search inste
 repeats are answered from a bounded per-run memo without a second network request. The message's first
 line is unchanged from the pre-taxonomy shape, so the capture still counts the same class while the model
 receives the guidance.
+
+Loop 4 corrects the original process-wide cache lifetime. Each SDK run invocation
+owns a separate memo through its runtime callback; direct readers share state
+only when their caller supplies a cache. Fresh invocations can retry a recovered
+resource without clearing another run's memo.
 
 `fixed` — implementation exists, gates green, awaiting the observation window. It is **not** `closed`: no
 class has been shown to stop recurring, `dev/experiences/fix-boundaries.json` stays empty, and every owned
