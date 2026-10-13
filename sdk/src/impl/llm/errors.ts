@@ -162,13 +162,21 @@ export function normalizeNativeToolCallStreamError(
       maxOutputTokens: options.maxOutputTokens,
     }),
   )
+  // FID-2026-1012-017 Loop 6: when the classifier could read the validation
+  // failure, the recovery text names the field that failed instead of asking the
+  // model to "correct the values" it had no way to identify. A truncated payload
+  // never carries this clause (there is no parsed arguments object to reject).
+  const schemaClause =
+    !isTruncated && nativeError.schemaIssue !== undefined
+      ? ` The arguments failed the tool schema at: ${nativeError.schemaIssue}.`
+      : ''
   let message: string
   if (isOutputCapHit) {
     message = `Incomplete arguments for tool ${nativeError.toolName}: the output token limit was reached before the arguments finished.${SPLIT_PAYLOAD_ADVICE}${budgetClause}`
   } else if (isTruncated) {
     message = `Incomplete arguments for tool ${nativeError.toolName}: the arguments were cut off before they finished parsing.${SPLIT_PAYLOAD_ADVICE}${budgetClause}`
   } else {
-    message = `Incomplete arguments for tool ${nativeError.toolName}: the provider rejected the call's arguments and nothing observed indicates truncation.${CORRECT_ARGUMENTS_ADVICE}${budgetClause}`
+    message = `Incomplete arguments for tool ${nativeError.toolName}: the provider rejected the call's arguments and nothing observed indicates truncation.${schemaClause}${CORRECT_ARGUMENTS_ADVICE}${budgetClause}`
   }
   return {
     type: 'error',

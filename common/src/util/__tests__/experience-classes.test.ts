@@ -124,6 +124,34 @@ describe('FID-2026-1012-024 stable class identity', () => {
     )
   })
 
+  test('a message clause added to a class keeps that class (additive rule)', () => {
+    // FID-2026-1012-017 Loop 6 appended the rejected field path to the
+    // native-incomplete recovery text. Both spellings are `native-incomplete`,
+    // so the cause short-circuits before the pattern table is consulted and the
+    // class key cannot move: the rows already in the ledger keep their stored
+    // identity and the recurrence probe keeps measuring one class.
+    const before = {
+      ...record(
+        'suggest_followups',
+        "Incomplete arguments for tool suggest_followups: the provider rejected the call's arguments and nothing observed indicates truncation. Correct the argument values so they satisfy the tool schema, then re-emit the call once.",
+      ),
+      errorClass: 'native-incomplete' as const,
+    }
+    const after = {
+      ...record(
+        'suggest_followups',
+        "Incomplete arguments for tool suggest_followups: the provider rejected the call's arguments and nothing observed indicates truncation. The arguments failed the tool schema at: followups[0].prompt — invalid_type (expected string). Correct the argument values so they satisfy the tool schema, then re-emit the call once.",
+      ),
+      errorClass: 'native-incomplete' as const,
+    }
+    expect(experienceClassIdentity(after).key).toBe(
+      experienceClassIdentity(before).key,
+    )
+    expect(experienceClassIdentity(after).key).toBe(
+      'v1:suggest_followups:incomplete-arguments:unexpected',
+    )
+  })
+
   test('horizons retain all old rows and legacy aliases', () => {
     const a = record(
       'run_terminal_command',

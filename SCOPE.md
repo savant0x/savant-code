@@ -26,6 +26,22 @@ recorded decision or external dependency requires it.
       version surfaces; `version:check` PASS).
       **Automation level: 3.**
 
+- [ ] **Untracked top-level `.opencode/` directory fails the repository gate.**
+      Discovered 2026-10-13 by `bun run validate:repository` while verifying an
+      unrelated lane: `[vendored.tree.foreign-root]` — `.opencode/` is a
+      top-level directory with no tracked files and no ignore rule, so the
+      release automation's `git add --all` would stage it whole. It is **not**
+      agent-authored: it was created 2026-10-13 15:07 and holds an opencode.ai
+      configuration (`opencode.json` with the sequentialthinking MCP server,
+      `agent/ECHO.md` — an ECHO agent definition with frontmatter, 41,835 bytes —
+      and `command/ECHO.md`, 342 bytes).
+      **Blocker:** the disposition is operator-reserved. The gate names exactly
+      two lawful outcomes — commit the new root deliberately, or give it its own
+      ignore entry beside `.idea/` — and both decide the fate of operator-authored
+      tooling (one makes it permanently invisible to git, the other puts a new root
+      in the repository). No agent-side choice is recorded; the files are left
+      untouched on disk. **Automation level: 1.**
+
 - [ ] **T186. Two registered workspaces sit outside every typecheck and test
       chain.** `package.json` registers 15 workspaces, but the root `typecheck`
       and `test` chains each cover 13; `savant-free` (17 tracked TS/TSX files,
@@ -209,6 +225,12 @@ with FID-024 owning capture/expectedness corrections and FID-014 owning class-to
       source.** RC1 — **18 classes / 193 records** (35% of the capture; nine tools, 40+ sessions,
       16 of them dated today) → E1. Learned 2026-08-16, and its lesson was retired out of the boot
       read on 2026-10-12 while the class still fired. **Automation level: 3.**
+      **Loop 6 (2026-10-13):** the remaining half is the provider-side rejection. The rejection now
+      names the field the schema refused (only the issue path/code/expected — never the payload), and a
+      repeated part of one call-out steers once instead of once per part; no ledger row is dropped.
+      Measured: the 20 post-fix rows are one response's parts (17 the same tool, tail pair 10 ms apart),
+      so a class's row count is an upper bound on occurrences. The four classes that are still firing
+      stay open and the fifteen others stay unobserved, not clean.
 
 - [ ] **FID-2026-1012-018. read_url is the top recorded class, covered by no lesson and no
       owner.** RC2 — **11 classes / 181 records** (404 114×/18 sessions, plus 403, 401, 429, 405,
@@ -282,6 +304,7 @@ work item remains active, including the recorded level-1 consolidation and exter
 - FID-2026-1012-017: `sdk/src/impl/llm/**`, `sdk/src/run/**`,
   `sdk/src/__tests__/tool-argument-budget.test.ts`,
   `common/src/types/contracts/llm.ts`, `common/src/util/tool-argument-budget.ts`,
+  `common/src/util/__tests__/experience-classes.test.ts`,
   `packages/agent-runtime/src/run-agent-step/**`,
   `packages/agent-runtime/src/tools/stream-parser/**`,
   `packages/agent-runtime/src/tools/handlers/tool/**`, `common/src/tools/params/tool/**`

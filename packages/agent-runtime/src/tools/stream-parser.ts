@@ -5,7 +5,10 @@ import { processStreamWithTools } from '../tool-stream-parser'
 import { handleStreamErrorChunk } from './stream-parser/error-chunk'
 import { buildFinalMessageHistory } from './stream-parser/finalize'
 import { createGroundingStager } from './stream-parser/grounding-stager'
-import { captureNativeFailure } from './stream-parser/native-failure-capture'
+import {
+  captureNativeFailure,
+  createNativeFailureDeduper,
+} from './stream-parser/native-failure-capture'
 import { createStreamDoneHolder } from './stream-parser/stream-done'
 import { createToolExecutionCallbackFactory } from './stream-parser/tool-execution'
 
@@ -50,6 +53,10 @@ export async function processStream(params: ProcessStreamParams) {
   let hasNativeIncompleteToolCall = false
   let lastIncompleteToolName: string | undefined
   const errorMessages: Message[] = []
+  // FID-2026-1012-017 Loop 6: one native-failure steering message per (tool,
+  // class) per stream. A response that repeats the same rejected call-out a
+  // hundred times steers the model once, not a hundred times.
+  const isDuplicateNativeFailure = createNativeFailureDeduper()
   const streamDone = createStreamDoneHolder()
   const fileProcessingState: FileProcessingState = {
     promisesByPath: {},
@@ -179,6 +186,7 @@ export async function processStream(params: ProcessStreamParams) {
           agentTemplate,
           availableToolNames: Object.keys(params.tools),
           runId,
+          isDuplicate: isDuplicateNativeFailure(chunk),
         })
         hasNativeIncompleteToolCall =
           hasNativeIncompleteToolCall ||

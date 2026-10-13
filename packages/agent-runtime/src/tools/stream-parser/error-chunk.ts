@@ -55,12 +55,20 @@ export function handleStreamErrorChunk(params: {
   agentTemplate: AgentTemplate
   availableToolNames?: readonly string[]
   runId: string
+  /**
+   * FID-2026-1012-017 Loop 6: this part repeats a call-out already reported in
+   * the same stream (see `createNativeFailureDeduper`). The report travels
+   * unchanged — the class, the tool name and the strike ladder are unaffected —
+   * but the steering message is stated once instead of once per duplicate part.
+   */
+  isDuplicate?: boolean
 }): {
   hasNativeIncompleteToolCall: boolean
   lastIncompleteToolName: string | undefined
   captureChunk?: StreamErrorChunk
 } {
   const { chunk, errorMessages, loggerWarn, agentTemplate, runId } = params
+  const isDuplicate = params.isDuplicate === true
   const availableToolNames =
     params.availableToolNames ?? agentTemplate.toolNames
   let hasNativeIncompleteToolCall = false
@@ -139,12 +147,14 @@ export function handleStreamErrorChunk(params: {
     errorClass === 'native-incomplete' && isUnavailableToolCall
       ? `Tool ${erroredToolName} is not available to this agent: the model called a tool that was not offered for this step.`
       : chunk.message
-  errorMessages.push(
-    userMessage({
-      content: withSystemTags(wrapToolCallErrorMessage(body, steering)),
-      tags: ['TOOL_CALL_ERROR'],
-    }),
-  )
+  if (!isDuplicate) {
+    errorMessages.push(
+      userMessage({
+        content: withSystemTags(wrapToolCallErrorMessage(body, steering)),
+        tags: ['TOOL_CALL_ERROR'],
+      }),
+    )
+  }
   const captureChunk: StreamErrorChunk =
     errorClass === 'native-incomplete' && isUnavailableToolCall
       ? {

@@ -175,9 +175,12 @@ repository gate).
 
 - gate: test sdk/src/__tests__/tool-argument-budget.test.ts
 - gate: test sdk/src/impl/__tests__/llm-native-tool-call.test.ts
+- gate: test sdk/src/impl/__tests__/llm-native-tool-call-schema-issue.test.ts
 - gate: test packages/agent-runtime/src/tools/handlers/tool/__tests__/chunked-write.test.ts
 - gate: test packages/agent-runtime/src/tools/handlers/tool/__tests__/chunked-write-commit.test.ts
 - gate: test packages/agent-runtime/src/tools/stream-parser/__tests__/error-chunk-steering.test.ts
+- gate: test packages/agent-runtime/src/tools/stream-parser/__tests__/native-failure-deduper.test.ts
+- gate: test common/src/util/__tests__/experience-classes.test.ts
 - gate: typecheck common
 - gate: typecheck sdk
 - gate: typecheck packages/agent-runtime
@@ -185,13 +188,16 @@ repository gate).
 
 ### Verification Receipt
 
-- fingerprint: sha256:ebdaec32df56db830873e4ea2e79d37d03f589b28eb47fa4bfb0997ae0134073
-- verified: 2026-10-13T17:30:42.512Z
+- fingerprint: sha256:3dbd18a8aacec58fc0e9152957e0195b1ed82236d2b0aedd0f4c3939dcc99517
+- verified: 2026-10-13T19:15:43.972Z
 - test sdk/src/__tests__/tool-argument-budget.test.ts: exit 0
 - test sdk/src/impl/__tests__/llm-native-tool-call.test.ts: exit 0
+- test sdk/src/impl/__tests__/llm-native-tool-call-schema-issue.test.ts: exit 0
 - test packages/agent-runtime/src/tools/handlers/tool/__tests__/chunked-write.test.ts: exit 0
 - test packages/agent-runtime/src/tools/handlers/tool/__tests__/chunked-write-commit.test.ts: exit 0
 - test packages/agent-runtime/src/tools/stream-parser/__tests__/error-chunk-steering.test.ts: exit 0
+- test packages/agent-runtime/src/tools/stream-parser/__tests__/native-failure-deduper.test.ts: exit 0
+- test common/src/util/__tests__/experience-classes.test.ts: exit 0
 - typecheck common: exit 0
 - typecheck sdk: exit 0
 - typecheck packages/agent-runtime: exit 0
@@ -423,6 +429,62 @@ repository gate).
 - **CHANGE DELTA:** 0% source — measurement and record only. No boundary is declared, no class claim is
   made, and `dev/experiences/fix-boundaries.json` stays empty.
 
+### Loop 6 — The rejection half: the amplification and the unnamed field (2026-10-13, automation level 3)
+
+- **RED — the recurrence re-measured against the capture at HEAD.** `bun scripts/experiences-recurrence.ts`:
+  586 records / 57 stable classes / 0 issues, every class `unresolved` because
+  `dev/experiences/fix-boundaries.json` is still empty. The only post-fix rows of this family are the 20 Loop 5
+  found: one run (`40c8bf08-ca36-417e-a6cb-44a80c219831`), one **5.7-second** window
+  (05:08:46.967Z → 05:08:52.666Z), every row `errorClass: native-incomplete` carrying this lane's budget text, no
+  row carrying a `finishReason`, no row carrying `tool_input` (hence `contextHash: ""`).
+- **RED — two decidable facts Loop 5 did not read off those rows:**
+  1. **They are parts of ONE response, not 17 recurrences.** 17 of the 20 are the same tool
+     (`suggest_followups`), and the tail pairs `transition_phase` and `browser_use` **10 ms** apart
+     (05:08:52.656Z / 05:08:52.666Z). No model round trip is 10 ms, and `processStream` captures one record per
+     error chunk (`stream-parser.ts` → `captureNativeFailure`), so these are 20 rejected tool-call **parts** of a
+     single streamed response. A class's row count is therefore amplified by one response's shape, which is part of
+     what this lane has been reading as recurrence.
+  2. **Nothing in the message could change the next emission.** All 20 rows are answered with "…the provider
+     rejected the call's arguments… Correct the argument values so they satisfy the tool schema…" — advice that
+     names no field. `ai` core *does* carry the validation failure (`InvalidToolInputError`'s `cause` is a
+     `TypeValidationError` whose own `cause` is the issue list), and `classifyInvalidToolCall` transported only
+     `argumentsTruncated`, discarding the field path — the same "discard the error we were handed" defect this lane
+     already repaired once for the unavailable-tool class (FID-2026-1012-002). Measured, the model re-emitted the
+     same call.
+- **GREEN — two bounded changes, both inside this record's write surface.**
+  1. **The rejection names the field.** `summarizeSchemaIssue` (`sdk/src/impl/llm/stream-error-chunk.ts`) reads the
+     issue `path` + `code` + `expected` and never the payload: `TypeValidationError.message` embeds the received
+     value (`Type validation failed: Value: {…}`), so that string is not read at all. The detail travels as
+     `NativeToolCallError.schemaIssue` (`common/src/types/contracts/llm.ts`, guarded like `finishReason` and
+     `argumentsTruncated`) into the message factory (`sdk/src/impl/llm/errors.ts`), which appends
+     ` The arguments failed the tool schema at: followups[0].prompt — invalid_type (expected string).`
+     Bounded (120 characters) and exclusive with the truncation clause: a cut payload never parsed, so it can name
+     no issue and keeps the split-the-work advice.
+  2. **One call-out steers once.** `createNativeFailureDeduper` / `nativeFailureKey`
+     (`packages/agent-runtime/src/tools/stream-parser/native-failure-capture.ts`) key a report by (tool, class) for
+     the lifetime of one stream; `handleStreamErrorChunk` takes an `isDuplicate` flag and skips the
+     `TOOL_CALL_ERROR` message push for a repeat, wired in `stream-parser.ts`. The report itself is unchanged —
+     class, tool name, `captureChunk` and the strike ladder behave exactly as before — so 17 duplicate paragraphs
+     of context become one, and **no ledger row is dropped**: shrinking capture volume is a capture-policy decision
+     that belongs to `FID-2026-1012-024`, not to the emit path.
+- **AUDIT (run this pass):** `sdk/src/impl/__tests__/llm-native-tool-call.test.ts` 20 pass / 0 fail (5 new: the named
+  field, the value never travelling, the unreadable-cause fallback, a cut payload never claiming a schema issue, the
+  hostile non-string guard); `…/stream-parser/__tests__/native-failure-deduper.test.ts` 5 pass / 0 fail;
+  `common/src/util/__tests__/experience-classes.test.ts` 10 pass / 0 fail including the additive-rule pin that the
+  appended clause keeps `v1:suggest_followups:incomplete-arguments:unexpected`; SDK suite 677 pass / 1 skip / 0 fail;
+  root `typecheck` 14 legs exit 0.
+- **ADVERSARIAL:** (a) *Does the field clause change the class?* No — the cause short-circuits on
+  `errorClass === 'native-incomplete'`, so both spellings derive one key, and that is pinned by test rather than
+  argued. (b) *Is the "one response" reading a guess?* The 10 ms gap between two different tools and the
+  one-row-per-chunk capture are both in the tree; the alternative reading (17 model round trips in 6 seconds) is
+  excluded by latency. (c) *Does the dedupe hide a distinct failure?* Only an identical (tool, class) pair inside one
+  stream collapses; a second tool, or a second class for the same tool, still steers and still captures. (d) *Can the
+  schema detail leak?* Only `path`/`code`/`expected` are read, and the pin asserts a secret in the payload reaches
+  neither the message nor the serialized chunk. (e) *Does this stop the class?* **No, and it is not claimed** — the
+  model must still correct the call, and the window cannot start while rows are landing.
+- **CHANGE DELTA:** 5 source files (2 sdk, 1 common contract, 2 agent-runtime), 2 suites extended, 1 suite added,
+  0 historical rows rewritten, 0 boundaries declared, 0 classes closed; `fix-boundaries.json` stays empty.
+
 ## Boundaries
 
 - The trace ledger stores only each failure's first line, so the 193 records may span several
@@ -433,6 +495,10 @@ repository gate).
 - A reduction in the recorded count is claimed only after the recurrence assertion window
   passes. Until then the class is open and no lesson is written for it. Loop 5 shows the reduction has
   not happened for four of the nineteen classes, so the window cannot start for them at all.
+- **Loop 6 bounds the count itself:** one response contributes one ledger row per rejected tool-call
+  part, so a class's row count is an upper bound on occurrences, not a count of them (measured: 20 rows
+  from one response). Every class claim in this record is stated over the window, never over a row
+  total, and the capture-volume question is registered to `FID-2026-1012-024`.
 
 ## Resolution
 
@@ -452,7 +518,13 @@ or a tamper-mismatched staging exposes nothing and commits nothing; the refusal 
 `MAX_ARGUMENT_CHARS` ceiling and the chunk size is the tool's own argument budget.
 
 `fixed` — the status for "implementation exists, gates green, awaiting the observation window". It is not
-`closed`: **no class has been shown to have stopped recurring.** `dev/experiences/fix-boundaries.json` stays
+`closed`: **no class has been shown to have stopped recurring.**
+
+**Loop 6 (2026-10-13)** landed the second half of the emit path: the rejection now names the field the schema
+refused (`schemaIssue`), and a repeated part of the same call-out steers once instead of once per part. It makes no
+class claim. The rejection itself is provider-side and cannot be repaired locally, so the four classes Loop 5
+measured as still firing stay open, the other fifteen stay unobserved rather than clean, and the ledger's row count
+for a class is now known to be amplified by multi-part responses. `dev/experiences/fix-boundaries.json` stays
 empty, every owned key reports `unresolved` from `bun scripts/experiences-recurrence.ts`, and the 14-day /
 three-session window has not started. Closure additionally requires that window's evidence, at which point
 this section is rewritten in the closure format (Closed Date / Fix Description / Tests Added / Verification

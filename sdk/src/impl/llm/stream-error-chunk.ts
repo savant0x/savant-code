@@ -76,6 +76,50 @@ export function isTruncatedToolInput(error: unknown): boolean {
   return JSONParseError.isInstance(cause)
 }
 
+/** FID-2026-1012-017 Loop 6: how much of a schema issue travels into the
+ *  recovery text. The field path is the actionable part; the cap keeps a
+ *  pathological path from dominating the message and the ledger's first line. */
+const MAX_SCHEMA_ISSUE_CHARS = 120
+
+/**
+ * FID-2026-1012-017 Loop 6 — name the field the schema rejected.
+ *
+ * The lane's earlier half removed the re-send prescription and stated the
+ * argument budget, and the class still recurred: 17 duplicate rejections of one
+ * `suggest_followups` call inside a single response carried the budget text and
+ * nothing else the model could act on. `ai` core attaches the validation
+ * failure as the `InvalidToolInputError`'s cause, so the field IS observable —
+ * but `TypeValidationError`'s own message embeds the RECEIVED VALUE
+ * (`Type validation failed: Value: {...}`), so that message is never read here.
+ * Only the issue's `path`, `code` and `expected` are taken; the value and the
+ * free-text message are dropped. Bounded and fail-closed: any other shape
+ * yields undefined and the caller keeps the generic advice.
+ */
+export function summarizeSchemaIssue(error: unknown): string | undefined {
+  if (!InvalidToolInputError.isInstance(error)) return undefined
+  const cause = (error as { cause?: unknown }).cause
+  if (!TypeValidationError.isInstance(cause)) return undefined
+  const issues = (cause as { cause?: { issues?: unknown } }).cause?.issues
+  if (!Array.isArray(issues)) return undefined
+  const issue = issues[0] as
+    { path?: unknown; code?: unknown; expected?: unknown } | undefined
+  if (typeof issue !== 'object' || issue === null) return undefined
+  const path = Array.isArray(issue.path)
+    ? issue.path
+        .map((segment) =>
+          typeof segment === 'number' ? `[${segment}]` : `.${String(segment)}`,
+        )
+        .join('')
+        .replace(/^\./, '')
+    : ''
+  const code = typeof issue.code === 'string' ? issue.code : ''
+  const expected =
+    typeof issue.expected === 'string' ? ` (expected ${issue.expected})` : ''
+  if (path === '' && code === '') return undefined
+  const summary = `${path === '' ? '<root>' : path} — ${code}${expected}`
+  return summary.slice(0, MAX_SCHEMA_ISSUE_CHARS)
+}
+
 /**
  * Assemble the agent-facing message: the error's own message plus the API
  * response body when the error is an APICallError.
@@ -143,11 +187,18 @@ export function classifyInvalidToolCall(
   // by the output budget used to be reported as if the model had written bad
   // arguments — and answered with a re-send that truncates identically. The
   // classifier's own structural evidence distinguishes the two cases.
+  // FID-2026-1012-017 Loop 6: the two causes stay exclusive. A cut payload keeps
+  // the split-the-work advice and can name no issue (the arguments never
+  // parsed); a well-formed payload that missed the schema names its field, which
+  // is the only half of the advice the model can act on.
+  const truncated = isTruncatedToolInput(chunk.error)
+  const schemaIssue = truncated ? undefined : summarizeSchemaIssue(chunk.error)
   return normalizeNativeToolCallStreamError(
     {
       type: 'native-incomplete',
       toolName,
-      ...(isTruncatedToolInput(chunk.error) && { argumentsTruncated: true }),
+      ...(truncated && { argumentsTruncated: true }),
+      ...(schemaIssue !== undefined && { schemaIssue }),
     },
     options,
   )

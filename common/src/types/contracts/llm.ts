@@ -55,6 +55,13 @@ export type NativeToolCallError = {
    *  has no finish reason to offer, so this is how a cut payload reaches the
    *  split-the-work advice instead of a plain re-send. */
   argumentsTruncated?: boolean
+  /** FID-2026-1012-017 Loop 6: the field path and issue code the schema
+   *  rejected, when the classifier could observe them. A rejection answered
+   *  only with "correct the argument values" leaves the model re-emitting the
+   *  same payload — measured: 17 duplicate rejections of one `suggest_followups`
+   *  call inside a single 6-second response (2026-10-13T05:08Z). Never a
+   *  value: the received payload is model output and can carry a secret. */
+  schemaIssue?: string
 }
 
 export function isNativeToolCallError(
@@ -75,6 +82,12 @@ export function isNativeToolCallError(
     'argumentsTruncated' in value &&
     typeof value.argumentsTruncated !== 'boolean'
   ) {
+    return false
+  }
+  // FID-2026-1012-017 Loop 6: the schema detail is a bounded phrase the
+  // classifier formats; a hostile provider must not smuggle anything else
+  // through this field either (same discipline as finishReason).
+  if ('schemaIssue' in value && typeof value.schemaIssue !== 'string') {
     return false
   }
   const candidate = value as {
