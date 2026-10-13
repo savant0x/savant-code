@@ -3,10 +3,14 @@ import * as fs from 'node:fs'
 import * as path from 'node:path'
 
 import { hashUtf8 } from '@savant-code/common/crypto/hash'
-import { EXPERIENCES_DIR_NAME } from '@savant-code/common/types/experience'
+import {
+  EXPERIENCES_DIR_NAME,
+  experienceExposureReceiptSchema,
+} from '@savant-code/common/types/experience'
 import { isRecord } from '@savant-code/common/util/object'
 
 import type { HookInputData, HookRunResult } from './types'
+import type { ExperienceExposureReceipt } from '@savant-code/common/types/experience'
 
 /**
  * FID-2026-1012-024 - in-process "exposure-capture" sink.
@@ -25,7 +29,7 @@ import type { HookInputData, HookRunResult } from './types'
  *   - fast path first: with `dev/experiences/fix-boundaries.json` absent or
  *     empty the sink returns without a write and without spawning anything -
  *     this fires on every successful tool call;
- *   - one receipt per (class, session), never rewritten, so the first
+ *   - one receipt per (class, boundary commit/date, session), never rewritten, so the first
  *     `exercisedAt` is the truthful one; the write uses `wx` so a concurrent
  *     writer cannot interleave;
  *   - the receipt records the revision that actually RAN (`git rev-parse HEAD`),
@@ -38,19 +42,12 @@ export const EXPOSURE_DIR_NAME = 'exposure'
 export const FIX_BOUNDARIES_FILE_NAME = 'fix-boundaries.json'
 
 /** The receipt shape `scripts/experiences-proof.ts` validates. */
-export interface ExposureReceipt {
-  kind: 'production-tool-exposure'
-  classKey: string
-  sessionId: string
-  exercisedAt: string
-  implementationCommit: string
-  /** Matching failure capture is configured; persistence/coverage need separate proof. */
-  captureVerified: true
-}
+export type ExposureReceipt = ExperienceExposureReceipt
 
 export interface Boundary {
   classKey: string
   commit: string
+  fixedAt: string
 }
 
 interface ManifestCacheEntry {
@@ -95,11 +92,16 @@ function readBoundaries(root: string): readonly Boundary[] {
     if (Array.isArray(entries)) {
       for (const candidate of entries as unknown[]) {
         if (!isRecord(candidate)) continue
-        const { classKey, commit } = candidate
+        const { classKey, commit, fixedAt } = candidate
         if (typeof classKey !== 'string' || classKey === '') continue
         if (typeof commit !== 'string' || !/^[a-f0-9]{40}$/.test(commit))
           continue
-        boundaries.push({ classKey, commit })
+        const timestamp =
+          experienceExposureReceiptSchema.shape.boundaryFixedAt.safeParse(
+            fixedAt,
+          )
+        if (!timestamp.success) continue
+        boundaries.push({ classKey, commit, fixedAt: timestamp.data })
       }
     }
     manifestCache.set(root, { mtimeMs, boundaries })
@@ -128,15 +130,22 @@ export function toolOfClassKey(classKey: string): string | undefined {
 
 /**
  * `<store>/exposure/<readable>--<digest>.json`. The readable half keeps the
- * receipt greppable; the digest of `classKey + '|' + sessionId` is what makes
- * two distinct pairs unable to collide.
+ * receipt greppable; the digest binds the class, boundary and session. A renewed
+ * boundary can earn a fresh receipt without rewriting an earlier one.
  */
 export function exposureReceiptFile(
   root: string,
   boundary: Boundary,
   sessionId: string,
 ): string {
-  const digest = hashUtf8(`${boundary.classKey}|${sessionId}`).slice(0, 16)
+  const digest = hashUtf8(
+    JSON.stringify([
+      boundary.classKey,
+      boundary.commit,
+      boundary.fixedAt,
+      sessionId,
+    ]),
+  ).slice(0, 16)
   const readable = boundary.classKey
     .replace(/[^A-Za-z0-9._-]/g, '-')
     .slice(0, 80)
@@ -192,7 +201,9 @@ export function runExposureCapture(
     if (boundaries.length === 0) return { outcome: 'allowed' }
     const toolName = typeof input.tool_name === 'string' ? input.tool_name : ''
     const matching = boundaries.filter(
-      (boundary) => toolOfClassKey(boundary.classKey) === toolName,
+      (boundary) =>
+        toolOfClassKey(boundary.classKey) === toolName &&
+        Date.parse(boundary.fixedAt) <= Date.now(),
     )
     if (matching.length === 0) return { outcome: 'allowed' }
     if (!failureCaptureConfigured)
@@ -218,6 +229,8 @@ export function runExposureCapture(
           sessionId,
           exercisedAt: new Date().toISOString(),
           implementationCommit: commit,
+          boundaryCommit: boundary.commit,
+          boundaryFixedAt: boundary.fixedAt,
           captureVerified: true,
         }
         fs.mkdirSync(path.dirname(file), { recursive: true })

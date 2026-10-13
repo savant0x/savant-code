@@ -185,8 +185,8 @@ receipt here cannot establish either or close this lane.
 
 ### Verification Receipt
 
-- fingerprint: sha256:ea8510111e57a05b71228740755254df984129c9ccaa4099ac102308565662d2
-- verified: 2026-10-13T23:43:54.617Z
+- fingerprint: sha256:0afdc72174980fdcfe244a0f5413e9c2d187ad313da22077eb6c980de9ab2979
+- verified: 2026-10-13T23:51:37.338Z
 - test common/src/util/__tests__/experience-classes.test.ts: exit 0
 - test packages/agent-runtime/src/tools/tool-executor/tool-result-errors.test.ts: exit 0
 - test packages/agent-runtime/src/tools/tool-executor/result-lifecycle.test.ts: exit 0
@@ -457,6 +457,28 @@ audit trail of the mistaken premise, not as acceptance criteria or class disposi
   class observation remains open and held count-reporting work stays untouched.
 
 ### Missed Questions
+
+### Loop 10 — Receipts bind to a repair boundary (2026-10-13)
+
+- **RED:** At `8fe7e06d`, receipt filenames identify only class/session and
+  receipts do not name their boundary. A renewed repair boundary in the same
+  session is suppressed by the old first-write-wins file. The proof reader can
+  also reuse a receipt under a different boundary when ancestry and time permit.
+- **GREEN:** Include boundary commit and fixed-at timestamp in both the receipt
+  and its filename identity. Require exact boundary agreement in the reader.
+  Put the receipt schema in the existing common experience module, consumed by
+  the runtime producer and scripts reader. Require valid boundary timestamps and
+  skip future boundaries before writing; preserve every historical receipt.
+- **AUDIT:** Reproduce renewed-boundary suppression and wrong-boundary acceptance
+  before implementation. Pin commit changes, timestamp-only changes, same-boundary
+  repeat immutability and future boundaries. Reuse existing declared producer,
+  engine, proof/horizon, common/runtime and scripts gates plus full typecheck.
+- **ADVERSARIAL:** Older unbound receipts cannot qualify a repair, but are not
+  rewritten or deleted. Boundary binding is not loaded-code provenance or proof
+  of class-specific coverage; those remain requirements for production closure.
+  All source targets are already registered; held count-reporting files stay intact.
+- **CHANGE DELTA:** Converged additive correction under level 3. No real fix
+  boundary, exposure or class closure is created by this work.
 
 ### Loop 8 — Exposure chronology check (2026-10-13)
 

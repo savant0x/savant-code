@@ -17,7 +17,7 @@ import type { ExposureReceipt } from '../exposure-capture'
 import type { HookInputData } from '../types'
 
 const SHA_A = 'a1b2c3d4e5f60718293a4b5c6d7e8f9012345678'
-const SHA_B = 'b2c3d4e5f60718293a4b5c6d7e8f9012345678901'
+const SHA_B = 'b'.repeat(40)
 
 /** Writer controls explicitly confirm the engine's capture configuration. */
 function runExposureCapture(input: HookInputData) {
@@ -30,12 +30,17 @@ function fixtureRoot(): string {
   return root
 }
 
-function declareBoundary(root: string, classKey: string, commit = SHA_A): void {
+function declareBoundary(
+  root: string,
+  classKey: string,
+  commit = SHA_A,
+  fixedAt = '2026-10-13T00:00:00.000Z',
+): void {
   fs.writeFileSync(
     path.join(root, 'dev', 'experiences', FIX_BOUNDARIES_FILE_NAME),
     JSON.stringify({
       version: 1,
-      boundaries: [{ classKey, commit, fixedAt: '2026-10-13T00:00:00.000Z' }],
+      boundaries: [{ classKey, commit, fixedAt }],
     }),
     'utf8',
   )
@@ -61,6 +66,27 @@ function receiptsIn(root: string): string[] {
 }
 
 describe('FID-2026-1012-024 production exposure receipts', () => {
+  test('renewed boundaries preserve earlier receipts and earn independent exposure', () => {
+    resetExposureCaptureCache()
+    const root = fixtureRoot()
+    const key = 'v1:str_replace:edit-noop:undetermined'
+    declareBoundary(root, key)
+    setExposureRevisionResolver(() => SHA_B)
+    runExposureCapture(success(root, 'str_replace'))
+    const [firstFile] = receiptsIn(root)
+    const original = fs.readFileSync(firstFile ?? '', 'utf8')
+    for (const [commit, fixedAt] of [
+      [SHA_B, '2026-10-13T00:00:00.000Z'],
+      [SHA_B, '2026-10-13T01:00:00.000Z'],
+    ]) {
+      declareBoundary(root, key, commit, fixedAt)
+      resetExposureCaptureCache()
+      setExposureRevisionResolver(() => SHA_B)
+      runExposureCapture(success(root, 'str_replace'))
+    }
+    expect(receiptsIn(root)).toHaveLength(3)
+    expect(fs.readFileSync(firstFile ?? '', 'utf8')).toBe(original)
+  })
   test('a direct sink call cannot assume failure capture is configured', () => {
     resetExposureCaptureCache()
     const root = fixtureRoot()
@@ -70,6 +96,23 @@ describe('FID-2026-1012-024 production exposure receipts', () => {
     })
     const result = captureExposure(success(root, 'str_replace'))
     expect(result.spawnError).toContain('failure capture is not configured')
+    expect(receiptsIn(root)).toHaveLength(0)
+  })
+  test('a future boundary cannot consume the first exposure receipt', () => {
+    resetExposureCaptureCache()
+    const root = fixtureRoot()
+    declareBoundary(
+      root,
+      'v1:str_replace:edit-noop:undetermined',
+      SHA_A,
+      new Date(Date.now() + 60_000).toISOString(),
+    )
+    setExposureRevisionResolver(() => {
+      throw new Error('a future boundary must not resolve a revision')
+    })
+    expect(
+      runExposureCapture(success(root, 'str_replace')).spawnError,
+    ).toBeUndefined()
     expect(receiptsIn(root)).toHaveLength(0)
   })
   test('stamps a checkable receipt for the tool that owns a declared boundary', () => {
@@ -94,6 +137,8 @@ describe('FID-2026-1012-024 production exposure receipts', () => {
     expect(receipt.implementationCommit).toMatch(/^[a-f0-9]{40}$/)
     expect(receipt.implementationCommit).toBe(SHA_A)
     expect(receipt.captureVerified).toBe(true)
+    expect(receipt.boundaryCommit).toBe(SHA_A)
+    expect(receipt.boundaryFixedAt).toBe('2026-10-13T00:00:00.000Z')
     // `z.iso.datetime({ offset: true })` accepts the UTC form.
     expect(new Date(receipt.exercisedAt).toISOString()).toBe(
       receipt.exercisedAt,

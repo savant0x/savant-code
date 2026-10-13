@@ -31,6 +31,7 @@ function fixture() {
         {
           classKey: 'v1:str_replace:edit-noop:undetermined',
           commit: 'a'.repeat(40),
+          fixedAt: '2026-10-13T00:00:00.000Z',
         },
       ],
     }),

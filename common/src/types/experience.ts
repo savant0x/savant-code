@@ -79,3 +79,20 @@ export const experienceRecordSchema = z.object({
 })
 
 export type ExperienceRecord = z.infer<typeof experienceRecordSchema>
+
+/** One exposure belongs to one declared repair boundary, never just a class. */
+export const experienceExposureReceiptSchema = z.object({
+  kind: z.literal('production-tool-exposure'),
+  classKey: z.string().min(1),
+  sessionId: z.string().min(1),
+  exercisedAt: z.iso.datetime({ offset: true }),
+  implementationCommit: z.string().regex(/^[a-f0-9]{40}$/),
+  boundaryCommit: z.string().regex(/^[a-f0-9]{40}$/),
+  boundaryFixedAt: z.iso.datetime({ offset: true }),
+  /** Configuration confirmation; persistence and class coverage need separate proof. */
+  captureVerified: z.literal(true),
+})
+
+export type ExperienceExposureReceipt = z.infer<
+  typeof experienceExposureReceiptSchema
+>

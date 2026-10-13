@@ -1,18 +1,9 @@
 import * as fs from 'node:fs'
 import * as path from 'node:path'
 
-import { z } from 'zod/v4'
+import { experienceExposureReceiptSchema } from '@savant-code/common/types/experience'
 
 import type { FixBoundary } from './experiences-recurrence'
-
-const exposureReceiptSchema = z.object({
-  kind: z.literal('production-tool-exposure'),
-  classKey: z.string().min(1),
-  sessionId: z.string().min(1),
-  exercisedAt: z.iso.datetime({ offset: true }),
-  implementationCommit: z.string().regex(/^[a-f0-9]{40}$/),
-  captureVerified: z.literal(true),
-})
 
 function evidenceFile(root: string, evidence: string): string | undefined {
   try {
@@ -86,11 +77,13 @@ export function inspectBoundaryEvidence(
     }
     seen.add(file)
     try {
-      const receipt = exposureReceiptSchema.parse(
+      const receipt = experienceExposureReceiptSchema.parse(
         JSON.parse(fs.readFileSync(file, 'utf8')),
       )
       if (
         receipt.classKey !== boundary.classKey ||
+        receipt.boundaryCommit !== boundary.commit ||
+        receipt.boundaryFixedAt !== boundary.fixedAt ||
         receipt.sessionId !== exposure.sessionId ||
         Date.parse(receipt.exercisedAt) !== Date.parse(exposure.exercisedAt) ||
         !ranAtOrAfter(root, boundary.commit, receipt.implementationCommit)

@@ -64,6 +64,8 @@ function fixture() {
     sessionId: 'session',
     exercisedAt: boundary.exposure[0]!.exercisedAt,
     implementationCommit: commit,
+    boundaryCommit: commit,
+    boundaryFixedAt: boundary.fixedAt,
     captureVerified: true,
   }
   fs.writeFileSync(path.join(root, 'exposure.json'), JSON.stringify(receipt))
@@ -95,6 +97,47 @@ describe('production observation receipts', () => {
   test('binds a readable production receipt to the implemented local commit', () => {
     const { root, boundary } = fixture()
     expect(inspectBoundaryEvidence(root, boundary)).toEqual([])
+  })
+  test('a receipt issued under a different boundary cannot qualify', () => {
+    const { root, boundary, receipt } = fixture()
+    fs.writeFileSync(
+      path.join(root, 'exposure.json'),
+      JSON.stringify({
+        ...receipt,
+        boundaryCommit: 'a'.repeat(40),
+        boundaryFixedAt: boundary.fixedAt,
+      }),
+    )
+    expect(inspectBoundaryEvidence(root, boundary)).toContain(
+      'exposure receipt disagrees with boundary: exposure.json',
+    )
+  })
+  test('a changed boundary timestamp cannot reuse an earlier receipt', () => {
+    const { root, boundary, receipt } = fixture()
+    fs.writeFileSync(
+      path.join(root, 'exposure.json'),
+      JSON.stringify({
+        ...receipt,
+        boundaryFixedAt: new Date(0).toISOString(),
+      }),
+    )
+    expect(inspectBoundaryEvidence(root, boundary)).toContain(
+      'exposure receipt disagrees with boundary: exposure.json',
+    )
+  })
+  test('an older unbound receipt cannot qualify and is never rewritten', () => {
+    const { root, boundary, receipt } = fixture()
+    const old = JSON.stringify(
+      Object.fromEntries(
+        Object.entries(receipt).filter(([key]) => !key.startsWith('boundary')),
+      ),
+    )
+    const file = path.join(root, 'exposure.json')
+    fs.writeFileSync(file, old)
+    expect(inspectBoundaryEvidence(root, boundary)).toContain(
+      'invalid production exposure receipt: exposure.json',
+    )
+    expect(fs.readFileSync(file, 'utf8')).toBe(old)
   })
   test('a receipt from a LATER revision still proves the fixed path ran', () => {
     // The session ran HEAD, which is normally ahead of the boundary commit that
