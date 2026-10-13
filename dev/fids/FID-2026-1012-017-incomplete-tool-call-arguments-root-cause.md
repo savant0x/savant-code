@@ -188,8 +188,8 @@ repository gate).
 
 ### Verification Receipt
 
-- fingerprint: sha256:3dbd18a8aacec58fc0e9152957e0195b1ed82236d2b0aedd0f4c3939dcc99517
-- verified: 2026-10-13T19:15:43.972Z
+- fingerprint: sha256:30f6b5ef6edb4a6eb1413721a4d73169b834741b721bbf56bfebdbbcd601a6d6
+- verified: 2026-10-13T19:20:40.827Z
 - test sdk/src/__tests__/tool-argument-budget.test.ts: exit 0
 - test sdk/src/impl/__tests__/llm-native-tool-call.test.ts: exit 0
 - test sdk/src/impl/__tests__/llm-native-tool-call-schema-issue.test.ts: exit 0
@@ -542,6 +542,11 @@ Evidence / Archived) and the FID is archived.
   revision-guarded chunks (FID-2026-1012-017)`, 8 files, 884 insertions / 43 deletions: the staging
   module and its two suites, the staging state in the proposed-content store, the `propose-write-file`
   wiring, this record at `fixed`, and the master status board row.
+- **Commit for Loop 6:** `232f0022` — `fix(llm): name the field a rejected tool call failed and steer one
+  call-out once (FID-2026-1012-017)`, 13 files, 602 insertions / 13 deletions: `summarizeSchemaIssue` and
+  its suite, the `schemaIssue` contract field and its guard, the message-factory clause, the
+  (tool, class) steering deduper and its suite, the additive-rule identity pin, this record's Loop 6, the
+  master status board row, the register item and the pass summary.
 
 - **Authorised write surface:** `SCOPE.md` → machine-readable scope targets → this record's
   line (registered 2026-10-12 with the root-cause matrix).
