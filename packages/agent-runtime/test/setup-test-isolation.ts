@@ -38,6 +38,7 @@ import { resetCheckpointStoreState } from '../src/tools/handlers/tool/checkpoint
 import { resetSqliteDatabaseCtor } from '../src/tools/handlers/tool/database/sqlite-adapter'
 import { resetProposedContentByRunId } from '../src/tools/handlers/tool/proposed-content-store'
 import { resetMaxIterationsCache } from '../src/tools/handlers/tool/transition-phase'
+import { resetWebSearchNoticeLogs } from '../src/tools/handlers/tool/web-search'
 import { clearThinkerConvergenceStateForTests } from '../src/tools/thinker-convergence-gate'
 import { resetThoughtSessions } from '../src/tools/thought-session-store'
 import { resetFileMutationLanes } from '../src/tools/tool-executor/file-mutation-queue'
@@ -69,6 +70,7 @@ beforeEach(() => {
   resetThoughtSessions()
   resetFileMutationLanes()
   resetToolOutcomes()
+  resetWebSearchNoticeLogs()
   resetTrustedDefinitions()
   resetCacheDebugCounter()
   resetCavemanConfigCache()

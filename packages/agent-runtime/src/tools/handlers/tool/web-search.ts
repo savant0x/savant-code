@@ -22,6 +22,17 @@ import type { Logger } from '@savant-code/common/types/contracts/logger'
  */
 const noticeLogs = new Map<string, CapabilityNoticeLog>()
 
+/**
+ * FID-2026-1007-002: `bun test` loads every file of this workspace into ONE
+ * process, so the per-session notice cache above outlives the suite that filled
+ * it. A shared fixture session id would then make one suite's verdict depend on
+ * which files ran first (the FID-2026-1007-001 failure shape). The reset is a
+ * same-file seam so the isolation preload can return it to its start state.
+ */
+export function resetWebSearchNoticeLogs(): void {
+  noticeLogs.clear()
+}
+
 function noticeLogFor(scope: string): CapabilityNoticeLog {
   const existing = noticeLogs.get(scope)
   if (existing) return existing

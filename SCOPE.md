@@ -134,6 +134,63 @@ recorded decision or external dependency requires it.
       Evidence: `docs/design/provider-parity-review-2026-10-12.md`;
       additions are `FID-2026-1012-026`. **Automation level: 3.**
 
+- [ ] **FID-2026-1013-003. Apixo built-in provider integration.** Operator request
+      2026-10-13: add `apixoai.online` as a built-in provider, run the probes,
+      confirm the contract, and prove `deepseek-v4.1-flash`. Measured: keyless
+      `GET /v1/models` → HTTP 200 / 35 rows publishing `context_window`, and one
+      permitted inference round-trip on `deepseek-v4.1-flash` → HTTP 200 with a
+      real completion. The registry entry, the keyless live-catalog wrapper, the
+      `live-catalog` exception, the window-coverage disposition, the three picker
+      seams and the doc surfaces land under the FID. **Automation level: 3.**
+
+### Findings owned and closed in the 2026-10-13 exposure pass
+
+Discovered while closing `FID-2026-1012-024`'s refusal/exposure work. Registered here with
+their evidence because no finding inside the project is out of scope, then completed in the
+same pass.
+
+- [x] **T188. `FID-2026-1013-003` carried no `### Code Verification Evidence` section, and one of
+      its declared gates was invalid.** Two separate defects in one record. (i)
+      `scripts/fid-ledger.ts:34` requires that heading on **every** active FID, so its absence alone
+      was the only red in `bun run validate:repository` (`[fid.structure.heading]`). (ii)
+      `- gate: test scripts/window-coverage-check.ts` cannot ever run — `fid:verify` rejects a
+      `gate: test` path that does not match `/\\.test\\.(ts|tsx)$/` — and that script is probe-shaped
+      (`if (import.meta.main) main()`, exit 0 clean / 1 naming issues), so it is now declared
+      `- gate: probe`, the documented route for proving a repo-gate check. Fixed in this pass: all
+      eleven declared gates were then run live and every one exited 0, the results and the Law-4
+      call-graph check are recorded under the heading, and the receipt is stamped (exact
+      `verified:` time in the record). No source change was made to that lane's implementation.
+      **Where the fix lives:** `dev/fids/FID-2026-1013-003-apixo-provider-integration.md` is an
+      **untracked** file owned by the provider-parity lane's pending commit, so no commit from this
+      pass contains it; the gate is green in the working tree and travels with that lane's commit.
+      **Automation level: 3.**
+
+- [x] **T189. Two module-scope registries have no reset in the workspace isolation preload.**
+      `bun scripts/module-state-check.ts` reports
+      `packages/agent-runtime/src/tools/handlers/tool/web-search.ts:23` (`noticeLogs`) and
+      `scripts/providers/audit-probes/parity-tier1-catalog-probe.ts:294` (`measurements`) as uncured
+      mutable containers. The probe is not wired into `validate:repository`, which is why the gate
+      never surfaced it. Both cured in this pass: `web-search.ts` gained a same-file
+      `resetWebSearchNoticeLogs()` seam (the per-session notice cache is exactly the shared-fixture
+      shape FID-2026-1007-001 was filed for) and is now called from the agent-runtime isolation
+      preload; the probe's top-level measurement loop now runs inside a guarded entrypoint, the same
+      shape as its sibling `scripts/window-coverage-check.ts`, because an import previously fired
+      live network probes as a side effect. The probe sits exactly **at** the 300-line ceiling, so
+      the guard is net-zero lines; the wider rationale lives here rather than in the file.
+      Re-measured: `module-state: PASS (2615 files; 192 of 197 resettable bindings wired)`,
+      `quality: PASS`, agent-runtime suite **2,103 pass / 0 fail**. **Where the fix lives:** the two
+      workspace files are tracked and committed by this pass; `scripts/providers/audit-probes/parity-tier1-catalog-probe.ts`
+      is **untracked** (the provider-parity lane's artifact), so its guard travels with that lane's
+      commit — `module-state: PASS` is a working-tree result until then. **Automation level: 3.**
+
+- [x] **T190. `FID-2026-1012-024`'s register write targets lagged its committed work.**
+      The exposure-receipt slice (commit `69a61f08`) wrote `common/src/types/hooks.ts` (the
+      builtin-action allowlist), `protocol.config.yaml` (the `PostToolUse` hook declaration) and
+      `packages/agent-runtime/test/setup-test-isolation.ts` (the cache-reset registration), and the
+      `FID-2026-1012-024` target line named none of them. The work is approved in scope and recorded
+      in that record; the target line is corrected in this pass so the register's authority matches
+      the work rather than lagging it. **Automation level: 3.**
+
 ### Harness and process
 
 - [ ] **T122. Savant-Free removal.** Operator direction 2026-10-12 (Q12/Q5):
@@ -299,8 +356,26 @@ work item remains active, including the recorded level-1 consolidation and exter
   `packages/agent-runtime/src/hooks/**`, `packages/agent-runtime/src/tools/tool-executor/**`,
   `packages/agent-runtime/src/tools/stream-parser.ts`,
   `packages/agent-runtime/src/tools/stream-parser/**`,
-  `scripts/experiences*.ts`, `scripts/__tests__/experiences*.test.ts`,
+  `packages/agent-runtime/test/setup-test-isolation.ts`, `common/src/types/hooks.ts`,
+  `protocol.config.yaml`, `scripts/experiences*.ts`, `scripts/__tests__/experiences*.test.ts`,
   `scripts/session-end-review.ts`, `dev/experiences/**`
+- FID-2026-1013-003: `common/src/providers/registry-partitioned-3.ts`,
+  `common/src/constants/window-coverage-register.ts`,
+  `common/src/providers/provider-exception-manifest.ts`,
+  `common/src/providers/__tests__/validate-provider-registry.test.ts`,
+  `common/src/constants/provider-catalog-census.json`,
+  `cli/src/utils/openrouter-models/apixo.ts`,
+  `cli/src/utils/openrouter-models/gateway.ts`,
+  `cli/src/utils/openrouter-models/gateway-live-results.ts`,
+  `cli/src/utils/openrouter-models/gateway-catalog-merge.ts`,
+  `cli/src/utils/openrouter-models/__tests__/apixo-catalog.test.ts`,
+  `cli/src/utils/__tests__/provider-setup.test.ts`,
+  `sdk/src/impl/__tests__/model-provider-free-mode.test.ts`,
+  `sdk/src/impl/__tests__/model-provider-free-mode-test-setup.ts`,
+  `.env.example`, `README.md`, `README.zh-CN.md`, `cli/release/README.md`,
+  `docs/index.md`, `docs/sdk-overview.md`, `docs/installation.md`,
+  `docs/features.md`, `docs/providers.md`, `dev/fids/**`, `SCOPE.md`,
+  `CHANGELOG.md`, `dev/session-summaries/**`
 - Release-0.0.36: `VERSION`, `package.json`, `agents/package.json`,
   `cli/package.json`, `cli/release/package.json`, `common/package.json`,
   `common/src/constants/protocol-bundle.generated.ts`, `desktop/package.json`,
