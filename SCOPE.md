@@ -86,6 +86,10 @@ recorded decision or external dependency requires it.
       Counts and endpoint evidence are in the learning-remediation session summary;
       no inference, purchase or provider-parity edit was performed.
       **Automation level: 3** for the probe.
+      **Child:** `FID-2026-1013-005`. Continuation 2026-10-13: local Ollama
+      HTTP 200 with three models. Cloudflare is blocked on both account ID
+      and API token configuration; neither is present in the probe process.
+      The persisted provider-key store also contains neither field.
 
 - [ ] **T175. Sweep control-manifest authorship + control-armed re-run.**
       Open remainder of archived `FID-2026-1007-016`: the seam is built, but

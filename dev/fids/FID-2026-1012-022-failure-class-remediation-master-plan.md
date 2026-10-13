@@ -132,6 +132,7 @@ of its own (`fid.graph.master-nested`).
 | FID-2026-1012-027 | A fixed record's receipts prove the gates it chose, not the surfaces it touched | harness | — |
 | FID-2026-1013-001 | Script test gate discovery must use the scripts root | harness | — |
 | FID-2026-1013-002 | Asymmetric partial matchers mutate received test evidence | harness | — |
+| FID-2026-1013-005 | C3 — remaining provider live-list boundaries (T119) | artifact | — |
 
 **Instrument sensitivity, stated because it bounds every claim below** — the slice length changes the
 class count, so the number is only meaningful with its instrument:
@@ -350,7 +351,7 @@ activation), and the child's id is recorded in this table when it exists.
 | Local `0.0.36` development line | C0 | register item | open — dev-line maintenance live; the cut is operator-called |
 | T122 — Savant-Free removal | C1 | *drafted at wave start* | blocked — operator must call it |
 | T186 — typecheck/test legs | C2 | *drafted at wave start* | blocked — on T122 |
-| T119 — provider live-list probes | C3 | register measurement | live probes complete — 25 remote registry catalogs HTTP 200, 14 using existing stored keys; local/account-specific boundaries retained; no purchase or inference |
+| T119 — provider live-list probes | C3 | FID-2026-1013-005 | 25 remote catalogs previously HTTP 200; local Ollama now HTTP 200 / three models; Cloudflare blocked on absent account ID and API token; no purchase or inference |
 | T173 — KiosAPI window rows | C4 | register measurement | blocked on vendor evidence — live pricing/model lists publish no window fields; no inferred fallback changes |
 | T171 — harvested-candidate auto-wire | C5 | register review | re-derived — explicit add-host prefill exists; picker branch absent; existing discovery suite 15 PASS; verdict/consent ruling remains operator-owned |
 | T175 — sweep control manifest | C6 | *drafted at wave start* | blocked — six external inputs |
