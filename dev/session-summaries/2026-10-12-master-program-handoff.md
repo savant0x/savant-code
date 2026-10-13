@@ -15,9 +15,11 @@ for each chain, so the next session does not re-derive it.
 - `47a204d0` — `FID-2026-1012-024`: the measuring instrument (capture coverage, stable class
   identity, ownership/recurrence authority). Class repair remains open by design.
 - `c4018491`, `1426609f` — `FID-2026-1012-025`: verification-harness drift repaired and closed.
-- This session's lane: `FID-2026-1012-023` (command-execution reliability, RC6) is implemented and
-  stamped `fixed` — one timeout contract, actionable timeout error, aborts attributed by field. See
-  the record for its gates and evidence.
+- `653db58d` — `FID-2026-1012-023` (command-execution reliability, RC6): one timeout contract, an
+  actionable timeout error, and aborts attributed by field. 21 files, +926/−65. The record is
+  `fixed` with 11 declared gates (10 verified live; `quality` is blocked by finding 2 below), and its
+  class claim stays open until the recurrence window runs. Use this hash as the fix boundary when
+  starting that clock.
 
 Baseline that was green before this lane and re-verified after it: root `typecheck` (14 legs), sdk
 suite (633 pass / 1 POSIX-only skip), agent-runtime suite (2,048 pass), `eslint . --max-warnings 0`,
