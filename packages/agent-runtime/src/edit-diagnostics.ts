@@ -11,6 +11,8 @@
  * already read and the request it was given.
  */
 
+import { redactSecrets } from '@savant-code/common/util/redact'
+
 /** The decidable causes of a missing edit target. */
 export type MissingEditClassification =
   /** A line of the request appears verbatim: the surrounding block differs. */
@@ -64,7 +66,7 @@ export function diagnoseMissingEdit(params: {
       return {
         classification: 'partial-line-match',
         candidateLine: index + 1,
-        candidateText: bound(lines[index]!.trim(), maxSnippet),
+        candidateText: bound(redactSecrets(lines[index]!.trim()), maxSnippet),
         fileLines,
         fileChars,
       }

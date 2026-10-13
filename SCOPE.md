@@ -316,10 +316,15 @@ work item remains active, including the recorded level-1 consolidation and exter
   `packages/agent-runtime/src/run-agent-step/capability-preflight.ts`,
   `packages/agent-runtime/src/run-agent-step/__tests__/capability-preflight.test.ts`
 - FID-2026-1012-020: `packages/agent-runtime/src/process-str-replace.ts`,
+  `packages/agent-runtime/src/process-file-block.ts`,
   `packages/agent-runtime/src/edit-diagnostics.ts`,
   `packages/agent-runtime/src/tools/handlers/tool/**`,
   `packages/agent-runtime/src/__tests__/process-str-replace*.test.ts`,
-  `packages/agent-runtime/src/__tests__/edit-diagnostics.test.ts`, `sdk/src/run/**`
+  `packages/agent-runtime/src/__tests__/edit-diagnostics.test.ts`, `sdk/src/run/**`,
+  `sdk/src/tools/change-file.ts`, `sdk/src/tools/apply-patch.ts`,
+  `sdk/src/tools/apply-patch/**`, `sdk/src/tools/patch-diagnostics.ts`,
+  `sdk/src/tools/list-directory.ts`, `sdk/src/__tests__/edit-boundary-diagnostics.test.ts`,
+  `sdk/src/__tests__/apply-patch-create-errors.test.ts`
 - FID-2026-1012-021: `scripts/experiences-dedup.ts`, `scripts/experiences-recurrence.ts`,
   `scripts/experiences-learning-order.ts`, `scripts/experiences-repair-drafts.ts`,
   `scripts/learnings-validation.ts`,

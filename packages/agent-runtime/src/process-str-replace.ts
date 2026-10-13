@@ -1,4 +1,5 @@
 import { READ_FILES_MAX_CHARS } from '@savant-code/common/constants/read-files'
+import { redactSecrets } from '@savant-code/common/util/redact'
 import { createPatch } from 'diff'
 
 import {
@@ -143,7 +144,7 @@ export async function processStrReplace(params: {
     logger.debug(
       {
         path,
-        initialContent,
+        contentChars: initialContent.length,
       },
       `processStrReplace: No change to ${path}`,
     )
@@ -166,9 +167,9 @@ export async function processStrReplace(params: {
   logger.debug(
     {
       path,
-      newContent: currentContent,
-      patch: finalPatch,
-      messages,
+      contentChars: currentContent.length,
+      patchChars: finalPatch.length,
+      messageCount: messages.length,
     },
     `processStrReplace: Updated file ${path}`,
   )
@@ -200,7 +201,7 @@ const tryMatchOldStr = (params: {
   if (!allowMultiple && count > 1) {
     return {
       success: false,
-      error: `Found ${count} occurrences of ${JSON.stringify(oldStr)} in the file. Please try again with a longer (more specified) old string or set allowMultiple to true.`,
+      error: `Found ${count} occurrences of ${JSON.stringify(redactSecrets(oldStr))} in the file. Please try again with a longer (more specified) old string or set allowMultiple to true.`,
     }
   }
   if (allowMultiple && count > 1) {
@@ -269,7 +270,7 @@ const tryMatchOldStr = (params: {
   return {
     success: false,
     error:
-      `The old string ${JSON.stringify(oldStr)} was not found in the file, ` +
+      `The old string ${JSON.stringify(redactSecrets(oldStr))} was not found in the file, ` +
       `skipping. Please try again with a different old string that matches ` +
       `the file content exactly.\n\n` +
       // FID-2026-1012-020: the first line above keeps the class identity the

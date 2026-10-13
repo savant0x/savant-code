@@ -206,8 +206,6 @@ describe('applyPatchTool', () => {
       throw new Error('Expected errorMessage in tool result')
     }
 
-    expect(result[0].value.errorMessage).toContain(
-      'Invalid Add File Line: oops',
-    )
+    expect(result[0].value.errorMessage).toContain('Invalid added-line format')
   })
 })

@@ -2,14 +2,17 @@ import path from 'path'
 
 import { fileExists } from '@savant-code/common/util/file'
 import { resolveAndContain } from '@savant-code/common/util/paths'
+import { redactSecrets } from '@savant-code/common/util/redact'
 import { applyPatch } from 'diff'
 import z from 'zod/v4'
 
+import { diagnosePatchFailure, filesystemErrorCode } from './patch-diagnostics'
 import { resolveFilePath } from './path-utils'
-import { logger } from '../utils/logger'
+import { logger as defaultLogger } from '../utils/logger'
 
 import type { ResolvedProjectPath } from './path-utils'
 import type { SavantCodeToolOutput } from '@savant-code/common/tools/list'
+import type { Logger } from '@savant-code/common/types/contracts/logger'
 import type { SavantCodeFileSystem } from '@savant-code/common/types/filesystem'
 import type { JSONValue } from '@savant-code/common/types/json'
 
@@ -23,8 +26,8 @@ type FileChange = z.infer<typeof FileChangeSchema>
 
 type ApplyChangeResult =
   | { status: 'created' | 'modified'; file: string }
-  | { status: 'patchFailed'; file: string; patch: string }
-  | { status: 'invalid'; file: string }
+  | { status: 'patchFailed'; file: string; diagnosis: string }
+  | { status: 'invalid'; file: string; code: string }
 
 export type OnFileWrittenCallback = (params: {
   path: string
@@ -39,6 +42,8 @@ export async function changeFile(params: {
   onFileWritten?: OnFileWrittenCallback
   /** FID-2026-0718-014 v2: injectable for testability. Default = node:fs.realpathSync.native. */
   realpathFn?: (p: string) => string
+  /** Per-call diagnostics sink; receives metadata, never the attempted body. */
+  logger?: Pick<Logger, 'error'>
 }): Promise<SavantCodeToolOutput<'str_replace'>> {
   const { parameters, cwd, fs, onFileWritten, realpathFn } = params
 
@@ -65,7 +70,12 @@ export async function changeFile(params: {
     ]
   }
 
-  const result = await applyChange({ change: fileChange, resolvedPath, fs })
+  const result = await applyChange({
+    change: fileChange,
+    resolvedPath,
+    fs,
+    logger: params.logger ?? defaultLogger,
+  })
 
   // Call the onFileWritten callback if provided and the file was successfully written
   if (
@@ -108,15 +118,15 @@ function formatApplyChangeResult(
   if (result.status === 'patchFailed') {
     return {
       file: result.file,
-      errorMessage: `Failed to apply patch.`,
-      patch: result.patch,
+      errorMessage: `Failed to apply patch.\n${result.diagnosis}`,
     }
   }
 
   return {
     file: result.file,
     errorMessage:
-      'Failed to write to file: file path caused an error or file could not be written',
+      'Failed to write to file: file path caused an error or file could not be written\n' +
+      `Filesystem code: ${'code' in result ? result.code : 'unknown'}. Check the parent directory and write permissions before retrying.`,
   }
 }
 
@@ -124,8 +134,9 @@ async function applyChange(params: {
   change: FileChange
   resolvedPath: ResolvedProjectPath
   fs: SavantCodeFileSystem
+  logger: Pick<Logger, 'error'>
 }): Promise<ApplyChangeResult> {
-  const { change, resolvedPath, fs } = params
+  const { change, resolvedPath, fs, logger } = params
   const { content, type } = change
   const { fullPath, relativePath } = resolvedPath
 
@@ -142,14 +153,30 @@ async function applyChange(params: {
       const oldContent = await fs.readFile(fullPath, 'utf-8')
       const newContent = applyPatch(oldContent, content)
       if (newContent === false) {
-        return { status: 'patchFailed', file: relativePath, patch: content }
+        return {
+          status: 'patchFailed',
+          file: relativePath,
+          diagnosis: diagnosePatchFailure(oldContent, content),
+        }
       }
       await fs.writeFile(fullPath, newContent)
     }
 
     return { status: exists ? 'modified' : 'created', file: relativePath }
   } catch (error) {
-    logger.error(`Failed to apply patch to ${relativePath}:`, error, content)
-    return { status: 'invalid', file: relativePath }
+    const code = filesystemErrorCode(error)
+    try {
+      logger.error(
+        {
+          file: redactSecrets(relativePath),
+          code,
+          contentChars: content.length,
+        },
+        'Failed to apply file change',
+      )
+    } catch {
+      // A failed diagnostic sink cannot erase the filesystem failure result.
+    }
+    return { status: 'invalid', file: relativePath, code }
   }
 }

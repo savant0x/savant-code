@@ -17,6 +17,7 @@ import {
 } from './apply-patch/diff'
 import { sanitizeUnifiedDiff } from './apply-patch/parser'
 import { successResult, errorResult } from './apply-patch/result'
+import { diagnosePatchFailure, safePatchError } from './patch-diagnostics'
 import { resolveFilePath } from './path-utils'
 
 import type { OnFileWrittenCallback } from './change-file'
@@ -90,13 +91,14 @@ export async function applyPatchTool(params: {
       diff: sanitizedDiff,
     })
 
-    if (!patchResult.patched) {
+    if (patchResult.patched === null) {
       return [
         errorResult(
           formatPatchFailureMessage({
             path: operation.path,
             attemptedStrategies: patchResult.attemptedStrategies,
             lastError: patchResult.lastError,
+            diagnosis: diagnosePatchFailure(oldContent, sanitizedDiff),
           }),
         ),
       ]
@@ -119,6 +121,6 @@ export async function applyPatchTool(params: {
 
     return [successResult(operation.path, 'update')]
   } catch (error) {
-    return [errorResult(error instanceof Error ? error.message : String(error))]
+    return [errorResult(safePatchError(error))]
   }
 }

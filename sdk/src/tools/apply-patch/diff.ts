@@ -12,6 +12,7 @@ import {
   patchHasIntendedChanges,
   stripTrailingNewline,
 } from './parser'
+import { safePatchError } from '../patch-diagnostics'
 
 import type { Chunk, DiffMode, PatchAttempt } from './types'
 
@@ -164,15 +165,17 @@ export function formatPatchFailureMessage(params: {
   path: string
   attemptedStrategies: string[]
   lastError?: string
+  diagnosis?: string
 }): string {
-  const { path, attemptedStrategies, lastError } = params
+  const { path, attemptedStrategies, lastError, diagnosis } = params
 
   return [
     `Failed to apply patch to ${path}.`,
     attemptedStrategies.length > 0
       ? `Tried strategies: ${attemptedStrategies.join(', ')}.`
       : undefined,
-    lastError ? `Last error: ${lastError}.` : undefined,
+    lastError ? `Last error: ${safePatchError(lastError)}.` : undefined,
+    diagnosis,
     'Please re-read the file and generate a patch with exact context lines.',
   ]
     .filter(Boolean)

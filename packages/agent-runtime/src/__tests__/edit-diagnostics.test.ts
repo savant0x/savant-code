@@ -60,6 +60,16 @@ describe('diagnoseMissingEdit', () => {
     )
     expect(diagnosis.candidateText?.endsWith('…')).toBe(true)
   })
+
+  it('redacts an entire credential before bounding its candidate snippet', () => {
+    const secret = `sk-${'a'.repeat(MAX_DIAGNOSTIC_SNIPPET + 50)}`
+    const diagnosis = diagnoseMissingEdit({
+      content: secret,
+      oldStr: `${secret}\nabsent`,
+    })
+    expect(diagnosis.candidateText).toBe('[REDACTED]')
+    expect(renderMissingEditDiagnosis(diagnosis)).not.toContain('sk-')
+  })
 })
 
 describe('renderMissingEditDiagnosis', () => {

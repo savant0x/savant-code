@@ -1,5 +1,7 @@
 import * as path from 'path'
 
+import { filesystemErrorCode } from './patch-diagnostics'
+
 import type { SavantCodeToolOutput } from '@savant-code/common/tools/list'
 import type { SavantCodeFileSystem } from '@savant-code/common/types/filesystem'
 
@@ -39,12 +41,12 @@ export async function listDirectory(params: {
       },
     ]
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : String(error)
+    const code = filesystemErrorCode(error)
     return [
       {
         type: 'json',
         value: {
-          errorMessage: `Failed to list directory: ${errorMessage}`,
+          errorMessage: `Failed to list directory: ${code}. Check the parent directory with list_directory, then use an existing directory path.`,
         },
       },
     ]

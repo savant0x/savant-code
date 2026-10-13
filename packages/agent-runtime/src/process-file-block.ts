@@ -43,7 +43,7 @@ export async function processFileBlock(params: {
     const cleanContent = cleanMarkdownCodeBlock(newContent)
 
     logger.debug(
-      { path, cleanContent },
+      { path, contentChars: cleanContent.length },
       `processFileBlock: Created new file ${path}`,
     )
     return promptSuccess({
@@ -57,7 +57,7 @@ export async function processFileBlock(params: {
 
   if (newContent === initialContent) {
     logger.info(
-      { newContent },
+      { path, contentChars: newContent.length },
       `processFileBlock: New was same as old, skipping ${path}`,
     )
     return promptSuccess({
@@ -81,9 +81,9 @@ export async function processFileBlock(params: {
     logger.debug(
       {
         path,
-        initialContent,
-        changes: newContent,
-        patch,
+        initialChars: initialContent.length,
+        newChars: newContent.length,
+        patchChars: patch.length,
       },
       `processFileBlock: No change to ${path}`,
     )
@@ -96,8 +96,8 @@ export async function processFileBlock(params: {
   logger.debug(
     {
       path,
-      newContent,
-      patch,
+      contentChars: newContent.length,
+      patchChars: patch.length,
     },
     `processFileBlock: Updated file ${path}`,
   )

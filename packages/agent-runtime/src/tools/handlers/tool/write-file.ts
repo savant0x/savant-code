@@ -158,7 +158,7 @@ export const handleWriteFile = (async (
     ? content.slice(1)
     : content
 
-  logger.debug({ path, content }, `write_file ${path}`)
+  logger.debug({ path, contentChars: content.length }, `write_file ${path}`)
 
   const newPromise = processFileBlock({
     path,
@@ -176,11 +176,12 @@ export const handleWriteFile = (async (
       if (error instanceof AbortError) {
         throw error
       }
-      logger.error(error, 'Error processing write_file block')
+      logger.error({ path }, 'Error processing write_file block')
       return {
         tool: 'write_file' as const,
         path,
-        error: `Error: Failed to process the write_file block. ${typeof error === 'string' ? error : error.message}`,
+        error:
+          'Error: Failed to process the write_file block. Re-read the file before retrying.',
       }
     })
     .then(async (fileProcessingResult) => ({
@@ -248,7 +249,7 @@ export async function postStreamProcessing<T extends FileProcessingTools>(
   if (errors.length > 0) {
     if (errors.length > 1) {
       throw new Error(
-        `Internal error: Unexpected number of matching errors for ${JSON.stringify(toolCall)}, found ${errors.length}, expected 1`,
+        `Internal error: Unexpected number of matching errors, found ${errors.length}, expected 1`,
       )
     }
 
@@ -269,7 +270,7 @@ export async function postStreamProcessing<T extends FileProcessingTools>(
   )
   if (changes.length !== 1) {
     throw new Error(
-      `Internal error: Unexpected number of matching changes for ${JSON.stringify(toolCall)}, found ${changes.length}, expected 1`,
+      `Internal error: Unexpected number of matching changes, found ${changes.length}, expected 1`,
     )
   }
 

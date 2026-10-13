@@ -153,17 +153,27 @@ false declaration.
 - gate: test packages/agent-runtime/src/__tests__/edit-diagnostics.test.ts
 - gate: test packages/agent-runtime/src/__tests__/process-str-replace-outcomes.test.ts
 - gate: test packages/agent-runtime/src/__tests__/process-str-replace.test.ts
+- gate: test packages/agent-runtime/src/tools/handlers/tool/__tests__/str-replace.test.ts
+- gate: test sdk/src/__tests__/edit-boundary-diagnostics.test.ts
+- gate: test sdk/src/__tests__/apply-patch.test.ts
+- gate: test sdk/src/__tests__/apply-patch-create-errors.test.ts
+- gate: test sdk/src/__tests__/change-file.test.ts
 - gate: typecheck packages/agent-runtime
 - gate: typecheck sdk
 - gate: quality
 
 ### Verification Receipt
 
-- fingerprint: sha256:238b94a06906160f02651e9580f99214e3402d90bf5a3edf02dd81042d743431
-- verified: 2026-10-13T05:41:29.800Z
+- fingerprint: sha256:1e76a5cb28f2abb38d1921f7f1ef89e038226601b273813c3cc5378472869a39
+- verified: 2026-10-13T22:54:58.281Z
 - test packages/agent-runtime/src/__tests__/edit-diagnostics.test.ts: exit 0
 - test packages/agent-runtime/src/__tests__/process-str-replace-outcomes.test.ts: exit 0
 - test packages/agent-runtime/src/__tests__/process-str-replace.test.ts: exit 0
+- test packages/agent-runtime/src/tools/handlers/tool/__tests__/str-replace.test.ts: exit 0
+- test sdk/src/__tests__/edit-boundary-diagnostics.test.ts: exit 0
+- test sdk/src/__tests__/apply-patch.test.ts: exit 0
+- test sdk/src/__tests__/apply-patch-create-errors.test.ts: exit 0
+- test sdk/src/__tests__/change-file.test.ts: exit 0
 - typecheck packages/agent-runtime: exit 0
 - typecheck sdk: exit 0
 - quality: exit 0
@@ -254,6 +264,50 @@ false declaration.
 
 ### Missed Questions
 
+### Loop 4 — SDK boundaries and payload-free diagnostics (2026-10-13)
+
+- **RED:** SDK `change-file.ts` logs the attempted file body on catch and
+  returns a failed patch verbatim. Runtime file processors and `write_file`
+  also log content/patch bodies. Patch parser errors can embed context lines.
+  `applyPatchTool` rejects a valid empty patched string using a falsy check.
+  The frozen-result repair has no production handler regression test, and
+  the missing-directory outcome still forwards raw exception text.
+- **GREEN:** Preserve all edit and matching strategies. Reuse the existing
+  `diagnoseMissingEdit` authority for bounded patch context evidence; redact
+  snippets before truncation. Never return raw failed patches or parser line
+  payloads. Log only path, sizes and a validated filesystem code; carry safe
+  recovery advice on filesystem failures. Distinguish null failure from a
+  valid empty file. Pin frozen success results through `handleStrReplace`.
+- **AUDIT plan:** Test real adapter failure paths with isolated injected
+  filesystems: unchanged targets on mismatch, redacted candidate evidence,
+  absent raw patch/body in results and logs, successful empty-file patches,
+  actionable missing-directory outcomes and frozen client-result preservation.
+  Add SDK and handler tests to this record's declared gates once they exist.
+- **ADVERSARIAL / convergence:** A candidate is evidence, never permission to
+  auto-apply a different edit. Diagnostic context is bounded and reported as
+  inspected context only; parser exceptions never echo user lines. Logging
+  controls cover both success and failure paths. Historical unknown causes and
+  exposure-qualified closure remain open. This recorded design authorizes the
+  named source changes under the master's existing level-3 grant.
+- **AUDIT evidence:** The four new SDK regressions failed before the repairs.
+  After correction, five SDK boundary cases PASS and the four focused runtime
+  suites report 23 PASS / zero FAIL. All 11 expanded declared gates PASS,
+  including the real frozen-result handler, SDK legacy compatibility suites,
+  both workspace typechecks and quality. Full root typecheck, scoped ESLint,
+  scoped formatting and call-graph checks PASS.
+- **Self-correction:** A broad runtime run exposed an unsupported Bun export
+  from `node:util` in the first error-code helper. The helper now derives its
+  code allowlist from supported `node:os` errno constants; SDK boundary tests
+  were re-run after that correction. Raw exception text remains excluded.
+- **Production reachability:** `change-file.ts` and `apply-patch.ts` call
+  `diagnosePatchFailure`; `formatPatchFailureMessage` classifies parser errors;
+  `list-directory.ts` and `change-file.ts` consume `filesystemErrorCode`.
+  Shared `diagnoseMissingEdit` serves both runtime replacement and SDK patch
+  diagnostics. No second matching algorithm or automatic patch retry was added.
+- **Observation:** Live census remains 589 rows / 58 stable classes / zero
+  issues. No capture row, repair boundary or production exposure was fabricated.
+  Unknown historical causes cannot be recovered from the old first-line rows.
+
 1. **Which cause dominates — line endings, staleness, or wrong targets?** → This record does not
    know and does not claim to: the trace stores each failure's first line, so the split is
    unmeasured. Step 1 measures it before the fix is designed in detail, and the three causes are
@@ -327,13 +381,12 @@ false declaration.
   (29/19/12/3/3/2/2/1) — pasted verbatim in Loop 3.
 - **Archived:** not archived. Per FID-2026-1012-022's closure condition a child closes only when its
   classes show no new records in the declared window; the window has not started.
-- **Open, and why this record is not `closed`:** (a) the recurrence window has not run, so no class
-  claim and no fix boundary exist; (b) the `patch-failed` classes (17 records) were not repaired —
-  their message already carries path, strategies, last error and the re-read action, but not a
-  nearest-candidate diff, which is a larger change than this pass warranted; (c) the single
-  `list_directory` `directory-missing` record is untouched; (d) the `immutable-result` mutation is
-  removed without a regression test at the handler boundary (no `handleStrReplace` test harness exists)
-  and without a proven production trigger — both stated as open rather than counted as done.
+- **Open, and why this record is not `closed`:** The recurrence window has not
+  run, so no class claim or fix boundary exists. Loop 4 completes bounded SDK
+  patch diagnosis, safe missing-directory recovery and the frozen-result
+  regression test at `handleStrReplace`. Original production causes lost from
+  historical rows and genuine exposure-qualified observation remain unproved.
+  A first-hunk diagnostic sample does not certify every later hunk's cause.
 
 - **Authorised write surface:** `SCOPE.md` → machine-readable scope targets → this record's
   line (registered 2026-10-12 with the root-cause matrix).
