@@ -159,16 +159,18 @@ Exact artifact paths and their `- gate:` declarations are recorded when the arti
 
 - gate: test scripts/__tests__/learnings-size-policy.test.ts
 - gate: test scripts/__tests__/learnings-retire.test.ts
+- gate: test scripts/__tests__/learnings-retirement-recovery.test.ts
 - gate: probe scripts/learnings.ts
 - gate: probe scripts/scripts-typecheck-check.ts
 - gate: quality
 
 ### Verification Receipt
 
-- fingerprint: sha256:b10ad571215577672d363d3ba8dd5a8bddec6a937c61e28a0a459410196de402
-- verified: 2026-10-13T05:17:41.874Z
+- fingerprint: sha256:25283c6f83f09f382a022f7ec1a3396036e4dd33659891e77b25e8cd713cc599
+- verified: 2026-10-13T16:23:13.918Z
 - test scripts/__tests__/learnings-size-policy.test.ts: exit 0
 - test scripts/__tests__/learnings-retire.test.ts: exit 0
+- test scripts/__tests__/learnings-retirement-recovery.test.ts: exit 0
 - probe scripts/learnings.ts: exit 0
 - probe scripts/scripts-typecheck-check.ts: exit 0
 - quality: exit 0
@@ -256,6 +258,36 @@ Exact artifact paths and their `- gate:` declarations are recorded when the arti
   edited by this pass.
 
 ### Missed Questions
+
+### Loop 4 — Interrupted retirement recovery (2026-10-13)
+
+- **RED:** The writer archives, rewrites the live ledger, then appends the move
+  receipt. An append failure leaves a completed move without a record; the retry
+  returns early because the live ledger is already under cap. Loop 2 promised
+  interruption/retry recovery but the existing suite covers only completed runs.
+- **GREEN:** Persist a versioned pending transaction before changing any of the
+  three artifacts. Record before/after bytes for ledger, archive and receipt log.
+  Atomically replace each artifact; retries accept exactly its before or after
+  bytes, skip completed steps and refuse conflicts. Preserve archive-prefix bytes.
+  A live foreign owner blocks concurrent replay; dead owners and this synchronous
+  caller's interrupted transaction can resume. Corrupt journals fail closed.
+- **AUDIT:** Add a dependency-injected committed-file writer for fault controls;
+  test interruption after archive/ledger/receipt, conflict refusal and idempotent
+  recovery. Journal recovery runs before the under-cap return. No production
+  retirement or fabricated move record is performed in this verification.
+- **ADVERSARIAL:** A journal is not proof of a completed move. Publish receipt
+  only after ledger/archive writes; remove the journal only after every expected
+  artifact matches. Refuse mismatched bytes and never guess how to merge edits.
+- **CHANGE DELTA:** Recorded before source writes under existing level-3 authority.
+
+### Recovery review questions
+
+1. Is receipt-last alone sufficient? No: it needs a durable intent to recover a
+   receipt failure after the live entry has already moved.
+2. Can a retry overwrite operator edits? No: each file must match the original
+   or intended result exactly; conflicting bytes stop recovery.
+3. Can an old pending transaction be replayed by two live processes? The pending
+   journal names the synchronous writer's PID; foreign live owners are refused.
 
 1. Should the ceiling rise instead of being enforced? → Enforcement first. Raising a limit
    whose breach is invisible moves the discovery to the next truncation; the review records the

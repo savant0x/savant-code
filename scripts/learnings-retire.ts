@@ -23,7 +23,13 @@ import * as fs from 'node:fs'
 import * as path from 'node:path'
 
 import { lessonSpans } from './learnings-locator.js'
-import { LEARNINGS_INSERTION_MARKER } from './learnings-schema.js'
+import { removeLessonSpans } from './learnings-retirement-spans.js'
+import {
+  commitRetirement,
+  resumeRetirement,
+} from './learnings-retirement-transaction.js'
+
+import type { RetirementFileWriter } from './learnings-retirement-transaction.js'
 
 export const LEARNINGS_PATH = path.join('dev', 'LEARNINGS.md')
 export const RETIRED_PATH = path.join('dev', 'LEARNINGS-RETIRED.md')
@@ -31,7 +37,7 @@ export const RETIRED_PATH = path.join('dev', 'LEARNINGS-RETIRED.md')
  * FID-2026-1012-011: the move record. Retirement is still the operator's
  * decision and still move-only, but what moved — and when, and why, and where
  * it went — is now a durable, machine-readable artifact rather than only a git
- * history. `FID-2026-1012-012` resolves retired titles through it.
+ * history. `FID-2026-1012-012` resolves titles through the shared live/retired index.
  */
 export const MOVE_RECORD_PATH = path.join('dev', 'learnings-move-log.jsonl')
 export const DEFAULT_LINE_CAP = 1200
@@ -140,69 +146,15 @@ export function retireLessons(
   return { retired, linesBefore: totalLines, linesAfter: measure(kept) }
 }
 
-/** Byte offset where a retired lesson's own content ends: after its last
- * `- **Field:**` line. Everything beyond — inter-lesson prose, the insertion
- * marker, the legacy boundary — is structural or ungoverned content that must
- * survive the rewrite byte-identical. (FID-2026-0916-007: the previous
- * marker-recovery heuristic dropped prose between the lesson and the marker.) */
-function retainedTailStart(block: string): number {
-  let lastFieldEnd = -1
-  const fieldRe = /^- \*\*[^*]+:\*\*.*$/gm
-  for (const match of block.matchAll(fieldRe)) {
-    lastFieldEnd = (match.index ?? 0) + match[0].length
-  }
-  if (lastFieldEnd !== -1) {
-    const newline = block.indexOf('\n', lastFieldEnd)
-    return newline === -1 ? block.length : newline + 1
-  }
-  // No structured fields (malformed block): fall back to the first structural
-  // marker; without one the whole block retires.
-  return block.indexOf(LEARNINGS_INSERTION_MARKER)
-}
-
-/** Remove every `## Lesson:` block whose title is in `titles`, leaving all
- * other content — inter-lesson prose, the boundary marker, the insertion
- * marker — byte-identical in place. (FID-2026-0916-007: the previous rebuild
- * dropped every non-lesson byte when it reconstructed the file from lesson
- * blocks.) */
-function removeLessonSpans(content: string, titles: Set<string>): string {
-  const parts = content.split(/^## Lesson:/m)
-  let out = parts[0] ?? ''
-  for (let i = 1; i < parts.length; i += 1) {
-    const block = parts[i] ?? ''
-    const title = (block.split('\n', 1)[0] ?? '').trim()
-    if (!titles.has(title)) {
-      out += `## Lesson:${block}`
-      continue
-    }
-    // A retired lesson must not take trailing prose or structural markers
-    // with it — only the lesson's own span is removed.
-    const tailStart = retainedTailStart(block)
-    if (tailStart !== -1) out += block.slice(tailStart)
-  }
-  return out
-}
-
-/** Append one JSON line per completed move. Called only after the archive and
- * the ledger rewrite have both succeeded, so a receipt never describes a move
- * that did not finish (FID-2026-1012-011 Loop 2). */
-function appendMoveRecords(
-  rootDir: string,
-  records: LearningsMoveRecord[],
-): void {
-  if (records.length === 0) return
-  const recordFile = path.join(rootDir, MOVE_RECORD_PATH)
-  const body = records.map((record) => JSON.stringify(record)).join('\n')
-  fs.appendFileSync(recordFile, `${body}\n`, 'utf8')
-}
-
 /** Apply retirement to disk: append retired blocks to the archive, rewrite
  * LEARNINGS.md with the kept blocks. The archive is append-only — existing
  * archive content is read back and preserved verbatim. */
 export function applyRetirement(
   rootDir: string,
-  opts: { cap?: number } = {},
+  opts: { cap?: number; write?: RetirementFileWriter } = {},
 ): RetireResult {
+  const recovered = resumeRetirement(rootDir, opts.write)
+  if (recovered) return recovered
   const learningsFile = path.join(rootDir, LEARNINGS_PATH)
   if (!fs.existsSync(learningsFile)) {
     return { retired: [], linesBefore: 0, linesAfter: 0 }
@@ -216,25 +168,15 @@ export function applyRetirement(
     retiredTitles.has(e.title),
   )
 
-  // Archive: append-only — preserve whatever is already there.
-  const retiredFile = path.join(rootDir, RETIRED_PATH)
-  const archiveHead = fs.existsSync(retiredFile)
-    ? fs.readFileSync(retiredFile, 'utf8').trimEnd()
-    : '# Retired Learnings (FID-2026-0824-012 S3-C — move-only archive)\n\n' +
-      '> Entries retired from dev/LEARNINGS.md are appended here verbatim.\n' +
-      '> Rules are never deleted — this archive is append-only.\n\n'
   const archiveBody = retired.map((e) => e.block.trimEnd()).join('\n\n---\n\n')
-  fs.writeFileSync(retiredFile, `${archiveHead}\n\n${archiveBody}\n`, 'utf8')
-  fs.writeFileSync(
-    learningsFile,
-    removeLessonSpans(content, retiredTitles),
-    'utf8',
-  )
-
-  // The move record is written last: it describes a move that completed.
-  appendMoveRecords(
-    rootDir,
-    retired.map((entry) => ({
+  const ledgerAfter = removeLessonSpans(content, retiredTitles)
+  return commitRetirement({
+    root: rootDir,
+    ledgerBefore: content,
+    ledgerAfter,
+    archiveBody,
+    write: opts.write,
+    records: retired.map((entry) => ({
       title: entry.title,
       date: fieldOf(entry.block, 'Date'),
       reason:
@@ -243,10 +185,9 @@ export function applyRetirement(
       destination: RETIRED_PATH,
       retiredAt: new Date().toISOString(),
       linesBefore: result.linesBefore,
-      linesAfter: result.linesAfter,
+      linesAfter: ledgerAfter.split(/\r?\n/).length,
     })),
-  )
-  return result
+  })
 }
 
 /** Parse `--cap <n>` defensively: absent flag falls back to the default, and
