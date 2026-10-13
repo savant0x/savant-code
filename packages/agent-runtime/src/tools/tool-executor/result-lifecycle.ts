@@ -8,7 +8,7 @@ import {
 import {
   hasCommandFailure,
   hasToolResultError,
-  toolResultErrorLine,
+  inspectToolResultFailure,
 } from './tool-result-errors'
 import { extractFailingPathsFromContent } from './verification-failure-paths'
 import { isWriteToolName, resolveFidIdForWrite } from './write-bookkeeping'
@@ -260,7 +260,11 @@ export async function runSuccessLifecycle<T extends ToolName>(
   // only, fire-and-forget. A tool whose result carries an error counts as
   // a PostToolUseFailure so the event has an honest caller.
   if (hookProjectRoot) {
-    const failed = hasToolResultError(toolResult.content)
+    // FID-2026-1012-023: one traversal yields the failure line AND the
+    // identity of the value that produced it, so the record can name the tool
+    // that was executed and not only the one the message mentions.
+    const inspection = inspectToolResultFailure(toolResult.content)
+    const failed = inspection.failed
     getHookEngine(hookProjectRoot).fireAndForgetTrigger(
       buildHookInput({
         event: failed ? 'PostToolUseFailure' : 'PostToolUse',
@@ -271,8 +275,9 @@ export async function runSuccessLifecycle<T extends ToolName>(
         toolResult: toolResult.content as unknown as JSONValue,
         // FID-2026-0909-005: surface the real error text so the ledger's
         // dedup key groups by error class; generic = shape-drift fallback.
-        ...(failed
-          ? { errorMessage: toolResultErrorLine(toolResult.content) }
+        ...(failed ? { errorMessage: inspection.line } : {}),
+        ...(failed && inspection.commandExecution
+          ? { commandExecution: inspection.commandExecution }
           : {}),
       }),
     )

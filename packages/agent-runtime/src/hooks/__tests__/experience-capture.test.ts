@@ -102,6 +102,48 @@ describe('buildExperienceRecord', () => {
     expect(record.contextHash).toBe('')
   })
 
+  test('transports the execution identity of a delegated abort (FID-2026-1012-023)', () => {
+    const record = buildExperienceRecord({
+      ...FAILURE_INPUT,
+      tool_name: 'run_readonly_command',
+      error_message: 'Tool call aborted: run_terminal_command',
+      command_execution: {
+        executionOutcome: 'cancelled',
+        executionStarted: false,
+        executedToolName: 'run_terminal_command',
+        terminationState: 'not-started',
+      },
+    })
+
+    // `toolName` stays the caller; the executed tool is now a field of the
+    // record rather than only a name inside the message.
+    expect(record.toolName).toBe('run_readonly_command')
+    expect(record.commandExecution).toEqual({
+      executionOutcome: 'cancelled',
+      executionStarted: false,
+      executedToolName: 'run_terminal_command',
+      terminationState: 'not-started',
+    })
+  })
+
+  test('drops a foreign execution identity instead of writing it to the ledger', () => {
+    const foreign = {
+      executionOutcome: 'not-an-outcome',
+      executedToolName: 7,
+    } as unknown as HookInputData['command_execution']
+    const record = buildExperienceRecord({
+      ...FAILURE_INPUT,
+      command_execution: foreign,
+    })
+    expect(record.commandExecution).toBeUndefined()
+  })
+
+  test('omits the identity field when the payload carries none', () => {
+    expect(
+      buildExperienceRecord(FAILURE_INPUT).commandExecution,
+    ).toBeUndefined()
+  })
+
   test('preserves native cause metadata through capture without storing inputs', () => {
     const record = buildExperienceRecord({
       ...FAILURE_INPUT,

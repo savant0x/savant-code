@@ -5,6 +5,7 @@ import type {
   ClientToolName,
   SavantCodeToolOutput,
 } from '@savant-code/common/tools/list'
+import type { CommandExecutionMetadata } from '@savant-code/common/util/command-execution'
 
 /**
  * Client-tool bridge (extracted verbatim from `tool-executor/native.ts` —
@@ -32,11 +33,22 @@ export function createClientToolBridge<T extends ToolName>(deps: {
     clientToolCall: ClientToolCall<T extends ClientToolName ? T : never>,
   ) => {
     if (signal.aborted) {
+      // FID-2026-1012-023: attribution, not prose. This is the site that made
+      // the ledger record `run_readonly_command` while its message named
+      // `run_terminal_command`; the metadata now carries the tool that was
+      // executed, so the failure routes to its owner by identity.
+      const cancellation: CommandExecutionMetadata = {
+        executionOutcome: 'cancelled',
+        executionStarted: false,
+        executedToolName: clientToolCall.toolName,
+        terminationState: 'not-started',
+      }
       return [
         {
           type: 'json',
           value: {
             errorMessage: `Tool call aborted: ${clientToolCall.toolName}`,
+            ...cancellation,
           },
         },
       ] as SavantCodeToolOutput<T extends ClientToolName ? T : never>

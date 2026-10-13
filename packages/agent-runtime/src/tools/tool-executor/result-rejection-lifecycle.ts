@@ -1,3 +1,5 @@
+import { commandExecutionMetadata } from '@savant-code/common/util/command-execution'
+
 import { markToolOutcomeReady } from './tool-outcome-state'
 import { buildHookInput, getHookEngine } from '../../hooks/engine'
 
@@ -42,6 +44,10 @@ export async function runRejectionLifecycle<T extends ToolName>(
   markToolOutcomeReady(toolCall.toolCallId)
   // FID-2026-0814-003: PostToolUseFailure from the rejection path.
   if (hookProjectRoot) {
+    // FID-2026-1012-023: a timeout rejects with an error that CARRIES its own
+    // execution identity, so the ledger can attribute the failure to the tool
+    // that ran and the budget it hit instead of a bare message.
+    const commandExecution = commandExecutionMetadata(error)
     getHookEngine(hookProjectRoot).fireAndForgetTrigger(
       buildHookInput({
         event: 'PostToolUseFailure',
@@ -50,6 +56,9 @@ export async function runRejectionLifecycle<T extends ToolName>(
         toolName,
         toolInput: toolCall.input as Record<string, JSONValue>,
         errorMessage,
+        ...(Object.keys(commandExecution).length > 0
+          ? { commandExecution }
+          : {}),
       }),
     )
   }

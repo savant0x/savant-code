@@ -2,6 +2,11 @@ import { spawn } from 'child_process'
 import * as os from 'os'
 import * as path from 'path'
 
+import {
+  CommandTimeoutError,
+  validateCommandTimeoutSeconds,
+} from '@savant-code/common/util/command-execution'
+
 import { BoundedOutputBuffer } from './bounded-output-buffer'
 import {
   KILL_ESCALATION_MS,
@@ -39,6 +44,7 @@ export function runTerminalCommand({
   signal?: AbortSignal
 }): Promise<SavantCodeToolOutput<'run_terminal_command'>> {
   return new Promise((resolve, reject) => {
+    validateCommandTimeoutSeconds(timeout_seconds)
     const isWindows = os.platform() === 'win32'
     // FID-2026-0919-008 (SEC-1): the child shell gets an ALLOWLISTED env,
     // not the full process env — `getSystemProcessEnv()` carries every
@@ -60,7 +66,12 @@ export function runTerminalCommand({
           type: 'json',
           value: {
             command,
-            message: 'Command cancelled: the run was aborted by the user.',
+            errorMessage:
+              'Command cancelled: the run was aborted before execution started.',
+            executionOutcome: 'cancelled',
+            executionStarted: false,
+            executedToolName: 'run_terminal_command',
+            terminationState: 'not-started',
           },
         },
       ])
@@ -141,7 +152,13 @@ export function runTerminalCommand({
             stdout: stdout.format(),
             ...(stderr.retainedLength > 0 ? { stderr: stderr.format() } : {}),
             message:
-              'Command interrupted: the run was aborted by the user and the process was killed before it completed.',
+              'Command interrupted: termination requested after the run was cancelled; verify cleanup before another execution.',
+            errorMessage:
+              'Command cancelled: execution did not complete; termination was requested.',
+            executionOutcome: 'cancelled',
+            executionStarted: true,
+            executedToolName: 'run_terminal_command',
+            terminationState: 'requested',
           },
         },
       ])
@@ -161,7 +178,11 @@ export function runTerminalCommand({
           signal?.removeEventListener('abort', onAbort)
           killChildProcess()
           reject(
-            new Error(`Command timed out after ${timeout_seconds} seconds`),
+            new CommandTimeoutError(
+              timeout_seconds,
+              'run_terminal_command',
+              childProcess.pid !== undefined,
+            ),
           )
         }
       }, timeout_seconds * 1000)

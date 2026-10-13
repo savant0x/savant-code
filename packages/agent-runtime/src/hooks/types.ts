@@ -4,6 +4,7 @@ import type {
 } from '@savant-code/common/types/experience'
 import type { HookEvent } from '@savant-code/common/types/hooks'
 import type { JSONValue } from '@savant-code/common/types/json'
+import type { CommandExecutionMetadata } from '@savant-code/common/util/command-execution'
 
 /**
  * FID-2026-0814-003 — runtime hook payload types.
@@ -25,6 +26,12 @@ export type HookInputData = {
   arguments_truncated?: boolean
   finish_reason?: string
   subagent_type?: string
+  /**
+   * FID-2026-1012-023: identity of a failed command execution — the caller
+   * (`tool_name`) and the tool that actually ran. Narrowed metadata only; it
+   * never carries output, arguments or an exception.
+   */
+  command_execution?: CommandExecutionMetadata
   [key: string]: unknown
 }
 

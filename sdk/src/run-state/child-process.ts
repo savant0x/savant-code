@@ -1,7 +1,13 @@
+import {
+  CommandTimeoutError,
+  SESSION_INIT_TIMEOUT_MS,
+  validateSessionInitBounds,
+} from '@savant-code/common/util/command-execution'
+
 import type { SavantCodeSpawn } from '@savant-code/common/types/spawn'
 
 /** Max time (ms) a session-init child process (e.g. git) may run. */
-export const CHILD_PROCESS_TIMEOUT_MS = 10_000
+export const CHILD_PROCESS_TIMEOUT_MS = SESSION_INIT_TIMEOUT_MS
 /** Max accumulated stdout/stderr kept for session-init commands. */
 export const CHILD_PROCESS_MAX_BUFFER_BYTES = 5_000_000
 
@@ -19,6 +25,7 @@ export function childProcessToPromise(
   maxBufferBytes: number = CHILD_PROCESS_MAX_BUFFER_BYTES,
 ): Promise<{ stdout: string; stderr: string }> {
   return new Promise((resolve, reject) => {
+    validateSessionInitBounds(timeoutMs, maxBufferBytes)
     let stdout = ''
     let stderr = ''
     let settled = false
@@ -33,8 +40,34 @@ export function childProcessToPromise(
 
     timer = setTimeout(() => {
       settled = true
-      proc.kill?.()
-      reject(new Error(`Command timed out after ${timeoutMs}ms`))
+      try {
+        if (typeof proc.kill !== 'function' || !proc.kill()) {
+          reject(
+            new CommandTimeoutError(
+              timeoutMs / 1000,
+              'session-init',
+              proc.pid !== undefined,
+              'unavailable',
+            ),
+          )
+          return
+        }
+      } catch (error) {
+        reject(
+          new Error(
+            'Session-init command timed out; its termination request failed.',
+            { cause: error },
+          ),
+        )
+        return
+      }
+      reject(
+        new CommandTimeoutError(
+          timeoutMs / 1000,
+          'session-init',
+          proc.pid !== undefined,
+        ),
+      )
     }, timeoutMs)
 
     proc.stdout?.on('data', (data: Buffer) => {

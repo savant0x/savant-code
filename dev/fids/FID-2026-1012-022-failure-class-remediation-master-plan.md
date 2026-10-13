@@ -354,7 +354,7 @@ activation), and the child's id is recorded in this table when it exists.
 | T62-followups — TokenHarbor / TokenRouter | C7 | *drafted at wave start* | blocked — provider credits |
 | T187 — skills `version` frontmatter | C8 | *drafted at wave start* | blocked — operator `/skills trust` surface |
 | FID-2026-1012-024 — class taxonomy and horizon | A0 | `-024` | converged (design); worked first |
-| FID-2026-1012-023 — execution reliability | A0 | `-023` | converged (design) |
+| FID-2026-1012-023 — execution reliability | A0 | `-023` | **fixed** — implementation + 11 declared gates green (sdk 633 PASS, agent-runtime 2,048 PASS, root typecheck, quality, eslint); recurrence window not yet started, so no class claim |
 | FID-2026-1012-017 — emission (193 records) | A1 | `-017` | converged (design) |
 | FID-2026-1012-018 — fetch (181) | A1 | `-018` | converged (design) |
 | FID-2026-1012-019 — capability integrity (50) | A1 | `-019` | converged (design) |
@@ -487,6 +487,19 @@ classes, all unresolved. It does not replace the historical 68-row baseline abov
 FID-2026-1012-025 records verified harness drift discovered by the broad implementation
 battery. Repair that deterministic verification dependency before continuing the class
 lanes. No production closure, push or publication is implied by this authority.
+
+Two findings from the `-023` lane are **recorded and still unowned**, so a later wave does not have to
+rediscover them:
+
+1. `toMatchObject` with an asymmetric matcher **mutates the received value** on Bun 1.3.14
+   (`expect({a:'x'}).toMatchObject({a: expect.stringContaining('x')})` leaves `typeof a === 'object'`).
+   It silently corrupts a raw tool result before a schema parses it; the `-023` contract test was
+   rewritten to parse first, but no other suite was audited. Needs its own harness record.
+2. `bun run validate:repository` exits 1 on `quality.ratchet`:
+   `scripts/providers/audit-probes/parity-tier1-catalog-probe.ts` is 312 lines against the 300
+   absolute maximum, and both fresh parity probes are prettier-dirty. Those files belong to the
+   provider-parity lane and were reported rather than edited; the owning lane must split and format
+   them.
 
 ### Original review questions
 

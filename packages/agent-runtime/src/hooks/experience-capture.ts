@@ -6,6 +6,7 @@ import {
   EXPERIENCES_DIR_NAME,
   RAW_TRACES_FILE_NAME,
 } from '@savant-code/common/types/experience'
+import { commandExecutionMetadataSchema } from '@savant-code/common/util/command-execution'
 import { experienceClassIdentity } from '@savant-code/common/util/experience-classes'
 import {
   canonicalToolInput,
@@ -49,6 +50,11 @@ export function buildExperienceRecord(input: HookInputData): ExperienceRecord {
   const toolInput =
     input.tool_input !== undefined ? canonicalToolInput(input.tool_input) : ''
   const toolName = typeof input.tool_name === 'string' ? input.tool_name : ''
+  // FID-2026-1012-023: the identity travels only if it validates — a foreign
+  // or malformed payload is dropped rather than written into the ledger.
+  const commandExecution = commandExecutionMetadataSchema.safeParse(
+    input.command_execution,
+  )
   const identity = experienceClassIdentity({
     toolName,
     errorFirstLine,
@@ -75,6 +81,9 @@ export function buildExperienceRecord(input: HookInputData): ExperienceRecord {
       : {}),
     ...(input.finish_reason !== undefined
       ? { finishReason: input.finish_reason }
+      : {}),
+    ...(commandExecution.success
+      ? { commandExecution: commandExecution.data }
       : {}),
   }
 }

@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-1012-023-command-execution-reliability.md`
 **ID:** FID-2026-1012-023
 **Severity:** medium
-**Status:** converged
+**Status:** fixed
 **Created:** 2026-10-12 23:10
 **Automation level:** 3
 **YAGNI-Compliance:** Verified
@@ -157,11 +157,17 @@ remove the records has not fixed the class.
 
 ## Verification Gates
 
-This record is **pre-implementation** (`Status: converged`), so **no gates are declared yet**.
-Declaring a `- gate: test <path>` before the artifact exists would be a false declaration, and
-`fid:verify` rejects exactly that. Gates are added under this heading when the status flips to
-`fixed`/`verified`: the recurrence probe, the timeout-content test, the two workspace typechecks and
-`quality`.
+- gate: test sdk/src/__tests__/command-execution-contract.test.ts
+- gate: test sdk/src/__tests__/run-terminal-command.test.ts
+- gate: test sdk/src/__tests__/run-state-child-process.test.ts
+- gate: test packages/agent-runtime/src/tools/tool-executor/client-tool-bridge.test.ts
+- gate: test packages/agent-runtime/src/tools/tool-executor/tool-result-errors.test.ts
+- gate: test packages/agent-runtime/src/tools/tool-executor/result-lifecycle.test.ts
+- gate: test packages/agent-runtime/src/hooks/__tests__/experience-capture.test.ts
+- gate: typecheck common
+- gate: typecheck sdk
+- gate: typecheck packages/agent-runtime
+- gate: quality
 
 ## Perfection Loop
 
@@ -206,6 +212,80 @@ Declaring a `- gate: test <path>` before the artifact exists would be a false de
 
 ### Missed Questions
 
+### Loop 3 — Implementation contract
+
+- **RED:** Direct SDK calls accept nonfinite budgets and negative values other than
+  the documented -1. SDK cancellation returns a success-shaped message; delegated
+  aborts name only the callee. Timeout rejection reports neither partial output nor
+  the distinction between requested termination and observed cleanup.
+- **GREEN:** Share finite timer validation and the unchanged 30-second/10-second
+  defaults. Keep -1 explicit for terminal calls and preserve valid long budgets.
+  Report controlled cancellation as an incomplete outcome, preserve caller/delegate/
+  executed-handler identity, and transport those fields through capture. Termination
+  is requested until close/cleanup evidence exists; never claim kill completion early.
+  Add actionable timeout advice and preserve bounded process-group escalation.
+- **AUDIT:** Producer-shaped SDK pins precede implementation; retain real process-tree
+  tests. Bind delegated-abort/lifecycle pins to captured identities. Run affected
+  workspaces and full root typecheck, lint, quality and repository validation.
+- **ADVERSARIAL:** Reject invalid budgets before spawning. Do not infer user intent
+  from an arbitrary abort signal, introduce background execution or replay commands.
+  Session-init kill failures must settle the promise rather than escape its timer.
+- **CHANGE DELTA:** Pre-write scope and impact recorded under automation level 3.
+
+### Loop 4 — Implementation and deterministic gates (2026-10-12)
+
+- **RED (re-measured):** unchanged — 13 classes / 27 records, last seen 2026-10-11. The abort seam the
+  Loop 1 RED marked NEEDS-REVIEW is located: `client-tool-bridge.ts:34` emitted
+  `Tool call aborted: ${clientToolCall.toolName}` with no identity, which is why the ledger holds a
+  `run_readonly_command` row whose message names `run_terminal_command`. The budget ladder is also
+  reproduced live in this pass: a repo-wide `grep` issued with the tool's default 30-second budget
+  timed out, and the same search under an explicit larger budget completed — the caller-side ladder,
+  observed.
+- **GREEN (implemented):**
+  - `common/src/util/command-execution.ts` — ONE `commandExecutionMetadataSchema` + `commandExecutionMetadata()`
+    narrowing authority; the public params module re-exports it (`run-terminal-command.ts:15`) instead of
+    holding a second definition, and the experience record validates against it (`experience.ts:76`).
+    `commandExecutionMetadata()` had **zero production callers** before this pass; it now has two.
+  - `tool-result-inspection.ts:37` — one traversal, two projections: the failure line and the identity of
+    the value that produced it (`inspectToolOutput`), with `inspectToolOutputFailure` retained as the
+    thin wrapper every existing caller and test uses.
+  - `tool-result-errors.ts:33` — `inspectToolResultFailure()` consumes that traversal once, so the
+    lifecycle no longer walks the result twice to get the line and its attribution.
+  - `result-lifecycle.ts:266` transports `commandExecution` on the failure hook; `result-rejection-lifecycle.ts:49`
+    narrows the THROWN error (a `CommandTimeoutError` carries its own identity) for the timeout path.
+  - `hooks/types.ts` + `hooks/engine.ts` + `experience-capture.ts:55` carry it into the record, and
+    `experience-capture.ts` **validates before writing**: a foreign or malformed payload is dropped
+    rather than appended to the ledger.
+  - `client-tool-bridge.ts:34` — the abort receipt now names the executed tool as a field
+    (`executedToolName`), alongside `executionOutcome: 'cancelled'`, `executionStarted: false` and
+    `terminationState: 'not-started'`, so an abort routes to its owner by identity instead of prose.
+- **AUDIT (deterministic, run in this pass):** `sdk` full suite 633 pass / 1 POSIX skip / 0 fail;
+  `packages/agent-runtime` full suite 2,048 pass / 0 fail across 314 files; full root `typecheck`
+  exit 0 (14 legs); `quality:report` PASS; repo-wide `eslint . --max-warnings 0` exit 0. New pins:
+  the timeout content pin drives a REAL process that outlives its budget (0.5 s) and asserts the budget
+  in the message, the narrowing advice, `timeoutSeconds`, `executedToolName` and the requested
+  termination state; the delegated-abort pin binds the bridge's receipt to the capture inspection that
+  reads it.
+- **ADVERSARIAL:** (a) *Is the class fixed, or merely re-worded?* Not claimed fixed — the falsifier is
+  the capture, and no post-fix window exists yet; the record states `fixed` on deterministic gates and
+  leaves the recurrence assertion open. (b) *Does a validation throw before spawn?* Yes — measured:
+  five non-finite/negative budgets reject with `Invalid timeout_seconds` and never spawn. (c) *Does the
+  record now carry content it should not?* No — the transported object is the narrowed identity only
+  (outcome, flags, tool names, budget); no output, arguments or exception is copied, and the capture
+  re-validates at the boundary. (d) *Can the batch path lose the identity?* No — the walker recurses
+  into `results` and pairs each inner failure with its own value's metadata, pinned by test.
+  (e) *Did the capture class key move?* No — `experienceClassIdentity` still receives only
+  `toolName`/`errorFirstLine`/`errorClass`/`expectedness`.
+- **DISCOVERED (verification harness, needs its own record):** `toMatchObject` with an asymmetric
+  matcher MUTATES the received object on Bun 1.3.14 — `expect({a:'x'}).toMatchObject({a: expect.stringContaining('x')})`
+  leaves `typeof a === 'object'`. It produced a false failure in this lane's first contract test by
+  corrupting the raw result before the output schema parsed it. The test now parses first and asserts
+  on the parse (robust either way); no claim is made that this is the only affected suite, and the
+  finding is carried to the session record and the register rather than left in this file.
+- **CHANGE DELTA:** implementation of the Loop 3 contract; the class lanes remain open.
+
+### Review questions
+
 1. **Should the timeout be raised automatically by the runtime, or should the model be told?** Told,
    with a bounded runtime escalation: an automatic raise hides the fact that the command shape is wrong,
    and the capture already shows the model re-issuing the same command with a bigger number — the
@@ -232,10 +312,20 @@ Declaring a `- gate: test <path>` before the artifact exists would be a false de
       and `sdk/src/run-state/child-process.ts:37`.
 - [x] The alias divergence is taken from the capture itself (a `run_readonly_command` record whose
       message names `run_terminal_command`), not from a reading of the alias code.
-- [x] **NEEDS-REVIEW:** the abort branch's location (`Tool call aborted: …`) was not found by the
-      searches run in this pass; the record marks it as the first thing to locate at implementation.
-- [x] **Not yet true, and deliberately not claimed:** the policy, the error text, the probe, the gates
-      and this record's receipt. No class is claimed to have stopped recurring.
+- [x] **Resolved at implementation:** the abort branch is `packages/agent-runtime/src/tools/tool-executor/client-tool-bridge.ts:34`
+      (`Tool call aborted: ${clientToolCall.toolName}`), reached from the `run_readonly_command` handler's
+      delegation to the `run_terminal_command` client tool. It now emits `executedToolName` as a field.
+- [x] Traceability of the transport, verified by grep at implementation (Law 4): the narrowed identity
+      reaches production through `result-lifecycle.ts:266` and `result-rejection-lifecycle.ts:49` into
+      `hooks/engine.ts` → `experience-capture.ts:55` → the record's `commandExecution` field. No new
+      function added in this lane has zero callers.
+- [x] Gates run and green at the implementation state: sdk 633 pass / 1 POSIX skip / 0 fail;
+      agent-runtime 2,048 pass / 0 fail; root `typecheck` exit 0; `quality:report` PASS; repo-wide
+      `eslint --max-warnings 0` exit 0; `lint:md` exit 0.
+- [ ] **Not yet true, and deliberately not claimed:** that any of the 13 classes has stopped recurring.
+      No fix boundary is recorded and no post-fix window has elapsed; the recurrence assertion stays
+      open and this record stays out of `closed` until the capture shows the classes absent over the
+      declared window.
 
 ## Boundaries
 
@@ -244,21 +334,67 @@ Declaring a `- gate: test <path>` before the artifact exists would be a false de
   `FID-2026-1012-024` (taxonomy), and a hand-off is made at RED with the re-measure as evidence.
 - No reproduction was driven: the mechanism is read from the tree and the volume from the capture.
 - The capture records only a failure's first line, so the nine budgets are certainly a floor on the
-  number actually used.
+  number actually used. The 13 classes are still live as of the last record (2026-10-11); this pass
+  changed the mechanism that records them, not the evidence that they occurred.
+- The observation window cannot be satisfied in the pass that implements the fix — the boundary that
+  starts it is recorded against the implementation commit, and the window then runs. This record
+  therefore stops at `fixed`; treating a green suite as the class-level proof is exactly the
+  substitution `FID-2026-1012-022` exists to refuse.
+- One discovery in this pass is a **verification-harness** finding, not a class: Bun 1.3.14's
+  `toMatchObject` mutates the received value when a key's expectation is an asymmetric matcher. It is
+  recorded in Loop 4 and carried to the session record; it is not repaired by this lane and is not
+  claimed as fixed.
 - Nothing was pushed.
 
 ## Resolution
 
-**Not implemented — `Status: converged` (pre-implementation, FID-2026-0915-004).**
+**Implemented — `Status: fixed` (deterministic gates green; recurrence assertion OPEN).**
 
-This record exists so this lane has an owner, a converged design and a register item with write
-authority; it made no source change. Whichever pass flips it to `fixed` rewrites this section in the
-closure format and adds the declared gates.
+Execution now has a contract in one place instead of a per-call number: `common/src/util/command-execution.ts`
+owns the schema, the narrowing reader, the finite-timer validation and the shared 30-second /
+10-second defaults; both public schemas validate budgets through it (`run-readonly-command.ts`,
+`run-terminal-command.ts`); a timeout rejects with `CommandTimeoutError`, which carries the budget
+that was hit, the advice to narrow or background rather than replay, and its own execution identity;
+session-init termination failures settle the promise instead of escaping their timer
+(`child-process.ts`); and an abort is attributed by field, not by prose
+(`client-tool-bridge.ts:34` → `result-lifecycle.ts:266` / `result-rejection-lifecycle.ts:49` →
+`experience-capture.ts:55`).
 
-- **Authorised write surface:** `SCOPE.md` → machine-readable scope targets → this record's line.
+Evidence at this state: sdk 633 PASS / 1 POSIX-only SKIP / 0 FAIL; agent-runtime 2,048 PASS / 0 FAIL
+across 314 files; full root `typecheck` exit 0; `quality:report` PASS; repo-wide
+`eslint . --max-warnings 0` exit 0; `lint:md` exit 0. The declared gates are listed above and stamped
+below.
+
+**Receipt NOT stamped, and why (measured, not excused).** `bun run fid:verify <this record> --write`
+ran every declared gate live: **10 of 11 pass** (all seven test gates, all three typechecks), and
+`quality` exits 1 with a single violation that is **not this lane's**:
+`scripts/providers/audit-probes/parity-tier1-catalog-probe.ts: 312 lines exceeds absolute maximum 300`
+(an untracked in-flight probe of the provider-parity lane, written during this pass). The quality gate
+is repo-wide and fail-closed, so no receipt can be stamped while that file is over the ceiling — and
+the file sits outside this record's authorised write surface, so editing it is a Law 2 violation
+rather than a shortcut. The gate list above is kept whole: the honest state is "one gate blocked by a
+foreign file", never a shorter list that passes. When the owning lane splits that file, re-run
+`fid:verify --write` to stamp the receipt against this record's unchanged content.
+
+**Open, and the reason this record is not `closed`:** the 13 classes have not been shown to have
+stopped recurring. The next step is `FID-2026-1012-024`'s instrument's own mechanism — record the fix
+boundary for each class against the implementation commit, then let
+`scripts/experiences-recurrence.ts` run the declared window (14 days / 3 sessions). A class that
+reappears inside the window returns this record to RED; only a clean window writes the lesson. For that
+reason the recurrence probe is deliberately **not** among the declared gates: while the classes carry
+no fix boundary, `scripts/experiences-recurrence.ts` truthfully reports `incomplete-observation` and
+exits non-zero, and declaring it would make `fid:verify` red on a correct today-state.
+
+- **Authorised write surface:** `SCOPE.md` → machine-readable scope targets → this record's line
+  (`sdk/src/tools/run-terminal-command.ts`, `sdk/src/run-state/**`, `common/src/util/command-execution.ts`,
+  `common/src/types/experience.ts`, `common/src/tools/params/tool/**`,
+  `packages/agent-runtime/src/tools/**`, `packages/agent-runtime/src/hooks/**`,
+  `dev/experiences/class-owners.json`, the two sdk test paths).
 - **Master program:** `FID-2026-1012-022` (census rows 18, 26, 30, 41, 42, 43, 49, 52, 53, 56, 62, 63,
   66).
 - **Design record:** `docs/design/learnings-root-cause-matrix.md` — RC6 and feature E6.
+- **Class-level claim:** none made here. This record fixes the mechanism the classes were recorded
+  through; the capture decides when the classes are gone.
 
 ## Lessons Learned
 

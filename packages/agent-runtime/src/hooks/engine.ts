@@ -11,6 +11,7 @@ import type {
 } from '@savant-code/common/types/experience'
 import type { HookConfig, HookEvent } from '@savant-code/common/types/hooks'
 import type { JSONValue } from '@savant-code/common/types/json'
+import type { CommandExecutionMetadata } from '@savant-code/common/util/command-execution'
 
 /**
  * FID-2026-0814-003 — hook engine: per-event matching, parallel execution,
@@ -136,6 +137,8 @@ export function buildHookInput(params: {
   argumentsTruncated?: boolean
   finishReason?: string
   subagentType?: string
+  /** FID-2026-1012-023: narrowed identity of a failed command execution. */
+  commandExecution?: CommandExecutionMetadata
 }): HookInputData {
   return {
     hook_event_name: params.event,
@@ -163,6 +166,9 @@ export function buildHookInput(params: {
       : {}),
     ...(params.subagentType !== undefined
       ? { subagent_type: params.subagentType }
+      : {}),
+    ...(params.commandExecution !== undefined
+      ? { command_execution: params.commandExecution }
       : {}),
   }
 }

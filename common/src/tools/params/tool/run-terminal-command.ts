@@ -1,35 +1,39 @@
 import z from 'zod/v4'
 
+import {
+  DEFAULT_COMMAND_TIMEOUT_SECONDS,
+  commandExecutionMetadataSchema,
+  isValidCommandTimeoutSeconds,
+} from '../../../util/command-execution'
 import { $getNativeToolCallExampleString, jsonToolResultSchema } from '../utils'
 
 import type { $ToolParams } from '../../constants'
 
-export const terminalCommandOutputSchema = z.union([
-  z.object({
+// FID-2026-1012-023: ONE definition, re-exported here. The capture payload and
+// the experience record validate against the same schema, so a metadata field
+// cannot be accepted by the tool result and silently dropped by the ledger.
+export { commandExecutionMetadataSchema }
+
+const commandOutputBaseSchema = z
+  .object({
     command: z.string(),
     startingCwd: z.string().optional(),
     message: z.string().optional(),
     stderr: z.string().optional(),
     stdout: z.string().optional(),
     exitCode: z.number().optional(),
-  }),
-  z.object({
-    command: z.string(),
-    startingCwd: z.string().optional(),
-    message: z.string().optional(),
-    stderr: z.string().optional(),
-    stdoutOmittedForLength: z.literal(true),
-    exitCode: z.number().optional(),
-  }),
-  z.object({
-    command: z.string(),
+  })
+  .extend(commandExecutionMetadataSchema.shape)
+
+// Specific outcomes must precede the broad success shape to preserve their fields.
+export const terminalCommandOutputSchema = z.union([
+  commandOutputBaseSchema.extend({ errorMessage: z.string() }),
+  commandOutputBaseSchema.extend({ stdoutOmittedForLength: z.literal(true) }),
+  commandOutputBaseSchema.extend({
     processId: z.number(),
     backgroundProcessStatus: z.enum(['running', 'completed', 'error']),
   }),
-  z.object({
-    command: z.string(),
-    errorMessage: z.string(),
-  }),
+  commandOutputBaseSchema,
 ])
 
 export const gitCommitGuidePrompt = `
@@ -118,7 +122,11 @@ const inputSchema = z
       ),
     timeout_seconds: z
       .number()
-      .default(30)
+      .refine(
+        isValidCommandTimeoutSeconds,
+        'Use -1 for no timeout or a finite nonnegative value within the timer range.',
+      )
+      .default(DEFAULT_COMMAND_TIMEOUT_SECONDS)
       .optional()
       .describe(`Set to -1 for no timeout. Default 30`),
   })

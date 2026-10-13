@@ -2,6 +2,10 @@ import z from 'zod/v4'
 
 import { $getNativeToolCallExampleString, jsonToolResultSchema } from '../utils'
 import { terminalCommandOutputSchema } from './run-terminal-command'
+import {
+  DEFAULT_COMMAND_TIMEOUT_SECONDS,
+  isValidCommandTimeoutSeconds,
+} from '../../../util/command-execution'
 
 import type { $ToolParams } from '../../constants'
 
@@ -31,7 +35,11 @@ const inputSchema = z
       ),
     timeout_seconds: z
       .number()
-      .default(30)
+      .refine(
+        isValidCommandTimeoutSeconds,
+        'Use -1 for no timeout or a finite nonnegative value within the timer range.',
+      )
+      .default(DEFAULT_COMMAND_TIMEOUT_SECONDS)
       .optional()
       .describe('Set to -1 for no timeout. Default 30'),
   })

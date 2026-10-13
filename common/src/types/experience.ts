@@ -1,5 +1,7 @@
 import { z } from 'zod/v4'
 
+import { commandExecutionMetadataSchema } from '../util/command-execution'
+
 /**
  * FID-2026-0824-012 Phase 1 — mechanical experience capture.
  *
@@ -66,6 +68,12 @@ export const experienceRecordSchema = z.object({
   expectedness: z.enum(EXPERIENCE_EXPECTEDNESS).optional(),
   argumentsTruncated: z.boolean().optional(),
   finishReason: z.string().optional(),
+  /**
+   * FID-2026-1012-023: narrowed identity of a failed command execution, so an
+   * abort or timeout is attributable to the tool that actually ran rather
+   * than to whichever name its message happened to contain.
+   */
+  commandExecution: commandExecutionMetadataSchema.optional(),
   /** New captures use the canonical credential redactor; historical rows stay unaltered. */
   redacted: z.literal(true).optional(),
 })

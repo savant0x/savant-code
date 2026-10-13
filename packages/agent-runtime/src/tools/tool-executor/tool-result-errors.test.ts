@@ -3,6 +3,7 @@ import { describe, expect, it } from 'bun:test'
 import {
   extractToolResultError,
   hasToolResultError,
+  inspectToolResultFailure,
   toolResultErrorLine,
 } from './tool-result-errors'
 
@@ -162,3 +163,102 @@ describe('toolResultErrorLine (lifecycle-site helper)', () => {
     expect(toolResultErrorLine(null).length).toBeGreaterThan(0)
   })
 })
+
+describe('inspectToolResultFailure (FID-2026-1012-023 identity transport)', () => {
+  it('pairs the failing value with the identity it declares', () => {
+    // The delegated-abort shape the ledger recorded as `run_readonly_command`
+    // with a message naming `run_terminal_command`.
+    const inspection = inspectToolResultFailure([
+      {
+        type: 'json',
+        value: {
+          errorMessage: 'Tool call aborted: run_terminal_command',
+          executionOutcome: 'cancelled',
+          executionStarted: false,
+          executedToolName: 'run_terminal_command',
+          terminationState: 'not-started',
+        },
+      },
+    ])
+
+    expect(inspection.failed).toBe(true)
+    expect(inspection.line).toBe('Tool call aborted: run_terminal_command')
+    expect(inspection.commandExecution).toMatchObject({
+      executionOutcome: 'cancelled',
+      executedToolName: 'run_terminal_command',
+      terminationState: 'not-started',
+    })
+  })
+
+  it('reads the identity of the FAILING value inside a batch, not the first one', () => {
+    const inspection = inspectToolResultFailure([
+      {
+        type: 'json',
+        value: {
+          commands: ['echo ok', 'bun run typecheck'],
+          results: [
+            { command: 'echo ok', stdout: 'ok', exitCode: 0 },
+            {
+              command: 'bun run typecheck',
+              errorMessage: 'Command timed out after 30 seconds.',
+              executionOutcome: 'timed-out',
+              executedToolName: 'run_terminal_command',
+              timeoutSeconds: 30,
+            },
+          ],
+        },
+      },
+    ])
+
+    expect(inspection.line).toBe('Command timed out after 30 seconds.')
+    expect(inspection.commandExecution).toMatchObject({
+      executionOutcome: 'timed-out',
+      executedToolName: 'run_terminal_command',
+      timeoutSeconds: 30,
+    })
+  })
+
+  it('omits the identity when the failing value declares none', () => {
+    const inspection = inspectToolResultFailure([
+      { type: 'json', value: { errorMessage: 'plain failure' } },
+    ])
+    expect(inspection.failed).toBe(true)
+    expect(inspection.commandExecution).toBeUndefined()
+  })
+
+  it('keeps the fallback line and no identity when nothing is extractable', () => {
+    const inspection = inspectToolResultFailure([{ type: 'json', value: {} }])
+    expect(inspection).toEqual({ failed: false, line: toolResultErrorLine([]) })
+    expect(inspectToolResultFailure('plain').failed).toBe(false)
+  })
+
+  it('agrees with hasToolResultError on the whole corpus', () => {
+    for (const shape of CORPUS_SHAPES) {
+      expect(inspectToolResultFailure(shape).failed).toBe(
+        hasToolResultError(shape),
+      )
+    }
+  })
+})
+
+/** Mirrors the detection corpus above plus the identity-bearing shape. */
+const CORPUS_SHAPES: unknown[] = [
+  'plain string',
+  null,
+  undefined,
+  [],
+  [{ type: 'json', value: { result: 'ok' } }],
+  [{ type: 'json', value: { errorMessage: 'a' } }],
+  [{ type: 'json', value: { error: 'a' } }],
+  [
+    {
+      type: 'json',
+      value: {
+        errorMessage: 'cancelled',
+        executionOutcome: 'cancelled',
+        executedToolName: 'run_terminal_command',
+      },
+    },
+  ],
+  [{ value: { error: 'late' } }, { value: { errorMessage: 'early' } }],
+]
