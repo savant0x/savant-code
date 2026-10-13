@@ -110,6 +110,12 @@ savant-graph-*.html
 # ohmyagent CLI local state (permission rules) — local tool config, never source.
 .ohmyagent/
 
+# opencode CLI local state (agent and command definitions, MCP config) — local
+# tool config, never source. Operator ruling 2026-10-13: the tree gets its own
+# ignore entry rather than being committed as a new top-level root, so the
+# release automation's `git add --all` cannot stage it whole.
+.opencode/
+
 # Vendored reference codebase (Hound/master-fetch, the keyless-search design
 # source) — third-party snapshot, not part of the monorepo. Mirrors the
 # .prettierignore + .markdownlintignore entries; never committed.

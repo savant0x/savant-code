@@ -26,22 +26,6 @@ recorded decision or external dependency requires it.
       version surfaces; `version:check` PASS).
       **Automation level: 3.**
 
-- [ ] **Untracked top-level `.opencode/` directory fails the repository gate.**
-      Discovered 2026-10-13 by `bun run validate:repository` while verifying an
-      unrelated lane: `[vendored.tree.foreign-root]` — `.opencode/` is a
-      top-level directory with no tracked files and no ignore rule, so the
-      release automation's `git add --all` would stage it whole. It is **not**
-      agent-authored: it was created 2026-10-13 15:07 and holds an opencode.ai
-      configuration (`opencode.json` with the sequentialthinking MCP server,
-      `agent/ECHO.md` — an ECHO agent definition with frontmatter, 41,835 bytes —
-      and `command/ECHO.md`, 342 bytes).
-      **Operator ruling 2026-10-13, verbatim:** *"Ignore it in .gitignore"* — the
-      tree gets its own ignore entry beside `.idea/`, `.codex`, `.commandcode/`
-      and `.ohmyagent/`; its files stay on disk untouched and the release
-      automation stops staging them. The ruling came from the presented choice
-      (commit the root deliberately / ignore it / leave it red), so the
-      disposition is recorded, not inferred. **Automation level: 1.**
-
 - [ ] **T186. Two registered workspaces sit outside every typecheck and test
       chain.** `package.json` registers 15 workspaces, but the root `typecheck`
       and `test` chains each cover 13; `savant-free` (17 tracked TS/TSX files,
@@ -308,7 +292,6 @@ work item remains active, including the recorded level-1 consolidation and exter
   `packages/agent-runtime/src/run-agent-step/**`,
   `packages/agent-runtime/src/tools/stream-parser/**`,
   `packages/agent-runtime/src/tools/handlers/tool/**`, `common/src/tools/params/tool/**`
-- Untracked top-level `.opencode/` (operator ruling 2026-10-13): `.gitignore`
 - FID-2026-1012-018: `sdk/src/tools/read-url/**`, `sdk/src/__tests__/read-url*.test.ts`,
   `common/src/tools/params/tool/**`
 - FID-2026-1012-019: `packages/agent-runtime/src/llm-api/**`, `sdk/src/native/**`,
