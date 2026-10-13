@@ -224,6 +224,10 @@
     {
       "classKey": "v1:write_file:unclassified:undetermined",
       "fid": "FID-2026-1012-024"
+    },
+    {
+      "classKey": "v1:browser_use:incomplete-arguments:unexpected",
+      "fid": "FID-2026-1012-017"
     }
   ]
 }

@@ -160,15 +160,17 @@ Exact artifact paths and their `- gate:` declarations are recorded when the arti
 - gate: test scripts/__tests__/learnings-size-policy.test.ts
 - gate: test scripts/__tests__/learnings-retire.test.ts
 - gate: probe scripts/learnings.ts
+- gate: probe scripts/scripts-typecheck-check.ts
 - gate: quality
 
 ### Verification Receipt
 
-- fingerprint: sha256:ef35ba484253b5bd854f8974cdf5c29d0671cfcd2dc77d2fd4a90f6e6c4f2c4d
-- verified: 2026-10-13T05:04:13.889Z
+- fingerprint: sha256:b10ad571215577672d363d3ba8dd5a8bddec6a937c61e28a0a459410196de402
+- verified: 2026-10-13T05:17:41.874Z
 - test scripts/__tests__/learnings-size-policy.test.ts: exit 0
 - test scripts/__tests__/learnings-retire.test.ts: exit 0
 - probe scripts/learnings.ts: exit 0
+- probe scripts/scripts-typecheck-check.ts: exit 0
 - quality: exit 0
 
 ## Perfection Loop
@@ -241,13 +243,14 @@ Exact artifact paths and their `- gate:` declarations are recorded when the arti
   and does **not** move the validator's ceilings — raising the limit is now a source change, i.e. a
   recorded decision; (c) the character ceiling is measured in JavaScript characters, not bytes (Loop 2's
   warning), so the two measures fail on different inputs by construction.
-- **Also found, while gating this lane:** `fid:verify` accepts `typecheck <workspace>` only for workspaces
-  in `VALIDATION_WORKSPACE_POLICY`, and **`scripts/` is not one of them**. A change in the scripts tree
-  can therefore pass every declarable gate while failing the root `typecheck`'s scripts leg — which is
-  exactly what happened here: `scripts/__tests__/experiences-coverage.test.ts` (FID-2026-1012-021) used
-  `triggerType: 'tool-failure'` instead of `'tool_failure'`, its declared gates passed, and the root
-  `typecheck` caught it. Fixed here; recorded in `-021`'s Loop 3 as a gate-vocabulary gap rather than
-  left for the next lane to rediscover.
+- **Also found, while gating this lane — and it is not a vocabulary gap.** A change in the `scripts`
+  tree can pass a record's declared gates while failing the root `typecheck`'s scripts leg, which is what
+  happened to `FID-2026-1012-021`: its test shipped `triggerType: 'tool-failure'` instead of
+  `'tool_failure'`, its three declared gates passed, and the hand-run root `typecheck` caught it. My
+  first reading — that `scripts` has no declarable typecheck — was **wrong**: the declarable form exists
+  as `scripts/scripts-typecheck-check.ts`, and `scripts/gate-declarability-registry.ts` pairs it with the
+  root `typecheck` gate for exactly that reason. This record now declares it. The real gap is that
+  nothing requires a record's gate set to cover the surfaces it touched; `FID-2026-1012-027` owns it.
 - **CHANGE DELTA:** +1 policy module and +1 test file; the validator, the check's output and the
   retirement tool changed. Nothing was retired, no ceiling value changed, and no ledger content was
   edited by this pass.
@@ -323,8 +326,9 @@ Exact artifact paths and their `- gate:` declarations are recorded when the arti
 - **Archived:** not archived; the master (`FID-2026-1012-022`) closes last.
 - **Open, and stated rather than implied:** (a) `FID-2026-1012-012` still has to *consume* the move record
   — this record produces it; (b) `FID-2026-1012-010` owns the boot digest that will make the character
-  ceiling less load-bearing; (c) the `fid:verify` gate vocabulary has no scripts-tree typecheck, so the
-  root `typecheck` remains a hand-run check for scripts-lane records (recorded in `-021`).
+  ceiling less load-bearing; (c) the scripts-tree typecheck is declared as the probe the declarability
+  registry already pairs with it (`scripts/scripts-typecheck-check.ts`) — the gap was an omission in this
+  record's gate set, not in the vocabulary, and the general defect is owned by `FID-2026-1012-027`.
 
 - **Authorised write surface:** `SCOPE.md` → machine-readable scope targets → this record's
   line (registered 2026-10-12 with the review).

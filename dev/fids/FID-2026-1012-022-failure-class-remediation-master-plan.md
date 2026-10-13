@@ -129,6 +129,7 @@ of its own (`fid.graph.master-nested`).
 | FID-2026-1012-023 | RC6 — command-execution reliability | 13 | 27 |
 | FID-2026-1012-024 | RC7 — class taxonomy and horizon | 7 | 36 |
 | FID-2026-1012-025 | Implementation-discovered verification harness drift | harness | — |
+| FID-2026-1012-027 | A fixed record's receipts prove the gates it chose, not the surfaces it touched | harness | — |
 
 **Instrument sensitivity, stated because it bounds every claim below** — the slice length changes the
 class count, so the number is only meaningful with its instrument:
@@ -360,6 +361,7 @@ activation), and the child's id is recorded in this table when it exists.
 | FID-2026-1012-019 — capability integrity (50) | A1 | `-019` | **fixed** — degradation contract + research surface + `code_search` flag guard; 7 declared gates green + receipt stamped; window open (the `search-executable-missing` cause is the **host** resolver's, and the run-start preflight is still open) |
 | FID-2026-1012-020 — edit-path friction (72) | A1 | `-020` | **fixed** — missing-target diagnosis, mismatch/no-op separation, unsafe result mutation removed; 5 declared gates green + receipt stamped; window open (`patch-failed` 17 records and `immutable-result`'s production trigger remain) |
 | FID-2026-1012-021 — the recurrence-to-fix loop | A2 | `-021` | **fixed** — class coverage is a repository gate (demonstrated failing on a removed owner, passing restored); probe named; 21 eligible classes, all owned. Lesson-last ordering stays open on `-014`'s rule links |
+| FID-2026-1012-027 — gate coverage of a record's surfaces | harness | `-027` | converged (design) — the `-011`/`-021` omissions it documents are already corrected in their own records |
 | FID-2026-1012-011 — ceiling ungated | B0 | `-011` | **fixed** — both ceilings (1,200 logical lines / 100,000 JS characters) enforced by `learnings:check`, headroom on pass, retirement emits `dev/learnings-move-log.jsonl`; 4 declared gates green + receipt stamped; the move record's consumer is `-012` |
 | FID-2026-1012-014 — rule catalogue vs ledger | B0 | `-014` | converged (design) |
 | FID-2026-1012-012 — retirement strands references | B1 | `-012` | converged (design) |
@@ -577,8 +579,9 @@ the closure format when it flips to `fixed`.
 - **Authorised write surface:** `SCOPE.md` → machine-readable scope targets → this record's line.
 - **Program census and lane allocation:** the Evidence block and the census table above;
   `docs/design/learnings-root-cause-matrix.md` for the root-cause matrix and the feature set.
-- **Children (14):** `FID-2026-1012-010` … `-021` (Lane V and RCs 1–5) plus `FID-2026-1012-023`
-  (RC6, execution control) and `FID-2026-1012-024` (RC7, class taxonomy and horizon).
+- **Children (15):** `FID-2026-1012-010` … `-021` (Lane V and RCs 1–5) plus `FID-2026-1012-023`
+  (RC6, execution control), `FID-2026-1012-024` (RC7, class taxonomy and horizon) and
+  `FID-2026-1012-027` (harness: a fixed record's gate set need not cover the surfaces it touched).
 - **Ordering:** the schedule is `### Work order` above — Chain A (`023`/`024` make the instrument
   honest, then the four independent class lanes, then `021` wires the gate once `017`–`020` have
   owners) and Chain B (Lane V, the review's §5 order). Every edge is declared as `**Depends On:**`

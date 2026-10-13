@@ -32,12 +32,15 @@ commits only.
 
 ## Findings raised, not parked
 
-- **A gate-vocabulary gap that this lane's neighbour tripped over.** `fid:verify` allows
-  `typecheck <workspace>` only for workspaces in `VALIDATION_WORKSPACE_POLICY`, and `scripts/` is not one.
-  `scripts/__tests__/experiences-coverage.test.ts` (FID-2026-1012-021) shipped `triggerType:
-  'tool-failure'` instead of `'tool_failure'`; **all three of its declared gates passed** and the root
-  `typecheck` caught it. Fixed here and recorded in `-021`: a scripts-tree record cannot declare the check
-  that catches its own type errors, so the root typecheck must be reported as hand-run evidence.
+- **A missing gate, not a missing vocabulary — corrected.** `scripts/__tests__/experiences-coverage.test.ts`
+  (FID-2026-1012-021) shipped `triggerType: 'tool-failure'` instead of `'tool_failure'`; **all three of its
+  declared gates passed** and the hand-run root `typecheck` caught it. I first read that as a structural
+  gap ("`scripts` is not a bun workspace, so the leg has no declarable form"). **That was wrong**: the
+  declarable form already exists — `scripts/scripts-typecheck-check.ts` — and
+  `scripts/gate-declarability-registry.ts` pairs it with the root `typecheck` gate for precisely that
+  reason. Both records now declare it. The surviving finding is narrower: **nothing requires a record's
+  gate set to cover the surfaces it touched**, so a plausible explanation for a missing gate passed for a
+  check. `FID-2026-1012-027` owns it.
 - **The ceiling is now a source change, not a flag.** `--cap` still affects only a retirement run; the
   validator's limits move only by editing the policy module — which is what "raising the limit is a
   decision" has to mean if it is to be auditable.

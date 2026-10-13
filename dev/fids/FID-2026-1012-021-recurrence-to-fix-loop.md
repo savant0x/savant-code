@@ -187,14 +187,16 @@ declared here and none is claimed.
 
 - gate: test scripts/__tests__/experiences-coverage.test.ts
 - gate: probe scripts/experiences-recurrence.ts
+- gate: probe scripts/scripts-typecheck-check.ts
 - gate: quality
 
 ### Verification Receipt
 
-- fingerprint: sha256:9808a574201c06596e73416537a0576b0035baa6a9abf3c45355840344c180e3
-- verified: 2026-10-13T05:05:02.047Z
+- fingerprint: sha256:52ee5e6454a8c5b487fbc52674805d9c489672c0717fa73df0a1852ee98fc9e6
+- verified: 2026-10-13T05:23:34.803Z
 - test scripts/__tests__/experiences-coverage.test.ts: exit 0
 - probe scripts/experiences-recurrence.ts: exit 0
+- probe scripts/scripts-typecheck-check.ts: exit 0
 - quality: exit 0
 
 ## Perfection Loop
@@ -265,13 +267,20 @@ declared here and none is claimed.
     exits 0 again. This is the record's own Verification requirement ("must fail on a fixture whose top
     class has no owner and pass on the real capture") demonstrated on the real gate path, with the
     fixture confined to a manifest edit that was reverted.
-- **Gate-vocabulary gap, found while gating the next lane (2026-10-13):** `fid:verify` accepts
-  `typecheck <workspace>` only for workspaces in `VALIDATION_WORKSPACE_POLICY`, and **`scripts/` is not
-  one of them**. This record's own test file shipped a type error (`triggerType: 'tool-failure'` instead
-  of `'tool_failure'`) that **passed all three declared gates** and was caught by the root `typecheck`
-  (run by hand during `FID-2026-1012-011`'s pass). Fixed at the test. The gap is structural: a
-  scripts-tree record cannot declare the check that would catch its own type errors, so the root
-  `typecheck` has to be reported as hand-run evidence. Recorded here rather than left for the next lane.
+- **An omission in this record's own gate set, found while gating the next lane (2026-10-13) and
+  corrected here.** This record's test file shipped a type error (`triggerType: 'tool-failure'` instead
+  of `'tool_failure'`) that **passed all three declared gates**; the root `typecheck` caught it. My first
+  reading of that — that `scripts` has no declarable typecheck because it is not a bun workspace — was
+  **wrong, and the repository says so**: `scripts/scripts-typecheck-check.ts` exists precisely as the
+  declarable `probe` form of the chain's 14th leg, and `scripts/gate-declarability-registry.ts:106-112`
+  pairs it with the root `typecheck` gate for that reason ("the chain's 14th leg: `scripts` is not a bun
+  workspace, so it has no `typecheck <workspace>` form"). The gate list above now declares it, and the
+  receipt below is stamped **with** it, and the leg was proved in both directions: with the type error
+  reintroduced `bun run fid:verify <this record>` exits 1 with `[FAIL] probe
+  scripts/scripts-typecheck-check.ts (exit 2)`, and with the file restored byte-identically it passes
+  again. The surviving finding is narrower and worse: nothing required this record's gate set to cover
+  the surfaces it touched, so a *plausible-sounding* explanation for a missing gate was as good as a
+  check. `FID-2026-1012-027` owns that gap.
 - **ADVERSARIAL / missed question:** **Has the loop closed? No — it now cannot stay open silently.**
   Three honest limits: (a) the coverage check proves an *owner exists*, not that the owner fixed
   anything — repair is still proved by the child's own recurrence assertion, and no boundary can be

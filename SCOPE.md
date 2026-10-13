@@ -231,6 +231,13 @@ with FID-024 owning capture/expectedness corrections and FID-014 owning class-to
       differently worded failures, uncaptured exit-code/nested errors and overbroad expectedness.
       Investigate all seven before any disposition → E7. **Automation level: 3.**
 
+- [ ] **FID-2026-1012-027. A fixed record's receipts prove the gates it chose, not the surfaces it
+      touched.** Harness — a stamped receipt coexisted with a red enforced `scripts`-tree typecheck
+      over a file inside the record's own write surface (`-021`, 2026-10-13), and nothing joins a
+      record's declared gate set to its `SCOPE.md` path list. Make coverage a checked relation in
+      `validate:repository` (surface → demanded declaration), then make `fid:verify --write` refuse an
+      uncovered set. **Automation level: 3.**
+
 ### Build orders (formalized as FIDs 2026-10-07)
 
 The build order for **every open item in this register** — the fifteen active records and the nine
@@ -320,6 +327,9 @@ work item remains active, including the recorded level-1 consolidation and exter
   `common/src/types/experience.ts`, `common/src/util/command-execution.ts`,
   `common/src/util/experience-classes.ts`, `common/src/tools/params/tool/**`,
   `dev/experiences/class-owners.json`
+- FID-2026-1012-027: `scripts/fid-surface-coverage.ts`,
+  `scripts/__tests__/fid-surface-coverage.test.ts`, `scripts/gate-declarability*.ts`,
+  `scripts/fid-verify.ts`, `scripts/validate-repository.ts`, `SCOPE.md`
 - FID-2026-1012-024: `common/src/types/experience.ts`, `common/src/util/experiences.ts`,
   `common/src/util/experience-*.ts`, `common/src/util/__tests__/experience-*.test.ts`,
   `packages/agent-runtime/src/hooks/**`, `packages/agent-runtime/src/tools/tool-executor/**`,
