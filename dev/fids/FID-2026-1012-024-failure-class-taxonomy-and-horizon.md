@@ -377,6 +377,31 @@ audit trail of the mistaken premise, not as acceptance criteria or class disposi
   validator; 0 historical rows rewritten; 0 boundaries declared; the lane's repair assertion still
   exits 1.
 
+### Loop 6 — The row count is an upper bound, measured across the census (2026-10-13, automation level 3)
+
+- **RED:** Loop 5 of the sibling lane (`FID-2026-1012-017`) measured one response contributing 20 rows. Whether that is
+  one class's accident or a property of the capture was unknown, and every class claim in this program is stated over
+  rows in a window.
+- **Method:** the shipped identity function (`experienceClassIdentity`) over `dev/experiences/raw-traces.jsonl`
+  (589 rows, 58 classes), grouped per class by (run, 60-second gap) — a model response cannot span a minute, so a
+  cluster is a lower bound on the responses that produced a class's rows.
+- **GREEN — measured:** **364 of 589 rows (62%) belong to classes averaging ≥1.5 rows per response-bounded cluster**
+  (13 of the 31 classes with ≥3 clusters). The outliers: `read_url:http-404` 114 rows → 50 clusters (2.28×, largest
+  burst 11), `read_url:incomplete-arguments` 27 → 7 (3.86×, burst 10), `web_search:research-unavailable` 24 → 9
+  (2.67×), `suggest_followups:incomplete-arguments` 23 → 7 (3.29×, burst 17). Eight classes with ≥5 rows are
+  effectively one row per response (ratio < 1.2: `write_file:incomplete-arguments` 1.10, `spawn_agents` 1.06,
+  `run_readonly_command:timeout` 1.14).
+- **Boundary the measurement cannot cross, stated rather than implied:** the ledger stores one line per failure, so a
+  burst of the same tool and class cannot be separated into *duplicate parts of one call* and *several distinct
+  attempts in one response*. Both inflate rows relative to occurrences; only the first is a defect in how the emission
+  is reported (which is the sibling lane's half, now fixed as steering, not as capture).
+- **ADVERSARIAL:** (a) *Is 60 seconds the right gap?* It is a conservative bound: a real response is seconds, so the
+  true amplification is at least this. (b) *Does this make the census unusable?* No — it makes the counts an upper
+  bound, which is how `FID-2026-1012-021`'s recurrence probe must state them. (c) *Does it change any owner?* No
+  allocation moves; no row was rewritten.
+- **CHANGE DELTA:** measurement and record only, 0 source files, 0 rows rewritten. Repairing the *count semantics* is
+  the probe's contract (`FID-2026-1012-021`) and the capture policy (this record), both still open on their own terms.
+
 ### Missed Questions
 
 1. **Should the class key be stored at capture time or derived at read time?** Stored, from the

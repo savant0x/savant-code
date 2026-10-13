@@ -26,6 +26,24 @@ recorded decision or external dependency requires it.
       version surfaces; `version:check` PASS).
       **Automation level: 3.**
 
+- [ ] **Session-end review replays the skill-lifecycle log forever.** Measured
+      2026-10-13 while routing the review's patterns: `.savant/skill-lifecycle-events.jsonl`
+      holds 18 events, all stamped 2026-10-12T21:42:19 (one `draft_created` then 17
+      `draft_failed` inside 105 ms, every one for the same skill
+      `library-complete-needs-a-named-consumer`), and
+      `scripts/session-end-notices.ts` → `skillLifecycleReportLines` claims the
+      `'cli'` surface cursor and **never acknowledges** it, so every session-end
+      review re-prints the same lines (plus `… 8 more`). `bun run lessons:to-skills`
+      today reports 0 candidates and appends 0 events, so the burst is historical,
+      not live.
+      **Blocker:** which surface owns the acknowledgement decides where the
+      operator first sees a skill draft on the trust surface — the headless review
+      (whose stdout is a transcript, so it would ack) or the interactive notice at
+      `cli/src/components/skill-lifecycle-notice.tsx`, which acks today. Acking in
+      the review suppresses the TUI's display; not acking keeps the replay. That is
+      an operator-facing visibility decision on the self-improving harness's trust
+      contract, so it is presented rather than chosen. **Automation level: 1.**
+
 - [ ] **T186. Two registered workspaces sit outside every typecheck and test
       chain.** `package.json` registers 15 workspaces, but the root `typecheck`
       and `test` chains each cover 13; `savant-free` (17 tracked TS/TSX files,
