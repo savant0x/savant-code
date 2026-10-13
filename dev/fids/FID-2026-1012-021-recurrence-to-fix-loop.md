@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-1012-021-recurrence-to-fix-loop.md`
 **ID:** FID-2026-1012-021
 **Severity:** high
-**Status:** converged
+**Status:** fixed
 **Created:** 2026-10-12 20:15
 **Automation level:** 2
 **YAGNI-Compliance:** Verified
@@ -185,10 +185,17 @@ declared here and none is claimed.
 
 ## Verification Gates
 
-This record is pre-implementation and `converged`, so **no gates are declared**. Gates are
-added when the status reaches `fixed`/`verified` and the artifacts they prove exist; declaring
-a path now would be a false declaration. Per the contract, a `converged` record is outside the
-fixed/verified set that `validate:repository` live-runs.
+- gate: test scripts/__tests__/experiences-coverage.test.ts
+- gate: probe scripts/experiences-recurrence.ts
+- gate: quality
+
+### Verification Receipt
+
+- fingerprint: sha256:4ba0fa6a870e0a870dac1c7e23d69d9c373e417b8e2431889f0bcaade21eb023
+- verified: 2026-10-13T04:52:02.858Z
+- test scripts/__tests__/experiences-coverage.test.ts: exit 0
+- probe scripts/experiences-recurrence.ts: exit 0
+- quality: exit 0
 
 ## Perfection Loop
 
@@ -233,6 +240,44 @@ fixed/verified set that `validate:repository` live-runs.
   No: implementation dependencies differ from observation closure. Land the shared
   probe before consumers, wire coverage after ownership, and keep unresolved work open.
 - **CHANGE DELTA:** Planning correction only. Planned artifacts/window are in the review.
+
+### Loop 3 — Implementation (2026-10-13)
+
+- **RED (re-measured at implementation time, `main` @ `0e7b3414`):** the capture holds **563 records /
+  56 stable classes**; with the bounded window applied, **21 classes are eligible** (≥3 distinct
+  sessions inside 14 days, not an expected outcome). Before this pass, eligibility was in no gate:
+  `dev/agenda.md` carried the classes and nothing failed when one had no owner.
+- **GREEN:** the coverage check now runs inside the repository gate.
+  `scripts/experiences-coverage.ts` reads `FID-2026-1012-024`'s stable class identity and the owner
+  manifest (never re-deriving either), and reports every eligible class with no owner, named with its
+  record count, its session count, its tool and its last-seen date; `scripts/hygiene.ts` surfaces it as
+  `hygiene.experience-coverage` on every `validate:repository` run. `experiences:recurrence` is now a
+  named entry point (`bun run experiences:recurrence`) so a fix can declare the probe as its gate.
+- **AUDIT — the gate was demonstrated failing and passing, not assumed:**
+  - `bun run experiences:recurrence` exit 0 at this state (all classes owned, no boundary declared).
+  - With the top eligible class's owner temporarily removed from `dev/experiences/class-owners.json`,
+    `bun run validate:repository` **exits 1** with exactly one new failure:
+    `[hygiene.experience-coverage] dev/experiences/class-owners.json: unowned recurring class
+    v1:read_url:http-404:undetermined (read_url, 114 records across 14 sessions in the last 14 days,
+    last seen 2026-10-10) — add it to dev/experiences/class-owners.json with the record that owns the
+    fix.`
+  - The manifest was restored byte-identically (`git diff --stat` clean) and `validate:repository`
+    exits 0 again. This is the record's own Verification requirement ("must fail on a fixture whose top
+    class has no owner and pass on the real capture") demonstrated on the real gate path, with the
+    fixture confined to a manifest edit that was reverted.
+- **ADVERSARIAL / missed question:** **Has the loop closed? No — it now cannot stay open silently.**
+  Three honest limits: (a) the coverage check proves an *owner exists*, not that the owner fixed
+  anything — repair is still proved by the child's own recurrence assertion, and no boundary can be
+  declared until a class stops firing, so `dev/experiences/fix-boundaries.json` stays empty;
+  (b) **lesson-last ordering is not yet enforced**: the probe already reports `unsupported repair` when
+  a boundary exists but the horizon is not `observed`, but mapping a governed lesson to its class needs
+  `FID-2026-1012-014`'s evidence-backed rule links, which is Chain B work not yet done — so a lesson
+  cannot yet be prevented from being written early; (c) auto-drafting a defect FID for an unowned class
+  (step 3) is **not implemented** — the check reports rather than files, and filing a record is the
+  operator-routed step the record itself puts at the operator boundary. All three are stated as open.
+- **CHANGE DELTA:** +1 collector module, +1 test file, +3 lines in the hygiene collector, one new
+  package script. No capture record was fabricated or appended (the fixtures are in memory), no lesson
+  was written, and no class is claimed to have stopped recurring.
 
 ### Missed Questions
 
@@ -280,13 +325,35 @@ fixed/verified set that `validate:repository` live-runs.
 
 ## Resolution
 
-**Not implemented — `Status: converged` (pre-implementation, FID-2026-0915-004).**
+**Implemented — `Status: fixed` (deterministic gates green; recurrence assertions OPEN).**
 
-This record exists so the finding has an owner, a converged design and a register item with
-write authority; it made no source change. The work described above is implemented by whichever
-pass flips the record to `fixed`, at which point this section is rewritten in the closure format
-(Closed Date / Fix Description / Tests Added / Verification Evidence / Archived) and the declared
-gates are added under `## Verification Gates`.
+- **Closed Date:** 2026-10-13 (machinery pass; the loop cannot be *closed* until the class lanes
+  observe clean windows — this record supplies the mechanism, not the proof).
+- **Fix Description.** An eligible failure class with no owner is now a repository-gate failure.
+  `scripts/experiences-coverage.ts` consumes `FID-2026-1012-024`'s stable class identity and the owner
+  manifest, applies the bounded eligibility rule (≥3 distinct sessions inside 14 days, expected
+  outcomes excluded) and names each unowned class with its count, sessions, tool and last-seen date;
+  `scripts/hygiene.ts` surfaces it as `hygiene.experience-coverage` inside `validate:repository`, so the
+  gap cannot sit invisible between sessions. `bun run experiences:recurrence` is the declared probe a
+  fix points its recurrence assertion at; `dev/experiences/fix-boundaries.json` remains the place a fix
+  records its window, and the probe already refuses an `unsupported repair`.
+- **Tests Added:** `scripts/__tests__/experiences-coverage.test.ts` (5 cases: fails on an unowned
+  class above the bar with count/sessions/last-seen rendered; passes with an owner; ignores a class
+  below the session bar or outside the window; never demands an owner for an expected outcome; groups
+  by stable class identity rather than by tool). Fixtures are in memory — no fabricated failure was
+  appended to the production capture.
+- **Verification Evidence:** `bun test scripts/__tests__/experiences-coverage.test.ts` 5 pass / 0 fail ·
+  `bun run scripts/experiences-recurrence.ts` exit 0 (56 stable classes, all owned) ·
+  `bun run validate:repository` PASS, and **FAILS** with one named `hygiene.experience-coverage` issue
+  when the top class's owner is removed and PASSES again once it is restored (manifest byte-identical,
+  `git diff --stat` clean) · `quality:report` PASS (1,502 baselined files) · ESLint `--max-warnings 0`
+  and Prettier clean.
+- **Archived:** not archived. The master (`FID-2026-1012-022`) closes last.
+- **Open, and why this record is not `closed`:** (a) lesson-last ordering is not enforced until
+  `FID-2026-1012-014` supplies the evidence-backed rule links that map a lesson to its class;
+  (b) auto-drafting a defect FID for an unowned class is deliberately not implemented — the check
+  reports, the operator routes; (c) no class has a clean observation window, so no lesson is written
+  and no claim is made.
 
 - **Authorised write surface:** `SCOPE.md` → machine-readable scope targets → this record's line.
 - **Design record:** `docs/design/learnings-root-cause-matrix.md` §3 (the matrix) and §4 RC5

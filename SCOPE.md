@@ -302,9 +302,11 @@ work item remains active, including the recorded level-1 consolidation and exter
   `packages/agent-runtime/src/tools/handlers/tool/**`,
   `packages/agent-runtime/src/__tests__/process-str-replace*.test.ts`,
   `packages/agent-runtime/src/__tests__/edit-diagnostics.test.ts`, `sdk/src/run/**`
-- FID-2026-1012-021: `scripts/experiences-dedup.ts`, `scripts/lessons-to-skills.ts`,
+- FID-2026-1012-021: `scripts/experiences-dedup.ts`, `scripts/experiences-recurrence.ts`,
+  `scripts/experiences-coverage.ts`, `scripts/hygiene.ts`, `scripts/lessons-to-skills.ts`,
   `scripts/lesson-feature-pipeline.ts`, `scripts/session-end-review.ts`,
-  `scripts/validate-repository.ts`, `dev/agenda.md`, `dev/experiences/**`,
+  `scripts/validate-repository.ts`, `scripts/__tests__/experiences-coverage.test.ts`,
+  `dev/agenda.md`, `dev/experiences/**`, `package.json`,
   `docs/design/learnings-root-cause-matrix.md`
 - FID-2026-1012-022: `dev/fids/**`, `SCOPE.md`, `docs/design/**`, `dev/experiences/**`,
   `dev/agenda.md`

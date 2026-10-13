@@ -3,8 +3,17 @@
 import fs from 'node:fs'
 import path from 'node:path'
 
+import {
+  collectClassCoverageIssues,
+  formatClassCoverageIssue,
+} from './experiences-coverage.js'
+
 export type HygieneIssue = {
-  code: 'stale-reference' | 'production-placeholder' | 'scratchpad-clutter'
+  code:
+    | 'stale-reference'
+    | 'production-placeholder'
+    | 'scratchpad-clutter'
+    | 'experience-coverage'
   file: string
   message: string
 }
@@ -208,7 +217,17 @@ export function collectHygieneIssues(scanRoot: string = root): HygieneIssue[] {
       })
     }
   }
-  return [...issues, ...collectScratchpadIssues(scanRoot)]
+  return [
+    ...issues,
+    ...collectScratchpadIssues(scanRoot),
+    // FID-2026-1012-021: a recurring failure class above the promotion bar with
+    // no owning record is repository hygiene, not a backlog item.
+    ...collectClassCoverageIssues(scanRoot).map((issue) => ({
+      code: 'experience-coverage' as const,
+      file: 'dev/experiences/class-owners.json',
+      message: formatClassCoverageIssue(issue),
+    })),
+  ]
 }
 
 if (import.meta.main) {

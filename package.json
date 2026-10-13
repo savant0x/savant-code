@@ -54,6 +54,7 @@
     "fid:verify": "bun scripts/fid-verify.ts",
     "skills:check": "bun scripts/skills-check.ts",
     "experiences:dedup": "bun scripts/experiences-dedup.ts",
+    "experiences:recurrence": "bun scripts/experiences-recurrence.ts",
     "telemetry:aggregate": "bun scripts/telemetry-aggregate.ts",
     "telemetry:sentinel": "bun scripts/telemetry-sentinel.ts",
     "telemetry:feedback": "bun scripts/telemetry-feedback.ts",
