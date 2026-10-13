@@ -7,7 +7,13 @@ and the register's own contract that a closed item's evidence is retained here r
 left sitting in the register as completed work.
 
 Commits this pass: `69a61f08` (exposure receipts + refusal channel), `7e0a00cc` (the
-web-search reset seam and the register reconciliation). Nothing was pushed.
+web-search reset seam and the register reconciliation), `1842ea84` (the register eviction
+and this record). Nothing was pushed.
+
+One consequence of the numbering hazard described below is visible in this pass's own
+history: `7e0a00cc`'s subject cites the task id that the eviction retired, so that id is a
+dangling reference in the log. It is recorded here rather than corrected, because amending a
+commit on `main` is a history rewrite this protocol does not authorize.
 
 ## 1. `FID-2026-1013-003` was unverifiable and held a gate that could never run
 
