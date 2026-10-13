@@ -62,7 +62,12 @@ recorded decision or external dependency requires it.
       endpoints, and a provider the operator has stated as added is already
       confirmed live and real; what remains is a live model-list probe. That
       withdraws the previous "needs an operator-provided paid xKiro account"
-      blocker. **Automation level: 3** for the probe.
+      blocker. **Measured 2026-10-13:** all 25 remote registry endpoints return
+      HTTP 200 model catalogs, using stored keys for the 14 key-gated endpoints.
+      Local Ollama and account-specific Cloudflare remain separate boundaries.
+      Counts and endpoint evidence are in the learning-remediation session summary;
+      no inference, purchase or provider-parity edit was performed.
+      **Automation level: 3** for the probe.
 
 - [ ] **T175. Sweep control-manifest authorship + control-armed re-run.**
       Open remainder of archived `FID-2026-1007-016`: the seam is built, but
@@ -90,6 +95,11 @@ recorded decision or external dependency requires it.
       these stale?" — the item is re-derived against the current
       `cli/src/utils/provider-wizard-discovery.ts` and
       `cli/src/chat/use-chat-pickers.ts` before the question is asked again.
+      **Re-derived 2026-10-13:** explicit `/provider add <host>` already uses
+      the prefill and per-step consent; picker selection delegates to provider
+      setup and has no discovery-prefill branch. The existing discovery suite
+      is in `cli/src/commands/__tests__/` (15 PASS), not `utils/__tests__/`.
+      The picker change still requires the recorded verdict/consent ruling.
       **Automation level: 1.**
 
 - [ ] **T173. KiosAPI window-table rows for five exact feed ids.**
@@ -101,6 +111,11 @@ recorded decision or external dependency requires it.
       the previous public-source search did not establish them.
       **Operator direction 2026-10-12 (Q18):** always live probe — establish the
       values by probing the vendor rather than by a public-source search.
+      **Live-probed 2026-10-13:** pricing returns 80 rows, including four exact
+      targets but no window fields; the authenticated model list returns 28 rows
+      with no window fields and none of the five exact target ids. The fifth
+      target is absent from pricing too. Vendor window evidence remains missing;
+      no fallback value was inferred or changed.
       **Automation level: 3** for the probe.
 
 - [ ] **T62-followups.** TokenHarbor needs a free-cell identity re-run after
@@ -120,6 +135,11 @@ recorded decision or external dependency requires it.
       additions are `FID-2026-1012-026`. **Automation level: 3.**
 
 ### Harness and process
+
+- [ ] **FID-2026-1013-001. Script test gates search the repository root.**
+      Receipt test-root resolution excludes scripts/, contradicting the documented
+      Bun substring-filter isolation contract. Repair argv/cwd and pin the runner.
+      **Automation level: 3.**
 
 - [ ] **T122. Savant-Free removal.** Operator direction 2026-10-12 (Q12/Q5):
       the savant-free flag/feature is to be removed rather than repaired. The
@@ -146,6 +166,8 @@ class fix, and the six programme lanes are.
       FID-011's enforceable ceiling, and blocks FID-016's scope decision — the earlier wording here
       (“blocks FID-014's tier”) read that edge backwards; the review's §5 order and the record's own
       `**Depends On:**` line now state the resolved direction. **Automation level: 3.**
+      Verified implementation: bounded generated digest and incomplete-read refusal;
+      formal closure blocked by the explicit no-commit hold (G2).
 
 - [ ] **FID-2026-1012-011. The ledger's size ceiling is enforced by nothing.** Rows A3/A4 →
       feature F3 (gated, logged lifecycle). Unblocks FID-012's move record.
@@ -153,22 +175,32 @@ class fix, and the six programme lanes are.
 
 - [ ] **FID-2026-1012-012. Retirement strands by-title references.** Rows D1/E3 → features
       F3/F6. Prerequisite of FID-015; fixes the 7 admission issues that make
-      `lessons:features --check` red today. **Automation level: 3.**
+      `lessons:features --check` red. **Verified 2026-10-13:** 33 focused tests pass;
+      real admission PASS (74 lessons, 9 candidates). Formal closure blocked by the
+      operator's no-commit hold (G2). **Automation level: 3.**
 
 - [ ] **FID-2026-1012-013. Lesson evidence rots silently.** Rows D2/D3/D4 → feature F4.
-      **Automation level: 3.**
+      Verified implementation: structured reproduction, validated snapshots, durable
+      current-code probes, three active legacy entries migrated. Formal closure
+      blocked by the no-commit hold (G2). **Automation level: 3.**
 
 - [ ] **FID-2026-1012-014. The rule catalogue and the ledger disagree.** Rows B2/B3/C1/C2/E2
-      → feature F2 (rule-first schema with an explicit boot tier). **Automation level: 3.**
+      → feature F2 (rule-first schema with an explicit boot tier). **Verified 2026-10-13:**
+      35 focused tests pass; boot projection and bundle checks PASS. Formal closure
+      blocked by the operator's no-commit hold (G2). **Automation level: 3.**
 
 - [ ] **FID-2026-1012-015. The lesson→feature pipeline is red and unowned.** Row E1 →
       features F5/F6. Must NOT wire its gate before FID-012 lands, or the repository reds on
-      a known-red store. **Automation level: 3.**
+      a known-red store. The locator is now green; admission/report freshness is wired
+      through the independent collector. Formal closure blocked by the no-commit hold.
+      **Automation level: 3.**
 
 - [ ] **FID-2026-1012-016. Redundant lesson families inflate the boot read.** Row C3 →
       features F4/F1. Consolidation runs through the existing supersession machinery and
       needs operator approval because the ledger is an operator-facing boot surface.
-      **Automation level: 3** for the enumeration, **1** for the consolidation.
+      Verified inventory: 74 titles, zero exact merge proposals, no supersession.
+      Formal closure blocked by the no-commit hold. **Automation level: 3** for the
+      enumeration, **1** for any future concrete consolidation.
 
 ### Failure-class remediation program (master `FID-2026-1012-022`, 2026-10-12)
 
@@ -194,7 +226,7 @@ with FID-024 owning capture/expectedness corrections and FID-014 owning class-to
       that gives every failure class an owner (68 classes / 559 records across six lanes). Children:
       `-010`…`-021`, `-023`, `-024`; Chain C tasks get children drafted at wave start. Not gateable
       itself; closes only when every child is closed and the closing pass re-runs the allocation.
-      Pointing an automation run at this record **is** the operating instruction. **Automation level: 2.**
+      Pointing an automation run at this record **is** the operating instruction. **Automation level: 3.**
 
 - [ ] **FID-2026-1012-017. The incomplete-arguments class has never been fixed at its
       source.** RC1 — **18 classes / 193 records** (35% of the capture; nine tools, 40+ sessions,
@@ -218,6 +250,8 @@ with FID-024 owning capture/expectedness corrections and FID-014 owning class-to
 - [ ] **FID-2026-1012-021. Nothing closes the loop from recurrence to fix.** RC5 → E5: the
       machinery that turns a recurring class into an owned repair, asserts the class stopped, and
       only then writes the lesson. Must not wire its coverage check before 017–020 have owners.
+      Verified machinery: coverage, qualified lesson-last ordering, idempotent proposed
+      FID drafting. Actual observation and the no-commit hold keep closure open.
       **Automation level: 2** (drafting a defect FID is automatable; approving one is the
       operator's).
 
@@ -276,23 +310,47 @@ work item remains active, including the recorded level-1 consolidation and exter
      finished days ago. Evict the     line in the pass that closes the item. -->
 
 - FID-2026-1012-010: `dev/LEARNINGS.md`, `dev/LEARNING-RULES.md`, `scripts/learnings*.ts`,
+  `scripts/validate-repository.ts`, `docs/embedded-learnings.md`, `ECHO.md`,
+  `scripts/__tests__/learnings-boot-digest.test.ts`,
   `scripts/generate-protocol-bundle.ts`, `agents/savant/system-prompt.ts`,
+  `common/src/constants/learnings-boot.ts`,
   `common/src/util/boot-contract.ts`, `common/src/util/embedded-protocol.ts`,
-  `common/src/constants/protocol-bundle.generated.ts`, `docs/design/**`
+  `common/src/util/__tests__/boot-contract.test.ts`,
+  `common/src/util/__tests__/embedded-protocol.test.ts`,
+  `packages/agent-runtime/src/echo/grounding.ts`,
+  `packages/agent-runtime/src/echo/enforcement/helpers.ts`,
+  `packages/agent-runtime/src/echo/__tests__/enforcement-refresh-cadence.test.ts`,
+  `packages/agent-runtime/src/tools/tool-executor/grounding-read.ts`,
+  `packages/agent-runtime/src/tools/tool-executor/grounding-read.test.ts`,
+  `packages/agent-runtime/src/tools/tool-executor/result-lifecycle.ts`,
+  `common/src/constants/protocol-bundle.generated.ts`,
+  `common/src/constants/echo-protocol-instructions.generated.ts`,
+  `packages/agent-runtime/src/echo/protocol-refresh.generated.ts`, `docs/design/**`
 - FID-2026-1012-011: `scripts/learnings*.ts`, `dev/LEARNINGS.md`,
   `dev/LEARNINGS-RETIRED.md`, `dev/learnings-move-log.jsonl`,
   `scripts/__tests__/learnings-size-policy.test.ts`,
   `scripts/__tests__/learnings-retire.test.ts`
 - FID-2026-1012-012: `scripts/lesson-feature-pipeline.ts`, `scripts/lessons-to-skills.ts`,
   `scripts/learnings*.ts`, `dev/LEARNINGS.md`, `dev/LEARNINGS-RETIRED.md`,
+  `scripts/__tests__/learnings-locator.test.ts`,
+  `scripts/__tests__/lesson-feature-pipeline.test.ts`,
   `dev/feature-pipeline/**`, `dev/session-summaries/**`
-- FID-2026-1012-013: `scripts/learnings*.ts`, `dev/LEARNINGS.md`, `dev/LEARNINGS-RETIRED.md`
+- FID-2026-1012-013: `scripts/learnings*.ts`, `dev/LEARNINGS.md`, `dev/LEARNINGS-RETIRED.md`,
+  `dev/LEARNING-RULES.md`, `scripts/validate-repository.ts`,
+  `scripts/__tests__/learnings-reproduction.test.ts`, `scripts/learnings.test.ts`
 - FID-2026-1012-014: `dev/LEARNING-RULES.md`, `dev/LEARNINGS.md`, `scripts/learnings*.ts`,
-  `scripts/generate-protocol-bundle.ts`, `docs/embedded-learnings.md`,
-  `common/src/constants/protocol-bundle.generated.ts`
+  `scripts/lessons-to-skills.ts`, `scripts/__tests__/learnings*.test.ts`,
+  `scripts/__tests__/lessons-to-skills*.test.ts`, `scripts/validate-repository.ts`,
+  `scripts/generate-protocol-bundle.ts`, `scripts/protocol-bundle-check.ts`,
+  `docs/embedded-learnings.md`, `common/src/constants/protocol-bundle.generated.ts`,
+  `common/src/constants/echo-protocol-instructions.generated.ts`,
+  `packages/agent-runtime/src/echo/protocol-refresh.generated.ts`
 - FID-2026-1012-015: `scripts/lesson-feature-pipeline.ts`, `scripts/validate-repository.ts`,
-  `dev/feature-pipeline/**`, `package.json`
-- FID-2026-1012-016: `dev/LEARNINGS.md`, `dev/LEARNING-RULES.md`, `scripts/learnings*.ts`
+  `scripts/lesson-feature-check.ts`, `scripts/__tests__/lesson-feature-check.test.ts`,
+  `scripts/__tests__/lesson-feature-pipeline.test.ts`, `dev/feature-pipeline/**`, `package.json`
+- FID-2026-1012-016: `dev/LEARNINGS.md`, `dev/LEARNING-RULES.md`, `scripts/learnings*.ts`,
+  `scripts/__tests__/learnings-consolidation.test.ts`,
+  `docs/design/learnings-consolidation-inventory-2026-10-13.md`
 - FID-2026-1012-017: `sdk/src/impl/llm/**`, `sdk/src/run/**`,
   `sdk/src/__tests__/tool-argument-budget.test.ts`,
   `common/src/types/contracts/llm.ts`, `common/src/util/tool-argument-budget.ts`,
@@ -312,6 +370,10 @@ work item remains active, including the recorded level-1 consolidation and exter
   `packages/agent-runtime/src/__tests__/process-str-replace*.test.ts`,
   `packages/agent-runtime/src/__tests__/edit-diagnostics.test.ts`, `sdk/src/run/**`
 - FID-2026-1012-021: `scripts/experiences-dedup.ts`, `scripts/experiences-recurrence.ts`,
+  `scripts/experiences-learning-order.ts`, `scripts/experiences-repair-drafts.ts`,
+  `scripts/learnings-validation.ts`,
+  `scripts/__tests__/experiences-learning-order.test.ts`,
+  `scripts/__tests__/experiences-repair-drafts.test.ts`,
   `scripts/experiences-coverage.ts`, `scripts/hygiene.ts`, `scripts/lessons-to-skills.ts`,
   `scripts/lesson-feature-pipeline.ts`, `scripts/session-end-review.ts`,
   `scripts/validate-repository.ts`, `scripts/__tests__/experiences-coverage.test.ts`,
@@ -333,6 +395,7 @@ work item remains active, including the recorded level-1 consolidation and exter
   `packages/agent-runtime/src/echo/scope-targets.ts`,
   `packages/agent-runtime/src/echo/pre-write-gates-law2.ts`,
   `packages/agent-runtime/src/echo/__tests__/scope-targets.test.ts`, `SCOPE.md`
+- FID-2026-1013-001: `scripts/fid-verify.ts`, `scripts/__tests__/fid-verify.test.ts`
 - FID-2026-1012-024: `common/src/types/experience.ts`, `common/src/util/experiences.ts`,
   `common/src/util/experience-*.ts`, `common/src/util/__tests__/experience-*.test.ts`,
   `packages/agent-runtime/src/hooks/**`, `packages/agent-runtime/src/tools/tool-executor/**`,

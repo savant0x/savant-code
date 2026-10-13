@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-1012-015-lessons-feature-pipeline-red-and-ungated.md`
 **ID:** FID-2026-1012-015
 **Severity:** high
-**Status:** converged
+**Status:** verified
 **Created:** 2026-10-12 19:05
 **Automation level:** 3
 **YAGNI-Compliance:** Verified
@@ -166,11 +166,21 @@ declared (with their receipts) when the artifacts exist.
 
 ## Verification Gates
 
-This record is pre-implementation (`Status: converged`, per FID-2026-0915-004), so **no gate
-bullets are declared here**. The contract requires gates only once the status flips to
-`fixed`/`verified`, and declaring a gate before its artifact exists (or before the store is
-green) would fail `validate:repository` on a known-red state. Gates and their receipt are
-declared in the implementation pass, from the verification plan above.
+- gate: test scripts/__tests__/lesson-feature-pipeline.test.ts
+- gate: test scripts/__tests__/lesson-feature-check.test.ts
+- gate: probe scripts/lesson-feature-check.ts
+- gate: probe scripts/scripts-typecheck-check.ts
+- gate: quality
+
+### Verification Receipt
+
+- fingerprint: sha256:59aae57ca03b18fde8d24f5888d3337d1848be90f90329e91ca6a6b668aa0425
+- verified: 2026-10-13T15:31:27.644Z
+- test scripts/__tests__/lesson-feature-pipeline.test.ts: exit 0
+- test scripts/__tests__/lesson-feature-check.test.ts: exit 0
+- probe scripts/lesson-feature-check.ts: exit 0
+- probe scripts/scripts-typecheck-check.ts: exit 0
+- quality: exit 0
 
 ## Perfection Loop
 
@@ -215,6 +225,42 @@ declared in the implementation pass, from the verification plan above.
 
 ### Missed Questions
 
+### Loop 3 — Recorded implementation contract (2026-10-13)
+
+- **RED:** FID-012 has repaired admission (74 titles / six candidates), and
+  FID-016's exact inventory has zero merge proposals. The report remains stale;
+  its fingerprint covers only the old live catalog, and red reviews cannot write
+  it. No independent report/admission collector is wired into repository validation.
+- **GREEN:** Fingerprint live + retired catalog inputs and the manifest separately
+  from readiness's catalog hash. Regenerate report output for red and green states,
+  retaining exit 1 on red. Add a standalone collector/probe that rejects malformed
+  stores, missing/stale reports and admission issues. Call the same collector from
+  repository validation after regenerating the real report. Preserve every draft
+  state and existing candidate link; no readiness or implementation is inferred.
+- **AUDIT:** Extend the existing admission suite and add
+  `scripts/__tests__/lesson-feature-check.test.ts` for archive/manifest freshness,
+  stale report refusal and deterministic red publication. Declare the standalone
+  `scripts/lesson-feature-check.ts` probe, never the recursive repo validator.
+- **ADVERSARIAL:** A generated red report is still red; writing it must not gain
+  admission or alter candidate state. Missing stores fail the enforced checker,
+  while the existing optional SessionEnd notice remains fail-open.
+- **CHANGE DELTA:** Recorded before source writes under automation level 3.
+
+### Loop 4 — Product candidate accounting (2026-10-13)
+
+- **RED:** Original step 4 also requires the F1/F2/F4 repairs to be represented
+  in the product pipeline; the existing six candidates do not name those owners.
+- **GREEN:** Add LF-007 / LF-008 / LF-009 as routed candidates owned by the already
+  approved FID-010 / FID-014 / FID-013 respectively, with real lesson citations
+  and source evidence. Preserve the six existing candidates and all four draft
+  states. No candidate is marked ready or implemented under the no-commit hold.
+- **AUDIT:** Rerun admission/report checks and regenerate the deterministic report.
+  Owning FIDs must exist uniquely; no implementation commit is fabricated.
+- **ADVERSARIAL:** Routed ownership records the approved program, not closure.
+  These candidates cannot become implemented until their owners close with real
+  recorded commits. Existing draft investigations remain visible.
+- **CHANGE DELTA:** Candidate metadata and generated report only.
+
 1. Why is a red check in a repository with a hard gate battery not a release blocker? → Because
   it was never declared as a gate; the battery is built from declared checks, and a package
   script nobody references is invisible to it. The fix is declaration, not a new mechanism.
@@ -227,9 +273,22 @@ declared in the implementation pass, from the verification plan above.
 
 ### Code Verification Evidence
 
-> Pre-implementation record: `Status: converged` (FID-2026-0915-004). Nothing in this
-> record has been implemented, so what follows records what was CHECKED at the cited
-> `HEAD` — not what was built.
+Current implementation evidence (2026-10-13) supersedes the historical baseline below.
+
+- [x] `reviewFeaturePipeline` hashes live and retired catalogs; the report's
+      `sourceFingerprint` also covers manifest bytes. Draft readiness and closed-FID
+      implementation proof remain independent checks.
+- [x] `writeFeatureReport` publishes deterministic red and green reports without
+      mutating the store. Three new checker tests and ten admission tests pass;
+      red publication stays a failed admission.
+- [x] `collectFeaturePipelineIssues` is called by the standalone probe and
+      `scripts/validate-repository.ts`. Real probe: PASS (0 issues). Missing/stale
+      reports and malformed/missing stores fail; SessionEnd remains advisory.
+- [x] Real report regenerated with 74 titles / 37 governed lessons / nine candidates.
+      Four drafts stay draft; both implemented candidates retain their real recorded
+      commits. Three new routed candidates name FID-010, FID-014 and FID-013;
+      existing candidate links and approval states were preserved.
+- [ ] Formal closure remains blocked by the operator's no-commit hold (G2).
 
 - [x] Every cited path exists at `main` @ `14d48820`, read directly at review time; the raw
       measurements live in `docs/design/learnings-boot-loading-and-lifecycle-review.md` §2/§3,
@@ -240,9 +299,6 @@ declared in the implementation pass, from the verification plan above.
       `protocol.config.yaml` and the pre-push hook contain no reference); the only surfacing is
       the fail-open advisory at `scripts/session-end-review.ts:246` (`featureRoutingNotes`);
       the active FID queue and `SCOPE.md` name no owner.
-- [x] **Not yet true, and deliberately not claimed:** the repair itself, its gates and its
-      receipt. Gates are declared when the status flips to `fixed`/`verified` and the
-      artifacts exist; declaring them now would be a false declaration.
 
 ## Boundaries
 
@@ -258,13 +314,14 @@ declared in the implementation pass, from the verification plan above.
 
 ## Resolution
 
-**Not implemented — `Status: converged` (pre-implementation, FID-2026-0915-004).**
+**Implemented — `Status: verified`; formal closure blocked by the no-commit hold.**
 
-This record exists so the finding has an owner, a converged design and a register item with
-write authority; it made no source change. The work described above is implemented by
-whichever pass flips the record to `fixed`, at which point this section is rewritten in the
-closure format (Closed Date / Fix Description / Tests Added / Verification Evidence /
-Archived) and the declared gates are added under `## Verification Gates`.
+Admission and report freshness are now repository checks through one independent
+collector. Fingerprints cover both lesson stores and the candidate manifest; reports
+remain truthful on red and preserve failure exits. Existing draft/implemented states
+and citations remain intact; LF-007 through LF-009 account for the approved boot,
+canonical-rule and reference-integrity repairs as routed work. No commit, push,
+release or archive move is performed.
 
 - **Authorised write surface:** `SCOPE.md` → machine-readable scope targets → this record's
   line (registered 2026-10-12 with the review).

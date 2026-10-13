@@ -26,7 +26,7 @@
   the SDK classification suite are declared in the FID's gate contract.
 - **Scope:** internal
 - **Owning FID:** FID-2026-1012-002
-- **Status:** active
+- **Status:** historical
 
 ## Lesson: A register target line whose globs all sit on continuation lines contributes nothing
 
@@ -61,7 +61,7 @@
   53 pass / 0 fail.
 - **Scope:** internal
 - **Owning FID:** FID-2026-1010-001
-- **Status:** active
+- **Status:** historical
 
 ## Lesson: A machine-readable register entry is a parsed artifact, not prose
 
@@ -82,17 +82,17 @@
   uniquely confusing because the block message names the missing coverage,
   never the mangled entry that caused it.
 - **Guard:** Never edit a machine-readable register entry line-by-line. Read
-  the entry, then rewrite the WHOLE entry block in one operation (or run a
-  small anchor-based script), and confirm the globs still parse — a targeted
-  write to one of the entry's own paths is the live probe. Prefer a script
-  for multi-line glob lists; the tool-call payload path is lossy for them.
+  the complete file, then rewrite the WHOLE entry block in one direct edit,
+  and confirm the globs still parse — a targeted write to one of the entry's
+  own paths is the live probe. The current single-agent Law 1 forbids scripted
+  edits, including multi-line glob lists; the incident's script is historical.
 - **Verification:** after the script rewrite, the previously blocked edits
   applied on the first attempt and the full battery passed (typecheck ×2,
   tests 5/5 and 1/1, probe 5/5, quality, eslint, prettier, lint:md,
   fid:verify 6/6).
 - **Scope:** internal
 - **Owning FID:** FID-2026-1009-001
-- **Status:** active
+- **Status:** historical
 
 ## Lesson: A repair script that slices on a re-run is a data-loss script
 
@@ -112,18 +112,17 @@
   an arbitrary position (the top) turns any re-run into an unbounded delete.
   Idempotence in a repair script means "no-op when already correct", never
   "delete then re-insert".
-- **Guard:** Repair scripts insert and remove only between a stable anchor
-  and its immediate neighbor (marker-adjacent insert; block-anchored delete
-  bounded by the block's own start AND end headings). After any scripted
-  edit to a tracked ledger file, diff against HEAD (`git diff --numstat`)
-  before declaring success — a green content validator proves the file is
-  well-formed, never that nothing was lost.
+- **Guard:** Read the complete file and make direct edits bounded by the
+  block's own start AND end headings; the current single-agent Law 1 forbids
+  scripted ledger edits. Diff against HEAD (`git diff --numstat`) before
+  declaring success — a green content validator proves the file is
+  well-formed, never that nothing was lost. Preserve unrelated operator work.
 - **Verification:** pristine file restored from HEAD (1,989 lines; the
   expected 2026-10-09 lesson present); `git diff --numstat` shows insertions
   only and zero deletions; learnings:check PASS; lint:md and prettier clean.
 - **Scope:** internal
 - **Owning FID:** FID-2026-1009-001
-- **Status:** active
+- **Status:** historical
 
 ## Lesson: Verification gates inside a code fence are invisible to fid:verify
 
@@ -151,7 +150,7 @@
   valid receipts.
 - **Scope:** internal
 - **Owning FID:** FID-2026-1009-001
-- **Status:** active
+- **Status:** historical
 
 ## Lesson: Extend an existing command before registering its replacement
 
@@ -169,7 +168,7 @@
   full root 8,572 pass, zero failures after command integration.
 - **Scope:** internal
 - **Owning FID:** FID-2026-1007-012
-- **Status:** active
+- **Status:** historical
 
 ## Lesson: Preserve operator-owned controls through a visual redesign
 
@@ -188,7 +187,7 @@
   S/navigation/context/version, raised buttons and context recovery verified.
 - **Scope:** internal
 - **Owning FID:** FID-2026-1008-006
-- **Status:** active
+- **Status:** historical
 
 ## Lesson: A failing part is not a failing whole
 
@@ -223,7 +222,7 @@
   that a served label not naming the requested model is flagged `mismatch`.
 - **Scope:** internal
 - **Owning FID:** FID-2026-1007-008
-- **Status:** active
+- **Status:** historical
 
 ## Lesson: A control that fails is not a control that disagrees
 
@@ -260,7 +259,7 @@
   absent token usage is pinned as `no-signal` rather than a tokenizer breach.
 - **Scope:** internal
 - **Owning FID:** FID-2026-1007-008
-- **Status:** active
+- **Status:** historical
 
 ## Lesson: A telemetry value's absence and its zero are different facts
 
@@ -299,7 +298,7 @@
   every row's `width="100%"` without the Cache row existing at all.
 - **Scope:** internal
 - **Owning FID:** FID-2026-1007-009
-- **Status:** active
+- **Status:** historical
 
 ## Lesson: A new AgentState field is not a free edit — the compiler makes you classify it
 
@@ -334,7 +333,7 @@
   the FID records the classification rather than the compile error alone.
 - **Scope:** internal
 - **Owning FID:** FID-2026-1007-009
-- **Status:** active
+- **Status:** historical
 
 ## Lesson: A health breaker may throttle background traffic but must never deny a user action
 
@@ -379,7 +378,7 @@
   common/src` shows the provider breaker's cooldown gate now has no production caller.
 - **Scope:** internal
 - **Owning FID:** FID-2026-1007-007
-- **Status:** active
+- **Status:** historical
 
 ## Lesson: Removing a gate from its only caller leaves production-dead code behind
 
@@ -417,7 +416,7 @@
   Verification Evidence.
 - **Scope:** internal
 - **Owning FID:** FID-2026-1007-007
-- **Status:** active
+- **Status:** historical
 
 ## Lesson: A blocker inherited from an outside document must be traced to its owner
 
@@ -453,9 +452,10 @@
   text; `bun run dev/scratchpad/active/cache-prefix-ratio-measure.ts` reproduces the
   step-10 table, and the step-8 absence is a scoped grep returning 0 matches; all
   eight declared gates exit 0 at the stamped receipt.
+- **Reproduction:** scripts/learnings-prefix-probe.ts → symbol:measureLearningPrefixStability
 - **Scope:** internal
 - **Owning FID:** FID-2026-1006-005
-- **Status:** active
+- **Status:** historical
 
 ## Lesson: Opt-in isolation is not isolation, and a reset is not an authority
 
@@ -490,7 +490,7 @@
   `3969 pass / 18 skip / 0 fail` across 482 files.
 - **Scope:** internal
 - **Owning FID:** FID-2026-1007-006
-- **Status:** active
+- **Status:** historical
 
 ## Lesson: A marker rule and a placement rule are different rules
 
@@ -528,7 +528,7 @@
   `provider-parity-check` exits 0.
 - **Scope:** internal
 - **Owning FID:** FID-2026-1007-005
-- **Status:** active
+- **Status:** historical
 
 ## Lesson: A suite can be passing because of the defect it is named after
 
@@ -567,7 +567,7 @@
   gates declared on FID-2026-1007-004 exit 0 at the stamped receipt.
 - **Scope:** internal
 - **Owning FID:** FID-2026-1007-004
-- **Status:** active
+- **Status:** historical
 
 ## Lesson: A gate that cannot be declared cannot be proven
 
@@ -610,7 +610,7 @@
   across the audit's two pin files and the scripts tree typechecks.
 - **Scope:** internal
 - **Owning FID:** FID-2026-1007-003
-- **Status:** active
+- **Status:** historical
 
 ## Lesson: A marker that names a possibility is not a locator
 
@@ -650,9 +650,10 @@
   3,000-line string, an over-cap object and a nested search-shape object; the
   measured numbers are in FID-2026-1006-005 step 3, and the locator gap it found is
   recorded there as step 11 rather than reported as parity.
+- **Reproduction:** scripts/learnings-truncation-probe.ts → symbol:measureLearningTruncation
 - **Scope:** internal
 - **Owning FID:** FID-2026-1006-005
-- **Status:** active
+- **Status:** historical
 
 ## Lesson: A leak class is enumerated, not inferred from the instance that hurt
 
@@ -688,7 +689,7 @@
   (a candidate) and the `__reset*`/`clear*` seams (coverage).
 - **Scope:** internal
 - **Owning FID:** FID-2026-1007-002
-- **Status:** active
+- **Status:** historical
 
 ## Lesson: A reset has no value until a preload calls it, and a boundary has two levels
 
@@ -725,7 +726,7 @@
   reason recorded, and all 13 workspace legs are green (8389 pass / 0 fail / 23 skip).
 - **Scope:** internal
 - **Owning FID:** FID-2026-1007-002
-- **Status:** active
+- **Status:** historical
 
 ## Lesson: A process-lifetime registry plus a reused fixture key is deterministic test-order dependence
 
@@ -766,7 +767,7 @@
   the new isolation suite is 4/4.
 - **Scope:** internal
 - **Owning FID:** FID-2026-1007-001
-- **Status:** active
+- **Status:** historical
 
 ## Lesson: Removing shared-state noise is the start of the diagnosis, not the end of the repair
 
@@ -805,7 +806,7 @@
   call-graph evidence in `dev/fids/FID-2026-1007-001-agent-runtime-suite-breaker-leak-and-behavior-corrections.md`.
 - **Scope:** internal
 - **Owning FID:** FID-2026-1007-001
-- **Status:** active
+- **Status:** historical
 
 ## Lesson: A cost model outgrown twice needs every site enumerated, not the constant retuned
 
@@ -830,7 +831,7 @@
   --check` reports 10/10.
 - **Scope:** internal
 - **Owning FID:** FID-2026-1006-004 (closed + archived)
-- **Status:** active
+- **Status:** historical
 
 ## Lesson: A governance control that degrades to an advisory needs a loud, specific degradation
 
@@ -852,7 +853,7 @@
   live probe shows the post-fix path returning `degraded: false` with a named method.
 - **Scope:** internal
 - **Owning FID:** FID-2026-1006-004 (closed + archived)
-- **Status:** active
+- **Status:** historical
 
 ## Lesson: A fix that deletes a detection class costs more than the work it removes
 
@@ -874,7 +875,7 @@
   across two consecutive runs.
 - **Scope:** internal
 - **Owning FID:** FID-2026-1006-004 (closed + archived)
-- **Status:** active
+- **Status:** historical
 
 ## Lesson: A library-complete hand-off needs a named consumer, not a readiness note
 
@@ -999,6 +1000,82 @@
 - **Status:** active
 - **Canonical rule:** extractions-carry-their-census-pins
 
+## Lesson: Focusable is not reachable — keyboard access needs a control that moves focus
+
+- **Date:** 2026-10-05
+- **Failure:** The right sidebar's section headers and FID cards were
+  mouse-only (`focusable={false}` + onMouseDown). Setting `focusable={true}`
+  alone would not have fixed keyboard access: OpenTUI 0.5.3 has no Tab
+  traversal (verified against the vendored core — `focus()` only registers a
+  per-renderable keypress handler, nothing cycles focusable renderables), so
+  a focusable control nobody can focus is still unreachable.
+- **Evidence:** cli/src/components/right-sidebar-focus.ts → symbol:createSidebarFocusController,
+  cli/src/components/savant-ui/primitives/sidebar-section.tsx → symbol:SidebarSection
+- **Invariant:** A keyboard-accessible control needs (1) an activation key
+  handler, (2) focus state it can render, and (3) a parent mechanism that
+  moves focus to it — all three, or none.
+- **Guard:** Before adding `focusable` to any TUI control, grep the platform
+  version for Tab/focus-cycling; if absent, wire the control into an explicit
+  focus-cycle parent in the same change.
+- **Verification:** cli sidebar-collapse suite 10/10 (5 new cycle legs);
+  typecheck exit 0; quality PASS. Evidence roles: parent cycle, section
+  registration and Enter/Space activation.
+- **Scope:** internal
+- **Owning FID:** FID-2026-1005-002 (closed + archived)
+- **Status:** active
+- **Canonical rule:** focusable-requires-a-focus-mover
+
+## Lesson: Count-only consumers should not pay for a full parse — derive the count at the source
+
+- **Date:** 2026-10-05
+- **Failure:** The right sidebar consumed only `archivedFids.length`, but
+  `useFids` fed it from `loadFidInventory`, which parses every archived FID's
+  Markdown on each refresh — 54.65 ms vs 0.31 ms for a directory listing at
+  the current archive size (455 files), on a hot cache, on every watcher hit.
+- **Evidence:** cli/src/utils/fid-loader.ts → symbol:countArchivedFids,
+  cli/src/hooks/use-fids.ts → symbol:useFids
+- **Invariant:** When a caller uses only a projection (length/count/exists),
+  the data path must do work proportional to the projection; the rich API
+  stays available for callers that need the full shape.
+- **Guard:** Before wiring a loader into a hot refresh path, list every field
+  each consumer reads; if the set is a projection, add a projection-specific
+  function beside the loader and point the hot path at it (keep the watcher
+  driving freshness — the projection must stay live).
+- **Verification:** cli fid-loader suite 12/12 (3 new count-path legs incl.
+  freshness across create/remove); measured delta in FID-2026-1005-002 Loop 2.
+- **Scope:** internal
+- **Owning FID:** FID-2026-1005-002 (closed + archived)
+- **Status:** active
+- **Canonical rule:** count-only-consumers-get-count-paths
+
+## Lesson: Reserve proposal slots mechanically — a record store is a cap, prompt discipline is a wish
+
+- **Date:** 2026-10-05
+- **Failure:** The isolated skill proposer's one-atomic-proposal-per-session
+  contract had no production caller and no mechanical enforcement point on
+  the draft path; the mechanical lesson script wrote generic draft bodies
+  directly (omitting the actual lesson rule) and only a session-end text
+  alert could surface background drafts.
+- **Evidence:** common/src/util/skill-proposals.ts → symbol:prepareCandidateHandoff,
+  common/src/util/skill-lifecycle-events.ts → symbol:appendSkillLifecycleEvent,
+  scripts/lessons-to-skills.ts → symbol:draftCandidates
+- **Invariant:** Concurrency/caps must be enforced by a store the code cannot
+  bypass (reserve BEFORE the side effect; retries idempotent by content
+  hash; a different proposal fails closed). Operator-facing notices must be
+  derivable from a schema with no free-text fields, so untrusted prose cannot
+  reach a privileged surface by construction.
+- **Guard:** When a contract says "at most one per session/turn", name the
+  record store that rejects the second one and write the same-session
+  second-attempt pin; when a notice must not echo untrusted text, define the
+  event schema first and build display text from validated fields only.
+- **Verification:** scripts suites 49/0; common suites 11/0; evals 20/0;
+  root typecheck exit 0; quality PASS. Evidence roles: reservation before
+  write (idempotent by content sha), metadata-only durable events, production caller.
+- **Scope:** internal
+- **Owning FID:** FID-2026-1005-003 (closed + archived)
+- **Status:** active
+- **Canonical rule:** reserve-slots-mechanically-notices-are-metadata-only
+
 ## Lesson: A parser that reads prose must separate *describing* a convention from *using* one
 
 - **Date:** 2026-10-03
@@ -1088,87 +1165,5 @@
 <!-- Narrative sessions 2026-07-25..2026-08-10 were retired to
   dev/LEARNINGS-RETIRED.md verbatim (FID-2026-0916-007, move-only). -->
 
-<!-- The lessons below are pre-schema narrative entries
-  (Context/Invariant/Guard), preserved verbatim and NOT validated; new entries
-  must be added above the marker in governed space. -->
-
----
-
-## Lesson: Focusable is not reachable — keyboard access needs a control that moves focus
-
-- **Date:** 2026-10-05
-- **Failure:** The right sidebar's section headers and FID cards were
-  mouse-only (`focusable={false}` + onMouseDown). Setting `focusable={true}`
-  alone would not have fixed keyboard access: OpenTUI 0.5.3 has no Tab
-  traversal (verified against the vendored core — `focus()` only registers a
-  per-renderable keypress handler, nothing cycles focusable renderables), so
-  a focusable control nobody can focus is still unreachable.
-- **Evidence:** cli/src/components/right-sidebar-focus.ts →
-  symbol:createSidebarFocusController (the parent cycle);
-  cli/src/components/savant-ui/primitives/sidebar-section.tsx →
-  symbol:SidebarSection (registration + Enter/Space activation).
-- **Invariant:** A keyboard-accessible control needs (1) an activation key
-  handler, (2) focus state it can render, and (3) a parent mechanism that
-  moves focus to it — all three, or none.
-- **Guard:** Before adding `focusable` to any TUI control, grep the platform
-  version for Tab/focus-cycling; if absent, wire the control into an explicit
-  focus-cycle parent in the same change.
-- **Verification:** cli sidebar-collapse suite 10/10 (5 new cycle legs);
-  typecheck exit 0; quality PASS.
-- **Scope:** cli, TUI
-- **Owning FID:** FID-2026-1005-002 (closed + archived)
-- **Status:** active
-- **Canonical rule:** focusable-requires-a-focus-mover
-
-## Lesson: Count-only consumers should not pay for a full parse — derive the count at the source
-
-- **Date:** 2026-10-05
-- **Failure:** The right sidebar consumed only `archivedFids.length`, but
-  `useFids` fed it from `loadFidInventory`, which parses every archived FID's
-  Markdown on each refresh — 54.65 ms vs 0.31 ms for a directory listing at
-  the current archive size (455 files), on a hot cache, on every watcher hit.
-- **Evidence:** cli/src/utils/fid-loader.ts → symbol:countArchivedFids;
-  cli/src/hooks/use-fids.ts → symbol:useFids.
-- **Invariant:** When a caller uses only a projection (length/count/exists),
-  the data path must do work proportional to the projection; the rich API
-  stays available for callers that need the full shape.
-- **Guard:** Before wiring a loader into a hot refresh path, list every field
-  each consumer reads; if the set is a projection, add a projection-specific
-  function beside the loader and point the hot path at it (keep the watcher
-  driving freshness — the projection must stay live).
-- **Verification:** cli fid-loader suite 12/12 (3 new count-path legs incl.
-  freshness across create/remove); measured delta in FID-2026-1005-002 Loop 2.
-- **Scope:** cli, performance
-- **Owning FID:** FID-2026-1005-002 (closed + archived)
-- **Status:** active
-- **Canonical rule:** count-only-consumers-get-count-paths
-
-## Lesson: Reserve proposal slots mechanically — a record store is a cap, prompt discipline is a wish
-
-- **Date:** 2026-10-05
-- **Failure:** The isolated skill proposer's one-atomic-proposal-per-session
-  contract had no production caller and no mechanical enforcement point on
-  the draft path; the mechanical lesson script wrote generic draft bodies
-  directly (omitting the actual lesson rule) and only a session-end text
-  alert could surface background drafts.
-- **Evidence:** common/src/util/skill-proposals.ts →
-  symbol:prepareCandidateHandoff (reservation before write, idempotent by
-  content sha); common/src/util/skill-lifecycle-events.ts →
-  symbol:appendSkillLifecycleEvent (metadata-only durable events);
-  scripts/lessons-to-skills.ts → symbol:draftCandidates (the production
-  caller).
-- **Invariant:** Concurrency/caps must be enforced by a store the code cannot
-  bypass (reserve BEFORE the side effect; retries idempotent by content
-  hash; a different proposal fails closed). Operator-facing notices must be
-  derivable from a schema with no free-text fields, so untrusted prose cannot
-  reach a privileged surface by construction.
-- **Guard:** When a contract says "at most one per session/turn", name the
-  record store that rejects the second one and write the same-session
-  second-attempt pin; when a notice must not echo untrusted text, define the
-  event schema first and build display text from validated fields only.
-- **Verification:** scripts suites 49/0; common suites 11/0; evals 20/0;
-  root typecheck exit 0; quality PASS.
-- **Scope:** harness, skills
-- **Owning FID:** FID-2026-1005-003 (closed + archived)
-- **Status:** active
-- **Canonical rule:** reserve-slots-mechanically-notices-are-metadata-only
+<!-- FID-2026-1012-013 migrated the three active pre-schema lessons above the
+  insertion marker, retaining their incident prose and active status. -->

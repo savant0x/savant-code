@@ -22,8 +22,14 @@ export type StructuredLearning = {
   status: LearningStatus
   supersededBy?: string
   canonicalRule?: string
+  reproduction?: StableReference[]
+  asOf?: string
 }
-export type LearningIssue = { code: string; message: string }
+export type LearningIssue = {
+  code: string
+  message: string
+  severity?: 'warning'
+}
 export type LearningValidationResult = {
   entries: StructuredLearning[]
   issues: LearningIssue[]

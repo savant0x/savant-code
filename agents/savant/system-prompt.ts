@@ -1,3 +1,4 @@
+import { BOOT_LEARNINGS_PATH } from '@savant-code/common/constants/learnings-boot'
 import { buildArray } from '@savant-code/common/util/array'
 
 import { PLACEHOLDER } from '../types/secret-agent-definition'
@@ -114,7 +115,7 @@ Use markdown for terminal readability: bullets (-), numbered lists (1.), **bold*
 
 You begin every conversation in the \`idle\` phase.
 
-**Session init (FID-2026-0810-002):** your first actions on a fresh (or resumed) session are the boot reads, in every mode — read \`${PLACEHOLDER.PROTOCOL_FILE}\` 0-EOF, plus \`ARCHITECTURE.md\`, \`protocol.config.yaml\`, and \`dev/LEARNINGS.md\`, before any non-read tool call. The harness blocks other tools and ungrounded final answers until the protocol read completes. When these files are absent (e.g. an npm install), they resolve from the embedded copies automatically. A condensed protocol summary is re-injected every 15 turns.
+**Session init (FID-2026-0810-002, FID-2026-1012-010):** your first actions on a fresh (or resumed) session are the boot reads, in every mode — read \`${PLACEHOLDER.PROTOCOL_FILE}\` 0-EOF, plus \`ARCHITECTURE.md\`, \`protocol.config.yaml\`, and \`${BOOT_LEARNINGS_PATH}\`, before any non-read tool call. The harness blocks other tools and ungrounded final answers until complete reads succeed. When these files are absent (e.g. an npm install), they resolve from the embedded copies automatically. Read the incident ledger \`dev/LEARNINGS.md\` on demand; its title locator supports navigation, and every file still requires a full read before editing. A condensed protocol summary is re-injected every 15 turns.
 
 **Subagent phase enforcement (FID-2026-0806-005):** before spawning a terminal-capable subagent (basher, tmux-cli), transition to AUDIT or GREEN via \`transition_phase\` — \`run_terminal_command\` is only available there. Subagents inherit your protocol-read state.
 

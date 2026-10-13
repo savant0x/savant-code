@@ -1,11 +1,11 @@
 # Lesson feature pipeline
 
-Source fingerprint: baa91dbd17dafdd5ba2dd9e205c48f390bb067ae786e61609bd8e3619e82de41.
+Source fingerprint: 50c75ce69db7717262ee0c43e9e42ab184a60594516664fbda8c18cf825cc1b3.
 
 Readiness is a reviewed proposal. Implementation status records closed-FID
 evidence; it does not claim that historical tests were rerun today.
 
-Inventory: 74 headed lessons; 55 schema-governed.
+Inventory: 74 headed lessons; 37 schema-governed.
 
 ## Feature candidates
 
@@ -104,6 +104,51 @@ Acceptance:
 
 Owning FID: not routed.
 
+### LF-007: Bound the learning boot digest and verify complete grounding reads
+
+P1; routed; observed-gap.
+
+The full incident ledger exceeds the complete-read tool budget. Route boot grounding through a bounded generated rule
+  digest and refuse incomplete reads as grounding evidence.
+
+Acceptance:
+
+- The generated digest respects the shared 24,000-character boot contract.
+- Prompt, embedded bundle and mechanical grounding consume the same canonical path.
+- Missing, omitted, windowed, truncated or oversized digest responses earn no grounding credit.
+
+Owning FID: FID-2026-1012-010.
+
+### LF-008: Project boot rules from a canonical tiered learning catalog
+
+P1; routed; observed-gap.
+
+Canonical rules, active ledger lessons and embedded guidance disagree. Explicit rule tiers and exact lesson links must
+  generate the boot projection without promoting historical guidance into current authority.
+
+Acceptance:
+
+- Every active lesson resolves to exactly one canonical rule; missing and duplicate targets fail validation.
+- Only boot-tier rules enter the generated boot projection.
+- Projection checks refuse invalid sources and detect missing or stale generated output.
+
+Owning FID: FID-2026-1012-014.
+
+### LF-009: Validate durable lesson reproduction and historical evidence
+
+P1; routed; observed-gap.
+
+Ephemeral probes and drifting source references cannot support current lesson authority. Preserve historical incident
+  evidence while requiring durable reproduction targets and verified historical snapshots.
+
+Acceptance:
+
+- Current reproduction paths reject ignored, ephemeral, missing or escaping targets.
+- Historical source drift requires a real commit and the exact referenced blob before becoming a warning.
+- Durable successor probes state their current-code scope without claiming historical provider parity.
+
+Owning FID: FID-2026-1012-013.
+
 ## Complete lesson inventory
 
 Unlinked lessons retain their documented guards. No current defect is inferred
@@ -127,7 +172,7 @@ from their presence. Historical entries require current-source review.
 - A marker rule and a placement rule are different rules — governed; no new candidate.
 - A suite can be passing because of the defect it is named after — governed; LF-004.
 - A gate that cannot be declared cannot be proven — governed; no new candidate.
-- A marker that names a possibility is not a locator — governed; LF-002, LF-004.
+- A marker that names a possibility is not a locator — governed; LF-002, LF-004, LF-009.
 - A leak class is enumerated, not inferred from the instance that hurt — governed; no new candidate.
 - A reset has no value until a preload calls it, and a boundary has two levels — governed; no new candidate.
 - A process-lifetime registry plus a reused fixture key is deterministic test-order dependence — governed; no new
@@ -141,50 +186,50 @@ from their presence. Historical entries require current-source review.
 - An embedded scope cannot import — give it data-shaped seams — governed; LF-002.
 - A config loader must parse the repository's formatted file, not a hand-written sample — governed; no new candidate.
 - A quality-gate extraction must carry its census pin to the new site — governed; no new candidate.
-- A parser that reads prose must separate *describing* a convention from *using* one — governed; no new candidate.
-- A fixed character budget must account for the prefix that renders before it — governed; no new candidate.
-- The register-completeness gate decides what a scope register may be condensed to, not the author — governed; no new
+- Focusable is not reachable — keyboard access needs a control that moves focus — governed; no new candidate.
+- Count-only consumers should not pay for a full parse — derive the count at the source — governed; no new candidate.
+- Reserve proposal slots mechanically — a record store is a cap, prompt discipline is a wish — governed; no new
   candidate.
-- An archived walkthrough is a claim — ground the plan in the current contract modules — governed; LF-006.
-- A stage followed by a network-bound step cannot pin its own retry — extract the seam — governed; no new candidate.
-- A mode parameter must be pinned on every branch that returns a verdict — governed; no new candidate.
+- A parser that reads prose must separate *describing* a convention from *using* one — governed; LF-008.
+- A fixed character budget must account for the prefix that renders before it — governed; LF-007.
+- An archived walkthrough is a claim — ground the plan in the current contract modules — governed; LF-006, LF-008.
+- The register-completeness gate decides what a scope register may be condensed to, not the author — retired; no new
+  candidate.
+- A stage followed by a network-bound step cannot pin its own retry — extract the seam — retired; no new candidate.
+- A mode parameter must be pinned on every branch that returns a verdict — retired; no new candidate.
 - A suppression key that can legitimately be null cannot distinguish "inactive" from "active with no identity" —
-  governed; LF-003.
-- A FID's Verification section is a contract — each promised test must exist before "verified" — governed; LF-005.
-- Environment-dependent guards need live probes — cwd-scoped path matching passed tests and failed production —
-  governed; no new candidate.
-- Active-ledger status admission — admissible active-queue statuses — governed; no new candidate.
-- FID metadata carries no attribution fields — governed; no new candidate.
-- Files over the 100k-character tool read limit break every in-place edit path — governed; LF-001.
-- Static-string decompositions require a byte-identity hash gate — governed; no new candidate.
-- Brand colors must be traced to provenance, not inherited from code — governed; no new candidate.
-- Undeclared imports can ride a phantom node_modules outside the repo — governed; no new candidate.
-- workflow_dispatch source_ref must be a branch or tag, not a SHA — governed; no new candidate.
-- Perfection Loop convergence on a FID document is not FID closure — governed; no new candidate.
-- The test renderer is not a proxy for the production renderer — governed; LF-005.
-- OpenTUI Timeline defaults halt looping animations after 1 s — governed; no new candidate.
-- Generated artifacts require source-shape validation — governed; no new candidate.
-- Structured lessons need executable evidence — governed; no new candidate.
-- Legacy clean-shell guidance is superseded by reversible preflight — governed; no new candidate.
-- Manual clean-shell recipe is superseded — governed; no new candidate.
-- Harness grounding keeps protocol variants explicit — governed; no new candidate.
-- A retry that re-emits the same oversized tool call is not recovery — historical; LF-003.
-- Autonomy is a driver problem, not a governance problem — historical; no new candidate.
-- Local commits ≠ publishes — granular history beats the monolithic release commit — historical; no new candidate.
-- Assume-unchanged files are phantom source invisible to every local gate — historical; no new candidate.
-- A test whose runtime approaches the harness timeout is flaky by construction — historical; no new candidate.
-- Generated download URLs must target the asset store, not the encoder's inverse — historical; no new candidate.
-- A stage that shells out to a CLI inherits that CLI's layout — historical; no new candidate.
-- A bootstrap that covers one context imports the failure into all others — historical; no new candidate.
-- One dynamic-import seam is only as durable as its pin — historical; no new candidate.
-- A ledger ruling inherits the freshness of its evidence — historical; LF-006.
-- Status-based guards inherit git's index-state blindness — historical; no new candidate.
-- The release gate is an environment, not a gate list — historical; no new candidate.
-- "Compiles" is one claim per compiler configuration — historical; no new candidate.
-- A policy scrub must sweep the rule text and its generator anchors, not just the artifacts — historical; LF-006.
-- External research citations are hypotheses until grepped against the tree — historical; no new candidate.
-- EHEL verification credit is per-agent — subagent runs do not clear the parent's gate — historical; no new candidate.
-- Focusable is not reachable — keyboard access needs a control that moves focus — historical; no new candidate.
-- Count-only consumers should not pay for a full parse — derive the count at the source — historical; no new candidate.
-- Reserve proposal slots mechanically — a record store is a cap, prompt discipline is a wish — historical; no new
-  candidate.
+  retired; LF-003.
+- A FID's Verification section is a contract — each promised test must exist before "verified" — retired; LF-005.
+- Environment-dependent guards need live probes — cwd-scoped path matching passed tests and failed production — retired;
+  no new candidate.
+- Active-ledger status admission — admissible active-queue statuses — retired; no new candidate.
+- FID metadata carries no attribution fields — retired; no new candidate.
+- Files over the 100k-character tool read limit break every in-place edit path — retired; LF-001, LF-007.
+- Static-string decompositions require a byte-identity hash gate — retired; no new candidate.
+- Brand colors must be traced to provenance, not inherited from code — retired; no new candidate.
+- Undeclared imports can ride a phantom node_modules outside the repo — retired; no new candidate.
+- workflow_dispatch source_ref must be a branch or tag, not a SHA — retired; no new candidate.
+- Perfection Loop convergence on a FID document is not FID closure — retired; no new candidate.
+- The test renderer is not a proxy for the production renderer — retired; LF-005.
+- OpenTUI Timeline defaults halt looping animations after 1 s — retired; no new candidate.
+- Generated artifacts require source-shape validation — retired; no new candidate.
+- Structured lessons need executable evidence — retired; no new candidate.
+- Legacy clean-shell guidance is superseded by reversible preflight — retired; no new candidate.
+- Manual clean-shell recipe is superseded — retired; no new candidate.
+- Harness grounding keeps protocol variants explicit — retired; no new candidate.
+- A retry that re-emits the same oversized tool call is not recovery — retired; LF-003.
+- Autonomy is a driver problem, not a governance problem — retired; no new candidate.
+- Local commits ≠ publishes — granular history beats the monolithic release commit — retired; no new candidate.
+- Assume-unchanged files are phantom source invisible to every local gate — retired; no new candidate.
+- A test whose runtime approaches the harness timeout is flaky by construction — retired; no new candidate.
+- Generated download URLs must target the asset store, not the encoder's inverse — retired; no new candidate.
+- A stage that shells out to a CLI inherits that CLI's layout — retired; no new candidate.
+- A bootstrap that covers one context imports the failure into all others — retired; no new candidate.
+- One dynamic-import seam is only as durable as its pin — retired; no new candidate.
+- A ledger ruling inherits the freshness of its evidence — retired; LF-006, LF-009.
+- Status-based guards inherit git's index-state blindness — retired; no new candidate.
+- The release gate is an environment, not a gate list — retired; no new candidate.
+- "Compiles" is one claim per compiler configuration — retired; no new candidate.
+- A policy scrub must sweep the rule text and its generator anchors, not just the artifacts — retired; LF-006.
+- External research citations are hypotheses until grepped against the tree — retired; no new candidate.
+- EHEL verification credit is per-agent — subagent runs do not clear the parent's gate — retired; no new candidate.

@@ -30,7 +30,17 @@ function fixtureRoot(): string {
   fs.mkdirSync(path.join(root, 'dev'), { recursive: true })
   fs.writeFileSync(
     path.join(root, 'dev', 'LEARNING-RULES.md'),
-    '# Rules\n\n## Rule: safe-rule\n',
+    [
+      '# Rules',
+      '',
+      '## Rule: safe-rule',
+      '',
+      '- **Authority:** scripts/example.ts',
+      '- **Validation:** scripts/example.ts',
+      '- **Tier:** boot',
+      '- **Tier reason:** Fixture rule for validator tests.',
+      '',
+    ].join('\n'),
   )
   return root
 }

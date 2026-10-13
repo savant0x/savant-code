@@ -500,7 +500,11 @@ Self-reporting is prohibited. The Orchestrator that writes code must not be the 
    language before continuing.
 4. Load `coding-standards/{language}.md` for naming conventions and quality overrides
 5. Review `ARCHITECTURE.md` to understand the agent roster and tool restrictions
-6. Review `dev/LEARNINGS.md` for known issues
+6. Read the generated boot-tier digest `docs/embedded-learnings.md` 0-EOF;
+   review the incident ledger `dev/LEARNINGS.md` on demand. The digest is bounded
+   at 24,000 JavaScript characters; truncation or a partial read never earns
+   grounding credit. Navigation through the lesson locator does not exempt any
+   file from a full read before editing.
 7. Glob `dev/fids/*.md` to list active FIDs. Read only the metadata headers (Status,
    Severity) of non-Closed FIDs to identify open work items. Do NOT read closed or
    archived FIDs.

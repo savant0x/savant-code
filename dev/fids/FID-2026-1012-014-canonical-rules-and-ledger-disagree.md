@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-1012-014-canonical-rules-and-ledger-disagree.md`
 **ID:** FID-2026-1012-014
 **Severity:** high
-**Status:** converged
+**Status:** verified
 **Created:** 2026-10-12 19:05
 **Automation level:** 3
 **YAGNI-Compliance:** Verified
@@ -182,11 +182,35 @@ declared (with their receipts) when the artifacts exist.
 
 ## Verification Gates
 
-This record is pre-implementation (`Status: converged`, per FID-2026-0915-004), so **no gate
-bullets are declared here**. The contract requires gates only once the status flips to
-`fixed`/`verified`; declaring a gate whose artifact does not yet exist would fail
-`validate:repository` on a path that is not there. Gates and their receipt are declared in the
-implementation pass, from the verification plan above.
+- gate: typecheck common
+- gate: typecheck packages/agent-runtime
+- gate: test scripts/__tests__/learnings-rule-tiers.test.ts
+- gate: test scripts/__tests__/learnings-projection.test.ts
+- gate: test scripts/__tests__/learnings-boot-digest.test.ts
+- gate: test scripts/learnings.test.ts
+- gate: test scripts/__tests__/lessons-to-skills.test.ts
+- gate: test scripts/__tests__/lessons-to-skills-drafting.test.ts
+- gate: probe scripts/learnings-projection-check.ts
+- gate: probe scripts/protocol-bundle-check.ts
+- gate: probe scripts/scripts-typecheck-check.ts
+- gate: quality
+
+### Verification Receipt
+
+- fingerprint: sha256:5e0a7adad85a672a7782e3d36a9a49a5516b83af76f06149a00ed41a4a22cc9d
+- verified: 2026-10-13T15:03:04.834Z
+- typecheck common: exit 0
+- typecheck packages/agent-runtime: exit 0
+- test scripts/__tests__/learnings-rule-tiers.test.ts: exit 0
+- test scripts/__tests__/learnings-projection.test.ts: exit 0
+- test scripts/__tests__/learnings-boot-digest.test.ts: exit 0
+- test scripts/learnings.test.ts: exit 0
+- test scripts/__tests__/lessons-to-skills.test.ts: exit 0
+- test scripts/__tests__/lessons-to-skills-drafting.test.ts: exit 0
+- probe scripts/learnings-projection-check.ts: exit 0
+- probe scripts/protocol-bundle-check.ts: exit 0
+- probe scripts/scripts-typecheck-check.ts: exit 0
+- quality: exit 0
 
 ## Perfection Loop
 
@@ -234,7 +258,48 @@ implementation pass, from the verification plan above.
   evidence; exact tier/projection test paths are in the shared artifact table.
 - **CHANGE DELTA:** Planning correction only; no skill release or catalogue edit occurred.
 
+### Loop 3 — Implementation plan (2026-10-13)
+
+- **RED:** The converged design names a rule tier but the current parser exposes neither tier nor
+  class links; `validateCanonicalRuleCatalog` checks only duplicate headings and named targets.
+  `docs/embedded-learnings.md` is hand-curated, and `lessons-to-skills.ts:139-154` chooses a
+  lesson by token overlap after appending the lesson title to the failure text, so the first rule
+  can self-match an unrelated recurring class.
+- **GREEN:** Add a closed-set `Tier` plus non-empty `Tier reason` to every catalogue rule and an
+  optional exact `Failure classes` list for evidence-backed class-to-rule links. Require every
+  non-historical governed lesson to name one catalogue rule; preserve incident prose by marking
+  the 26 current entries with no authoritative rule as `Status: historical` rather than assigning
+  them a false rule. Render `docs/embedded-learnings.md` deterministically from the boot-tier rule
+  projection, validate it for drift and privacy, and make skill eligibility require an exact class
+  link from the catalogue. No token-overlap fallback remains.
+- **AUDIT:** The new rule-tier test covers duplicate/missing/invalid tiers, unruled lessons,
+  historical lessons, exact class-link matching and unrelated-class rejection. The projection probe
+  covers byte drift and a boot-tier output; protocol-bundle and scripts-typecheck probes cover the
+  generated/runtime surfaces.
+- **ADVERSARIAL:** A reference-tier rule remains available to future explicit promotion without
+  entering the boot payload; a historical lesson remains in the append-only ledger but cannot enter
+  boot or skill promotion; a recurring class with no explicit link produces no candidate rather than
+  inheriting a coincidental rule. The projection is rule metadata, not a second hand-edited lesson
+  list, so the four existing public rules remain the boot set without copying incident prose.
+- **CHANGE DELTA:** Implementation pass; source changes begin only after this recorded plan.
+
 ### Missed Questions
+
+### Loop 4 — Long-token projection correction (2026-10-13)
+
+- **RED:** Combined verification stopped at the synthetic overbudget boot-rule
+  test. The shared Markdown wrapper could select only indentation as its split
+  prefix, then recreate the same remaining string indefinitely.
+- **GREEN:** Refuse a split that consumes only whitespace; preserve unbreakable
+  tokens without inventing spaces inside them. The existing budget test must
+  return an overflow issue without replacing destination bytes. Avoid quadratic
+  email scanning on long non-email tokens by testing the final local character
+  before `@`, which preserves the existing substring-detection semantics.
+- **AUDIT:** Add a direct long-token wrapping regression to the boot-digest suite;
+  rerun that suite, existing privacy tests and the full combined learning battery.
+- **ADVERSARIAL:** Termination cannot depend on the caller supplying spaced prose.
+  Overflow remains a failure, never a partial projection or omitted boot rule.
+- **CHANGE DELTA:** Correction of the generated-artifact path, before re-stamping.
 
 1. Should the rule live in the catalogue or in the lesson? → In the catalogue, with the lesson
    as evidence. The catalogue already carries the two fields a loader needs (`Authority`,
@@ -249,9 +314,20 @@ implementation pass, from the verification plan above.
 
 ### Code Verification Evidence
 
-> Pre-implementation record: `Status: converged` (FID-2026-0915-004). Nothing in this
-> record has been implemented, so what follows records what was CHECKED at the cited
-> `HEAD` — not what was built.
+Current implementation evidence (2026-10-13) supersedes the historical measurements below.
+
+- [x] `scripts/learnings-rules.ts` parses tier/reason/authority/validation and exact class
+      links; `scripts/learnings-references.ts:validateCanonicalRuleCatalog` requires a
+      non-historical lesson to name exactly one catalog target, including duplicate refusal.
+- [x] `scripts/learnings-projection.ts` renders only boot rules, refuses invalid/private
+      sources and writes idempotently. `scripts/learnings.ts` and
+      `scripts/validate-repository.ts` call `collectEmbeddedProjectionIssues`.
+- [x] `scripts/lessons-to-skills.ts:findCandidates` joins recurrence digest to stable class
+      identity and exact catalog links; invalid catalogs and historical rules cannot promote.
+- [x] Focused combined tier/projection/validator/skill battery: 35 pass, 0 fail. Root
+      typecheck and ESLint exit 0; quality PASS (1,502 baselined files); projection and
+      protocol bundle checks PASS. Initial two-file formatting drift corrected.
+- [ ] Formal closure: blocked by the explicit operator hold on local commits (ECHO G2).
 
 - [x] Every cited path exists at `main` @ `14d48820`, read directly at review time; the raw
       measurements live in `docs/design/learnings-boot-loading-and-lifecycle-review.md` §2/§3,
@@ -262,9 +338,6 @@ implementation pass, from the verification plan above.
       `Scope: internal`; `docs/embedded-learnings.md` holds 4 lessons all dated 2026-08-11
       and nothing drift-checks it against the ledger (`scripts/generate-protocol-bundle.ts:86`,
       `common/src/util/embedded-protocol.ts:37`); `.agents/skills/.quarantine/` holds 4 drafts.
-- [x] **Not yet true, and deliberately not claimed:** the repair itself, its gates and its
-      receipt. Gates are declared when the status flips to `fixed`/`verified` and the
-      artifacts exist; declaring them now would be a false declaration.
 
 ## Boundaries
 
@@ -281,13 +354,16 @@ implementation pass, from the verification plan above.
 
 ## Resolution
 
-**Not implemented — `Status: converged` (pre-implementation, FID-2026-0915-004).**
+**Implemented — `Status: verified`; closure blocked by the operator's no-commit hold.**
 
-This record exists so the finding has an owner, a converged design and a register item with
-write authority; it made no source change. The work described above is implemented by
-whichever pass flips the record to `fixed`, at which point this section is rewritten in the
-closure format (Closed Date / Fix Description / Tests Added / Verification Evidence /
-Archived) and the declared gates are added under `## Verification Gates`.
+The catalog now classifies all 35 rules after FID-013's legacy reconciliation.
+All 37 governed lessons satisfy the exact-target
+contract; historical entries retain their incident bodies. Four explicitly public boot
+rules generate the shipped guidance deterministically. Exact class links replace token
+overlap in skill eligibility, with invalid catalogs and ambiguous classes refused.
+Tests are the rule-tier, projection, learning validator and two skill suites declared
+above. Verification evidence is recorded in this section and the live receipt.
+No commit, push, release or archive move is performed.
 
 - **Authorised write surface:** `SCOPE.md` → machine-readable scope targets → this record's
   line (registered 2026-10-12 with the review).

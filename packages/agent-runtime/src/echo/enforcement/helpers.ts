@@ -3,6 +3,8 @@
  * verbatim from `echo/enforcement.ts`; pure predicates shared by the class
  * and the `enforcement/` pipeline modules).
  */
+import { BOOT_LEARNINGS_PATH } from '@savant-code/common/constants/learnings-boot'
+
 import {
   DESTRUCTIVE_COMMAND_REGEX,
   GIT_MUTATING_REGEX,
@@ -61,7 +63,7 @@ export function terminalCommandCandidates(
  */
 export const COMPLETION_GATE_MAX_RETRIES = 3
 export function buildCompletionGateSteering(protocolFile: string): string {
-  return `Session-init grounding required: read \`${protocolFile}\` 0-EOF before ending your turn (also read \`ARCHITECTURE.md\`, \`protocol.config.yaml\`, and \`dev/LEARNINGS.md\`). The harness blocks ungrounded final answers.`
+  return `Session-init grounding required: read \`${protocolFile}\` 0-EOF before ending your turn (also read \`ARCHITECTURE.md\`, \`protocol.config.yaml\`, and \`${BOOT_LEARNINGS_PATH}\`). The harness blocks ungrounded final answers.`
 }
 export const COMPLETION_GATE_DISARM_NOTICE =
   'The session-init grounding gate has been disarmed for this session after repeated attempts; proceeding without the boot reads.'

@@ -1,4 +1,7 @@
+import { BOOT_LEARNINGS_PATH } from '@savant-code/common/constants/learnings-boot'
+
 import { captureToolResultEvidence } from './evidence-capture'
+import { completeGroundingReads } from './grounding-read'
 import {
   isRedispatchable,
   markToolOutcomeReady,
@@ -130,24 +133,20 @@ export async function runSuccessLifecycle<T extends ToolName>(
   // Grounding-set progress is committed only after the read handler
   // succeeds, never merely because the model requested a path.
   if (toolName === 'read_files' && !hasToolResultError(toolResult.content)) {
-    const successfulGroundingPaths = toolResult.content.flatMap((part) => {
-      if (part.type !== 'json' || !Array.isArray(part.value)) return []
-      return part.value.flatMap((entry) => {
-        if (
-          typeof entry !== 'object' ||
-          entry === null ||
-          Array.isArray(entry) ||
-          !('path' in entry) ||
-          !('content' in entry) ||
-          typeof entry.path !== 'string' ||
-          typeof entry.content !== 'string'
-        ) {
-          return []
-        }
-        return [entry.path]
-      })
+    const reads = completeGroundingReads({
+      output: toolResult.content,
+      hasWindow: 'offset' in toolCall.input || 'limit' in toolCall.input,
     })
-    enforcement.recordSuccessfulGroundingRead(successfulGroundingPaths)
+    enforcement.recordSuccessfulGroundingRead(reads.map((read) => read.path))
+    for (const read of reads)
+      if (read.path.replaceAll('\\', '/').toLowerCase() === BOOT_LEARNINGS_PATH)
+        params.logger.debug(
+          {
+            bootLearningCharacters: read.characters,
+            bootLearningBytes: read.bytes,
+          },
+          'Boot learning payload measured',
+        )
   }
 
   // EHEL: Post-tool enforcement tracking

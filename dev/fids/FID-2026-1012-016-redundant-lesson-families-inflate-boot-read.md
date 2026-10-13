@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-1012-016-redundant-lesson-families-inflate-boot-read.md`
 **ID:** FID-2026-1012-016
 **Severity:** medium
-**Status:** converged
+**Status:** verified
 **Created:** 2026-10-12 19:05
 **Automation level:** 3
 **YAGNI-Compliance:** Verified
@@ -187,10 +187,21 @@ existing `Superseded by` field so a by-title reference still reaches the survivi
 
 ## Verification Gates
 
-This record is `converged` — pre-implementation — so **no gate bullets are declared here**.
-Gates are declared when the artifacts exist, per the contract (mandatory once the status flips
-to `fixed`/`verified`), and the natural shapes for this record are the learnings validator
-suite, a probe for the consolidation's measurement, and the repo-wide `quality` gate.
+- gate: test scripts/__tests__/learnings-consolidation.test.ts
+- gate: probe scripts/learnings-consolidation-check.ts
+- gate: probe scripts/learnings.ts
+- gate: probe scripts/scripts-typecheck-check.ts
+- gate: quality
+
+### Verification Receipt
+
+- fingerprint: sha256:cef4a97f8e0c8ec4c4daaa1761101b904dadc49b65128477cfab76b4c67b9345
+- verified: 2026-10-13T15:04:20.420Z
+- test scripts/__tests__/learnings-consolidation.test.ts: exit 0
+- probe scripts/learnings-consolidation-check.ts: exit 0
+- probe scripts/learnings.ts: exit 0
+- probe scripts/scripts-typecheck-check.ts: exit 0
+- quality: exit 0
 
 ## Perfection Loop
 
@@ -236,6 +247,27 @@ suite, a probe for the consolidation's measurement, and the repo-wide `quality` 
 
 ### Missed Questions
 
+### Loop 3 — Recorded inventory contract (2026-10-13)
+
+- **RED:** The boot path now reads four classified rules, and all 37 live lessons
+  are governed. The original family list conflates caller proof, ownership and
+  breaker policy; those are distinct invariants. A family label cannot authorize
+  superseding one. No concrete merge has yet been proven.
+- **GREEN:** Derive a unique title/location/invariant/guard/rule inventory through
+  FID-012's locator. Propose a merge only for identical normalized invariants,
+  identical guards and the same existing canonical rule. Preserve different
+  guards and report every ambiguity. Measure the current digest independently
+  of ledger characters. Write a deterministic inventory for operator review;
+  do not supersede or retire any lesson without the recorded level-1 ruling.
+- **AUDIT:** Pin exact duplicate eligibility, differing guard/rule refusal and
+  inventory ambiguity in `scripts/__tests__/learnings-consolidation.test.ts`.
+  Run `scripts/learnings-consolidation-check.ts` against the real tree.
+- **ADVERSARIAL:** An empty exact-merge proposal is a valid finding, not evidence
+  that broad thematic families are interchangeable. The checker must explicitly
+  refuse automatic mutation and report zero boot savings when no boot rule changes.
+- **CHANGE DELTA:** Inventory and read-only measurement only; ledger changes remain
+  operator-gated if a concrete proposal exists.
+
 1. Should consolidation happen before or after rule tiering? → After the rule catalogue agrees
    with the ledger (FID-2026-1012-014), because the survivor must name a rule that exists and
    has a tier; consolidating first would pick rule names the catalogue does not carry.
@@ -248,9 +280,20 @@ suite, a probe for the consolidation's measurement, and the repo-wide `quality` 
 
 ### Code Verification Evidence
 
-> Pre-implementation record: `Status: converged` (FID-2026-0915-004). Nothing in this
-> record has been implemented, so what follows records what was CHECKED at the cited
-> `HEAD` — not what was built.
+Current inventory evidence (2026-10-13) supersedes the original family estimate.
+
+- [x] `reviewLearningConsolidation` consumes FID-012's locator, and
+      `exactConsolidationProposals` requires the same normalized invariant, guard
+      and existing canonical rule. Two regression tests pass, including rejection
+      of differing caller/ownership/breaker guards.
+- [x] Real probe: PASS (74 unique titles; 0 exact proposals; 1,938 boot characters;
+      zero mutation). Durable inventory:
+      `docs/design/learnings-consolidation-inventory-2026-10-13.md`.
+- [x] Measured reduction in this pass: 0 boot characters and 0 ledger characters.
+      No supersession, retirement or candidate re-pointing is performed. Thematic
+      family labels do not establish equivalent invariants.
+- [ ] Formal closure remains blocked by the no-commit hold (G2). A future concrete
+      consolidation still requires the recorded level-1 ruling.
 
 - [x] Every cited path exists at `main` @ `14d48820`, read directly at review time; the raw
       measurements live in `docs/design/learnings-boot-loading-and-lifecycle-review.md` §2/§3,
@@ -259,9 +302,6 @@ suite, a probe for the consolidation's measurement, and the repo-wide `quality` 
       `## Lesson:` headings: 18 of the 34 governed entries listed with their owning FIDs in
       this record's own Evidence block; the ledger totals 77,195 chars / 1,174 lines; the
       reduction figure in this record is labelled an estimate, not a measurement.
-- [x] **Not yet true, and deliberately not claimed:** the repair itself, its gates and its
-      receipt. Gates are declared when the status flips to `fixed`/`verified` and the
-      artifacts exist; declaring them now would be a false declaration.
 
 ## Boundaries
 
@@ -277,13 +317,13 @@ suite, a probe for the consolidation's measurement, and the repo-wide `quality` 
 
 ## Resolution
 
-**Not implemented — `Status: converged` (pre-implementation, FID-2026-0915-004).**
+**Inventory implemented — `Status: verified`; formal closure blocked by the no-commit hold.**
 
-This record exists so the finding has an owner, a converged design and a register item with
-write authority; it made no source change. The work described above is implemented by
-whichever pass flips the record to `fixed`, at which point this section is rewritten in the
-closure format (Closed Date / Fix Description / Tests Added / Verification Evidence /
-Archived) and the declared gates are added under `## Verification Gates`.
+The unique inventory and exact-merge checker replace the original unproven family
+estimate. No eligible identical invariant/guard/rule group exists in the current
+tree, so there is no concrete supersession to approve or apply. Distinct caller,
+ownership and breaker guidance remains visible. No ledger mutation or boot saving
+is claimed by this pass; the bounded boot selection belongs to FID-010.
 
 - **Authorised write surface:** `SCOPE.md` → machine-readable scope targets → this record's
   line (registered 2026-10-12 with the review).

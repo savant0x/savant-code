@@ -21,7 +21,7 @@ describe('embedded-protocol (FID-2026-0810-002 Change 2)', () => {
       'ECHO.md',
       'ARCHITECTURE.md',
       'protocol.config.yaml',
-      'dev/LEARNINGS.md',
+      'docs/embedded-learnings.md',
       'templates/FID-TEMPLATE.md',
     ]) {
       const served = getEmbeddedGroundingFile(groundPath)

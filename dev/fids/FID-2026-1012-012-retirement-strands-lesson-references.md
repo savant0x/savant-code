@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-1012-012-retirement-strands-lesson-references.md`
 **ID:** FID-2026-1012-012
 **Severity:** high
-**Status:** converged
+**Status:** verified
 **Created:** 2026-10-12 19:05
 **Automation level:** 3
 **YAGNI-Compliance:** Verified
@@ -164,12 +164,27 @@ locator's own history is auditable without git.
 
 ## Verification Gates
 
-This record is **pre-implementation** (`converged`, per FID-2026-0915-004), so it declares **no
-gates**: the artifacts its steps create do not exist yet, and a gate that cannot execute is a
-false declaration. Gates are declared in this section when the implementation lands and the
-status flips to `fixed`/`verified` — at that point `quality` is mandatory and each promised
-test path above becomes a `- gate: test <path>` bullet. `fid:verify --check` reports this
-record as outside the verification contract, by design.
+- gate: test scripts/__tests__/learnings-locator.test.ts
+- gate: test scripts/__tests__/lesson-feature-pipeline.test.ts
+- gate: test scripts/__tests__/learnings-retire.test.ts
+- gate: test scripts/__tests__/lessons-to-skills.test.ts
+- gate: test scripts/__tests__/lessons-to-skills-drafting.test.ts
+- gate: probe scripts/lesson-feature-pipeline.ts
+- gate: probe scripts/scripts-typecheck-check.ts
+- gate: quality
+
+### Verification Receipt
+
+- fingerprint: sha256:b3e31d0a3f0e6e5ce373f75354dac222e9116df1b2568e755477b5a5d56f83ec
+- verified: 2026-10-13T15:03:18.137Z
+- test scripts/__tests__/learnings-locator.test.ts: exit 0
+- test scripts/__tests__/lesson-feature-pipeline.test.ts: exit 0
+- test scripts/__tests__/learnings-retire.test.ts: exit 0
+- test scripts/__tests__/lessons-to-skills.test.ts: exit 0
+- test scripts/__tests__/lessons-to-skills-drafting.test.ts: exit 0
+- probe scripts/lesson-feature-pipeline.ts: exit 0
+- probe scripts/scripts-typecheck-check.ts: exit 0
+- quality: exit 0
 
 ## Perfection Loop
 
@@ -213,6 +228,29 @@ record as outside the verification contract, by design.
 
 ### Missed Questions
 
+### Loop 3 — Recorded implementation contract (2026-10-13)
+
+- **RED:** Real `bun run lessons:features --check` still exits 1 with seven missing
+  retired titles. `reviewFeaturePipeline` imports `parseLessons` from the skill
+  script and reads only the live catalog; `loadLessons` does the same. Retirement
+  has a separate block parser. FID-011 already implements move receipts and pins
+  their idempotence, so this pass preserves that writer.
+- **GREEN:** Extract the shared entry parser and implement an in-memory locator
+  with all locations, date, status, rule, retired/governed flags and heading line.
+  Identical duplicate bodies resolve with all locations; conflicting bodies fail.
+  Supersession follows replacements with missing-target and cycle diagnostics.
+  Feature references annotate retirement and reject obsolete superseded links with
+  a replacement notice; skill eligibility remains live/active only. Retirement
+  consumes the same parser without changing the operator's retirement decision.
+- **AUDIT:** Pin locator boundaries in `scripts/__tests__/learnings-locator.test.ts`,
+  retired admission in `scripts/__tests__/lesson-feature-pipeline.test.ts`, and
+  rerun existing skill and retirement suites plus scripts typecheck and quality.
+- **ADVERSARIAL:** Resolving historical evidence must never promote it. Missing
+  archives are allowed for fixtures/new repositories; present but unsafe or
+  unreadable sources fail. No candidate title or actual ledger body is rewritten.
+- **CHANGE DELTA:** Source implementation begins after this recorded presentation.
+  The no-commit hold prevents formal closure under G2.
+
 1. Should retirement *rename* rather than move? → No. Renaming the title to keep references
    valid would break the ledger's other by-title consumer (the candidate store) in the same
    way and would falsify a record that other lessons cite; a locator is the honest fix.
@@ -226,9 +264,17 @@ record as outside the verification contract, by design.
 
 ### Code Verification Evidence
 
-> Pre-implementation record: `Status: converged` (FID-2026-0915-004). Nothing in this
-> record has been implemented, so what follows records what was CHECKED at the cited
-> `HEAD` — not what was built.
+Current implementation evidence (2026-10-13) supersedes the historical measurements below.
+
+- [x] `scripts/learnings-locator.ts` owns parsing, location inventory and supersession
+      resolution. `lesson-feature-pipeline.ts` calls `readLessonLocator` / `resolveLesson`;
+      `lessons-to-skills.ts:loadLessons` uses both and retains live locations only;
+      `learnings-retire.ts:splitEntries` calls `lessonSpans`.
+- [x] Combined locator/admission/retirement/skill suites: 33 pass, 0 fail. Scripts
+      typecheck exit 0; quality PASS (1,502 baselined files).
+- [x] Real `bun run lessons:features --check`: PASS (74 lessons, 6 candidates).
+      All seven retired references resolve without changing candidate links or ledgers.
+- [ ] Formal closure: blocked by the explicit no-commit hold (ECHO G2).
 
 - [x] Every cited path exists at `main` @ `14d48820`, read directly at review time; the raw
       measurements live in `docs/design/learnings-boot-loading-and-lifecycle-review.md` §2/§3,
@@ -238,9 +284,6 @@ record as outside the verification contract, by design.
       named titles were checked with `grep -cF` against both `dev/LEARNINGS.md` and
       `dev/LEARNINGS-RETIRED.md` and read `live=0 / retired≥1`; the moving retirement landed
       in `ac4bad20` (972 deleted / 1,057 inserted, 74 lesson headings → 37 live + 37 retired).
-- [x] **Not yet true, and deliberately not claimed:** the repair itself, its gates and its
-      receipt. Gates are declared when the status flips to `fixed`/`verified` and the
-      artifacts exist; declaring them now would be a false declaration.
 
 ## Boundaries
 
@@ -255,13 +298,14 @@ record as outside the verification contract, by design.
 
 ## Resolution
 
-**Not implemented — `Status: converged` (pre-implementation, FID-2026-0915-004).**
+**Implemented — `Status: verified`; closure blocked by the operator's no-commit hold.**
 
-This record exists so the finding has an owner, a converged design and a register item with
-write authority; it made no source change. The work described above is implemented by
-whichever pass flips the record to `fixed`, at which point this section is rewritten in the
-closure format (Closed Date / Fix Description / Tests Added / Verification Evidence /
-Archived) and the declared gates are added under `## Verification Gates`.
+The shared in-memory locator preserves all matching locations and follows replacements
+with explicit notices. Conflicting duplicates, missing replacements and cycles fail
+closed. Feature admission resolves retired evidence; skills exclude retired entries.
+Retirement shares the entry parser and keeps FID-011's idempotent move receipts.
+The declared regression suites and real admission command pass. No ledger move,
+candidate promotion, commit, push, release or archive operation was performed.
 
 - **Authorised write surface:** `SCOPE.md` → machine-readable scope targets → this record's
   line (registered 2026-10-12 with the review).

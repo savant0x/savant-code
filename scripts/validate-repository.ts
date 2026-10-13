@@ -27,10 +27,8 @@ import { validateActiveFidLedger } from './fid-ledger.js'
 import { collectRecordCoverageIssues } from './fid-surface-coverage.js'
 import { collectGateDeclarabilityIssues } from './gate-declarability.js'
 import { collectHygieneIssues } from './hygiene.js'
-import {
-  validateEmbeddedLearningSource,
-  validateLearningFile,
-} from './learnings-core.js'
+import { validateLearningArtifacts } from './learnings-artifact-check.js'
+import { collectFeaturePipelineIssues } from './lesson-feature-check.js'
 import { collectQualityIssues, readQualityBaseline } from './quality-report.js'
 import {
   formatValidationIssues,
@@ -55,26 +53,6 @@ import type {
 type JsonObject = Record<string, unknown>
 
 const root = path.resolve(import.meta.dir, '..')
-
-function validateLearningsContent(): { code: string; message: string }[] {
-  const result = validateLearningFile(root)
-  const sourcePath = path.join(root, 'docs', 'embedded-learnings.md')
-  const sourceIssues = fs.existsSync(sourcePath)
-    ? validateEmbeddedLearningSource(
-        'docs/embedded-learnings.md',
-        fs.readFileSync(sourcePath, 'utf8'),
-      )
-    : [
-        {
-          code: 'learning.embedded.missing',
-          message: 'docs/embedded-learnings.md is missing.',
-        },
-      ]
-  return [...result.issues, ...sourceIssues].map((issue) => ({
-    code: issue.code,
-    message: issue.message,
-  }))
-}
 
 function validateCurrentHygiene(): { code: string; message: string }[] {
   return collectHygieneIssues().map((issue) => ({
@@ -261,7 +239,8 @@ const issues: FidLedgerIssue[] = [
   ...validateActiveFidLedger(root),
   ...validateFidVerificationGates(root),
   ...validateArchivedFidClosures(root),
-  ...validateLearningsContent(),
+  ...validateLearningArtifacts(root).issues,
+  ...collectFeaturePipelineIssues(root),
   // SAVANT_CODE_SKIP_QUALITY_RATCHET: temporarily exempt ratchet for releases
   // (operator-paused FID-2026-0819-005)
   ...(process.env.SAVANT_CODE_SKIP_QUALITY_RATCHET === '1'

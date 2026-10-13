@@ -4,7 +4,11 @@ import path from 'node:path'
 
 import { afterEach, describe, expect, test } from 'bun:test'
 
-import { resolveBootContract } from '../boot-contract'
+import {
+  resolveBootContract,
+  BOOT_LEARNINGS_PATH,
+  BOOT_LEARNINGS_MAX_CHARACTERS,
+} from '../boot-contract'
 
 const tempDirectories: string[] = []
 
@@ -48,6 +52,10 @@ function createProject(): string {
 }
 
 describe('resolveBootContract', () => {
+  test('the boot learning contract is a bounded generated digest', () => {
+    expect(BOOT_LEARNINGS_PATH).toBe('docs/embedded-learnings.md')
+    expect(BOOT_LEARNINGS_MAX_CHARACTERS).toBe(24_000)
+  })
   test('selects the marker-declared single-agent file and explicit namespace', () => {
     const contract = resolveBootContract(createProject(), 'single-agent')
     expect(contract).toEqual({

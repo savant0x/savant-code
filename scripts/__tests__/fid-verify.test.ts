@@ -11,7 +11,6 @@ import {
 } from '../fid-verify'
 
 const BT = String.fromCharCode(96)
-
 describe('safeRepoPath', () => {
   it('accepts a repo-relative test file', () => {
     const result = safeRepoPath(
@@ -61,8 +60,11 @@ describe('resolveGate', () => {
     expect('error' in resolved ? resolved.error : resolved.argv).toEqual([
       'bun',
       'test',
-      'scripts/__tests__/fid-verify.test.ts',
+      '__tests__/fid-verify.test.ts',
     ])
+    if ('error' in resolved) throw new Error(resolved.error)
+    expect(resolved.cwd.replaceAll('\\', '/')).toEndWith('/scripts')
+    expect(resolved.label).toBe('test scripts/__tests__/fid-verify.test.ts')
   })
 
   it('rejects an unknown kind', () => {

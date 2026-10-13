@@ -173,6 +173,94 @@
           "reason": "Existing canonical authority catalog to retain and ground."
         }
       ]
+    },
+    {
+      "id": "LF-007",
+      "title": "Bound the learning boot digest and verify complete grounding reads",
+      "priority": "P1",
+      "state": "routed",
+      "fid": "FID-2026-1012-010",
+      "basis": "observed-gap",
+      "lessons": [
+        "Files over the 100k-character tool read limit break every in-place edit path",
+        "A fixed character budget must account for the prefix that renders before it"
+      ],
+      "gap": "The full incident ledger exceeds the complete-read tool budget. Route boot grounding through a bounded generated rule digest and refuse incomplete reads as grounding evidence.",
+      "acceptance": [
+        "The generated digest respects the shared 24,000-character boot contract.",
+        "Prompt, embedded bundle and mechanical grounding consume the same canonical path.",
+        "Missing, omitted, windowed, truncated or oversized digest responses earn no grounding credit."
+      ],
+      "evidence": [
+        {
+          "path": "common/src/constants/learnings-boot.ts",
+          "reason": "Shared path and character budget consumed by projection and runtime grounding."
+        },
+        {
+          "path": "packages/agent-runtime/src/tools/tool-executor/grounding-read.ts",
+          "reason": "Production complete-read classification and payload counts."
+        }
+      ]
+    },
+    {
+      "id": "LF-008",
+      "title": "Project boot rules from a canonical tiered learning catalog",
+      "priority": "P1",
+      "state": "routed",
+      "fid": "FID-2026-1012-014",
+      "basis": "observed-gap",
+      "lessons": [
+        "A parser that reads prose must separate *describing* a convention from *using* one",
+        "An archived walkthrough is a claim — ground the plan in the current contract modules"
+      ],
+      "gap": "Canonical rules, active ledger lessons and embedded guidance disagree. Explicit rule tiers and exact lesson links must generate the boot projection without promoting historical guidance into current authority.",
+      "acceptance": [
+        "Every active lesson resolves to exactly one canonical rule; missing and duplicate targets fail validation.",
+        "Only boot-tier rules enter the generated boot projection.",
+        "Projection checks refuse invalid sources and detect missing or stale generated output."
+      ],
+      "evidence": [
+        {
+          "path": "dev/LEARNING-RULES.md",
+          "reason": "Canonical rule authority with explicit tiers and tier reasons."
+        },
+        {
+          "path": "scripts/learnings-references.ts",
+          "reason": "Exact active lesson-to-rule reference validation."
+        },
+        {
+          "path": "scripts/learnings-projection.ts",
+          "reason": "Deterministic boot-tier projection and invalid-source refusal."
+        }
+      ]
+    },
+    {
+      "id": "LF-009",
+      "title": "Validate durable lesson reproduction and historical evidence",
+      "priority": "P1",
+      "state": "routed",
+      "fid": "FID-2026-1012-013",
+      "basis": "observed-gap",
+      "lessons": [
+        "A ledger ruling inherits the freshness of its evidence",
+        "A marker that names a possibility is not a locator"
+      ],
+      "gap": "Ephemeral probes and drifting source references cannot support current lesson authority. Preserve historical incident evidence while requiring durable reproduction targets and verified historical snapshots.",
+      "acceptance": [
+        "Current reproduction paths reject ignored, ephemeral, missing or escaping targets.",
+        "Historical source drift requires a real commit and the exact referenced blob before becoming a warning.",
+        "Durable successor probes state their current-code scope without claiming historical provider parity."
+      ],
+      "evidence": [
+        {
+          "path": "scripts/learnings-reproduction.ts",
+          "reason": "Current durable reproduction path validation without executing lesson prose."
+        },
+        {
+          "path": "scripts/learnings-history.ts",
+          "reason": "Commit and historical blob verification before admitting live source drift."
+        }
+      ]
     }
   ]
 }

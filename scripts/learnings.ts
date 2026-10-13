@@ -5,11 +5,8 @@ import path from 'node:path'
 
 export * from './learnings-core.js'
 
-import {
-  LEGACY_BOUNDARY,
-  validateEmbeddedLearningSource,
-  validateLearnings,
-} from './learnings-core.js'
+import { validateLearningArtifacts } from './learnings-artifact-check.js'
+import { LEGACY_BOUNDARY, validateLearnings } from './learnings-core.js'
 // FID-2026-1012-011: the pass output carries headroom, so the ceiling is
 // visible while the gate is green rather than only when it fails.
 import { learningsSizeSummary } from './learnings-size-policy.js'
@@ -25,24 +22,15 @@ if (import.meta.main) {
   const root = path.resolve(import.meta.dir, '..')
   const learningsFile = path.join(root, 'dev', 'LEARNINGS.md')
   const learningsContent = fs.readFileSync(learningsFile, 'utf8')
-  const result = validateLearnings(learningsContent, root)
-  const sourcePath = path.join(root, 'docs', 'embedded-learnings.md')
-  result.issues.push(
-    ...(fs.existsSync(sourcePath)
-      ? validateEmbeddedLearningSource(
-          'docs/embedded-learnings.md',
-          fs.readFileSync(sourcePath, 'utf8'),
-        )
-      : [
-          {
-            code: 'learning.embedded.missing',
-            message: 'docs/embedded-learnings.md is missing.',
-          },
-        ]),
-  )
-  if (result.issues.length > 0) {
-    console.error(`learnings: FAIL (${result.issues.length} issue(s))`)
-    for (const entry of result.issues)
+  const result = validateLearningArtifacts(root, learningsContent)
+  const failures = result.issues.filter((issue) => issue.severity !== 'warning')
+  for (const warning of result.issues.filter(
+    (issue) => issue.severity === 'warning',
+  ))
+    console.warn(`- [warning] ${warning.code}: ${warning.message}`)
+  if (failures.length > 0) {
+    console.error(`learnings: FAIL (${failures.length} issue(s))`)
+    for (const entry of failures)
       console.error(`- [${entry.code}] ${entry.message}`)
     process.exitCode = 1
   } else {

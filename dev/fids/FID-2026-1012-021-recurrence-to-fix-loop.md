@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-1012-021-recurrence-to-fix-loop.md`
 **ID:** FID-2026-1012-021
 **Severity:** high
-**Status:** fixed
+**Status:** verified
 **Created:** 2026-10-12 20:15
 **Automation level:** 2
 **YAGNI-Compliance:** Verified
@@ -186,16 +186,26 @@ declared here and none is claimed.
 ## Verification Gates
 
 - gate: test scripts/__tests__/experiences-coverage.test.ts
+- gate: test scripts/__tests__/experiences-learning-order.test.ts
+- gate: test scripts/__tests__/experiences-repair-drafts.test.ts
+- gate: test scripts/__tests__/session-end-review.test.ts
 - gate: probe scripts/experiences-recurrence.ts
+- gate: probe scripts/experiences-repair-drafts.ts
+- gate: probe scripts/learnings.ts
 - gate: probe scripts/scripts-typecheck-check.ts
 - gate: quality
 
 ### Verification Receipt
 
-- fingerprint: sha256:52ee5e6454a8c5b487fbc52674805d9c489672c0717fa73df0a1852ee98fc9e6
-- verified: 2026-10-13T05:23:34.803Z
+- fingerprint: sha256:479f7a2aa8007d9a4242f2c7dfbbe02831c4ff21c78a88d433a46fb5ae72c44f
+- verified: 2026-10-13T15:04:46.594Z
 - test scripts/__tests__/experiences-coverage.test.ts: exit 0
+- test scripts/__tests__/experiences-learning-order.test.ts: exit 0
+- test scripts/__tests__/experiences-repair-drafts.test.ts: exit 0
+- test scripts/__tests__/session-end-review.test.ts: exit 0
 - probe scripts/experiences-recurrence.ts: exit 0
+- probe scripts/experiences-repair-drafts.ts: exit 0
+- probe scripts/learnings.ts: exit 0
 - probe scripts/scripts-typecheck-check.ts: exit 0
 - quality: exit 0
 
@@ -297,6 +307,29 @@ declared here and none is claimed.
 
 ### Missed Questions
 
+### Loop 4 — Recorded completion contract (2026-10-13)
+
+- **RED:** Coverage is enforced but active class-linked lessons can still claim
+  repair before qualified observation. FID-014 now exposes exact class links.
+  Unowned eligible classes are reported but produce no durable repair draft.
+- **GREEN:** Add lesson-last validation to the real learning validator, joining
+  explicit canonical class links to the existing owner/horizon/proof authorities.
+  An active class-repair lesson requires observed exposure and its actual owning
+  FID; historical guidance and proven expected outcomes do not claim repair.
+  Draft unowned eligible repairs idempotently as complete proposed FID documents
+  inside an append-only proposal JSONL, not active records or source-write grants.
+  New proposals have automation level 1 and require operator routing into the
+  active register/master/owner manifest. SessionEnd may draft, never approve.
+- **AUDIT:** Pin unproved/recurred/wrong-owner rejection, observed eligibility,
+  and the disk-backed validator caller. Pin repeat-run draft idempotence and
+  absence of active-queue/register mutation in isolated fixtures. Declare both
+  suites and independent read-only learning/draft probes.
+- **ADVERSARIAL:** Quiet capture is not observation, and a proposed document is
+  not an owner. Coverage remains red until real routing. Do not append synthetic
+  failures to production capture, invent fix boundaries, or write lessons early.
+- **CHANGE DELTA:** Recorded before source writes; actual observation and the
+  operator's commit/routing holds remain independent of machinery verification.
+
 1. Should the loop also consume the ledger's existing lessons? → Yes, in the same pass: a lesson
    whose owning FID is closed and whose class still recurs (the incomplete-tool-call family is
    the worked example) is evidence the fix did not hold, and the class should reopen rather
@@ -311,9 +344,20 @@ declared here and none is claimed.
 
 ### Code Verification Evidence
 
-> Pre-implementation record: `Status: converged` (FID-2026-0915-004). Nothing in this record
-> has been implemented, so what follows records what was CHECKED at the cited `HEAD` — not what
-> was built.
+Current machinery completion evidence (2026-10-13) supersedes the older open limits below.
+
+- [x] `validateLearnings` calls `validateLearningRepairOrder`; explicit class links
+      require observed repair, validated exposure receipts and the actual owning FID.
+      Unresolved/recurred/wrong-owner claims fail; historical and proven expected
+      guidance do not claim class repair.
+- [x] `runSessionEndReview` calls `repairDraftRoutingNotes`. Drafts are append-only
+      complete proposed records with an exclusive writer lock and class-key deduplication.
+      They grant no active ownership, register mutation or source-write authority;
+      operator routing remains required.
+- [x] Combined coverage/order/draft/SessionEnd suites: 23 pass, 0 fail. Fixtures
+      prove idempotence and no active-queue/register/raw-capture mutation.
+- [ ] Actual class observation and formal closure remain open: no fix boundary or
+      clean production window is invented, and the no-commit hold prevents G2 closure.
 
 - [x] Measured at `bee0610d` from the real capture: 559 records / 68 classes / 195 distinct
       sessions, 27 classes at the ≥3-distinct-session bar, 193 incomplete-argument records with
@@ -341,7 +385,13 @@ declared here and none is claimed.
 
 ## Resolution
 
-**Implemented — `Status: fixed` (deterministic gates green; recurrence assertions OPEN).**
+**Machinery implemented — `Status: verified`; class recurrence assertions OPEN.**
+
+The earlier limits (a)/(b) below are superseded by Loop 4: lesson-last ordering is
+now enforced, and unowned eligible classes draft proposed FID documents idempotently
+for operator routing. Proposal storage is not active ownership. The class lanes
+still require genuine qualified observation, and the explicit no-commit hold
+prevents formal closure. No production failure or exposure was fabricated.
 
 - **Closed Date:** 2026-10-13 (machinery pass; the loop cannot be *closed* until the class lanes
   observe clean windows — this record supplies the mechanism, not the proof).

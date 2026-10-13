@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-1012-010-learnings-boot-read-size-contract.md`
 **ID:** FID-2026-1012-010
 **Severity:** critical
-**Status:** converged
+**Status:** verified
 **Created:** 2026-10-12 19:05
 **Automation level:** 3
 **YAGNI-Compliance:** Verified
@@ -158,10 +158,37 @@ Exact artifact paths and their `- gate:` declarations are recorded when the arti
 
 ## Verification Gates
 
-This record is **pre-implementation** (`Status: converged`), so no gates are declared yet and
-none are claimed as passing. Gates are declared in this section at implementation time, when
-the artifacts exist — the contract requires `fixed`/`verified` records to carry them, and this
-record deliberately does not pretend to a receipt it has not earned.
+- gate: typecheck common
+- gate: typecheck agents
+- gate: typecheck packages/agent-runtime
+- gate: test scripts/__tests__/learnings-boot-digest.test.ts
+- gate: test scripts/__tests__/learnings-projection.test.ts
+- gate: test common/src/util/__tests__/boot-contract.test.ts
+- gate: test common/src/util/__tests__/embedded-protocol.test.ts
+- gate: test packages/agent-runtime/src/tools/tool-executor/grounding-read.test.ts
+- gate: test packages/agent-runtime/src/echo/__tests__/enforcement-refresh-cadence.test.ts
+- gate: probe scripts/learnings-boot-check.ts
+- gate: probe scripts/protocol-bundle-check.ts
+- gate: probe scripts/scripts-typecheck-check.ts
+- gate: quality
+
+### Verification Receipt
+
+- fingerprint: sha256:666fd7afd48d3189a924283c9776a213c6177dd4cc7192a42e250412456f124a
+- verified: 2026-10-13T15:03:52.294Z
+- typecheck common: exit 0
+- typecheck agents: exit 0
+- typecheck packages/agent-runtime: exit 0
+- test scripts/__tests__/learnings-boot-digest.test.ts: exit 0
+- test scripts/__tests__/learnings-projection.test.ts: exit 0
+- test common/src/util/__tests__/boot-contract.test.ts: exit 0
+- test common/src/util/__tests__/embedded-protocol.test.ts: exit 0
+- test packages/agent-runtime/src/tools/tool-executor/grounding-read.test.ts: exit 0
+- test packages/agent-runtime/src/echo/__tests__/enforcement-refresh-cadence.test.ts: exit 0
+- probe scripts/learnings-boot-check.ts: exit 0
+- probe scripts/protocol-bundle-check.ts: exit 0
+- probe scripts/scripts-typecheck-check.ts: exit 0
+- quality: exit 0
 
 ## Perfection Loop
 
@@ -206,6 +233,28 @@ record deliberately does not pretend to a receipt it has not earned.
 
 ### Missed Questions
 
+### Loop 3 — Recorded implementation contract (2026-10-13)
+
+- **RED:** FID-014 supplies a deterministic four-rule boot projection, but the
+  prompt, mechanical grounding set and completion steering still name the entire
+  ledger. Result lifecycle credits any path/content result without examining the
+  requested window or SDK truncation marker. No digest budget is asserted.
+- **GREEN:** Reuse `docs/embedded-learnings.md` as the canonical local and embedded
+  digest; preserve legacy embedded aliases. Share a 24,000-JavaScript-character
+  constant and fail generation/checks on overflow. Point prompt, mechanical set
+  and protocol boot sequence at the digest; keep ledger navigation on demand and
+  full reads before edits. Accept grounding only from complete non-windowed reads
+  without truncation/status markers. Emit digest character/byte counts through
+  the existing runtime logger, without content. Publish a standalone budget probe.
+- **AUDIT:** Add the planned digest suite and boot-contract pin; extend embedded
+  alias and grounding-cadence tests. Pin complete/omitted/windowed/truncated reads
+  in `grounding-read.test.ts` and grep its result-lifecycle caller.
+- **ADVERSARIAL:** An oversized boot tier fails rather than silently dropping a
+  rule. A retired lesson never re-enters boot through locator resolution. Existing
+  embedded legacy requests remain readable, but only the required digest path earns
+  digest grounding credit. No file-edit exemption is inferred from the locator.
+- **CHANGE DELTA:** Recorded before implementation at automation level 3.
+
 1. Should the digest be a separate file or a generated section inside the ledger? → Separate
    file. A generated section inside the boot-read file would preserve the defect (the read
    still costs the whole file) and would make the ledger a partly-generated artifact with two
@@ -220,9 +269,20 @@ record deliberately does not pretend to a receipt it has not earned.
 
 ### Code Verification Evidence
 
-> Pre-implementation record: `Status: converged` (FID-2026-0915-004). Nothing in this
-> record has been implemented, so what follows records what was CHECKED at the cited
-> `HEAD` — not what was built.
+Current implementation (2026-10-13) supersedes the historical measurements below.
+
+- [x] `common/src/constants/learnings-boot.ts` owns the 24,000-character budget
+      and digest path. Projection generation/checks consume it; overflow refuses writes.
+- [x] Prompt, `echo/grounding.ts`, completion steering, ECHO's boot sequence and
+      embedded bundle now agree on `docs/embedded-learnings.md`. Legacy embedded
+      ledger requests remain an alias. The four original public invariants/guards
+      are preserved in the canonical catalog and generated projection.
+- [x] `result-lifecycle.ts` calls `completeGroundingReads` before granting read
+      credit. Windowed, omitted, empty, SDK-status, truncated and overbudget reads
+      fail closed. The real SDK/handler test covers truncation and missing files.
+- [x] Runtime logging records character and byte counts without content. The
+      independent budget probe reports 1,938 / 24,000 characters (22,062 headroom).
+- [ ] Formal closure: blocked by the operator's no-commit hold (ECHO G2).
 
 - [x] Every cited path exists at `main` @ `14d48820`, read directly at review time; the raw
       measurements live in `docs/design/learnings-boot-loading-and-lifecycle-review.md` §2/§3,
@@ -232,9 +292,6 @@ record deliberately does not pretend to a receipt it has not earned.
       `common/src/constants/read-files.ts:18`; the boot-read contract at
       `agents/savant/system-prompt.ts:117`; the truncation precedent at `CHANGELOG.md:3464`
       (1,610 lines / 102,520 chars).
-- [x] **Not yet true, and deliberately not claimed:** the repair itself, its gates and its
-      receipt. Gates are declared when the status flips to `fixed`/`verified` and the
-      artifacts exist; declaring them now would be a false declaration.
 
 ## Boundaries
 
@@ -248,13 +305,15 @@ record deliberately does not pretend to a receipt it has not earned.
 
 ## Resolution
 
-**Not implemented — `Status: converged` (pre-implementation, FID-2026-0915-004).**
+**Implemented — `Status: verified`; formal closure blocked by the no-commit hold.**
 
-This record exists so the finding has an owner, a converged design and a register item with
-write authority; it made no source change. The work described above is implemented by
-whichever pass flips the record to `fixed`, at which point this section is rewritten in the
-closure format (Closed Date / Fix Description / Tests Added / Verification Evidence /
-Archived) and the declared gates are added under `## Verification Gates`.
+One generated, bounded rule digest now supplies local and embedded boot reads.
+Incident prose remains in the ledger and locator. The digest retains the original
+four public rules, including their invariants and guards; no additional rule is
+publicly promoted. Grounding credit requires complete content, and telemetry carries
+counts only. The declared gates provide reproducibility, budget refusal, embedded
+alias, mechanical grounding and real SDK-to-handler evidence. No commit, push,
+release or archive move is performed.
 
 - **Authorised write surface:** `SCOPE.md` → machine-readable scope targets → this record's
   line (registered 2026-10-12 with the review).

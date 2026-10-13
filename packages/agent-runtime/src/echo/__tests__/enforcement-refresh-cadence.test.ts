@@ -12,7 +12,7 @@ describe('EchoEnforcement — protocol refresh cadence', () => {
       'ECHO.md',
       'ARCHITECTURE.md',
       'protocol.config.yaml',
-      'dev/LEARNINGS.md',
+      'docs/embedded-learnings.md',
     ]) {
       enforcement.beforeToolCall({
         toolName: 'read_files',
@@ -100,7 +100,7 @@ describe('EchoEnforcement — protocol refresh cadence', () => {
       'ECHO.md',
       'ARCHITECTURE.md',
       'protocol.config.yaml',
-      'dev/LEARNINGS.md',
+      'docs/embedded-learnings.md',
     ]) {
       enforcement.beforeToolCall({
         toolName: 'read_files',
@@ -121,7 +121,7 @@ describe('EchoEnforcement — protocol refresh cadence', () => {
       'ECHO.md',
       'ARCHITECTURE.md',
       'protocol.config.yaml',
-      'dev/LEARNINGS.md',
+      'docs/embedded-learnings.md',
     ]) {
       enforcement.beforeToolCall({
         toolName: 'read_files',

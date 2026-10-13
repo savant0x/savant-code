@@ -22,6 +22,7 @@
 import * as fs from 'node:fs'
 import * as path from 'node:path'
 
+import { lessonSpans } from './learnings-locator.js'
 import { LEARNINGS_INSERTION_MARKER } from './learnings-schema.js'
 
 export const LEARNINGS_PATH = path.join('dev', 'LEARNINGS.md')
@@ -57,14 +58,7 @@ export type RetireResult = {
 }
 
 function splitEntries(content: string): { title: string; block: string }[] {
-  const parts = content.split(/^## Lesson:/m)
-  const entries: { title: string; block: string }[] = []
-  for (let i = 1; i < parts.length; i++) {
-    const block = parts[i]
-    const title = (block.split('\n', 1)[0] ?? '').trim()
-    entries.push({ title, block: `## Lesson:${block}` })
-  }
-  return entries
+  return lessonSpans(content).map(({ title, block }) => ({ title, block }))
 }
 
 function fieldOf(block: string, name: string): string {

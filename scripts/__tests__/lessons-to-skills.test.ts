@@ -71,6 +71,23 @@ const LESSON_TEMPLATE = `## Lesson: Environment-dependent guards need live probe
 - **Canonical rule:** no-environment-dependent-guards
 `
 
+function writeRuleCatalog(root: string): void {
+  fs.writeFileSync(
+    path.join(root, 'dev', 'LEARNING-RULES.md'),
+    `# Canonical rules
+
+## Rule: no-environment-dependent-guards
+
+- **Authority:** fixture.ts
+- **Validation:** fixture test
+- **Tier:** reference
+- **Tier reason:** fixture-only explicit class mapping
+- **Failure classes:** v1:run_command:incomplete-arguments:unexpected
+`,
+    'utf8',
+  )
+}
+
 describe('parseLessons', () => {
   test('extracts structured fields', () => {
     const entries = parseLessons(`# LEARNINGS\n\n${LESSON_TEMPLATE}`)
@@ -82,6 +99,66 @@ describe('parseLessons', () => {
 })
 
 describe('findCandidates (S3-B extraction criteria)', () => {
+  test('exact class targeting rejects unrelated, ambiguous, duplicate and historical catalog entries', () => {
+    for (const mode of [
+      'unrelated',
+      'ambiguous',
+      'duplicate',
+      'historical',
+      'retired',
+    ]) {
+      const root = fixtureRoot()
+      writeLedger(
+        root,
+        ['s1', 's2', 's3'].map((sessionId) =>
+          record(
+            'run_command',
+            'Incomplete arguments for tool run_command: missing guard',
+            1,
+            sessionId,
+          ),
+        ),
+      )
+      fs.writeFileSync(path.join(root, 'dev', 'LEARNINGS.md'), LESSON_TEMPLATE)
+      writeRuleCatalog(root)
+      const catalogPath = path.join(root, 'dev', 'LEARNING-RULES.md')
+      const catalog = fs.readFileSync(catalogPath, 'utf8')
+      if (mode === 'unrelated')
+        fs.writeFileSync(
+          catalogPath,
+          catalog.replace(
+            'v1:run_command:incomplete-arguments:unexpected',
+            'v1:other:incomplete-arguments:unexpected',
+          ),
+        )
+      if (mode === 'ambiguous')
+        fs.appendFileSync(
+          catalogPath,
+          catalog.replace(
+            '## Rule: no-environment-dependent-guards',
+            '## Rule: another-rule',
+          ),
+        )
+      if (mode === 'duplicate') fs.appendFileSync(catalogPath, catalog)
+      if (mode === 'historical')
+        fs.writeFileSync(
+          catalogPath,
+          catalog.replace('- **Tier:** reference', '- **Tier:** historical'),
+        )
+      if (mode === 'retired') {
+        fs.writeFileSync(
+          path.join(root, 'dev', 'LEARNINGS.md'),
+          '# LEARNINGS\n',
+        )
+        fs.writeFileSync(
+          path.join(root, 'dev', 'LEARNINGS-RETIRED.md'),
+          LESSON_TEMPLATE,
+        )
+      }
+      expect(findCandidates(root, { now: NOW })).toEqual([])
+    }
+  })
+
   test('flags a matching cross-session recurring pattern as eligible', () => {
     const root = fixtureRoot()
     // FID-2026-1005-003 Step 1: the promotion gate is DISTINCT sessions —
@@ -89,19 +166,19 @@ describe('findCandidates (S3-B extraction criteria)', () => {
     writeLedger(root, [
       record(
         'run_command',
-        'guard depends on launch environment state',
+        'Incomplete arguments for tool run_command: missing guard',
         1,
         's1',
       ),
       record(
         'run_command',
-        'guard depends on launch environment state',
+        'Incomplete arguments for tool run_command: missing guard',
         2,
         's2',
       ),
       record(
         'run_command',
-        'guard depends on launch environment state',
+        'Incomplete arguments for tool run_command: missing guard',
         3,
         's3',
       ),
@@ -112,6 +189,7 @@ describe('findCandidates (S3-B extraction criteria)', () => {
       `# LEARNINGS\n\n${LESSON_TEMPLATE}`,
       'utf8',
     )
+    writeRuleCatalog(root)
     const candidates = findCandidates(root, { now: NOW })
     expect(candidates).toHaveLength(1)
     expect(candidates[0].reasons).toEqual([])
@@ -123,19 +201,19 @@ describe('findCandidates (S3-B extraction criteria)', () => {
     writeLedger(root, [
       record(
         'run_command',
-        'guard depends on launch environment state',
+        'Incomplete arguments for tool run_command: missing guard',
         1,
         's1',
       ),
       record(
         'run_command',
-        'guard depends on launch environment state',
+        'Incomplete arguments for tool run_command: missing guard',
         2,
         's1',
       ),
       record(
         'run_command',
-        'guard depends on launch environment state',
+        'Incomplete arguments for tool run_command: missing guard',
         3,
         's1',
       ),
@@ -146,14 +224,23 @@ describe('findCandidates (S3-B extraction criteria)', () => {
       `# LEARNINGS\n\n${LESSON_TEMPLATE}`,
       'utf8',
     )
+    writeRuleCatalog(root)
     expect(findCandidates(root, { now: NOW })).toHaveLength(0)
   })
 
   test('below-frequency patterns are not candidates', () => {
     const root = fixtureRoot()
     writeLedger(root, [
-      record('run_command', 'guard depends on launch environment state', 1),
-      record('run_command', 'guard depends on launch environment state', 2),
+      record(
+        'run_command',
+        'Incomplete arguments for tool run_command: missing guard',
+        1,
+      ),
+      record(
+        'run_command',
+        'Incomplete arguments for tool run_command: missing guard',
+        2,
+      ),
     ])
     fs.mkdirSync(path.join(root, 'dev'), { recursive: true })
     fs.writeFileSync(
@@ -161,6 +248,7 @@ describe('findCandidates (S3-B extraction criteria)', () => {
       `# LEARNINGS\n\n${LESSON_TEMPLATE}`,
       'utf8',
     )
+    writeRuleCatalog(root)
     expect(findCandidates(root, { now: NOW })).toHaveLength(0)
   })
 })

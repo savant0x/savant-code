@@ -32,6 +32,7 @@ import {
   computeRecurrences,
   readExperienceLedger,
 } from './experiences-dedup.js'
+import { repairDraftRoutingNotes } from './experiences-repair-drafts'
 import { featureRoutingNotes } from './lesson-feature-pipeline'
 import {
   quarantineAlertNote,
@@ -264,6 +265,7 @@ export function runSessionEndReview(
         `UNRESOLVED: ${entry.key} — ${entry.count} all-time occurrences; last ${entry.lastSeen}. Age cannot establish repair.`,
     ),
     ...featureRoutingNotes(rootDir),
+    ...repairDraftRoutingNotes(rootDir, opts.now),
     ...(quarantineNote !== null ? [quarantineNote] : []),
     ...lifecycleLines,
     ...telemetryReportLines(rootDir, opts),

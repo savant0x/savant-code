@@ -8,6 +8,11 @@ import type { ProtocolContractConfig } from './protocol-config'
 
 export type ProtocolVariant = 'harness' | 'single-agent'
 
+export {
+  BOOT_LEARNINGS_PATH,
+  BOOT_LEARNINGS_MAX_CHARACTERS,
+} from '../constants/learnings-boot'
+
 /** Where the resolved contract's content lives (FID-2026-0810-002 Change 2). */
 export type ProtocolSource = 'local' | 'embedded'
 

@@ -22,7 +22,12 @@ const REQUIRED_FIELDS = [
   'Owning FID',
   'Status',
 ] as const
-const OPTIONAL_FIELDS = ['Superseded by', 'Canonical rule'] as const
+const OPTIONAL_FIELDS = [
+  'Superseded by',
+  'Canonical rule',
+  'Reproduction',
+  'As of',
+] as const
 const ALLOWED_FIELDS = new Set<string>([...REQUIRED_FIELDS, ...OPTIONAL_FIELDS])
 const FIELD_PATTERN = /^- \*\*([^*]+):\*\*\s*(.*)$/
 const FID_PATTERN = /^FID-\d{4}-\d{4}-\d{3}(?:$|[-, ])/
@@ -162,6 +167,27 @@ export function parseEntry(
       ),
     )
   const supersededBy = fields.get('Superseded by') || undefined
+  const reproduction = fields.has('Reproduction')
+    ? splitList(fields.get('Reproduction') ?? '').map(parseReference)
+    : undefined
+  if (
+    reproduction &&
+    (!reproduction.length || reproduction.some((reference) => !reference))
+  )
+    issues.push(
+      makeIssue(
+        'learning.reproduction.invalid',
+        `${title}: Reproduction must use path → kind:target references.`,
+      ),
+    )
+  const asOf = fields.get('As of') || undefined
+  if (asOf && (status !== 'historical' || !/^[a-f0-9]{40}$/.test(asOf)))
+    issues.push(
+      makeIssue(
+        'learning.history.invalid',
+        `${title}: As of requires a historical lesson and a full commit SHA.`,
+      ),
+    )
   if (status === 'superseded' && !supersededBy)
     issues.push(
       makeIssue(
@@ -187,6 +213,14 @@ export function parseEntry(
       owningFids,
       status: status ?? 'needs-review',
       ...(supersededBy ? { supersededBy } : {}),
+      ...(reproduction
+        ? {
+            reproduction: reproduction.filter(
+              (reference): reference is StableReference => Boolean(reference),
+            ),
+          }
+        : {}),
+      ...(asOf ? { asOf } : {}),
       ...(fields.get('Canonical rule')
         ? { canonicalRule: fields.get('Canonical rule') }
         : {}),

@@ -78,13 +78,10 @@ const GROUNDING_FILES = [
 ] as const
 
 /**
- * Preserve the runtime's canonical grounding request while serving the
- * curated embedded source. Local projects still read their own
- * `dev/LEARNINGS.md`; embedded fallback maps that request to this bundle key.
+ * Local and embedded boots use the same generated digest key. Legacy request
+ * aliases are handled by the embedded reader, so generation has one identity.
  */
-const EMBEDDED_PATH_ALIASES: Readonly<Record<string, string>> = {
-  'docs/embedded-learnings.md': 'dev/learnings.md',
-}
+const EMBEDDED_PATH_ALIASES: Readonly<Record<string, string>> = {}
 
 /** Normalize a relative path for bundle-key lookup (lowercase, fwd slashes). */
 export function normalizeGroundingPath(filePath: string): string {

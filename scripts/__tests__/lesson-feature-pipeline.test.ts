@@ -68,6 +68,33 @@ afterEach(() => {
 })
 
 describe('lesson feature admission', () => {
+  test('retired references are admitted as retired evidence; superseded references name replacements', () => {
+    const { root, manifest, save } = fixture()
+    const title = 'Retired evidence'
+    fs.writeFileSync(
+      path.join(root, 'dev', 'LEARNINGS-RETIRED.md'),
+      `## Lesson: ${title}\n- **Status:** active\n`,
+    )
+    manifest.features[0]!.lessons = [title]
+    manifest.catalogHash = reviewFeaturePipeline(root).catalogHash
+    save()
+    const review = reviewFeaturePipeline(root)
+    expect(review.issues).toEqual([])
+    expect(
+      review.lessons.find((lesson) => lesson.title === title)?.retired,
+    ).toBe(true)
+    expect(renderFeatureReport(review)).toContain('Retired evidence — retired')
+    fs.writeFileSync(
+      path.join(root, 'dev', 'LEARNINGS-RETIRED.md'),
+      `## Lesson: ${title}\n- **Status:** superseded\n- **Superseded by:** Preserve evidence\n`,
+    )
+    manifest.catalogHash = reviewFeaturePipeline(root).catalogHash
+    save()
+    expect(reviewFeaturePipeline(root).issues).toEqual([
+      'LF-001: Superseded lesson: Retired evidence; replacement: Preserve evidence',
+    ])
+  })
+
   test('inventory retains historical entries without inventing candidates', () => {
     const { root } = fixture()
     const before = fs.readFileSync(path.join(root, 'dev', 'LEARNINGS.md'))

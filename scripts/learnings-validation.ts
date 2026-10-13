@@ -1,10 +1,12 @@
 import fs from 'node:fs'
 import path from 'node:path'
 
+import { validateLearningRepairOrder } from './experiences-learning-order.js'
 import {
   validateCanonicalRuleCatalog,
   validateStableReferences,
 } from './learnings-references.js'
+import { validateReproductionReferences } from './learnings-reproduction.js'
 import {
   LEGACY_BOUNDARY,
   LEARNINGS_INSERTION_MARKER,
@@ -174,7 +176,9 @@ export function validateLearnings(
       ...learningsSizeIssues(content),
       ...supersessionIssues(entries),
       ...validateStableReferences(root, entries),
+      ...validateReproductionReferences(root, entries),
       ...validateCanonicalRuleCatalog(root, entries),
+      ...validateLearningRepairOrder(root, entries),
     ],
   }
 }
@@ -189,7 +193,7 @@ export function validateEmbeddedLearningSource(
       code: 'learning.embedded.source',
       message: `Unexpected embedded source: ${sourcePath}.`,
     })
-  if (/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i.test(content))
+  if (/[A-Z0-9._%+-]@[A-Z0-9.-]+\.[A-Z]{2,}/i.test(content))
     issues.push({
       code: 'learning.embedded.privacy',
       message: 'Embedded learning source contains an email address.',

@@ -109,7 +109,7 @@ export function resolveGate(
   if (kind === 'test') {
     const safe = safeRepoPath(arg, /\.test\.(ts|tsx)$/)
     if (!safe.ok) return { error: safe.error ?? 'unsafe test path' }
-    const workspace = [...WORKSPACES]
+    const workspace = [...WORKSPACES, 'scripts']
       .sort((a, b) => b.length - a.length)
       .find((candidate) => arg.startsWith(`${candidate}/`))
     return {

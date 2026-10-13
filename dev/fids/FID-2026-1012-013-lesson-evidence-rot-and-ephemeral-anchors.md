@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-1012-013-lesson-evidence-rot-and-ephemeral-anchors.md`
 **ID:** FID-2026-1012-013
 **Severity:** high
-**Status:** converged
+**Status:** verified
 **Created:** 2026-10-12 19:05
 **Automation level:** 3
 **YAGNI-Compliance:** Verified
@@ -163,12 +163,25 @@ the legacy tail's disposition instead of letting it sit outside every tier.
 
 ## Verification Gates
 
-This record is **pre-implementation** (`converged`, per FID-2026-0915-004), so it declares **no
-gates**: the artifacts its steps create do not exist yet, and a gate that cannot execute is a
-false declaration. Gates are declared here when the implementation lands and the status flips to
-`fixed`/`verified` — at which point `quality` is mandatory and each promised test path above
-becomes a `- gate: test <path>` bullet. `fid:verify --check` reports this record as outside the
-verification contract, by design.
+- gate: test scripts/__tests__/learnings-reproduction.test.ts
+- gate: test scripts/learnings.test.ts
+- gate: probe scripts/learnings.ts
+- gate: probe scripts/learnings-prefix-probe.ts
+- gate: probe scripts/learnings-truncation-probe.ts
+- gate: probe scripts/scripts-typecheck-check.ts
+- gate: quality
+
+### Verification Receipt
+
+- fingerprint: sha256:cc75fd3106d82a5230d80ce1f9ab90c3cdf6df91cdaff20d96b05eac07aea31c
+- verified: 2026-10-13T15:40:23.790Z
+- test scripts/__tests__/learnings-reproduction.test.ts: exit 0
+- test scripts/learnings.test.ts: exit 0
+- probe scripts/learnings.ts: exit 0
+- probe scripts/learnings-prefix-probe.ts: exit 0
+- probe scripts/learnings-truncation-probe.ts: exit 0
+- probe scripts/scripts-typecheck-check.ts: exit 0
+- quality: exit 0
 
 ## Perfection Loop
 
@@ -214,6 +227,33 @@ verification contract, by design.
 
 ### Missed Questions
 
+### Loop 3 — Recorded implementation contract (2026-10-13)
+
+- **RED:** Full live-ledger read confirms the two missing reproduction pointers,
+  two guards recommending scripted edits, and three active lessons below the
+  schema boundary. Those three have explicit but uncataloged rule names and
+  prose annotations in Evidence. FID-012's locator now resolves all 74 titles.
+- **GREEN:** Add optional structured `Reproduction` references and a historical
+  `As of` commit. Require reproduction sources to exist inside the repository,
+  outside ephemeral/ignored roots, and resolve their exact targets without
+  executing prose. Historical structural drift warns only after validating the
+  actual commit and blob target; active entries cannot use that relaxation.
+  Supply durable measurement probes for prefix stability and truncation shapes.
+  Migrate all three legacy lessons into chronological governed space, preserving
+  active status and incident prose; add their three reference-tier canonical
+  rules. Repair the two contradictory guards while retaining their failure
+  accounts. No actual retirement is performed.
+- **AUDIT:** Add `scripts/__tests__/learnings-reproduction.test.ts`; rerun the
+  existing validator and real ledger/catalog gate. Durable probes are declared
+  separately. Source paths added during the no-commit hold are checked for
+  repository containment and non-ignored source eligibility; formal committed
+  durability remains subject to the operator's hold.
+- **ADVERSARIAL:** Never validate a historical claim from an arbitrary SHA-shaped
+  string alone. Missing commits/blobs stay failures. Warnings name live drift;
+  they never hide reproduction failures or promote historical evidence. The
+  recovered probes remeasure current code and do not claim historical parity.
+- **CHANGE DELTA:** Recorded presentation before source writes, level 3.
+
 1. Should the `Verification` field be structured rather than prose? → Yes, and that is
    effectively what step 1 does: a reproduction reference acquires the same
    `path → kind:target` shape the evidence field already has, which is what makes it checkable.
@@ -229,9 +269,25 @@ verification contract, by design.
 
 ### Code Verification Evidence
 
-> Pre-implementation record: `Status: converged` (FID-2026-0915-004). Nothing in this
-> record has been implemented, so what follows records what was CHECKED at the cited
-> `HEAD` — not what was built.
+Current implementation (2026-10-13) supersedes the historical measurements below.
+
+- [x] Schema supports structured reproduction references and historical commit
+      pins. `validateLearnings` calls both structural and reproduction validators.
+      Historical warnings require the actual commit and exact blob target; missing
+      snapshots, active relaxations, ignored/ephemeral/outside sources fail.
+- [x] Four reproduction tests pass, including commit/blob negative controls and
+      a real-ledger pin for the three migrated active entries.
+- [x] Real ledger check: PASS (37 structured entries; 1,170 / 1,200 logical lines;
+      76,975 / 100,000 JavaScript characters). No lesson was retired or deleted.
+      The catalog now has 35 rules, including the three reconciled legacy names.
+- [x] Prefix probe: 2 / 2 canonical payload comparisons stable (ratio 1), no
+      provider-cache claim. Truncation probe: all five current shapes preserve
+      original values/fields without retention; historical measurements remain
+      intact in Verification, with new durable Reproduction pointers.
+- [x] The two guards that recommended scripted edits now state the current
+      direct-edit law; their incident accounts are preserved.
+- [ ] Committed durability and formal closure remain blocked by the explicit
+      no-commit hold. Current source eligibility is validated without claiming a commit.
 
 - [x] Every cited path exists at `main` @ `14d48820`, read directly at review time; the raw
       measurements live in `docs/design/learnings-boot-loading-and-lifecycle-review.md` §2/§3,
@@ -241,9 +297,6 @@ verification contract, by design.
       (existence, exactly-once, line range — `**Evidence:**` only); the 3 legacy entries below
       the boundary via `structuredBlocks` in `scripts/learnings-schema.ts`; the 24-hour
       scratchpad expiry from FID-2026-1012-006.
-- [x] **Not yet true, and deliberately not claimed:** the repair itself, its gates and its
-      receipt. Gates are declared when the status flips to `fixed`/`verified` and the
-      artifacts exist; declaring them now would be a false declaration.
 
 ## Boundaries
 
@@ -257,13 +310,15 @@ verification contract, by design.
 
 ## Resolution
 
-**Not implemented — `Status: converged` (pre-implementation, FID-2026-0915-004).**
+**Implemented — `Status: verified`; closure blocked by the no-commit hold.**
 
-This record exists so the finding has an owner, a converged design and a register item with
-write authority; it made no source change. The work described above is implemented by
-whichever pass flips the record to `fixed`, at which point this section is rewritten in the
-closure format (Closed Date / Fix Description / Tests Added / Verification Evidence /
-Archived) and the declared gates are added under `## Verification Gates`.
+Structural and reproduction validation now have distinct contracts. Historical
+drift is visible only after snapshot verification; arbitrary prose is never run.
+Both expired measurements have durable current-code successors. All three legacy
+entries remain active in governed space, their evidence annotations retained in
+Verification and their three canonical rules classified as reference. Contradictory
+scripted-edit guards are repaired while incident accounts remain. No retirement,
+commit, push, release or archive operation is performed.
 
 - **Authorised write surface:** `SCOPE.md` → machine-readable scope targets → this record's
   line (registered 2026-10-12 with the review).

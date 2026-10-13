@@ -17,6 +17,7 @@
 import * as fs from 'node:fs'
 import * as path from 'node:path'
 
+import { experienceClassIdentity } from '@savant-code/common/util/experience-classes'
 import { emitSkillMutationEvent } from '@savant-code/common/util/skill-lifecycle-events'
 import { createSkill } from '@savant-code/common/util/skill-management'
 // FID-2026-1005-003 Steps 2–4: the mechanical script identifies candidates
@@ -34,74 +35,37 @@ import {
 import {
   computeRecurrences,
   DEFAULT_MIN_SESSIONS,
+  groupByDedupKey,
   readExperienceLedger,
 } from './experiences-dedup.js'
+import { readLessonLocator, resolveLesson } from './learnings-locator.js'
+import { readCanonicalRuleCatalog } from './learnings-rules.js'
+
+import type { LessonEntry } from './learnings-locator.js'
 
 // FID-2026-0912-002: re-export — the CLI/`--archive` surface and its tests
 // import from this module; the executor lives in draft-archive.ts.
 export { archiveRejectedDrafts, DRAFT_REJECTION_WINDOW_DAYS }
 
-type LessonEntry = {
-  title: string
-  canonicalRule?: string
-  guard: string
-  invariant: string
-  owningFids: string[]
-  evidenceCount: number
-  status: string
-}
-
-/** Parse LEARNINGS.md into structured entries (line-based field reader). */
-export function parseLessons(content: string): LessonEntry[] {
-  const entries: LessonEntry[] = []
-  const blocks = content.split(/^## Lesson:/m)
-  for (let i = 1; i < blocks.length; i++) {
-    const block = blocks[i]
-    const title = (block.split('\n', 1)[0] ?? '').trim()
-    const fields = new Map<string, string>()
-    let current: string | null = null
-    for (const line of block.split(/\r?\n/)) {
-      const fieldMatch = line.match(/^- \*\*([^*]+):\*\*\s*(.*)$/)
-      if (fieldMatch) {
-        current = fieldMatch[1]
-        fields.set(current, fieldMatch[2])
-      } else if (current && line.trim() !== '') {
-        // Continuation lines (indented Evidence/Guard blocks) append.
-        fields.set(current, `${fields.get(current) ?? ''} ${line.trim()}`)
-      }
-    }
-    const get = (name: string): string => fields.get(name)?.trim() ?? ''
-    const owningFids = get('Owning FID')
-      .split(',')
-      .map((s) => s.trim())
-      .filter(Boolean)
-    const evidenceText = get('Evidence')
-    // Evidence items are path → kind:target pairs; count distinct items.
-    const evidenceCount = evidenceText
-      .split(/[,\n]/)
-      .filter((s) => s.includes('→')).length
-    entries.push({
-      title,
-      canonicalRule: get('Canonical rule') || undefined,
-      guard: get('Guard'),
-      invariant: get('Invariant'),
-      owningFids,
-      evidenceCount: evidenceCount || (evidenceText === '' ? 0 : 1),
-      status: get('Status'),
-    })
-  }
-  return entries
-}
+export { parseLessons } from './learnings-locator.js'
 
 export function loadLessons(rootDir: string): LessonEntry[] {
-  const file = path.join(rootDir, 'dev', 'LEARNINGS.md')
-  if (!fs.existsSync(file)) return []
-  return parseLessons(fs.readFileSync(file, 'utf8'))
+  const locator = readLessonLocator(rootDir)
+  const lessons: LessonEntry[] = []
+  for (const title of locator.keys()) {
+    const result = resolveLesson(locator, title)
+    if (!result.ok) throw new Error(result.issue)
+    if (result.replacements.length) continue
+    const live = result.locations.find((location) => !location.retired)
+    if (live) lessons.push(live.entry)
+  }
+  return lessons
 }
 
 export type DraftCandidate = {
   lessonTitle: string
   canonicalRule: string
+  classKey: string
   toolName: string
   errorFirstLine: string
   count: number
@@ -119,50 +83,45 @@ export function findCandidates(
   const records = readExperienceLedger(rootDir)
   const recurrences = computeRecurrences(records, { now })
   const lessons = loadLessons(rootDir)
+  const catalog = readCanonicalRuleCatalog(rootDir)
+  if (catalog.issues.length) return []
+  const classKeyByDigest = new Map<string, string>()
+  for (const group of groupByDedupKey(records).values()) {
+    const sample = group.records[0]
+    if (sample)
+      classKeyByDigest.set(group.key, experienceClassIdentity(sample).key)
+  }
+  const rulesByClass = new Map<string, Set<string>>()
+  for (const rule of catalog.rules)
+    if (rule.tier !== 'historical')
+      for (const classKey of rule.failureClasses) {
+        const rules = rulesByClass.get(classKey) ?? new Set<string>()
+        rules.add(rule.name)
+        rulesByClass.set(classKey, rules)
+      }
   const candidates: DraftCandidate[] = []
 
-  // Significant tokens = words > 4 chars (stopwords and connectors drop out).
-  const significantTokens = (value: string): Set<string> =>
-    new Set(
-      value
-        .toLowerCase()
-        .replace(/[^a-z0-9\s-]/g, ' ')
-        .split(/[\s-]+/)
-        .filter((word) => word.length > 4),
-    )
-
   for (const recurrence of recurrences) {
-    // FID-2026-1005-003 Step 1: three failures in ONE session are a retry
-    // loop, not a reusable-skill signal — a failure-derived candidate
-    // requires the pattern across ≥ 3 distinct sessions.
+    // Require recurrence across distinct sessions, not an in-session retry loop.
     if (recurrence.distinctSessions < DEFAULT_MIN_SESSIONS) continue
-    // Best-effort semantic link: a lesson whose canonical-rule tokens overlap
-    // the failure's tokens (the full-fidelity Scribe path does the deep match;
-    // this mechanical script only needs a defensible candidate signal).
-    const lesson = lessons.find((l) => {
-      if (!l.canonicalRule) return false
-      const ruleTokens = significantTokens(l.canonicalRule)
-      if (ruleTokens.size === 0) return false
-      const errorTokens = significantTokens(
-        `${recurrence.errorFirstLine} ${l.title}`,
-      )
-      let overlap = 0
-      for (const token of ruleTokens) {
-        if (errorTokens.has(token)) overlap++
-      }
-      return overlap >= 1
-    })
+    const classKey = classKeyByDigest.get(recurrence.key)
+    const linkedRules = classKey ? rulesByClass.get(classKey) : undefined
+    const lesson =
+      linkedRules?.size === 1
+        ? lessons.find(
+            (entry) =>
+              entry.status === 'active' &&
+              entry.canonicalRule !== undefined &&
+              linkedRules.has(entry.canonicalRule),
+          )
+        : undefined
     if (!lesson) continue
 
     const reasons: string[] = []
-    if (lesson.status !== 'active') {
-      reasons.push(`lesson status is '${lesson.status}' (not active)`)
-    }
     // Non-obvious: a guard spanning real synthesis (2+ words).
     if (lesson.guard.split(/\s+/).filter(Boolean).length < 4) {
       reasons.push('guard too thin (likely trivial, not a reusable skill)')
     }
-    // Cross-project heuristic: evidence spans 2+ distinct paths.
     if (lesson.evidenceCount < 2) {
       reasons.push('evidence spans fewer than 2 paths (not cross-project)')
     }
@@ -170,6 +129,7 @@ export function findCandidates(
       candidates.push({
         lessonTitle: lesson.title,
         canonicalRule: lesson.canonicalRule ?? lesson.title,
+        classKey: classKey ?? '',
         toolName: recurrence.toolName,
         errorFirstLine: recurrence.errorFirstLine,
         count: recurrence.count,
@@ -181,6 +141,7 @@ export function findCandidates(
     candidates.push({
       lessonTitle: lesson.title,
       canonicalRule: lesson.canonicalRule ?? lesson.title,
+      classKey: classKey ?? '',
       toolName: recurrence.toolName,
       errorFirstLine: recurrence.errorFirstLine,
       count: recurrence.count,
@@ -209,6 +170,7 @@ export function draftCandidates(
   opts: { now?: number; sessionId?: string } = {},
 ): string[] {
   const drafted: string[] = []
+  const quarantineRoot = path.join(rootDir, '.agents/skills/.quarantine')
   for (const candidate of findCandidates(rootDir, opts)) {
     if (candidate.reasons.length > 0) continue
     const name = candidate.canonicalRule
@@ -216,6 +178,7 @@ export function draftCandidates(
       .replace(/^-+|-+$/g, '')
       .slice(0, 64)
     if (!name || name.length < 3) continue
+    if (fs.existsSync(path.join(quarantineRoot, name, 'SKILL.md'))) continue
 
     // Step 2–3: reserve the proposal slot mechanically BEFORE the write.
     const reserved = prepareCandidateHandoff(

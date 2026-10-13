@@ -34,8 +34,8 @@ export function getEmbeddedGroundingFile(
   const files = EMBEDDED_PROTOCOL_BUNDLE.files as Record<string, string>
   const content =
     files[key] ??
-    (key === 'docs/embedded-learnings.md'
-      ? files['dev/learnings.md']
+    (key === 'dev/learnings.md'
+      ? files['docs/embedded-learnings.md']
       : undefined)
   if (content === undefined) return undefined
   return { path: key, content }

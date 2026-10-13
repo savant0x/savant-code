@@ -4,13 +4,17 @@ import path from 'node:path'
 
 import { parseFidStatus } from '@savant-code/agent-runtime/echo/fid-verification-enforcement'
 
-import { structuredBlocks } from './learnings-schema'
+import {
+  readLessonLocator,
+  resolveLesson,
+  RETIRED_LESSONS,
+} from './learnings-locator'
+import { wrapLearningMarkdown } from './learnings-markdown'
 import {
   featureEvidencePath,
   featureManifestSchema,
   inspectFeatureFid,
 } from './lesson-feature-schema'
-import { parseLessons } from './lessons-to-skills'
 
 import type { FeatureCandidate } from './lesson-feature-schema'
 
@@ -21,7 +25,13 @@ export const sha256 = (value: string | Buffer): string =>
 
 export type FeatureReview = {
   catalogHash: string
-  lessons: Array<{ title: string; governed: boolean; linked: string[] }>
+  sourceFingerprint: string
+  lessons: Array<{
+    title: string
+    governed: boolean
+    linked: string[]
+    retired?: boolean
+  }>
   features: Array<{ candidate: FeatureCandidate; issues: string[] }>
   issues: string[]
 }
@@ -41,6 +51,7 @@ export function reviewFeaturePipeline(
 ): FeatureReview {
   const empty: FeatureReview = {
     catalogHash: '',
+    sourceFingerprint: '',
     lessons: [],
     features: [],
     issues: [],
@@ -51,17 +62,18 @@ export function reviewFeaturePipeline(
       featureEvidencePath(root, 'dev/LEARNINGS.md'),
       'utf8',
     )
-    const manifest = featureManifestSchema.parse(
-      JSON.parse(
-        fs.readFileSync(featureEvidencePath(root, FEATURE_STORE), 'utf8'),
-      ),
+    const manifestContent = fs.readFileSync(
+      featureEvidencePath(root, FEATURE_STORE),
+      'utf8',
     )
-    const catalogHash = sha256(catalog)
-    const lessons = parseLessons(catalog)
-    const governed = new Set(
-      structuredBlocks(catalog).map((lesson) => lesson.title),
+    const manifest = featureManifestSchema.parse(JSON.parse(manifestContent))
+    const retired = fs.existsSync(path.join(root, RETIRED_LESSONS))
+      ? fs.readFileSync(featureEvidencePath(root, RETIRED_LESSONS), 'utf8')
+      : undefined
+    const catalogHash = sha256(
+      retired === undefined ? catalog : `${catalog}\0${retired}`,
     )
-    const titles = new Set(lessons.map((lesson) => lesson.title))
+    const locator = readLessonLocator(root)
     const ids = new Set<string>()
     const owners = new Set<string>()
     const features = manifest.features.map((candidate) => {
@@ -72,7 +84,12 @@ export function reviewFeaturePipeline(
         issues.push('Duplicate lesson links')
       }
       for (const title of candidate.lessons) {
-        if (!titles.has(title)) issues.push(`Missing lesson: ${title}`)
+        const resolved = resolveLesson(locator, title)
+        if (!resolved.ok) issues.push(resolved.issue)
+        else if (resolved.replacements.length)
+          issues.push(
+            `Superseded lesson: ${title}; replacement: ${resolved.replacements.join(' → ')}`,
+          )
       }
       if (candidate.state === 'ready') {
         if (manifest.catalogHash !== catalogHash)
@@ -126,11 +143,17 @@ export function reviewFeaturePipeline(
     })
     return {
       catalogHash,
-      lessons: lessons.map((lesson) => ({
-        title: lesson.title,
-        governed: governed.has(lesson.title),
+      sourceFingerprint: sha256(`${catalogHash}\0${manifestContent}`),
+      lessons: [...locator].map(([title, locations]) => ({
+        title,
+        governed: locations.some(
+          (location) => location.governed && !location.retired,
+        ),
+        ...(locations.every((location) => location.retired)
+          ? { retired: true }
+          : {}),
         linked: manifest.features
-          .filter((feature) => feature.lessons.includes(lesson.title))
+          .filter((feature) => feature.lessons.includes(title))
           .map((feature) => feature.id),
       })),
       features,
@@ -175,7 +198,7 @@ export function renderFeatureReport(review: FeatureReview): string {
   const lines = [
     '# Lesson feature pipeline',
     '',
-    `Source fingerprint: ${review.catalogHash || 'unavailable'}.`,
+    `Source fingerprint: ${review.sourceFingerprint || 'unavailable'}.`,
     '',
     'Readiness is a reviewed proposal. Implementation status records closed-FID',
     'evidence; it does not claim that historical tests were rerun today.',
@@ -213,7 +236,7 @@ export function renderFeatureReport(review: FeatureReview): string {
   )
   for (const lesson of review.lessons)
     lines.push(
-      `- ${markdown(lesson.title)} — ${lesson.governed ? 'governed' : 'historical'}; ` +
+      `- ${markdown(lesson.title)} — ${lesson.retired ? 'retired' : lesson.governed ? 'governed' : 'historical'}; ` +
         `${lesson.linked.join(', ') || 'no new candidate'}.`,
     )
   if (review.issues.length)
@@ -223,23 +246,14 @@ export function renderFeatureReport(review: FeatureReview): string {
       '',
       ...review.issues.map((issue) => `- ${markdown(issue)}`),
     )
-  return (
-    lines
-      .flatMap((line) => {
-        if (line.length <= 120) return [line]
-        const wrapped: string[] = []
-        let remaining = line
-        while (remaining.length > 120) {
-          const at = remaining.lastIndexOf(' ', 120)
-          if (at < 1) break
-          wrapped.push(remaining.slice(0, at))
-          remaining = `  ${remaining.slice(at + 1)}`
-        }
-        wrapped.push(remaining)
-        return wrapped
-      })
-      .join('\n') + '\n'
-  )
+  return wrapLearningMarkdown(lines)
+}
+
+/** Publication is deterministic on red too; admission remains the caller's exit decision. */
+export function writeFeatureReport(root: string, review: FeatureReview): void {
+  const destination = path.join(root, FEATURE_REPORT)
+  if (fs.existsSync(destination)) featureEvidencePath(root, FEATURE_REPORT)
+  fs.writeFileSync(destination, renderFeatureReport(review), 'utf8')
 }
 
 if (import.meta.main) {
@@ -253,11 +267,7 @@ if (import.meta.main) {
     throw new Error('Feature store is missing')
   }
   const report = renderFeatureReport(review)
-  if (args.includes('--write') && !review.issues.length) {
-    const destination = path.join(root, FEATURE_REPORT)
-    if (fs.existsSync(destination)) featureEvidencePath(root, FEATURE_REPORT)
-    fs.writeFileSync(destination, report, 'utf8')
-  }
+  if (args.includes('--write')) writeFeatureReport(root, review)
   console.log(
     args.includes('--check')
       ? `lesson-features: ${review.issues.length ? 'FAIL' : 'PASS'} (${review.lessons.length} lessons, ${review.features.length} candidates)`

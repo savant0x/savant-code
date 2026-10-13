@@ -75,25 +75,42 @@ const LESSON_TEMPLATE = `## Lesson: Environment-dependent guards need live probe
 - **Canonical rule:** no-environment-dependent-guards
 `
 
+function writeRuleCatalog(root: string): void {
+  fs.writeFileSync(
+    path.join(root, 'dev', 'LEARNING-RULES.md'),
+    `# Canonical rules
+
+## Rule: no-environment-dependent-guards
+
+- **Authority:** fixture.ts
+- **Validation:** fixture test
+- **Tier:** reference
+- **Tier reason:** fixture-only explicit class mapping
+- **Failure classes:** v1:run_command:incomplete-arguments:unexpected
+`,
+    'utf8',
+  )
+}
+
 describe('draftCandidates', () => {
   test('drafts an eligible candidate into quarantine with the proposal + event contract', () => {
     const root = fixtureRoot()
     writeLedger(root, [
       record(
         'run_command',
-        'guard depends on launch environment state',
+        'Incomplete arguments for tool run_command: missing guard',
         1,
         's1',
       ),
       record(
         'run_command',
-        'guard depends on launch environment state',
+        'Incomplete arguments for tool run_command: missing guard',
         2,
         's2',
       ),
       record(
         'run_command',
-        'guard depends on launch environment state',
+        'Incomplete arguments for tool run_command: missing guard',
         3,
         's3',
       ),
@@ -104,6 +121,7 @@ describe('draftCandidates', () => {
       `# LEARNINGS\n\n${LESSON_TEMPLATE}`,
       'utf8',
     )
+    writeRuleCatalog(root)
     // Inject the fixture's frozen clock — draftCandidates forwards `now` to
     // the 14-day recurrence window, so the Aug 21–23 fixture records stay
     // in-window regardless of the real date (date-bomb guard).
@@ -147,19 +165,19 @@ describe('draftCandidates', () => {
     writeLedger(root, [
       record(
         'run_command',
-        'guard depends on launch environment state',
+        'Incomplete arguments for tool run_command: missing guard',
         1,
         's1',
       ),
       record(
         'run_command',
-        'guard depends on launch environment state',
+        'Incomplete arguments for tool run_command: missing guard',
         2,
         's2',
       ),
       record(
         'run_command',
-        'guard depends on launch environment state',
+        'Incomplete arguments for tool run_command: missing guard',
         3,
         's3',
       ),
@@ -170,6 +188,7 @@ describe('draftCandidates', () => {
       `# LEARNINGS\n\n${LESSON_TEMPLATE}`,
       'utf8',
     )
+    writeRuleCatalog(root)
     const first = draftCandidates(root, { now: NOW })
     expect(first.length).toBeGreaterThan(0)
     // A second pass in the SAME session: the slot is taken, nothing new is

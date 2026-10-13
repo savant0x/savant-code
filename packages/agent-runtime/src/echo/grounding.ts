@@ -1,5 +1,6 @@
 import { createHash } from 'node:crypto'
 
+import { BOOT_LEARNINGS_PATH } from '@savant-code/common/constants/learnings-boot'
 import { userMessage } from '@savant-code/common/util/messages'
 
 import { buildProtocolRefreshSummary } from './protocol-summary'
@@ -14,7 +15,7 @@ export const HARNESS_GROUNDING_PATHS = [
   'ECHO.md',
   'ARCHITECTURE.md',
   'protocol.config.yaml',
-  'dev/LEARNINGS.md',
+  BOOT_LEARNINGS_PATH,
 ] as const
 
 export const GROUNDING_CHECKPOINT_SCHEMA_VERSION = 1 as const

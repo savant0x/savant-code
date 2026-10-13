@@ -1,12 +1,14 @@
 import fs from 'node:fs'
 import path from 'node:path'
 
+import { historicalReferenceIssues } from './learnings-history.js'
 import {
   codeWithoutProse,
   declarationCode,
   escapeRegExp,
   testTargetCount,
 } from './learnings-reference-lexer.js'
+import { readCanonicalRuleCatalog } from './learnings-rules.js'
 
 import type {
   LearningIssue,
@@ -92,7 +94,20 @@ export function validateStableReferences(
   const issues: LearningIssue[] = []
   for (const entry of entries)
     for (const reference of entry.evidence) {
-      if (!resolves(root, reference))
+      const resolvesLive = resolves(root, reference)
+      if (entry.asOf) {
+        issues.push(
+          ...historicalReferenceIssues({
+            root,
+            entry,
+            reference,
+            resolvesLive,
+            countTargets: targetCount,
+          }),
+        )
+        continue
+      }
+      if (!resolvesLive)
         issues.push({
           code: 'learning.evidence.unresolved',
           message: `${entry.title}: evidence target is missing or ambiguous: ${reference.raw}.`,
@@ -121,34 +136,31 @@ export function validateCanonicalRuleCatalog(
   root: string,
   entries: readonly StructuredLearning[],
 ): LearningIssue[] {
-  const catalogPath = path.join(root, 'dev', 'LEARNING-RULES.md')
-  if (!fs.existsSync(catalogPath))
-    return [
-      {
-        code: 'learning.rules.missing',
-        message: 'Canonical rule catalog is missing.',
-      },
-    ]
-  const headings = [
-    ...fs.readFileSync(catalogPath, 'utf8').matchAll(/^## Rule: (.+)$/gm),
-  ]
-    .map((match) => match[1]?.trim())
-    .filter((name): name is string => Boolean(name))
-  const counts = new Map<string, number>()
-  for (const heading of headings)
-    counts.set(heading, (counts.get(heading) ?? 0) + 1)
-  const issues: LearningIssue[] = []
-  for (const [name, count] of counts)
-    if (count !== 1)
-      issues.push({
-        code: 'learning.rules.duplicate',
-        message: `Canonical rule ${name} has ${count} headings; expected exactly one.`,
-      })
+  const catalog = readCanonicalRuleCatalog(root)
+  const issues = [...catalog.issues]
+  const rules = new Map(catalog.rules.map((rule) => [rule.name, rule]))
+  const ruleCounts = new Map<string, number>()
+  for (const rule of catalog.rules)
+    ruleCounts.set(rule.name, (ruleCounts.get(rule.name) ?? 0) + 1)
   for (const entry of entries)
-    if (entry.canonicalRule && counts.get(entry.canonicalRule) !== 1)
+    if (entry.status !== 'historical' && !entry.canonicalRule)
+      issues.push({
+        code: 'learning.rules.lesson-unruled',
+        message: `${entry.title}: non-historical lessons must name a canonical rule.`,
+      })
+    else if (entry.canonicalRule && ruleCounts.get(entry.canonicalRule) !== 1)
       issues.push({
         code: 'learning.rules.unresolved',
         message: `${entry.title}: canonical rule ${entry.canonicalRule} must have one catalog target.`,
+      })
+    else if (
+      entry.canonicalRule &&
+      rules.get(entry.canonicalRule)?.tier === 'historical' &&
+      entry.status !== 'historical'
+    )
+      issues.push({
+        code: 'learning.rules.lesson-tier',
+        message: `${entry.title}: an active lesson cannot point to a historical canonical rule.`,
       })
   return issues
 }
