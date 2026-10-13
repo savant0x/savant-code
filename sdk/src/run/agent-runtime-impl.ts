@@ -4,6 +4,7 @@ import { toJSONValue } from '@savant-code/common/util/type-narrowing'
 
 import { handleToolCall, readFiles } from './tool-call'
 import { getAgentRuntimeImpl } from '../impl/agent-runtime'
+import { createClientCapabilityProbe } from '../native/capability-preflight'
 import { getProjectPathLookupKeys } from '../tools/path-utils'
 
 import type { CustomToolDefinition } from '../custom-tool'
@@ -65,6 +66,10 @@ export function buildAgentRuntimeImpl(params: {
   return getAgentRuntimeImpl({
     logger,
     traceWriter,
+    probeClientCapabilities: createClientCapabilityProbe({
+      overriddenSearch: overrideTools.code_search !== undefined,
+      signal,
+    }),
     handleStepsLogChunk: () => {
       // Does nothing for now
     },

@@ -4,6 +4,7 @@
 // module keeps the core setup: template resolution, run start, prompt/tool
 // assembly, token-count shaping, and the ContextCompactor.
 import { ContextCompactor } from '../context-compactor'
+import { withCapabilityPreflight } from './capability-preflight'
 import { applyDriveDirectives } from './loop-context-drive'
 import { applyGoalDirectives } from './loop-context-goals'
 import { buildInitialMessages } from './loop-context-messages'
@@ -209,7 +210,12 @@ export async function createLoopContext(params: {
   // Mutate initialAgentState so that in-progress work propagates back to the
   // caller's shared reference (e.g. SDK's sessionState.mainAgentState) even if
   // an error is thrown before we return.
-  initialAgentState.messageHistory = initialMessages
+  initialAgentState.messageHistory = await withCapabilityPreflight({
+    messages: initialMessages,
+    tools: Object.keys(effectiveTools),
+    permissionMode: loopParams.fileContext.permissionMode,
+    probeClientCapabilities: loopParams.probeClientCapabilities,
+  })
   initialAgentState.systemPrompt = system
   initialAgentState.toolDefinitions = toolDefinitions
 

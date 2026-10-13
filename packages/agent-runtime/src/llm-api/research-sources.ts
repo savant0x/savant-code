@@ -13,6 +13,7 @@ import {
   readDocsetFreshness,
 } from './docset-cache'
 import { keylessSearch } from './keyless-search'
+import { WEB_SEARCH_API_KEYS } from './research-configuration'
 import {
   boundDocumentation,
   formatOrganicAsDocumentation,
@@ -77,7 +78,7 @@ export async function searchWebSource(options: {
   // from one that answered empty are different facts (FID-2026-1012-019).
   const ranAndReturnedNothing: string[] = []
 
-  const serperKey = readEnvKey('SERPER_API_KEY')
+  const serperKey = readEnvKey(WEB_SEARCH_API_KEYS.serper)
   if (serperKey) {
     const result = await searchWeb({
       query,
@@ -89,7 +90,7 @@ export async function searchWebSource(options: {
     if (result) {
       return { result }
     }
-    ranAndReturnedNothing.push('SERPER_API_KEY')
+    ranAndReturnedNothing.push(WEB_SEARCH_API_KEYS.serper)
   }
 
   const byokEngines: Array<{
@@ -97,19 +98,19 @@ export async function searchWebSource(options: {
     run: (apiKey: string) => Promise<string | null>
   }> = [
     {
-      key: 'PARALLEL_API_KEY',
+      key: WEB_SEARCH_API_KEYS.parallel,
       run: (k) => searchParallel({ query, depth, logger, fetch, apiKey: k }),
     },
     {
-      key: 'TAVILY_API_KEY',
+      key: WEB_SEARCH_API_KEYS.tavily,
       run: (k) => searchTavily({ query, depth, logger, fetch, apiKey: k }),
     },
     {
-      key: 'EXA_API_KEY',
+      key: WEB_SEARCH_API_KEYS.exa,
       run: (k) => searchExa({ query, depth, logger, fetch, apiKey: k }),
     },
     {
-      key: 'FIRECRAWL_API_KEY',
+      key: WEB_SEARCH_API_KEYS.firecrawl,
       run: (k) => searchFirecrawl({ query, depth, logger, fetch, apiKey: k }),
     },
   ]
@@ -129,7 +130,7 @@ export async function searchWebSource(options: {
     return { result: keyless }
   }
 
-  const knownKeys = ['SERPER_API_KEY', ...byokEngines.map((e) => e.key)]
+  const knownKeys = Object.values(WEB_SEARCH_API_KEYS)
   return {
     error: buildWebSearchExhaustionNotice({
       knownKeys,

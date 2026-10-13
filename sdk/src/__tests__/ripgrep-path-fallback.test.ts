@@ -167,4 +167,25 @@ describe('PATH fallback (FID-2026-0918-007)', () => {
     expect(calls).toBe(1)
     resetPathRgCacheForTests()
   })
+
+  test('PATH and binary-name changes invalidate a cached miss', () => {
+    const previous = process.env.PATH
+    resetPathRgCacheForTests()
+    let calls = 0
+    const probe = () => {
+      calls += 1
+      return calls === 1 ? undefined : '/new/rg'
+    }
+    try {
+      expect(resolveRgFromPath('rg', probe)).toBeUndefined()
+      process.env.PATH = `${previous ?? ''};fixture-path-change`
+      expect(resolveRgFromPath('rg', probe)).toBe('/new/rg')
+      expect(resolveRgFromPath('other-rg', probe)).toBe('/new/rg')
+      expect(calls).toBe(3)
+    } finally {
+      if (previous === undefined) delete process.env.PATH
+      else process.env.PATH = previous
+      resetPathRgCacheForTests()
+    }
+  })
 })

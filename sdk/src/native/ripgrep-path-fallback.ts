@@ -11,6 +11,8 @@
 
 import { spawnSync as nodeSpawnSync } from 'node:child_process'
 
+import { buildChildEnv } from '../env'
+
 /**
  * Probe result cache. Memoized per process: the PATH rarely changes
  * mid-session, and re-spawning `where`/`which` on every failed vendored
@@ -18,6 +20,8 @@ import { spawnSync as nodeSpawnSync } from 'node:child_process'
  * uninitialized; `undefined` = cached miss.
  */
 let cachedPathRg: string | undefined | null = null
+let cachedConfiguration: string | undefined
+const PATH_PROBE_TIMEOUT_MS = 1_000
 
 /** Spawn a locator command and return its first non-empty stdout line.
  * `node:child_process` (not Bun's spawnSync) so the SDK keeps its Node
@@ -26,6 +30,9 @@ function defaultPathProbe(command: string[]): string | undefined {
   try {
     const spawned = nodeSpawnSync(command[0], command.slice(1), {
       encoding: 'utf8',
+      timeout: PATH_PROBE_TIMEOUT_MS,
+      windowsHide: true,
+      env: buildChildEnv(),
     })
     if (spawned.status !== 0) return undefined
     const first = (spawned.stdout ?? '')
@@ -51,8 +58,15 @@ export function resolveRgFromPath(
   binaryName?: string,
   probe: (command: string[]) => string | undefined = defaultPathProbe,
 ): string | undefined {
-  if (cachedPathRg !== null) return cachedPathRg
   const name = binaryName ?? (process.platform === 'win32' ? 'rg.exe' : 'rg')
+  const configuration = JSON.stringify([
+    name,
+    process.env.PATH,
+    process.env.PATHEXT,
+  ])
+  if (cachedPathRg !== null && configuration === cachedConfiguration)
+    return cachedPathRg
+  cachedConfiguration = configuration
   cachedPathRg = locateOnPath(name, probe)
   return cachedPathRg
 }
@@ -68,4 +82,5 @@ function locateOnPath(
 /** Test hook: clear the memoized PATH-probe result. */
 export function resetPathRgCacheForTests(): void {
   cachedPathRg = null
+  cachedConfiguration = undefined
 }

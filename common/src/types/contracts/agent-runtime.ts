@@ -17,6 +17,7 @@ import type {
 } from './llm'
 import type { Logger } from './logger'
 import type { TraceWriter } from './trace'
+import type { ProbeClientCapabilitiesFn } from '../../util/capability-notice'
 
 /** Shared dependencies */
 export type AgentRuntimeDeps = {
@@ -52,6 +53,8 @@ export type AgentRuntimeScopedDeps = {
   requestOptionalFile: RequestOptionalFileFn
   sendAction: SendActionFn
   sendSubagentChunk: SendSubagentChunkFn
+  /** Local client availability, scoped to the run and requested effective tools. */
+  probeClientCapabilities?: ProbeClientCapabilitiesFn
 
   /** FID-2026-0803-004: directory for persistent per-turn file checkpoints
    *  (rewind). When unset, checkpoint capture is disabled. Hosts that enable

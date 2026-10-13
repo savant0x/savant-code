@@ -31,6 +31,7 @@ export function getAgentRuntimeImpl(
     | 'sendSubagentChunk'
     | 'checkpointDir'
     | 'checkpointTurnId'
+    | 'probeClientCapabilities'
   >,
 ): AgentRuntimeDeps & AgentRuntimeScopedDeps {
   const {
@@ -46,6 +47,7 @@ export function getAgentRuntimeImpl(
     sendSubagentChunk,
     checkpointDir,
     checkpointTurnId,
+    probeClientCapabilities,
   } = params
 
   const clientEnv: ClientEnv = {
@@ -103,6 +105,7 @@ export function getAgentRuntimeImpl(
     // Checkpointing (FID-2026-0803-004)
     checkpointDir,
     checkpointTurnId,
+    probeClientCapabilities,
   }
 }
 

@@ -14,6 +14,10 @@ import { getBundledRgPath } from '../../native/ripgrep'
 import type { SavantCodeToolOutput } from '../../../../common/src/tools/list'
 import type { Logger } from '@savant-code/common/types/contracts/logger'
 
+/** Both preflight and execution must resolve the same bundling context. */
+export const resolveCodeSearchRipgrep = (): string =>
+  getBundledRgPath(import.meta.url)
+
 /**
  * True when `p` exists and is a directory.
  *
@@ -117,7 +121,7 @@ export function codeSearch({
       ])
     }
 
-    const rgPath = getBundledRgPath(import.meta.url)
+    const rgPath = resolveCodeSearchRipgrep()
     if (logger) {
       logger.info(
         { rgPath, args, searchCwd },

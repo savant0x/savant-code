@@ -186,6 +186,9 @@ declarations, the test paths and the receipt are added when this record reaches
 - gate: test common/src/util/__tests__/capability-notice.test.ts
 - gate: test packages/agent-runtime/src/llm-api/__tests__/research-sources-web.test.ts
 - gate: test sdk/src/__tests__/code-search-flags.test.ts
+- gate: test sdk/src/__tests__/capability-preflight.test.ts
+- gate: test sdk/src/__tests__/ripgrep-path-fallback.test.ts
+- gate: test packages/agent-runtime/src/run-agent-step/__tests__/capability-preflight.test.ts
 - gate: typecheck common
 - gate: typecheck sdk
 - gate: typecheck packages/agent-runtime
@@ -193,11 +196,14 @@ declarations, the test paths and the receipt are added when this record reaches
 
 ### Verification Receipt
 
-- fingerprint: sha256:a110d09a382f2d8f4d59bdb4b630c221f60e8023e9922d887919f741236f89b8
-- verified: 2026-10-13T04:30:01.046Z
+- fingerprint: sha256:e365d87c0859141fda5340bc6fd75a14e6046978008f4e2bfc1d69604ae1efc7
+- verified: 2026-10-13T22:34:28.032Z
 - test common/src/util/__tests__/capability-notice.test.ts: exit 0
 - test packages/agent-runtime/src/llm-api/__tests__/research-sources-web.test.ts: exit 0
 - test sdk/src/__tests__/code-search-flags.test.ts: exit 0
+- test sdk/src/__tests__/capability-preflight.test.ts: exit 0
+- test sdk/src/__tests__/ripgrep-path-fallback.test.ts: exit 0
+- test packages/agent-runtime/src/run-agent-step/__tests__/capability-preflight.test.ts: exit 0
 - typecheck common: exit 0
 - typecheck sdk: exit 0
 - typecheck packages/agent-runtime: exit 0
@@ -284,6 +290,72 @@ declarations, the test paths and the receipt are added when this record reaches
 
 ### Missed Questions
 
+### Loop 4 — Run-start capability preflight (2026-10-13)
+
+**Plan:** Four review steps. Subject: truthful client capability checks before planning.
+
+#### Thought 1
+
+The CLI's `initializeApp` probes ripgrep for a human warning, while
+`createLoopContext` assembles the model's initial history without that result.
+The search executor uses its own module URL for resolution. A server-side probe
+or a probe of a different bundling context could certify the wrong executable.
+
+#### Thought 2
+
+Add an optional, ephemeral client capability callback to the run dependency
+contract. The SDK supplies it beside its tool-execution wiring; the child
+context extractor forwards it. Reuse the search executor's exact resolution
+function and bound a local `--version` check. Host overrides remain unverified
+and never trigger a bundled-binary probe. No session schema changes are needed.
+
+#### Thought 3
+
+Research configuration is evidence of configured sources only. Centralize the
+selector's key names for preflight; retain the keyless fallback when no key is
+present. The runtime filters to its effective tools, honors offline policy and
+adds one tagged history message before planning, leaving the system/tool prefix
+stable. A resumed run replaces the previous tagged message and refreshes state.
+
+#### Thought 4
+
+The alternative of persisting availability in file context would become stale
+across runs and add snapshot classifications. The callback keeps the executing
+client authoritative. Tests must prove prompt delivery, refresh, child forwarding,
+override handling, missing/broken binary outcomes, safe research and no probe of
+unused tools. PATH resolution refreshes when PATH/PATHEXT or binary name changes.
+
+#### Final
+
+Implement the callback and tagged preflight under the master's level-3 grant.
+All notices are advisory and bounded; no network request, raw credential,
+command replay, tool-array mutation or class-repair claim follows a preflight.
+Extend FID-019's scoped targets for these named seams before source writes.
+Record the new test gates after the files exist, then re-stamp the receipt.
+
+- **RED evidence:** The new `createLoopContext` integration test failed with
+  zero `CAPABILITY_PREFLIGHT` messages before wiring, then passed with one
+  refreshed message. This proves delivery at the production planning seam.
+- **Implementation:** Optional `probeClientCapabilities` travels through SDK
+  runtime assembly and `extractSubagentContextParams`. Both preflight and
+  search call `resolveCodeSearchRipgrep`; a bounded, shell-free version check
+  uses the existing credential-free child environment. Concurrent children
+  share one in-flight probe; configuration changes invalidate its cache.
+  The runtime limits an unresponsive host callback to 2,500 ms and preserves
+  the system prompt and tool array. Research configuration and execution now
+  share `WEB_SEARCH_API_KEYS`.
+- **AUDIT:** Full SDK suite 686 PASS / 1 SKIP / zero FAIL; full runtime suite
+  2,115 PASS / zero FAIL; common 879 PASS / 4 SKIP / zero FAIL. Full root
+  typecheck and scoped zero-warning ESLint PASS. The live client probe returns
+  `code_search: ready` because local ripgrep starts, explicitly without a search.
+  Runtime suite log: `dev/scratchpad/active/2026-10-13-fid019-runtime-tests.log`.
+- **ADVERSARIAL:** A working executable that is not ripgrep is rejected by the
+  real version adapter. Unused tools, host overrides and cancelled runs skip
+  probing. Offline research remains unavailable; a configured key is never
+  treated as completed network access. Probe exceptions omit raw text and
+  credential values. The original host-resolver failure remains unproved;
+  this check does not declare any historical class repaired.
+
 1. **Is the ripgrep ENOENT savant's defect or the host's?** → **Answered in Loop 3: the host's.**
    The recorded text names `@codebuff/sdk` and `CODEBUFF_RG_PATH`, and neither string exists in this
    repository; savant's own resolver and spawn failure name `SAVANT_CODE_RG_PATH` and the
@@ -365,10 +437,10 @@ declarations, the test paths and the receipt are added when this record reaches
   classes show no new records in the declared window; the window has not started.
 - **Open, and why this record is not `closed`:** (a) the recurrence window (14 days / 3 sessions) has
   not run, so no class claim exists and no fix boundary is recorded (`dev/experiences/fix-boundaries.json`
-  stays empty); (b) the run-start capability preflight (plan step 7) is **not implemented** — what
-  landed is the once-per-run notice dedupe, which is the half of step 7 that neither denies unused
-  capabilities nor blocks human work; the preflight needs a prompt-time consumer and is deliberately
-  left to the lane that owns that surface rather than built unowned here; (c) the flags/type failures
+  stays empty); (b) the run-start capability preflight (plan step 7) is now
+  implemented by Loop 4: the SDK owns the local probe, child calls share its
+  run-scoped result, and the runtime refreshes one tagged planning notice;
+  it is advisory and claims no search completion; (c) the flags/type failures
   (`unrecognized file type`, `unrecognized flag`) already surface ripgrep's own actionable stderr
   through the anomaly path, so no producer-side list of valid types was added — a hardcoded list would
   rot against the pinned binary. All three are stated as open rather than counted as done.

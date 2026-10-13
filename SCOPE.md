@@ -307,7 +307,14 @@ work item remains active, including the recorded level-1 consolidation and exter
   `packages/agent-runtime/src/tools/**`, `common/src/constants/**`,
   `common/src/util/capability-notice.ts`, `common/src/util/__tests__/capability-notice.test.ts`,
   `common/src/util/experience-classes.ts`, `sdk/src/tools/code-search/**`,
-  `sdk/src/__tests__/code-search-flags.test.ts`
+  `sdk/src/__tests__/code-search-flags.test.ts`,
+  `sdk/src/__tests__/capability-preflight.test.ts`,
+  `sdk/src/__tests__/ripgrep-path-fallback.test.ts`,
+  `sdk/src/run/agent-runtime-impl.ts`, `sdk/src/impl/agent-runtime.ts`,
+  `common/src/types/contracts/agent-runtime.ts`,
+  `packages/agent-runtime/src/run-agent-step/loop-context.ts`,
+  `packages/agent-runtime/src/run-agent-step/capability-preflight.ts`,
+  `packages/agent-runtime/src/run-agent-step/__tests__/capability-preflight.test.ts`
 - FID-2026-1012-020: `packages/agent-runtime/src/process-str-replace.ts`,
   `packages/agent-runtime/src/edit-diagnostics.ts`,
   `packages/agent-runtime/src/tools/handlers/tool/**`,

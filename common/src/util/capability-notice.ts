@@ -27,6 +27,19 @@ export type CapabilityState =
   /** Something ran but did not finish, so its output is not a complete answer. */
   | 'incomplete'
 
+/** A local check is evidence of readiness, never a successful search. */
+export interface CapabilitySnapshot {
+  capability: string
+  state: 'ready' | 'unavailable' | 'unverified'
+  reason: string
+  action?: string
+}
+
+/** Ephemeral client dependency; never serialized into session state. */
+export type ProbeClientCapabilitiesFn = (
+  tools: readonly string[],
+) => Promise<CapabilitySnapshot[]>
+
 export interface CapabilityNotice {
   /** The tool name in the agent's terms, e.g. `web_search`, `code_search`. */
   capability: string
