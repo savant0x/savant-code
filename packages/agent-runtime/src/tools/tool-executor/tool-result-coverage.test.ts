@@ -4,6 +4,7 @@ import {
   extractToolResultError,
   hasCommandFailure,
   hasToolResultError,
+  TOOL_RESULT_ERROR_FALLBACK,
 } from './tool-result-errors'
 
 import type { JSONValue } from '@savant-code/common/types/json'
@@ -52,6 +53,42 @@ describe('FID-2026-1012-024 producer-shaped failure coverage', () => {
       ],
       error: 'File read did not complete: [FILE_TOO_LARGE]',
     },
+    // FID-2026-1012-024: the flat channels are the most common production
+    // shape (str_replace, write_file, spawn_agents, web_search, read_docs all
+    // return a bare {errorMessage} or {error} as the part value). Covered here
+    // so a future walker rewrite cannot silently drop them to the constant.
+    {
+      name: 'flat errorMessage (str_replace path rejection)',
+      value: { errorMessage: 'str_replace: path rejected: read-only' },
+      error: 'str_replace: path rejected: read-only',
+    },
+    {
+      name: 'flat errorMessage (write_file path rejection)',
+      value: { errorMessage: 'write_file: path rejected: read-only' },
+      error: 'write_file: path rejected: read-only',
+    },
+    {
+      name: 'flat legacy error channel',
+      value: { error: 'legacy flat error channel' },
+      error: 'legacy flat error channel',
+    },
+    {
+      name: 'flat error code',
+      value: { errorCode: 'EACCES' },
+      error: 'EACCES',
+    },
+    {
+      name: 'readonly guard rejection (live command-exit class)',
+      value: {
+        command: 'cat a | tee b',
+        stdout: '',
+        stderr:
+          'run_readonly_command rejected: Command contains forbidden shell metacharacters',
+        exitCode: 1,
+      },
+      error:
+        'Command exited with code 1: run_readonly_command rejected: Command contains forbidden shell metacharacters',
+    },
   ]
 
   for (const fixture of failures) {
@@ -60,6 +97,11 @@ describe('FID-2026-1012-024 producer-shaped failure coverage', () => {
       expect(hasToolResultError(output)).toBe(true)
       expect(hasCommandFailure(output)).toBe(true)
       expect(extractToolResultError(output)).toBe(fixture.error)
+      // The constant is a signal, never a label: no recognised failure may
+      // render as 'tool result contains an error'.
+      expect(extractToolResultError(output)).not.toBe(
+        TOOL_RESULT_ERROR_FALLBACK,
+      )
     })
   }
 

@@ -15,11 +15,15 @@
 
 Seven classes — **36 records across seven tools and 23 sessions** — lost their causes behind
 `tool result contains an error`. They remain unresolved under this owner. The September extractor
-change replaced the wrapper, not the underlying failures. Six tools have later differently worded
-failures; the seventh, `skill_manage`, now emits an exit-code failure the capture predicate misses.
-Deep probes also expose uncaptured nested errors, nonzero exits and read-status failures. Silence
-cannot establish dormancy or repair. This lane investigates all seven, repairs the measuring
-instrument and preserves explicit ownership of every unresolved cause before introducing horizons.
+change replaced the wrapper, not the underlying failures. The seven-tool investigation (Loop 4) found
+the constant unreachable from all seven current producers: six tools show later, differently worded
+**classified** failures, and the seventh — `skill_manage` — has had *no failures at all* since
+2026-09-08, so its silence is absent exposure, not an invisible shape (Loop 2's claim that the capture
+predicate misses its exit-1 result is refuted; that shape is pinned). Zero of 550 post-fix rows carry
+the constant. The legacy bucket is now named `cause-not-recorded`, because that is what it means, and an
+unmatched message keeps a reproducible `unrecognised-<sha>` identity instead of being called
+"unclassified". Silence cannot establish dormancy or repair: this lane preserves explicit ownership of
+every unresolved cause and claims no class repair, before introducing horizons.
 
 ## Environment
 
@@ -251,13 +255,78 @@ audit trail of the mistaken premise, not as acceptance criteria or class disposi
 - **CHECKS:** Full root typecheck, ESLint with zero warnings, Markdown lint and quality
   pass. Current four-script suite: 56 PASS; shared class suite: 6 PASS. The explicit
   lane repair assertion exits 1 with seven unproved classes, the required honest result.
-- **OPEN:** Complete seven-tool mechanism investigation and exercise real observation.
+- **OPEN:** Observation remains open. Loop 4 completes the seven-tool mechanism investigation.
   The lane's repair assertion is `bun scripts/experiences-recurrence.ts
   --assert-repaired=FID-2026-1012-024`; it must fail until its claims have evidence.
   Dependent implementation can use the instrument without closing this FID.
 - **Persistence review:** Newly observed command stderr must pass the existing canonical
   credential redactor before entering the failure ledger. Record the redaction policy
   on new rows; preserve old immutable rows. A producer-shaped secret pin precedes this repair.
+
+### Loop 4 — Seven-tool mechanism investigation (2026-10-13, automation level 3)
+
+- **RED:** Step 6 was the last unrun verb. The seven wrapper classes had no per-tool mechanism
+  finding, and Loop 2's claim — that `skill_manage`'s exit-1 result "is invisible to the capture
+  predicate" — had never been tested against the shipped walker.
+- **Method:** for each of the seven tools, measured the capture at HEAD with the real identity
+  function (`experienceClassIdentity` over `dev/experiences/raw-traces.jsonl`, 586 records), and read
+  the producer that emits its failure. 36 wrapper rows in total; **0 of the 550 post-fix rows** carry
+  the constant.
+
+| tool | wrapper rows | last wrapper | post-fix rows / sessions | first post-fix cause | producer | coverage |
+|---|---|---|---|---|---|---|
+| `str_replace` | 14 | 2026-09-09 | 84 / 40 | `edit-noop` | `str-replace.ts:60,75` → `{errorMessage}` | verified |
+| `read_url` | 8 | 2026-08-26 | 208 / 31 | `http-401` | `sdk/src/tools/read-url/outcomes.ts` | verified |
+| `code_search` | 5 | 2026-09-02 | 28 / 15 | `search-executable-missing` | ripgrep ENOENT / anomaly line | verified |
+| `run_readonly_command` | 3 | 2026-09-07 | 37 / 23 | `incomplete-arguments` | `run-readonly-command.ts:46,69` → `{stdout,stderr,exitCode:1}` | verified |
+| `skill_manage` | 3 | 2026-09-08 | **0 / 0** | — | `skill-manage.ts:66` → `{stdout,stderr,exitCode:1}` | pinned, **never exercised** |
+| `run_terminal_command` | 2 | 2026-09-07 | 11 / 9 | `timeout` | client command envelope | verified |
+| `write_file` | 1 | 2026-08-25 | 26 / 22 | `patch-failed` | `write-file.ts:118,133,261` → `{errorMessage}` | verified |
+
+- **GREEN — findings:**
+  1. **The constant is unreachable from every current producer.** `hasToolResultError` is defined as
+     `extractToolResultError(content) !== ''` (`tool-result-errors.ts:14`) and `extractToolResultError`
+     *is* the walker, so a result the lifecycle records as failed cannot render as the fallback at
+     `:26`; that fallback now means "no failure was found", which the lifecycle does not record. Six
+     tools have abundant post-fix classified exposure; the seventh is silent because it did not run.
+  2. **Loop 2's `skill_manage` claim is refuted, not carried forward.** `skill-manage.ts:66` returns
+     `{action, stdout:'', stderr: result.error, exitCode: 1}`; the walker's non-zero-exit branch
+     (`tool-result-inspection.ts:126-133`) renders `Command exited with code 1: <stderr>` → cause
+     `command-exit`, pinned by `tool-result-coverage.test.ts` ("skill management exit"). Its three old
+     rows are all dated ≤ 2026-09-08 and it has produced **no post-fix failures of any kind** — the tool
+     is restricted to Scribe + Orchestrator, so the silence is absent exposure. Coverage is proven by
+     construction and pin; **observation is explicitly not claimed.**
+  3. **Step 4's naming is applied.** The legacy bucket's cause was `unclassified`, which read as a
+     classification *attempt* and collided in one vocabulary with `ExperienceErrorClass.unclassified`.
+     It is now `cause-not-recorded`: the seven tool-scoped classes are one semantic finding. The
+     unmatched-message fallback likewise became `unrecognised-<sha>`, because a hashed unknown *is* a
+     recorded, reproducible identity. `CAUSE_PATTERNS` (`experience-classes.ts`) and ten owner keys
+     updated; no historical row was rewritten.
+  4. **Pin-set gaps closed.** The flat channels — `{errorMessage}`, `{error}`, `{errorCode}` as the part
+     value, the shape `str_replace`, `write_file`, `spawn_agents`, `web_search` and `read_docs`
+     actually return — were unpinned, as was the live guard-rejection shape. Five fixtures added, plus
+     an invariant that no recognised failure renders as the constant.
+  5. **The live class is two mechanisms under one name.** All three `run_readonly_command:command-exit`
+     rows are 2026-10-13: two are `run_readonly_command rejected: Command contains forbidden shell
+     metacharacters` (`run-readonly-command.ts:69`) — a *validation* refusal reported through the
+     command envelope's `exitCode: 1` — and one is a genuine host exit 127. Recorded, not repaired:
+     giving a refusal its own channel is a producer change outside this loop's contract.
+- **AUDIT:** the table is derived from the capture with the shipped identity function and the producer
+  sites are read and cited per tool. Suites: 7/7 `common` class-identity, 46/46 `agent-runtime`
+  walker/outcome, 44/44 `scripts` horizon/coverage/dedup. Root typecheck 14 legs exit 0. Census:
+  586 records / 57 classes / 0 issues. `--assert-repaired=FID-2026-1012-024` still exits **1** with the
+  same eight unproved classes, now self-describing — the required honest result.
+- **ADVERSARIAL:** (a) *Can the constant reappear?* Only from a producer of `error_message` outside the
+  walker; within the repo the failure flag and the line come from one traversal, so a new constant row
+  would be evidence of a **second** line producer, not of the old defect — which is why the invariant
+  pin was added. (b) *Does renaming a cause rewrite history?* No: identity is derived on read,
+  `legacyKeys` still carries the old spelling, and no row changed. (c) *Is the silent tool "fixed"?*
+  No, and this loop does not claim it: zero exposure is unproved, not dormant. (d) *Does
+  `cause-not-recorded` risk being read as terminal?* It stays tool-scoped and `unresolved`, and the
+  repair assertion reports it as unproved.
+- **CHANGE DELTA:** 2 source files (`common/src/util/experience-classes.ts` + two test files), 1 owner
+  manifest (10 keys), 0 behaviour change to the walker, 0 historical rows rewritten, 0 fix boundaries
+  claimed. The lane's assertion remains red by design.
 
 ### Missed Questions
 
@@ -300,12 +369,25 @@ audit trail of the mistaken premise, not as acceptance criteria or class disposi
       (`normalizeErrorFirstLine('tool result contains an error')`).
 - [x] Current implementation: stable identity and schema, bounded producer-shaped walker,
       native metadata transport, ownership census and fail-closed horizon/receipt probe exist.
+- [x] Loop 4 (2026-10-13): all seven tools measured against the capture at HEAD with
+      `experienceClassIdentity` — 36 wrapper rows, last 2026-09-09, **0 post-fix** — with the producer
+      site read and cited for each (table above); flat error channels and the guard-rejection shape now
+      pinned, with an invariant that no recognised failure renders as the constant.
+- [x] Loop 4: the constant is unreachable from the shipped walker — `tool-result-errors.ts:14` defines
+      detection *as* extraction, so a recorded failure cannot render as the fallback at `:26`.
+- [x] Loop 4: the legacy bucket and the unmatched-message bucket are named for what they mean
+      (`cause-not-recorded`, `unrecognised-<sha>`); ten owner keys updated; no row rewritten.
 - [ ] Still unproved: underlying class repairs, exercised production observation and lane closure.
+      `skill_manage` has zero post-fix exposure, so its class is unobservable through this lane's
+      capture and is not claimed fixed.
 
 ## Boundaries
 
-- All seven classes remain unresolved until their mechanisms, claimed fixes and capture coverage
-  are investigated. A horizon cannot replace that evidence. A renamed failure remains an owned issue.
+- All seven classes remain unresolved. Loop 4 established their mechanisms, the real scope of the
+  claimed extractor fix and the capture coverage of each; what is still missing is *exercised
+  observation*, so no class may be called reviewed, dormant or repaired. A horizon cannot replace that
+  evidence, and a renamed failure remains an owned issue — the `cause-not-recorded` keys are the same
+  36 rows under a truthful name, not a new or emptied set.
 - No change is proposed to the capture hook's fail-open behaviour, to `experiences:dedup`'s
   recurrence threshold, or to the two downstream producers as part of this lane.
 - The 559 historical records are re-read, never rewritten; the capture stays append-only and immutable.
@@ -313,7 +395,8 @@ audit trail of the mistaken premise, not as acceptance criteria or class disposi
 
 ## Resolution
 
-**Instrument implemented; class repairs and observation remain open — `Status: converged`.**
+**Instrument implemented and the seven-tool mechanism investigation complete; class repairs and
+observation remain open — `Status: converged`.**
 
 Loop 3 implements the measuring instrument under the operator's automation-level-3
 grant. This record cannot close merely because its deterministic tests pass. When

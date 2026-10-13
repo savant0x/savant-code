@@ -31,9 +31,13 @@ describe('FID-2026-1012-024 stable class identity', () => {
     )
   })
 
-  test('unknown wrapper causes keep tool identity and remain unresolved', () => {
+  test('the pre-fix constant names the missing cause, never a diagnosis', () => {
+    // FID-2026-1012-024 Step 4: the constant line was a *rendering* of a
+    // failure, not a cause. The bucket says so, keeps tool identity, and stays
+    // unresolved — it must not read as a classification attempt.
     const a = record('read_url', 'tool result contains an error')
     const b = record('skill_manage', 'tool result contains an error')
+    expect(experienceClassIdentity(a).cause).toBe('cause-not-recorded')
     expect(experienceClassIdentity(a).key).not.toBe(
       experienceClassIdentity(b).key,
     )
@@ -42,6 +46,13 @@ describe('FID-2026-1012-024 stable class identity', () => {
         (entry) => entry.state === 'unresolved',
       ),
     ).toBe(true)
+  })
+
+  test('an unrecognised message keeps its own reproducible identity', () => {
+    const cause = experienceClassIdentity(
+      record('code_search', 'an entirely new failure message'),
+    ).cause
+    expect(cause).toMatch(/^unrecognised-[a-f0-9]{64}$/)
   })
 
   test('undetermined HTTP outcomes are not silently demoted to expected', () => {

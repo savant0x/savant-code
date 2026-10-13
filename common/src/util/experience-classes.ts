@@ -18,7 +18,13 @@ export interface ExperienceClassIdentity {
 const CAUSE_PATTERNS: ReadonlyArray<readonly [RegExp, string]> = [
   [/^Incomplete arguments for tool\b/, 'incomplete-arguments'],
   [/^Tool .* is not available to this agent:/, 'tool-unavailable'],
-  [/^tool result contains an error$/, 'unclassified'],
+  // The pre-fix constant line (FID-2026-0909-005). The capture stored a
+  // *rendering* of the failure, so the cause was never recorded: this bucket is
+  // named for what it means. The seven tool-scoped classes behind it are one
+  // semantic finding — "the cause was not recorded" — not seven diagnoses, and
+  // the name must not read as "we tried and could not classify" (which is what
+  // the distinct-identity fallback below is) (FID-2026-1012-024 Step 4).
+  [/^tool result contains an error$/, 'cause-not-recorded'],
   [/^Command timed out after\b|^Code search timed out\b/, 'timeout'],
   [/^Tool call aborted:/, 'cancelled'],
   [/^Command exited with code\b/, 'command-exit'],
@@ -51,8 +57,10 @@ function failureCause(line: string, errorClass?: ExperienceErrorClass): string {
   if (status) return `http-${status[1] ?? status[2]}`
   const known = CAUSE_PATTERNS.find(([pattern]) => pattern.test(line))
   if (known) return known[1]
-  // Unknown messages retain distinct identities rather than merging unknown causes.
-  return `unclassified-${createHash('sha256').update(line).digest('hex')}`
+  // A message that matches no known cause keeps its OWN identity: over-merging
+  // unknown causes is the defect this table exists to avoid, and a hash suffix
+  // is what makes the unknown reproducible instead of anonymous.
+  return `unrecognised-${createHash('sha256').update(line).digest('hex')}`
 }
 
 /** Derive old rows without rewriting them; never infer repair or dormancy. */
