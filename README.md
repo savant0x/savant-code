@@ -71,6 +71,7 @@ history. The supported hosted providers are:
 | OpenRouter | `/provider openrouter` or `DIRECT_PROVIDER=openrouter` | `OR_MASTER_KEY`, `OPENROUTER_API_KEY`, or `INFERENCE_API_KEY` | Default provider; free tier (`openrouter/free`) is the boot default; direct mode without the Savant backend |
 | TokenRouter | `/provider tokenrouter` or `DIRECT_PROVIDER=tokenrouter` | `TOKENROUTER_API_KEY` | Multi-provider gateway |
 | NVIDIA NIM | `/provider nvidia` or `DIRECT_PROVIDER=nvidia` | `NVIDIA_API_KEY` | NVIDIA-hosted inference |
+| AIHubMix | `/provider aihubmix` or `DIRECT_PROVIDER=aihubmix` | `AIHUBMIX_API_KEY` | Hosted gateway |
 | APInex | `/provider apinex` or `DIRECT_PROVIDER=apinex` | `APINEX_API_KEY` | Hosted gateway with an authenticated live model catalog |
 | Apixo | `/provider apixo` or `DIRECT_PROVIDER=apixo` | `APIXOAI_API_KEY` | [OI]-compatible gateway with a keyless live model catalog |
 | Atria AI | `/provider atria` or `DIRECT_PROVIDER=atria` | `ATRIA_API_KEY` | Hosted gateway |
@@ -442,7 +443,7 @@ code 2 blocks a tool.
   Tiarina Cloud,
   UnoRouter,
   BazaarLink, Atria AI,
-  OpenAI, Vercel AI Gateway, Clean APIs, CodeCraft API, Mistral AI, Apixo, xKiro, and Cloudflare Workers AI via
+  OpenAI, Vercel AI Gateway, Clean APIs, CodeCraft API, Mistral AI, Apixo, AIHubMix, xKiro, and Cloudflare Workers AI via
   `@savant-code/llm-providers`. Nous Research uses the direct OpenAI-compatible API; Portal OAuth
   is a separate integration.
 - **Default model** — `openrouter/free` via OpenRouter (configurable via
@@ -892,6 +893,7 @@ picker or choose one directly:
 /provider xkiro
 /provider mistral
 /provider apixo
+/provider aihubmix
 /provider cloudflare
 ```
 
@@ -905,6 +907,7 @@ The supported environment variables are `OPENAI_API_KEY`, `OPENROUTER_API_KEY`,
 `AI_GATEWAY_API_KEY`, `CLEANAPIS_API_KEY`, `CODECRAFT_API_KEY`, `XKIRO_API_KEY`,
 `MISTRAL_API_KEY`,
 `APIXOAI_API_KEY`,
+`AIHUBMIX_API_KEY`,
 `CHATANYWHERE_API_KEY`,
 `TIARINA_API_KEY`,
 `CLOUDFLARE_API_TOKEN`. The key

@@ -161,7 +161,7 @@ describe('FID-2026-1013-003: apixo live catalog', () => {
     const fulfilled = (value: OpenRouterModel[]) =>
       ({ status: 'fulfilled', value }) as const
     // The positional contract: nous, kiosapi, apinex, [OI], orcarouter, B.AI,
-    // vercel, cleanapis, codecraft, mistral, xkiro, apixo, custom.
+    // vercel, cleanapis, codecraft, mistral, xkiro, apixo, AIHubMix, custom.
     const restResults = [
       fulfilled([]),
       fulfilled([]),
@@ -176,6 +176,7 @@ describe('FID-2026-1013-003: apixo live catalog', () => {
       fulfilled([neighbourRow]),
       fulfilled([apixoRow]),
       fulfilled([]),
+      fulfilled([]),
     ]
     const resolved = resolveGatewayLiveCatalogs(
       fulfilled([]),
@@ -185,6 +186,7 @@ describe('FID-2026-1013-003: apixo live catalog', () => {
     expect(resolved.apixoModels).toEqual([apixoRow])
     // The neighbour slot is unaffected — the shift this pins against.
     expect(resolved.xkiroModels).toEqual([neighbourRow])
+    expect(resolved.aihubmixModels).toEqual([])
     expect(resolved.customModels).toEqual([])
   })
 })

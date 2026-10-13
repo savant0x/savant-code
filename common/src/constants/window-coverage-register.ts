@@ -281,4 +281,14 @@ export const WINDOW_COVERAGE_REGISTER: ReadonlyMap<
       note: 'Live catalog keyless: HTTP 200 with 35/35 rows carrying context_window + max_output_tokens (probed 2026-10-13, FID-2026-1013-003); the keyless body is byte-identical to the authenticated one, so no key is needed for the census.',
     },
   ],
+  [
+    'aihubmix',
+    {
+      // FID-2026-1013-004: the rich public catalog retains all 698 LLM rows,
+      // but the vendor publishes positive limits only on a subset. Zero and
+      // missing values remain unknown rather than inheriting a fallback.
+      disposition: 'runtime-partial',
+      note: 'Live catalog keyless: HTTP 200 with 869 rows and 698 LLM rows (probed 2026-10-13); positive finite context_length on 358/698 and max_output on 306/698. 642/698 LLM rows have empty endpoints; rows remain retained because endpoints metadata is sparse (FID-2026-1013-004).',
+    },
+  ],
 ])

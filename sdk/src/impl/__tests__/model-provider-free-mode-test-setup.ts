@@ -47,6 +47,7 @@ export function setupModelProviderTestHarness() {
   let originalVercelApiKey: string | undefined
   let originalMistralApiKey: string | undefined
   let originalApixoApiKey: string | undefined
+  let originalAihubmixApiKey: string | undefined
   let originalOpenRouterApiKey: string | undefined
   let originalOrMasterKey: string | undefined
   let originalInferenceApiKey: string | undefined
@@ -91,6 +92,8 @@ export function setupModelProviderTestHarness() {
     // so the key-missing leg only resolves when it is deleted here.
     originalApixoApiKey = process.env.APIXOAI_API_KEY
     delete process.env.APIXOAI_API_KEY
+    originalAihubmixApiKey = process.env.AIHUBMIX_API_KEY
+    delete process.env.AIHUBMIX_API_KEY
     originalOpenRouterApiKey = process.env.OPENROUTER_API_KEY
     originalOrMasterKey = process.env.OR_MASTER_KEY
     originalInferenceApiKey = process.env.INFERENCE_API_KEY
@@ -187,6 +190,11 @@ export function setupModelProviderTestHarness() {
       delete process.env.APIXOAI_API_KEY
     } else {
       process.env.APIXOAI_API_KEY = originalApixoApiKey
+    }
+    if (originalAihubmixApiKey === undefined) {
+      delete process.env.AIHUBMIX_API_KEY
+    } else {
+      process.env.AIHUBMIX_API_KEY = originalAihubmixApiKey
     }
     if (originalOpenRouterApiKey === undefined) {
       delete process.env.OPENROUTER_API_KEY

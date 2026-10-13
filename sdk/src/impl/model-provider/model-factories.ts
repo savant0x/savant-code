@@ -74,6 +74,10 @@ export function createProviderModel(
   const apiModelId = applyIdTransform(config, model)
   const baseUrl = resolveBaseUrl(config.baseUrl, extraCreds)
   const protocol = resolveProtocol(config, model)
+  // Carrier/affiliate headers (FID-2026-1013-004): applied on EVERY protocol
+  // branch below, so a provider that declares `extraHeaders` never silently
+  // loses them because its model dispatched to a different wire protocol.
+  const extraHeaders = config.extraHeaders
 
   // Outbound schema hygiene (FID-2026-0905-004): SDK-native branches
   // serialize tool schemas raw — cycle-cut them in transport. Retry
@@ -88,6 +92,7 @@ export function createProviderModel(
       baseURL: baseUrl,
       apiKey,
       fetch: sanitizingFetch,
+      headers: extraHeaders,
     })
     return anthropic(apiModelId)
   }
@@ -100,6 +105,7 @@ export function createProviderModel(
       baseURL: baseUrl,
       apiKey,
       fetch: sanitizingFetch,
+      headers: extraHeaders,
     })
     return openai.responses(apiModelId)
   }
@@ -116,6 +122,7 @@ export function createProviderModel(
       baseURL: baseUrl,
       apiKey,
       fetch: sanitizingFetch,
+      headers: extraHeaders,
     })
     return google(apiModelId)
   }
@@ -142,6 +149,9 @@ export function createProviderModel(
             'X-OpenRouter-Categories': 'cli-agent,cloud-agent,programming-app',
           }
         : {}),
+      // Provider-declared carrier headers (FID-2026-1013-004) — merged last so
+      // they always reach the wire.
+      ...(extraHeaders ?? {}),
     }),
     fetch: fetchWithRetryableNetworkErrors as typeof globalThis.fetch,
     includeUsage: undefined,

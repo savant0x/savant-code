@@ -55,6 +55,17 @@ describe('provider completion audit (FID-2026-0809-008)', () => {
     )
   })
 
+  test('aihubmix owns its live-catalog exception (FID-2026-1013-004)', () => {
+    const entry = PROVIDER_EXCEPTION_MANIFEST.find(
+      (candidate) => candidate.providerId === 'aihubmix',
+    )
+    expect(entry?.kinds).toEqual(['live-catalog'])
+    expect(entry?.owner).toBe('cli/src/utils/openrouter-models/aihubmix.ts')
+    expect(entry?.evidence).toContain(
+      'cli/src/utils/openrouter-models/gateway.ts',
+    )
+  })
+
   test('detects evidence paths that do not exist at the integration boundary', () => {
     const problems = validateProviderAudit(
       PROVIDER_REGISTRY,

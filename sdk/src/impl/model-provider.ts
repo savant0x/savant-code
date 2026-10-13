@@ -198,6 +198,14 @@ async function resolveModelForRequest(
       activeProviderConfig.protocolMap === undefined
         ? { protocol: resolveEntryProtocol(activeProviderConfig) }
         : {}),
+      // FID-2026-1013-004: the ACTIVE provider's own carrier headers, sent
+      // only on this branch — the target IS that provider's endpoint. The
+      // custom-INFERENCE_BASE_URL branch above is deliberately excluded: an
+      // operator-owned endpoint is a different target and must never receive
+      // a registry provider's identity headers (FID-2026-1003-006).
+      ...(activeProviderConfig?.extraHeaders !== undefined
+        ? { extraHeaders: activeProviderConfig.extraHeaders }
+        : {}),
     }),
     isChatGptOAuth: false,
   }

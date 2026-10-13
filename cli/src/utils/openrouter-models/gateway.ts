@@ -4,7 +4,7 @@
  * HCNSec + TokenBom + Infron + UnoRouter + BazaarLink + Atria AI +
  * Intern InkStone (FID-2026-1004-008) + Vercel AI Gateway + OpenAI
  * (FID-2026-1001-001) + Mistral AI (FID-2026-1009-005) + Apixo
- * (FID-2026-1013-003) — plus subscription
+ * (FID-2026-1013-003) + AIHubMix (FID-2026-1013-004) — plus subscription
  * plumbing.
  */
 import fs from 'node:fs'
@@ -12,6 +12,7 @@ import fs from 'node:fs'
 import { modelRequestLimits } from '@savant-code/common/util/model-request-limits'
 
 import { logger } from '../logger'
+import { __resetAihubmixCacheForTest } from './aihubmix'
 import { __resetApinexCacheForTest } from './apinex'
 import { __resetApixoCacheForTest } from './apixo'
 import { __resetBaiCacheForTest } from './bai'
@@ -117,6 +118,7 @@ function notifyGatewayCatalogListeners(catalog: OpenRouterModel[]): void {
  * - Vercel AI Gateway (live API, public)
  * - Mistral AI (live API, authenticated — FID-2026-1009-005)
  * - Apixo (live API, public — FID-2026-1013-003)
+ * - AIHubMix (live API, public — FID-2026-1013-004)
  *
  * Fetches live sources in parallel via Promise.allSettled(). If a source fails,
  * uses cached/empty list for that provider. Returns a combined, sorted list.
@@ -246,6 +248,7 @@ function resetProviderCatalogCaches(): void {
   __resetMistralCacheForTest()
   __resetXkiroCacheForTest()
   __resetApixoCacheForTest()
+  __resetAihubmixCacheForTest()
   // Step 9 remainder: lazily-built custom fetchers are cache state too.
   __resetCustomCatalogsForTest()
 }

@@ -209,6 +209,7 @@ Works with multiple inference providers:
 - **CodeCraft API** — Authenticated live model catalog and OpenAI chat (`CODECRAFT_API_KEY`; `https://codecraftapi.com/v1`)
 - **Mistral AI** — Authenticated live model catalog and OpenAI chat (`MISTRAL_API_KEY`; `https://api.mistral.ai/v1`)
 - **Apixo** — Keyless live model catalog and [OI] chat (`APIXOAI_API_KEY`; `https://api.apixoai.online/v1`; the vendor publishes a context window on every catalog row)
+- **AIHubMix** — Keyless rich live model catalog and OpenAI chat (`AIHUBMIX_API_KEY`; `https://aihubmix.com/v1`; the catalog retains 698 LLM rows and publishes positive limits only on a subset)
 - **xKiro** — Public live chat catalog (`XKIRO_API_KEY`; `https://api.xkiro.com/v1`). Anthropic model IDs use Messages; other IDs use OpenAI chat. Vendor namespaces remain intact. Catalog tiers describe requirements; paid-model access depends on the account.
 - **ChatAnywhere** — OpenAI-compatible hosted gateway on a static 27-model chat roster (`CHATANYWHERE_API_KEY`; `https://api.chatanywhere.tech/v1`; free-key tier: 10,000 points/day per the vendor's GPT_API_free docs)
 - **Tiarina Cloud** — OpenAI-compatible hosted gateway on a static 19-model chat roster (`TIARINA_API_KEY`; `https://ai.tiarina.cloud/v1`; free-key tier)

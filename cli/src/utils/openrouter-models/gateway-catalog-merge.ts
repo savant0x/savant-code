@@ -55,6 +55,7 @@ export function assembleGatewayCatalog(
     ...live.mistralModels,
     ...live.xkiroModels,
     ...live.apixoModels,
+    ...live.aihubmixModels,
     ...fetchCommandCodeModels(),
     ...fetchHcnsecModels(),
     ...fetchTokenBomModels(),

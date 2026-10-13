@@ -114,6 +114,15 @@ export interface ProviderConfig {
   idTransform: ProviderIdTransform
   /** Present for dual-protocol providers; a typed key into the protocol maps. */
   protocolMap?: ProviderProtocolMap
+  /**
+   * Static extra headers merged into every inference request this provider's
+   * registry entry authorizes (FID-2026-1013-004). Carrier/affiliate codes
+   * live here — AIHubMix's `APP-Code` is the first: a literal, never a
+   * credential, so it is registry data and not an env var. Applied by the
+   * generic factory on every protocol branch AND by the bare-slug path, so a
+   * declared header can never be silently dropped for one routing mode.
+   */
+  extraHeaders?: Record<string, string>
   catalog:
     | { source: 'live'; url: string }
     | {

@@ -111,4 +111,34 @@ export const PROVIDER_REGISTRY_PARTITION_3 = {
     domain: 'apixoai.online',
     order: 4,
   },
+  aihubmix: {
+    id: 'aihubmix',
+    label: 'AIHubMix',
+    kind: 'gateway',
+    credentials: { envVar: 'AIHUBMIX_API_KEY' },
+    // aihubmix.com — OpenAI-compatible gateway. The product request surface
+    // is /v1/chat/completions; the protocol layer appends that suffix to this
+    // API root. Live probes 2026-10-13: keyless GET /api/v1/models -> HTTP 200
+    // with 869 rows, including 698 rows whose types contain the exact `llm`
+    // token; a free chat request returned HTTP 200 with an account policy
+    // response rather than a substantive completion.
+    baseUrl: 'https://aihubmix.com/v1',
+    protocol: 'openai',
+    // Upstream model ids are bare (`coding-glm-5.3-flash-free`); strip removes
+    // only the internal `aihubmix/` routing prefix before inference.
+    idTransform: 'strip',
+    // The richer public endpoint publishes model types and optional context /
+    // output limits. The keyless and keyed bodies were byte-identical in the
+    // sanitized probe, so the wrapper intentionally sends no catalog key.
+    catalog: { source: 'live', url: 'https://aihubmix.com/api/v1/models' },
+    // AIHubMix's documented carrier code: `APP-Code: MFSO2605` grants the
+    // caller a standing 10% discount. It is a public discount code, not a
+    // credential — so it is registry data, never an env var, and is sent on
+    // every inference request this entry authorizes (generic factory on all
+    // protocol branches, plus the DIRECT_PROVIDER bare-slug path).
+    extraHeaders: { 'APP-Code': 'MFSO2605' },
+    setupAvailable: true,
+    domain: 'aihubmix.com',
+    order: 4,
+  },
 } as const satisfies Record<string, ProviderConfig>

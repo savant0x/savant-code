@@ -4,16 +4,17 @@
  * leg was added by FID-2026-1001-001.
  *
  * POSITIONAL CONTRACT: `restResults` is the tail of the Promise.allSettled()
- * array after [openrouter, nvidia], in exactly this order:
- * Nous, KiosAPI, APInex, OpenAI, OrcaRouter, B.AI, Vercel, CleanApis,
- * CodeCraft, Mistral, xKiro, Apixo, custom catalogs. Fulfilled values win; rejected sources degrade to their
- * per-provider cache — custom catalogs degrade to [] (lazily-built custom
- * fetchers have no cache, FID-2026-0910-004 D10).
+ * array after [openrouter, nvidia], in exactly this order: Nous, KiosAPI,
+ * APInex, OpenAI, OrcaRouter, B.AI, Vercel, CleanApis, CodeCraft, Mistral,
+ * xKiro, Apixo, AIHubMix, custom catalogs. Fulfilled values win; rejected
+ * sources degrade to their per-provider cache — custom catalogs degrade to []
+ * (lazily-built custom fetchers have no cache, FID-2026-0910-004 D10).
  *
  * FID-2026-1007-006: the fan-out array itself also lives here. The array and
  * the ladder are one contract, and splitting them was how the 300-line cap
  * turned a positional list into two places to edit.
  */
+import { fetchAihubmixModels, getCachedAihubmixModels } from './aihubmix'
 import { fetchApinexModels, getCachedApinexModels } from './apinex'
 import { fetchApixoModels, getCachedApixoModels } from './apixo'
 import { fetchBaiModels, getCachedBaiModels } from './bai'
@@ -50,6 +51,7 @@ export interface GatewayLiveCatalogs {
   mistralModels: OpenRouterModel[]
   xkiroModels: OpenRouterModel[]
   apixoModels: OpenRouterModel[]
+  aihubmixModels: OpenRouterModel[]
   customModels: OpenRouterModel[]
 }
 
@@ -77,9 +79,10 @@ export async function fetchGatewayLiveCatalogs(forceRefresh: boolean): Promise<{
     fetchCodecraftModels(forceRefresh),
     fetchMistralModels(forceRefresh),
     fetchXkiroModels(forceRefresh),
-    // FID-2026-1013-003: Apixo is the last BUILT-IN live leg; the
+    // FID-2026-1013-004: AIHubMix is the last BUILT-IN live leg; the
     // custom-catalogs tail below must stay last (see the positional contract).
     fetchApixoModels(forceRefresh),
+    fetchAihubmixModels(forceRefresh),
     // FID-2026-0910-004 Step 9 remainder: custom catalogs (live + inline)
     // merge here; per-provider failures degrade to [] (D10 ladder).
     fetchAllCustomModels(forceRefresh),
@@ -105,6 +108,7 @@ export function resolveGatewayLiveCatalogs(
     mistralResult,
     xkiroResult,
     apixoResult,
+    aihubmixResult,
     customResult,
   ] = restResults
 
@@ -167,5 +171,9 @@ export function resolveGatewayLiveCatalogs(
       apixoResult?.status === 'fulfilled'
         ? apixoResult.value
         : getCachedApixoModels(),
+    aihubmixModels:
+      aihubmixResult?.status === 'fulfilled'
+        ? aihubmixResult.value
+        : getCachedAihubmixModels(),
   }
 }

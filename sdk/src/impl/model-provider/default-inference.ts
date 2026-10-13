@@ -58,6 +58,13 @@ export async function createDefaultInferenceModel(
      * and no active-provider key can reach the operator's own endpoint.
      */
     endpointOwnsAuth?: boolean
+    /**
+     * FID-2026-1013-004: the ACTIVE provider's registry-declared carrier
+     * headers (e.g. AIHubMix's `APP-Code`). Mirrors the generic factory so a
+     * DIRECT_PROVIDER bare-slug request carries exactly the headers its
+     * registry entry declares — no mode silently drops them.
+     */
+    extraHeaders?: Record<string, string>
   },
 ): Promise<LanguageModel> {
   const inferenceBaseUrl = getInferenceBaseUrlFromEnv()
@@ -111,6 +118,7 @@ export async function createDefaultInferenceModel(
       baseURL: inferenceBaseUrl,
       apiKey: authorizationKey,
       fetch: fetchWithRetryableNetworkErrors as typeof globalThis.fetch,
+      headers: options?.extraHeaders,
     })
     return openai.responses(model)
   }
@@ -140,6 +148,9 @@ export async function createDefaultInferenceModel(
             }),
           }
         : {}),
+      // Provider-declared carrier headers (FID-2026-1013-004) — merged last so
+      // they always reach the wire.
+      ...(options?.extraHeaders ?? {}),
     }),
     metadataExtractor: {
       extractMetadata: async ({

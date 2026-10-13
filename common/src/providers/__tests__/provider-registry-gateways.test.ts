@@ -113,4 +113,26 @@ describe('gateway registry entries (full-entry pins)', () => {
       order: 4,
     })
   })
+
+  test('aihubmix entry matches the rich keyless catalog contract (FID-2026-1013-004)', () => {
+    expect(PROVIDER_REGISTRY.aihubmix).toEqual({
+      id: 'aihubmix',
+      label: 'AIHubMix',
+      kind: 'gateway',
+      credentials: { envVar: 'AIHUBMIX_API_KEY' },
+      baseUrl: 'https://aihubmix.com/v1',
+      protocol: 'openai',
+      idTransform: 'strip',
+      catalog: {
+        source: 'live',
+        url: 'https://aihubmix.com/api/v1/models',
+      },
+      // Documented carrier code: grants a standing 10% discount. A literal,
+      // not a credential — hence registry data rather than an env var.
+      extraHeaders: { 'APP-Code': 'MFSO2605' },
+      setupAvailable: true,
+      domain: 'aihubmix.com',
+      order: 4,
+    })
+  })
 })

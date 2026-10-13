@@ -35,6 +35,7 @@ closed if this section drifts from the registry.
 | OpenRouter | `openrouter` | gateway | `OPENROUTER_API_KEY` | `https://openrouter.ai/api/v1` | openai | live |
 | TokenRouter | `tokenrouter` | gateway | `TOKENROUTER_API_KEY` | `https://api.tokenrouter.com/v1` | multi (`TOKENROUTER_PROTOCOLS`) | static (31 models) |
 | NVIDIA NIM | `nvidia` | gateway | `NVIDIA_API_KEY` | `https://integrate.api.nvidia.com/v1` | openai | live |
+| AIHubMix | `aihubmix` | gateway | `AIHUBMIX_API_KEY` | `https://aihubmix.com/v1` | openai | live |
 | APInex | `apinex` | gateway | `APINEX_API_KEY` | `https://api.apinex.bond/v1` | openai | live |
 | Apixo | `apixo` | gateway | `APIXOAI_API_KEY` | `https://api.apixoai.online/v1` | openai | live |
 | Atria AI | `atria` | gateway | `ATRIA_API_KEY` | `https://api.atria-asi.ai/v1` | openai | static (1 model) |
@@ -91,7 +92,13 @@ closed if this section drifts from the registry.
   under. Its catalog is keyless, so the picker populates before any key exists.
   `deepseek-v4.1-flash` is a reasoning model — it returns `reasoning_content`,
   and the billed `total_tokens` exceeds prompt + completion by the reasoning
-  tokens, which the vendor charges at the output price.
+   tokens, which the vendor charges at the output price.
+- **AIHubMix** exposes a keyless rich catalog at `/api/v1/models` and uses
+  `AIHUBMIX_API_KEY` only for inference at `/v1/chat/completions`. The picker
+  retains 698 LLM rows; window coverage is runtime-partial because positive
+  `context_length` appears on 358/698 rows and positive `max_output` on
+  306/698 rows. Empty endpoint metadata does not remove an LLM row, and
+  zero-valued limits remain unknown rather than receiving fabricated fallbacks.
 
 ### Live catalogs
 
@@ -102,7 +109,9 @@ windows come from the vendor rather than a fallback table. Rosters are live
 rather than pinned to a model list
 in source. Catalog requests returned 33 CodeCraft, 129 xKiro, and 33 CleanAPIs
 models on 2026-10-03, and 35 Apixo models on 2026-10-13; these are observed
-counts, not fixed limits.
+counts, not fixed limits. AIHubMix's rich catalog is also public and live; its
+698 retained LLM rows and partial limit coverage are measured observations, not
+fixed roster limits.
 
 The runtime removes exactly one internal provider prefix before transmission.
 For example, `xkiro/mistralai/ministral-14b` sends

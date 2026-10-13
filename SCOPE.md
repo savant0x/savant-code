@@ -152,15 +152,6 @@ recorded decision or external dependency requires it.
       Evidence: `docs/design/provider-parity-review-2026-10-12.md`;
       additions are `FID-2026-1012-026`. **Automation level: 3.**
 
-- [ ] **FID-2026-1013-003. Apixo built-in provider integration.** Operator request
-      2026-10-13: add `apixoai.online` as a built-in provider, run the probes,
-      confirm the contract, and prove `deepseek-v4.1-flash`. Measured: keyless
-      `GET /v1/models` → HTTP 200 / 35 rows publishing `context_window`, and one
-      permitted inference round-trip on `deepseek-v4.1-flash` → HTTP 200 with a
-      real completion. The registry entry, the keyless live-catalog wrapper, the
-      `live-catalog` exception, the window-coverage disposition, the three picker
-      seams and the doc surfaces land under the FID. **Automation level: 3.**
-
 ### Harness and process
 
 - [ ] **Task-id reuse hazard (found 2026-10-13).** The register evicts an item on closure and the
@@ -350,23 +341,6 @@ work item remains active, including the recorded level-1 consolidation and exter
   `packages/agent-runtime/test/setup-test-isolation.ts`, `common/src/types/hooks.ts`,
   `protocol.config.yaml`, `scripts/experiences*.ts`, `scripts/__tests__/experiences*.test.ts`,
   `scripts/session-end-review.ts`, `dev/experiences/**`
-- FID-2026-1013-003: `common/src/providers/registry-partitioned-3.ts`,
-  `common/src/constants/window-coverage-register.ts`,
-  `common/src/providers/provider-exception-manifest.ts`,
-  `common/src/providers/__tests__/validate-provider-registry.test.ts`,
-  `common/src/constants/provider-catalog-census.json`,
-  `cli/src/utils/openrouter-models/apixo.ts`,
-  `cli/src/utils/openrouter-models/gateway.ts`,
-  `cli/src/utils/openrouter-models/gateway-live-results.ts`,
-  `cli/src/utils/openrouter-models/gateway-catalog-merge.ts`,
-  `cli/src/utils/openrouter-models/__tests__/apixo-catalog.test.ts`,
-  `cli/src/utils/__tests__/provider-setup.test.ts`,
-  `sdk/src/impl/__tests__/model-provider-free-mode.test.ts`,
-  `sdk/src/impl/__tests__/model-provider-free-mode-test-setup.ts`,
-  `.env.example`, `README.md`, `README.zh-CN.md`, `cli/release/README.md`,
-  `docs/index.md`, `docs/sdk-overview.md`, `docs/installation.md`,
-  `docs/features.md`, `docs/providers.md`, `dev/fids/**`, `SCOPE.md`,
-  `CHANGELOG.md`, `dev/session-summaries/**`
 - Release-0.0.36: `VERSION`, `package.json`, `agents/package.json`,
   `cli/package.json`, `cli/release/package.json`, `common/package.json`,
   `common/src/constants/protocol-bundle.generated.ts`, `desktop/package.json`,

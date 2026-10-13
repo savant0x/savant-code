@@ -50,6 +50,7 @@ Or select one of the supported gateway providers directly:
 | OpenRouter | `/provider openrouter` or `DIRECT_PROVIDER=openrouter` | `OR_MASTER_KEY`, `OPENROUTER_API_KEY`, or `INFERENCE_API_KEY` | Default provider; free tier (`openrouter/free`) is the boot default; direct mode without the Savant backend |
 | TokenRouter | `/provider tokenrouter` or `DIRECT_PROVIDER=tokenrouter` | `TOKENROUTER_API_KEY` | Multi-provider gateway |
 | NVIDIA NIM | `/provider nvidia` or `DIRECT_PROVIDER=nvidia` | `NVIDIA_API_KEY` | NVIDIA-hosted inference |
+| AIHubMix | `/provider aihubmix` or `DIRECT_PROVIDER=aihubmix` | `AIHUBMIX_API_KEY` | Hosted gateway |
 | APInex | `/provider apinex` or `DIRECT_PROVIDER=apinex` | `APINEX_API_KEY` | Hosted gateway with an authenticated live model catalog |
 | Apixo | `/provider apixo` or `DIRECT_PROVIDER=apixo` | `APIXOAI_API_KEY` | [OI]-compatible gateway with a keyless live model catalog |
 | Atria AI | `/provider atria` or `DIRECT_PROVIDER=atria` | `ATRIA_API_KEY` | Hosted gateway |
@@ -178,6 +179,7 @@ CODECRAFT_API_KEY=dummy-codecraft-api-key-replace-me
 XKIRO_API_KEY=dummy-xkiro-api-key-replace-me
 MISTRAL_API_KEY=dummy-mistral-api-key-replace-me
 APIXOAI_API_KEY=dummy-apixoai-api-key-replace-me
+AIHUBMIX_API_KEY=dummy-aihubmix-key-replace-me
 CHATANYWHERE_API_KEY=dummy-chatanywhere-api-key-replace-me
 TIARINA_API_KEY=dummy-tiarina-api-key-replace-me
 # Cloudflare needs TWO credentials (token + account id):

@@ -10,7 +10,47 @@
 > the v0.0.36 cut. Release notes are written here at cut time; nothing in this
 > section ships until then.
 
-## 2026-10-13 — The Apixo gateway joins the built-in registry (FID-2026-1013-003)
+## 2026-10-13 - The AIHubMix gateway joins the built-in registry (FID-2026-1013-004)
+
+### Added
+
+- **AIHubMix (`aihubmix`, `AIHUBMIX_API_KEY`) is a built-in gateway provider** on
+  `https://aihubmix.com/v1`, single `openai` protocol and `strip` id transform, using the
+  vendor's richer **keyless** catalog at `/api/v1/models` - probed 2026-10-13: HTTP 200
+  with 869 rows, of which 698 carry the exact comma-delimited `llm` type token. The
+  wrapper filters on that token, preserves sparse-endpoint rows rather than dropping
+  them, and uses `catalogLimit` without fabricating any limit the vendor omits.
+- **Window coverage is declared `runtime-partial`** - of the 698 LLM rows only 358
+  publish a positive context limit and 306 a positive output limit, so zero, missing and
+  non-positive values stay unknown and no fallback is invented. The exception manifest
+  owns the `live-catalog` behaviour and the census records the measured row count.
+- **`ProviderConfig.extraHeaders` - a registry-owned carrier-header field.** AIHubMix's
+  documented `APP-Code` grants a standing discount, and no seam existed for a
+  provider-specific request header (the codebase's only precedent was a provider id
+  hard-coded by name in two factories). The new optional field is applied on **all four**
+  generic-factory protocol branches and plumbed through the `DIRECT_PROVIDER` bare-slug
+  path, so a declared header cannot be dropped by a protocol dispatch or a routing mode.
+  The custom-`INFERENCE_BASE_URL` branch is deliberately excluded: an operator-owned
+  endpoint must never receive a registry provider's identity headers.
+  `MFSO2605` is a public discount code, not a secret, so it is registry data and never
+  an env var.
+
+### Fixed
+
+- **Two `import/order` violations** in `gateway.ts` and `gateway-live-results.ts`, where
+  the new `./aihubmix` import sat after `./apinex`, plus an over-wrapped
+  positional-contract comment.
+- **A stale register entry.** The archived Apixo FID's `SCOPE.md` item outlived its
+  closure and was evicted here.
+
+### Known limitation
+
+- A free-model inference probe returned **HTTP 200 with an account-policy apology, not a
+  substantive completion**. This is recorded as transport and credential reachability
+  only; it is not an inference-acceptance claim, and a later substantive completion
+  would be stronger evidence rather than a correction.
+
+## 2026-10-13 - The Apixo gateway joins the built-in registry (FID-2026-1013-003)
 
 ### Added
 

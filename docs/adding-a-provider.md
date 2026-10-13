@@ -102,6 +102,8 @@ myprovider: {
   // catalog: ...                // see "Choose a catalog source"
   // quota: { url, valuePath, unit?, note, auth?, limitPath?, resetPath? }
   //                                 — only where the vendor documents it
+  // extraHeaders: { 'APP-Code': 'MFSO2605' }
+  //                                 — static carrier/discount headers, never secrets
   setupAvailable: true,         // appears in the /provider picker
   domain: 'myprovider.example', // favicon; omit for providers with no logo
   order: 4,                     // picker group; unknown sorts at 4
@@ -121,6 +123,16 @@ Field semantics worth stating precisely:
   quotes its `note`. Declare it **only** where the vendor documents such an
   endpoint; `provider-contract-pins.test.ts` asserts that no provider declares a
   quota endpoint without one.
+- **`extraHeaders`** is optional and data-only: a static header map merged into
+  every request this entry authorizes. It exists for carrier/affiliate codes —
+  AIHubMix's `APP-Code` is the one in the tree. Use it **only** for a public,
+  non-secret literal: it is registry data, so putting a credential here would
+  commit the credential. It is applied on **all four** generic-factory protocol
+  branches and on the `DIRECT_PROVIDER` bare-slug path, so a declared header
+  cannot be lost by a protocol dispatch or a routing mode. It is deliberately
+  *not* sent on the custom-`INFERENCE_BASE_URL` branch — an operator-owned
+  endpoint is a different target and must never receive a registry provider's
+  identity headers.
 - **`missingKeyMessage`** exists because the default is
   `` `${label} API key not set. Set ${envVar} environment variable.` `` and
   several providers legitimately differ (short names, "API token" wording,

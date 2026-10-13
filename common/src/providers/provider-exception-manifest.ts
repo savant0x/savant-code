@@ -172,6 +172,19 @@ export const PROVIDER_EXCEPTION_MANIFEST: readonly ProviderExceptionManifestEntr
       ],
     },
     {
+      // FID-2026-1013-004: keyless rich catalog (HTTP 200 with 869 rows,
+      // probed 2026-10-13) with a dedicated model_id/types parser. The
+      // catalog body is public; inference still resolves AIHUBMIX_API_KEY
+      // through the generic registry factory.
+      providerId: 'aihubmix',
+      kinds: ['live-catalog'],
+      owner: 'cli/src/utils/openrouter-models/aihubmix.ts',
+      evidence: [
+        'cli/src/utils/openrouter-models/aihubmix.ts',
+        'cli/src/utils/openrouter-models/gateway.ts',
+      ],
+    },
+    {
       providerId: 'tokenrouter',
       kinds: ['multi-protocol'],
       owner: 'common/src/constants/model-config/provider-protocols.ts',

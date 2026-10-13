@@ -96,6 +96,23 @@ describe('validateProviderRegistry (FID-2026-0809-001 Phase 5)', () => {
     expect(setup.apixo?.label).toBe('Apixo')
   })
 
+  test('the aihubmix entry derives its routing/setup/picker surfaces (FID-2026-1013-004)', () => {
+    expect(PROVIDER_REGISTRY.aihubmix.id).toBe('aihubmix')
+    expect(ALLOWED_MODEL_PREFIXES).toContain('aihubmix')
+    expect(deriveValidProviderIds(PROVIDER_REGISTRY)).toContain('aihubmix')
+    expect(deriveProviderDomains(PROVIDER_REGISTRY, ORG_DOMAINS).aihubmix).toBe(
+      'aihubmix.com',
+    )
+    expect(deriveProviderOrder(PROVIDER_REGISTRY, 'aihubmix')).toBe(4)
+    const setup = deriveSetupConfig(PROVIDER_REGISTRY) as Record<
+      string,
+      { label: string; envVar: string; baseUrl: string } | undefined
+    >
+    expect(setup.aihubmix?.envVar).toBe('AIHUBMIX_API_KEY')
+    expect(setup.aihubmix?.baseUrl).toBe('https://aihubmix.com/v1')
+    expect(setup.aihubmix?.label).toBe('AIHubMix')
+  })
+
   test('static catalogs agree with the registry prefix (catalog agreement)', () => {
     // Pin the contract explicitly: every model id in every static catalog
     // carries the provider's routing prefix, so the picker and the router can
