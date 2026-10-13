@@ -44,6 +44,7 @@ export interface ExposureReceipt {
   sessionId: string
   exercisedAt: string
   implementationCommit: string
+  /** Matching failure capture is configured; persistence/coverage need separate proof. */
   captureVerified: true
 }
 
@@ -175,9 +176,13 @@ function resolveRevision(root: string): string | undefined {
  * Engine-facing entry: stamp one receipt per matching boundary. Never throws -
  * an unresolved revision or an unwritable path is reported on the result.
  */
-export function runExposureCapture(input: HookInputData): HookRunResult {
+export function runExposureCapture(
+  input: HookInputData,
+  failureCaptureConfigured = false,
+): HookRunResult {
   let spawnError: string | undefined
   try {
+    if (input.hook_event_name !== 'PostToolUse') return { outcome: 'allowed' }
     const root = input.cwd
     const sessionId =
       typeof input.session_id === 'string' ? input.session_id : ''
@@ -190,6 +195,12 @@ export function runExposureCapture(input: HookInputData): HookRunResult {
       (boundary) => toolOfClassKey(boundary.classKey) === toolName,
     )
     if (matching.length === 0) return { outcome: 'allowed' }
+    if (!failureCaptureConfigured)
+      return {
+        outcome: 'allowed',
+        spawnError:
+          'exposure receipt skipped: matching failure capture is not configured',
+      }
     const commit = revisionFor(root)
     if (commit === undefined) {
       return {

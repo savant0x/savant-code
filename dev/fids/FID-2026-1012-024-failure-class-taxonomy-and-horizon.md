@@ -174,6 +174,8 @@ receipt here cannot establish either or close this lane.
 - gate: test packages/agent-runtime/src/tools/tool-executor/result-lifecycle.test.ts
 - gate: test packages/agent-runtime/src/hooks/__tests__/experience-capture.test.ts
 - gate: test packages/agent-runtime/src/hooks/__tests__/exposure-capture.test.ts
+- gate: test packages/agent-runtime/src/hooks/__tests__/exposure-capture-engine.test.ts
+- gate: test packages/agent-runtime/src/hooks/__tests__/engine.test.ts
 - gate: test scripts/__tests__/experiences-proof.test.ts
 - gate: test scripts/__tests__/experiences-class-horizon.test.ts
 - gate: probe scripts/scripts-typecheck-check.ts
@@ -183,13 +185,15 @@ receipt here cannot establish either or close this lane.
 
 ### Verification Receipt
 
-- fingerprint: sha256:607fad7b73f391a46548103d6264ff18c109bed200fe9b14f0c37101fe4281d5
-- verified: 2026-10-13T23:38:04.754Z
+- fingerprint: sha256:ea8510111e57a05b71228740755254df984129c9ccaa4099ac102308565662d2
+- verified: 2026-10-13T23:43:54.617Z
 - test common/src/util/__tests__/experience-classes.test.ts: exit 0
 - test packages/agent-runtime/src/tools/tool-executor/tool-result-errors.test.ts: exit 0
 - test packages/agent-runtime/src/tools/tool-executor/result-lifecycle.test.ts: exit 0
 - test packages/agent-runtime/src/hooks/__tests__/experience-capture.test.ts: exit 0
 - test packages/agent-runtime/src/hooks/__tests__/exposure-capture.test.ts: exit 0
+- test packages/agent-runtime/src/hooks/__tests__/exposure-capture-engine.test.ts: exit 0
+- test packages/agent-runtime/src/hooks/__tests__/engine.test.ts: exit 0
 - test scripts/__tests__/experiences-proof.test.ts: exit 0
 - test scripts/__tests__/experiences-class-horizon.test.ts: exit 0
 - probe scripts/scripts-typecheck-check.ts: exit 0
@@ -428,6 +432,29 @@ audit trail of the mistaken premise, not as acceptance criteria or class disposi
   allocation moves; no row was rewritten.
 - **CHANGE DELTA:** measurement and record only, 0 source files, 0 rows rewritten. Repairing the *count semantics* is
   the probe's contract (`FID-2026-1012-021`) and the capture policy (this record), both still open on their own terms.
+
+### Loop 9 — Exposure requires matching failure capture (2026-10-13)
+
+- **RED:** At `6e718f94`, the exposure sink unconditionally writes
+  `captureVerified: true`. An engine with only the success hook can therefore
+  issue a positive receipt while failure capture is disabled or excludes that
+  tool. Builtin deduplication also keys only on `command` (undefined for all
+  builtins), so different actions on one event can suppress each other.
+- **GREEN:** The engine supplies whether the matching failure event schedules
+  the `experience-capture` builtin. Require that confirmation and a success
+  event before emitting a receipt. Direct sink calls default to unconfirmed.
+  Dedupe builtin actions by action identity, external commands by command identity,
+  with cwd retained; use the same selection for execution and confirmation.
+- **AUDIT:** Add real-engine controls for absent capture, mismatched and invalid
+  matchers, enabled matching capture, distinct builtin actions and a miswired
+  failure event. Direct writer controls explicitly confirm configuration. Run
+  the engine and capture suites, declared instrument gates and full typecheck.
+- **ADVERSARIAL:** Configuration confirmation does not prove persistence succeeded
+  or that every class-specific path was exercised; existing capture evidence
+  remains required. No failure is executed to manufacture exposure, no hook is
+  enabled by this change, and no historical receipt or boundary is rewritten.
+- **CHANGE DELTA:** Converged correction within the existing level-3 hook surface;
+  class observation remains open and held count-reporting work stays untouched.
 
 ### Missed Questions
 

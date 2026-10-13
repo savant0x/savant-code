@@ -8,7 +8,7 @@ import {
   EXPOSURE_DIR_NAME,
   FIX_BOUNDARIES_FILE_NAME,
   resetExposureCaptureCache,
-  runExposureCapture,
+  runExposureCapture as captureExposure,
   setExposureRevisionResolver,
   toolOfClassKey,
 } from '../exposure-capture'
@@ -18,6 +18,11 @@ import type { HookInputData } from '../types'
 
 const SHA_A = 'a1b2c3d4e5f60718293a4b5c6d7e8f9012345678'
 const SHA_B = 'b2c3d4e5f60718293a4b5c6d7e8f9012345678901'
+
+/** Writer controls explicitly confirm the engine's capture configuration. */
+function runExposureCapture(input: HookInputData) {
+  return captureExposure(input, true)
+}
 
 function fixtureRoot(): string {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'exposure-capture-'))
@@ -56,6 +61,17 @@ function receiptsIn(root: string): string[] {
 }
 
 describe('FID-2026-1012-024 production exposure receipts', () => {
+  test('a direct sink call cannot assume failure capture is configured', () => {
+    resetExposureCaptureCache()
+    const root = fixtureRoot()
+    declareBoundary(root, 'v1:str_replace:edit-noop:undetermined')
+    setExposureRevisionResolver(() => {
+      throw new Error('must not resolve without capture confirmation')
+    })
+    const result = captureExposure(success(root, 'str_replace'))
+    expect(result.spawnError).toContain('failure capture is not configured')
+    expect(receiptsIn(root)).toHaveLength(0)
+  })
   test('stamps a checkable receipt for the tool that owns a declared boundary', () => {
     resetExposureCaptureCache()
     const root = fixtureRoot()

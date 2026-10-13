@@ -36,14 +36,18 @@ import type { CommandExecutionMetadata } from '@savant-code/common/util/command-
  * Dispatch one hook config: builtin in-process actions run in-process
  * (no spawn); everything else is the external-command runner. Never throws.
  */
-export function runHook(config: HookConfig, input: HookInputData) {
+export function runHook(
+  config: HookConfig,
+  input: HookInputData,
+  failureCaptureConfigured = false,
+) {
   if (config.action === 'experience-capture') {
     return Promise.resolve(runExperienceCapture(input))
   }
   if (config.action === 'exposure-capture') {
     // FID-2026-1012-024: the success-side sink. Fail-open like every other
     // observation hook; the caller's catch keeps it from affecting execution.
-    return Promise.resolve(runExposureCapture(input))
+    return Promise.resolve(runExposureCapture(input, failureCaptureConfigured))
   }
   if (config.action === 'deny-mutating-terminal') {
     // FID-2026-1001-003 step 1: in-process deny sink; the engine's catch
@@ -58,6 +62,21 @@ export type HookTriggerResult = {
   reasons: string[]
   /** Individual run results (observability). */
   runs: HookRunResult[]
+}
+
+/** Distinct builtins must not collapse onto their absent command field. */
+function dedupeHooks(configs: readonly HookConfig[]): HookConfig[] {
+  const seen = new Set<string>()
+  return configs.filter((config) => {
+    const key = JSON.stringify([
+      config.cwd ?? '',
+      config.action === undefined ? 'command' : 'action',
+      config.action ?? config.command,
+    ])
+    if (seen.has(key)) return false
+    seen.add(key)
+    return true
+  })
 }
 
 export class HookEngine {
@@ -88,26 +107,23 @@ export class HookEngine {
 
   /** Run matching hooks in parallel; aggregate blocks. Never throws. */
   async triggerBlock(input: HookInputData): Promise<HookTriggerResult> {
-    let hooks = this.getHooksFor(input.hook_event_name, input.tool_name)
-    // Dedupe identical (cwd + command) declarations WITHIN a single trigger so
-    // one command runs once per event; the same command declared for a
-    // different event still fires for that event.
-    const seen = new Set<string>()
-    hooks = hooks.filter((config) => {
-      const key = `${config.cwd ?? ''}|${config.command}`
-      if (seen.has(key)) return false
-      seen.add(key)
-      return true
-    })
+    const hooks = dedupeHooks(
+      this.getHooksFor(input.hook_event_name, input.tool_name),
+    )
     if (hooks.length === 0) {
       return { blocked: false, reasons: [], runs: [] }
     }
+    const failureCaptureConfigured = dedupeHooks(
+      this.getHooksFor('PostToolUseFailure', input.tool_name),
+    ).some((config) => config.action === 'experience-capture')
     const results = await Promise.all(
       hooks.map((config) =>
-        runHook(config, input).catch((error): HookRunResult => ({
-          outcome: 'allowed',
-          spawnError: error instanceof Error ? error.message : String(error),
-        })),
+        runHook(config, input, failureCaptureConfigured).catch(
+          (error): HookRunResult => ({
+            outcome: 'allowed',
+            spawnError: error instanceof Error ? error.message : String(error),
+          }),
+        ),
       ),
     )
     const blocked = results.filter((r) => r.outcome === 'blocked')
