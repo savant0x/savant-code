@@ -6,10 +6,12 @@ import {
   EXPERIENCES_DIR_NAME,
   RAW_TRACES_FILE_NAME,
 } from '@savant-code/common/types/experience'
+import { experienceClassIdentity } from '@savant-code/common/util/experience-classes'
 import {
   canonicalToolInput,
   normalizeErrorFirstLine,
 } from '@savant-code/common/util/experiences'
+import { redactSecrets } from '@savant-code/common/util/redact'
 
 import type { HookInputData, HookRunResult } from './types'
 import type { ExperienceRecord } from '@savant-code/common/types/experience'
@@ -40,18 +42,40 @@ import type { ExperienceRecord } from '@savant-code/common/types/experience'
 /** Build one immutable event record from the hook payload. */
 export function buildExperienceRecord(input: HookInputData): ExperienceRecord {
   const errorFirstLine = normalizeErrorFirstLine(
-    typeof input.error_message === 'string' ? input.error_message : '',
+    redactSecrets(
+      typeof input.error_message === 'string' ? input.error_message : '',
+    ),
   )
   const toolInput =
     input.tool_input !== undefined ? canonicalToolInput(input.tool_input) : ''
+  const toolName = typeof input.tool_name === 'string' ? input.tool_name : ''
+  const identity = experienceClassIdentity({
+    toolName,
+    errorFirstLine,
+    errorClass: input.error_class,
+    expectedness: input.expectedness,
+  })
   return {
     ts: new Date().toISOString(),
     triggerType: 'tool_failure',
-    toolName: typeof input.tool_name === 'string' ? input.tool_name : '',
+    toolName,
     errorFirstLine,
     // sha256 of the canonical JSON (no raw arguments persisted).
     contextHash: toolInput === '' ? '' : hashUtf8(toolInput),
     sessionId: input.session_id,
+    schemaVersion: 1,
+    redacted: true,
+    classKey: identity.key,
+    expectedness: identity.expectedness,
+    ...(input.error_class !== undefined
+      ? { errorClass: input.error_class }
+      : {}),
+    ...(input.arguments_truncated !== undefined
+      ? { argumentsTruncated: input.arguments_truncated }
+      : {}),
+    ...(input.finish_reason !== undefined
+      ? { finishReason: input.finish_reason }
+      : {}),
   }
 }
 

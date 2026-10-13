@@ -5,7 +5,7 @@
 **Severity:** critical
 **Status:** converged
 **Created:** 2026-10-12 23:10
-**Automation level:** 2
+**Automation level:** 3
 **YAGNI-Compliance:** Verified
 
 ---
@@ -128,6 +128,7 @@ of its own (`fid.graph.master-nested`).
 | FID-2026-1012-021 | RC5 — the recurrence-to-fix loop (machinery) | 0 | — |
 | FID-2026-1012-023 | RC6 — command-execution reliability | 13 | 27 |
 | FID-2026-1012-024 | RC7 — class taxonomy and horizon | 7 | 36 |
+| FID-2026-1012-025 | Implementation-discovered verification harness drift | harness | — |
 
 **Instrument sensitivity, stated because it bounds every claim below** — the slice length changes the
 class count, so the number is only meaningful with its instrument:
@@ -476,6 +477,18 @@ by whichever pass flips a child to `fixed`/`verified`, on the child's artifacts.
 - **CHANGE DELTA:** Planning correction only; individual Loop 2 entries record each child.
 
 ### Missed Questions
+
+### Implementation authorization and newly discovered work
+
+The operator grants automation level 3 and directs completion of the entire program.
+FID-024's instrument is implemented; class repairs and real observation remain open.
+Its stable census preserves 559 records and 68 legacy aliases as 55 explicitly owned
+classes, all unresolved. It does not replace the historical 68-row baseline above.
+FID-2026-1012-025 records verified harness drift discovered by the broad implementation
+battery. Repair that deterministic verification dependency before continuing the class
+lanes. No production closure, push or publication is implied by this authority.
+
+### Original review questions
 
 1. **Should the size records (`-010` … `-016`) be withdrawn, now that they are not class fixes?**
    No — and this is the operator's ruling of 2026-10-12: keep them, because the ledger's value is real

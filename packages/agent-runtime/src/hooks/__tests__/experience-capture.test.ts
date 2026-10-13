@@ -60,6 +60,16 @@ describe('normalizeErrorFirstLine (shared with the dedup layer)', () => {
 })
 
 describe('buildExperienceRecord', () => {
+  test('newly captured command stderr uses canonical credential redaction', () => {
+    const secret = ['sk', '-', 'fixture', 'abcdefgh12345678'].join('')
+    const record = buildExperienceRecord({
+      ...FAILURE_INPUT,
+      tool_name: 'run_terminal_command',
+      error_message: `Command exited with code 1: rejected ${secret}`,
+    })
+    expect(record.errorFirstLine).not.toContain(secret)
+    expect(record.errorFirstLine).toContain('[REDACTED]')
+  })
   test('produces a single immutable event record', () => {
     const record = buildExperienceRecord(FAILURE_INPUT)
     expect(record.triggerType).toBe('tool_failure')
@@ -90,6 +100,21 @@ describe('buildExperienceRecord', () => {
     })
     expect(record.errorFirstLine).toBe('')
     expect(record.contextHash).toBe('')
+  })
+
+  test('preserves native cause metadata through capture without storing inputs', () => {
+    const record = buildExperienceRecord({
+      ...FAILURE_INPUT,
+      error_class: 'native-incomplete',
+      arguments_truncated: true,
+      finish_reason: 'length',
+    })
+    expect(record.schemaVersion).toBe(1)
+    expect(record.errorClass).toBe('native-incomplete')
+    expect(record.argumentsTruncated).toBe(true)
+    expect(record.finishReason).toBe('length')
+    expect(record.classKey).toContain('incomplete-arguments')
+    expect(record.expectedness).toBe('unexpected')
   })
 })
 

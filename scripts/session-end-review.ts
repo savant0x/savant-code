@@ -24,6 +24,7 @@
 import * as fs from 'node:fs'
 import * as path from 'node:path'
 
+import { summarizeExperienceClasses } from '@savant-code/common/util/experience-classes'
 import { proposalsForSession } from '@savant-code/common/util/skill-proposals'
 import { updateWikiPattern } from '@savant-code/common/util/skill-wiki'
 
@@ -141,7 +142,11 @@ export function pendingOperatorDecisions(scope: string): PendingDecision[] {
 /** Build the agenda document from the current recurrences (≤ 50 lines). */
 export function buildAgenda(
   recurrences: ReturnType<typeof computeRecurrences>,
-  opts: { maxItems?: number; decisions?: PendingDecision[] } = {},
+  opts: {
+    maxItems?: number
+    decisions?: PendingDecision[]
+    unresolvedClasses?: number
+  } = {},
 ): {
   items: AgendaItem[]
   agenda: string
@@ -162,6 +167,13 @@ export function buildAgenda(
     '> 1-3 active high-leverage capabilities/anti-patterns; ≤ 50 lines.',
     '',
   ]
+  if (opts.unresolvedClasses !== undefined) {
+    lines.push(
+      `> All-time unresolved classes: ${opts.unresolvedClasses}; age does not prove repair.`,
+      '> Full census and ownership: `bun scripts/experiences-recurrence.ts`.',
+      '',
+    )
+  }
   if (items.length === 0) {
     lines.push('_No recurring failure patterns in the last 14 days._', '')
   } else {
@@ -222,7 +234,11 @@ export function runSessionEndReview(
   } catch {
     // No SCOPE.md in this root (tests, foreign repos) — no decisions to surface.
   }
-  const built = buildAgenda(recurrences, { decisions })
+  const classes = summarizeExperienceClasses(records)
+  const built = buildAgenda(recurrences, {
+    decisions,
+    unresolvedClasses: classes.length,
+  })
   const agendaFile = path.join(rootDir, AGENDA_PATH)
   fs.mkdirSync(path.dirname(agendaFile), { recursive: true })
   fs.writeFileSync(agendaFile, built.agenda, 'utf8')
@@ -243,6 +259,10 @@ export function runSessionEndReview(
   const lifecycleLines = skillLifecycleReportLines(rootDir)
   const routing = [
     ...built.routing,
+    ...classes.map(
+      (entry) =>
+        `UNRESOLVED: ${entry.key} — ${entry.count} all-time occurrences; last ${entry.lastSeen}. Age cannot establish repair.`,
+    ),
     ...featureRoutingNotes(rootDir),
     ...(quarantineNote !== null ? [quarantineNote] : []),
     ...lifecycleLines,

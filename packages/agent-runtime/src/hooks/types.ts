@@ -1,3 +1,7 @@
+import type {
+  ExperienceErrorClass,
+  ExperienceExpectedness,
+} from '@savant-code/common/types/experience'
 import type { HookEvent } from '@savant-code/common/types/hooks'
 import type { JSONValue } from '@savant-code/common/types/json'
 
@@ -16,6 +20,10 @@ export type HookInputData = {
   tool_input?: Record<string, JSONValue>
   tool_result?: JSONValue
   error_message?: string
+  error_class?: ExperienceErrorClass
+  expectedness?: ExperienceExpectedness
+  arguments_truncated?: boolean
+  finish_reason?: string
   subagent_type?: string
   [key: string]: unknown
 }

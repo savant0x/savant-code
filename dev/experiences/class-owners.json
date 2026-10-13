@@ -1,0 +1,225 @@
+{
+  "version": 1,
+  "owners": [
+    {
+      "classKey": "v1:read_files:incomplete-arguments:unexpected",
+      "fid": "FID-2026-1012-017"
+    },
+    {
+      "classKey": "v1:str_replace:incomplete-arguments:unexpected",
+      "fid": "FID-2026-1012-017"
+    },
+    {
+      "classKey": "v1:read_url:incomplete-arguments:unexpected",
+      "fid": "FID-2026-1012-017"
+    },
+    {
+      "classKey": "v1:write_file:incomplete-arguments:unexpected",
+      "fid": "FID-2026-1012-017"
+    },
+    {
+      "classKey": "v1:spawn_agents:incomplete-arguments:unexpected",
+      "fid": "FID-2026-1012-017"
+    },
+    {
+      "classKey": "v1:run_readonly_command:incomplete-arguments:unexpected",
+      "fid": "FID-2026-1012-017"
+    },
+    {
+      "classKey": "v1:write_todos:incomplete-arguments:unexpected",
+      "fid": "FID-2026-1012-017"
+    },
+    {
+      "classKey": "v1:suggest_followups:incomplete-arguments:unexpected",
+      "fid": "FID-2026-1012-017"
+    },
+    {
+      "classKey": "v1:basher:incomplete-arguments:unexpected",
+      "fid": "FID-2026-1012-017"
+    },
+    {
+      "classKey": "v1:run_terminal_command:incomplete-arguments:unexpected",
+      "fid": "FID-2026-1012-017"
+    },
+    {
+      "classKey": "v1:transition_parameter:incomplete-arguments:unexpected",
+      "fid": "FID-2026-1012-017"
+    },
+    {
+      "classKey": "v1:forge:incomplete-arguments:unexpected",
+      "fid": "FID-2026-1012-017"
+    },
+    {
+      "classKey": "v1:grep:incomplete-arguments:unexpected",
+      "fid": "FID-2026-1012-017"
+    },
+    {
+      "classKey": "v1:transition_phase:incomplete-arguments:unexpected",
+      "fid": "FID-2026-1012-017"
+    },
+    {
+      "classKey": "v1:...:incomplete-arguments:unexpected",
+      "fid": "FID-2026-1012-017"
+    },
+    {
+      "classKey": "v1:apply_patch:incomplete-arguments:unexpected",
+      "fid": "FID-2026-1012-017"
+    },
+    {
+      "classKey": "v1:savant_code_tool_call:incomplete-arguments:unexpected",
+      "fid": "FID-2026-1012-017"
+    },
+    {
+      "classKey": "v1:write_files:incomplete-arguments:unexpected",
+      "fid": "FID-2026-1012-017"
+    },
+    {
+      "classKey": "v1:read_url:http-404:undetermined",
+      "fid": "FID-2026-1012-018"
+    },
+    {
+      "classKey": "v1:read_url:fetch-unextractable:undetermined",
+      "fid": "FID-2026-1012-018"
+    },
+    {
+      "classKey": "v1:read_url:http-403:undetermined",
+      "fid": "FID-2026-1012-018"
+    },
+    {
+      "classKey": "v1:read_url:http-401:undetermined",
+      "fid": "FID-2026-1012-018"
+    },
+    {
+      "classKey": "v1:read_url:fetch-oversized:undetermined",
+      "fid": "FID-2026-1012-018"
+    },
+    {
+      "classKey": "v1:read_url:http-429:undetermined",
+      "fid": "FID-2026-1012-018"
+    },
+    {
+      "classKey": "v1:read_url:http-405:undetermined",
+      "fid": "FID-2026-1012-018"
+    },
+    {
+      "classKey": "v1:read_url:fetch-unsupported:undetermined",
+      "fid": "FID-2026-1012-018"
+    },
+    {
+      "classKey": "v1:read_url:fetch-blocked:undetermined",
+      "fid": "FID-2026-1012-018"
+    },
+    {
+      "classKey": "v1:read_url:fetch-dns:undetermined",
+      "fid": "FID-2026-1012-018"
+    },
+    {
+      "classKey": "v1:read_url:http-503:undetermined",
+      "fid": "FID-2026-1012-018"
+    },
+    {
+      "classKey": "v1:web_search:research-unavailable:undetermined",
+      "fid": "FID-2026-1012-019"
+    },
+    {
+      "classKey": "v1:code_search:search-executable-missing:undetermined",
+      "fid": "FID-2026-1012-019"
+    },
+    {
+      "classKey": "v1:code_search:search-incomplete:undetermined",
+      "fid": "FID-2026-1012-019"
+    },
+    {
+      "classKey": "v1:code_search:unclassified-0900285fee5eacd3c66c56582953f3898e94383d5056fe0e1e0291cf4359afe7:undetermined",
+      "fid": "FID-2026-1012-019"
+    },
+    {
+      "classKey": "v1:code_search:unclassified-31bebff8fe417faff476c7fd9a827339761628b9f801010761b2626d222e2028:undetermined",
+      "fid": "FID-2026-1012-019"
+    },
+    {
+      "classKey": "v1:str_replace:edit-target-missing:undetermined",
+      "fid": "FID-2026-1012-020"
+    },
+    {
+      "classKey": "v1:str_replace:edit-noop:undetermined",
+      "fid": "FID-2026-1012-020"
+    },
+    {
+      "classKey": "v1:apply_patch:patch-failed:undetermined",
+      "fid": "FID-2026-1012-020"
+    },
+    {
+      "classKey": "v1:str_replace:immutable-result:undetermined",
+      "fid": "FID-2026-1012-020"
+    },
+    {
+      "classKey": "v1:write_file:patch-failed:undetermined",
+      "fid": "FID-2026-1012-020"
+    },
+    {
+      "classKey": "v1:str_replace:edit-target-ambiguous:undetermined",
+      "fid": "FID-2026-1012-020"
+    },
+    {
+      "classKey": "v1:str_replace:patch-failed:undetermined",
+      "fid": "FID-2026-1012-020"
+    },
+    {
+      "classKey": "v1:list_directory:directory-missing:undetermined",
+      "fid": "FID-2026-1012-020"
+    },
+    {
+      "classKey": "v1:str_replace:unclassified-59a08c3cbc319aa48168284e77fb6d326cc2351c3f16202ff0354e7c095fb939:undetermined",
+      "fid": "FID-2026-1012-020"
+    },
+    {
+      "classKey": "v1:run_readonly_command:timeout:undetermined",
+      "fid": "FID-2026-1012-023"
+    },
+    {
+      "classKey": "v1:run_terminal_command:timeout:undetermined",
+      "fid": "FID-2026-1012-023"
+    },
+    {
+      "classKey": "v1:run_readonly_command:cancelled:undetermined",
+      "fid": "FID-2026-1012-023"
+    },
+    {
+      "classKey": "v1:glob:cancelled:undetermined",
+      "fid": "FID-2026-1012-023"
+    },
+    {
+      "classKey": "v1:list_directory:cancelled:undetermined",
+      "fid": "FID-2026-1012-023"
+    },
+    {
+      "classKey": "v1:str_replace:unclassified:undetermined",
+      "fid": "FID-2026-1012-024"
+    },
+    {
+      "classKey": "v1:read_url:unclassified:undetermined",
+      "fid": "FID-2026-1012-024"
+    },
+    {
+      "classKey": "v1:code_search:unclassified:undetermined",
+      "fid": "FID-2026-1012-024"
+    },
+    {
+      "classKey": "v1:run_readonly_command:unclassified:undetermined",
+      "fid": "FID-2026-1012-024"
+    },
+    {
+      "classKey": "v1:skill_manage:unclassified:undetermined",
+      "fid": "FID-2026-1012-024"
+    },
+    {
+      "classKey": "v1:run_terminal_command:unclassified:undetermined",
+      "fid": "FID-2026-1012-024"
+    },
+    {
+      "classKey": "v1:write_file:unclassified:undetermined",
+      "fid": "FID-2026-1012-024"
+    }
+  ]
+}

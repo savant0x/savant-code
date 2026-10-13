@@ -22,14 +22,7 @@ import type { AgentState } from '@savant-code/common/types/session-state'
 import type { ProjectFileContext } from '@savant-code/common/util/file'
 import type { ToolSet } from 'ai'
 
-/**
- * FID-2026-0909-005 — end-to-end wiring pins for the PostToolUseFailure
- * error-message extraction. Runs the real `runSuccessLifecycle` against a
- * temp project root that declares the production experience-capture hook,
- * then asserts the ledger record carries the real error line (not the
- * generic fallback). Extractor unit pins live in
- * tool-result-errors.test.ts beside their subject module.
- */
+/** FID-005 / 024: exercise the real lifecycle and capture hook in a temp project. */
 
 const mockAgentTemplate: AgentTemplate = {
   id: 'test-lifecycle-agent',
@@ -257,6 +250,48 @@ describe('runSuccessLifecycle error-capture wiring', () => {
       )
       const records = await readCapturedRecords(root)
       expect(records).toHaveLength(0)
+    })
+  })
+
+  it('records a failed readonly batch through the production hook engine', async () => {
+    await withCaptureRoot(async (root) => {
+      const fixture = buildLifecycleFixture(root)
+      const toolCall: SavantCodeToolCall<'run_readonly_command'> = {
+        toolName: 'run_readonly_command',
+        toolCallId: 'batch-failure',
+        input: { commands: ['fixture'], timeout_seconds: 30 },
+      }
+      const ctx: GateContext<'run_readonly_command'> = {
+        ...fixture.ctx,
+        toolName: 'run_readonly_command',
+        toolCall,
+        params: {
+          ...fixture.ctx.params,
+          toolName: 'run_readonly_command',
+          input: toolCall.input,
+        },
+      }
+      await runSuccessLifecycle(
+        { ctx, trace: fixture.trace, hookProjectRoot: root },
+        [
+          {
+            type: 'json',
+            value: {
+              commands: ['fixture'],
+              results: [
+                { command: 'fixture', exitCode: 1, stderr: 'fixture failed' },
+              ],
+            },
+          },
+        ],
+        undefined,
+      )
+      const records = await readCapturedRecords(root)
+      expect(records).toHaveLength(1)
+      expect(records[0]?.toolName).toBe('run_readonly_command')
+      expect(records[0]?.errorFirstLine).toBe(
+        'Command exited with code 1: fixture failed',
+      )
     })
   })
 })

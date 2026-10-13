@@ -6,16 +6,15 @@
  * The capture path writes ONE immutable event per record (S1-A); this module
  * owns all aggregation:
  *
- *   - `groupByDedupKey` — sha256(toolName + normalizedErrorFirstLine) groups
- *     identical failures (the NUL-separated key lives in common so the sink
- *     and the analyzer can never disagree).
+ *   - `groupByDedupKey` — shared versioned cause identity groups failures
+ *     across changing budgets/payloads while preserving unknown causes.
  *   - `computeRecurrences` — the persistent cross-session frequency counter:
  *     a pattern must appear ≥ `minFrequency` (default 3) times within a
  *     rolling `windowDays` (default 14) sliding window. Deliberately NOT a
  *     per-session counter — a pattern recurring once per session would never
  *     promote.
- *   - `isExpectedFailure` — noise filter for known-benign error classes
- *     (broad-search 404s etc.) so they never count toward promotion.
+ *   - `isExpectedFailure` — explicit contextual expectedness only. Unknown
+ *     outcomes stay investigable; error words cannot establish expectedness.
  *   - `purgeExpiredTraces` — PreCompact compaction: drops records older than
  *     the window. Promoted lessons live durably in LEARNINGS.md + FIDs, so
  *     purging the raw trace can never destroy evidence that already promoted.
@@ -25,14 +24,16 @@
  *   bun run experiences:dedup --purge    — rewrite the ledger, keep 14 days
  */
 
+import { createHash } from 'node:crypto'
 import * as fs from 'node:fs'
 import * as path from 'node:path'
 
 import {
   EXPERIENCES_DIR_NAME,
   RAW_TRACES_FILE_NAME,
+  experienceRecordSchema,
 } from '@savant-code/common/types/experience'
-import { experienceDedupKey } from '@savant-code/common/util/experiences'
+import { experienceClassIdentity } from '@savant-code/common/util/experience-classes'
 
 import type { ExperienceRecord } from '@savant-code/common/types/experience'
 
@@ -46,24 +47,6 @@ export const DEFAULT_MIN_FREQUENCY = 3
 export const DEFAULT_MIN_SESSIONS = 3
 const MS_PER_DAY = 24 * 60 * 60 * 1000
 
-/**
- * Known-benign failure classes that must never promote to a lesson.
- * Deliberately narrow: `command not found` (a missing binary — a REAL,
- * promotable environment gap) is NOT expected, while HTTP 404 / empty
- * web-search result classes are.
- */
-const EXPECTED_FAILURE_PATTERNS: RegExp[] = [
-  // Broad-search 404 / empty-result classes (e.g. web_search misses).
-  /\b404\b/i,
-  /no results? found/i,
-  // read_url: the target carried no extractable text (JS-rendered, blocked,
-  // or genuinely empty) — the tool reported its correct outcome, the same
-  // "resource has no content" shape as a search 404. Without this, a single
-  // research pass over JS-only vendor pages (15 records, 2026-09-19) took the
-  // agenda's top slot while an actionable class sat below it.
-  /no readable text/i,
-]
-
 /** Fail-open parse: one line per record; malformed lines are skipped. */
 export function parseExperienceLedger(content: string): ExperienceRecord[] {
   const records: ExperienceRecord[] = []
@@ -71,15 +54,8 @@ export function parseExperienceLedger(content: string): ExperienceRecord[] {
     const trimmed = line.trim()
     if (trimmed === '') continue
     try {
-      const parsed = JSON.parse(trimmed) as ExperienceRecord
-      if (
-        typeof parsed?.ts === 'string' &&
-        typeof parsed?.toolName === 'string' &&
-        typeof parsed?.errorFirstLine === 'string' &&
-        typeof parsed?.sessionId === 'string'
-      ) {
-        records.push(parsed)
-      }
+      const parsed = experienceRecordSchema.safeParse(JSON.parse(trimmed))
+      if (parsed.success) records.push(parsed.data)
     } catch {
       // Malformed line — skip, never fail the analysis.
     }
@@ -93,8 +69,10 @@ export function readExperienceLedger(rootDir: string): ExperienceRecord[] {
   return parseExperienceLedger(fs.readFileSync(file, 'utf8'))
 }
 
-export function isExpectedFailure(errorFirstLine: string): boolean {
-  return EXPECTED_FAILURE_PATTERNS.some((re) => re.test(errorFirstLine))
+export function isExpectedFailure(
+  record: Pick<ExperienceRecord, 'expectedness'>,
+): boolean {
+  return record.expectedness === 'expected'
 }
 
 export type DedupGroup = {
@@ -110,7 +88,10 @@ export function groupByDedupKey(
 ): Map<string, DedupGroup> {
   const groups = new Map<string, DedupGroup>()
   for (const record of records) {
-    const key = experienceDedupKey(record.toolName, record.errorFirstLine)
+    // Existing wiki/proposal consumers require a filesystem-safe 64-hex key.
+    const key = createHash('sha256')
+      .update(experienceClassIdentity(record).key)
+      .digest('hex')
     const existing = groups.get(key)
     if (existing) {
       existing.records.push(record)
@@ -152,8 +133,8 @@ export type RecurrenceOptions = {
 /**
  * Persistent cross-session recurrence detector: patterns with ≥ minFrequency
  * occurrences within the last `windowDays` (rolling, not calendar). Records
- * whose first line matches an expected-failure pattern never count toward the
- * frequency.
+ * explicitly marked expected never count toward the frequency. All historical
+ * undetermined outcomes remain visible and count toward investigation.
  */
 export function computeRecurrences(
   records: ExperienceRecord[],
@@ -168,10 +149,10 @@ export function computeRecurrences(
   for (const group of groupByDedupKey(records).values()) {
     const inWindow = group.records.filter((record) => {
       const ts = Date.parse(record.ts)
-      return Number.isFinite(ts) && ts >= cutoff
+      return Number.isFinite(ts) && ts >= cutoff && ts <= now
     })
     const inWindowFiltered = inWindow.filter(
-      (record) => !isExpectedFailure(record.errorFirstLine),
+      (record) => !isExpectedFailure(record),
     )
     if (inWindowFiltered.length < minFrequency) continue
     // FID-2026-1005-003 Step 1: distinct-session count over the same

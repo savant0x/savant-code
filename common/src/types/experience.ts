@@ -21,6 +21,20 @@ export const EXPERIENCE_TRIGGER_TYPES = [
 
 export type ExperienceTriggerType = (typeof EXPERIENCE_TRIGGER_TYPES)[number]
 
+export const EXPERIENCE_EXPECTEDNESS = [
+  'expected',
+  'unexpected',
+  'undetermined',
+] as const
+export type ExperienceExpectedness = (typeof EXPERIENCE_EXPECTEDNESS)[number]
+export const EXPERIENCE_ERROR_CLASSES = [
+  'native-incomplete',
+  'tool-unavailable',
+  'tool-result-failure',
+  'unclassified',
+] as const
+export type ExperienceErrorClass = (typeof EXPERIENCE_ERROR_CLASSES)[number]
+
 /** Store location (repo-relative): raw traces are never boot-read. */
 export const EXPERIENCES_DIR_NAME = 'dev/experiences'
 /** Append-only ledger file inside the store. */
@@ -45,6 +59,15 @@ export const experienceRecordSchema = z.object({
    */
   contextHash: z.string(),
   sessionId: z.string(),
+  /** Optional so historical immutable rows remain valid. */
+  schemaVersion: z.literal(1).optional(),
+  classKey: z.string().optional(),
+  errorClass: z.enum(EXPERIENCE_ERROR_CLASSES).optional(),
+  expectedness: z.enum(EXPERIENCE_EXPECTEDNESS).optional(),
+  argumentsTruncated: z.boolean().optional(),
+  finishReason: z.string().optional(),
+  /** New captures use the canonical credential redactor; historical rows stay unaltered. */
+  redacted: z.literal(true).optional(),
 })
 
 export type ExperienceRecord = z.infer<typeof experienceRecordSchema>

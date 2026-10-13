@@ -112,15 +112,11 @@ describe('hasCommandFailure — outcome-aware command failure detection', () => 
   })
 })
 
-describe('FID-2026-0927-003 F1 — the defect this fixes, pinned as a contrast', () => {
-  it('the OLD shape-aware predicate could not see a red test run', () => {
-    // This is the defect itself, stated as a test so it cannot regress
-    // silently: `hasToolResultError` returns FALSE for the red-run shape, which
-    // is precisely why it was the wrong primitive for Law 3 crediting. If this
-    // leg ever fails, `hasToolResultError` grew an exitCode branch and the two
-    // predicates have collapsed into one — at which point the deliberate
-    // distinction documented on `writeSucceeded` needs re-deciding.
-    expect(hasToolResultError(redTestRun)).toBe(false)
+describe('FID-2026-1012-024 — capture and verification agree on command outcome', () => {
+  it('capture also sees a failing command without a structured error field', () => {
+    // The earlier contrast preserved a capture blind spot. File-write credit
+    // still requires a written path; command failure never gains that credit.
+    expect(hasToolResultError(redTestRun)).toBe(true)
   })
 
   it('the NEW outcome-aware predicate does see it', () => {

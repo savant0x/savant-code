@@ -14,6 +14,7 @@ import {
   NATIVE_TOOL_CALL_STEERING_MESSAGES,
 } from '../../../run-agent-step/constants'
 import { handleStreamErrorChunk } from '../error-chunk'
+import { buildNativeFailureInput } from '../native-failure-capture'
 import { createResponseHandler } from '../response-handler'
 
 import type { StreamErrorChunk } from '@savant-code/common/types/contracts/llm'
@@ -129,6 +130,11 @@ describe('native-incomplete strike-one steering (FID-2026-0909-007)', () => {
 
       expect(result.hasNativeIncompleteToolCall).toBe(true)
       expect(result.lastIncompleteToolName).toBe('read_files')
+      const capture =
+        result.captureChunk &&
+        buildNativeFailureInput(result.captureChunk, 'session', '/project')
+      expect(capture?.error_class).toBe('tool-unavailable')
+      expect(capture?.error_message).toContain('is not available to this agent')
       const content = errorContentOf(errorMessages[0])
       expect(content).toContain('read_files is not available to this agent')
       expect(content).toContain(
@@ -251,6 +257,11 @@ describe('native-incomplete strike-one steering (FID-2026-0909-007)', () => {
       expect(result.lastIncompleteToolName).toBe('read_files')
       const content = errorContentOf(errorMessages[0])
       expect(content).toContain('cut off before they finished parsing')
+      const capture =
+        result.captureChunk &&
+        buildNativeFailureInput(result.captureChunk, 'session', '/project')
+      expect(capture?.arguments_truncated).toBe(true)
+      expect(capture?.error_class).toBe('native-incomplete')
       expect(content).toContain('read fewer files at a time')
       expect(content).not.toContain(
         'retry the tool call with a complete arguments object',

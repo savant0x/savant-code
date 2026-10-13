@@ -193,29 +193,42 @@ describe('computeRecurrences (persistent cross-session counter)', () => {
   })
 
   test('expected failures never count toward promotion', () => {
-    const records = [
-      record('web_search', 'HTTP 404: no results', 1),
-      record('web_search', 'HTTP 404: no results', 2),
-      record('web_search', 'HTTP 404: no results', 3),
+    const records: ExperienceRecord[] = [
+      {
+        ...record('web_search', 'HTTP 404: no results', 1),
+        expectedness: 'expected',
+      },
+      {
+        ...record('web_search', 'HTTP 404: no results', 2),
+        expectedness: 'expected',
+      },
+      {
+        ...record('web_search', 'HTTP 404: no results', 3),
+        expectedness: 'expected',
+      },
     ]
     expect(computeRecurrences(records, { now: NOW })).toHaveLength(0)
   })
 
-  test('read_url no-readable-text is expected noise, not promotable (T82-C)', () => {
-    // The tool reported a correct outcome (the page had no extractable
-    // text); three such reads must not promote, exactly like a search 404.
+  test('read_url no-readable-text remains investigated when expectedness is unknown', () => {
     const records = [
       record('read_url', 'No readable text found at URL', 1),
       record('read_url', 'No readable text found at URL', 2),
       record('read_url', 'No readable text found at URL', 3),
     ]
-    expect(computeRecurrences(records, { now: NOW })).toHaveLength(0)
+    expect(computeRecurrences(records, { now: NOW })).toHaveLength(1)
   })
 
   test('mixed expected + real failures count only the real ones', () => {
-    const records = [
-      record('run_command', 'HTTP 404: not found', 1),
-      record('run_command', 'HTTP 404: not found', 2),
+    const records: ExperienceRecord[] = [
+      {
+        ...record('run_command', 'HTTP 404: not found', 1),
+        expectedness: 'expected',
+      },
+      {
+        ...record('run_command', 'HTTP 404: not found', 2),
+        expectedness: 'expected',
+      },
       record('run_command', 'real failure', 1),
       record('run_command', 'real failure', 2),
       record('run_command', 'real failure', 3),
@@ -228,20 +241,15 @@ describe('computeRecurrences (persistent cross-session counter)', () => {
 })
 
 describe('isExpectedFailure', () => {
-  test('flags 404 / empty-result classes only', () => {
-    expect(isExpectedFailure('HTTP 404: no results')).toBe(true)
-    expect(isExpectedFailure('no results found')).toBe(true)
-    // read_url's correct no-content outcome (T82-C) — expected, never noise.
-    expect(isExpectedFailure('No readable text found at URL')).toBe(true)
-    // Real, promotable failures are NOT expected noise:
-    expect(isExpectedFailure('tsc: command not found')).toBe(false)
-    expect(isExpectedFailure('file not found')).toBe(false)
-    expect(isExpectedFailure('TypeError: x is undefined')).toBe(false)
-    // Narrowness guard: a peer *_replace soft-failure stays promotable.
-    expect(isExpectedFailure('No change to the file')).toBe(false)
-    expect(isExpectedFailure('read_url: HTTP 429 Too Many Requests')).toBe(
-      false,
+  test('requires contextual expectedness rather than guessing from error words', () => {
+    expect(isExpectedFailure({ expectedness: 'expected' })).toBe(true)
+    expect(isExpectedFailure({ expectedness: 'unexpected' })).toBe(false)
+    expect(isExpectedFailure({ expectedness: 'undetermined' })).toBe(false)
+    expect(isExpectedFailure({})).toBe(false)
+    const records = [1, 2, 3].map((day) =>
+      record('parser', 'parser invariant failed at line 404', day),
     )
+    expect(computeRecurrences(records, { now: NOW })).toHaveLength(1)
   })
 })
 

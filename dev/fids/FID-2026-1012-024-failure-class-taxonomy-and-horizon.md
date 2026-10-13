@@ -215,7 +215,51 @@ audit trail of the mistaken premise, not as acceptance criteria or class disposi
   ownership of unresolved underlying findings; the review names exact planned artifacts.
 - **CHANGE DELTA:** Planning correction only; all seven classes remain unresolved.
 
-### Missed Questions
+### Loop 3 — Implementation contract (automation level 3, 2026-10-12)
+
+- **RED:** The production-shaped probes from Loop 2 are the failing baseline.
+- **GREEN:** One bounded outcome walker serves detection and extraction; it traverses
+  only result envelopes, result arrays and known error/exit/read-status fields, preserving
+  success output and caller ownership. Native cause/truncation metadata travels through
+  the shared hook builder into optional versioned experience fields. Stable class identity
+  and horizon/ownership analysis preserve all old rows and unknown causes.
+- **AUDIT:** Add producer-shape and lifecycle pins before changing the walker. Existing
+  mirror/success pins stay in the gate set. Use scripts and affected workspace checks.
+- **ADVERSARIAL:** Bound cycles/depth/inspection work; never recurse through arbitrary
+  user data looking for error-like keys. Any observation lacking coverage remains unproved.
+- **CHANGE DELTA:** This is the recorded pre-write impact analysis; source follows it.
+
+### Loop 3 — Instrument implementation and evidence
+
+- **RED:** Producer-shaped capture suite: 3 PASS / 7 FAIL before the shared walker.
+  Adversarial outer-accessor and primitive/envelope-budget controls then produced 3 FAIL.
+- **GREEN:** The bounded walker serves detection, extraction and command verification.
+  Capture retains native cause, truncation and finish-reason fields. Steering and capture
+  share the derived unavailable-tool outcome. Historical rows remain byte-unchanged.
+- **AUDIT:** Full runtime: 2,033 PASS / 0 FAIL across 313 files. After the adversarial
+  refinement, extraction/coverage/command suites: 36 PASS / 0 FAIL. Production hook
+  integration covers readonly nested exit failures. Script horizon/dedup/agenda suites:
+  51 PASS / 0 FAIL; production receipt controls: 5 PASS / 0 FAIL. Checks are local.
+- **ADVERSARIAL:** Closure rejects corrupt/future rows, stored-key disagreement,
+  missing ownership, short windows, missing capture coverage, repeated-session exposure,
+  renamed timeout recurrence, synthetic receipts and boundaries predating implementation.
+  The broad script run discovered existing reset-wiring failures; these remain program work.
+- **CENSUS:** `bun scripts/experiences-recurrence.ts`: 559 records / 55 stable classes,
+  preserving all 68 legacy aliases. All have explicit owners; all remain unresolved.
+  `dev/experiences/fix-boundaries.json` is intentionally empty because no underlying
+  production repair has yet been proved. A default census PASS is not a repair PASS.
+- **CHECKS:** Full root typecheck, ESLint with zero warnings, Markdown lint and quality
+  pass. Current four-script suite: 56 PASS; shared class suite: 6 PASS. The explicit
+  lane repair assertion exits 1 with seven unproved classes, the required honest result.
+- **OPEN:** Complete seven-tool mechanism investigation and exercise real observation.
+  The lane's repair assertion is `bun scripts/experiences-recurrence.ts
+  --assert-repaired=FID-2026-1012-024`; it must fail until its claims have evidence.
+  Dependent implementation can use the instrument without closing this FID.
+- **Persistence review:** Newly observed command stderr must pass the existing canonical
+  credential redactor before entering the failure ledger. Record the redaction policy
+  on new rows; preserve old immutable rows. A producer-shaped secret pin precedes this repair.
+
+### Implementation questions
 
 1. **Should the class key be stored at capture time or derived at read time?** Stored, from the
    `FID-2026-1012-009` `errorClass` follow-up: deriving it at read time cannot recover the cause from a
@@ -236,8 +280,9 @@ audit trail of the mistaken premise, not as acceptance criteria or class disposi
 
 ### Code Verification Evidence
 
-> Pre-implementation record: `Status: converged` (FID-2026-0915-004). Nothing here is implemented;
-> what follows records what was CHECKED at the cited state.
+> The lane remains converged and open. Its instrument is implemented; underlying
+> class repair and production observation are not claimed. Original checks below
+> retain their original cited baseline; Loop 3 records current implementation checks.
 
 - [x] Measured at `6e37aa15`: the seven classes / 36 records above, from the capture aggregation,
       matching rows 12, 16, 24, 32, 33, 36 and 46 of `FID-2026-1012-022`'s census.
@@ -253,8 +298,9 @@ audit trail of the mistaken premise, not as acceptance criteria or class disposi
       `docs/design/SkillOpt Integration into Savant.md:62`.
 - [x] The dedup key's normalization is pinned by `scripts/__tests__/experiences-dedup.test.ts:77`
       (`normalizeErrorFirstLine('tool result contains an error')`).
-- [x] **Not yet true, and deliberately not claimed:** the class key, the horizon, the wrapper's new
-      meaning, the census probe, this lane's closures, the gates and this record's receipt.
+- [x] Current implementation: stable identity and schema, bounded producer-shaped walker,
+      native metadata transport, ownership census and fail-closed horizon/receipt probe exist.
+- [ ] Still unproved: underlying class repairs, exercised production observation and lane closure.
 
 ## Boundaries
 
@@ -267,11 +313,12 @@ audit trail of the mistaken premise, not as acceptance criteria or class disposi
 
 ## Resolution
 
-**Not implemented — `Status: converged` (pre-implementation, FID-2026-0915-004).**
+**Instrument implemented; class repairs and observation remain open — `Status: converged`.**
 
-This record exists so the measuring instrument has an owner, a converged design and a register item with
-write authority; it made no source change. Whichever pass flips it to `fixed` rewrites this section in
-the closure format and adds the declared gates.
+Loop 3 implements the measuring instrument under the operator's automation-level-3
+grant. This record cannot close merely because its deterministic tests pass. When
+underlying production claims pass the repair assertion, record the committed hash,
+declared gates and receipt before archival.
 
 - **Authorised write surface:** `SCOPE.md` → machine-readable scope targets → this record's line.
 - **Master program:** `FID-2026-1012-022` (census rows 12, 16, 24, 32, 33, 36, 46).

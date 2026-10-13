@@ -5,6 +5,10 @@ import { runExperienceCapture } from './experience-capture'
 import { runHookCommand } from './runner'
 
 import type { HookInputData, HookRunResult } from './types'
+import type {
+  ExperienceErrorClass,
+  ExperienceExpectedness,
+} from '@savant-code/common/types/experience'
 import type { HookConfig, HookEvent } from '@savant-code/common/types/hooks'
 import type { JSONValue } from '@savant-code/common/types/json'
 
@@ -127,6 +131,10 @@ export function buildHookInput(params: {
   toolInput?: Record<string, JSONValue>
   toolResult?: JSONValue
   errorMessage?: string
+  errorClass?: ExperienceErrorClass
+  expectedness?: ExperienceExpectedness
+  argumentsTruncated?: boolean
+  finishReason?: string
   subagentType?: string
 }): HookInputData {
   return {
@@ -140,6 +148,18 @@ export function buildHookInput(params: {
       : {}),
     ...(params.errorMessage !== undefined
       ? { error_message: params.errorMessage }
+      : {}),
+    ...(params.errorClass !== undefined
+      ? { error_class: params.errorClass }
+      : {}),
+    ...(params.expectedness !== undefined
+      ? { expectedness: params.expectedness }
+      : {}),
+    ...(params.argumentsTruncated !== undefined
+      ? { arguments_truncated: params.argumentsTruncated }
+      : {}),
+    ...(params.finishReason !== undefined
+      ? { finish_reason: params.finishReason }
       : {}),
     ...(params.subagentType !== undefined
       ? { subagent_type: params.subagentType }
