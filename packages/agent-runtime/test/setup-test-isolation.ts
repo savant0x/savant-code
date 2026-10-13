@@ -24,6 +24,7 @@ import { beforeEach } from 'bun:test'
 import { resetEnforcementInstances } from '../src/echo/enforcement/factory'
 import { __resetYagniEnforcedCacheForTests } from '../src/echo/yagni-pre-write-gate'
 import { resetRetentionRegistry } from '../src/evidence/retention-registry'
+import { resetComplianceCaptureCache } from '../src/hooks/compliance-capture'
 import { resetEngineCache } from '../src/hooks/engine'
 import { resetSessionInstances } from '../src/provenance/registry'
 import { resetUnknownShapeLog } from '../src/provider-boundary/classified-stream-retry'
@@ -50,6 +51,7 @@ beforeEach(() => {
   resetUnknownShapeLog()
   resetEnforcementInstances()
   __resetYagniEnforcedCacheForTests()
+  resetComplianceCaptureCache()
   resetEngineCache()
   resetSessionInstances()
   resetRetentionRegistry()

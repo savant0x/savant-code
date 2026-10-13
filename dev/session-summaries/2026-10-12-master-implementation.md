@@ -19,7 +19,8 @@ Continue ready implementation dependencies while real observation remains open.
 
 ## Work state
 
-- FID-2026-1012-024: implementing the converged instrument contract.
+- FID-2026-1012-024: instrument committed at `47a204d0`; class repair remains active.
+- FID-2026-1012-025: harness repair implemented; final gates and committed receipt pending.
 - Remaining children: active; execute in the master's revised order.
 - Production observation: not yet begun; no class closure is claimed.
 
@@ -52,3 +53,19 @@ SDK full gate: 625 PASS / 1 POSIX-only SKIP / 0 FAIL. Final runtime broad rerun:
 2,035 PASS / 1 FAIL under concurrent heavy checks; its worktree-capture-scale
 suite passes all nine tests in isolation. The complete broad rerun will be repeated
 sequentially after the verification-harness repair. No clean broad-pass claim is made.
+
+## FID-025 verification harness
+
+Wire the two existing resets into their workspace preloads. Preserve the operator's
+Tauri allowlist ruling with a positive control and a distinct forbidden command.
+Read the production loader's durable census path in its real-fixture check.
+The first repaired scanner assertion exposed two standalone provider programs without
+entrypoint guards. Their import-safety tests reproduced attempted network calls, using
+a child-process fetch blocker that prevented actual requests. Guarded main functions
+and a typed shared credential reader now make imports inert. Thirty focused harness
+tests pass; the broad root-owned scripts suite is being rerun sequentially.
+
+Sequential broad verification now passes: scripts 451 PASS / 0 FAIL across 48 files;
+agent-runtime 2,037 PASS / 0 FAIL across 313 files. Full root typecheck passes after
+the harness changes. The earlier contended runtime result is superseded by this
+complete clean rerun; no test or production timeout was raised.

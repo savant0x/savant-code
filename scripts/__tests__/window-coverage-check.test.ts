@@ -14,6 +14,7 @@ import { describe, expect, it } from 'bun:test'
 
 import {
   checkRegisterAgainstCensus,
+  DEFAULT_CENSUS_PATH,
   fixRegisterArtifact,
   loadCensus,
 } from '../window-coverage-check'
@@ -119,9 +120,7 @@ describe('loadCensus (bootstrap rule)', () => {
   })
 
   it('loads the real measured census fixture', () => {
-    const census = loadCensus(
-      'dev/scratchpad/active/provider-catalog-census.json',
-    )
+    const census = loadCensus(DEFAULT_CENSUS_PATH)
     expect(census).toBeDefined()
     expect(typeof census?.rows.codecraft).toBe('number')
     expect(census?.rows.codecraft).toBeGreaterThan(0)

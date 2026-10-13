@@ -42,6 +42,7 @@ import { resetRefreshInFlight as resetFreeOptionsRefresh } from './utils/free-op
 import { resetTimestampFormatter } from './utils/helpers'
 import { resetLogShipperState } from './utils/log-shipper'
 import { resetFileSinkState } from './utils/logger/file-sink'
+import { clearModelAutoWire } from './utils/model-picker-autowire'
 import { resetOllamaOnboardingState } from './utils/ollama-onboarding'
 import { resetCustomCatalogState } from './utils/openrouter-models/custom-catalog'
 import { __resetOpenRouterModelsCacheForTest } from './utils/openrouter-models/gateway'
@@ -147,6 +148,7 @@ beforeEach(() => {
   resetTimestampFormatter()
   resetLogShipperState()
   resetFileSinkState()
+  clearModelAutoWire()
   resetOllamaOnboardingState()
   resetCustomCatalogState()
   resetGatewayCoverageState()

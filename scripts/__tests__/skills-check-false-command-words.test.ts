@@ -214,10 +214,21 @@ describe('command-allowlist candidate extraction (FID-2026-0928-001)', () => {
     const words = allowlistFindings(
       fixtureRoot(),
       withVerification(
-        'Run `tauri signer generate -w <path>` to make a keypair.',
+        'Run `evil-signing-tool signer generate -w <path>` to make a keypair.',
       ),
     )
-    expect(words.some((m) => m.includes('tauri'))).toBe(true)
+    expect(words.some((m) => m.includes('evil-signing-tool'))).toBe(true)
+  })
+
+  test('honors the operator-approved Tauri command allowlist', () => {
+    expect(
+      allowlistFindings(
+        fixtureRoot(),
+        withVerification(
+          'Run `tauri signer generate -w <path>` to make a keypair.',
+        ),
+      ),
+    ).toEqual([])
   })
 
   test('still reports an allowlisted invocation as clean', () => {

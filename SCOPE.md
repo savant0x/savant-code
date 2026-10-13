@@ -305,7 +305,10 @@ work item remains active, including the recorded level-1 consolidation and exter
 - FID-2026-1012-025: `cli/src/test-setup.ts`,
   `packages/agent-runtime/test/setup-test-isolation.ts`,
   `scripts/__tests__/skills-check-false-command-words.test.ts`,
-  `scripts/__tests__/window-coverage-check.test.ts`
+  `scripts/__tests__/window-coverage-check.test.ts`,
+  `scripts/providers/audit-probes/t62f1-*.ts`,
+  `scripts/providers/audit-probes/credentials.ts`,
+  `scripts/__tests__/provider-probe-import-safety.test.ts`
 - Release-0.0.36: `VERSION`, `package.json`, `agents/package.json`,
   `cli/package.json`, `cli/release/package.json`, `common/package.json`,
   `common/src/constants/protocol-bundle.generated.ts`, `desktop/package.json`,

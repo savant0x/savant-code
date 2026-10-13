@@ -43,12 +43,24 @@ defects before using the broader battery to assess the remediation program.
 4. Run the root-owned harness suites at repository root, relevant workspace suites,
    full typecheck, lint and quality. Commit implementation before receipt and archival.
 
+### Loop 2 — Findings uncovered after the first repair
+
+The repaired preload-wiring assertion passes and exposes the next real scanner result:
+two standalone provider probes mutate credential maps at module scope and execute
+network requests on import. They are programs, but lack the program entrypoint guard.
+Wrap their work in guarded `main` functions, use a shared typed credential reader,
+and pin safe imports in isolated processes whose fetch function rejects every call.
+This control makes no network request and does not spend provider credits. Preserve
+the explicit program behavior; an exemption would conceal the import-time side effects.
+
 ## Impact and boundaries
 
-Only test isolation and test assertions change. Production policy, caches, model
-selection and census data retain their current behavior. No production failure class
-is declared repaired by this FID. No timeout budget is inflated to hide contention.
-No extra abstraction or test-only production seam is needed: both reset seams exist.
+Test isolation, assertions and provider-probe import safety change. Production policy,
+caches, model selection and census data retain their behavior. Explicit provider probe
+programs retain their endpoints and requests; imports perform neither credential reads
+nor fetches. No production failure class is declared repaired by this FID. No timeout
+budget is inflated to hide contention. Existing reset seams and one typed credential
+reader provide the implementation without exemptions or test-only production seams.
 
 ## Perfection Loop
 
@@ -71,8 +83,23 @@ No extra abstraction or test-only production seam is needed: both reset seams ex
 
 ## Verification Gates
 
-Declare the concrete gates and stamp their receipt after implementation.
+The artifacts exist and their focused checks pass. Stamp the receipt only after every
+declared gate executes successfully against the implemented tree.
+
+- gate: test scripts/__tests__/module-state-audit.test.ts
+- gate: test scripts/__tests__/skills-check-false-command-words.test.ts
+- gate: test scripts/__tests__/window-coverage-check.test.ts
+- gate: test scripts/__tests__/provider-probe-import-safety.test.ts
+- gate: test cli/src/utils/__tests__/model-picker-autowire.test.ts
+- gate: test packages/agent-runtime/src/hooks/__tests__/compliance-capture.test.ts
+- gate: typecheck cli
+- gate: typecheck packages/agent-runtime
+- gate: probe scripts/scripts-typecheck-check.ts
+- gate: quality
 
 ## Resolution
 
-Open, converged. This finding is retained under the master's level-3 authorization.
+Implemented, awaiting final gates and committed receipt. The focused harness battery
+passes 30 tests. Import-safety RED produced two real attempted-network failures before
+the guards; both import tests pass with zero fetches after implementation. The live
+module-state audit now passes without adding an exemption.

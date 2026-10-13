@@ -2,23 +2,9 @@
 // lowercase vs uppercase GLM ids with a minimal 1-token request. If the
 // lowercase id yields "model not found" while uppercase does not, the static
 // catalog ids are dead on the wire. Read-only in spirit: error paths, 1 token.
-import { readFileSync } from 'node:fs'
-import { homedir } from 'node:os'
-import { join } from 'node:path'
+import { readProviderProbeKeys } from './credentials'
 
-const keys: Record<string, string> = {}
-try {
-  const creds = JSON.parse(
-    readFileSync(join(homedir(), '.savant-code', 'credentials.json'), 'utf8'),
-  )
-  for (const [k, v] of Object.entries(creds.providerApiKeys ?? {})) {
-    if (typeof v === 'string') keys[k] = v
-  }
-} catch {}
-const key = keys.COMMAND_CODE_API_KEY
-console.log('COMMAND_CODE_API_KEY present:', key !== undefined)
-
-async function probe(model: string): Promise<void> {
+async function probe(model: string, key: string | undefined): Promise<void> {
   const r = await fetch(
     'https://api.commandcode.ai/provider/v1/chat/completions',
     {
@@ -40,6 +26,12 @@ async function probe(model: string): Promise<void> {
   console.log('  ', body.slice(0, 220).replace(/\s+/g, ' '))
 }
 
-await probe('zai-org/glm-5.2') // static catalog spelling (lowercase)
-await probe('zai-org/GLM-5.2') // live roster spelling
-await probe('zai-org/NOT-A-MODEL') // control: definitely-absent id
+async function main(): Promise<void> {
+  const key = readProviderProbeKeys().COMMAND_CODE_API_KEY
+  console.log('COMMAND_CODE_API_KEY present:', key !== undefined)
+  await probe('zai-org/glm-5.2', key) // static catalog spelling (lowercase)
+  await probe('zai-org/GLM-5.2', key) // live roster spelling
+  await probe('zai-org/NOT-A-MODEL', key) // control: definitely-absent id
+}
+
+if (import.meta.main) await main()
