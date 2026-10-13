@@ -33,15 +33,19 @@ describe('analytics dispatcher', () => {
     })
 
     expect(out).toHaveLength(1)
-    expect(out[0]).toMatchObject({
-      event: AnalyticsEvent.APP_LAUNCHED,
-      userId: 'u',
-      properties: expect.objectContaining({
+    const receivedBefore = JSON.stringify(out[0])
+    expect(out[0]).toEqual(
+      expect.objectContaining({
+        event: AnalyticsEvent.APP_LAUNCHED,
         userId: 'u',
-        level,
-        msg,
+        properties: expect.objectContaining({
+          userId: 'u',
+          level,
+          msg,
+        }),
       }),
-    })
+    )
+    expect(JSON.stringify(out[0])).toBe(receivedBefore)
   })
 
   it('buffers when no user and flushes once user appears', () => {

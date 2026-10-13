@@ -15,6 +15,7 @@ import { PROVIDER_REGISTRY } from '@savant-code/common/providers/registry'
 import { auditBunfigTestTimeout } from './audit-bunfig-test-timeout.js'
 import { auditExitCodeMasking } from './audit-exit-codes.js'
 import { auditGateEnvParity } from './audit-gate-env-parity.js'
+import { collectMutatingMatcherIssues } from './audit-mutating-matchers.js'
 import { auditRebrandCorruption } from './audit-rebrand-corruption.js'
 import { collectTestBudgetIssues } from './audit-test-budget-injection.js'
 import { auditVendoredTrees } from './audit-vendored-tree.js'
@@ -251,6 +252,7 @@ const issues: FidLedgerIssue[] = [
       }))),
   ...providerAuditIssues,
   ...exitCodeMaskingIssues,
+  ...collectMutatingMatcherIssues(root),
   ...gateEnvParityIssues,
   ...validateCurrentHygiene(),
   ...auditRebrandCorruption(root),

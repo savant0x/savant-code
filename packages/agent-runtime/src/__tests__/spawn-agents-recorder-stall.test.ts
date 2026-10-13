@@ -201,12 +201,16 @@ describe('spawn_agents — Recorder corrective retry ladder (FID-2026-0823-012)'
     expect(secondArgs?.prompt).toContain('write_file IN THE VERY NEXT STEP')
 
     const reportsArray = reports as Array<Record<string, unknown>>
-    expect(reportsArray[0]?.value).toMatchObject({
-      type: 'lastMessage',
-      value: expect.arrayContaining([
-        expect.objectContaining({ role: 'assistant' }),
-      ]),
-    })
+    const receivedBefore = JSON.stringify(reportsArray)
+    expect(reportsArray[0]?.value).toEqual(
+      expect.objectContaining({
+        type: 'lastMessage',
+        value: expect.arrayContaining([
+          expect.objectContaining({ role: 'assistant' }),
+        ]),
+      }),
+    )
+    expect(JSON.stringify(reportsArray)).toBe(receivedBefore)
   })
 
   it('does not retry when the first attempt already wrote', async () => {

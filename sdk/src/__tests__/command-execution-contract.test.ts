@@ -12,8 +12,9 @@ import { runTerminalCommand } from '../tools/run-terminal-command'
  * walked: measured on Bun 1.3.14, `toMatchObject({ key:
  * expect.stringContaining('…') })` REPLACES the received key's value with the
  * matcher object, so a later `outputSchema.parse(raw)` sees `{}` where the
- * string was and the union's broad branch silently strips it. Parse first,
- * assert on the parse.
+ * string was and the union's broad branch silently strips it. Parse first;
+ * compose toEqual/objectContaining and verify received-value preservation
+ * (FID-2026-1013-002).
  */
 describe('FID-2026-1012-023 command budget and cancellation contract', () => {
   test.each([NaN, Infinity, -Infinity, -2, -0.5])(
@@ -59,13 +60,17 @@ describe('FID-2026-1012-023 command budget and cancellation contract', () => {
       signal: controller.signal,
     })
     const parsed = runTerminalCommandParams.outputSchema.parse(output)
-    expect(parsed[0]?.value).toMatchObject({
-      executionOutcome: 'cancelled',
-      executionStarted: false,
-      executedToolName: 'run_terminal_command',
-      terminationState: 'not-started',
-      errorMessage: expect.stringContaining('cancelled'),
-    })
+    const receivedBefore = JSON.stringify(parsed)
+    expect(parsed[0]?.value).toEqual(
+      expect.objectContaining({
+        executionOutcome: 'cancelled',
+        executionStarted: false,
+        executedToolName: 'run_terminal_command',
+        terminationState: 'not-started',
+        errorMessage: expect.stringContaining('cancelled'),
+      }),
+    )
+    expect(JSON.stringify(parsed)).toBe(receivedBefore)
   })
 
   test('a command that outlives its budget reports that budget, the advice and its identity', async () => {

@@ -136,6 +136,12 @@ recorded decision or external dependency requires it.
 
 ### Harness and process
 
+- [ ] **FID-2026-1013-002. Asymmetric partial matchers mutate test evidence.**
+      Bun 1.3.14 replaces received fields with matcher objects. The current
+      AST census finds three inline asymmetric toMatchObject calls among 195
+      assertions. Replace those calls, pin received-value preservation and
+      enforce the inline pattern in repository validation. **Automation level: 3.**
+
 - [ ] **FID-2026-1013-001. Script test gates search the repository root.**
       Receipt test-root resolution excludes scripts/, contradicting the documented
       Bun substring-filter isolation contract. Repair argv/cwd and pin the runner.
@@ -328,6 +334,7 @@ work item remains active, including the recorded level-1 consolidation and exter
   `packages/agent-runtime/src/echo/protocol-refresh.generated.ts`, `docs/design/**`
 - FID-2026-1012-011: `scripts/learnings*.ts`, `dev/LEARNINGS.md`,
   `dev/LEARNINGS-RETIRED.md`, `dev/learnings-move-log.jsonl`,
+  `scripts/__tests__/learnings-retirement-recovery.test.ts`,
   `scripts/__tests__/learnings-size-policy.test.ts`,
   `scripts/__tests__/learnings-retire.test.ts`
 - FID-2026-1012-012: `scripts/lesson-feature-pipeline.ts`, `scripts/lessons-to-skills.ts`,
@@ -396,6 +403,11 @@ work item remains active, including the recorded level-1 consolidation and exter
   `packages/agent-runtime/src/echo/pre-write-gates-law2.ts`,
   `packages/agent-runtime/src/echo/__tests__/scope-targets.test.ts`, `SCOPE.md`
 - FID-2026-1013-001: `scripts/fid-verify.ts`, `scripts/__tests__/fid-verify.test.ts`
+- FID-2026-1013-002: `scripts/audit-mutating-matchers.ts`,
+  `scripts/__tests__/audit-mutating-matchers.test.ts`, `scripts/validate-repository.ts`,
+  `common/src/util/__tests__/analytics-dispatcher.test.ts`,
+  `sdk/src/__tests__/command-execution-contract.test.ts`,
+  `packages/agent-runtime/src/__tests__/spawn-agents-recorder-stall.test.ts`
 - FID-2026-1012-024: `common/src/types/experience.ts`, `common/src/util/experiences.ts`,
   `common/src/util/experience-*.ts`, `common/src/util/__tests__/experience-*.test.ts`,
   `packages/agent-runtime/src/hooks/**`, `packages/agent-runtime/src/tools/tool-executor/**`,
