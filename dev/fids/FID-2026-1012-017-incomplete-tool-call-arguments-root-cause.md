@@ -350,8 +350,13 @@ stay active on this record until they land.
 
 **Closed Date / Fix Description / Tests Added / Verification Evidence / Archived:** not applicable yet — this
 section is rewritten in the closure format by the pass that completes the staging step, at which point the
-status flips and the gates are declared. The commit hash for what landed is stamped by the follow-up record
-commit (the FID-2026-1012-023 precedent).
+status flips and the gates are declared.
+
+- **Commit for what landed:** `972c389d` — `fix(sdk): bound tool-call arguments at the emit path
+  (FID-2026-1012-017)`, 15 files, 649 insertions / 86 deletions: the budget module and its suite, the
+  classifier/stream plumbing, the ceiling guard, the `read_files` extraction that kept `tool-call.ts` and
+  `stream.ts` inside the 300-line ceiling, the spawn-steering repair, the register entry for the newly
+  captured `command-exit` class, and the scope-target update for this record.
 
 - **Authorised write surface:** `SCOPE.md` → machine-readable scope targets → this record's
   line (registered 2026-10-12 with the root-cause matrix).
