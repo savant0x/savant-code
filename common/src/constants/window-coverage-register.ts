@@ -271,4 +271,14 @@ export const WINDOW_COVERAGE_REGISTER: ReadonlyMap<
       note: 'Static 19-model catalog (FID-2026-1012-005). The keyed /v1/models publishes NO window fields (row shape id/object/created/owned_by — 19 rows, 0 window fields, probed 2026-10-12); 18 exact-id rows are cross-gateway consensus in the context-window-table-tiarina seam and 1 id (glm-4.7-flash) is documented no-row.',
     },
   ],
+  [
+    'apixo',
+    {
+      // FID-2026-1013-003: the vendor's own catalog publishes the window on
+      // every row, so the runtime value is the source of truth and no
+      // fallback-table section is owed.
+      disposition: 'runtime-published',
+      note: 'Live catalog keyless: HTTP 200 with 35/35 rows carrying context_window + max_output_tokens (probed 2026-10-13, FID-2026-1013-003); the keyless body is byte-identical to the authenticated one, so no key is needed for the census.',
+    },
+  ],
 ])

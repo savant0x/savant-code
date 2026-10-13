@@ -91,6 +91,7 @@ Or configure one directly:
 | Vercel AI Gateway | `/provider vercel` | `AI_GATEWAY_API_KEY` (keyless live model catalog; the key may also come from `.env.local`/shell — shell takes precedence) |
 | Clean APIs | `/provider cleanapis` | `CLEANAPIS_API_KEY` (authenticated live model catalog; OpenAI-compatible at `https://cleanapis.com/v1`) |
 | CodeCraft API | `/provider codecraft` | `CODECRAFT_API_KEY` (authenticated live model catalog; OpenAI chat at `https://codecraftapi.com/v1`) |
+| Apixo | `/provider apixo` | `APIXOAI_API_KEY` (keyless live model catalog publishing context windows; [OI] chat at `https://api.apixoai.online/v1`) |
 | Mistral AI | `/provider mistral` | `MISTRAL_API_KEY` (authenticated live model catalog; OpenAI chat at `https://api.mistral.ai/v1`) |
 | xKiro | `/provider xkiro` | `XKIRO_API_KEY` (public live chat catalog; explicit Messages/chat routing at `https://api.xkiro.com/v1`; paid models require account entitlement) |
 | ChatAnywhere | `/provider chatanywhere` | `CHATANYWHERE_API_KEY` (OpenAI-compatible gateway on a static 27-model chat roster at `https://api.chatanywhere.tech/v1`; free-key tier) |

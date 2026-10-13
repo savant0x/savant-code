@@ -43,6 +43,7 @@ const TABLE_NOTES: Record<string, string> = {
   nous: 'OpenAI-compatible direct inference; Portal OAuth is separate',
   kiosapi: 'OpenAI-compatible gateway (live catalog)',
   apinex: 'Hosted gateway with an authenticated live model catalog',
+  apixo: '[OI]-compatible gateway with a keyless live model catalog',
   orcarouter:
     'Multi-provider gateway with a live model catalog (free tier currently gated vendor-side on GitHub account linkage)',
   bai: 'OpenAI-compatible gateway with an authenticated live model catalog',

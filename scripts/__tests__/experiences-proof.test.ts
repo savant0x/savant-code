@@ -107,7 +107,15 @@ describe('production observation receipts', () => {
     )
     for (const args of [
       ['add', 'later.txt'],
-      ['-c', 'user.name=Fixture', '-c', 'user.email=fixture@example.invalid', 'commit', '-qm', 'later'],
+      [
+        '-c',
+        'user.name=Fixture',
+        '-c',
+        'user.email=fixture@example.invalid',
+        'commit',
+        '-qm',
+        'later',
+      ],
     ])
       expect(Bun.spawnSync(['git', ...args], { cwd: root }).exitCode).toBe(0)
     const run = Bun.spawnSync(['git', 'rev-parse', 'HEAD'], { cwd: root })
@@ -124,10 +132,21 @@ describe('production observation receipts', () => {
     const { root, boundary, receipt } = fixture()
     // The fixture's commit is the run; a later commit becomes the fix.
     const before = boundary.commit
-    fs.writeFileSync(path.join(root, 'fix.txt'), 'the commit that landed the fix')
+    fs.writeFileSync(
+      path.join(root, 'fix.txt'),
+      'the commit that landed the fix',
+    )
     for (const args of [
       ['add', 'fix.txt'],
-      ['-c', 'user.name=Fixture', '-c', 'user.email=fixture@example.invalid', 'commit', '-qm', 'fix'],
+      [
+        '-c',
+        'user.name=Fixture',
+        '-c',
+        'user.email=fixture@example.invalid',
+        'commit',
+        '-qm',
+        'fix',
+      ],
     ])
       expect(Bun.spawnSync(['git', ...args], { cwd: root }).exitCode).toBe(0)
     boundary.commit = Bun.spawnSync(['git', 'rev-parse', 'HEAD'], { cwd: root })

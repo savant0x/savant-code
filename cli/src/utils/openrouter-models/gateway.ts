@@ -3,7 +3,8 @@
  * + CommandCode + Nous Research + KiosAPI + APInex + OrcaRouter + B.AI +
  * HCNSec + TokenBom + Infron + UnoRouter + BazaarLink + Atria AI +
  * Intern InkStone (FID-2026-1004-008) + Vercel AI Gateway + OpenAI
- * (FID-2026-1001-001) + Mistral AI (FID-2026-1009-005) — plus subscription
+ * (FID-2026-1001-001) + Mistral AI (FID-2026-1009-005) + Apixo
+ * (FID-2026-1013-003) — plus subscription
  * plumbing.
  */
 import fs from 'node:fs'
@@ -12,6 +13,7 @@ import { modelRequestLimits } from '@savant-code/common/util/model-request-limit
 
 import { logger } from '../logger'
 import { __resetApinexCacheForTest } from './apinex'
+import { __resetApixoCacheForTest } from './apixo'
 import { __resetBaiCacheForTest } from './bai'
 import { __resetCleanApisCacheForTest } from './cleanapis'
 import { __resetCodecraftCacheForTest } from './codecraft'
@@ -114,6 +116,7 @@ function notifyGatewayCatalogListeners(catalog: OpenRouterModel[]): void {
  * - ChatAnywhere (static audited catalog — FID-2026-1007-005)
  * - Vercel AI Gateway (live API, public)
  * - Mistral AI (live API, authenticated — FID-2026-1009-005)
+ * - Apixo (live API, public — FID-2026-1013-003)
  *
  * Fetches live sources in parallel via Promise.allSettled(). If a source fails,
  * uses cached/empty list for that provider. Returns a combined, sorted list.
@@ -242,6 +245,7 @@ function resetProviderCatalogCaches(): void {
   __resetCodecraftCacheForTest()
   __resetMistralCacheForTest()
   __resetXkiroCacheForTest()
+  __resetApixoCacheForTest()
   // Step 9 remainder: lazily-built custom fetchers are cache state too.
   __resetCustomCatalogsForTest()
 }

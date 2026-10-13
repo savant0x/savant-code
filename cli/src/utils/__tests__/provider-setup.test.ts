@@ -185,6 +185,15 @@ describe('provider setup', () => {
     expect(getConfiguredProviderNames()).toContain('mistral')
   })
 
+  test('saves Apixo credentials for direct-provider mode (FID-2026-1013-003)', () => {
+    saveProviderApiKey('apixo', '  test-apixo-key  ')
+
+    expect(process.env.APIXOAI_API_KEY).toBe('test-apixo-key')
+    expect(process.env.DIRECT_PROVIDER).toBe('apixo')
+    expect(process.env.INFERENCE_BASE_URL).toBe('https://api.apixoai.online/v1')
+    expect(getConfiguredProviderNames()).toContain('apixo')
+  })
+
   test('saves OpenRouter credentials for direct-provider mode', () => {
     saveProviderApiKey('openrouter', '  test-openrouter-key  ')
 

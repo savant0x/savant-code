@@ -9,12 +9,12 @@ import { isRecord } from '@savant-code/common/util/object'
 import type { HookInputData, HookRunResult } from './types'
 
 /**
- * FID-2026-1012-024 — in-process "exposure-capture" sink.
+ * FID-2026-1012-024 - in-process "exposure-capture" sink.
  *
  * A failure class can only stop being unresolved when something proves the fixed
  * path was *exercised* after the fix and did not reproduce the failure. The
  * capture hook records failures, so it can never prove that: in its records,
- * silence is indistinguishable from a tool that never ran — which is exactly how
+ * silence is indistinguishable from a tool that never ran - which is exactly how
  * `skill_manage`'s class was mistaken for an invisible capture shape when it was
  * simply unexercised. This sink runs on the complementary event, a SUCCESSFUL
  * tool call, and stamps one receipt per (class, session) for every declared fix
@@ -23,14 +23,14 @@ import type { HookInputData, HookRunResult } from './types'
  * Contract (fail-open, mirroring `experience-capture.ts`):
  *   - never throws: an exposure failure can never affect execution;
  *   - fast path first: with `dev/experiences/fix-boundaries.json` absent or
- *     empty the sink returns without a write and without spawning anything —
+ *     empty the sink returns without a write and without spawning anything -
  *     this fires on every successful tool call;
  *   - one receipt per (class, session), never rewritten, so the first
  *     `exercisedAt` is the truthful one; the write uses `wx` so a concurrent
  *     writer cannot interleave;
  *   - the receipt records the revision that actually RAN (`git rev-parse HEAD`),
  *     and the boundary validator requires the boundary's commit to be an
- *     ancestor of it — a receipt cannot be manufactured for code that predates
+ *     ancestor of it - a receipt cannot be manufactured for code that predates
  *     the fix.
  */
 
@@ -86,7 +86,8 @@ function readBoundaries(root: string): readonly Boundary[] {
     const file = path.join(root, EXPERIENCES_DIR_NAME, FIX_BOUNDARIES_FILE_NAME)
     const { mtimeMs } = fs.statSync(file)
     const cached = manifestCache.get(root)
-    if (cached !== undefined && cached.mtimeMs === mtimeMs) return cached.boundaries
+    if (cached !== undefined && cached.mtimeMs === mtimeMs)
+      return cached.boundaries
     const parsed: unknown = JSON.parse(fs.readFileSync(file, 'utf8'))
     const boundaries: Boundary[] = []
     const entries: unknown = isRecord(parsed) ? parsed['boundaries'] : undefined
@@ -95,7 +96,8 @@ function readBoundaries(root: string): readonly Boundary[] {
         if (!isRecord(candidate)) continue
         const { classKey, commit } = candidate
         if (typeof classKey !== 'string' || classKey === '') continue
-        if (typeof commit !== 'string' || !/^[a-f0-9]{40}$/.test(commit)) continue
+        if (typeof commit !== 'string' || !/^[a-f0-9]{40}$/.test(commit))
+          continue
         boundaries.push({ classKey, commit })
       }
     }
@@ -134,7 +136,9 @@ export function exposureReceiptFile(
   sessionId: string,
 ): string {
   const digest = hashUtf8(`${boundary.classKey}|${sessionId}`).slice(0, 16)
-  const readable = boundary.classKey.replace(/[^A-Za-z0-9._-]/g, '-').slice(0, 80)
+  const readable = boundary.classKey
+    .replace(/[^A-Za-z0-9._-]/g, '-')
+    .slice(0, 80)
   return path.join(
     root,
     EXPERIENCES_DIR_NAME,
@@ -168,7 +172,7 @@ function resolveRevision(root: string): string | undefined {
 }
 
 /**
- * Engine-facing entry: stamp one receipt per matching boundary. Never throws —
+ * Engine-facing entry: stamp one receipt per matching boundary. Never throws -
  * an unresolved revision or an unwritable path is reported on the result.
  */
 export function runExposureCapture(input: HookInputData): HookRunResult {
@@ -220,7 +224,9 @@ export function runExposureCapture(input: HookInputData): HookRunResult {
             : `exposure capture failed: ${String(error)}`
       }
     }
-    return spawnError === undefined ? { outcome: 'allowed' } : { outcome: 'allowed', spawnError }
+    return spawnError === undefined
+      ? { outcome: 'allowed' }
+      : { outcome: 'allowed', spawnError }
   } catch (error) {
     return {
       outcome: 'allowed',

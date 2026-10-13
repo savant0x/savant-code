@@ -67,4 +67,48 @@ export const PROVIDER_REGISTRY_PARTITION_3 = {
     domain: 'tiarina.cloud',
     order: 4,
   },
+  apixo: {
+    id: 'apixo',
+    label: 'Apixo',
+    kind: 'gateway',
+    credentials: {
+      // The vendor's own examples use `APIXO_API_KEY`; the operator's funded
+      // credential is stored as `APIXOAI_API_KEY` in the repo-root
+      // `.env.local` (loaded by cli/src/pre-init/load-dev-env.ts). The
+      // registry name must be the one that resolves the key that exists.
+      envVar: 'APIXOAI_API_KEY',
+      // /provider hint is part of the canonical message.
+      missingKeyMessage:
+        'Apixo API key not set. Set APIXOAI_API_KEY environment variable or run /provider apixo.',
+    },
+    // api.apixoai.online — [OI]- and Anthropic-compatible gateway
+    // (apixoai.online/docs). The [OI] lane serves Chat Completions at
+    // /v1/chat/completions, which is the API root the protocol layer appends
+    // to. Live probes 2026-10-13 (FID-2026-1013-003): GET /v1/models -> 200
+    // keyless AND 200 authenticated, the two bodies byte-identical, 35 rows
+    // with one uniform shape (id/object/type/created/created_at/owned_by/
+    // display_name/context_window/max_output_tokens — windows published);
+    // POST /v1/chat/completions -> 200 round-trip on deepseek-v4.1-flash
+    // (a reasoning model: `reasoning_content` is returned and the billed
+    // total_tokens exceeds prompt+completion by the reasoning tokens).
+    baseUrl: 'https://api.apixoai.online/v1',
+    // Single protocol on the MEASURED wire: the vendor also serves
+    // /v1/messages and /v1/responses, but every model answers
+    // /v1/chat/completions and that leg is proven, so `openai-anthropic`
+    // would demand a protocolMap plus the `dual-protocol` exception for lanes
+    // Savant does not route (the tiarina precedent: measured single wire beats
+    // an advertised multi-wire).
+    protocol: 'openai',
+    // Upstream ids are bare (`deepseek-v4.1-flash`, `grok-4.7`); `strip`
+    // removes only the internal `apixo/` routing prefix — the
+    // vercel/mistral/tiarina precedent.
+    idTransform: 'strip',
+    // KEYLESS live catalog (probed 200 keyless 2026-10-13) — the Vercel /
+    // OrcaRouter pattern, so the cli wrapper carries no `resolveKey`; a
+    // resolver on a public catalog is the drift the runbook names.
+    catalog: { source: 'live', url: 'https://api.apixoai.online/v1/models' },
+    setupAvailable: true,
+    domain: 'apixoai.online',
+    order: 4,
+  },
 } as const satisfies Record<string, ProviderConfig>

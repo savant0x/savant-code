@@ -54,6 +54,7 @@ export function assembleGatewayCatalog(
     ...live.codecraftModels,
     ...live.mistralModels,
     ...live.xkiroModels,
+    ...live.apixoModels,
     ...fetchCommandCodeModels(),
     ...fetchHcnsecModels(),
     ...fetchTokenBomModels(),

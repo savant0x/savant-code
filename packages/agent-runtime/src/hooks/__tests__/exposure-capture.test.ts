@@ -25,11 +25,7 @@ function fixtureRoot(): string {
   return root
 }
 
-function declareBoundary(
-  root: string,
-  classKey: string,
-  commit = SHA_A,
-): void {
+function declareBoundary(root: string, classKey: string, commit = SHA_A): void {
   fs.writeFileSync(
     path.join(root, 'dev', 'experiences', FIX_BOUNDARIES_FILE_NAME),
     JSON.stringify({
@@ -83,7 +79,9 @@ describe('FID-2026-1012-024 production exposure receipts', () => {
     expect(receipt.implementationCommit).toBe(SHA_A)
     expect(receipt.captureVerified).toBe(true)
     // `z.iso.datetime({ offset: true })` accepts the UTC form.
-    expect(new Date(receipt.exercisedAt).toISOString()).toBe(receipt.exercisedAt)
+    expect(new Date(receipt.exercisedAt).toISOString()).toBe(
+      receipt.exercisedAt,
+    )
   })
 
   test('writes nothing for a tool that owns no declared boundary', () => {
@@ -189,9 +187,9 @@ describe('FID-2026-1012-024 production exposure receipts', () => {
     resetExposureCaptureCache()
     const root = fixtureRoot()
     // Keys encode the tool name exactly as the identity builder does.
-    expect(toolOfClassKey('v1:read%20files:incomplete-arguments:unexpected')).toBe(
-      'read files',
-    )
+    expect(
+      toolOfClassKey('v1:read%20files:incomplete-arguments:unexpected'),
+    ).toBe('read files')
     expect(toolOfClassKey('not-a-v1-key')).toBeUndefined()
     declareBoundary(root, 'v1:read%20files:incomplete-arguments:unexpected')
     setExposureRevisionResolver(() => SHA_A)

@@ -35,12 +35,12 @@ recorded decision or external dependency requires it.
       configuration (`opencode.json` with the sequentialthinking MCP server,
       `agent/ECHO.md` — an ECHO agent definition with frontmatter, 41,835 bytes —
       and `command/ECHO.md`, 342 bytes).
-      **Blocker:** the disposition is operator-reserved. The gate names exactly
-      two lawful outcomes — commit the new root deliberately, or give it its own
-      ignore entry beside `.idea/` — and both decide the fate of operator-authored
-      tooling (one makes it permanently invisible to git, the other puts a new root
-      in the repository). No agent-side choice is recorded; the files are left
-      untouched on disk. **Automation level: 1.**
+      **Operator ruling 2026-10-13, verbatim:** *"Ignore it in .gitignore"* — the
+      tree gets its own ignore entry beside `.idea/`, `.codex`, `.commandcode/`
+      and `.ohmyagent/`; its files stay on disk untouched and the release
+      automation stops staging them. The ruling came from the presented choice
+      (commit the root deliberately / ignore it / leave it red), so the
+      disposition is recorded, not inferred. **Automation level: 1.**
 
 - [ ] **T186. Two registered workspaces sit outside every typecheck and test
       chain.** `package.json` registers 15 workspaces, but the root `typecheck`
@@ -308,6 +308,7 @@ work item remains active, including the recorded level-1 consolidation and exter
   `packages/agent-runtime/src/run-agent-step/**`,
   `packages/agent-runtime/src/tools/stream-parser/**`,
   `packages/agent-runtime/src/tools/handlers/tool/**`, `common/src/tools/params/tool/**`
+- Untracked top-level `.opencode/` (operator ruling 2026-10-13): `.gitignore`
 - FID-2026-1012-018: `sdk/src/tools/read-url/**`, `sdk/src/__tests__/read-url*.test.ts`,
   `common/src/tools/params/tool/**`
 - FID-2026-1012-019: `packages/agent-runtime/src/llm-api/**`, `sdk/src/native/**`,

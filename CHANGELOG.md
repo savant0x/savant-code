@@ -10,6 +10,46 @@
 > the v0.0.36 cut. Release notes are written here at cut time; nothing in this
 > section ships until then.
 
+## 2026-10-13 — The Apixo gateway joins the built-in registry (FID-2026-1013-003)
+
+### Added
+
+- **Apixo (`apixo`, `APIXOAI_API_KEY`) is a built-in gateway provider** on
+  `https://api.apixoai.online/v1`, single `openai` protocol, `strip` id transform, and
+  a **keyless** live catalog (`/v1/models`) — probed 2026-10-13: HTTP 200 both keyless
+  and keyed with byte-identical bodies, 35 rows, and one real completion on
+  `deepseek-v4.1-flash`. The `/provider` picker, `/model` catalog, routing prefix,
+  credential readiness and favicon all derive from the registry entry; the new wrapper
+  carries a dedicated parser for the vendor's `context_window` /
+  `max_output_tokens` row shape, which the shared OpenRouter-shaped parser would have
+  read as zero windows (the measured Vercel mis-parse class).
+- **Window coverage is declared `runtime-published`** — the catalog publishes a window
+  on every one of its rows, so the runtime value is the source of truth and no
+  fallback-table section is owed. The exception manifest owns the `live-catalog`
+  behaviour, and the live census records the measured row count.
+
+### Fixed
+
+- Two registry-enumeration tests that the provider runbook does not name
+  (`common/src/providers/__tests__/provider-registry.test.ts`) now carry `apixo` in
+  the registry-key, setup-key and order-4 lists — a new provider fails those before
+  any pipeline gate sees it.
+- Pre-existing prettier drift in three files this change does not own
+  (`packages/agent-runtime/src/hooks/exposure-capture.ts`, its suite, and
+  `scripts/__tests__/experiences-proof.test.ts`) was repaired in the same pass so the
+  hard format gate is green. Formatting only; no behaviour changed.
+
+### Verification
+
+All eleven declared gates exit 0 (receipt stamped 2026-10-13T18:01:05.201Z); full root
+typecheck exit 0; every workspace suite green — cli 4155, common 871, sdk 672,
+agent-runtime 2103, desktop 450, evals 229 plus six smaller workspaces, all 0 fail;
+`quality:report` PASS; eslint, markdownlint and prettier exit 0;
+`generate:provider-docs:check`, `providers:parity --check` (apixo: 35) and
+`window-coverage:check` clean. `validate:repository` was not run by operator ruling
+2026-10-13 (recorded verbatim in the archived FID); the sub-checks this change owns were
+run individually. Closed and archived at `001fecc`.
+
 ## 2026-10-13 — The learning-store and harness lanes close (FID-2026-1012-010/-011/-012/-013/-014/-015/-016/-027, FID-2026-1013-001/-002)
 
 ### Fixed

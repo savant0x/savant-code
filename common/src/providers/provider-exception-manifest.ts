@@ -159,6 +159,19 @@ export const PROVIDER_EXCEPTION_MANIFEST: readonly ProviderExceptionManifestEntr
       ],
     },
     {
+      // FID-2026-1013-003: KEYLESS live catalog (200 keyless and 200
+      // authenticated with byte-identical bodies, probed 2026-10-13) with a
+      // dedicated context_window/max_output_tokens parser — the Vercel
+      // pattern, so no credential resolver is implied.
+      providerId: 'apixo',
+      kinds: ['live-catalog'],
+      owner: 'cli/src/utils/openrouter-models/apixo.ts',
+      evidence: [
+        'cli/src/utils/openrouter-models/apixo.ts',
+        'cli/src/utils/openrouter-models/gateway.ts',
+      ],
+    },
+    {
       providerId: 'tokenrouter',
       kinds: ['multi-protocol'],
       owner: 'common/src/constants/model-config/provider-protocols.ts',

@@ -6,7 +6,7 @@
  * POSITIONAL CONTRACT: `restResults` is the tail of the Promise.allSettled()
  * array after [openrouter, nvidia], in exactly this order:
  * Nous, KiosAPI, APInex, OpenAI, OrcaRouter, B.AI, Vercel, CleanApis,
- * CodeCraft, Mistral, xKiro, custom catalogs. Fulfilled values win; rejected sources degrade to their
+ * CodeCraft, Mistral, xKiro, Apixo, custom catalogs. Fulfilled values win; rejected sources degrade to their
  * per-provider cache — custom catalogs degrade to [] (lazily-built custom
  * fetchers have no cache, FID-2026-0910-004 D10).
  *
@@ -15,6 +15,7 @@
  * turned a positional list into two places to edit.
  */
 import { fetchApinexModels, getCachedApinexModels } from './apinex'
+import { fetchApixoModels, getCachedApixoModels } from './apixo'
 import { fetchBaiModels, getCachedBaiModels } from './bai'
 import { fetchCleanApisModels, getCachedCleanApisModels } from './cleanapis'
 import { fetchCodecraftModels, getCachedCodecraftModels } from './codecraft'
@@ -48,6 +49,7 @@ export interface GatewayLiveCatalogs {
   codecraftModels: OpenRouterModel[]
   mistralModels: OpenRouterModel[]
   xkiroModels: OpenRouterModel[]
+  apixoModels: OpenRouterModel[]
   customModels: OpenRouterModel[]
 }
 
@@ -75,6 +77,9 @@ export async function fetchGatewayLiveCatalogs(forceRefresh: boolean): Promise<{
     fetchCodecraftModels(forceRefresh),
     fetchMistralModels(forceRefresh),
     fetchXkiroModels(forceRefresh),
+    // FID-2026-1013-003: Apixo is the last BUILT-IN live leg; the
+    // custom-catalogs tail below must stay last (see the positional contract).
+    fetchApixoModels(forceRefresh),
     // FID-2026-0910-004 Step 9 remainder: custom catalogs (live + inline)
     // merge here; per-provider failures degrade to [] (D10 ladder).
     fetchAllCustomModels(forceRefresh),
@@ -99,6 +104,7 @@ export function resolveGatewayLiveCatalogs(
     codecraftResult,
     mistralResult,
     xkiroResult,
+    apixoResult,
     customResult,
   ] = restResults
 
@@ -157,5 +163,9 @@ export function resolveGatewayLiveCatalogs(
       xkiroResult?.status === 'fulfilled'
         ? xkiroResult.value
         : getCachedXkiroModels(),
+    apixoModels:
+      apixoResult?.status === 'fulfilled'
+        ? apixoResult.value
+        : getCachedApixoModels(),
   }
 }

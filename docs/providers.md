@@ -36,6 +36,7 @@ closed if this section drifts from the registry.
 | TokenRouter | `tokenrouter` | gateway | `TOKENROUTER_API_KEY` | `https://api.tokenrouter.com/v1` | multi (`TOKENROUTER_PROTOCOLS`) | static (31 models) |
 | NVIDIA NIM | `nvidia` | gateway | `NVIDIA_API_KEY` | `https://integrate.api.nvidia.com/v1` | openai | live |
 | APInex | `apinex` | gateway | `APINEX_API_KEY` | `https://api.apinex.bond/v1` | openai | live |
+| Apixo | `apixo` | gateway | `APIXOAI_API_KEY` | `https://api.apixoai.online/v1` | openai | live |
 | Atria AI | `atria` | gateway | `ATRIA_API_KEY` | `https://api.atria-asi.ai/v1` | openai | static (1 model) |
 | B.AI | `bai` | gateway | `BAI_API_KEY` | `https://api.b.ai/v1` | openai | live |
 | BazaarLink | `bazaarlink` | gateway | `BAZAARLINK_API_KEY` | `https://api.bazaarlink.ai/v1` | openai | static (12 models) |
@@ -84,13 +85,24 @@ closed if this section drifts from the registry.
   allowlists. Their live `/v1/models` rosters exist but are not the catalog: the
   audited set is checked in deliberately, because identity substitutions and
   dead channels were measured on the live listings.
+- **Apixo** is the one provider whose credential name differs from the vendor's
+  own documentation: the vendor's examples use `APIXO_API_KEY`, while the
+  registry resolves `APIXOAI_API_KEY`, the name the operator's key is stored
+  under. Its catalog is keyless, so the picker populates before any key exists.
+  `deepseek-v4.1-flash` is a reasoning model — it returns `reasoning_content`,
+  and the billed `total_tokens` exceeds prompt + completion by the reasoning
+  tokens, which the vendor charges at the output price.
 
 ### Live catalogs
 
 CodeCraft and CleanAPIs fetch authenticated `/v1/models` catalogs. xKiro's
-chat catalog is public. Rosters are live rather than pinned to a model list
+chat catalog is public. Apixo's catalog is public and self-describing: every one
+of its 35 rows publishes a `context_window` and `max_output_tokens`, so its
+windows come from the vendor rather than a fallback table. Rosters are live
+rather than pinned to a model list
 in source. Catalog requests returned 33 CodeCraft, 129 xKiro, and 33 CleanAPIs
-models on 2026-10-03; these are observed counts, not fixed limits.
+models on 2026-10-03, and 35 Apixo models on 2026-10-13; these are observed
+counts, not fixed limits.
 
 The runtime removes exactly one internal provider prefix before transmission.
 For example, `xkiro/mistralai/ministral-14b` sends

@@ -77,6 +77,25 @@ describe('validateProviderRegistry (FID-2026-0809-001 Phase 5)', () => {
     expect(deriveProviderOrder(PROVIDER_REGISTRY, 'not-a-provider')).toBe(4)
   })
 
+  test('the apixo entry derives its routing/setup/picker surfaces (FID-2026-1013-003)', () => {
+    // The entry's own derivation, asserted from the registry alone: nothing
+    // here is hand-maintained in a derived surface.
+    expect(PROVIDER_REGISTRY.apixo.id).toBe('apixo')
+    expect(ALLOWED_MODEL_PREFIXES).toContain('apixo')
+    expect(deriveValidProviderIds(PROVIDER_REGISTRY)).toContain('apixo')
+    expect(deriveProviderDomains(PROVIDER_REGISTRY, ORG_DOMAINS).apixo).toBe(
+      'apixoai.online',
+    )
+    expect(deriveProviderOrder(PROVIDER_REGISTRY, 'apixo')).toBe(4)
+    const setup = deriveSetupConfig(PROVIDER_REGISTRY) as Record<
+      string,
+      { label: string; envVar: string; baseUrl: string } | undefined
+    >
+    expect(setup.apixo?.envVar).toBe('APIXOAI_API_KEY')
+    expect(setup.apixo?.baseUrl).toBe('https://api.apixoai.online/v1')
+    expect(setup.apixo?.label).toBe('Apixo')
+  })
+
   test('static catalogs agree with the registry prefix (catalog agreement)', () => {
     // Pin the contract explicitly: every model id in every static catalog
     // carries the provider's routing prefix, so the picker and the router can
