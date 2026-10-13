@@ -6,6 +6,13 @@ import { commandExecutionMetadata } from '@savant-code/common/util/command-execu
 
 import type { CommandExecutionMetadata } from '@savant-code/common/util/command-execution'
 
+/**
+ * A validation refusal reported through the command envelope. The prefix is
+ * required and anchored, so a real exit whose stderr merely quotes the phrase is
+ * still rendered as an exit (FID-2026-1012-024).
+ */
+const REFUSAL_SIGNATURE = /^run_readonly_command rejected: /
+
 const MAX_INSPECTION_DEPTH = 32
 const MAX_INSPECTION_NODES = 4096
 const INSPECTION_FAILURE = 'Tool result failure inspection could not complete'
@@ -117,6 +124,10 @@ function scalarFailure<T extends object>(value: T): string {
   ) {
     const detail =
       'stderr' in value && typeof value.stderr === 'string' ? value.stderr : ''
+    // FID-2026-1012-024: a guard refusal never executed anything, so it is not
+    // an execution outcome. The producer declares it on its own channel; a
+    // refusal is the declaration itself, never "Command exited with code 1".
+    if (REFUSAL_SIGNATURE.test(detail)) return detail
     return `Command exited with code ${value.exitCode}${detail ? `: ${detail}` : ''}`
   }
   if (

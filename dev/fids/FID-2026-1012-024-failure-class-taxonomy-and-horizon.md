@@ -328,6 +328,55 @@ audit trail of the mistaken premise, not as acceptance criteria or class disposi
   manifest (10 keys), 0 behaviour change to the walker, 0 historical rows rewritten, 0 fix boundaries
   claimed. The lane's assertion remains red by design.
 
+### Loop 5 — Refusal channel and production exposure receipts (2026-10-13, automation level 3)
+
+- **RED:** two gaps left by Loop 4. (i) The live `command-exit` class merged a *validation refusal* with
+  real host exits: the readonly guard declares `run_readonly_command rejected: …` in `stderr` with
+  `exitCode: 1` (`run-readonly-command.ts:45,68`), while the walker rendered every non-zero exit as
+  `Command exited with code N: …` — so a refusal that executed nothing read as an execution outcome.
+  (ii) Exposure could not be earned at all: `fix-boundaries.json` is empty, and the only way a boundary
+  could ever report `observed` was a hand-written receipt, which is the synthetic evidence the probe
+  exists to refuse.
+- **GREEN — a refusal is not an execution outcome.** The producer already declares the refusal on its own
+  channel; the renderer now honours it (`tool-result-inspection.ts`: a non-zero exit whose `stderr`
+  matches the anchored `REFUSAL_SIGNATURE` renders the refusal itself, never the exit prefix), and
+  `CAUSE_PATTERNS` maps `^run_readonly_command rejected:` to cause **`refused`**.
+- **GREEN — exposure is now produced, not asserted.** `packages/agent-runtime/src/hooks/exposure-capture.ts`
+  is an in-process `PostToolUse` sink (declared in `protocol.config.yaml`, allowlisted in
+  `HOOK_BUILTIN_ACTIONS`, dispatched by the engine, reset in the workspace test-isolation preload). It
+  fires on **success** — the complementary event to the failure capture — and stamps one receipt per
+  (class, session) for each declared boundary the executed tool owns, recording the revision that
+  actually RAN (`git rev-parse HEAD`). Fast path: with no boundary declared it returns before writing or
+  spawning, so it costs nothing while the manifest is empty. Receipts are first-write-wins (`wx`), never
+  rewritten, so the first `exercisedAt` is the truthful one.
+- **GREEN — the validator measures ancestry, not equality.** A real session runs HEAD, which is *ahead*
+  of the boundary commit that landed the fix; requiring `implementationCommit === boundary.commit` would
+  force every receipt to claim a revision the session never ran. `experiences-proof.ts` now requires the
+  boundary commit to be an **ancestor of** (or equal to) the recorded run, so a receipt cannot be
+  manufactured for code that predates its own fix — and a receipt from a *later* revision now counts.
+- **AUDIT:** 10 exposure-capture cases and 10 hook suites green (92 pass / 0 fail), proof suite 8/8
+  including the new descendant-passes / ancestor-fails cases, `hook-events-check` PASS, census
+  586 records / 57 classes / 0 issues, `validate:repository` PASS, root typecheck and ESLint green.
+- **ADVERSARIAL — the rule that governs every future taxonomy change: it must be ADDITIVE.** The first
+  attempt inserted a pattern matching the *already-stored* rendering, and the ledger rejected its own
+  rows: `inspectLedger` fails any row whose stored `classKey` disagrees with its re-derived cause, so
+  the two refusal rows became issues, the census went red, and **FID-2026-1012-021's declared probe gate
+  failed `validate:repository`**. The pattern was rewritten to claim only lines that no stored row
+  carries, and the census returned to 0 issues. A stored spelling must keep deriving its stored cause
+  forever — which is also why Loop 4's rename was lawful: those rows predate `classKey` and store none.
+  This is now pinned by test rather than by comment.
+- **ADVERSARIAL (2):** (a) *Does the refusal split hide a real failure?* No — the refusal still extracts a
+  non-empty line, so `hasToolResultError` / `hasCommandFailure` treat it as a failure exactly as before;
+  only its class name changes. (b) *Can the receipt sink be gamed?* A receipt is never written for a
+  class the executed tool does not own; an unresolvable revision writes nothing and reports `spawnError`;
+  the anchored signature keeps a command that merely *quotes* the phrase classified as an exit. (c) *Does
+  `refused` have rows?* Not yet — no refusal has been captured since the change, so the class is
+  declared and owned but unpopulated, and the older refusals keep their stored `command-exit` identity.
+  No count moved by renaming, which is the point.
+- **CHANGE DELTA:** 3 source files, 1 config, 1 allowlist, 2 new test files, 1 workspace preload, 1
+  validator; 0 historical rows rewritten; 0 boundaries declared; the lane's repair assertion still
+  exits 1.
+
 ### Missed Questions
 
 1. **Should the class key be stored at capture time or derived at read time?** Stored, from the

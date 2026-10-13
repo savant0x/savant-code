@@ -96,6 +96,52 @@ describe('production observation receipts', () => {
     const { root, boundary } = fixture()
     expect(inspectBoundaryEvidence(root, boundary)).toEqual([])
   })
+  test('a receipt from a LATER revision still proves the fixed path ran', () => {
+    // The session ran HEAD, which is normally ahead of the boundary commit that
+    // landed the fix; requiring equality would force the receipt to claim a
+    // revision it never ran.
+    const { root, boundary, receipt } = fixture()
+    fs.writeFileSync(
+      path.join(root, 'later.txt'),
+      'a later commit, after the fix landed',
+    )
+    for (const args of [
+      ['add', 'later.txt'],
+      ['-c', 'user.name=Fixture', '-c', 'user.email=fixture@example.invalid', 'commit', '-qm', 'later'],
+    ])
+      expect(Bun.spawnSync(['git', ...args], { cwd: root }).exitCode).toBe(0)
+    const run = Bun.spawnSync(['git', 'rev-parse', 'HEAD'], { cwd: root })
+      .stdout.toString()
+      .trim()
+    expect(run).not.toBe(boundary.commit)
+    fs.writeFileSync(
+      path.join(root, 'exposure.json'),
+      JSON.stringify({ ...receipt, implementationCommit: run }),
+    )
+    expect(inspectBoundaryEvidence(root, boundary)).toEqual([])
+  })
+  test('a receipt from a revision BEFORE the fix cannot prove anything', () => {
+    const { root, boundary, receipt } = fixture()
+    // The fixture's commit is the run; a later commit becomes the fix.
+    const before = boundary.commit
+    fs.writeFileSync(path.join(root, 'fix.txt'), 'the commit that landed the fix')
+    for (const args of [
+      ['add', 'fix.txt'],
+      ['-c', 'user.name=Fixture', '-c', 'user.email=fixture@example.invalid', 'commit', '-qm', 'fix'],
+    ])
+      expect(Bun.spawnSync(['git', ...args], { cwd: root }).exitCode).toBe(0)
+    boundary.commit = Bun.spawnSync(['git', 'rev-parse', 'HEAD'], { cwd: root })
+      .stdout.toString()
+      .trim()
+    boundary.fixedAt = new Date().toISOString()
+    fs.writeFileSync(
+      path.join(root, 'exposure.json'),
+      JSON.stringify({ ...receipt, implementationCommit: before }),
+    )
+    expect(inspectBoundaryEvidence(root, boundary)).toContain(
+      'exposure receipt disagrees with boundary: exposure.json',
+    )
+  })
   test('a synthetic receipt cannot substitute for production exposure', () => {
     const { root, boundary, receipt } = fixture()
     fs.writeFileSync(

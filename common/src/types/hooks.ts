@@ -131,6 +131,12 @@ export type _HookEventClassesDisjoint = AssertNever<
  */
 export const HOOK_BUILTIN_ACTIONS = [
   'experience-capture',
+  // FID-2026-1012-024: stamps one production exposure receipt on a SUCCESSFUL
+  // tool call for every declared fix boundary the executed tool owns — the
+  // evidence a failure class needs before it can be called observed. In-process
+  // because `PostToolUse` is a high-frequency event, and the sink's fast path
+  // does no work while no boundary is declared.
+  'exposure-capture',
   // FID-2026-1001-003 step 1 (defence-in-depth, operator-approved 2026-10-02):
   // categorically deny worktree-mutating terminal commands BEFORE dispatch,
   // decided by the SAME effect classifier as the pre-write gates (Law 13).

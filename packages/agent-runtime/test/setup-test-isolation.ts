@@ -26,6 +26,7 @@ import { __resetYagniEnforcedCacheForTests } from '../src/echo/yagni-pre-write-g
 import { resetRetentionRegistry } from '../src/evidence/retention-registry'
 import { resetComplianceCaptureCache } from '../src/hooks/compliance-capture'
 import { resetEngineCache } from '../src/hooks/engine'
+import { resetExposureCaptureCache } from '../src/hooks/exposure-capture'
 import { resetSessionInstances } from '../src/provenance/registry'
 import { resetUnknownShapeLog } from '../src/provider-boundary/classified-stream-retry'
 import { resetProviderCircuitBreakers } from '../src/provider-boundary/provider-circuit-breaker'
@@ -53,6 +54,7 @@ beforeEach(() => {
   __resetYagniEnforcedCacheForTests()
   resetComplianceCaptureCache()
   resetEngineCache()
+  resetExposureCaptureCache()
   resetSessionInstances()
   resetRetentionRegistry()
   resetLastEmittedMicroSummary()

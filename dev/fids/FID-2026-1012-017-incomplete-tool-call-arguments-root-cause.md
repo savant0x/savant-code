@@ -185,8 +185,8 @@ repository gate).
 
 ### Verification Receipt
 
-- fingerprint: sha256:f2610e0154774b967c68c88162654a6611e2e66762c5202ee3419be4e3b29efd
-- verified: 2026-10-13T04:05:53.237Z
+- fingerprint: sha256:ebdaec32df56db830873e4ea2e79d37d03f589b28eb47fa4bfb0997ae0134073
+- verified: 2026-10-13T17:30:42.512Z
 - test sdk/src/__tests__/tool-argument-budget.test.ts: exit 0
 - test sdk/src/impl/__tests__/llm-native-tool-call.test.ts: exit 0
 - test packages/agent-runtime/src/tools/handlers/tool/__tests__/chunked-write.test.ts: exit 0
@@ -372,6 +372,56 @@ repository gate).
       `…/chunked-write-commit.test.ts` — 15 pass / 0 fail across the two.
 - [x] **Not claimed:** any class having stopped recurring. No fix boundary is written, so every owned
       key reports `unresolved` and the 14-day/three-session observation window has not started.
+- [x] **Loop 5 measured the opposite for four of the nineteen:** 20 post-fix rows after both fix
+      commits (`suggest_followups` 17, `basher` 1, `transition_phase` 1, `browser_use` 1), all
+      `errorClass: native-incomplete` and all carrying this lane's own budget text. The window cannot
+      start for those classes, and the provider-side rejection is this lane's identified remaining work.
+
+### Loop 5 — Recurrence check against the fix boundary (2026-10-13, automation level 3)
+
+- **RED:** This record was `fixed` on the strength of its gates. Its own Boundaries said a reduction in
+  the recorded count is claimed only after the recurrence assertion window passes — and no measurement
+  had ever been taken against the fix commits, so "fixed" and "the class stopped" were
+  indistinguishable for all nineteen classes.
+- **Method:** FID-2026-1012-024's instrument applied to this lane's owned classes, with the boundaries
+  taken from the commits themselves (`git log -1 --format=%cI`) rather than from a date
+  approximation: `972c389d` @ 2026-10-13T03:44:28Z (emit path), `f46af839` @ 2026-10-13T04:05:07Z
+  (staging). Rows were recounted from `dev/experiences/raw-traces.jsonl` with `experienceClassIdentity`.
+- **GREEN — MEASURED RECURRENCE: four classes did not stop.** 20 of this family's rows are dated after
+  **both** fix commits, in **one session** (`40c8bf08…`), inside a single **6-second burst**
+  (2026-10-13T05:08:46.967Z → 05:08:52.666Z):
+
+| class | post-fix rows | sessions |
+|---|---|---|
+| `suggest_followups:incomplete-arguments:unexpected` | 17 | 1 |
+| `basher:incomplete-arguments:unexpected` | 1 | 1 |
+| `transition_phase:incomplete-arguments:unexpected` | 1 | 1 |
+| `browser_use:incomplete-arguments:unexpected` | 1 | 1 |
+
+  The horizon rule is unambiguous: `postFixFailures > 0` ⇒ `recurred`. These four classes have **not**
+  stopped recurring, and no repair may be claimed for them.
+
+- **The fix is live inside those rows, which locates the remaining half.** All 20 carry
+  `errorClass: native-incomplete`, and each first line contains the recovery text this lane shipped —
+  *"One tool call's arguments may occupy at most 8192 characters (derived from this model's
+  8192-token output allowance)"*. So the emit-path lever is deployed and stating its budget, and the
+  failure still occurs: the **provider** rejects the call's arguments ("nothing observed indicates
+  truncation"), which a local ceiling cannot prevent by refusing oversized local calls. That second
+  half is newly identified here, not previously known.
+- **The other fifteen classes are unobserved, not clean.** They have zero post-fix rows, but the family
+  has only three post-fix sessions and under a day of elapsed time against a 14-day / three-session
+  requirement. Silence is not evidence — the rule this program exists to enforce.
+- **AUDIT:** the 20 rows were read in full (`errorClass`, `finishReason`, `argumentsTruncated` presence,
+  exact line text). Root typecheck, ESLint, `validate:repository`, the scripts suites and the census
+  were re-run green on the tree carrying this note.
+- **ADVERSARIAL:** (a) *Were these rows produced by the fix's own author session?* No — they are
+  1 h 03 m after the staging commit, in a session id absent from both fix commits. (b) *Does a 6-second
+  burst inflate 20 records into 20 recurrences?* The class claim needs one; the burst is reported as
+  what it is. (c) *Should the boundary be declared anyway so the instrument can score it?* No:
+  declaring a repair boundary for a recurring class makes the census report `unsupported repair` — the
+  instrument refusing the claim, as designed. The window cannot start while the class is firing.
+- **CHANGE DELTA:** 0% source — measurement and record only. No boundary is declared, no class claim is
+  made, and `dev/experiences/fix-boundaries.json` stays empty.
 
 ## Boundaries
 
@@ -381,7 +431,8 @@ repository gate).
 - No runtime session was driven to reproduce the class on demand in this pass; the mechanism is
   read from the tree and the volume is measured from the ledger.
 - A reduction in the recorded count is claimed only after the recurrence assertion window
-  passes. Until then the class is open and no lesson is written for it.
+  passes. Until then the class is open and no lesson is written for it. Loop 5 shows the reduction has
+  not happened for four of the nineteen classes, so the window cannot start for them at all.
 
 ## Resolution
 

@@ -30,6 +30,28 @@ function evidenceFile(root: string, evidence: string): string | undefined {
   }
 }
 
+/**
+ * FID-2026-1012-024: a receipt records the revision that actually RAN, which is
+ * normally HEAD — ahead of the boundary commit that landed the fix. Requiring
+ * equality would force every receipt to claim a revision the session never ran,
+ * which is the synthetic evidence this probe exists to refuse. The honest rule
+ * is ancestry: the boundary commit must be an ancestor of (or equal to) the run
+ * that produced the receipt, so a receipt can never be manufactured for code
+ * that predates its own fix.
+ */
+function ranAtOrAfter(
+  root: string,
+  boundaryCommit: string,
+  runCommit: string,
+): boolean {
+  if (boundaryCommit === runCommit) return true
+  const result = Bun.spawnSync(
+    ['git', 'merge-base', '--is-ancestor', boundaryCommit, runCommit],
+    { cwd: root },
+  )
+  return result.exitCode === 0
+}
+
 /** Receipts bind exposure to this class, session and implemented revision. */
 export function inspectBoundaryEvidence(
   root: string,
@@ -61,7 +83,7 @@ export function inspectBoundaryEvidence(
         receipt.classKey !== boundary.classKey ||
         receipt.sessionId !== exposure.sessionId ||
         Date.parse(receipt.exercisedAt) !== Date.parse(exposure.exercisedAt) ||
-        receipt.implementationCommit !== boundary.commit
+        !ranAtOrAfter(root, boundary.commit, receipt.implementationCommit)
       )
         issues.push(
           `exposure receipt disagrees with boundary: ${exposure.evidence}`,

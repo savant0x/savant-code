@@ -48,6 +48,50 @@ describe('FID-2026-1012-024 stable class identity', () => {
     ).toBe(true)
   })
 
+  test('a guard refusal is its own cause; the legacy rendering keeps its own', () => {
+    // The producer declares a refusal on its own channel, so a validation
+    // refusal never reads as an execution outcome.
+    expect(
+      experienceClassIdentity(
+        record(
+          'run_readonly_command',
+          'run_readonly_command rejected: Command contains forbidden shell metacharacters',
+        ),
+      ).cause,
+    ).toBe('refused')
+    expect(
+      experienceClassIdentity(
+        record(
+          'run_readonly_command',
+          'Command exited with code 127: /usr/bin/bash: head: command not found',
+        ),
+      ).cause,
+    ).toBe('command-exit')
+    // Rows already in the ledger store the pre-split rendering, and
+    // `inspectLedger` rejects a row whose stored key disagrees with its cause.
+    // This spelling must therefore keep deriving `command-exit`: a taxonomy
+    // change may only claim lines that no stored row carries.
+    expect(
+      experienceClassIdentity(
+        record(
+          'run_readonly_command',
+          'Command exited with code 1: run_readonly_command rejected: Command contains forbidden shell metacharacters',
+        ),
+      ).cause,
+    ).toBe('command-exit')
+  })
+
+  test('a real exit that merely quotes the refusal text is still an exit', () => {
+    expect(
+      experienceClassIdentity(
+        record(
+          'run_readonly_command',
+          'Command exited with code 1: ./a.ts: run_readonly_command rejected: x',
+        ),
+      ).cause,
+    ).toBe('command-exit')
+  })
+
   test('an unrecognised message keeps its own reproducible identity', () => {
     const cause = experienceClassIdentity(
       record('code_search', 'an entirely new failure message'),

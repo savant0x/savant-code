@@ -27,6 +27,17 @@ const CAUSE_PATTERNS: ReadonlyArray<readonly [RegExp, string]> = [
   [/^tool result contains an error$/, 'cause-not-recorded'],
   [/^Command timed out after\b|^Code search timed out\b/, 'timeout'],
   [/^Tool call aborted:/, 'cancelled'],
+  // FID-2026-1012-024: a guard REFUSAL is a validation decision, not an execution
+  // outcome. The readonly producer declares one on its own channel (`stderr`
+  // starting with the refusal, exitCode 1 — the envelope shape FID-2026-0908-001
+  // keeps for command-class tools), and the walker now renders the refusal
+  // itself instead of "Command exited with code 1: …".
+  //
+  // This pattern deliberately does NOT match that older rendering: rows already
+  // in the ledger store it, and `inspectLedger` rejects any row whose stored
+  // classKey disagrees with its re-derived cause. Taxonomy changes are additive
+  // for that reason — a pattern may claim only lines that no stored row carries.
+  [/^run_readonly_command rejected:/, 'refused'],
   [/^Command exited with code\b/, 'command-exit'],
   [/^File read did not complete:/, 'read-incomplete'],
   [/^The old string .* was not found/, 'edit-target-missing'],

@@ -244,6 +244,16 @@ hooks:
   # fail-open — a capture failure can never affect execution.
   - event: PostToolUseFailure
     action: experience-capture
+  # FID-2026-1012-024: production exposure receipts. A failure class can only stop
+  # being unresolved when something proves the fixed path was exercised AFTER the
+  # fix and did not reproduce it, and the failure capture above cannot show that —
+  # in its records, silence is indistinguishable from a tool that never ran (that
+  # is how `skill_manage`'s class was mistaken for an invisible capture shape when
+  # it was simply unexercised). This sink fires on SUCCESS and stamps one receipt
+  # per (class, session) for each declared fix boundary the executed tool owns.
+  # Fast path: with no boundary declared it returns before writing or spawning.
+  - event: PostToolUse
+    action: exposure-capture
   # FID-2026-1001-003 step 1 defence-in-depth (operator-approved 2026-10-02):
   # categorically deny worktree-mutating terminal commands BEFORE dispatch.
   # Decided by the SAME effect classifier as the pre-write gates (Law 13);

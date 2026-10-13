@@ -78,7 +78,7 @@ describe('FID-2026-1012-024 producer-shaped failure coverage', () => {
       error: 'EACCES',
     },
     {
-      name: 'readonly guard rejection (live command-exit class)',
+      name: 'readonly guard refusal (its own channel, not an exit)',
       value: {
         command: 'cat a | tee b',
         stdout: '',
@@ -87,7 +87,18 @@ describe('FID-2026-1012-024 producer-shaped failure coverage', () => {
         exitCode: 1,
       },
       error:
-        'Command exited with code 1: run_readonly_command rejected: Command contains forbidden shell metacharacters',
+        'run_readonly_command rejected: Command contains forbidden shell metacharacters',
+    },
+    {
+      name: 'real non-zero exit is still reported as an exit',
+      value: {
+        command: 'cat missing',
+        stdout: '',
+        stderr: 'cat: missing: No such file or directory',
+        exitCode: 1,
+      },
+      error:
+        'Command exited with code 1: cat: missing: No such file or directory',
     },
   ]
 
@@ -104,6 +115,24 @@ describe('FID-2026-1012-024 producer-shaped failure coverage', () => {
       )
     })
   }
+
+  test('a real exit that merely quotes the refusal phrase is still an exit', () => {
+    // The refusal signature is anchored, so a command whose own stderr contains
+    // the phrase is not promoted into a validation refusal.
+    const output = [
+      {
+        value: {
+          command: 'grep -r "run_readonly_command rejected: " .',
+          stdout: '',
+          stderr: './a.ts: run_readonly_command rejected: x',
+          exitCode: 1,
+        },
+      },
+    ]
+    expect(extractToolResultError(output)).toBe(
+      'Command exited with code 1: ./a.ts: run_readonly_command rejected: x',
+    )
+  })
 
   test('stderr without a failing exit is not a failed command', () => {
     const output = [{ value: { stderr: 'warning', exitCode: 0 } }]

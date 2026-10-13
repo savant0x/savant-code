@@ -2,6 +2,7 @@ import { readProtocolConfig } from '@savant-code/common/util/protocol-config'
 
 import { runDenyMutatingTerminal } from './deny-mutating-terminal'
 import { runExperienceCapture } from './experience-capture'
+import { runExposureCapture } from './exposure-capture'
 import { runHookCommand } from './runner'
 
 import type { HookInputData, HookRunResult } from './types'
@@ -38,6 +39,11 @@ import type { CommandExecutionMetadata } from '@savant-code/common/util/command-
 export function runHook(config: HookConfig, input: HookInputData) {
   if (config.action === 'experience-capture') {
     return Promise.resolve(runExperienceCapture(input))
+  }
+  if (config.action === 'exposure-capture') {
+    // FID-2026-1012-024: the success-side sink. Fail-open like every other
+    // observation hook; the caller's catch keeps it from affecting execution.
+    return Promise.resolve(runExposureCapture(input))
   }
   if (config.action === 'deny-mutating-terminal') {
     // FID-2026-1001-003 step 1: in-process deny sink; the engine's catch
