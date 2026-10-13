@@ -221,6 +221,12 @@ describe('terminal command process diagnostics', () => {
       while (!existsSync(pidFile) && Date.now() < readyDeadline) {
         await new Promise((resolve) => setTimeout(resolve, 25))
       }
+      if (!existsSync(pidFile)) {
+        controller.abort()
+        throw new Error(
+          `Windows fixture failed to start: ${JSON.stringify(await run)}`,
+        )
+      }
       expect(existsSync(pidFile)).toBe(true)
       const fixturePids = JSON.parse(readFileSync(pidFile, 'utf8')) as {
         parentPid: number
