@@ -30,6 +30,13 @@ type AiSdkErrorChunk = {
 }
 
 /**
+ * FID-2026-1012-017: the request's output allowance, forwarded so the recovery
+ * text can state the tool's real argument budget. Optional — a caller that
+ * cannot resolve it still gets the truthful cause and the split advice.
+ */
+export type NativeRecoveryOptions = { maxOutputTokens?: number }
+
+/**
  * The OpenAI-compatible provider uses a typed object for incomplete native
  * arguments so this path never relies on parsing a user-facing message.
  * Returns null for non-object errors and hostile shapes (the factory's own
@@ -37,6 +44,7 @@ type AiSdkErrorChunk = {
  */
 export function classifyNativeToolCallError(
   error: unknown,
+  options: NativeRecoveryOptions = {},
 ):
   | ReturnType<typeof normalizeNativeToolCallStreamError>
   | ReturnType<typeof normalizeUnavailableToolStreamError> {
@@ -47,7 +55,7 @@ export function classifyNativeToolCallError(
   if (isUnavailableToolError(error)) {
     return normalizeUnavailableToolStreamError(error.toolName)
   }
-  return normalizeNativeToolCallStreamError(error)
+  return normalizeNativeToolCallStreamError(error, options)
 }
 
 /**
@@ -111,10 +119,13 @@ export function isAgentRetryableToolError(error: unknown): boolean {
  * Reuses the one message factory (Law 13). Returns null for a hostile
  * non-string toolName shape — the caller fails closed (Law 14).
  */
-export function classifyInvalidToolCall(chunk: {
-  toolName: unknown
-  error?: unknown
-}):
+export function classifyInvalidToolCall(
+  chunk: {
+    toolName: unknown
+    error?: unknown
+  },
+  options: NativeRecoveryOptions = {},
+):
   | ReturnType<typeof normalizeNativeToolCallStreamError>
   | ReturnType<typeof normalizeUnavailableToolStreamError> {
   const toolName =
@@ -132,11 +143,14 @@ export function classifyInvalidToolCall(chunk: {
   // by the output budget used to be reported as if the model had written bad
   // arguments — and answered with a re-send that truncates identically. The
   // classifier's own structural evidence distinguishes the two cases.
-  return normalizeNativeToolCallStreamError({
-    type: 'native-incomplete',
-    toolName,
-    ...(isTruncatedToolInput(chunk.error) && { argumentsTruncated: true }),
-  })
+  return normalizeNativeToolCallStreamError(
+    {
+      type: 'native-incomplete',
+      toolName,
+      ...(isTruncatedToolInput(chunk.error) && { argumentsTruncated: true }),
+    },
+    options,
+  )
 }
 
 /**

@@ -194,6 +194,10 @@
       "fid": "FID-2026-1012-023"
     },
     {
+      "classKey": "v1:run_readonly_command:command-exit:undetermined",
+      "fid": "FID-2026-1012-024"
+    },
+    {
       "classKey": "v1:str_replace:unclassified:undetermined",
       "fid": "FID-2026-1012-024"
     },

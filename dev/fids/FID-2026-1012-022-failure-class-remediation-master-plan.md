@@ -355,7 +355,7 @@ activation), and the child's id is recorded in this table when it exists.
 | T187 — skills `version` frontmatter | C8 | *drafted at wave start* | blocked — operator `/skills trust` surface |
 | FID-2026-1012-024 — class taxonomy and horizon | A0 | `-024` | converged (design); worked first |
 | FID-2026-1012-023 — execution reliability | A0 | `-023` | **fixed** — implementation + 11 declared gates green (sdk 633 PASS, agent-runtime 2,048 PASS, root typecheck, quality, eslint); recurrence window not yet started, so no class claim |
-| FID-2026-1012-017 — emission (193 records) | A1 | `-017` | converged (design) |
+| FID-2026-1012-017 — emission (193 records) | A1 | `-017` | implementation landed and gated (argument budget, truthful recovery, pre-execution ceiling, spawn steering); bulk-staging step open — **not `fixed`**, no class claim |
 | FID-2026-1012-018 — fetch (181) | A1 | `-018` | converged (design) |
 | FID-2026-1012-019 — capability integrity (50) | A1 | `-019` | converged (design) |
 | FID-2026-1012-020 — edit-path friction (72) | A1 | `-020` | converged (design) |

@@ -216,6 +216,48 @@ the recurrence probe, the affected workspaces' typechecks and `quality`.
   The shared review names the observation window and exact planned test/probe paths.
 - **CHANGE DELTA:** Planning correction only; all emission classes remain unresolved.
 
+### Loop 3 — Implementation pass (2026-10-12, operator-authorized)
+
+- **RED (re-measured this pass, the instrument of FID-2026-1012-022):** `bun
+  scripts/experiences-recurrence.ts` reports the record's 18 owned keys unresolved at their recorded
+  volumes — `read_files` 48, `str_replace` 28, `read_url` 27, `write_file` 23, `spawn_agents` 17,
+  `run_readonly_command` 15, `write_todos` 7, `suggest_followups` 6, `basher` 5, `run_terminal_command`
+  4, `transition_parameter` 3, `forge`/`grep`/`transition_phase` 2 each, and one each for `...`,
+  `apply_patch`, `savant_code_tool_call`, `write_files`; `grep -c 'Incomplete arguments for tool'
+  dev/experiences/raw-traces.jsonl` = **193**, 16 of them dated 2026-10-12. The class is live, not
+  historical.
+- **GREEN (implemented this pass):** the emit path is bounded and no branch prescribes a re-send.
+  `common/src/util/tool-argument-budget.ts` derives a per-tool argument budget from the model's own
+  output allowance, measures serialized arguments fail-closed, and states the bound in one sentence
+  (`describeArgumentBudget`); `sdk/src/impl/llm/errors.ts` states that budget in both truncation causes
+  and replaces the unproven-cause re-send prescription with schema-first guidance (schema recovery
+  preserved, decision table in `docs/design/perfection-loop-2026-10-12.md` §017);
+  `sdk/src/impl/llm/stream-error-chunk.ts` and `stream.ts` forward the request's `maxOutputTokens` into
+  the classifier; `sdk/src/run/tool-call-argument-ceiling.ts` refuses a call above the ceiling before
+  any override, MCP client or local handler runs, so nothing is applied partially;
+  `packages/agent-runtime/src/run-agent-step/constants.ts` no longer tells a parent that every spawned
+  agent inherits the conversation — the Recorder runs with `includeMessageHistory: false`, so the advice
+  now names both context policies.
+- **AUDIT (gates run in this pass, output pasted in Code Verification Evidence):** `bun run typecheck`
+  (all workspaces + `scripts/`) exit 0; the SDK suite 647 pass / 0 fail; the agent-runtime suite 2,048
+  pass / 0 fail; the stream-parser steering suites 23 pass / 0 fail; `bun run validate:repository` PASS
+  (the two ratchet breaches this change first introduced — `stream.ts` and `tool-call.ts` over 300 lines
+  — were repaired by extraction, not by suppression, and the FID-023 `quality` gate they reddened is
+  green again); Prettier and ESLint clean on every changed file.
+- **ADVERSARIAL:** (a) *Does the budget merely invite smaller, worse calls?* The budget is stated, not
+  silently enforced, and a complete large payload is still executed below the ceiling — the negative
+  control (`allows a complete payload below the ceiling`) pins that. (b) *Can a renamed error hide the
+  class?* The class key is `toolName` + cause (`experienceClassIdentity`), so the assertion is on the
+  key, not the rendered wording. (c) *Did any class stop?* **No claim:** no fix boundary exists for this
+  record, so `fix-boundaries.json` stays empty and the horizon for all 18 keys remains `unresolved`.
+- **STILL OPEN (approved, not done):** the third lever of the reviewed design — *bulk writes stage
+  bounded chunks with revision/hash guards and commit once, failure leaving the target untouched* — is
+  **not implemented**. Its planned artifact is
+  `packages/agent-runtime/src/tools/handlers/tool/__tests__/chunked-write.test.ts`; it belongs on the
+  propose/write staging surface (`proposed-content-store.ts`, `propose-write-file.ts`) and it is the
+  reason this record is **not** flipped to `fixed` in this pass. It stays an active step of this record.
+- **CHANGE DELTA:** ~0.7% of the record (source: 6 files under 300 lines, 3 new modules/tests).
+
 ### Missed Questions
 
 1. Should the budget live in the tool schema or in the prompt? → In the emit path first, so it
@@ -233,9 +275,12 @@ the recurrence probe, the affected workspaces' typechecks and `quality`.
 
 ### Code Verification Evidence
 
-> Pre-implementation record: `Status: converged` (FID-2026-0915-004). Nothing in this record
-> has been implemented, so what follows records what was CHECKED at the cited `HEAD` — not what
-> was built.
+> Partially implemented: the emission budget, the truthful recovery text, the pre-execution ceiling
+> and the spawn-steering repair exist in the tree at the commit recorded in Resolution; the bulk-write
+> staging shape does not. `Status: converged` is kept deliberately — the status vocabulary has no
+> "partially implemented", and `fixed` would overstate a record with an approved step still open.
+> The receipt/fingerprint contract applies to `fixed`/`verified`, so no gates are declared here yet;
+> the gate output below is the evidence for what landed.
 
 - [x] Measurements re-checked: the aggregation over `dev/experiences/raw-traces.jsonl` returned
       559 records / 68 classes / 195 sessions (instrument: `toolName` + the first 70 characters of the
@@ -247,9 +292,33 @@ the recurrence probe, the affected workspaces' typechecks and `quality`.
       `sdk/src/impl/llm/errors.ts:142-146`, `sdk/src/impl/llm/stream-error-chunk.ts`); the
       matrix that ranks this class is `docs/design/learnings-root-cause-matrix.md` §3 row 2 and
       §4 RC1.
-- [x] **Not yet true, and deliberately not claimed:** the repair itself, its gates and its
-      receipt. Gates are declared when the status flips to `fixed`/`verified`; declaring them
-      now would be a false declaration.
+- [x] **Emission budget implemented:** `common/src/util/tool-argument-budget.ts`
+      (`toolArgumentBudget` / `measureSerializedArguments` / `assessToolArguments` /
+      `describeArgumentBudget`), consumed by `sdk/src/impl/llm/errors.ts`,
+      `sdk/src/impl/llm/stream-error-chunk.ts`, `sdk/src/impl/llm/stream.ts` and
+      `sdk/src/run/tool-call-argument-ceiling.ts`; production callers confirmed by grep
+      (`normalizeNativeToolCallStreamError` ← `classifyNativeToolCallError` ← `stream.ts:104`;
+      `classifyInvalidToolCall` ← `stream.ts:266`; `refuseOversizedToolCall` ← `tool-call.ts`
+      `handleToolCall`).
+- [x] **Truthful recovery, verified by suite output:** `bun test src/impl/__tests__/llm-native-tool-call.test.ts`
+      — 15 pass / 0 fail, including *states the tool argument budget derived from the output
+      allowance* (4,096-token allowance → `at most 8192 characters`), *states the default budget when
+      no allowance is known* (16,384 characters), and the three schema-recovery cases that assert the
+      re-send prescription is gone while schema correction remains.
+- [x] **New budget suite:** `bun test src/__tests__/tool-argument-budget.test.ts` — 11 pass / 0 fail
+      (derivation, default on hostile allowances, short-tool share, floor/ceiling clamps, measurement,
+      fail-closed cyclic handling, assessment, the stated sentence, and the ceiling refusal).
+- [x] **Full gates this pass:** `bun run typecheck` exit 0 (13 workspaces + `scripts/`); SDK suite
+      `647 pass / 0 fail` across 104 files; agent-runtime suite `2,048 pass / 0 fail` across 314 files;
+      stream-parser steering suites `23 pass / 0 fail`; `bun run validate:repository` →
+      `validation: PASS`; `bun x prettier --check` and `bun x eslint` clean on all changed files.
+- [x] **Capture instrument green:** `bun scripts/experiences-recurrence.ts` → `563 records, 56 stable
+      classes, 0 issues`, exit 0. The pass also surfaced one unowned class
+      (`v1:run_readonly_command:command-exit:undetermined`, a command-exit shape owned by the capture
+      lane) which is now registered to `FID-2026-1012-024`.
+- [x] **Not claimed:** any class having stopped recurring. No fix boundary is written, so every owned
+      key reports `unresolved` and the 14-day/three-session observation window has not started. The
+      bulk-write staging shape is not implemented (see Loop 3 → STILL OPEN).
 
 ## Boundaries
 
@@ -263,13 +332,26 @@ the recurrence probe, the affected workspaces' typechecks and `quality`.
 
 ## Resolution
 
-**Not implemented — `Status: converged` (pre-implementation, FID-2026-0915-004).**
+**Partially implemented — `Status: converged` (no `fixed` claim).**
 
-This record exists so the finding has an owner, a converged design and a register item with
-write authority; it made no source change. The work above is implemented by whichever pass
-flips the record to `fixed`, at which point this section is rewritten in the closure format
-(Closed Date / Fix Description / Tests Added / Verification Evidence / Archived) and the
-declared gates are added under `## Verification Gates`.
+Loop 3 landed the emit-path half of the reviewed design in the tree: the per-tool argument budget
+(`common/src/util/tool-argument-budget.ts`) with the recovery text that states it, the removal of every
+re-send prescription from the truncation branches, the pre-execution ceiling refusal
+(`sdk/src/run/tool-call-argument-ceiling.ts`), and the spawn-steering repair for children that inherit no
+history. Its gates were run in this pass and are pasted in Code Verification Evidence above.
+
+The record is deliberately **not** `fixed`: the third lever of the reviewed design — bulk writes staging
+bounded chunks with revision/hash guards and committing once, failure leaving the target untouched — is an
+approved step that is **not implemented**. Because the record makes no `fixed`/`verified` claim, no gate
+bullets are declared under `## Verification Gates` and no receipt is stamped; a receipt for a partial
+implementation would be a false declaration. The bulk-staging step, its planned artifact
+(`packages/agent-runtime/src/tools/handlers/tool/__tests__/chunked-write.test.ts`) and its staging surface
+stay active on this record until they land.
+
+**Closed Date / Fix Description / Tests Added / Verification Evidence / Archived:** not applicable yet — this
+section is rewritten in the closure format by the pass that completes the staging step, at which point the
+status flips and the gates are declared. The commit hash for what landed is stamped by the follow-up record
+commit (the FID-2026-1012-023 precedent).
 
 - **Authorised write surface:** `SCOPE.md` → machine-readable scope targets → this record's
   line (registered 2026-10-12 with the root-cause matrix).

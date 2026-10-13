@@ -67,11 +67,8 @@ export async function* promptAiSdkStream(
             agentProviderOptions: params.agentProviderOptions,
           }),
         }),
-    // Handle tool call errors gracefully by passing them through to our validation layer
-    // instead of throwing (which would halt the agent). The only special case is when
-    // the tool name matches a spawnable agent - transform those to spawn_agents calls.    // Handle tool call errors gracefully by passing them through to our validation layer
-    // instead of throwing (which would halt the agent). The only special case is when
-    // the tool name matches a spawnable agent - transform those to spawn_agents calls.
+    // Tool-call errors pass through to our validation layer instead of throwing; a
+    // tool name matching a spawnable agent is transformed into a spawn_agents call.
     experimental_repairToolCall: createRepairToolCall({
       logger,
       params,
@@ -100,7 +97,9 @@ export async function* promptAiSdkStream(
     if (chunkValue.type === 'error') {
       // Error chunks from fullStream are non-network errors (tool failures, model issues, rate limits, etc.)
       // Network errors which cannot be recovered from are thrown, not yielded as chunks.
-      const nativeErrorChunk = classifyNativeToolCallError(chunkValue.error)
+      const nativeErrorChunk = classifyNativeToolCallError(chunkValue.error, {
+        maxOutputTokens: params.maxOutputTokens,
+      })
       if (nativeErrorChunk !== null) {
         yield nativeErrorChunk
         continue
@@ -260,7 +259,9 @@ export async function* promptAiSdkStream(
           streamErrorLogFields(chunkValue, params.model),
           'Invalid tool call in AI SDK stream - classifying as native-incomplete',
         )
-        const nativeErrorChunk = classifyInvalidToolCall(chunkValue)
+        const nativeErrorChunk = classifyInvalidToolCall(chunkValue, {
+          maxOutputTokens: params.maxOutputTokens,
+        })
         // The factory is null for hostile shapes; a non-string toolName was
         // already normalized above, so null is unreachable here — but the
         // contract is enforced fail-closed (Law 14) rather than trusted.

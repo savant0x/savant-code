@@ -14,61 +14,26 @@ import {
 } from '@savant-code/common/util/param-helpers'
 
 import { requireCwd } from './require-cwd'
+import { refuseOversizedToolCall } from './tool-call-argument-ceiling'
 import { isRunPauseError } from './types'
 import { applyPatchTool } from '../tools/apply-patch'
 import { FileChangeSchema, changeFile } from '../tools/change-file'
 import { codeSearch } from '../tools/code-search'
 import { glob } from '../tools/glob'
 import { listDirectory } from '../tools/list-directory'
-import { getFiles } from '../tools/read-files'
 import { readUrl } from '../tools/read-url'
 import { runTerminalCommand } from '../tools/run-terminal-command'
 
 import type { CustomToolDefinition } from '../custom-tool'
 import type { SavantCodeClientOptions } from './types'
 import type { OnFileWrittenCallback } from '../tools/change-file'
-import type { FileFilter } from '../tools/read-files'
 import type { ServerAction } from '@savant-code/common/actions'
 import type { ToolName } from '@savant-code/common/tools/constants'
 import type { PublishedClientToolName } from '@savant-code/common/tools/list'
 import type { SavantCodeFileSystem } from '@savant-code/common/types/filesystem'
 import type { ToolResultOutput } from '@savant-code/common/types/messages/content-part'
-
-export async function readFiles({
-  filePaths,
-  offset,
-  limit,
-  override,
-  fileFilter,
-  cwd,
-  fs,
-}: {
-  filePaths: string[]
-  /** LF-001 (FID-2026-1012-007): the requested 1-indexed line window. */
-  offset?: number
-  limit?: number
-  override?: NonNullable<
-    Required<SavantCodeClientOptions>['overrideTools']['read_files']
-  >
-  fileFilter?: FileFilter
-  cwd?: string
-  fs: SavantCodeFileSystem
-}) {
-  if (override) {
-    // An override replaces this tool wholesale: it receives the window in its
-    // input and owns the result. The production path (no override) windows at
-    // the fetch boundary in getFiles.
-    return await override({ filePaths, offset, limit })
-  }
-  return getFiles({
-    filePaths,
-    offset,
-    limit,
-    cwd: requireCwd(cwd, 'read_files'),
-    fs,
-    fileFilter,
-  })
-}
+/** FID-2026-1012-017 split: the read_files helper now lives in its own module. */
+export { readFiles } from './read-files-tool'
 
 export async function handleToolCall({
   action,
@@ -104,6 +69,11 @@ export async function handleToolCall({
       ],
     }
   }
+
+  // FID-2026-1012-017: an unbounded payload is refused before any execution
+  // path (override, MCP client or local handler) can run or partially apply it.
+  const oversizedRefusal = refuseOversizedToolCall({ toolName, input })
+  if (oversizedRefusal !== null) return oversizedRefusal
 
   // Handle MCP tool calls when mcpConfig is present
   if (action.mcpConfig) {

@@ -24,11 +24,19 @@ test('normalizes a native incomplete provider error into a typed stream chunk', 
 
   expect(result).toEqual({
     type: 'error',
-    message:
-      'Incomplete arguments for tool sequentialthinking; retry the tool call with a complete arguments object.',
+    message: expect.any(String),
     errorClass: 'native-incomplete',
     toolName: 'sequentialthinking',
   })
+  // FID-2026-1012-017: an unproven cause keeps schema recovery (the values must
+  // be corrected) and never prescribes re-sending the same payload.
+  expect(result?.message).toContain(
+    "the provider rejected the call's arguments",
+  )
+  expect(result?.message).toContain(
+    'Correct the argument values so they satisfy the tool schema',
+  )
+  expect(result?.message).not.toContain('retry the tool call')
 })
 
 test('steers to split payloads on an output-cap hit (FID-2026-0909-008)', () => {
@@ -44,7 +52,7 @@ test('steers to split payloads on an output-cap hit (FID-2026-0909-008)', () => 
   expect(result?.finishReason).toBe('length')
 })
 
-test('keeps retry guidance when the finish reason is not a cap hit', () => {
+test('keeps schema recovery when the finish reason is not a cap hit', () => {
   const result = normalizeNativeToolCallStreamError({
     type: 'native-incomplete',
     toolName: 'sequentialthinking',
@@ -52,7 +60,7 @@ test('keeps retry guidance when the finish reason is not a cap hit', () => {
   })
 
   expect(result?.message).toContain(
-    'retry the tool call with a complete arguments object',
+    'Correct the argument values so they satisfy the tool schema',
   )
   expect(result?.message).not.toContain('Split the work')
   expect(result?.finishReason).toBe('stop')
@@ -104,7 +112,7 @@ test('steers to split payloads when the arguments were cut mid-document', () => 
   expect(result?.argumentsTruncated).toBe(true)
 })
 
-test('keeps retry guidance when nothing marks the payload as truncated', () => {
+test('keeps schema recovery when nothing marks the payload as truncated', () => {
   const result = normalizeNativeToolCallStreamError({
     type: 'native-incomplete',
     toolName: 'read_files',
@@ -112,7 +120,7 @@ test('keeps retry guidance when nothing marks the payload as truncated', () => {
   })
 
   expect(result?.message).toContain(
-    'retry the tool call with a complete arguments object',
+    'Correct the argument values so they satisfy the tool schema',
   )
   expect(result?.message).not.toContain('Split the work')
   expect(result?.argumentsTruncated).toBeUndefined()
@@ -145,7 +153,7 @@ test('classifies a JSON parse failure as a cut payload, not bad arguments', () =
   expect(result?.message).toContain('Split the work into smaller calls')
 })
 
-test('keeps the generic advice when arguments parsed but missed the schema', () => {
+test('keeps schema recovery when arguments parsed but missed the schema', () => {
   const result = classifyInvalidToolCall({
     toolName: 'read_files',
     error: new InvalidToolInputError({
@@ -160,11 +168,11 @@ test('keeps the generic advice when arguments parsed but missed the schema', () 
 
   expect(truncatedFlag(result)).toBeUndefined()
   expect(result?.message).toContain(
-    'retry the tool call with a complete arguments object',
+    'Correct the argument values so they satisfy the tool schema',
   )
 })
 
-test('keeps the generic advice when the invalid call carries no cause', () => {
+test('keeps schema recovery when the invalid call carries no cause', () => {
   const result = classifyInvalidToolCall({
     toolName: 'read_files',
     error: new InvalidToolInputError({
@@ -176,6 +184,46 @@ test('keeps the generic advice when the invalid call carries no cause', () => {
 
   expect(truncatedFlag(result)).toBeUndefined()
   expect(result?.message).toContain(
-    'retry the tool call with a complete arguments object',
+    'Correct the argument values so they satisfy the tool schema',
   )
+})
+
+// FID-2026-1012-017: the budget the model is told is derived from the model's
+// own output allowance, so the split it plans is measured against the real cap.
+test('states the tool argument budget derived from the output allowance', () => {
+  const result = normalizeNativeToolCallStreamError(
+    {
+      type: 'native-incomplete',
+      toolName: 'write_file',
+      finishReason: 'length',
+    },
+    { maxOutputTokens: 4_096 },
+  )
+
+  expect(result?.message).toContain('at most 8192 characters')
+  expect(result?.message).toContain('4096-token output allowance')
+})
+
+test('states the default budget when no allowance is known', () => {
+  const result = normalizeNativeToolCallStreamError({
+    type: 'native-incomplete',
+    toolName: 'write_file',
+    argumentsTruncated: true,
+  })
+
+  expect(result?.message).toContain('at most 16384 characters')
+  expect(result?.message).toContain('8192-token output allowance')
+})
+
+test('states the tighter budget for a tool whose arguments are structurally short', () => {
+  const result = normalizeNativeToolCallStreamError(
+    {
+      type: 'native-incomplete',
+      toolName: 'write_todos',
+      finishReason: 'length',
+    },
+    { maxOutputTokens: 100_000 },
+  )
+
+  expect(result?.message).toContain('at most 60000 characters')
 })

@@ -4,6 +4,10 @@
  */
 
 import { isNativeToolCallError } from '@savant-code/common/types/contracts/llm'
+import {
+  describeArgumentBudget,
+  toolArgumentBudget,
+} from '@savant-code/common/util/tool-argument-budget'
 
 import { getErrorStatusCode } from '../../error-utils'
 
@@ -120,8 +124,20 @@ export function normalizeUnavailableToolStreamError(
 const SPLIT_PAYLOAD_ADVICE =
   " Split the work into smaller calls — keep each call's arguments compact."
 
+/**
+ * FID-2026-1012-017: the advice for a rejection whose cause is NOT an observed
+ * truncation — the arguments parsed but missed the schema, or nothing in the
+ * stream says what happened. Schema recovery is preserved (the values must be
+ * corrected), while the payload re-send that kept this class alive is not: a
+ * payload large enough to have been cut would be cut again. Kept distinct from
+ * `SPLIT_PAYLOAD_ADVICE` so a schema error is never reported as a size problem.
+ */
+const CORRECT_ARGUMENTS_ADVICE =
+  ' Correct the argument values so they satisfy the tool schema, then re-emit the call once. If the arguments are large, divide the work across calls instead of sending the same payload again.'
+
 export function normalizeNativeToolCallStreamError(
   value: object,
+  options: { maxOutputTokens?: number } = {},
 ): Extract<StreamErrorChunk, { errorClass: 'native-incomplete' }> | null {
   if (!isNativeToolCallError(value)) {
     return null
@@ -137,13 +153,22 @@ export function normalizeNativeToolCallStreamError(
   // Both conditions select the same advice — one wording per class (Law 13) —
   // while the cause clause stays truthful about what was actually observed.
   const isTruncated = isOutputCapHit || nativeError.argumentsTruncated === true
+  // FID-2026-1012-017: both truncation causes state the tool's real argument
+  // budget, so the model plans a split against the number instead of re-sending
+  // the payload that was already cut.
+  const budgetClause = describeArgumentBudget(
+    toolArgumentBudget({
+      toolName: nativeError.toolName,
+      maxOutputTokens: options.maxOutputTokens,
+    }),
+  )
   let message: string
   if (isOutputCapHit) {
-    message = `Incomplete arguments for tool ${nativeError.toolName}: the output token limit was reached before the arguments finished.${SPLIT_PAYLOAD_ADVICE}`
+    message = `Incomplete arguments for tool ${nativeError.toolName}: the output token limit was reached before the arguments finished.${SPLIT_PAYLOAD_ADVICE}${budgetClause}`
   } else if (isTruncated) {
-    message = `Incomplete arguments for tool ${nativeError.toolName}: the arguments were cut off before they finished parsing.${SPLIT_PAYLOAD_ADVICE}`
+    message = `Incomplete arguments for tool ${nativeError.toolName}: the arguments were cut off before they finished parsing.${SPLIT_PAYLOAD_ADVICE}${budgetClause}`
   } else {
-    message = `Incomplete arguments for tool ${nativeError.toolName}; retry the tool call with a complete arguments object.`
+    message = `Incomplete arguments for tool ${nativeError.toolName}: the provider rejected the call's arguments and nothing observed indicates truncation.${CORRECT_ARGUMENTS_ADVICE}${budgetClause}`
   }
   return {
     type: 'error',

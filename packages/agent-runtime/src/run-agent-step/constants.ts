@@ -51,12 +51,18 @@ export const NATIVE_TOOL_CALL_STEERING_MESSAGES: Record<
       ' Read the first file with read_files, then read the next file in a separate call.',
   },
   // FID-2026-0909-007: the tools that truncated in the 2026-09-09 session.
+  // FID-2026-1012-017: this advice used to assert that every spawned agent
+  // inherits the conversation. It does not — the Recorder runs with
+  // `includeMessageHistory: false` (FID-2026-0823-011), so its prompt is its
+  // entire context. Steering a parent to "send a one-line pointer" for that
+  // child loses the work, so the advice now names both context policies and
+  // asks for the compact form of what the child actually needs.
   spawn_agents: {
-    hint: ' Spawned agents inherit the conversation context — send the delta only, never restate it. Reference files by path instead of inlining their content.',
+    hint: ' Spawned agents differ in what context they inherit: most receive this conversation and need the delta only, while some (the Recorder, for one) run with no history, so their prompt must carry every fact they need. Reference files by path instead of inlining their content.',
     explicit:
-      ' Your spawn_agents prompt is too large. Send a one-line pointer to the work; the spawned agent reads the shared conversation history itself.',
+      ' Your spawn_agents prompt is too large. Send a compact goal — the work in one sentence, files by path — plus only the evidence a child without history cannot otherwise see.',
     example:
-      ' Spawn with a single-sentence goal (e.g. "Audit X in file Y; the evidence is in the shared history") instead of pasting the evidence into the prompt.',
+      ' Spawn with a single-sentence goal naming the files by path (e.g. "Audit X in file Y") and add the handful of facts a no-history child would otherwise lack, instead of pasting the file contents.',
   },
   run_readonly_command: {
     hint: ' Run ONE command per call instead of chaining many commands with &&, ;, or newlines.',

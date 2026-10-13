@@ -272,7 +272,9 @@ work item remains active, including the recorded level-1 consolidation and exter
 - FID-2026-1012-015: `scripts/lesson-feature-pipeline.ts`, `scripts/validate-repository.ts`,
   `dev/feature-pipeline/**`, `package.json`
 - FID-2026-1012-016: `dev/LEARNINGS.md`, `dev/LEARNING-RULES.md`, `scripts/learnings*.ts`
-- FID-2026-1012-017: `sdk/src/impl/llm/**`, `common/src/types/contracts/llm.ts`,
+- FID-2026-1012-017: `sdk/src/impl/llm/**`, `sdk/src/run/**`,
+  `sdk/src/__tests__/tool-argument-budget.test.ts`,
+  `common/src/types/contracts/llm.ts`, `common/src/util/tool-argument-budget.ts`,
   `packages/agent-runtime/src/run-agent-step/**`,
   `packages/agent-runtime/src/tools/stream-parser/**`,
   `packages/agent-runtime/src/tools/handlers/tool/**`, `common/src/tools/params/tool/**`
