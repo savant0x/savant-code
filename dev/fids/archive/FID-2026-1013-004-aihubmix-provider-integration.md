@@ -512,8 +512,12 @@ wall-clock reasons. The finding above is reported rather than worked around.
   recorded as HTTP 200 transport reachability with an account-policy apology —
   **not** as a substantive completion.
 - **Known Limitation:** the free-resource policy blocked a substantive free
-  completion. Nothing in the implementation depends on it, and no stronger
-  claim is made.
+  completion, so the implementation record stops at transport reachability and
+  no stronger claim was made from the agent side. **Superseded 2026-10-13:**
+  the operator independently checked both providers live and confirmed them
+  working — AIHubMix and Apixo are accepted by their vendors, not merely
+  reachable. The limitation above is retained as the honest account of what the
+  automated probes established, and the operator's check is what upgrades it.
 - **Archived:** 2026-10-13 — closed at `618b7a1a`; the receipt in
   Implementation Evidence records the gates that earned it.
 
