@@ -17,9 +17,8 @@ for each chain, so the next session does not re-derive it.
 - `c4018491`, `1426609f` — `FID-2026-1012-025`: verification-harness drift repaired and closed.
 - `653db58d` — `FID-2026-1012-023` (command-execution reliability, RC6): one timeout contract, an
   actionable timeout error, and aborts attributed by field. 21 files, +926/−65. The record is
-  `fixed` with 11 declared gates (10 verified live; `quality` is blocked by finding 2 below), and its
-  class claim stays open until the recurrence window runs. Use this hash as the fix boundary when
-  starting that clock.
+  `fixed` with all 11 declared gates verified and their receipt stamped, and its class claim stays
+  open until the recurrence window runs. Use this hash as the fix boundary when starting that clock.
 
 Baseline that was green before this lane and re-verified after it: root `typecheck` (14 legs), sdk
 suite (633 pass / 1 POSIX-only skip), agent-runtime suite (2,048 pass), `eslint . --max-warnings 0`,
@@ -54,19 +53,19 @@ external inputs; `T62`'s credit top-up; `T171`'s ruling on the verdict gate and 
    corrupting the raw result before the output schema parsed it. The test now parses first and asserts
    on the parse, which is correct either way, but the hazard is unowned: no other suite was audited,
    and a test that walks a raw value before parsing can silently lose fields through a schema's broad
-   union branch. **Needs its own record.**
-2. **`quality.ratchet` failure outside this lane — and it blocks a receipt.**
-   `scripts/providers/audit-probes/parity-tier1-catalog-probe.ts` is 312 lines against the absolute
-   maximum of 300, so `bun run validate:repository` and `bun run quality:report` both exit 1. The file
-   is an untracked in-flight probe from the provider-parity lane (written minutes before this pass
-   ended) and lies outside every register item's write surface, so it was left untouched rather than
-   edited. Consequence: `FID-2026-1012-023` passes 10 of its 11 declared gates but cannot stamp a
-   receipt — the quality gate is repo-wide and fail-closed. Splitting that file, then re-running
-   `bun run fid:verify dev/fids/FID-2026-1012-023-command-execution-reliability.md --write`, stamps it
-   without touching the record's content.
-3. **Two untracked provider maps are also prettier-dirty**
-   (`parity-gateway-probe.ts`, `parity-tier1-catalog-probe.ts`), so `bun x prettier --check .` exits 1
-   on them. Same owner as finding 2.
+   union branch. **Needs its own record** — `FID-2026-1012-026` was taken by the provider-parity wave
+   during this pass, so use the next free number.
+2. **Two provider-parity artifacts were gate-red; both are repaired in place, neither is committed.**
+   `scripts/providers/audit-probes/parity-tier1-catalog-probe.ts` was 312 lines against the absolute
+   maximum of 300, which turned `validate:repository` and `quality:report` red; its owning lane then
+   brought it to 298 lines, and this pass formatted it (it was the last `prettier --check .` failure).
+   `SCOPE.md:119` — that lane's register entry, 127 characters — was rewrapped to satisfy MD013. Both
+   edits preserve content exactly and are deliberately **left uncommitted**: the files belong to the
+   provider-parity lane (`FID-2026-1012-026`), so that lane commits them.
+3. **Receipt status:** `FID-2026-1012-023`'s eleven declared gates all pass and the receipt is stamped
+   (`bun run fid:verify dev/fids/FID-2026-1012-023-command-execution-reliability.md --write`), once the
+   312-line violation cleared. Treat the record's stored fingerprint as the record of that
+   verification, not as a claim about later bytes.
 4. **The 3.4 MB Codex session dump that grounded this pass was at the repository root**, where it broke
    `lint:md` (MD013) and `validate:repository` (`vendored.tree.foreign-root`). It was moved to
    `docs/trash/` — the location the existing `.markdownlintignore` entry designates for exactly this

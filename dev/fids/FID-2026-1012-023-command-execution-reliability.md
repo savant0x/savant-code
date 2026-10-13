@@ -169,6 +169,22 @@ remove the records has not fixed the class.
 - gate: typecheck packages/agent-runtime
 - gate: quality
 
+### Verification Receipt
+
+- fingerprint: sha256:0cd056d35dbf18a65a02cd5ba5463b339a30ae39a121f2d1e76552b34ace91dd
+- verified: 2026-10-13T01:54:58.424Z
+- test sdk/src/__tests__/command-execution-contract.test.ts: exit 0
+- test sdk/src/__tests__/run-terminal-command.test.ts: exit 0
+- test sdk/src/__tests__/run-state-child-process.test.ts: exit 0
+- test packages/agent-runtime/src/tools/tool-executor/client-tool-bridge.test.ts: exit 0
+- test packages/agent-runtime/src/tools/tool-executor/tool-result-errors.test.ts: exit 0
+- test packages/agent-runtime/src/tools/tool-executor/result-lifecycle.test.ts: exit 0
+- test packages/agent-runtime/src/hooks/__tests__/experience-capture.test.ts: exit 0
+- typecheck common: exit 0
+- typecheck sdk: exit 0
+- typecheck packages/agent-runtime: exit 0
+- quality: exit 0
+
 ## Perfection Loop
 
 ### Loop 1 — RED (2026-10-12)
