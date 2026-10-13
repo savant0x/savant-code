@@ -328,8 +328,11 @@ work item remains active, including the recorded level-1 consolidation and exter
   `common/src/util/experience-classes.ts`, `common/src/tools/params/tool/**`,
   `dev/experiences/class-owners.json`
 - FID-2026-1012-027: `scripts/fid-surface-coverage.ts`,
-  `scripts/__tests__/fid-surface-coverage.test.ts`, `scripts/gate-declarability*.ts`,
-  `scripts/fid-verify.ts`, `scripts/validate-repository.ts`, `SCOPE.md`
+  `scripts/__tests__/fid-surface-coverage.test.ts`, `scripts/fid-verify.ts`,
+  `scripts/validate-repository.ts`,
+  `packages/agent-runtime/src/echo/scope-targets.ts`,
+  `packages/agent-runtime/src/echo/pre-write-gates-law2.ts`,
+  `packages/agent-runtime/src/echo/__tests__/scope-targets.test.ts`, `SCOPE.md`
 - FID-2026-1012-024: `common/src/types/experience.ts`, `common/src/util/experiences.ts`,
   `common/src/util/experience-*.ts`, `common/src/util/__tests__/experience-*.test.ts`,
   `packages/agent-runtime/src/hooks/**`, `packages/agent-runtime/src/tools/tool-executor/**`,

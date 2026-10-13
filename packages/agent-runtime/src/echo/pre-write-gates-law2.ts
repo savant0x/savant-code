@@ -36,10 +36,16 @@
  *   carries no tier/mode branch.
  */
 
-import { existsSync, readFileSync } from 'node:fs'
-import { join } from 'node:path'
-
 import { canonicalizePath } from './path-canonicalization'
+// FID-2026-1012-027: the parser moved to `./scope-targets` and is shared with
+// the surface-coverage audit, so the write gate and the audit cannot disagree
+// about what an item covers. Behavior (grammar + fail-closed continuation) is
+// unchanged; the module's own pins stay green. The local import is what the
+// gate calls; the re-exports keep this module's published surface (and its
+// pinned unit test imports) intact.
+import { loadScopeArtifact } from './scope-targets'
+export { loadScopeArtifact } from './scope-targets'
+export type { ScopeArtifact } from './scope-targets'
 
 /** Root-relative governance surfaces exempt at the gate (operator ruling). */
 const GOVERNANCE_EXEMPT_EXACT = new Set([
@@ -53,57 +59,6 @@ const GOVERNANCE_EXEMPT_EXACT = new Set([
 ])
 
 const GOVERNANCE_EXEMPT_PREFIXES = ['dev/', '.agents/', '.githooks/']
-
-export interface ScopeArtifact {
-  patterns: string[]
-  exists: boolean
-}
-
-/**
- * Parse the register's machine-readable target section: lines shaped
- * `- <item-id>: \`glob\`, \`glob\``. An item line without backticked globs
- * contributes nothing (non-covering by construction).
- *
- * FID-2026-1004-006 (B): an item's globs may wrap onto INDENTED continuation
- * lines, which is how the register itself writes long entries. The previous
- * line-only match silently dropped those globs, so the register under-covered
- * its own approved write surfaces — a `Law 2` block on a target the item
- * already listed (and the same latent failure on every other multi-line entry,
- * including `T119` and `T130`).
- *
- * Continuation is bounded so the fix stays FAIL-CLOSED: it stops at the next
- * item, at a blank line, and at any non-indented text. Prose that merely
- * mentions a backticked glob therefore still contributes nothing — an indented
- * line only counts when it directly follows an item head.
- */
-export function loadScopeArtifact(
-  scopePath: string = join(process.cwd(), 'SCOPE.md'),
-): ScopeArtifact {
-  if (!existsSync(scopePath)) return { patterns: [], exists: false }
-  const text = readFileSync(scopePath, 'utf8')
-  const patterns: string[] = []
-  const ITEM_HEAD = /^- ([A-Za-z0-9-]+): (.+)$/
-  const INDENTED = /^[ \t]+\S/
-  const lines = text.split(/\r?\n/)
-
-  const collectGlobs = (line: string): void => {
-    for (const glob of line.matchAll(/`([^`]+)`/g)) {
-      patterns.push(glob[1])
-    }
-  }
-
-  for (let i = 0; i < lines.length; i++) {
-    const head = ITEM_HEAD.exec(lines[i])
-    if (!head) continue
-    collectGlobs(head[2])
-    for (let j = i + 1; j < lines.length; j++) {
-      const next = lines[j]
-      if (next.trim() === '' || !INDENTED.test(next)) break
-      collectGlobs(next)
-    }
-  }
-  return { patterns, exists: true }
-}
 
 /**
  * Minimal glob matcher for the register's pattern vocabulary: `**` crosses

@@ -154,16 +154,18 @@ false declaration.
 - gate: test packages/agent-runtime/src/__tests__/process-str-replace-outcomes.test.ts
 - gate: test packages/agent-runtime/src/__tests__/process-str-replace.test.ts
 - gate: typecheck packages/agent-runtime
+- gate: typecheck sdk
 - gate: quality
 
 ### Verification Receipt
 
-- fingerprint: sha256:a096d2dbe127ef89d93f2ad7b1637c8d77b8146150fab029d1388f8c39f1a33f
-- verified: 2026-10-13T04:41:35.645Z
+- fingerprint: sha256:238b94a06906160f02651e9580f99214e3402d90bf5a3edf02dd81042d743431
+- verified: 2026-10-13T05:41:29.800Z
 - test packages/agent-runtime/src/__tests__/edit-diagnostics.test.ts: exit 0
 - test packages/agent-runtime/src/__tests__/process-str-replace-outcomes.test.ts: exit 0
 - test packages/agent-runtime/src/__tests__/process-str-replace.test.ts: exit 0
 - typecheck packages/agent-runtime: exit 0
+- typecheck sdk: exit 0
 - quality: exit 0
 
 ## Perfection Loop

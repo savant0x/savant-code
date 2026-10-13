@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-1012-027-gate-coverage-of-a-fixed-records-surfaces.md`
 **ID:** FID-2026-1012-027
 **Severity:** high
-**Status:** converged
+**Status:** fixed
 **Created:** 2026-10-13 04:20
 **Automation level:** 3
 **YAGNI-Compliance:** Verified
@@ -136,34 +136,62 @@ configuration.
 
 ### Steps
 
-1. Add `scripts/fid-surface-coverage.ts`: `collectRecordCoverageIssues(root)` reads `SCOPE.md`'s
-   scope-targets section and each active `fixed` record's declared gates, applies the mapping, and
-   returns issues naming the record, the missing declaration and the demanding surface.
-2. Mapping v1 (conservative, documented, extensible): any path under `scripts/**` ⇒
+1. **implemented** — `scripts/fid-surface-coverage.ts`: `collectRecordCoverageIssues(root)` reads
+   `SCOPE.md`'s scope-targets section (through the same parser the Law 2 write gate uses) and each
+   active `fixed`/`verified` record's declared gates (through the same parser `fid:verify` uses),
+   applies the mapping, and returns issues naming the record, the missing declaration and the
+   demanding surface.
+2. **implemented** — mapping v1 as designed: any path under `scripts/**` ⇒
    `probe scripts/scripts-typecheck-check.ts`; any path under a workspace whose
-   `VALIDATION_WORKSPACE_POLICY.requiredTypecheck` is true ⇒ `typecheck <workspace>`; every record ⇒
-   `quality`. A `fixed` record with no SCOPE entry is its own issue (the surface is unknown, so
-   coverage cannot be claimed).
-3. Wire it into `validate:repository` (as a new `FID-…`-named import beside the other collectors).
-4. Fixture tests: a record whose surface names `scripts/**` without the probe fails; with it passes;
-   a workspace surface without that workspace's typecheck fails; a record with no SCOPE entry fails;
-   an unfixed record is not gated.
-5. Only then (option B): make `fid:verify --write` refuse to stamp when the same collector reports a
-   missing declaration for that record — reusing step 1's mapping so the two cannot disagree.
+   `VALIDATION_WORKSPACE_POLICY.requiredTypecheck` is true ⇒ `typecheck <workspace>`; every record
+   with a known surface ⇒ `quality`. A record with no SCOPE entry, or a line naming no paths, is
+   its own issue (the surface is unknown, so coverage cannot be claimed).
+3. **implemented** — wired into `validate:repository`'s collector array.
+4. **implemented** — `scripts/__tests__/fid-surface-coverage.test.ts`: 13 pins over temp roots
+   (scripts surface without/with the probe, workspace legs, package-root resolution, unregistered,
+   pathless, pre-implementation record not gated, section absent ⇒ inert, and the option-B refusal).
+5. **implemented (option B)** — `fid:verify --write` refuses to stamp when
+   `coverageStampBlockers(root, recordName)` reports an uncovered declaration, reusing step 1's
+   collector so the stamp and the repo gate cannot disagree. Only active enforced records are
+   enumerated, so an archived or pre-implementation record is never blocked.
 
 ### Verification
 
-Planned, not yet run: the collector fails on a fixture whose surface demands a declaration it does
-not carry and passes on the repaired records (this one and `-011`/`-021`); `bun run
-validate:repository` fails with a fixture record and passes on the real tree; and the repaired
-`-021` declares the leg it was missing — proven by the leg being **red** when the type error is
-reintroduced and **green** with it fixed, with the receipt re-stamped in between.
+Run, all measured on the implementation tree:
+
+- The collector **fails on a fixture** whose surface demands a declaration it does not carry
+  (`fid.coverage.missing-gate`, naming the record, the demanding glob and the declaration) and
+  **passes** once the declaration is added (13/13 fixture pins).
+- The collector **fails on the real tree** with one line removed from `-018`'s gate block, and
+  prints **0 issues** with it restored — the same record, same tree, both directions.
+- It found **two real omissions** this record was written to make visible:
+  `-018` (surface `common/src/tools/params/tool/**`, no `typecheck common`) and `-020` (surface
+  `sdk/src/run/**`, no `typecheck sdk`). Both declared the leg and re-stamped their receipts
+  (all gates green).
+- Option B refuses a `--write` on the same mutated `-018` before running any gate, and stamps the
+  clean record normally.
+- The Law 2 parser move is behavior-preserving: `law2-scope-gate.test.ts` 16/16 green, and the
+  shared module adds `sectionPresent` so a coverage consumer can tell "no section" from "no item".
 
 ## Verification Gates
 
-This record is **pre-implementation** (`Status: converged`, FID-2026-0915-004), so no gates are
-declared and none are claimed as passing. Gates are added when the status flips to
-`fixed`/`verified`, from the artifacts step 1 creates.
+- gate: test scripts/__tests__/fid-surface-coverage.test.ts
+- gate: test packages/agent-runtime/src/echo/__tests__/scope-targets.test.ts
+- gate: test packages/agent-runtime/src/echo/__tests__/law2-scope-gate.test.ts
+- gate: probe scripts/scripts-typecheck-check.ts
+- gate: typecheck packages/agent-runtime
+- gate: quality
+
+### Verification Receipt
+
+- fingerprint: sha256:dd1314b2d7e60ab870592664ff4aa8b5fd1dd4ffedec8da9a8508f5a0fbb27f7
+- verified: 2026-10-13T05:47:39.679Z
+- test scripts/__tests__/fid-surface-coverage.test.ts: exit 0
+- test packages/agent-runtime/src/echo/__tests__/scope-targets.test.ts: exit 0
+- test packages/agent-runtime/src/echo/__tests__/law2-scope-gate.test.ts: exit 0
+- probe scripts/scripts-typecheck-check.ts: exit 0
+- typecheck packages/agent-runtime: exit 0
+- quality: exit 0
 
 ## Perfection Loop
 
@@ -190,6 +218,30 @@ declared and none are claimed as passing. Gates are added when the status flips 
 - **CHANGE DELTA:** 0% implementation — this record is the design plus the measured incident; the
   immediate omissions in `-011` and `-021` were corrected in their own records in the same pass.
 
+### Loop 2 — Independent audit and self-correction (2026-10-13)
+
+- **RED:** the first wiring attempt failed its own subject: adding the collector to
+  `scripts/validate-repository.ts` pushed the file to 305 lines and the `quality` gate (absolute
+  maximum 300) went red — an under-declared surface, caught by a gate the change itself had to keep
+  green.
+- **GREEN:** the wiring was reduced to the import plus one array entry and two redundant blank
+  separators were dropped; the file is 299 lines and `quality:report` PASSes.
+- **AUDIT:** the collector run on the real tree printed exactly **two** findings, both real and both
+  the class this record names (`-018` missing `typecheck common`, `-020` missing `typecheck sdk`);
+  after declaring the legs and re-stamping, the collector prints **0 issues** and both receipts are
+  green. The negative direction was then re-proven on the real tree by removing the line and
+  restoring it byte-for-byte.
+- **ADVERSARIAL:** (a) *Does the parser move risk the write gate?* `law2-scope-gate.test.ts` is
+  16/16 green and the module gained `sectionPresent` rather than changing any parse rule. (b) *Is the
+  option-B refusal circular?* No: it enumerates only active enforced records, so archived and
+  pre-implementation records are never blocked. (c) *Could the audit be satisfied by declaring a gate
+  the record does not need?* Yes — coverage is a lower bound on the declared set, never a strength
+  measure; that limit is stated in Boundaries. (d) *Does the check rest on a second parser that can
+  drift?* No: both inputs come from the authorities that already own them (`parseVerificationGates`,
+  `gateLabel`, `loadScopeTargetsByItem`).
+- **CHANGE DELTA:** ~30% of this record's text (Steps marked implemented, Verification rewritten with
+  measured results, Loop 2, evidence, Boundaries, Resolution).
+
 ### Missed Questions
 
 1. **Should the mapping come from `git diff` of the implementation commit instead of `SCOPE.md`?**
@@ -202,41 +254,74 @@ declared and none are claimed as passing. Gates are added when the status flips 
 3. **What about a `fixed` record whose SCOPE line names no paths?** That is not a coverage question
    but a register-completeness one — `collectRegisterCompletenessIssues` already fails an active FID
    `SCOPE.md` does not name; the new collector treats a named-but-pathless entry as its own issue.
+4. **What if the collector's own wiring must fit inside a file already at its ceiling?** Measured
+   during implementation: `scripts/validate-repository.ts` sits at the 300-line absolute ceiling, so
+   wiring the audit cost two lines the file did not have. The fix was to keep the wiring minimal (an
+   import and one array entry) and drop two redundant blank separators — not to relax the ceiling, and
+   not to move the check out of the repository gate.
 
 ### Code Verification Evidence
 
-> Pre-implementation record. Nothing here is implemented; what follows records what was CHECKED at
-> `3e0fab27`.
-
-- [x] `-021`'s declared gate block, its stamped receipt, and the failing root `typecheck` were all read
-      at `a827de8d`/`3e0fab27` and are quoted verbatim above.
+- [x] `-021`'s declared gate block, its stamped receipt, and the failing root `typecheck` were read at
+      `a827de8d`/`3e0fab27` and are quoted verbatim above.
 - [x] `scripts/scripts-typecheck-check.ts` exists, is the declarable `probe` form, exits 0, and is
       registered as the root `typecheck` gate's 14th-leg declaration
       (`scripts/gate-declarability-registry.ts:106-112`).
-- [x] The scope-targets section of `SCOPE.md` carries a per-FID path list, so the demanded surface is
-      machine-readable without new metadata.
-- [x] **Not yet true, and deliberately not claimed:** the collector, its fixtures, its wiring and its
-      receipt. Gates are declared when those artifacts exist.
+- [x] `scripts/fid-surface-coverage.ts` implements `collectRecordCoverageIssues` (the collector) and
+      `scripts/validate-repository.ts` calls it inside its collector array; `scripts/fid-verify.ts`
+      holds `coverageStampBlockers`, called from `main()` before any gate runs (option B).
+- [x] `packages/agent-runtime/src/echo/scope-targets.ts` is the ONE parser (`loadScopeTargetsByItem`
+      + `loadScopeArtifact`), re-exported from `pre-write-gates-law2.ts` so existing importers are
+      unchanged; `scope-targets.test.ts` pins both shapes and the `sectionPresent` flag.
+- [x] Root `typecheck` (14 legs) exit 0; `scripts`-tree typecheck exit 0; the collector prints 0
+      issues on the real tree; `quality:report` PASS; receipt stamped below with every gate exit 0.
 
 ## Boundaries
 
-- This record makes no source change; the immediate omissions it documents were corrected inside
-  `FID-2026-1012-011` and `FID-2026-1012-021` (their gate blocks and receipts), not here.
 - The mapping is deliberately coarse in v1: it proves a leg is *declared*, never that the declaration
-  is the strongest gate available for that surface.
-- It does not re-open any closed record: coverage is checked going forward, and a record whose surface
-  was already accepted keeps its receipt until the check lands.
+  is the strongest gate available for that surface — a record can satisfy it with a gate that proves
+  little. Strength remains the subject of the declared gate's own artifact.
+- Only active `fixed`/`verified` records are covered; `converged` records are pre-implementation and
+  declare no gates by construction.
+- A missing register, or a register without the machine-readable section, is inert here: that is
+  `scope.unregistered-item`'s question (FID-2026-0919-025), and reporting it once per record would turn
+  one register fix into N findings.
+- The collector reads the register line-oriented, exactly as the Law 2 write gate does, so an item
+  line under any heading parses. Fencing it to the section would change the write gate's authority and
+  is explicitly not done (`scope-targets.test.ts` pins the line-oriented behaviour).
+- It does not re-open any closed record: archived records are outside the enforced status set, and
+  coverage is checked going forward.
+
+### Implementation Evidence
+
+- [ ] **Commit SHA:** pending operator git execution (working tree)
+- [x] **File:line ranges:** `scripts/fid-surface-coverage.ts` (collector), `scripts/fid-verify.ts`
+      (`coverageStampBlockers` + `main()` call), `scripts/validate-repository.ts` (collector array),
+      `packages/agent-runtime/src/echo/scope-targets.ts` (shared parser)
+- [x] **Gate output:** the receipt below — every declared gate exit 0
+- [x] **Reproducibility:** `grep -rn "fid-surface-coverage" --include=*.ts` finds the module, its test,
+      its wiring and the `fid:verify` caller
+- [x] **Step statuses:** steps 1-5 `implemented`
 
 ## Resolution
 
-**Not implemented — `Status: converged` (pre-implementation, FID-2026-0915-004).**
+**Implemented 2026-10-13 — `Status: fixed`.**
 
-This record exists so the finding has an owner, a converged design and a register item with write
-authority; it made no source change. The implementation pass rewrites this section in the closure
-format and declares its gates.
+- **Fix Description:** coverage is now a checked relation. `scripts/fid-surface-coverage.ts` joins
+  each active `fixed`/`verified` record's declared gates (parsed by `fid:verify`'s own
+  `parseVerificationGates`) to its `SCOPE.md` write surface (read by the Law 2 gate's own
+  `loadScopeTargetsByItem`), and `validate:repository` fails naming the record, the missing
+  declaration and the demanding glob. Option B makes `fid:verify --write` refuse the same stamp first,
+  through the same collector.
+- **Tests Added:** Yes — `scripts/__tests__/fid-surface-coverage.test.ts` (13 pins, including the
+  stamp refusal) and `packages/agent-runtime/src/echo/__tests__/scope-targets.test.ts`.
+- **Verification Evidence:** two real omissions found and repaired (`-018` declared `typecheck common`,
+  `-020` declared `typecheck sdk`, both re-stamped green); the real tree then reports 0 coverage
+  issues; mutation in both directions re-proven; root `typecheck` exit 0; `quality:report` PASS.
+- **Archived:** not set — this record remains active.
 
 - **Authorised write surface:** `SCOPE.md` → machine-readable scope targets → this record's line.
 - **Design input:** `scripts/gate-declarability.ts` (the audited-gate guard this sits beside),
   `scripts/fid-verify.ts` (option B's enforcement point), `scripts/validate-repository.ts`.
-- **Ordering:** consumes `FID-2026-1012-021`'s pass (the incident) and precedes any attempt to make
-  `fid:verify --write` coverage-aware (step 5, option B).
+- **Ordering:** consumes `FID-2026-1012-021`'s pass (the incident); option B (step 5) is implemented
+  here, so no later revision is needed to make the stamp coverage-aware.

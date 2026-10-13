@@ -24,6 +24,7 @@ import {
   validateFidVerificationGates,
 } from './fid-gates.js'
 import { validateActiveFidLedger } from './fid-ledger.js'
+import { collectRecordCoverageIssues } from './fid-surface-coverage.js'
 import { collectGateDeclarabilityIssues } from './gate-declarability.js'
 import { collectHygieneIssues } from './hygiene.js'
 import {
@@ -234,13 +235,11 @@ function validateRegisterCompleteness(): { code: string; message: string }[] {
 const changelogCoverageIssues = collectChangelogCoverageIssues(root).map(
   (issue) => ({ code: issue.code, message: issue.message }),
 )
-
 // FID-2026-0909-002: refuse the two release-gate env-parity defect classes (./audit-gate-env-parity).
 const gateEnvParityIssues = auditGateEnvParity(root).map((issue) => ({
   code: 'audit.gate-env-parity',
   message: `${issue.file}:${issue.line}: ${issue.message}`,
 }))
-
 // FID-2026-0927-002: two controls that LOOK load-bearing and are not.
 //   F1b — a top-level tree with no tracked files and no ignore rule sits inside
 //         the release automation's `git add --all` blast radius, and the
@@ -277,6 +276,7 @@ const issues: FidLedgerIssue[] = [
   ...validateCurrentHygiene(),
   ...auditRebrandCorruption(root),
   ...validateScopeDispositions(),
+  ...collectRecordCoverageIssues(root), // FID-2026-1012-027: gate/surface coverage
   ...validateRegisterCompleteness(),
   ...changelogCoverageIssues,
   ...vendoredTreeIssues,

@@ -23,6 +23,10 @@ import {
 
 import { checkAll } from './fid-check'
 import { stampReceipt } from './fid-receipt-stamp'
+// FID-2026-1012-027 option B: the same coverage collector `validate:repository`
+// runs, reused here so a stamp and the repo gate can never disagree about
+// whether a record's declared set covers its own write surface.
+import { collectRecordCoverageIssues } from './fid-surface-coverage'
 import { VALIDATION_WORKSPACE_POLICY } from './validation-manifest'
 
 // Public surface preserved for existing importers (facade re-export).
@@ -200,9 +204,22 @@ export function buildReceipt(
   return lines.join('\n')
 }
 
-// The fence-aware stamp locator + insert/replace logic (findHeadingLine /
-// stampReceipt) live in ./fid-receipt-stamp (300-line ceiling split,
-// FID-2026-0913-002 discipline; verbatim move).
+// The fence-aware stamp locator + insert/replace logic live in
+// ./fid-receipt-stamp (FID-2026-0913-002 ceiling split; verbatim move).
+
+/**
+ * The coverage blockers that must stop a `--write` stamp for one record
+ * (FID-2026-1012-027 option B). Exported so the refusal is testable against a
+ * temp root, since `main()` resolves the real repository root.
+ */
+export function coverageStampBlockers(
+  root: string,
+  recordName: string,
+): { code: string; message: string }[] {
+  return collectRecordCoverageIssues(root).filter((issue) =>
+    issue.message.startsWith(`${recordName}:`),
+  )
+}
 
 export function main(): number {
   const args = process.argv.slice(2)
@@ -229,6 +246,22 @@ export function main(): number {
     for (const error of parseErrors) console.error(`    - ${error}`)
     if (gates.length === 0) console.error('    - no gates declared')
     return 1
+  }
+
+  // FID-2026-1012-027 option B: refuse to STAMP a receipt whose declared set
+  // omits a gate the record's own `SCOPE.md` surface demands. The repo gate
+  // catches the same omission later (validate:repository); refusing here is the
+  // earlier, cheaper feedback. Only active enforced records are enumerated, so
+  // an archived or pre-implementation record is never blocked by this.
+  if (write) {
+    const coverage = coverageStampBlockers(root, path.basename(file))
+    if (coverage.length > 0) {
+      console.error(
+        "fid:verify: declared gates do not cover the record's own write surface (FID-2026-1012-027):",
+      )
+      for (const issue of coverage) console.error(`    - ${issue.message}`)
+      return 1
+    }
   }
 
   const { results, errors: runErrors } = runGates(gates)

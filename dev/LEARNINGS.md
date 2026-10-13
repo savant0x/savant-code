@@ -38,7 +38,7 @@
   the missing coverage and never the malformed entry. The entry looked correct to
   a human reader: it listed the paths, indented, in the same shape every
   neighbouring entry uses.
-- **Evidence:** packages/agent-runtime/src/echo/pre-write-gates-law2.ts → symbol:loadScopeArtifact,
+- **Evidence:** packages/agent-runtime/src/echo/scope-targets.ts → symbol:loadScopeArtifact,
   packages/agent-runtime/src/echo/pre-write-gates-law2.ts → symbol:runLaw2Gate,
   SCOPE.md → heading:Machine-readable scope targets
 - **Invariant:** The gate matches item heads with `/^- ([A-Za-z0-9-]+): (.+)$/`,
@@ -74,7 +74,7 @@
   the very files the entry covered ("no approved scope item covers ...").
   The gate read the register exactly as written — the entry's shape had
   stopped parsing.
-- **Evidence:** packages/agent-runtime/src/echo/pre-write-gates-law2.ts → symbol:loadScopeArtifact,
+- **Evidence:** packages/agent-runtime/src/echo/scope-targets.ts → symbol:loadScopeArtifact,
   SCOPE.md → heading:Machine-readable scope targets
 - **Invariant:** A register entry that gates writes is code, not
   documentation — its indentation and line shape are the contract, and a

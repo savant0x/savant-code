@@ -165,16 +165,18 @@ closure gate when that window completes (`FID-2026-1012-021` owns the machinery)
 - gate: test sdk/src/__tests__/read-url-ssrf.test.ts
 - gate: test sdk/src/__tests__/read-url-outcomes.test.ts
 - gate: typecheck sdk
+- gate: typecheck common
 - gate: quality
 
 ### Verification Receipt
 
-- fingerprint: sha256:3137623ea7205f733bac23a06277b08a93889ff59228ff960090405f485669b7
-- verified: 2026-10-13T04:14:34.294Z
+- fingerprint: sha256:1d7f75cd95f20e0b66092f5cbe9c4429a1f779d7c0d8e413db302c83a388c0d2
+- verified: 2026-10-13T05:44:22.264Z
 - test sdk/src/__tests__/read-url.test.ts: exit 0
 - test sdk/src/__tests__/read-url-ssrf.test.ts: exit 0
 - test sdk/src/__tests__/read-url-outcomes.test.ts: exit 0
 - typecheck sdk: exit 0
+- typecheck common: exit 0
 - quality: exit 0
 
 ## Perfection Loop
