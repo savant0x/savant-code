@@ -6,7 +6,7 @@
 **Status:** closed
 **Created:** 2026-10-13 13:12
 **Closed:** 2026-10-13
-**Commit:** 001fecc
+**Commit:** 6c32495
 **Automation level:** 3
 **YAGNI-Compliance:** Verified
 
@@ -286,7 +286,7 @@ basis for each choice. Nothing is hand-edited in a derived surface.
 
 ### Implementation Evidence (REQUIRED for `closed`)
 
-- [x] **Commit SHA:** `001fecc` — `feat(providers): add the Apixo gateway with a keyless live catalog (FID-2026-1013-003)`
+- [x] **Commit SHA:** `6c32495` — `feat(providers): add the Apixo gateway with a keyless live catalog (FID-2026-1013-003)`
 - [x] **File:line ranges:**
       - `common/src/providers/registry-partitioned-3.ts:70-111` — the registry entry
       - `common/src/constants/window-coverage-register.ts:274-286` — `runtime-published` disposition
@@ -365,6 +365,7 @@ basis for each choice. Nothing is hand-edited in a derived surface.
 ## Resolution
 
 - **Closed Date:** 2026-10-13 18:05 (set when closure was independently verified)
+- **Commit:** 6c32495
 - **Fix Description:** Added `apixo` (Apixo) as a built-in gateway provider: one
   typed registry entry (`APIXOAI_API_KEY`, `https://api.apixoai.online/v1`,
   `openai` single-protocol, `strip`), a keyless live-catalog wrapper with a dedicated
@@ -394,7 +395,7 @@ basis for each choice. Nothing is hand-edited in a derived surface.
   `bun run generate:provider-docs:check` clean; `bun run providers:parity --check`
   clean with `apixo: 35`; `bun run window-coverage:check` clean;
   `bun scripts/scope-register-check.ts` 0 issues.
-- **Archived:** 2026-10-13 — closed at `001fecc`; the FID's own receipt was stamped
+- **Archived:** 2026-10-13 — closed at `6c32495`; the FID's own receipt was stamped
   against the final document before the status flip.
 
 ## Lessons Learned

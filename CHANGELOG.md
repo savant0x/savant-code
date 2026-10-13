@@ -48,7 +48,7 @@ agent-runtime 2103, desktop 450, evals 229 plus six smaller workspaces, all 0 fa
 `generate:provider-docs:check`, `providers:parity --check` (apixo: 35) and
 `window-coverage:check` clean. `validate:repository` was not run by operator ruling
 2026-10-13 (recorded verbatim in the archived FID); the sub-checks this change owns were
-run individually. Closed and archived at `001fecc`.
+run individually. Closed and archived at `6c32495`.
 
 ## 2026-10-13 — The learning-store and harness lanes close (FID-2026-1012-010/-011/-012/-013/-014/-015/-016/-027, FID-2026-1013-001/-002)
 
