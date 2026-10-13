@@ -136,17 +136,6 @@ recorded decision or external dependency requires it.
 
 ### Harness and process
 
-- [ ] **FID-2026-1013-002. Asymmetric partial matchers mutate test evidence.**
-      Bun 1.3.14 replaces received fields with matcher objects. The current
-      AST census finds three inline asymmetric toMatchObject calls among 195
-      assertions. Replace those calls, pin received-value preservation and
-      enforce the inline pattern in repository validation. **Automation level: 3.**
-
-- [ ] **FID-2026-1013-001. Script test gates search the repository root.**
-      Receipt test-root resolution excludes scripts/, contradicting the documented
-      Bun substring-filter isolation contract. Repair argv/cwd and pin the runner.
-      **Automation level: 3.**
-
 - [ ] **T122. Savant-Free removal.** Operator direction 2026-10-12 (Q12/Q5):
       the savant-free flag/feature is to be removed rather than repaired. The
       known failing integration remains open under the removal decision, and the
@@ -166,47 +155,6 @@ children of the remediation master `FID-2026-1012-022` as **Lane V** — the art
 line of sight to it, and the pipeline's targeting. Operator ruling 2026-10-12: they are kept, because
 the ledger's value is real only if it is visible and it is not hidden; they are not a substitute for a
 class fix, and the six programme lanes are.
-
-- [ ] **FID-2026-1012-010. The boot read has no size contract.** Rows A1/A2 → feature F1
-      (generated bounded boot digest) and F5 (measured budget). **Consumes** FID-014's rule tier and
-      FID-011's enforceable ceiling, and blocks FID-016's scope decision — the earlier wording here
-      (“blocks FID-014's tier”) read that edge backwards; the review's §5 order and the record's own
-      `**Depends On:**` line now state the resolved direction. **Automation level: 3.**
-      Verified implementation: bounded generated digest and incomplete-read refusal;
-      formal closure blocked by the explicit no-commit hold (G2).
-
-- [ ] **FID-2026-1012-011. The ledger's size ceiling is enforced by nothing.** Rows A3/A4 →
-      feature F3 (gated, logged lifecycle). Unblocks FID-012's move record.
-      **Automation level: 3.**
-
-- [ ] **FID-2026-1012-012. Retirement strands by-title references.** Rows D1/E3 → features
-      F3/F6. Prerequisite of FID-015; fixes the 7 admission issues that make
-      `lessons:features --check` red. **Verified 2026-10-13:** 33 focused tests pass;
-      real admission PASS (74 lessons, 9 candidates). Formal closure blocked by the
-      operator's no-commit hold (G2). **Automation level: 3.**
-
-- [ ] **FID-2026-1012-013. Lesson evidence rots silently.** Rows D2/D3/D4 → feature F4.
-      Verified implementation: structured reproduction, validated snapshots, durable
-      current-code probes, three active legacy entries migrated. Formal closure
-      blocked by the no-commit hold (G2). **Automation level: 3.**
-
-- [ ] **FID-2026-1012-014. The rule catalogue and the ledger disagree.** Rows B2/B3/C1/C2/E2
-      → feature F2 (rule-first schema with an explicit boot tier). **Verified 2026-10-13:**
-      35 focused tests pass; boot projection and bundle checks PASS. Formal closure
-      blocked by the operator's no-commit hold (G2). **Automation level: 3.**
-
-- [ ] **FID-2026-1012-015. The lesson→feature pipeline is red and unowned.** Row E1 →
-      features F5/F6. Must NOT wire its gate before FID-012 lands, or the repository reds on
-      a known-red store. The locator is now green; admission/report freshness is wired
-      through the independent collector. Formal closure blocked by the no-commit hold.
-      **Automation level: 3.**
-
-- [ ] **FID-2026-1012-016. Redundant lesson families inflate the boot read.** Row C3 →
-      features F4/F1. Consolidation runs through the existing supersession machinery and
-      needs operator approval because the ledger is an operator-facing boot surface.
-      Verified inventory: 74 titles, zero exact merge proposals, no supersession.
-      Formal closure blocked by the no-commit hold. **Automation level: 3** for the
-      enumeration, **1** for any future concrete consolidation.
 
 ### Failure-class remediation program (master `FID-2026-1012-022`, 2026-10-12)
 
@@ -271,13 +219,6 @@ with FID-024 owning capture/expectedness corrections and FID-014 owning class-to
       differently worded failures, uncaptured exit-code/nested errors and overbroad expectedness.
       Investigate all seven before any disposition → E7. **Automation level: 3.**
 
-- [ ] **FID-2026-1012-027. A fixed record's receipts prove the gates it chose, not the surfaces it
-      touched.** Harness — a stamped receipt coexisted with a red enforced `scripts`-tree typecheck
-      over a file inside the record's own write surface (`-021`, 2026-10-13), and nothing joins a
-      record's declared gate set to its `SCOPE.md` path list. Make coverage a checked relation in
-      `validate:repository` (surface → demanded declaration), then make `fid:verify --write` refuse an
-      uncovered set. **Automation level: 3.**
-
 ### Build orders (formalized as FIDs 2026-10-07)
 
 The build order for **every open item in this register** — the fifteen active records and the nine
@@ -315,49 +256,6 @@ work item remains active, including the recorded level-1 consolidation and exter
      them to every write, so "present before act" is satisfied by work that
      finished days ago. Evict the     line in the pass that closes the item. -->
 
-- FID-2026-1012-010: `dev/LEARNINGS.md`, `dev/LEARNING-RULES.md`, `scripts/learnings*.ts`,
-  `scripts/validate-repository.ts`, `docs/embedded-learnings.md`, `ECHO.md`,
-  `scripts/__tests__/learnings-boot-digest.test.ts`,
-  `scripts/generate-protocol-bundle.ts`, `agents/savant/system-prompt.ts`,
-  `common/src/constants/learnings-boot.ts`,
-  `common/src/util/boot-contract.ts`, `common/src/util/embedded-protocol.ts`,
-  `common/src/util/__tests__/boot-contract.test.ts`,
-  `common/src/util/__tests__/embedded-protocol.test.ts`,
-  `packages/agent-runtime/src/echo/grounding.ts`,
-  `packages/agent-runtime/src/echo/enforcement/helpers.ts`,
-  `packages/agent-runtime/src/echo/__tests__/enforcement-refresh-cadence.test.ts`,
-  `packages/agent-runtime/src/tools/tool-executor/grounding-read.ts`,
-  `packages/agent-runtime/src/tools/tool-executor/grounding-read.test.ts`,
-  `packages/agent-runtime/src/tools/tool-executor/result-lifecycle.ts`,
-  `common/src/constants/protocol-bundle.generated.ts`,
-  `common/src/constants/echo-protocol-instructions.generated.ts`,
-  `packages/agent-runtime/src/echo/protocol-refresh.generated.ts`, `docs/design/**`
-- FID-2026-1012-011: `scripts/learnings*.ts`, `dev/LEARNINGS.md`,
-  `dev/LEARNINGS-RETIRED.md`, `dev/learnings-move-log.jsonl`,
-  `scripts/__tests__/learnings-retirement-recovery.test.ts`,
-  `scripts/__tests__/learnings-size-policy.test.ts`,
-  `scripts/__tests__/learnings-retire.test.ts`
-- FID-2026-1012-012: `scripts/lesson-feature-pipeline.ts`, `scripts/lessons-to-skills.ts`,
-  `scripts/learnings*.ts`, `dev/LEARNINGS.md`, `dev/LEARNINGS-RETIRED.md`,
-  `scripts/__tests__/learnings-locator.test.ts`,
-  `scripts/__tests__/lesson-feature-pipeline.test.ts`,
-  `dev/feature-pipeline/**`, `dev/session-summaries/**`
-- FID-2026-1012-013: `scripts/learnings*.ts`, `dev/LEARNINGS.md`, `dev/LEARNINGS-RETIRED.md`,
-  `dev/LEARNING-RULES.md`, `scripts/validate-repository.ts`,
-  `scripts/__tests__/learnings-reproduction.test.ts`, `scripts/learnings.test.ts`
-- FID-2026-1012-014: `dev/LEARNING-RULES.md`, `dev/LEARNINGS.md`, `scripts/learnings*.ts`,
-  `scripts/lessons-to-skills.ts`, `scripts/__tests__/learnings*.test.ts`,
-  `scripts/__tests__/lessons-to-skills*.test.ts`, `scripts/validate-repository.ts`,
-  `scripts/generate-protocol-bundle.ts`, `scripts/protocol-bundle-check.ts`,
-  `docs/embedded-learnings.md`, `common/src/constants/protocol-bundle.generated.ts`,
-  `common/src/constants/echo-protocol-instructions.generated.ts`,
-  `packages/agent-runtime/src/echo/protocol-refresh.generated.ts`
-- FID-2026-1012-015: `scripts/lesson-feature-pipeline.ts`, `scripts/validate-repository.ts`,
-  `scripts/lesson-feature-check.ts`, `scripts/__tests__/lesson-feature-check.test.ts`,
-  `scripts/__tests__/lesson-feature-pipeline.test.ts`, `dev/feature-pipeline/**`, `package.json`
-- FID-2026-1012-016: `dev/LEARNINGS.md`, `dev/LEARNING-RULES.md`, `scripts/learnings*.ts`,
-  `scripts/__tests__/learnings-consolidation.test.ts`,
-  `docs/design/learnings-consolidation-inventory-2026-10-13.md`
 - FID-2026-1012-017: `sdk/src/impl/llm/**`, `sdk/src/run/**`,
   `sdk/src/__tests__/tool-argument-budget.test.ts`,
   `common/src/types/contracts/llm.ts`, `common/src/util/tool-argument-budget.ts`,
@@ -396,18 +294,6 @@ work item remains active, including the recorded level-1 consolidation and exter
   `common/src/types/experience.ts`, `common/src/util/command-execution.ts`,
   `common/src/util/experience-classes.ts`, `common/src/tools/params/tool/**`,
   `dev/experiences/class-owners.json`
-- FID-2026-1012-027: `scripts/fid-surface-coverage.ts`,
-  `scripts/__tests__/fid-surface-coverage.test.ts`, `scripts/fid-verify.ts`,
-  `scripts/validate-repository.ts`,
-  `packages/agent-runtime/src/echo/scope-targets.ts`,
-  `packages/agent-runtime/src/echo/pre-write-gates-law2.ts`,
-  `packages/agent-runtime/src/echo/__tests__/scope-targets.test.ts`, `SCOPE.md`
-- FID-2026-1013-001: `scripts/fid-verify.ts`, `scripts/__tests__/fid-verify.test.ts`
-- FID-2026-1013-002: `scripts/audit-mutating-matchers.ts`,
-  `scripts/__tests__/audit-mutating-matchers.test.ts`, `scripts/validate-repository.ts`,
-  `common/src/util/__tests__/analytics-dispatcher.test.ts`,
-  `sdk/src/__tests__/command-execution-contract.test.ts`,
-  `packages/agent-runtime/src/__tests__/spawn-agents-recorder-stall.test.ts`
 - FID-2026-1012-024: `common/src/types/experience.ts`, `common/src/util/experiences.ts`,
   `common/src/util/experience-*.ts`, `common/src/util/__tests__/experience-*.test.ts`,
   `packages/agent-runtime/src/hooks/**`, `packages/agent-runtime/src/tools/tool-executor/**`,

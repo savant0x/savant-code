@@ -3,8 +3,10 @@
 **Filename:** `FID-2026-1012-016-redundant-lesson-families-inflate-boot-read.md`
 **ID:** FID-2026-1012-016
 **Severity:** medium
-**Status:** verified
+**Status:** closed
 **Created:** 2026-10-12 19:05
+**Closed:** 2026-10-13
+**Commit:** 6b847099fcdcc9c9b8e1660b86bf31c3b68311f7
 **Automation level:** 3
 **YAGNI-Compliance:** Verified
 **Master FID:** FID-2026-1012-022 (The failure-class remediation program)
@@ -292,8 +294,9 @@ Current inventory evidence (2026-10-13) supersedes the original family estimate.
 - [x] Measured reduction in this pass: 0 boot characters and 0 ledger characters.
       No supersession, retirement or candidate re-pointing is performed. Thematic
       family labels do not establish equivalent invariants.
-- [ ] Formal closure remains blocked by the no-commit hold (G2). A future concrete
-      consolidation still requires the recorded level-1 ruling.
+- [x] The implementation is committed. The archive move and CHANGELOG entry are
+      the remaining closure ceremony. A future concrete consolidation still
+      requires the recorded level-1 ruling.
 
 - [x] Every cited path exists at `main` @ `14d48820`, read directly at review time; the raw
       measurements live in `docs/design/learnings-boot-loading-and-lifecycle-review.md` §2/§3,
@@ -317,7 +320,7 @@ Current inventory evidence (2026-10-13) supersedes the original family estimate.
 
 ## Resolution
 
-**Inventory implemented — `Status: verified`; formal closure blocked by the no-commit hold.**
+**Inventory implemented; closed 2026-10-13 at `6b847099fcdcc9c9b8e1660b86bf31c3b68311f7`, once all 5 declared gates re-ran green.**
 
 The unique inventory and exact-merge checker replace the original unproven family
 estimate. No eligible identical invariant/guard/rule group exists in the current
@@ -332,3 +335,4 @@ is claimed by this pass; the bounded boot selection belongs to FID-010.
 - **Ordering:** Follows FID-2026-1012-010 (the boot digest decides how much consolidation is
   needed) and FID-2026-1012-014 (rules must be the promotion target); the consolidation step
   itself is operator-approved (automation level 1).
+- **Archived:** 2026-10-13 — all 5 declared gates re-ran green on the closure tree before closure; the implementation commit is recorded in the metadata above.

@@ -3,8 +3,10 @@
 **Filename:** `FID-2026-1012-010-learnings-boot-read-size-contract.md`
 **ID:** FID-2026-1012-010
 **Severity:** critical
-**Status:** verified
+**Status:** closed
 **Created:** 2026-10-12 19:05
+**Closed:** 2026-10-13
+**Commit:** 6b847099fcdcc9c9b8e1660b86bf31c3b68311f7
 **Automation level:** 3
 **YAGNI-Compliance:** Verified
 **Master FID:** FID-2026-1012-022 (The failure-class remediation program)
@@ -282,7 +284,7 @@ Current implementation (2026-10-13) supersedes the historical measurements below
       fail closed. The real SDK/handler test covers truncation and missing files.
 - [x] Runtime logging records character and byte counts without content. The
       independent budget probe reports 1,938 / 24,000 characters (22,062 headroom).
-- [ ] Formal closure: blocked by the operator's no-commit hold (ECHO G2).
+- [x] Formal closure: closed 2026-10-13 at `6b847099fcdcc9c9b8e1660b86bf31c3b68311f7`; local commits were authorized, push and release remain operator-owned.
 
 - [x] Every cited path exists at `main` @ `14d48820`, read directly at review time; the raw
       measurements live in `docs/design/learnings-boot-loading-and-lifecycle-review.md` §2/§3,
@@ -305,15 +307,15 @@ Current implementation (2026-10-13) supersedes the historical measurements below
 
 ## Resolution
 
-**Implemented — `Status: verified`; formal closure blocked by the no-commit hold.**
+**Implemented; closed 2026-10-13 at `6b847099fcdcc9c9b8e1660b86bf31c3b68311f7`, once all 13 declared gates re-ran green.**
 
 One generated, bounded rule digest now supplies local and embedded boot reads.
 Incident prose remains in the ledger and locator. The digest retains the original
 four public rules, including their invariants and guards; no additional rule is
 publicly promoted. Grounding credit requires complete content, and telemetry carries
 counts only. The declared gates provide reproducibility, budget refusal, embedded
-alias, mechanical grounding and real SDK-to-handler evidence. No commit, push,
-release or archive move is performed.
+alias, mechanical grounding and real SDK-to-handler evidence. Local commits were
+authorized on 2026-10-13; push and release remain operator-owned.
 
 - **Authorised write surface:** `SCOPE.md` → machine-readable scope targets → this record's
   line (registered 2026-10-12 with the review).
@@ -321,3 +323,4 @@ release or archive move is performed.
   and A2, §4 features F1 and F5.
 - **Ordering:** Consumes the boot tier defined by FID-2026-1012-014; consumes the ceiling that
   FID-2026-1012-011 makes enforceable; scopes what FID-2026-1012-016 needs to consolidate.
+- **Archived:** 2026-10-13 — all 13 declared gates re-ran green on the closure tree before closure; the implementation commit is recorded in the metadata above.

@@ -3,8 +3,10 @@
 **Filename:** `FID-2026-1012-014-canonical-rules-and-ledger-disagree.md`
 **ID:** FID-2026-1012-014
 **Severity:** high
-**Status:** verified
+**Status:** closed
 **Created:** 2026-10-12 19:05
+**Closed:** 2026-10-13
+**Commit:** 6b847099fcdcc9c9b8e1660b86bf31c3b68311f7
 **Automation level:** 3
 **YAGNI-Compliance:** Verified
 **Master FID:** FID-2026-1012-022 (The failure-class remediation program)
@@ -327,7 +329,7 @@ Current implementation evidence (2026-10-13) supersedes the historical measureme
 - [x] Focused combined tier/projection/validator/skill battery: 35 pass, 0 fail. Root
       typecheck and ESLint exit 0; quality PASS (1,502 baselined files); projection and
       protocol bundle checks PASS. Initial two-file formatting drift corrected.
-- [ ] Formal closure: blocked by the explicit operator hold on local commits (ECHO G2).
+- [x] Formal closure: closed 2026-10-13 at `6b847099fcdcc9c9b8e1660b86bf31c3b68311f7`; local commits were authorized, push and release remain operator-owned.
 
 - [x] Every cited path exists at `main` @ `14d48820`, read directly at review time; the raw
       measurements live in `docs/design/learnings-boot-loading-and-lifecycle-review.md` §2/§3,
@@ -354,7 +356,7 @@ Current implementation evidence (2026-10-13) supersedes the historical measureme
 
 ## Resolution
 
-**Implemented — `Status: verified`; closure blocked by the operator's no-commit hold.**
+**Implemented; closed 2026-10-13 at `6b847099fcdcc9c9b8e1660b86bf31c3b68311f7`, once all 12 declared gates re-ran green.**
 
 The catalog now classifies all 35 rules after FID-013's legacy reconciliation.
 All 37 governed lessons satisfy the exact-target
@@ -363,7 +365,7 @@ rules generate the shipped guidance deterministically. Exact class links replace
 overlap in skill eligibility, with invalid catalogs and ambiguous classes refused.
 Tests are the rule-tier, projection, learning validator and two skill suites declared
 above. Verification evidence is recorded in this section and the live receipt.
-No commit, push, release or archive move is performed.
+Local commits were authorized on 2026-10-13; push and release remain operator-owned.
 
 - **Authorised write surface:** `SCOPE.md` → machine-readable scope targets → this record's
   line (registered 2026-10-12 with the review).
@@ -371,3 +373,4 @@ No commit, push, release or archive move is performed.
   B2, B3, C1, C2 and E2, §4 feature F2.
 - **Ordering:** Defines the boot tier FID-2026-1012-010 consumes and the rule target
   FID-2026-1012-016 consolidates onto.
+- **Archived:** 2026-10-13 — all 12 declared gates re-ran green on the closure tree before closure; the implementation commit is recorded in the metadata above.

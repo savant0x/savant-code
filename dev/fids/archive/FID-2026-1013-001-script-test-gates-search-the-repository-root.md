@@ -3,8 +3,10 @@
 **Filename:** `FID-2026-1013-001-script-test-gates-search-the-repository-root.md`
 **ID:** FID-2026-1013-001
 **Severity:** medium
-**Status:** verified
+**Status:** closed
 **Created:** 2026-10-13 09:40
+**Closed:** 2026-10-13
+**Commit:** 6b847099fcdcc9c9b8e1660b86bf31c3b68311f7
 **Automation level:** 3
 **YAGNI-Compliance:** Verified
 **Master FID:** FID-2026-1012-022
@@ -106,9 +108,12 @@ retaining its existing workspace and command-injection checks.
 The runner regression suite passes 25 tests, including script argv/cwd and stable
 receipt labels. FID-014 and FID-012 gates now complete and stamp live receipts;
 typecheck workspace admission remains unchanged. Quality passes at 300 lines for
-the runner test. Formal closure remains blocked by the operator's commit hold.
+the runner test. The implementation is committed at that hash and the record is closed.
 
 ## Resolution
 
-Implemented and verified. Formal closure requires a commit and remains blocked by the
-operator's explicit no-commit hold. No push or release is authorized.
+Implemented at `6b847099fcdcc9c9b8e1660b86bf31c3b68311f7` and verified; closed 2026-10-13
+once all 3 declared gates re-ran green. Local commits were authorized on 2026-10-13;
+push and release remain operator-owned.
+
+- **Archived:** 2026-10-13 — all 3 declared gates re-ran green on the closure tree before closure; the implementation commit is recorded in the metadata above.

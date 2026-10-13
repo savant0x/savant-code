@@ -200,3 +200,25 @@ T175, T62, T187 and T171's ruling retain their recorded operator/external blocke
 T173 additionally needs vendor-published exact window evidence. Master closure is
 not claimed. Provider-parity, wiki, raw capture, idea-shelf and prior handoff work
 were preserved. No stage, commit, push, release or archive move was performed.
+
+## Commit authorization and continued harness repair
+
+The operator subsequently authorized local commits and continuation before the
+session closes. This supersedes the commit hold above; push/release authority
+was not granted. Explicit-path commits:
+
+- `3c5766d8`: SDK Windows readiness diagnostic under FID-023.
+- `6b847099fcdcc9c9b8e1660b86bf31c3b68311f7`: interdependent learning schema,
+  projection, grounding, consumer checks and recurrence machinery. Unrelated
+  provider parity, raw traces, wiki, agenda, idea shelf and handoff files stayed
+  unstaged. Closure metadata is a subsequent pass with the real implementation hash.
+
+FID-2026-1013-002 owns the master's unowned asymmetric-matcher finding. A current
+AST census finds three inline unsafe calls among 195 partial assertions. Before
+repair, received-preservation pins fail in analytics, command and spawn suites
+(15 PASS / 3 FAIL), each proving an original value became a matcher object.
+The equality/partial-object composition preserves existing matching semantics and
+original data; all three suites now pass (18 PASS). The new collector suite passes
+seven tests; real audit PASS (0 issues). The repository validator calls the same
+collector as the standalone probe. Indirect/dynamic matcher flow remains an
+explicit boundary; the collector claims only inline detection.

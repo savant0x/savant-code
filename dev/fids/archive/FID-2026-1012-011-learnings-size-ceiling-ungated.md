@@ -3,8 +3,10 @@
 **Filename:** `FID-2026-1012-011-learnings-size-ceiling-ungated.md`
 **ID:** FID-2026-1012-011
 **Severity:** high
-**Status:** fixed
+**Status:** closed
 **Created:** 2026-10-12 19:05
+**Closed:** 2026-10-13
+**Commit:** 3e0fab271417c10635cf55aaa1e54a4b54e2c5f6
 **Automation level:** 3
 **YAGNI-Compliance:** Verified
 **Master FID:** FID-2026-1012-022 (The failure-class remediation program)
@@ -331,9 +333,9 @@ Exact artifact paths and their `- gate:` declarations are recorded when the arti
 
 ## Resolution
 
-**Implemented — `Status: fixed` (deterministic gates green; the operator boundary unchanged).**
-
-- **Closed Date:** 2026-10-13.
+**Implemented; closed 2026-10-13 at `3e0fab271417c10635cf55aaa1e54a4b54e2c5f6`, with the Loop 4
+recovery work in `ca1f359d68e4f72235415059a32f85537b0dbdc7`, once all 6 declared gates re-ran green.**
+Local commits were authorized on 2026-10-13; push, release and any retirement remain operator-owned.
 - **Fix Description.** The ceiling is no longer a parameter of the repair tool: it is an invariant of
   the artifact, enforced where the artifact is validated. `scripts/learnings-size-policy.ts` owns both
   measures — 1,200 **logical lines** (newline-delimited segments, the unit `learnings:retire` reports)
@@ -355,7 +357,7 @@ Exact artifact paths and their `- gate:` declarations are recorded when the arti
   temporarily appended (reverted byte-identically) · `bun run typecheck` (root, including the `scripts/`
   leg) exit 0 · `validate:repository` PASS · `quality:report` PASS · ESLint `--max-warnings 0` and
   Prettier clean.
-- **Archived:** not archived; the master (`FID-2026-1012-022`) closes last.
+- **Archived:** 2026-10-13 — all 6 declared gates re-ran green on the closure tree before closure; the implementation commit is recorded in the metadata above.
 - **Open, and stated rather than implied:** (a) `FID-2026-1012-012` still has to *consume* the move record
   — this record produces it; (b) `FID-2026-1012-010` owns the boot digest that will make the character
   ceiling less load-bearing; (c) the scripts-tree typecheck is declared as the probe the declarability

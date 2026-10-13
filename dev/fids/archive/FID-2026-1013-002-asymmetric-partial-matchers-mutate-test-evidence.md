@@ -3,8 +3,10 @@
 **Filename:** `FID-2026-1013-002-asymmetric-partial-matchers-mutate-test-evidence.md`
 **ID:** FID-2026-1013-002
 **Severity:** medium
-**Status:** verified
+**Status:** closed
 **Created:** 2026-10-13 12:00
+**Closed:** 2026-10-13
+**Commit:** 9b1d5b4deabf0168f55bb46e3085a138f2bcdffd
 **Automation level:** 3
 **YAGNI-Compliance:** Verified
 **Master FID:** FID-2026-1012-022
@@ -152,6 +154,9 @@ negation and quoted lookalikes; it proves the collector rejects a seeded file.
 
 ## Resolution
 
-Implemented assertion preservation and the shared inline-pattern collector;
-live verification is recorded above and in the declared receipt. Local commits
-authorized on 2026-10-13; push and release remain operator-owned.
+Implemented at `9b1d5b4deabf0168f55bb46e3085a138f2bcdffd` and closed 2026-10-13 once all
+10 declared gates re-ran green; live verification is recorded above and in the
+declared receipt. Local commits were authorized on 2026-10-13; push and release
+remain operator-owned.
+
+- **Archived:** 2026-10-13 — all 10 declared gates re-ran green on the closure tree before closure; the implementation commit is recorded in the metadata above.

@@ -3,8 +3,10 @@
 **Filename:** `FID-2026-1012-027-gate-coverage-of-a-fixed-records-surfaces.md`
 **ID:** FID-2026-1012-027
 **Severity:** high
-**Status:** fixed
+**Status:** closed
 **Created:** 2026-10-13 04:20
+**Closed:** 2026-10-13
+**Commit:** 5144615bcb674c7dab1e8e92b46c5b4e1b020a39
 **Automation level:** 3
 **YAGNI-Compliance:** Verified
 **Master FID:** FID-2026-1012-022 (The failure-class remediation program)
@@ -305,7 +307,7 @@ Run, all measured on the implementation tree:
 
 ## Resolution
 
-**Implemented 2026-10-13 — `Status: fixed`.**
+**Implemented; closed 2026-10-13 at `5144615bcb674c7dab1e8e92b46c5b4e1b020a39`, once all 6 declared gates re-ran green.**
 
 - **Fix Description:** coverage is now a checked relation. `scripts/fid-surface-coverage.ts` joins
   each active `fixed`/`verified` record's declared gates (parsed by `fid:verify`'s own
@@ -318,7 +320,7 @@ Run, all measured on the implementation tree:
 - **Verification Evidence:** two real omissions found and repaired (`-018` declared `typecheck common`,
   `-020` declared `typecheck sdk`, both re-stamped green); the real tree then reports 0 coverage
   issues; mutation in both directions re-proven; root `typecheck` exit 0; `quality:report` PASS.
-- **Archived:** not set — this record remains active.
+- **Archived:** 2026-10-13 — all 6 declared gates re-ran green on the closure tree before closure; the implementation commit is recorded in the metadata above.
 
 - **Authorised write surface:** `SCOPE.md` → machine-readable scope targets → this record's line.
 - **Design input:** `scripts/gate-declarability.ts` (the audited-gate guard this sits beside),

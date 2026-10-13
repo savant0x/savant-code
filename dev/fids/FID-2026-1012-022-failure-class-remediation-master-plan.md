@@ -131,6 +131,7 @@ of its own (`fid.graph.master-nested`).
 | FID-2026-1012-025 | Implementation-discovered verification harness drift | harness | — |
 | FID-2026-1012-027 | A fixed record's receipts prove the gates it chose, not the surfaces it touched | harness | — |
 | FID-2026-1013-001 | Script test gate discovery must use the scripts root | harness | — |
+| FID-2026-1013-002 | Asymmetric partial matchers mutate received test evidence | harness | — |
 
 **Instrument sensitivity, stated because it bounds every claim below** — the slice length changes the
 class count, so the number is only meaningful with its instrument:
@@ -362,15 +363,16 @@ activation), and the child's id is recorded in this table when it exists.
 | FID-2026-1012-019 — capability integrity (50) | A1 | `-019` | **fixed** — degradation contract + research surface + `code_search` flag guard; 7 declared gates green + receipt stamped; window open (the `search-executable-missing` cause is the **host** resolver's, and the run-start preflight is still open) |
 | FID-2026-1012-020 — edit-path friction (72) | A1 | `-020` | **fixed** — missing-target diagnosis, mismatch/no-op separation, unsafe result mutation removed; 5 declared gates green + receipt stamped; window open (`patch-failed` 17 records and `immutable-result`'s production trigger remain) |
 | FID-2026-1012-021 — the recurrence-to-fix loop | A2 | `-021` | verified — coverage gate, qualified lesson-last ordering and idempotent proposed FID drafting; operator routing never inferred; class observation and no-commit hold keep closure open |
-| FID-2026-1012-027 — gate coverage of a record's surfaces | harness | `-027` | **fixed** — coverage is a repository gate: `collectRecordCoverageIssues` joins each enforced record's declared gates to its `SCOPE.md` surface, and `fid:verify --write` refuses an uncovered stamp (option B); it found and repaired two real omissions (`-018` `typecheck common`, `-020` `typecheck sdk`); 6 declared gates green + receipt stamped |
-| FID-2026-1012-011 — ceiling ungated | B0 | `-011` | **fixed** — both ceilings (1,200 logical lines / 100,000 JS characters) enforced by `learnings:check`, headroom on pass, retirement emits `dev/learnings-move-log.jsonl`; 4 declared gates green + receipt stamped; the move record's consumer is `-012` |
-| FID-2026-1012-014 — rule catalogue vs ledger | B0 | `-014` | verified — tiers, exact class targeting and generated boot projection; 35 focused tests pass; formal closure blocked by the no-commit hold |
-| FID-2026-1012-012 — retirement strands references | B1 | `-012` | verified — shared live/retired locator; 33 focused tests pass; real admission PASS (74 lessons, 9 candidates); formal closure blocked by the no-commit hold |
-| FID-2026-1012-013 — lesson evidence rot | B2 | `-013` | verified — structured reproduction, verified historical snapshots, durable probes and all three active legacy lessons governed; closure blocked by no-commit hold |
-| FID-2026-1012-010 — boot-read size contract | B1 | `-010` | verified — 24,000-character generated digest, aligned prompt/grounding/bundle, incomplete-read refusal and count telemetry; closure blocked by no-commit hold |
-| FID-2026-1012-016 — redundant lesson families | B3 | `-016` | verified inventory — 74 unique titles, zero exact merge proposals; no supersession performed; closure blocked by no-commit hold |
-| FID-2026-1012-015 — pipeline red and unowned | B4 | `-015` | verified — shared admission/report-freshness gate, live/retired/manifest fingerprint and deterministic red reports; nine candidates include three routed repair owners; existing drafts preserved; closure blocked by no-commit hold |
-| FID-2026-1013-001 — script test gate discovery | harness | `1013-001` | verified — script gates execute from scripts/, stable receipt labels; closure blocked by no-commit hold |
+| FID-2026-1012-027 — gate coverage of a record's surfaces | harness | `-027` | **closed 2026-10-13** — coverage is a repository gate: `collectRecordCoverageIssues` joins each enforced record's declared gates to its `SCOPE.md` surface, and `fid:verify --write` refuses an uncovered stamp (option B); it found and repaired two real omissions (`-018` `typecheck common`, `-020` `typecheck sdk`); implementation `5144615b`; 6 declared gates re-ran green |
+| FID-2026-1012-011 — ceiling ungated | B0 | `-011` | **closed 2026-10-13** — both ceilings (1,200 logical lines / 100,000 JS characters) enforced by `learnings:check`, headroom on pass, retirement emits `dev/learnings-move-log.jsonl` and now recovers an interrupted move; implementation `3e0fab27` (+ recovery `ca1f359d`); 6 declared gates re-ran green |
+| FID-2026-1012-014 — rule catalogue vs ledger | B0 | `-014` | **closed 2026-10-13** — tiers, exact class targeting and generated boot projection; implementation `6b847099`; 12 declared gates re-ran green |
+| FID-2026-1012-012 — retirement strands references | B1 | `-012` | **closed 2026-10-13** — shared live/retired locator; real admission PASS (74 lessons, 9 candidates); implementation `6b847099`; 8 declared gates re-ran green |
+| FID-2026-1012-013 — lesson evidence rot | B2 | `-013` | **closed 2026-10-13** — structured reproduction, verified historical snapshots, durable probes and all three active legacy lessons governed; implementation `6b847099`; 7 declared gates re-ran green |
+| FID-2026-1012-010 — boot-read size contract | B1 | `-010` | **closed 2026-10-13** — 24,000-character generated digest, aligned prompt/grounding/bundle, incomplete-read refusal and count telemetry; implementation `6b847099`; 13 declared gates re-ran green |
+| FID-2026-1012-016 — redundant lesson families | B3 | `-016` | **closed 2026-10-13** — 74 unique titles, zero exact merge proposals; no supersession performed; implementation `6b847099`; 5 declared gates re-ran green |
+| FID-2026-1012-015 — pipeline red and unowned | B4 | `-015` | **closed 2026-10-13** — shared admission/report-freshness gate, live/retired/manifest fingerprint and deterministic red reports; nine candidates include three routed repair owners; implementation `6b847099`; 5 declared gates re-ran green |
+| FID-2026-1013-001 — script test gate discovery | harness | `1013-001` | **closed 2026-10-13** — script gates execute from scripts/, stable receipt labels; implementation `6b847099`; 3 declared gates re-ran green |
+| FID-2026-1013-002 — mutating partial assertions | harness | `1013-002` | **closed 2026-10-13** — three mutation failures reproduced and repaired; 25 focused tests green; standalone AST audit PASS; implementation `9b1d5b4d`; 10 declared gates re-ran green |
 
 **The automation contract.** Session ceiling is `protocol.config.yaml` → `session.autonomy_level`
 (3). An item runs unattended when its level is ≤ the ceiling and it is not on the operator-gated list;
@@ -385,8 +387,11 @@ PASS / 23 SKIP / 0 FAIL), full root typecheck, ESLint, Prettier, Markdown lint,
 quality, learning, protocol-bundle and projection gates pass. Eight continuation
 children carry live receipts. The shared stable-class census reads 586 records /
 57 classes, zero unowned, zero issues and zero observed classes; the historical
-68-row census above retains its original instrument. No exposure-qualified
-observation, class repair closure, commit, push or release is inferred. Detailed
+68-row census above retains its original instrument. Ten commit-blocked children — the seven
+Chain B records and the three harness records — re-ran their declared gates live on the closure
+tree and were closed and archived on 2026-10-13; their register entries and write targets left
+`SCOPE.md` with them. No exposure-qualified observation or class repair closure is inferred, and
+push and release remain operator-owned. Detailed
 logs and register measurements are indexed in
 `dev/session-summaries/2026-10-13-learning-remediation-continuation.md`.
 
@@ -508,7 +513,9 @@ rediscover them — plus a third, measured 2026-10-13 during the `-019` pass:
 1. `toMatchObject` with an asymmetric matcher **mutates the received value** on Bun 1.3.14
    (`expect({a:'x'}).toMatchObject({a: expect.stringContaining('x')})` leaves `typeof a === 'object'`).
    It silently corrupts a raw tool result before a schema parses it; the `-023` contract test was
-   rewritten to parse first, but no other suite was audited. Needs its own harness record.
+   rewritten to parse first, but no other suite was audited. FID-2026-1013-002 now
+   owns this finding: current AST census identifies three inline cases, each
+   reproduced with a preservation pin and repaired without weakening assertions.
 2. `bun run validate:repository` exits 1 on `quality.ratchet`:
    `scripts/providers/audit-probes/parity-tier1-catalog-probe.ts` is 312 lines against the 300
    absolute maximum, and both fresh parity probes are prettier-dirty. Those files belong to the

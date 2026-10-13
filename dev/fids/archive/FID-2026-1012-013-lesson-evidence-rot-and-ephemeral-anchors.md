@@ -3,8 +3,10 @@
 **Filename:** `FID-2026-1012-013-lesson-evidence-rot-and-ephemeral-anchors.md`
 **ID:** FID-2026-1012-013
 **Severity:** high
-**Status:** verified
+**Status:** closed
 **Created:** 2026-10-12 19:05
+**Closed:** 2026-10-13
+**Commit:** 6b847099fcdcc9c9b8e1660b86bf31c3b68311f7
 **Automation level:** 3
 **YAGNI-Compliance:** Verified
 **Master FID:** FID-2026-1012-022 (The failure-class remediation program)
@@ -286,8 +288,9 @@ Current implementation (2026-10-13) supersedes the historical measurements below
       intact in Verification, with new durable Reproduction pointers.
 - [x] The two guards that recommended scripted edits now state the current
       direct-edit law; their incident accounts are preserved.
-- [ ] Committed durability and formal closure remain blocked by the explicit
-      no-commit hold. Current source eligibility is validated without claiming a commit.
+- [x] Committed durability and formal closure: closed 2026-10-13 at
+      `6b847099fcdcc9c9b8e1660b86bf31c3b68311f7`. Local commits were authorized on 2026-10-13;
+      push and release remain operator-owned.
 
 - [x] Every cited path exists at `main` @ `14d48820`, read directly at review time; the raw
       measurements live in `docs/design/learnings-boot-loading-and-lifecycle-review.md` §2/§3,
@@ -310,15 +313,16 @@ Current implementation (2026-10-13) supersedes the historical measurements below
 
 ## Resolution
 
-**Implemented — `Status: verified`; closure blocked by the no-commit hold.**
+**Implemented; closed 2026-10-13 at `6b847099fcdcc9c9b8e1660b86bf31c3b68311f7`, once all 7 declared gates re-ran green.**
 
 Structural and reproduction validation now have distinct contracts. Historical
 drift is visible only after snapshot verification; arbitrary prose is never run.
 Both expired measurements have durable current-code successors. All three legacy
 entries remain active in governed space, their evidence annotations retained in
 Verification and their three canonical rules classified as reference. Contradictory
-scripted-edit guards are repaired while incident accounts remain. No retirement,
-commit, push, release or archive operation is performed.
+scripted-edit guards are repaired while incident accounts remain. No retirement was
+performed; local commits were authorized on 2026-10-13, and push and release remain
+operator-owned.
 
 - **Authorised write surface:** `SCOPE.md` → machine-readable scope targets → this record's
   line (registered 2026-10-12 with the review).
@@ -326,3 +330,4 @@ commit, push, release or archive operation is performed.
   §4 feature F4.
 - **Ordering:** Depends on FID-2026-1012-011's retirement record for the `as-of` history
   rule; shares the ledger schema changes with FID-2026-1012-014.
+- **Archived:** 2026-10-13 — all 7 declared gates re-ran green on the closure tree before closure; the implementation commit is recorded in the metadata above.

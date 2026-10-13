@@ -10,6 +10,47 @@
 > the v0.0.36 cut. Release notes are written here at cut time; nothing in this
 > section ships until then.
 
+## 2026-10-13 — The learning-store and harness lanes close (FID-2026-1012-010/-011/-012/-013/-014/-015/-016/-027, FID-2026-1013-001/-002)
+
+### Fixed
+
+- **The lessons ledger has a size contract and its boot read is bounded**
+  (FID-2026-1012-010, FID-2026-1012-011). The 1,200-logical-line and 100,000-character
+  ceilings moved from the retirement tool into the validator, so `learnings:check` and
+  therefore `validate:repository` fail on either breach and report headroom while green;
+  retirement emits a machine-readable move record and now recovers from an interruption
+  mid-move. The boot read is a generated 24,000-character rule digest, and grounding credit
+  is refused for windowed, truncated or status-only reads.
+- **Retirement no longer strands by-title references, and lesson evidence stops rotting**
+  (FID-2026-1012-012, FID-2026-1012-013). One locator spans the live ledger and the retired
+  archive and resolves supersession with replacement notices; the seven admission issues that
+  left `lessons:features --check` red are resolved. Reproduction references are structured,
+  ephemeral roots are rejected, and historical pins must validate their actual commit and blob.
+- **The rule catalogue and the ledger are kept in step** (FID-2026-1012-014, FID-2026-1012-016).
+  Every catalogue rule carries a tier and a reason, every non-historical lesson names exactly
+  one catalogue rule, and the shipped subset is a deterministic projection of the boot tier.
+  The consolidation inventory is exact-merge only: 74 unique titles, zero eligible proposals,
+  zero mutation, zero boot saving claimed.
+- **The lesson-to-feature pipeline is gated by its own independent collector**
+  (FID-2026-1012-015); `lessons:features --check` passes over the reconciled store and its
+  report fingerprints the live, retired and manifest inputs, publishing deterministic red
+  reports instead of a stale green one.
+- **Coverage of a fixed record's own surface is now a checked relation**
+  (FID-2026-1012-027). `scripts/fid-surface-coverage.ts` joins each enforced record's declared
+  gates to its `SCOPE.md` write surface; it found and repaired two real omissions and
+  `fid:verify --write` refuses an uncovered stamp first.
+- **Script test gates resolve from the `scripts` root** (FID-2026-1013-001), so receipt
+  execution no longer runs repository-root substring discovery over script suites.
+- **Partial assertions no longer mutate the evidence they check** (FID-2026-1013-002).
+  Three inline `toMatchObject` calls replaced received fields with matcher objects under
+  Bun 1.3.14; they now use a non-mutating equality/partial-object composition, with a shared
+  AST collector wired into repository validation.
+- All ten records re-ran their declared gates green on the closure tree (13+6+8+7+12+5+5+6+3+10
+  = 75 gate executions, every one exit 0), then were closed and archived at their
+  implementation commits. FID-2026-1012-011's recovery commit is `ca1f359d`. The failure-class
+  remediation master (`FID-2026-1012-022`) remains active: its class lanes still await
+  exposure-qualified observation.
+
 ## 2026-10-12 — Verification harness drift repaired (FID-2026-1012-025)
 
 ### Fixed

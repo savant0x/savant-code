@@ -3,8 +3,10 @@
 **Filename:** `FID-2026-1012-015-lessons-feature-pipeline-red-and-ungated.md`
 **ID:** FID-2026-1012-015
 **Severity:** high
-**Status:** verified
+**Status:** closed
 **Created:** 2026-10-12 19:05
+**Closed:** 2026-10-13
+**Commit:** 6b847099fcdcc9c9b8e1660b86bf31c3b68311f7
 **Automation level:** 3
 **YAGNI-Compliance:** Verified
 **Master FID:** FID-2026-1012-022 (The failure-class remediation program)
@@ -288,7 +290,7 @@ Current implementation evidence (2026-10-13) supersedes the historical baseline 
       Four drafts stay draft; both implemented candidates retain their real recorded
       commits. Three new routed candidates name FID-010, FID-014 and FID-013;
       existing candidate links and approval states were preserved.
-- [ ] Formal closure remains blocked by the operator's no-commit hold (G2).
+- [x] Formal closure: closed 2026-10-13 at `6b847099fcdcc9c9b8e1660b86bf31c3b68311f7`; local commits were authorized, push and release remain operator-owned.
 
 - [x] Every cited path exists at `main` @ `14d48820`, read directly at review time; the raw
       measurements live in `docs/design/learnings-boot-loading-and-lifecycle-review.md` §2/§3,
@@ -314,14 +316,14 @@ Current implementation evidence (2026-10-13) supersedes the historical baseline 
 
 ## Resolution
 
-**Implemented — `Status: verified`; formal closure blocked by the no-commit hold.**
+**Implemented; closed 2026-10-13 at `6b847099fcdcc9c9b8e1660b86bf31c3b68311f7`, once all 5 declared gates re-ran green.**
 
 Admission and report freshness are now repository checks through one independent
 collector. Fingerprints cover both lesson stores and the candidate manifest; reports
 remain truthful on red and preserve failure exits. Existing draft/implemented states
 and citations remain intact; LF-007 through LF-009 account for the approved boot,
-canonical-rule and reference-integrity repairs as routed work. No commit, push,
-release or archive move is performed.
+canonical-rule and reference-integrity repairs as routed work. Local commits were
+authorized on 2026-10-13; push and release remain operator-owned.
 
 - **Authorised write surface:** `SCOPE.md` → machine-readable scope targets → this record's
   line (registered 2026-10-12 with the review).
@@ -330,3 +332,4 @@ release or archive move is performed.
 - **Ordering:** Depends on FID-2026-1012-012's live+retired title index; the gate must NOT be
   wired into `validate:repository` before those 7 issues are resolved, or the repository reds
   on a known-red store.
+- **Archived:** 2026-10-13 — all 5 declared gates re-ran green on the closure tree before closure; the implementation commit is recorded in the metadata above.

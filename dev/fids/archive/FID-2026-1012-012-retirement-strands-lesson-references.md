@@ -3,8 +3,10 @@
 **Filename:** `FID-2026-1012-012-retirement-strands-lesson-references.md`
 **ID:** FID-2026-1012-012
 **Severity:** high
-**Status:** verified
+**Status:** closed
 **Created:** 2026-10-12 19:05
+**Closed:** 2026-10-13
+**Commit:** 6b847099fcdcc9c9b8e1660b86bf31c3b68311f7
 **Automation level:** 3
 **YAGNI-Compliance:** Verified
 **Master FID:** FID-2026-1012-022 (The failure-class remediation program)
@@ -274,7 +276,7 @@ Current implementation evidence (2026-10-13) supersedes the historical measureme
       typecheck exit 0; quality PASS (1,502 baselined files).
 - [x] Real `bun run lessons:features --check`: PASS (74 lessons, 6 candidates).
       All seven retired references resolve without changing candidate links or ledgers.
-- [ ] Formal closure: blocked by the explicit no-commit hold (ECHO G2).
+- [x] Formal closure: closed 2026-10-13 at `6b847099fcdcc9c9b8e1660b86bf31c3b68311f7`; local commits were authorized, push and release remain operator-owned.
 
 - [x] Every cited path exists at `main` @ `14d48820`, read directly at review time; the raw
       measurements live in `docs/design/learnings-boot-loading-and-lifecycle-review.md` §2/§3,
@@ -298,14 +300,15 @@ Current implementation evidence (2026-10-13) supersedes the historical measureme
 
 ## Resolution
 
-**Implemented — `Status: verified`; closure blocked by the operator's no-commit hold.**
+**Implemented; closed 2026-10-13 at `6b847099fcdcc9c9b8e1660b86bf31c3b68311f7`, once all 8 declared gates re-ran green.**
 
 The shared in-memory locator preserves all matching locations and follows replacements
 with explicit notices. Conflicting duplicates, missing replacements and cycles fail
 closed. Feature admission resolves retired evidence; skills exclude retired entries.
 Retirement shares the entry parser and keeps FID-011's idempotent move receipts.
-The declared regression suites and real admission command pass. No ledger move,
-candidate promotion, commit, push, release or archive operation was performed.
+The declared regression suites and real admission command pass. No ledger move or
+candidate promotion was performed; local commits were authorized on 2026-10-13, and
+push and release remain operator-owned.
 
 - **Authorised write surface:** `SCOPE.md` → machine-readable scope targets → this record's
   line (registered 2026-10-12 with the review).
@@ -313,3 +316,4 @@ candidate promotion, commit, push, release or archive operation was performed.
   §4 features F3 and F6.
 - **Ordering:** Prerequisite of FID-2026-1012-015, whose gate must not be wired until these
   references resolve; consumes the move record FID-2026-1012-011 introduces.
+- **Archived:** 2026-10-13 — all 8 declared gates re-ran green on the closure tree before closure; the implementation commit is recorded in the metadata above.
