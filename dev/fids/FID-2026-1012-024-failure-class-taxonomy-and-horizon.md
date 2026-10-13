@@ -163,12 +163,39 @@ recomputes the census over the real capture, exiting 1 when a class above the ba
 closure claim contradicts the records. The recurrence assertion for this lane is the silent window: no
 `tool result contains an error` record after the declared boundary.
 
+These gates verify the implemented instrument. The lane remains `converged`
+while underlying class repair and production observation are unproved; a green
+receipt here cannot establish either or close this lane.
+
 ## Verification Gates
 
-This record is **pre-implementation** (`Status: converged`), so **no gates are declared yet**: a
-declared gate must point at an artifact that exists, and declaring one now would be a false declaration.
-Gates are added under this heading when the status flips to `fixed`/`verified` — the class-key test, the
-horizon test, the census probe, the `scripts`/`common`/`agent-runtime` typechecks and `quality`.
+- gate: test common/src/util/__tests__/experience-classes.test.ts
+- gate: test packages/agent-runtime/src/tools/tool-executor/tool-result-errors.test.ts
+- gate: test packages/agent-runtime/src/tools/tool-executor/result-lifecycle.test.ts
+- gate: test packages/agent-runtime/src/hooks/__tests__/experience-capture.test.ts
+- gate: test packages/agent-runtime/src/hooks/__tests__/exposure-capture.test.ts
+- gate: test scripts/__tests__/experiences-proof.test.ts
+- gate: test scripts/__tests__/experiences-class-horizon.test.ts
+- gate: probe scripts/scripts-typecheck-check.ts
+- gate: typecheck common
+- gate: typecheck packages/agent-runtime
+- gate: quality
+
+### Verification Receipt
+
+- fingerprint: sha256:607fad7b73f391a46548103d6264ff18c109bed200fe9b14f0c37101fe4281d5
+- verified: 2026-10-13T23:38:04.754Z
+- test common/src/util/__tests__/experience-classes.test.ts: exit 0
+- test packages/agent-runtime/src/tools/tool-executor/tool-result-errors.test.ts: exit 0
+- test packages/agent-runtime/src/tools/tool-executor/result-lifecycle.test.ts: exit 0
+- test packages/agent-runtime/src/hooks/__tests__/experience-capture.test.ts: exit 0
+- test packages/agent-runtime/src/hooks/__tests__/exposure-capture.test.ts: exit 0
+- test scripts/__tests__/experiences-proof.test.ts: exit 0
+- test scripts/__tests__/experiences-class-horizon.test.ts: exit 0
+- probe scripts/scripts-typecheck-check.ts: exit 0
+- typecheck common: exit 0
+- typecheck packages/agent-runtime: exit 0
+- quality: exit 0
 
 ## Perfection Loop
 
@@ -403,6 +430,28 @@ audit trail of the mistaken premise, not as acceptance criteria or class disposi
   the probe's contract (`FID-2026-1012-021`) and the capture policy (this record), both still open on their own terms.
 
 ### Missed Questions
+
+### Loop 8 — Exposure chronology check (2026-10-13)
+
+- **RED:** At `1d552548`, the proof reader verifies the boundary commit date
+  and ancestry of each recorded run revision, but never compares an exposure
+  timestamp to that run revision's commit date. A receipt can name a descendant
+  that did not exist at the claimed exposure time and still pass inspection.
+- **GREEN:** Read each run revision's committer date and reject a receipt whose
+  timestamp predates it, or whose commit date cannot be resolved. Reuse the same
+  date reader for the existing boundary check. Keep ancestry and all class,
+  session, path and duplicate-evidence checks. No historical receipt is rewritten.
+- **AUDIT:** Add a real temporary-git control with a descendant committed after
+  the receipt's timestamp. The current proof reader must fail that control before
+  implementation. Retain a valid later-revision control with its exposure stamped
+  after that revision. Run proof/horizon suites and the scripts typecheck leg.
+- **ADVERSARIAL:** Commit dates are repository evidence, not trusted wall-clock
+  attestations; this check rules out contradictory chronology, not forged history
+  or proof that every owned failure path was exercised. Unknown dates fail closed.
+  FID-021's held count-reporting changes remain untouched. This is within FID-024's
+  existing proof/test surfaces and level-3 authorization.
+- **CHANGE DELTA:** Converged additive instrument correction; no class repair,
+  real exposure, fix boundary or closure is claimed.
 
 1. **Should the class key be stored at capture time or derived at read time?** Stored, from the
    `FID-2026-1012-009` `errorClass` follow-up: deriving it at read time cannot recover the cause from a

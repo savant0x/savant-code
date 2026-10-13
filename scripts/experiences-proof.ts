@@ -52,6 +52,16 @@ function ranAtOrAfter(
   return result.exitCode === 0
 }
 
+/** Unresolvable dates are NaN so chronology checks fail closed. */
+function committedAt(root: string, commit: string): number {
+  const result = Bun.spawnSync(['git', 'show', '-s', '--format=%cI', commit], {
+    cwd: root,
+  })
+  return result.exitCode === 0
+    ? Date.parse(result.stdout.toString().trim())
+    : NaN
+}
+
 /** Receipts bind exposure to this class, session and implemented revision. */
 export function inspectBoundaryEvidence(
   root: string,
@@ -88,6 +98,13 @@ export function inspectBoundaryEvidence(
         issues.push(
           `exposure receipt disagrees with boundary: ${exposure.evidence}`,
         )
+      const runCommittedAt = committedAt(root, receipt.implementationCommit)
+      if (!Number.isFinite(runCommittedAt))
+        issues.push(`unresolvable exposure run revision: ${exposure.evidence}`)
+      else if (Date.parse(receipt.exercisedAt) < runCommittedAt)
+        issues.push(
+          `exposure predates its recorded run revision: ${exposure.evidence}`,
+        )
     } catch {
       issues.push(`invalid production exposure receipt: ${exposure.evidence}`)
     }
@@ -99,15 +116,10 @@ export function inspectBoundaryEvidence(
   if (commit.exitCode !== 0) {
     issues.push(`boundary commit is not in local history: ${boundary.commit}`)
   } else {
-    const date = Bun.spawnSync(
-      ['git', 'show', '-s', '--format=%cI', boundary.commit],
-      { cwd: root },
-    )
-    const committedAt = Date.parse(date.stdout.toString().trim())
+    const boundaryCommittedAt = committedAt(root, boundary.commit)
     if (
-      date.exitCode !== 0 ||
-      !Number.isFinite(committedAt) ||
-      Date.parse(boundary.fixedAt) < committedAt
+      !Number.isFinite(boundaryCommittedAt) ||
+      Date.parse(boundary.fixedAt) < boundaryCommittedAt
     )
       issues.push(
         `boundary predates its implementation commit: ${boundary.commit}`,

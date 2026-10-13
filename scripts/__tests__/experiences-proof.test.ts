@@ -122,11 +122,52 @@ describe('production observation receipts', () => {
       .stdout.toString()
       .trim()
     expect(run).not.toBe(boundary.commit)
+    receipt.exercisedAt = new Date().toISOString()
+    boundary.exposure[0]!.exercisedAt = receipt.exercisedAt
     fs.writeFileSync(
       path.join(root, 'exposure.json'),
       JSON.stringify({ ...receipt, implementationCommit: run }),
     )
     expect(inspectBoundaryEvidence(root, boundary)).toEqual([])
+  })
+  test('an exposure cannot predate the run revision named by its receipt', () => {
+    const { root, boundary, receipt } = fixture()
+    const laterDate = new Date(
+      Date.parse(receipt.exercisedAt) + 60_000,
+    ).toISOString()
+    expect(
+      Bun.spawnSync(
+        [
+          'git',
+          '-c',
+          'user.name=Fixture',
+          '-c',
+          'user.email=fixture@example.invalid',
+          'commit',
+          '--allow-empty',
+          '-qm',
+          'later run revision',
+        ],
+        {
+          cwd: root,
+          env: {
+            ...process.env,
+            GIT_AUTHOR_DATE: laterDate,
+            GIT_COMMITTER_DATE: laterDate,
+          },
+        },
+      ).exitCode,
+    ).toBe(0)
+    const run = Bun.spawnSync(['git', 'rev-parse', 'HEAD'], { cwd: root })
+      .stdout.toString()
+      .trim()
+    fs.writeFileSync(
+      path.join(root, 'exposure.json'),
+      JSON.stringify({ ...receipt, implementationCommit: run }),
+    )
+    expect(inspectBoundaryEvidence(root, boundary)).toContain(
+      'exposure predates its recorded run revision: exposure.json',
+    )
   })
   test('a receipt from a revision BEFORE the fix cannot prove anything', () => {
     const { root, boundary, receipt } = fixture()
@@ -169,6 +210,16 @@ describe('production observation receipts', () => {
     )
     expect(inspectBoundaryEvidence(root, boundary)).toContain(
       'invalid production exposure receipt: exposure.json',
+    )
+  })
+  test('an unknown run revision cannot establish exposure chronology', () => {
+    const { root, boundary, receipt } = fixture()
+    fs.writeFileSync(
+      path.join(root, 'exposure.json'),
+      JSON.stringify({ ...receipt, implementationCommit: '0'.repeat(40) }),
+    )
+    expect(inspectBoundaryEvidence(root, boundary)).toContain(
+      'unresolvable exposure run revision: exposure.json',
     )
   })
   test('renaming the session in the manifest cannot multiply one real exposure', () => {
