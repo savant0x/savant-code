@@ -185,8 +185,8 @@ repository gate).
 
 ### Verification Receipt
 
-- fingerprint: sha256:5b471da264f9c4b500fc427573e9963866d3af9a73e7775e0021c3e8b9659df6
-- verified: 2026-10-13T04:01:05.634Z
+- fingerprint: sha256:f2610e0154774b967c68c88162654a6611e2e66762c5202ee3419be4e3b29efd
+- verified: 2026-10-13T04:05:53.237Z
 - test sdk/src/__tests__/tool-argument-budget.test.ts: exit 0
 - test sdk/src/impl/__tests__/llm-native-tool-call.test.ts: exit 0
 - test packages/agent-runtime/src/tools/handlers/tool/__tests__/chunked-write.test.ts: exit 0
@@ -415,6 +415,10 @@ Evidence / Archived) and the FID is archived.
   classifier/stream plumbing, the ceiling guard, the `read_files` extraction that kept `tool-call.ts` and
   `stream.ts` inside the 300-line ceiling, the spawn-steering repair, the register entry for the newly
   captured `command-exit` class, and the scope-target update for this record.
+- **Commit for the staging lever:** `f46af839` — `fix(agent-runtime): stage bulk writes as bounded,
+  revision-guarded chunks (FID-2026-1012-017)`, 8 files, 884 insertions / 43 deletions: the staging
+  module and its two suites, the staging state in the proposed-content store, the `propose-write-file`
+  wiring, this record at `fixed`, and the master status board row.
 
 - **Authorised write surface:** `SCOPE.md` → machine-readable scope targets → this record's
   line (registered 2026-10-12 with the root-cause matrix).
