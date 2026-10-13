@@ -191,8 +191,8 @@ declared here and none is claimed.
 
 ### Verification Receipt
 
-- fingerprint: sha256:4ba0fa6a870e0a870dac1c7e23d69d9c373e417b8e2431889f0bcaade21eb023
-- verified: 2026-10-13T04:52:02.858Z
+- fingerprint: sha256:9808a574201c06596e73416537a0576b0035baa6a9abf3c45355840344c180e3
+- verified: 2026-10-13T05:05:02.047Z
 - test scripts/__tests__/experiences-coverage.test.ts: exit 0
 - probe scripts/experiences-recurrence.ts: exit 0
 - quality: exit 0
@@ -265,6 +265,13 @@ declared here and none is claimed.
     exits 0 again. This is the record's own Verification requirement ("must fail on a fixture whose top
     class has no owner and pass on the real capture") demonstrated on the real gate path, with the
     fixture confined to a manifest edit that was reverted.
+- **Gate-vocabulary gap, found while gating the next lane (2026-10-13):** `fid:verify` accepts
+  `typecheck <workspace>` only for workspaces in `VALIDATION_WORKSPACE_POLICY`, and **`scripts/` is not
+  one of them**. This record's own test file shipped a type error (`triggerType: 'tool-failure'` instead
+  of `'tool_failure'`) that **passed all three declared gates** and was caught by the root `typecheck`
+  (run by hand during `FID-2026-1012-011`'s pass). Fixed at the test. The gap is structural: a
+  scripts-tree record cannot declare the check that would catch its own type errors, so the root
+  `typecheck` has to be reported as hand-run evidence. Recorded here rather than left for the next lane.
 - **ADVERSARIAL / missed question:** **Has the loop closed? No — it now cannot stay open silently.**
   Three honest limits: (a) the coverage check proves an *owner exists*, not that the owner fixed
   anything — repair is still proved by the child's own recurrence assertion, and no boundary can be

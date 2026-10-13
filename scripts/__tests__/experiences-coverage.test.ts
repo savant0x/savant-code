@@ -26,7 +26,7 @@ function record(params: {
 }): ExperienceRecord {
   return {
     ts: new Date(now - params.daysAgo * DAY).toISOString(),
-    triggerType: 'tool-failure',
+    triggerType: 'tool_failure',
     toolName: params.toolName ?? 'read_url',
     errorFirstLine:
       params.errorFirstLine ?? 'Failed to fetch URL: 404 Not Found',

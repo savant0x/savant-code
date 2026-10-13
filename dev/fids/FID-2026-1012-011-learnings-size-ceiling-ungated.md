@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-1012-011-learnings-size-ceiling-ungated.md`
 **ID:** FID-2026-1012-011
 **Severity:** high
-**Status:** converged
+**Status:** fixed
 **Created:** 2026-10-12 19:05
 **Automation level:** 3
 **YAGNI-Compliance:** Verified
@@ -157,10 +157,19 @@ Exact artifact paths and their `- gate:` declarations are recorded when the arti
 
 ## Verification Gates
 
-This record is **pre-implementation** (`Status: converged`), so no gates are declared yet and
-none are claimed as passing. Gates are declared here at implementation time, when the artifacts
-exist. Until then this record asserts only what the evidence above reproduces on the current
-tree.
+- gate: test scripts/__tests__/learnings-size-policy.test.ts
+- gate: test scripts/__tests__/learnings-retire.test.ts
+- gate: probe scripts/learnings.ts
+- gate: quality
+
+### Verification Receipt
+
+- fingerprint: sha256:ef35ba484253b5bd854f8974cdf5c29d0671cfcd2dc77d2fd4a90f6e6c4f2c4d
+- verified: 2026-10-13T05:04:13.889Z
+- test scripts/__tests__/learnings-size-policy.test.ts: exit 0
+- test scripts/__tests__/learnings-retire.test.ts: exit 0
+- probe scripts/learnings.ts: exit 0
+- quality: exit 0
 
 ## Perfection Loop
 
@@ -200,6 +209,48 @@ tree.
   No. Does a byte count prove the character ceiling? No. Pin independent breaches and
   real write-interruption recovery at the planned paths in the shared artifact table.
 - **CHANGE DELTA:** Planning correction only; no retirement or source edit occurred.
+
+### Loop 3 — Implementation (2026-10-13)
+
+- **RED (re-measured at implementation time, `main` @ `a827de8d`):** `grep -rn 'DEFAULT_LINE_CAP'
+  scripts/*.ts` still returned only `scripts/learnings-retire.ts`; `bun run learnings:check` exited 0;
+  the ledger measured **1,175 logical lines (newline-delimited segments) and 76,775 JavaScript
+  characters** — **25 lines and 23,225 characters** of headroom, exactly the split-line unit Loop 2
+  recorded. Both ceilings were unreachable by either gate.
+- **GREEN:** the policy moved to the artifact. `scripts/learnings-size-policy.ts` owns the line ceiling
+  (1,200 logical lines, the unit retirement measures) and the character ceiling (100,000 JavaScript
+  characters — UTF-16 code units — the unit the boot boundary truncates on); `validateLearnings`
+  carries its issues, so `learnings:check` — already wired into `validate:repository` — fails on either
+  breach; the pass output now reports headroom; and retirement appends a machine-readable move record
+  (`dev/learnings-move-log.jsonl`: `title`, `date`, `reason`, `destination`, `retiredAt`,
+  `linesBefore`, `linesAfter`) **after** the archive and the ledger rewrite have both succeeded, so a
+  receipt never describes a move that did not finish.
+- **AUDIT — both directions were run on the real gate, and reverted:**
+  - Green: `bun run learnings:check` exits 0 and now prints `1,175/1,200 logical lines, 76,775/100,000
+    JavaScript characters (25 lines, 23,225 characters of headroom)`.
+  - Red: with 30 blank lines temporarily appended to `dev/LEARNINGS.md`, `bun run learnings:check`
+    **exits 1** with `[learning.size.line-ceiling] dev/LEARNINGS.md is 1,205 logical lines
+    (newline-delimited segments) against a ceiling of 1,200 — 5 over. Restore headroom with
+    \`bun run learnings:retire\` (operator-run, move-only: nothing is deleted).`
+  - Restored: the file was copied back byte-identically (`git diff --stat` clean), `learnings:check`
+    exits 0 again.
+  - The move record is pinned by a fixture run: the JSONL resolves each title back to the archive, and
+    a second run under the cap appends no further receipt.
+- **ADVERSARIAL — what the gate still does not do:** (a) it cannot make the operator retire; it makes a
+  breach impossible to miss, which is the whole finding; (b) `--cap` remains a retirement-only override
+  and does **not** move the validator's ceilings — raising the limit is now a source change, i.e. a
+  recorded decision; (c) the character ceiling is measured in JavaScript characters, not bytes (Loop 2's
+  warning), so the two measures fail on different inputs by construction.
+- **Also found, while gating this lane:** `fid:verify` accepts `typecheck <workspace>` only for workspaces
+  in `VALIDATION_WORKSPACE_POLICY`, and **`scripts/` is not one of them**. A change in the scripts tree
+  can therefore pass every declarable gate while failing the root `typecheck`'s scripts leg — which is
+  exactly what happened here: `scripts/__tests__/experiences-coverage.test.ts` (FID-2026-1012-021) used
+  `triggerType: 'tool-failure'` instead of `'tool_failure'`, its declared gates passed, and the root
+  `typecheck` caught it. Fixed here; recorded in `-021`'s Loop 3 as a gate-vocabulary gap rather than
+  left for the next lane to rediscover.
+- **CHANGE DELTA:** +1 policy module and +1 test file; the validator, the check's output and the
+  retirement tool changed. Nothing was retired, no ceiling value changed, and no ledger content was
+  edited by this pass.
 
 ### Missed Questions
 
@@ -245,13 +296,35 @@ tree.
 
 ## Resolution
 
-**Not implemented — `Status: converged` (pre-implementation, FID-2026-0915-004).**
+**Implemented — `Status: fixed` (deterministic gates green; the operator boundary unchanged).**
 
-This record exists so the finding has an owner, a converged design and a register item with
-write authority; it made no source change. The work described above is implemented by
-whichever pass flips the record to `fixed`, at which point this section is rewritten in the
-closure format (Closed Date / Fix Description / Tests Added / Verification Evidence /
-Archived) and the declared gates are added under `## Verification Gates`.
+- **Closed Date:** 2026-10-13.
+- **Fix Description.** The ceiling is no longer a parameter of the repair tool: it is an invariant of
+  the artifact, enforced where the artifact is validated. `scripts/learnings-size-policy.ts` owns both
+  measures — 1,200 **logical lines** (newline-delimited segments, the unit `learnings:retire` reports)
+  and 100,000 **JavaScript characters** (UTF-16 code units, the unit the boot boundary truncates on) —
+  and `validateLearnings` carries its issues, so `bun run learnings:check` (and therefore
+  `validate:repository`) fails on either breach with a message naming the measure, the value, the
+  overage and the restoring command. The pass output reports headroom so the limit is visible while the
+  gate is green. Retirement remains operator-run and move-only, but now emits
+  `dev/learnings-move-log.jsonl` — one JSON object per completed move with `title`, `date`, `reason`,
+  `destination`, `retiredAt` and the before/after line counts — written after both file writes succeed.
+- **Tests Added:** `scripts/__tests__/learnings-size-policy.test.ts` (6 cases: the segment unit; at the
+  ceiling passes; one line over fails naming measure/value/overage/command; the char ceiling fails
+  independently of the line count; both breaches reported together; headroom in the summary) and one new
+  case in `scripts/__tests__/learnings-retire.test.ts` (the move record is written with every field,
+  resolves back to the archive, and is not appended again when nothing moves).
+- **Verification Evidence:** `bun test scripts/__tests__/learnings-size-policy.test.ts
+  scripts/__tests__/learnings-retire.test.ts` 15 pass / 0 fail · `bun run learnings:check` exit 0 with
+  headroom printed, and **exit 1** with the named `learning.size.line-ceiling` message when 30 lines are
+  temporarily appended (reverted byte-identically) · `bun run typecheck` (root, including the `scripts/`
+  leg) exit 0 · `validate:repository` PASS · `quality:report` PASS · ESLint `--max-warnings 0` and
+  Prettier clean.
+- **Archived:** not archived; the master (`FID-2026-1012-022`) closes last.
+- **Open, and stated rather than implied:** (a) `FID-2026-1012-012` still has to *consume* the move record
+  — this record produces it; (b) `FID-2026-1012-010` owns the boot digest that will make the character
+  ceiling less load-bearing; (c) the `fid:verify` gate vocabulary has no scripts-tree typecheck, so the
+  root `typecheck` remains a hand-run check for scripts-lane records (recorded in `-021`).
 
 - **Authorised write surface:** `SCOPE.md` → machine-readable scope targets → this record's
   line (registered 2026-10-12 with the review).

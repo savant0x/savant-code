@@ -10,6 +10,9 @@ import {
   validateEmbeddedLearningSource,
   validateLearnings,
 } from './learnings-core.js'
+// FID-2026-1012-011: the pass output carries headroom, so the ceiling is
+// visible while the gate is green rather than only when it fails.
+import { learningsSizeSummary } from './learnings-size-policy.js'
 
 export function readAndValidateLearnings(root: string) {
   return validateLearnings(
@@ -21,7 +24,8 @@ export function readAndValidateLearnings(root: string) {
 if (import.meta.main) {
   const root = path.resolve(import.meta.dir, '..')
   const learningsFile = path.join(root, 'dev', 'LEARNINGS.md')
-  const result = validateLearnings(fs.readFileSync(learningsFile, 'utf8'), root)
+  const learningsContent = fs.readFileSync(learningsFile, 'utf8')
+  const result = validateLearnings(learningsContent, root)
   const sourcePath = path.join(root, 'docs', 'embedded-learnings.md')
   result.issues.push(
     ...(fs.existsSync(sourcePath)
@@ -46,20 +50,17 @@ if (import.meta.main) {
     // "total lessons" (FID-2026-0916-007): entries are the schema-validated
     // governed lessons; narrative lessons below the legacy boundary are
     // preserved but deliberately unvalidated.
-    const boundary = fs
-      .readFileSync(learningsFile, 'utf8')
-      .indexOf(LEGACY_BOUNDARY)
+    const boundary = learningsContent.indexOf(LEGACY_BOUNDARY)
     const below =
       boundary === -1
         ? 0
-        : (fs
-            .readFileSync(learningsFile, 'utf8')
-            .slice(boundary)
-            .match(/^## Lesson:/gm)?.length ?? 0)
+        : (learningsContent.slice(boundary).match(/^## Lesson:/gm)?.length ?? 0)
     const summary =
       below === 0
         ? `${result.entries.length} structured entries`
         : `${result.entries.length} structured entries; ${below} narrative entries below boundary — unvalidated by design`
-    console.log(`learnings: PASS (${summary})`)
+    console.log(
+      `learnings: PASS (${summary}; ${learningsSizeSummary(learningsContent)})`,
+    )
   }
 }

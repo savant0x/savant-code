@@ -26,7 +26,29 @@ import { LEARNINGS_INSERTION_MARKER } from './learnings-schema.js'
 
 export const LEARNINGS_PATH = path.join('dev', 'LEARNINGS.md')
 export const RETIRED_PATH = path.join('dev', 'LEARNINGS-RETIRED.md')
+/**
+ * FID-2026-1012-011: the move record. Retirement is still the operator's
+ * decision and still move-only, but what moved — and when, and why, and where
+ * it went — is now a durable, machine-readable artifact rather than only a git
+ * history. `FID-2026-1012-012` resolves retired titles through it.
+ */
+export const MOVE_RECORD_PATH = path.join('dev', 'learnings-move-log.jsonl')
 export const DEFAULT_LINE_CAP = 1200
+
+export interface LearningsMoveRecord {
+  /** The retired lesson's title, verbatim. */
+  title: string
+  /** The lesson's own Date field (empty when the entry carries none). */
+  date: string
+  /** Why it was retired (`status superseded`, `oldest entry (line cap)`, …). */
+  reason: string
+  /** Where its content now lives — the append-only archive. */
+  destination: string
+  /** When the move completed. */
+  retiredAt: string
+  linesBefore: number
+  linesAfter: number
+}
 
 export type RetireResult = {
   retired: { title: string; reason: string }[]
@@ -167,6 +189,19 @@ function removeLessonSpans(content: string, titles: Set<string>): string {
   return out
 }
 
+/** Append one JSON line per completed move. Called only after the archive and
+ * the ledger rewrite have both succeeded, so a receipt never describes a move
+ * that did not finish (FID-2026-1012-011 Loop 2). */
+function appendMoveRecords(
+  rootDir: string,
+  records: LearningsMoveRecord[],
+): void {
+  if (records.length === 0) return
+  const recordFile = path.join(rootDir, MOVE_RECORD_PATH)
+  const body = records.map((record) => JSON.stringify(record)).join('\n')
+  fs.appendFileSync(recordFile, `${body}\n`, 'utf8')
+}
+
 /** Apply retirement to disk: append retired blocks to the archive, rewrite
  * LEARNINGS.md with the kept blocks. The archive is append-only — existing
  * archive content is read back and preserved verbatim. */
@@ -200,6 +235,22 @@ export function applyRetirement(
     learningsFile,
     removeLessonSpans(content, retiredTitles),
     'utf8',
+  )
+
+  // The move record is written last: it describes a move that completed.
+  appendMoveRecords(
+    rootDir,
+    retired.map((entry) => ({
+      title: entry.title,
+      date: fieldOf(entry.block, 'Date'),
+      reason:
+        result.retired.find((candidate) => candidate.title === entry.title)
+          ?.reason ?? 'line cap',
+      destination: RETIRED_PATH,
+      retiredAt: new Date().toISOString(),
+      linesBefore: result.linesBefore,
+      linesAfter: result.linesAfter,
+    })),
   )
   return result
 }
@@ -238,6 +289,8 @@ if (import.meta.main) {
   console.log(
     `learnings:retire: retired ${result.retired.length} entry/entries; ${result.linesBefore} → ${result.linesAfter} lines`,
   )
+  if (result.retired.length > 0)
+    console.log(`learnings:retire: move record appended to ${MOVE_RECORD_PATH}`)
   for (const r of result.retired)
     console.log(`- retired: ${r.title} (${r.reason})`)
 }

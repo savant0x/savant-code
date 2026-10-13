@@ -8,6 +8,8 @@ import {
   applyRetirement,
   retireLessons,
   DEFAULT_LINE_CAP,
+  MOVE_RECORD_PATH,
+  RETIRED_PATH,
 } from '../learnings-retire'
 import {
   LEGACY_BOUNDARY,
@@ -83,6 +85,45 @@ describe('retireLessons (S3-C)', () => {
 })
 
 describe('applyRetirement', () => {
+  test('writes a machine-readable move record only after the move completes (FID-2026-1012-011)', () => {
+    const root = fixtureRoot()
+    fs.mkdirSync(path.join(root, 'dev'), { recursive: true })
+    fs.writeFileSync(
+      path.join(root, 'dev', 'LEARNINGS.md'),
+      '# LEARNINGS\n\n' +
+        entry('old', '2026-06-01', 'active') +
+        entry('recent', '2026-08-20', 'active'),
+    )
+
+    const result = applyRetirement(root, { cap: 20 })
+    expect(result.retired.length).toBeGreaterThan(0)
+
+    const lines = fs
+      .readFileSync(path.join(root, MOVE_RECORD_PATH), 'utf8')
+      .trim()
+      .split('\n')
+    expect(lines).toHaveLength(result.retired.length)
+    const record = JSON.parse(lines[0]!) as Record<string, unknown>
+    expect(record.title).toBe(result.retired[0]!.title)
+    expect(record.date).toBe('2026-06-01')
+    expect(record.reason).toBe(result.retired[0]!.reason)
+    expect(record.destination).toBe(RETIRED_PATH)
+    expect(typeof record.retiredAt).toBe('string')
+    expect(record.linesBefore).toBe(result.linesBefore)
+    expect(record.linesAfter).toBe(result.linesAfter)
+
+    // The record resolves back to the archive: the title is findable there.
+    const archive = fs.readFileSync(path.join(root, RETIRED_PATH), 'utf8')
+    expect(archive).toContain(`## Lesson: ${record.title}`)
+
+    // Idempotent by absence of work: a second run under the cap moves nothing
+    // and appends no further receipt.
+    expect(applyRetirement(root, { cap: 20 }).retired).toEqual([])
+    expect(
+      fs.readFileSync(path.join(root, MOVE_RECORD_PATH), 'utf8').trim(),
+    ).toBe(lines.join('\n'))
+  })
+
   test('absent --cap falls back to the default, never NaN (FID-2026-0916-007)', () => {
     // Regression pin: the old arg parse read argv[0] when --cap was absent,
     // yielding NaN; `NaN <= NaN` is false, so every entry retired.

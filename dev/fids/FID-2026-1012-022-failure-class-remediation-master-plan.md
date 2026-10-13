@@ -360,7 +360,7 @@ activation), and the child's id is recorded in this table when it exists.
 | FID-2026-1012-019 — capability integrity (50) | A1 | `-019` | **fixed** — degradation contract + research surface + `code_search` flag guard; 7 declared gates green + receipt stamped; window open (the `search-executable-missing` cause is the **host** resolver's, and the run-start preflight is still open) |
 | FID-2026-1012-020 — edit-path friction (72) | A1 | `-020` | **fixed** — missing-target diagnosis, mismatch/no-op separation, unsafe result mutation removed; 5 declared gates green + receipt stamped; window open (`patch-failed` 17 records and `immutable-result`'s production trigger remain) |
 | FID-2026-1012-021 — the recurrence-to-fix loop | A2 | `-021` | **fixed** — class coverage is a repository gate (demonstrated failing on a removed owner, passing restored); probe named; 21 eligible classes, all owned. Lesson-last ordering stays open on `-014`'s rule links |
-| FID-2026-1012-011 — ceiling ungated | B0 | `-011` | converged (design) |
+| FID-2026-1012-011 — ceiling ungated | B0 | `-011` | **fixed** — both ceilings (1,200 logical lines / 100,000 JS characters) enforced by `learnings:check`, headroom on pass, retirement emits `dev/learnings-move-log.jsonl`; 4 declared gates green + receipt stamped; the move record's consumer is `-012` |
 | FID-2026-1012-014 — rule catalogue vs ledger | B0 | `-014` | converged (design) |
 | FID-2026-1012-012 — retirement strands references | B1 | `-012` | converged (design) |
 | FID-2026-1012-013 — lesson evidence rot | B2 | `-013` | converged (reviewed design; active lessons preserved) |

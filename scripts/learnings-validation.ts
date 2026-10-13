@@ -12,6 +12,9 @@ import {
   parseEntry,
   structuredBlocks,
 } from './learnings-schema.js'
+// FID-2026-1012-011: the ledger's own size is an invariant of the artifact, so
+// the validator enforces it rather than the tool that repairs it.
+import { learningsSizeIssues } from './learnings-size-policy.js'
 
 import type {
   LearningIssue,
@@ -168,6 +171,7 @@ export function validateLearnings(
     entries,
     issues: [
       ...issues,
+      ...learningsSizeIssues(content),
       ...supersessionIssues(entries),
       ...validateStableReferences(root, entries),
       ...validateCanonicalRuleCatalog(root, entries),

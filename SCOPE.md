@@ -273,7 +273,9 @@ work item remains active, including the recorded level-1 consolidation and exter
   `common/src/util/boot-contract.ts`, `common/src/util/embedded-protocol.ts`,
   `common/src/constants/protocol-bundle.generated.ts`, `docs/design/**`
 - FID-2026-1012-011: `scripts/learnings*.ts`, `dev/LEARNINGS.md`,
-  `dev/LEARNINGS-RETIRED.md`
+  `dev/LEARNINGS-RETIRED.md`, `dev/learnings-move-log.jsonl`,
+  `scripts/__tests__/learnings-size-policy.test.ts`,
+  `scripts/__tests__/learnings-retire.test.ts`
 - FID-2026-1012-012: `scripts/lesson-feature-pipeline.ts`, `scripts/lessons-to-skills.ts`,
   `scripts/learnings*.ts`, `dev/LEARNINGS.md`, `dev/LEARNINGS-RETIRED.md`,
   `dev/feature-pipeline/**`, `dev/session-summaries/**`
