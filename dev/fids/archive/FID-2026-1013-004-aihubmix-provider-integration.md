@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-1013-004-aihubmix-provider-integration.md`
 **ID:** FID-2026-1013-004
 **Severity:** medium
-**Status:** converged
+**Status:** closed
 **Created:** 2026-10-13 16:03
 **Automation level:** 3
 **YAGNI-Compliance:** Verified
@@ -411,9 +411,9 @@ against the implementation tree.
 
 ### Implementation Evidence (REQUIRED for `closed`)
 
-- [x] **Commit SHA:** `6c324955` (provider integration) + the carrier-header
-      follow-up in the same close-out commit recorded in the changelog entry
-      above. Nothing was pushed.
+- [x] **Commit SHA:** `618b7a1a` — `feat(providers): add AIHubMix built-in
+      gateway and registry carrier headers (FID-2026-1013-004)`, 35 files,
+      1336 insertions / 52 deletions. Local only; nothing pushed.
 - [x] **File:line ranges:**
   - Registry entry + carrier header: `common/src/providers/registry-partitioned-3.ts:114-141`
   - New field: `common/src/providers/types.ts:117-125`
@@ -514,7 +514,8 @@ wall-clock reasons. The finding above is reported rather than worked around.
 - **Known Limitation:** the free-resource policy blocked a substantive free
   completion. Nothing in the implementation depends on it, and no stronger
   claim is made.
-- **Archived:** pending this closure commit.
+- **Archived:** 2026-10-13 — closed at `618b7a1a`; the receipt in
+  Implementation Evidence records the gates that earned it.
 
 ## Lessons Learned
 
