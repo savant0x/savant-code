@@ -57,10 +57,13 @@ describe('readUrl SSRF protection', () => {
       },
     })
 
+    // FID-2026-1012-018: the refusal keeps its exact first line (the capture's
+    // class identity) and gains the policy advice on the following line.
     expect(result[0].value).toEqual({
       url: 'http://intranet.example.com/secrets',
       errorMessage:
-        'Host "intranet.example.com" resolves to a private or reserved address (10.0.0.5)',
+        'Host "intranet.example.com" resolves to a private or reserved address (10.0.0.5)\n' +
+        'The host resolves inside this machine or a reserved range, so the request is refused by policy. Do not retry this host.',
     })
   })
 

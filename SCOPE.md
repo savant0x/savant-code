@@ -107,6 +107,18 @@ recorded decision or external dependency requires it.
       its allowance resets; TokenRouter self-identification needs an operator
       top-up. **Blocker:** provider credits/keys. **Automation level: 1.**
 
+- [x] **Parity-gateway-probes. Gateway + Tier 1 surface probes for the
+      provider-parity program.** Measured 2026-10-12 (probes under
+      `scripts/providers/audit-probes/`): Kilo public keyless (200, 391 rows,
+      inference round-trip proven); OpenCode public (200, 83 rows live) but
+      free-tier product-locked (403); Tier 1 swept (2 public, 14 key-gated, 2
+      no-surface). **Operator ruling 2026-10-12:** the deliverable is registry
+      expansion, not dev-held credentials — users bring their own keys;
+      keyless acceptance is surface-verified, inference leg deferred to the
+      user's key (recorded narrowing of the runbook's real-request step).
+      Evidence: `docs/design/provider-parity-review-2026-10-12.md`;
+      additions are `FID-2026-1012-026`. **Automation level: 3.**
+
 ### Harness and process
 
 - [ ] **T122. Savant-Free removal.** Operator direction 2026-10-12 (Q12/Q5):
@@ -278,7 +290,8 @@ work item remains active, including the recorded level-1 consolidation and exter
   `packages/agent-runtime/src/run-agent-step/**`,
   `packages/agent-runtime/src/tools/stream-parser/**`,
   `packages/agent-runtime/src/tools/handlers/tool/**`, `common/src/tools/params/tool/**`
-- FID-2026-1012-018: `sdk/src/tools/read-url/**`, `common/src/tools/params/tool/**`
+- FID-2026-1012-018: `sdk/src/tools/read-url/**`, `sdk/src/__tests__/read-url*.test.ts`,
+  `common/src/tools/params/tool/**`
 - FID-2026-1012-019: `packages/agent-runtime/src/llm-api/**`, `sdk/src/native/**`,
   `packages/agent-runtime/src/tools/**`, `common/src/constants/**`
 - FID-2026-1012-020: `packages/agent-runtime/src/process-str-replace.ts`,
@@ -290,8 +303,13 @@ work item remains active, including the recorded level-1 consolidation and exter
 - FID-2026-1012-022: `dev/fids/**`, `SCOPE.md`, `docs/design/**`, `dev/experiences/**`,
   `dev/agenda.md`
 - FID-2026-1012-023: `sdk/src/tools/run-terminal-command.ts`, `sdk/src/run-state/**`,
+  `sdk/src/run/tool-call.ts`, `sdk/src/__tests__/command-execution-contract.test.ts`,
+  `sdk/src/__tests__/run-terminal-command.test.ts`,
   `packages/agent-runtime/src/tools/**`, `packages/agent-runtime/src/run-agent-step/**`,
-  `common/src/types/contracts/**`
+  `packages/agent-runtime/src/hooks/**`, `common/src/types/contracts/**`,
+  `common/src/types/experience.ts`, `common/src/util/command-execution.ts`,
+  `common/src/util/experience-classes.ts`, `common/src/tools/params/tool/**`,
+  `dev/experiences/class-owners.json`
 - FID-2026-1012-024: `common/src/types/experience.ts`, `common/src/util/experiences.ts`,
   `common/src/util/experience-*.ts`, `common/src/util/__tests__/experience-*.test.ts`,
   `packages/agent-runtime/src/hooks/**`, `packages/agent-runtime/src/tools/tool-executor/**`,
@@ -324,6 +342,7 @@ work item remains active, including the recorded level-1 consolidation and exter
 - T62-followups: `dev/scratchpad/active/t62*.ts` (the catalog itself is
   gateway-side; the local write surface is the probe scripts — verified
   2026-10-02: no local catalog directory exists)
+- Parity-gateway-probes: `scripts/providers/audit-probes/**`, `docs/design/provider-parity-review-2026-10-12.md`, `SCOPE.md`
 - T122: (no write surface — operator-owned)
 - T186: (no write surface — blocked on the T122 savant-free removal)
 - T187: (no write surface — operator-owned skills surface)

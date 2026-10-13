@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-1012-018-read-url-failure-class-uncovered.md`
 **ID:** FID-2026-1012-018
 **Severity:** high
-**Status:** converged
+**Status:** fixed
 **Created:** 2026-10-12 20:15
 **Automation level:** 3
 **YAGNI-Compliance:** Verified
@@ -155,12 +155,27 @@ appearing — rather than a green suite alone.
 - Negative control: a genuinely unavailable host still surfaces as a failure, so classification
   does not become silent success.
 
+**Not a gate:** the recurrence assertion. It reads the capture rather than this record's artifacts, and no
+class can be asserted clean until the 14-day / three-session observation window runs; it becomes the
+closure gate when that window completes (`FID-2026-1012-021` owns the machinery).
+
 ## Verification Gates
 
-This record is **pre-implementation** (`Status: converged`), so **no gates are declared yet**:
-a declared gate must point at an artifact that exists, and declaring one now would be a false
-declaration. Gates are added under this heading when the status flips to `fixed`/`verified` —
-the recurrence probe, `typecheck sdk`, and `quality`.
+- gate: test sdk/src/__tests__/read-url.test.ts
+- gate: test sdk/src/__tests__/read-url-ssrf.test.ts
+- gate: test sdk/src/__tests__/read-url-outcomes.test.ts
+- gate: typecheck sdk
+- gate: quality
+
+### Verification Receipt
+
+- fingerprint: sha256:3137623ea7205f733bac23a06277b08a93889ff59228ff960090405f485669b7
+- verified: 2026-10-13T04:14:34.294Z
+- test sdk/src/__tests__/read-url.test.ts: exit 0
+- test sdk/src/__tests__/read-url-ssrf.test.ts: exit 0
+- test sdk/src/__tests__/read-url-outcomes.test.ts: exit 0
+- typecheck sdk: exit 0
+- quality: exit 0
 
 ## Perfection Loop
 
@@ -203,6 +218,47 @@ the recurrence probe, `typecheck sdk`, and `quality`.
   All 11 classes remain owned; exact planned tests and exposure rules are in the review.
 - **CHANGE DELTA:** Planning correction only; no class is classified dormant or fixed.
 
+### Loop 3 — Implementation pass (2026-10-12, operator-authorized)
+
+- **RED (re-measured this pass, the instrument of FID-2026-1012-022):**
+  `bun scripts/experiences-recurrence.ts` reports all 11 keys owned by this record `unresolved` at their
+  recorded volumes — `read_url` 404 ×114, unextractable ×25, `http-403` ×10, `http-401` ×9, `http-429` ×7,
+  `fetch-oversized` ×7, plus `http-405`, `fetch-unsupported`, `fetch-blocked`, `fetch-dns` and `http-503`
+  from Loop 2's widened set.
+- **GREEN (implemented):** `sdk/src/tools/read-url/outcomes.ts` carries the taxonomy (status → kind,
+  next action and whether the outcome is final for the run), the extraction-miss classifier (empty body,
+  markup-with-no-text, or an explicitly unproven cause), the canonical URL identity, and the bounded
+  per-run negative cache. `sdk/src/tools/read-url/fetch.ts` uses them at every refusal site, and
+  `response-body.ts` was extracted so both stay inside the 300-line ceiling. Two rules govern the shape
+  of everything emitted: the **first line of each message is byte-identical to the pre-taxonomy shape**
+  (`Failed to fetch URL: …`, `No readable text found at URL`, `Response is too large …`,
+  `Unsupported content type: …`, the SSRF refusal), so the capture keeps counting the same class, and the
+  advice lands on the following lines where the model reads it. Only run-final outcomes are memoized: a
+  429 or a 5xx is advised and never remembered, so a rate limit cannot become a permanent dead end.
+- **AUDIT:** `sdk/src/__tests__/read-url-outcomes.test.ts` (new, 17 cases) plus the two baseline suites —
+  35 pass / 0 fail: status classification and cacheability, the search fallback, the three extraction
+  causes, identity (fragment removed; trailing slash, port and query preserved; credentials never in the
+  key), cache behaviour and its bound, and three end-to-end fetches (a repeated 404 answered from the memo
+  with **one** network call, a 429 fetched twice and memoized never, an oversized response and a PDF
+  refusal carrying their guidance). Full SDK suite 664 pass / 0 fail across 105 files;
+  `bun run validate:repository` PASS.
+- **ADVERSARIAL:** (a) *Does the taxonomy hide the failure?* No — every outcome is still reported as a
+  failure with the same first line; only the advice is added. (b) *Could negative caching hide a URL that
+  becomes available?* The cache is per run and bounded, and only outcomes the taxonomy marks final are
+  admitted; a transient condition is never memoized, and `clearReadUrlNegativeCache()` gives an explicit
+  run boundary. (c) *Does the search fallback invent an answer?* It substitutes a discoverable next step
+  for a dead end; no result is fabricated and the original failure is preserved in the message.
+  (d) *Does the canonical key merge distinct resources?* It drops only the fragment (and the userinfo, so
+  no credential is persisted); path, trailing slash, port and query are preserved.
+- **BASELINE CHANGED, deliberately:** `sdk/src/__tests__/read-url-ssrf.test.ts` asserted the blocked-host
+  error by exact equality; the refusal now carries its policy advice on a second line, so the assertion
+  was updated to the new shape (same first line). The SSRF checks themselves — including re-validation on
+  every redirect — are untouched and still covered.
+- **SCOPE correction:** this record's register line did not cover its own test surfaces
+  (`sdk/src/__tests__/read-url*.test.ts`); the line was extended in the same pass as the write, the same
+  correction recorded for `FID-2026-1012-017`.
+- **CHANGE DELTA:** ~0.6% of the record.
+
 ### Missed Questions
 
 1. Why is this class absent from the ledger while classes with a fraction of its volume have
@@ -219,9 +275,9 @@ the recurrence probe, `typecheck sdk`, and `quality`.
 
 ### Code Verification Evidence
 
-> Pre-implementation record: `Status: converged` (FID-2026-0915-004). Nothing in this record
-> has been implemented, so what follows records what was CHECKED at the cited `HEAD` — not what
-> was built.
+> Implemented in Loop 3: the outcome taxonomy, canonical identity and per-run negative cache, wired at
+> every refusal site in the fetch path. The gate output below is the evidence for what landed; the
+> receipt under `### Verification Receipt` records the live re-run.
 
 - [x] Measurements re-checked: the aggregation over `dev/experiences/raw-traces.jsonl` returned
       the per-class counts pasted in Evidence (114/18 for `404`, 25/7 unextractable, 10/7 `403`,
@@ -230,9 +286,19 @@ the recurrence probe, `typecheck sdk`, and `quality`.
 - [x] The two emission sites were read at `main` @ `bee0610d`
       (`sdk/src/tools/read-url/fetch.ts:169` and `:186`), and the ranking this record expands is
       `docs/design/learnings-root-cause-matrix.md` §3 rows 1, 6 and 13, §4 RC2.
-- [x] **Not yet true, and deliberately not claimed:** the repair itself, its gates and its
-      receipt. Gates are declared when the status flips to `fixed`/`verified`; declaring them
-      now would be a false declaration.
+- [x] **Taxonomy and cache implemented:** `sdk/src/tools/read-url/outcomes.ts`,
+      `sdk/src/tools/read-url/fetch.ts`, `sdk/src/tools/read-url/response-body.ts`; production callers
+      confirmed by grep (`classifyHttpStatus` ← `fetch.ts` `!response.ok`; `classifyExtractionMiss` ←
+      `fetch.ts` empty-extraction branch; `canonicalUrlKey`/`readUrlNegativeCache` ← `readUrl` entry;
+      `readUrl` ← `sdk/src/run/tool-call.ts`).
+- [x] **Suites green this pass:** the three `read-url` suites at
+      `sdk/src/__tests__/read-url.test.ts`, `sdk/src/__tests__/read-url-ssrf.test.ts` and
+      `sdk/src/__tests__/read-url-outcomes.test.ts` — 35 pass / 0 fail; full SDK suite 664 pass / 0 fail
+      across 105 files; `bun run --cwd=sdk typecheck` exit 0; `bun run validate:repository` PASS;
+      Prettier and ESLint clean on every changed file.
+- [x] **Not claimed:** that any class has stopped recurring. No fix boundary is written for these keys,
+      so `dev/experiences/fix-boundaries.json` stays empty, every owned key reports `unresolved`, and the
+      14-day / three-session observation window has not started.
 
 ## Boundaries
 
@@ -248,13 +314,21 @@ the recurrence probe, `typecheck sdk`, and `quality`.
 
 ## Resolution
 
-**Not implemented — `Status: converged` (pre-implementation, FID-2026-0915-004).**
+**Implemented — `Status: fixed`.**
 
-This record exists so the finding has an owner, a converged design and a register item with
-write authority; it made no source change. The work above is implemented by whichever pass
-flips the record to `fixed`, at which point this section is rewritten in the closure format
-(Closed Date / Fix Description / Tests Added / Verification Evidence / Archived) and the
-declared gates are added under `## Verification Gates`.
+Loop 3 landed the taxonomy and the cache: every fetch outcome is classified (`not-found`, `unauthorized`,
+`denied`, `method-not-allowed`, `rate-limited`, `unavailable`, `server-error`, `client-error`,
+`oversized`, `unsupported-content`, `blocked`, `dns`, `unextractable`), each carries the next action the
+model should take, a not-found is final for the run and points at a search instead of a dead end, and
+repeats are answered from a bounded per-run memo without a second network request. The message's first
+line is unchanged from the pre-taxonomy shape, so the capture still counts the same class while the model
+receives the guidance.
+
+`fixed` — implementation exists, gates green, awaiting the observation window. It is **not** `closed`: no
+class has been shown to stop recurring, `dev/experiences/fix-boundaries.json` stays empty, and every owned
+key still reports `unresolved` from `bun scripts/experiences-recurrence.ts`. Closure requires that window's
+evidence, at which point this section is rewritten in the closure format (Closed Date / Fix Description /
+Tests Added / Verification Evidence / Archived) and the FID is archived.
 
 - **Authorised write surface:** `SCOPE.md` → machine-readable scope targets → this record's
   line (registered 2026-10-12 with the root-cause matrix).

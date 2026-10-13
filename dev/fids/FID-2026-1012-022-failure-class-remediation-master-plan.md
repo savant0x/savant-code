@@ -356,7 +356,7 @@ activation), and the child's id is recorded in this table when it exists.
 | FID-2026-1012-024 — class taxonomy and horizon | A0 | `-024` | converged (design); worked first |
 | FID-2026-1012-023 — execution reliability | A0 | `-023` | **fixed** — implementation + 11 declared gates green (sdk 633 PASS, agent-runtime 2,048 PASS, root typecheck, quality, eslint); recurrence window not yet started, so no class claim |
 | FID-2026-1012-017 — emission (193 records) | A1 | `-017` | **fixed** — emission budget, truthful recovery, pre-execution ceiling, spawn steering and bounded revision-guarded bulk staging all implemented with declared gates green and a stamped receipt; recurrence window not started, so **no class claim** |
-| FID-2026-1012-018 — fetch (181) | A1 | `-018` | converged (design) |
+| FID-2026-1012-018 — fetch (181) | A1 | `-018` | **fixed** — outcome taxonomy, canonical identity and bounded per-run negative cache implemented with declared gates green and a stamped receipt; recurrence window not started, so **no class claim** |
 | FID-2026-1012-019 — capability integrity (50) | A1 | `-019` | converged (design) |
 | FID-2026-1012-020 — edit-path friction (72) | A1 | `-020` | converged (design) |
 | FID-2026-1012-021 — the recurrence-to-fix loop | A2 | `-021` | converged (design) |

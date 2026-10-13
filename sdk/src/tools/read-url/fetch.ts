@@ -14,6 +14,16 @@ import {
   isSupportedContentType,
   truncateText,
 } from './extract'
+import {
+  canonicalUrlKey,
+  classifyExtractionMiss,
+  classifyHttpStatus,
+  passthroughOutcome,
+  readUrlNegativeCache,
+  type FetchOutcome,
+  type NegativeCache,
+} from './outcomes'
+import { readResponseBody } from './response-body'
 
 /**
  * read-url — fetch orchestration with SSRF re-validation on every redirect.
@@ -27,52 +37,37 @@ function errorResult(
   return [{ type: 'json', value: { ...(url ? { url } : {}), errorMessage } }]
 }
 
-function getHeader(headers: Headers, name: string): string | undefined {
-  return headers.get(name) ?? undefined
+/**
+ * FID-2026-1012-018: the message the model reads is the classified first line
+ * plus the next action. The first line is unchanged from the pre-taxonomy shape
+ * so the capture keeps counting the same class
+ * (`common/src/util/experience-classes.ts`).
+ */
+function outcomeMessage(outcome: FetchOutcome): string {
+  return outcome.advice
+    ? `${outcome.firstLine}\n${outcome.advice}`
+    : outcome.firstLine
 }
 
-async function readResponseBody(
-  response: Response,
-  maxBytes: number,
-): Promise<string> {
-  const contentLength = getHeader(response.headers, 'content-length')
-  if (contentLength && Number(contentLength) > maxBytes) {
-    throw new Error(`Response is too large (${contentLength} bytes)`)
-  }
+const REPEAT_NOTE =
+  'This URL was already attempted in this run; the memoized outcome is reported instead of another request.'
 
-  if (!response.body) {
-    const buffer = await response.arrayBuffer()
-    if (buffer.byteLength > maxBytes) {
-      throw new Error(`Response is too large (${buffer.byteLength} bytes)`)
-    }
-    return new TextDecoder().decode(buffer)
-  }
+/** Final outcomes are memoized per run; transient ones never are. */
+function rememberOutcome(
+  cache: NegativeCache,
+  key: string,
+  outcome: FetchOutcome,
+): void {
+  cache.remember(key, outcome)
+}
 
-  const reader = response.body.getReader()
-  const chunks: Uint8Array[] = []
-  let totalBytes = 0
+// The error shapes this function raises itself, classified to the taxonomy.
+const OVERSIZED_ERROR = /Response (?:is too large|exceeded)\b/
+const BLOCKED_ERROR = /resolves to a private or reserved address/
+const DNS_ERROR = /Could not resolve host|ENOTFOUND|getaddrinfo/
 
-  while (true) {
-    const { done, value } = await reader.read()
-    if (done) break
-    if (!value) continue
-
-    totalBytes += value.byteLength
-    if (totalBytes > maxBytes) {
-      await reader.cancel()
-      throw new Error(`Response exceeded ${maxBytes} bytes`)
-    }
-    chunks.push(value)
-  }
-
-  const body = new Uint8Array(totalBytes)
-  let offset = 0
-  for (const chunk of chunks) {
-    body.set(chunk, offset)
-    offset += chunk.byteLength
-  }
-
-  return new TextDecoder().decode(body)
+function getHeader(headers: Headers, name: string): string | undefined {
+  return headers.get(name) ?? undefined
 }
 
 export async function readUrl({
@@ -82,10 +77,17 @@ export async function readUrl({
   lookupHost,
   resolveDns = fetchImpl === globalThis.fetch,
   signal,
+  cache = readUrlNegativeCache,
 }: {
   url: string
   max_chars?: number
   fetch?: FetchLike
+  /**
+   * FID-2026-1012-018: the per-run memo of final outcomes. Injectable so a
+   * caller that owns its own run boundary can scope it; the default is the
+   * process-wide cache the CLI's dispatch uses (one process per session).
+   */
+  cache?: NegativeCache
   /** Override hostname resolution (defaults to node:dns). */
   lookupHost?: HostLookup
   /**
@@ -108,6 +110,14 @@ export async function readUrl({
     return errorResult(url, 'Invalid URL')
   }
 
+  // FID-2026-1012-018: a URL this run already resolved to a final outcome is
+  // answered from the memo instead of being fetched again.
+  const cacheKey = canonicalUrlKey(parsedUrl)
+  const memoized = cache.get(cacheKey)
+  if (memoized) {
+    return errorResult(url, `${outcomeMessage(memoized)}\n${REPEAT_NOTE}`)
+  }
+
   const controller = new AbortController()
   const timeout = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS)
   const onExternalAbort = () => controller.abort()
@@ -128,10 +138,25 @@ export async function readUrl({
         // are still blocked.
         await assertUrlAllowed(currentUrl, { lookupHost, resolveDns })
       } catch (error) {
-        return errorResult(
-          url,
-          error instanceof Error ? error.message : 'Blocked URL',
-        )
+        const message = error instanceof Error ? error.message : 'Blocked URL'
+        if (!BLOCKED_ERROR.test(message) && !DNS_ERROR.test(message)) {
+          return errorResult(url, message)
+        }
+        const outcome = BLOCKED_ERROR.test(message)
+          ? passthroughOutcome(message, {
+              kind: 'blocked',
+              advice:
+                'The host resolves inside this machine or a reserved range, so the request is refused by policy. Do not retry this host.',
+              cacheable: true,
+            })
+          : passthroughOutcome(message, {
+              kind: 'dns',
+              advice:
+                'The hostname did not resolve. Check the spelling or use another source; the run does not retry automatically.',
+              cacheable: false,
+            })
+        rememberOutcome(cache, cacheKey, outcome)
+        return errorResult(url, outcomeMessage(outcome))
       }
 
       response = await fetchImpl(currentUrl.toString(), {
@@ -164,26 +189,52 @@ export async function readUrl({
     }
 
     if (!response.ok) {
-      return errorResult(
-        url,
-        `Failed to fetch URL: ${response.status} ${response.statusText}`,
-      )
+      const failure = classifyHttpStatus(response.status, response.statusText)
+      rememberOutcome(cache, cacheKey, failure)
+      return errorResult(url, outcomeMessage(failure))
     }
 
     const contentType = getHeader(response.headers, 'content-type') ?? ''
     if (contentType && !isSupportedContentType(contentType)) {
-      return errorResult(
-        url,
+      const unsupported = passthroughOutcome(
         `Unsupported content type: ${contentType || 'unknown'}`,
+        {
+          kind: 'unsupported-content',
+          advice:
+            'The reader extracts HTML, plain text and JSON. A binary or document format needs a different path — do not re-fetch the same URL expecting text.',
+          cacheable: true,
+        },
       )
+      rememberOutcome(cache, cacheKey, unsupported)
+      return errorResult(url, outcomeMessage(unsupported))
     }
 
-    const body = await readResponseBody(response, MAX_RESPONSE_BYTES)
+    let body: string
+    try {
+      body = await readResponseBody(response, MAX_RESPONSE_BYTES)
+    } catch (error) {
+      if (!(error instanceof Error) || !OVERSIZED_ERROR.test(error.message)) {
+        throw error
+      }
+      const oversized = passthroughOutcome(error.message, {
+        kind: 'oversized',
+        advice: `The response is larger than the ${MAX_RESPONSE_BYTES}-byte cap this reader accepts, so the whole document was not read. Fetch a narrower resource (a section, a raw/plain variant, an API endpoint) instead.`,
+        cacheable: true,
+      })
+      rememberOutcome(cache, cacheKey, oversized)
+      return errorResult(url, outcomeMessage(oversized))
+    }
     const extracted = extractTextByContentType(contentType, body)
     const truncated = truncateText(extracted.text, max_chars)
 
     if (!truncated.text) {
-      return errorResult(url, 'No readable text found at URL')
+      const miss = classifyExtractionMiss({
+        contentType,
+        bodyLength: body.length,
+        textLength: extracted.text.length,
+      })
+      rememberOutcome(cache, cacheKey, miss)
+      return errorResult(url, outcomeMessage(miss))
     }
 
     return [
@@ -205,12 +256,18 @@ export async function readUrl({
     ]
   } catch (error) {
     const isAbort = error instanceof Error && error.name === 'AbortError'
+    if (isAbort && !signal?.aborted) {
+      // Transient by nature: advised, never memoized. The first line keeps the
+      // pre-taxonomy shape so the capture's class is unchanged.
+      return errorResult(
+        url,
+        `Timed out after ${FETCH_TIMEOUT_MS} ms\nThe host did not answer within this reader's budget. One later attempt is reasonable; the run does not retry automatically.`,
+      )
+    }
     return errorResult(
       url,
       isAbort
-        ? signal?.aborted
-          ? 'Cancelled: the run was aborted by the user.'
-          : `Timed out after ${FETCH_TIMEOUT_MS} ms`
+        ? 'Cancelled: the run was aborted by the user.'
         : error instanceof Error
           ? error.message
           : 'Unknown error',
