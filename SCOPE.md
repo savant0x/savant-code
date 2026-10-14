@@ -194,6 +194,20 @@ and the 2026-10-14 FID-folder audit report. The additions remain active in
       like an absence. **Automation level: 2** (the census is automatable; rewriting historical
       records is not permitted and triage is the operator's — Q24).
 
+- [x] **FID-2026-1014-003. No agent may be attributed — one rule, three enforcement points, no
+      exception.** Operator direction 2026-10-14: *"the rule is firm. NEVER allow co-attribution,
+      there should not even be an escape hatch"* / *"it's 100% forbidden from any coding agent to
+      tag my repo"*. Measured before: the rule existed in **two divergent copies** (a bash `grep`
+      in the hook and `WATERMARK_PATTERNS` in the pre-push scan), naming two identities; the hook
+      **advertised** the `--no-verify` bypass in its own failure text; a session summary invited
+      footer removal "per the operator's own co-author policy"; and **no CI layer existed**. Now:
+      one module (`scripts/attribution-guard.ts`), three layers (hook, pre-push range scan, CI),
+      fail-closed on every unusable input, whole-history scan exit 0. Amended the 2026-10-02
+      summary; left a dated amendment rather than a silent rewrite.
+      **Blocker (operator):** the CI job must be marked a **required status check** in branch
+      protection or it cannot block a merge — only the operator can set that.
+      **Automation level: 3.**
+
 - [ ] **T122. Savant-Free removal.** Operator direction 2026-10-12 (Q12/Q5):
       the savant-free flag/feature is to be removed rather than repaired. The
       known failing integration remains open under the removal decision, and the
@@ -424,5 +438,10 @@ and its remaining operator/external-input holds stay active.
   `packages/agent-runtime/src/echo/enforcement/helpers.ts`
 - FID-2026-1014-002: `dev/fids/FID-2026-1014-002-*.md`,
   `dev/scratchpad/active/fid-artifact-census.ts` (local-only, gitignored)
+- FID-2026-1014-003: `scripts/attribution-guard.ts`,
+  `scripts/__tests__/attribution-guard.test.ts`, `scripts/pre-push-scan.ts`
+  (re-export only), `.githooks/commit-msg`,
+  `.github/workflows/attribution-guard.yml`,
+  `dev/session-summaries/2026-10-02-0223-fid-003-batch1-implementation.md`
 - T186: (no write surface — blocked on the T122 savant-free removal)
 - T187: (no write surface — operator-owned skills surface)

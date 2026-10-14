@@ -180,7 +180,14 @@ Generated with Codebuff
 Co-Authored-By: Codebuff <noreply@codebuff.com>
 ```
 
-(Operator may edit the footer per their own co-author policy.)
+> **Amended 2026-10-14.** The line that stood here invited the footer's removal
+> "per the operator's own co-author policy". There is no such latitude: the
+> operator's standing rule is that it is **100% forbidden for any coding agent
+> to be attributed in this repository**, with no exception and no approval path.
+> The block above is retained as the record of what that commit message carried
+> before the rule; the rule itself lives in `scripts/attribution-guard.ts` and is
+> enforced by `.githooks/commit-msg`, the pre-push range scan and CI
+> (`.github/workflows/attribution-guard.yml`).
 
 ---
 

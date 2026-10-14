@@ -107,6 +107,27 @@
 - "One truth" means one **form** as well as one value — a shared constant is not shared
   behaviour unless both callers read it the same way (the `g`-flag trap).
 
+### Task 4: no agent may be attributed (operator directive, same session)
+
+- **Status:** completed — `FID-2026-1014-003` (CI layer pending branch protection)
+- **Measured before:** the rule had two divergent copies (hook bash `grep` +
+  `WATERMARK_PATTERNS`), named only `codebuff`/`commandcode`, the hook's own
+  failure text advertised the `--no-verify` bypass, a session summary invited
+  footer removal "per the operator's own co-author policy", and no CI layer
+  existed — so a bypassed local hook reached the remote unchallenged.
+- **Now:** one rule (`scripts/attribution-guard.ts`), three layers (hook,
+  pre-push range scan, CI), fail-closed `2` on any unusable input.
+- **Verified:** tagged message file → exit 1 · clean → 0 · unreadable file → 2 ·
+  unresolvable range → 2 · temp-repo tagged range → 1 · whole-history `--all` →
+  **exit 0** (every commit, every ref). Suites 7/0 and 4/0; `typecheck:scripts`,
+  `quality`, `lint:md`, eslint, prettier all exit 0.
+- **Two defects found by running it, both fixed:** the rule flagged *prose* that
+  quotes the watermark (its own explanatory commit), and the emoji branch was
+  inert without the `u` flag (`🤖 Generated with Codebuff` passed silently).
+- **Disclosed:** one commit attempt this session carried the Codebuff footer; the
+  hook rejected it, no commit object was created, and the retry omitted it. No
+  commit in any ref carries a trailer; `--no-verify` was never used.
+
 ## Next Session
 
 1. Take the Q23 ruling and implement (b) if authorized: route instead of refuse.
