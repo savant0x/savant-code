@@ -2,10 +2,11 @@ import { spawnSync } from 'node:child_process'
 import * as fs from 'node:fs'
 import * as path from 'node:path'
 
-import { hashUtf8 } from '@savant-code/common/crypto/hash'
 import {
   EXPERIENCES_DIR_NAME,
+  EXPOSURE_DIR_NAME,
   experienceExposureReceiptSchema,
+  exposureReceiptFileName,
 } from '@savant-code/common/types/experience'
 import { isRecord } from '@savant-code/common/util/object'
 
@@ -38,7 +39,7 @@ import type { ExperienceExposureReceipt } from '@savant-code/common/types/experi
  *     the fix.
  */
 
-export const EXPOSURE_DIR_NAME = 'exposure'
+export { EXPOSURE_DIR_NAME }
 export const FIX_BOUNDARIES_FILE_NAME = 'fix-boundaries.json'
 
 /** The receipt shape `scripts/experiences-proof.ts` validates. */
@@ -129,31 +130,25 @@ export function toolOfClassKey(classKey: string): string | undefined {
 }
 
 /**
- * `<store>/exposure/<readable>--<digest>.json`. The readable half keeps the
- * receipt greppable; the digest binds the class, boundary and session. A renewed
- * boundary can earn a fresh receipt without rewriting an earlier one.
+ * `<store>/exposure/<readable>--<digest>.json` — the shared receipt identity
+ * (`exposureReceiptFileName`). A renewed boundary earns a fresh receipt without
+ * rewriting an earlier one.
  */
 export function exposureReceiptFile(
   root: string,
   boundary: Boundary,
   sessionId: string,
 ): string {
-  const digest = hashUtf8(
-    JSON.stringify([
-      boundary.classKey,
-      boundary.commit,
-      boundary.fixedAt,
-      sessionId,
-    ]),
-  ).slice(0, 16)
-  const readable = boundary.classKey
-    .replace(/[^A-Za-z0-9._-]/g, '-')
-    .slice(0, 80)
   return path.join(
     root,
     EXPERIENCES_DIR_NAME,
     EXPOSURE_DIR_NAME,
-    `${readable}--${digest}.json`,
+    exposureReceiptFileName({
+      classKey: boundary.classKey,
+      boundaryCommit: boundary.commit,
+      boundaryFixedAt: boundary.fixedAt,
+      sessionId,
+    }),
   )
 }
 

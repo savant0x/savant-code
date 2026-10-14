@@ -4,7 +4,12 @@ import * as path from 'node:path'
 
 import { z } from 'zod/v4'
 
-import { experienceRecordSchema } from '@savant-code/common/types/experience'
+import {
+  experienceRecordSchema,
+  type ExperienceRecord,
+  type ExposureByClass,
+  type ExposureSession,
+} from '@savant-code/common/types/experience'
 import {
   EXPERIENCE_CLUSTER_GAP_MS,
   experienceClassIdentity,
@@ -13,8 +18,6 @@ import {
 
 import { closedOwnerIssues, parseRecurrenceArgs } from './experiences-probe'
 import { inspectBoundaryEvidence } from './experiences-proof'
-
-import type { ExperienceRecord } from '@savant-code/common/types/experience'
 
 const DAY = 86_400_000
 export const OBSERVATION_DAYS = 14
@@ -27,13 +30,6 @@ export const fixBoundarySchema = z.object({
   captureVerified: z.boolean(),
   implementationEvidence: z.string().min(1),
   captureEvidence: z.string().min(1),
-  exposure: z.array(
-    z.object({
-      sessionId: z.string().min(1),
-      exercisedAt: timestamp,
-      evidence: z.string().min(1),
-    }),
-  ),
 })
 export type FixBoundary = z.infer<typeof fixBoundarySchema>
 export type HorizonState =
@@ -88,6 +84,7 @@ export function evaluateClassHorizon(
   records: readonly ExperienceRecord[],
   classKey: string,
   boundary: FixBoundary | undefined,
+  exposure: readonly ExposureSession[],
   now = Date.now(),
 ): ClassHorizon {
   if (!boundary)
@@ -105,7 +102,7 @@ export function evaluateClassHorizon(
       Date.parse(record.ts) >= fixedAt,
   ).length
   const exercisedSessions = new Set(
-    boundary.exposure
+    exposure
       .filter((entry) => {
         const ts = Date.parse(entry.exercisedAt)
         return (
@@ -150,10 +147,29 @@ export const boundaryManifestSchema = z.object({
   boundaries: z.array(fixBoundarySchema),
 })
 
+/** A declared repair fails on recurrence, missing capture, or an elapsed window. */
+function repairClaimIssues(
+  classKey: string,
+  boundary: FixBoundary,
+  horizon: ClassHorizon,
+): string[] {
+  if (horizon.state === 'recurred')
+    return [`unsupported repair: ${classKey} (recurred)`]
+  if (!boundary.captureVerified)
+    return [`repair declared without capture coverage: ${classKey}`]
+  if (
+    horizon.state === 'incomplete-observation' &&
+    horizon.elapsedDays >= OBSERVATION_DAYS
+  )
+    return [`repair window elapsed without qualified exposure: ${classKey}`]
+  return []
+}
+
 export function recurrenceReport(
   records: readonly ExperienceRecord[],
   owners: z.infer<typeof ownerManifestSchema>,
   boundaries: z.infer<typeof boundaryManifestSchema>,
+  exposure: ExposureByClass = new Map(),
   now = Date.now(),
 ) {
   const issues: string[] = []
@@ -174,14 +190,16 @@ export function recurrenceReport(
   const classes = summarizeExperienceClasses(records).map((summary) => {
     const owner = ownerMap.get(summary.key)
     if (!owner) issues.push(`unowned class: ${summary.key}`)
+    const boundary = boundaryMap.get(summary.key)
     const horizon = evaluateClassHorizon(
       records,
       summary.key,
-      boundaryMap.get(summary.key),
+      boundary,
+      exposure.get(summary.key) ?? [],
       now,
     )
-    if (boundaryMap.has(summary.key) && horizon.state !== 'observed')
-      issues.push(`unsupported repair: ${summary.key} (${horizon.state})`)
+    if (boundary)
+      issues.push(...repairClaimIssues(summary.key, boundary, horizon))
     return { ...summary, owner, ...horizon }
   })
   for (const key of boundaryMap.keys()) {
@@ -210,18 +228,28 @@ if (import.meta.main) {
         fs.readFileSync(path.join(directory, 'fix-boundaries.json'), 'utf8'),
       ),
     )
-    const report = recurrenceReport(ledger.records, owners, boundaries)
-    const issues = [...ledger.issues, ...report.issues]
+    const exposures = new Map<string, readonly ExposureSession[]>()
+    const boundaryIssues = new Map<string, number>()
+    const proofIssues: string[] = []
     for (const boundary of boundaries.boundaries) {
-      const proofIssues = inspectBoundaryEvidence(root, boundary)
-      issues.push(...proofIssues)
-      if (proofIssues.length) {
-        const entry = report.classes.find(
-          (candidate) => candidate.key === boundary.classKey,
-        )
-        if (entry && entry.state === 'observed')
-          entry.state = 'incomplete-observation'
-      }
+      const inspection = inspectBoundaryEvidence(root, boundary)
+      proofIssues.push(...inspection.issues)
+      boundaryIssues.set(boundary.classKey, inspection.issues.length)
+      exposures.set(boundary.classKey, inspection.exposure)
+    }
+    const report = recurrenceReport(
+      ledger.records,
+      owners,
+      boundaries,
+      exposures,
+    )
+    const issues = [...ledger.issues, ...report.issues, ...proofIssues]
+    for (const entry of report.classes) {
+      if (
+        (boundaryIssues.get(entry.key) ?? 0) > 0 &&
+        entry.state === 'observed'
+      )
+        entry.state = 'incomplete-observation'
     }
     issues.push(
       ...closedOwnerIssues(

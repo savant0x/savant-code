@@ -4,16 +4,85 @@ import * as path from 'node:path'
 
 import { afterEach, describe, expect, test } from 'bun:test'
 
-import { closedOwnerIssues } from '../experiences-probe'
+import {
+  EXPERIENCES_DIR_NAME,
+  EXPOSURE_DIR_NAME,
+  exposureReceiptFileName,
+  exposureReceiptReadablePrefix,
+} from '@savant-code/common/types/experience'
+
 import { inspectBoundaryEvidence } from '../experiences-proof'
 
 import type { FixBoundary } from '../experiences-recurrence'
+import type { ExperienceExposureReceipt } from '@savant-code/common/types/experience'
 
 const roots: string[] = []
 afterEach(() => {
   for (const root of roots.splice(0))
     fs.rmSync(root, { recursive: true, force: true })
 })
+
+function git(
+  root: string,
+  args: readonly string[],
+  env?: Record<string, string>,
+) {
+  return Bun.spawnSync(['git', ...args], {
+    cwd: root,
+    env: env ? { ...process.env, ...env } : undefined,
+  })
+}
+
+function headCommit(root: string): string {
+  return Bun.spawnSync(['git', 'rev-parse', 'HEAD'], { cwd: root })
+    .stdout.toString()
+    .trim()
+}
+
+function commitAll(
+  root: string,
+  message: string,
+  env?: Record<string, string>,
+): string {
+  for (const args of [
+    ['add', '-A'],
+    [
+      '-c',
+      'user.name=Fixture',
+      '-c',
+      'user.email=fixture@example.invalid',
+      'commit',
+      '-qm',
+      message,
+    ],
+  ])
+    expect(git(root, args, env).exitCode).toBe(0)
+  return headCommit(root)
+}
+
+function commitEmpty(
+  root: string,
+  message: string,
+  env: Record<string, string>,
+): string {
+  expect(
+    git(
+      root,
+      [
+        '-c',
+        'user.name=Fixture',
+        '-c',
+        'user.email=fixture@example.invalid',
+        'commit',
+        '--allow-empty',
+        '-qm',
+        message,
+      ],
+      env,
+    ).exitCode,
+  ).toBe(0)
+  return headCommit(root)
+}
 
 function fixture() {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'experience-proof-'))
@@ -26,23 +95,8 @@ function fixture() {
     path.join(root, 'capture.md'),
     'capture exercised and audited',
   )
-  for (const args of [
-    ['init', '-q'],
-    ['add', 'implementation.md', 'capture.md'],
-    [
-      '-c',
-      'user.name=Fixture',
-      '-c',
-      'user.email=fixture@example.invalid',
-      'commit',
-      '-qm',
-      'fixture',
-    ],
-  ])
-    expect(Bun.spawnSync(['git', ...args], { cwd: root }).exitCode).toBe(0)
-  const commit = Bun.spawnSync(['git', 'rev-parse', 'HEAD'], { cwd: root })
-    .stdout.toString()
-    .trim()
+  expect(git(root, ['init', '-q']).exitCode).toBe(0)
+  const commit = commitAll(root, 'fixture')
   const boundary: FixBoundary = {
     classKey: 'v1:fixture:timeout:unexpected',
     commit,
@@ -50,94 +104,87 @@ function fixture() {
     captureVerified: true,
     implementationEvidence: 'implementation.md',
     captureEvidence: 'capture.md',
-    exposure: [
-      {
-        sessionId: 'session',
-        exercisedAt: new Date().toISOString(),
-        evidence: 'exposure.json',
-      },
-    ],
   }
-  const receipt = {
+  const receipt: ExperienceExposureReceipt = {
     kind: 'production-tool-exposure',
     classKey: boundary.classKey,
     sessionId: 'session',
-    exercisedAt: boundary.exposure[0]!.exercisedAt,
+    exercisedAt: new Date().toISOString(),
     implementationCommit: commit,
-    boundaryCommit: commit,
+    boundaryCommit: boundary.commit,
     boundaryFixedAt: boundary.fixedAt,
     captureVerified: true,
   }
-  fs.writeFileSync(path.join(root, 'exposure.json'), JSON.stringify(receipt))
   return { root, boundary, receipt }
 }
 
+/** Store a receipt under the name the shared identity derives for it. */
+function storeReceipt(
+  root: string,
+  receipt: ExperienceExposureReceipt,
+): string {
+  return storeBytes(root, exposureReceiptFileName(receipt), receipt)
+}
+
+/** Store arbitrary bytes under an explicit name (broken or renamed evidence). */
+function storeBytes(root: string, name: string, value: unknown): string {
+  const directory = path.join(root, EXPERIENCES_DIR_NAME, EXPOSURE_DIR_NAME)
+  fs.mkdirSync(directory, { recursive: true })
+  const file = path.join(directory, name)
+  fs.writeFileSync(
+    file,
+    typeof value === 'string' ? value : JSON.stringify(value),
+  )
+  return file
+}
+
 describe('production observation receipts', () => {
-  test('closing an owner cannot bypass missing repair boundaries', () => {
-    const { root, boundary } = fixture()
-    fs.mkdirSync(path.join(root, 'dev/fids'), { recursive: true })
-    fs.writeFileSync(
-      path.join(root, 'dev/fids/FID-2026-1012-024-fixture.md'),
-      '**Status:** closed\n',
-    )
-    expect(
-      closedOwnerIssues(
-        root,
-        ['FID-2026-1012-024'],
-        [
-          {
-            key: boundary.classKey,
-            owner: 'FID-2026-1012-024',
-            state: 'unresolved',
-          },
-        ],
-      ),
-    ).toEqual([`closed owner has unproved class: ${boundary.classKey}`])
-  })
-  test('binds a readable production receipt to the implemented local commit', () => {
-    const { root, boundary } = fixture()
-    expect(inspectBoundaryEvidence(root, boundary)).toEqual([])
+  test('binds a discovered production receipt to the implemented commit', () => {
+    const { root, boundary, receipt } = fixture()
+    const file = storeReceipt(root, receipt)
+    const inspection = inspectBoundaryEvidence(root, boundary)
+    expect(inspection.issues).toEqual([])
+    expect(inspection.exposure).toEqual([
+      {
+        sessionId: receipt.sessionId,
+        exercisedAt: receipt.exercisedAt,
+        evidence: path.relative(root, file),
+      },
+    ])
   })
   test('a receipt issued under a different boundary cannot qualify', () => {
     const { root, boundary, receipt } = fixture()
-    fs.writeFileSync(
-      path.join(root, 'exposure.json'),
-      JSON.stringify({
-        ...receipt,
-        boundaryCommit: 'a'.repeat(40),
-        boundaryFixedAt: boundary.fixedAt,
-      }),
-    )
-    expect(inspectBoundaryEvidence(root, boundary)).toContain(
-      'exposure receipt disagrees with boundary: exposure.json',
-    )
+    storeReceipt(root, { ...receipt, boundaryCommit: 'a'.repeat(40) })
+    const inspection = inspectBoundaryEvidence(root, boundary)
+    expect(inspection.issues).toEqual([])
+    expect(inspection.exposure).toEqual([])
   })
   test('a changed boundary timestamp cannot reuse an earlier receipt', () => {
     const { root, boundary, receipt } = fixture()
-    fs.writeFileSync(
-      path.join(root, 'exposure.json'),
-      JSON.stringify({
-        ...receipt,
-        boundaryFixedAt: new Date(0).toISOString(),
-      }),
-    )
-    expect(inspectBoundaryEvidence(root, boundary)).toContain(
-      'exposure receipt disagrees with boundary: exposure.json',
-    )
+    storeReceipt(root, {
+      ...receipt,
+      boundaryFixedAt: new Date(0).toISOString(),
+    })
+    const inspection = inspectBoundaryEvidence(root, boundary)
+    expect(inspection.issues).toEqual([])
+    expect(inspection.exposure).toEqual([])
   })
   test('an older unbound receipt cannot qualify and is never rewritten', () => {
     const { root, boundary, receipt } = fixture()
-    const old = JSON.stringify(
+    const legacy = JSON.stringify(
       Object.fromEntries(
         Object.entries(receipt).filter(([key]) => !key.startsWith('boundary')),
       ),
     )
-    const file = path.join(root, 'exposure.json')
-    fs.writeFileSync(file, old)
-    expect(inspectBoundaryEvidence(root, boundary)).toContain(
-      'invalid production exposure receipt: exposure.json',
+    const file = storeBytes(
+      root,
+      `${exposureReceiptReadablePrefix(boundary.classKey)}--legacy.json`,
+      legacy,
     )
-    expect(fs.readFileSync(file, 'utf8')).toBe(old)
+    expect(inspectBoundaryEvidence(root, boundary).issues).toContain(
+      `invalid production exposure receipt: ${path.relative(root, file)}`,
+    )
+    expect(fs.readFileSync(file, 'utf8')).toBe(legacy)
   })
   test('a receipt from a LATER revision still proves the fixed path ran', () => {
     // The session ran HEAD, which is normally ahead of the boundary commit that
@@ -148,147 +195,92 @@ describe('production observation receipts', () => {
       path.join(root, 'later.txt'),
       'a later commit, after the fix landed',
     )
-    for (const args of [
-      ['add', 'later.txt'],
-      [
-        '-c',
-        'user.name=Fixture',
-        '-c',
-        'user.email=fixture@example.invalid',
-        'commit',
-        '-qm',
-        'later',
-      ],
-    ])
-      expect(Bun.spawnSync(['git', ...args], { cwd: root }).exitCode).toBe(0)
-    const run = Bun.spawnSync(['git', 'rev-parse', 'HEAD'], { cwd: root })
-      .stdout.toString()
-      .trim()
+    const run = commitAll(root, 'later')
     expect(run).not.toBe(boundary.commit)
     receipt.exercisedAt = new Date().toISOString()
-    boundary.exposure[0]!.exercisedAt = receipt.exercisedAt
-    fs.writeFileSync(
-      path.join(root, 'exposure.json'),
-      JSON.stringify({ ...receipt, implementationCommit: run }),
-    )
-    expect(inspectBoundaryEvidence(root, boundary)).toEqual([])
+    storeReceipt(root, { ...receipt, implementationCommit: run })
+    const inspection = inspectBoundaryEvidence(root, boundary)
+    expect(inspection.issues).toEqual([])
+    expect(inspection.exposure).toHaveLength(1)
   })
   test('an exposure cannot predate the run revision named by its receipt', () => {
     const { root, boundary, receipt } = fixture()
     const laterDate = new Date(
       Date.parse(receipt.exercisedAt) + 60_000,
     ).toISOString()
-    expect(
-      Bun.spawnSync(
-        [
-          'git',
-          '-c',
-          'user.name=Fixture',
-          '-c',
-          'user.email=fixture@example.invalid',
-          'commit',
-          '--allow-empty',
-          '-qm',
-          'later run revision',
-        ],
-        {
-          cwd: root,
-          env: {
-            ...process.env,
-            GIT_AUTHOR_DATE: laterDate,
-            GIT_COMMITTER_DATE: laterDate,
-          },
-        },
-      ).exitCode,
-    ).toBe(0)
-    const run = Bun.spawnSync(['git', 'rev-parse', 'HEAD'], { cwd: root })
-      .stdout.toString()
-      .trim()
-    fs.writeFileSync(
-      path.join(root, 'exposure.json'),
-      JSON.stringify({ ...receipt, implementationCommit: run }),
-    )
-    expect(inspectBoundaryEvidence(root, boundary)).toContain(
-      'exposure predates its recorded run revision: exposure.json',
+    const run = commitEmpty(root, 'later run revision', {
+      GIT_AUTHOR_DATE: laterDate,
+      GIT_COMMITTER_DATE: laterDate,
+    })
+    const file = storeReceipt(root, { ...receipt, implementationCommit: run })
+    expect(inspectBoundaryEvidence(root, boundary).issues).toContain(
+      `exposure predates its recorded run revision: ${path.relative(root, file)}`,
     )
   })
   test('a receipt from a revision BEFORE the fix cannot prove anything', () => {
     const { root, boundary, receipt } = fixture()
-    // The fixture's commit is the run; a later commit becomes the fix.
     const before = boundary.commit
     fs.writeFileSync(
       path.join(root, 'fix.txt'),
       'the commit that landed the fix',
     )
-    for (const args of [
-      ['add', 'fix.txt'],
-      [
-        '-c',
-        'user.name=Fixture',
-        '-c',
-        'user.email=fixture@example.invalid',
-        'commit',
-        '-qm',
-        'fix',
-      ],
-    ])
-      expect(Bun.spawnSync(['git', ...args], { cwd: root }).exitCode).toBe(0)
-    boundary.commit = Bun.spawnSync(['git', 'rev-parse', 'HEAD'], { cwd: root })
-      .stdout.toString()
-      .trim()
+    boundary.commit = commitAll(root, 'fix')
     boundary.fixedAt = new Date().toISOString()
-    fs.writeFileSync(
-      path.join(root, 'exposure.json'),
-      JSON.stringify({ ...receipt, implementationCommit: before }),
-    )
-    expect(inspectBoundaryEvidence(root, boundary)).toContain(
-      'exposure receipt disagrees with boundary: exposure.json',
+    const file = storeReceipt(root, {
+      ...receipt,
+      boundaryCommit: boundary.commit,
+      boundaryFixedAt: boundary.fixedAt,
+      implementationCommit: before,
+    })
+    expect(inspectBoundaryEvidence(root, boundary).issues).toContain(
+      `exposure receipt disagrees with boundary: ${path.relative(root, file)}`,
     )
   })
   test('a synthetic receipt cannot substitute for production exposure', () => {
     const { root, boundary, receipt } = fixture()
-    fs.writeFileSync(
-      path.join(root, 'exposure.json'),
-      JSON.stringify({ ...receipt, kind: 'synthetic-test' }),
+    const file = storeBytes(
+      root,
+      `${exposureReceiptReadablePrefix(boundary.classKey)}--synthetic.json`,
+      { ...receipt, kind: 'synthetic-test' },
     )
-    expect(inspectBoundaryEvidence(root, boundary)).toContain(
-      'invalid production exposure receipt: exposure.json',
+    expect(inspectBoundaryEvidence(root, boundary).issues).toContain(
+      `invalid production exposure receipt: ${path.relative(root, file)}`,
     )
   })
   test('an unknown run revision cannot establish exposure chronology', () => {
     const { root, boundary, receipt } = fixture()
-    fs.writeFileSync(
-      path.join(root, 'exposure.json'),
-      JSON.stringify({ ...receipt, implementationCommit: '0'.repeat(40) }),
-    )
-    expect(inspectBoundaryEvidence(root, boundary)).toContain(
-      'unresolvable exposure run revision: exposure.json',
+    const file = storeReceipt(root, {
+      ...receipt,
+      implementationCommit: '0'.repeat(40),
+    })
+    expect(inspectBoundaryEvidence(root, boundary).issues).toContain(
+      `unresolvable exposure run revision: ${path.relative(root, file)}`,
     )
   })
-  test('renaming the session in the manifest cannot multiply one real exposure', () => {
-    const { root, boundary } = fixture()
-    boundary.exposure.push({
-      ...boundary.exposure[0]!,
-      sessionId: 'invented-session',
-    })
-    expect(inspectBoundaryEvidence(root, boundary)).toContain(
-      'missing, repeated or outside-workspace exposure: exposure.json',
+  test('a renamed receipt cannot claim an exposure it did not earn', () => {
+    const { root, boundary, receipt } = fixture()
+    const file = storeBytes(
+      root,
+      `${exposureReceiptReadablePrefix(boundary.classKey)}--${'0'.repeat(16)}.json`,
+      receipt,
     )
+    const inspection = inspectBoundaryEvidence(root, boundary)
+    expect(inspection.issues).toContain(
+      `renamed or edited exposure receipt: ${path.relative(root, file)}`,
+    )
+    expect(inspection.exposure).toEqual([])
   })
   test('a receipt for a different class cannot qualify this repair', () => {
     const { root, boundary, receipt } = fixture()
-    fs.writeFileSync(
-      path.join(root, 'exposure.json'),
-      JSON.stringify({ ...receipt, classKey: 'another' }),
-    )
-    expect(inspectBoundaryEvidence(root, boundary)).toContain(
-      'exposure receipt disagrees with boundary: exposure.json',
-    )
+    storeReceipt(root, { ...receipt, classKey: 'another' })
+    const inspection = inspectBoundaryEvidence(root, boundary)
+    expect(inspection.issues).toEqual([])
+    expect(inspection.exposure).toEqual([])
   })
   test('a boundary cannot predate its implementation', () => {
     const { root, boundary } = fixture()
     boundary.fixedAt = '2000-01-01T00:00:00Z'
-    expect(inspectBoundaryEvidence(root, boundary)).toContain(
+    expect(inspectBoundaryEvidence(root, boundary).issues).toContain(
       `boundary predates its implementation commit: ${boundary.commit}`,
     )
   })

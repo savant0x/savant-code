@@ -13,6 +13,7 @@ import { readCanonicalRuleCatalog } from './learnings-rules'
 import type { HorizonState } from './experiences-recurrence'
 import type { CanonicalLearningRule } from './learnings-rules'
 import type { LearningIssue, StructuredLearning } from './learnings-types'
+import type { ExposureSession } from '@savant-code/common/types/experience'
 
 type RepairClass = {
   key: string
@@ -85,14 +86,21 @@ export function validateLearningRepairOrder(
         fs.readFileSync(path.join(directory, 'fix-boundaries.json'), 'utf8'),
       ),
     )
-    const report = recurrenceReport(ledger.records, owners, boundaries)
-    for (const boundary of boundaries.boundaries)
-      if (inspectBoundaryEvidence(root, boundary).length) {
-        const repair = report.classes.find(
-          (entry) => entry.key === boundary.classKey,
-        )
-        if (repair) repair.state = 'incomplete-observation'
-      }
+    const exposures = new Map<string, readonly ExposureSession[]>()
+    const unproved = new Set<string>()
+    for (const boundary of boundaries.boundaries) {
+      const inspection = inspectBoundaryEvidence(root, boundary)
+      exposures.set(boundary.classKey, inspection.exposure)
+      if (inspection.issues.length) unproved.add(boundary.classKey)
+    }
+    const report = recurrenceReport(
+      ledger.records,
+      owners,
+      boundaries,
+      exposures,
+    )
+    for (const repair of report.classes)
+      if (unproved.has(repair.key)) repair.state = 'incomplete-observation'
     return [
       ...ledger.issues.map((message) => ({
         code: 'learning.repair.ledger',

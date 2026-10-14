@@ -1,5 +1,6 @@
 import { z } from 'zod/v4'
 
+import { hashUtf8 } from '../crypto/hash'
 import { commandExecutionMetadataSchema } from '../util/command-execution'
 
 /**
@@ -41,6 +42,13 @@ export type ExperienceErrorClass = (typeof EXPERIENCE_ERROR_CLASSES)[number]
 export const EXPERIENCES_DIR_NAME = 'dev/experiences'
 /** Append-only ledger file inside the store. */
 export const RAW_TRACES_FILE_NAME = 'raw-traces.jsonl'
+/**
+ * Exposure receipts (FID-2026-1012-024) live beside the ledger: one immutable
+ * file per (class, boundary commit, fix time, session). The producer stamps the
+ * name and the proof reader re-derives it, so a receipt cannot be renamed or
+ * hand-edited into evidence it did not earn.
+ */
+export const EXPOSURE_DIR_NAME = 'exposure'
 
 export const experienceRecordSchema = z.object({
   /** ISO-8601 UTC timestamp of the triggering event. */
@@ -96,3 +104,46 @@ export const experienceExposureReceiptSchema = z.object({
 export type ExperienceExposureReceipt = z.infer<
   typeof experienceExposureReceiptSchema
 >
+
+/** Receipt filename prefix — greppable, and the only attribution a corrupt file has. */
+export function exposureReceiptReadablePrefix(classKey: string): string {
+  return classKey.replace(/[^A-Za-z0-9._-]/g, '-').slice(0, 80)
+}
+
+/**
+ * Filename identity of a receipt: the readable half keeps it greppable, the
+ * digest binds class, boundary commit, fix time and session. Both the producer
+ * and the proof reader derive it, so a renamed or edited receipt is detectable.
+ */
+export function exposureReceiptFileName(
+  receipt: Pick<
+    ExperienceExposureReceipt,
+    'classKey' | 'boundaryCommit' | 'boundaryFixedAt' | 'sessionId'
+  >,
+): string {
+  const digest = hashUtf8(
+    JSON.stringify([
+      receipt.classKey,
+      receipt.boundaryCommit,
+      receipt.boundaryFixedAt,
+      receipt.sessionId,
+    ]),
+  ).slice(0, 16)
+  return `${exposureReceiptReadablePrefix(receipt.classKey)}--${digest}.json`
+}
+
+/**
+ * One validated exposure receipt, as the proof reader derives it for a declared
+ * repair boundary (FID-2026-1012-024 Loop 11). Exposure is DISCOVERED in the
+ * store, never declared beside the boundary: the hand-maintained array it
+ * replaces was the one thing no code could fill, so a landed fix could never
+ * become an observed repair.
+ */
+export interface ExposureSession {
+  sessionId: string
+  exercisedAt: string
+  evidence: string
+}
+
+/** Qualified exposure per class key, as the census receives it. */
+export type ExposureByClass = ReadonlyMap<string, readonly ExposureSession[]>

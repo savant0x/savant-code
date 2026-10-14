@@ -1,15 +1,22 @@
-import { describe, expect, test } from 'bun:test'
+import * as fs from 'node:fs'
+import * as os from 'node:os'
+import * as path from 'node:path'
+
+import { afterEach, describe, expect, test } from 'bun:test'
 
 import { experienceClassIdentity } from '@savant-code/common/util/experience-classes'
 
-import { parseRecurrenceArgs } from '../experiences-probe'
+import { closedOwnerIssues, parseRecurrenceArgs } from '../experiences-probe'
 import {
   evaluateClassHorizon,
   inspectLedger,
   recurrenceReport,
 } from '../experiences-recurrence'
 
-import type { ExperienceRecord } from '@savant-code/common/types/experience'
+import type {
+  ExperienceRecord,
+  ExposureSession,
+} from '@savant-code/common/types/experience'
 
 const DAY = 86_400_000
 const NOW = Date.UTC(2026, 9, 12)
@@ -29,11 +36,30 @@ const boundary = {
   captureVerified: true,
   implementationEvidence: 'dev/evidence/implementation.json',
   captureEvidence: 'dev/evidence/capture.json',
-  exposure: [1, 2, 3].map((day) => ({
-    sessionId: `production-${day}`,
-    exercisedAt: new Date(NOW - day * DAY).toISOString(),
-    evidence: `dev/evidence/session-${day}.json`,
-  })),
+}
+const exposure: ExposureSession[] = [1, 2, 3].map((day) => ({
+  sessionId: `production-${day}`,
+  exercisedAt: new Date(NOW - day * DAY).toISOString(),
+  evidence: `dev/experiences/exposure/session-${day}.json`,
+}))
+const exposures = new Map([[key, exposure]])
+
+const roots: string[] = []
+afterEach(() => {
+  for (const root of roots.splice(0))
+    fs.rmSync(root, { recursive: true, force: true })
+})
+
+/** A closure claim is checked against the ledger, not against the record alone. */
+function closedOwnerRoot(): string {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'experience-closure-'))
+  roots.push(root)
+  fs.mkdirSync(path.join(root, 'dev/fids'), { recursive: true })
+  fs.writeFileSync(
+    path.join(root, 'dev/fids/FID-2026-1012-024-fixture.md'),
+    '**Status:** closed\n',
+  )
+  return root
 }
 
 describe('class horizon is evidence qualified', () => {
@@ -53,14 +79,14 @@ describe('class horizon is evidence qualified', () => {
     ).toEqual({ json: true, assertion: 'FID-2026-1012-024' })
   })
   test('age and silence alone leave an old class unresolved', () => {
-    expect(evaluateClassHorizon([failure], key, undefined, NOW).state).toBe(
+    expect(evaluateClassHorizon([failure], key, undefined, [], NOW).state).toBe(
       'unresolved',
     )
   })
   test('a full exercised window can support a repair claim', () => {
-    expect(evaluateClassHorizon([failure], key, boundary, NOW).state).toBe(
-      'observed',
-    )
+    expect(
+      evaluateClassHorizon([failure], key, boundary, exposure, NOW).state,
+    ).toBe('observed')
   })
   test('a short window cannot pass', () => {
     expect(
@@ -71,6 +97,7 @@ describe('class horizon is evidence qualified', () => {
           ...boundary,
           fixedAt: new Date(NOW - DAY).toISOString(),
         },
+        exposure,
         NOW,
       ).state,
     ).toBe('incomplete-observation')
@@ -84,6 +111,7 @@ describe('class horizon is evidence qualified', () => {
           ...boundary,
           captureVerified: false,
         },
+        exposure,
         NOW,
       ).state,
     ).toBe('incomplete-observation')
@@ -93,13 +121,8 @@ describe('class horizon is evidence qualified', () => {
       evaluateClassHorizon(
         [failure],
         key,
-        {
-          ...boundary,
-          exposure: boundary.exposure.map((entry) => ({
-            ...entry,
-            sessionId: 'one',
-          })),
-        },
+        boundary,
+        exposure.map((entry) => ({ ...entry, sessionId: 'one' })),
         NOW,
       ).state,
     ).toBe('incomplete-observation')
@@ -111,7 +134,8 @@ describe('class horizon is evidence qualified', () => {
       errorFirstLine: 'Command timed out after 600 seconds',
     }
     expect(
-      evaluateClassHorizon([failure, renamed], key, boundary, NOW).state,
+      evaluateClassHorizon([failure, renamed], key, boundary, exposure, NOW)
+        .state,
     ).toBe('recurred')
   })
   test('future exposure cannot count', () => {
@@ -119,13 +143,11 @@ describe('class horizon is evidence qualified', () => {
       evaluateClassHorizon(
         [failure],
         key,
-        {
-          ...boundary,
-          exposure: boundary.exposure.map((entry) => ({
-            ...entry,
-            exercisedAt: new Date(NOW + DAY).toISOString(),
-          })),
-        },
+        boundary,
+        exposure.map((entry) => ({
+          ...entry,
+          exercisedAt: new Date(NOW + DAY).toISOString(),
+        })),
         NOW,
       ).state,
     ).toBe('incomplete-observation')
@@ -169,11 +191,21 @@ describe('ownership census', () => {
     version: 1 as const,
     owners: [{ classKey: key, fid: 'FID-2026-1012-023' }],
   }
+  test('closing an owner cannot bypass missing repair boundaries', () => {
+    expect(
+      closedOwnerIssues(
+        closedOwnerRoot(),
+        ['FID-2026-1012-024'],
+        [{ key, owner: 'FID-2026-1012-024', state: 'unresolved' }],
+      ),
+    ).toEqual([`closed owner has unproved class: ${key}`])
+  })
   test('a single old unknown class still requires an owner', () => {
     const result = recurrenceReport(
       [failure],
       { version: 1, owners: [] },
       { version: 1, boundaries: [] },
+      new Map(),
       NOW,
     )
     expect(result.issues).toEqual([`unowned class: ${key}`])
@@ -184,6 +216,7 @@ describe('ownership census', () => {
       [failure],
       owners,
       { version: 1, boundaries: [] },
+      new Map(),
       NOW,
     )
     expect(result.issues).toEqual([])
@@ -195,6 +228,7 @@ describe('ownership census', () => {
       [failure, repeated, repeated],
       owners,
       { version: 1, boundaries: [boundary] },
+      exposures,
       NOW,
     )
     expect(result.classes[0]?.count).toBe(3)
@@ -203,18 +237,55 @@ describe('ownership census', () => {
     expect(result.classes[0]?.postFixFailures).toBe(2)
     expect(result.issues).toContain(`unsupported repair: ${key} (recurred)`)
   })
-  test('a claimed repair with no exposure fails the assertion', () => {
+  test('exposure the store holds earns an observed repair', () => {
+    const result = recurrenceReport(
+      [failure],
+      owners,
+      { version: 1, boundaries: [boundary] },
+      exposures,
+      NOW,
+    )
+    expect(result.classes[0]?.state).toBe('observed')
+    expect(result.issues).toEqual([])
+  })
+  test('an in-window repair is reported as state, not a census failure', () => {
     const result = recurrenceReport(
       [failure],
       owners,
       {
         version: 1,
-        boundaries: [{ ...boundary, exposure: [] }],
+        boundaries: [
+          { ...boundary, fixedAt: new Date(NOW - DAY).toISOString() },
+        ],
       },
+      new Map(),
+      NOW,
+    )
+    expect(result.classes[0]?.state).toBe('incomplete-observation')
+    expect(result.issues).toEqual([])
+  })
+  test('a window that elapsed without exposure fails the census', () => {
+    const result = recurrenceReport(
+      [failure],
+      owners,
+      { version: 1, boundaries: [boundary] },
+      new Map(),
       NOW,
     )
     expect(result.issues).toContain(
-      `unsupported repair: ${key} (incomplete-observation)`,
+      `repair window elapsed without qualified exposure: ${key}`,
+    )
+  })
+  test('a repair declared without capture coverage fails at once', () => {
+    const result = recurrenceReport(
+      [failure],
+      owners,
+      { version: 1, boundaries: [{ ...boundary, captureVerified: false }] },
+      exposures,
+      NOW,
+    )
+    expect(result.issues).toContain(
+      `repair declared without capture coverage: ${key}`,
     )
   })
 })

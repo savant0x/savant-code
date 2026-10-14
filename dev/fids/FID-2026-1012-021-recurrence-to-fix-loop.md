@@ -200,8 +200,8 @@ declared here and none is claimed.
 
 ### Verification Receipt
 
-- fingerprint: sha256:72d17882926e4c7a0994b3c8fb78578d6b55b12b4348391baea42b4a01adc4eb
-- verified: 2026-10-13T22:17:51.295Z
+- fingerprint: sha256:feefd3c15a8912a6e90d86e70e5e65839a29370d0a337cc246a61327e7515130
+- verified: 2026-10-14T00:54:19.675Z
 - test scripts/__tests__/experiences-coverage.test.ts: exit 0
 - test scripts/__tests__/experiences-learning-order.test.ts: exit 0
 - test scripts/__tests__/experiences-repair-drafts.test.ts: exit 0
@@ -312,6 +312,22 @@ declared here and none is claimed.
   was written, and no class is claimed to have stopped recurring.
 
 ### Missed Questions
+
+### Loop 6 — The no-commit hold is lifted (2026-10-13)
+
+- **RED:** Loop 5's count-reporting work was held uncommitted by an explicit operator
+  hold. The hold could not be worked around: the held change and the observation-path
+  fix that follows it share two files (`common/src/util/experience-classes.ts`,
+  `scripts/experiences-recurrence.ts`), and `git commit <path>` stages a whole file.
+- **GREEN:** Operator ruling 2026-10-13 lifts the hold. The held work was committed on
+  its own at `2a34e558`, after re-running its declared gates on the final bytes: shared
+  class suite 14 PASS, five scripts suites 39 PASS, `typecheck common` exit 0, and all
+  three declared probes exit 0.
+- **AUDIT:** The commit is path-scoped to the seven files that carried the held change
+  plus the continuation summary; no unrelated dirty path was staged.
+- **ADVERSARIAL:** The ruling changes no count, owner, class key, promotion threshold or
+  repair assertion, and it implies no class closure: observation is still unproved, so
+  this record stays `verified` and no lesson is written against it.
 
 ### Loop 5 — Count semantics (2026-10-13, recorded before implementation)
 

@@ -185,8 +185,8 @@ receipt here cannot establish either or close this lane.
 
 ### Verification Receipt
 
-- fingerprint: sha256:9ad39db30a352ed05f24649e28ee1a8a94b3d8b031f1162e835511bc8f763f49
-- verified: 2026-10-13T23:51:37.338Z
+- fingerprint: sha256:a5f3c18f25e969fcf9039def35c9bd106c858161462635d9e54dfd7d75216a7a
+- verified: 2026-10-14T00:54:00.407Z
 - test common/src/util/__tests__/experience-classes.test.ts: exit 0
 - test packages/agent-runtime/src/tools/tool-executor/tool-result-errors.test.ts: exit 0
 - test packages/agent-runtime/src/tools/tool-executor/result-lifecycle.test.ts: exit 0
@@ -480,6 +480,64 @@ audit trail of the mistaken premise, not as acceptance criteria or class disposi
 - **CHANGE DELTA:** Converged additive correction under level 3. No real fix
   boundary, exposure or class closure is created by this work.
 
+### Loop 11 — Exposure is derived from the receipt store (2026-10-13, automation level 3)
+
+- **RED:** Two defects, both reproduced against the shipped code before any edit.
+  (i) The sink writes one immutable receipt per `(class, boundary, session)` to
+  `dev/experiences/exposure/**`, but the only reader validated the paths a boundary
+  *listed* in its own `exposure` array — and grep proves no code writes that array
+  (`scripts/experiences-{proof,recurrence,learning-order}.ts` read `fix-boundaries.json`;
+  the sink only reads it). A receipt on disk could therefore never raise
+  `exercisedSessions`, so no declared repair could ever become `observed`.
+  (ii) `recurrenceReport` pushed `unsupported repair` for every declared boundary that
+  was not yet `observed`, and the CLI exits 1 on any issue, while the window is
+  `OBSERVATION_DAYS = 14` measured from `fixedAt`. Declaring the first boundary would
+  therefore fail `FID-2026-1012-021`'s declared probe gate — and so
+  `validate:repository` — for the entire window the boundary needs in order to be
+  proved. The instrument had no honest representation of "fix landed, observing".
+  Measured the same day: 589 rows / 58 classes / zero issues, no `exposure/` directory
+  on disk, `fix-boundaries.json` empty, so the gap was latent, not yet visible.
+  Operator ruling 2026-10-13: derive exposure from the store; report
+  `incomplete-observation` as state, with the window still enforced.
+- **GREEN:** Exposure is discovered, never declared. `inspectBoundaryEvidence` scans the
+  store, keeps only receipts whose `classKey`, `boundaryCommit` and `boundaryFixedAt`
+  agree exactly with the boundary (an earlier or renewed boundary's receipt is not this
+  boundary's evidence), requires the filename to re-derive from the receipt's own fields
+  (`exposureReceiptFileName`, now shared by producer and reader), and applies the
+  existing ancestry and chronology checks. `fixBoundarySchema` loses its `exposure`
+  field; the census receives a validated `ExposureByClass` map. A declared repair now
+  fails the census on `recurred`, on `captureVerified: false`, or on a window that
+  elapsed with fewer than three exercised sessions, and an in-window boundary is
+  reported as state. Closure still requires `observed`: `closedOwnerIssues` and
+  `--assert-repaired` are unchanged.
+- **AUDIT:** 32 focused tests across the proof and horizon suites (rewritten for the
+  store): a discovered receipt qualifies; a receipt naming another boundary commit or fix
+  time is not reused; a renamed receipt is refused (`renamed or edited exposure receipt`);
+  an unbound legacy receipt is refused and never rewritten; a receipt for another class
+  is not attributed; the observed path is reached through the store; an in-window
+  boundary yields no issue; a window that elapsed without exposure and a boundary
+  declared without capture coverage both fail. Full scripts suite 960 PASS / 0 FAIL;
+  `quality` PASS; `typecheck:scripts`, `typecheck common` and
+  `typecheck packages/agent-runtime` exit 0. `--assert-repaired=FID-2026-1012-024`
+  still exits 1 with nine unproved classes — the required honest result.
+- **ADVERSARIAL:** (a) *Does discovery admit forged evidence?* It is stricter than the
+  listed-path contract it replaces: a receipt must name this boundary exactly, its
+  filename must re-derive from its own content, and its run revision must be the boundary
+  commit or a descendant whose committer date precedes the exposure. A renamed, edited or
+  foreign receipt is refused or not counted. (b) *Does making `incomplete-observation`
+  non-fatal weaken the gate?* It removes a failure no work could clear and leaves one a
+  claim cannot dodge: the window, capture coverage, recurrence and every evidence check
+  still fail the census, and closure still refuses an unproved class. (c) *Is a receipt
+  enough to close a class?* No — unchanged: three qualified sessions over fourteen days,
+  no post-fix row, and the lane's own assertion. (d) *Was any historical row, receipt or
+  boundary rewritten?* None: no real boundary exists, and `fix-boundaries.json` remains
+  empty. (e) *What still blocks a first boundary?* `expectedness` is assigned by nothing,
+  so a legitimate outcome (a guard refusal that steers the agent) still cannot be told
+  from a defect — that remains open, and it is why no boundary was declared here.
+- **CHANGE DELTA:** 2 script modules, 1 shared type module, 1 runtime hook import surface,
+  2 test suites, 1 learning-order call site; 0 historical rows rewritten; 0 boundaries
+  declared; the lane's repair assertion still exits 1 by design.
+
 ### Loop 8 — Exposure chronology check (2026-10-13)
 
 - **RED:** At `1d552548`, the proof reader verifies the boundary commit date
@@ -585,8 +643,9 @@ audit trail of the mistaken premise, not as acceptance criteria or class disposi
 
 ## Resolution
 
-**Instrument implemented and the seven-tool mechanism investigation complete; class repairs and
-observation remain open — `Status: converged`.**
+**Instrument implemented and the seven-tool mechanism investigation complete; the observation path
+is derived from the receipt store (Loop 11) and class repairs and production observation remain
+open — `Status: converged`.**
 
 Loop 3 implements the measuring instrument under the operator's automation-level-3
 grant. This record cannot close merely because its deterministic tests pass. When
