@@ -12,6 +12,9 @@ import { describe, expect, test } from 'bun:test'
 import { pruneLocalOnlyFailedTag, receiptPath } from './public-release'
 import { blockedTagMessage } from './public-release/preflight'
 
+// The release-contract fixtures drive real git repositories. This file's first
+// test performs ~22 git spawns, and a Windows spawn costs ~200 ms, so it needs
+// an explicit budget over bun's 5 s default (FID-2026-1013-006; measured 5.19 s).
 describe('public release contract — tag hygiene', () => {
   test('prunes a local-only failed-run tag but never a remote, unowned or unverifiable one', () => {
     const version = '9.9.9-prune'
@@ -98,7 +101,7 @@ describe('public release contract — tag hygiene', () => {
       rmSync(repo, { recursive: true, force: true })
       rmSync(remote, { recursive: true, force: true })
     }
-  })
+  }, 30_000)
 
   test('reports an unverifiable remote as unverified, never as a present tag', () => {
     // FID-2026-0924-001: a failed `git ls-remote` is an absence of evidence.

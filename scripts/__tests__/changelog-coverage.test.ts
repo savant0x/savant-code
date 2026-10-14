@@ -1,6 +1,6 @@
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
-import { join } from 'node:path'
+import { join, resolve } from 'node:path'
 
 import { describe, expect, test } from 'bun:test'
 
@@ -16,6 +16,11 @@ import {
   parseEnumerationTail,
   parseShortForm,
 } from '../changelog-notation.js'
+
+/** FID-2026-1013-006: live checks resolve the repo root from this file, never the
+ * cwd — script gates run with `scripts/` as cwd (FID-2026-1013-001), where a
+ * `process.cwd()` root read `scripts/CHANGELOG.md` and threw ENOENT. */
+const repoRoot = resolve(import.meta.dir, '..', '..')
 
 /** A short form carries no date, so it resolves against the full ids in its own
  * `##` section. Section scoping is the safety property: without it `FID-013`
@@ -281,13 +286,13 @@ describe('live repository', () => {
   // uncovered must already be recorded as known debt. This holds whether the
   // baseline is empty or not, and it is what fails if a new gap appears.
   test('every uncovered id is already recorded in the coverage baseline', () => {
-    const baseline = readCoverageBaseline(process.cwd())
-    for (const record of collectUncoveredFids(process.cwd())) {
+    const baseline = readCoverageBaseline(repoRoot)
+    for (const record of collectUncoveredFids(repoRoot)) {
       expect(baseline.has(record.id)).toBe(true)
     }
   })
 
   test('the real repository reports no un-baselined gap', () => {
-    expect(collectChangelogCoverageIssues(process.cwd())).toEqual([])
+    expect(collectChangelogCoverageIssues(repoRoot)).toEqual([])
   })
 })

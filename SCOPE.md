@@ -172,6 +172,24 @@ recorded decision or external dependency requires it.
       and the second would renumber live items. Presented, not decided unilaterally.
       **Automation level: 1.**
 
+- [ ] **Scripts suite is not green on a clean tree (found 2026-10-13).** `bun test` from
+      `scripts/` — the cwd the FID-2026-1013-001 gate contract declares — reported
+      950 pass / 10 fail. Six failures were the `quality` gate correctly naming two
+      `FID-2026-1012-024` files over the 300-line ceiling (repaired in that record); the
+      other four are independent and deterministic: two live-repository checks resolving
+      the repo root from `process.cwd()` (which is `scripts/` under the gate contract), a
+      probe redirect guard rejecting the apex→www hop its own re-POST logic exists for,
+      and two git-fixture tests whose 5 s default is below the real spawn cost on Windows.
+      Each is repaired at its cause with every assertion intact.
+      **Child:** `FID-2026-1013-006`. **Automation level: 3.**
+
+- [ ] **The knowledge-graph leg is red on a clean tree (found 2026-10-13).** `bun run test`
+      exits 1 in `packages/knowledge-graph`: the refresh-safety fixture retries only `EBUSY`
+      (250 ms) while Windows reports `EBUSY`/`EPERM`/`EACCES`/`ENOTEMPTY`, and one test
+      fabricates 10,001 readdir entries and runs a full refresh (2.2 s idle, 5.1 s under load)
+      against bun's 5 s default. Both repaired at their cause; no assertion touched.
+      **Child:** `FID-2026-1013-007`. **Automation level: 3.**
+
 - [ ] **T122. Savant-Free removal.** Operator direction 2026-10-12 (Q12/Q5):
       the savant-free flag/feature is to be removed rather than repaired. The
       known failing integration remains open under the removal decision, and the
@@ -350,6 +368,10 @@ work item remains active, including the recorded level-1 consolidation and exter
   `common/src/types/experience.ts`, `common/src/util/command-execution.ts`,
   `common/src/util/experience-classes.ts`, `common/src/tools/params/tool/**`,
   `dev/experiences/class-owners.json`
+- FID-2026-1013-007: `packages/knowledge-graph/**`, `dev/fids/**`
+- FID-2026-1013-006: `scripts/__tests__/changelog-coverage.test.ts`,
+  `common/src/providers/probe-endpoint.ts`, `scripts/pre-push-scan.test.ts`,
+  `scripts/public-release-tag-hygiene.test.ts`, `dev/fids/**`
 - FID-2026-1012-024: `common/src/types/experience.ts`, `common/src/util/experiences.ts`,
   `common/src/util/experience-*.ts`, `common/src/util/__tests__/experience-*.test.ts`,
   `packages/agent-runtime/src/hooks/**`, `packages/agent-runtime/src/tools/tool-executor/**`,

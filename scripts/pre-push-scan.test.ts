@@ -45,6 +45,10 @@ const FAKE_TOKEN = ['ghp', '_', 'K8sT2vX9mQ4rA7cD1fH5jL0nP3wZ6yB8eG2uR'].join(
   '',
 )
 
+// The scan fixtures build real git repositories. Tests that walk a pushed range
+// spend 4-6 s in git spawns alone on Windows (~200 ms each), which is at or past
+// bun's 5 s default under parallel load, so those two carry an explicit budget
+// (FID-2026-1013-006; measured 4.3 s and 6.0 s).
 describe('pre-push credential scan', () => {
   test('parses hook stdin ref lines', () => {
     const stdin = [
@@ -186,7 +190,7 @@ describe('pre-push credential scan', () => {
     } finally {
       rmSync(repo, { recursive: true, force: true })
     }
-  })
+  }, 30_000)
 
   test('enumerates root commits (the very first commit has no parents)', () => {
     const repo = initRepo()
@@ -208,7 +212,7 @@ describe('pre-push credential scan', () => {
     } finally {
       rmSync(repo, { recursive: true, force: true })
     }
-  })
+  }, 30_000)
 
   test('deletion refs push no content and never block', () => {
     const repo = initRepo()

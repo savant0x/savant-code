@@ -45,6 +45,25 @@ export type ProbeResult = {
   error: string | null
 }
 
+/**
+ * FID-2026-1013-006: the redirect the re-POST logic exists for is apex→www,
+ * which is a cross-ORIGIN hop inside ONE site. Rejecting every origin change made
+ * that recorded live case (orcarouter.ai, 2026-09-15) unreachable — the probe
+ * re-issued the POST and then refused the answer it was written to obtain, so
+ * every apex-fronted relay read boundary-unverifiable. The guard is therefore the
+ * SITE, not the origin: the target must stay on the same scheme and port and be
+ * the base host, a subdomain of it, or its parent. Anything else still fails
+ * closed — a probe never follows a redirect off its own site.
+ */
+export function isSameSiteRedirect(base: string, target: URL): boolean {
+  const origin = new URL(base)
+  if (target.protocol !== origin.protocol || target.port !== origin.port)
+    return false
+  const host = origin.hostname.toLowerCase()
+  const next = target.hostname.toLowerCase()
+  return next === host || next.endsWith(`.${host}`) || host.endsWith(`.${next}`)
+}
+
 const TIMEOUT_MS = 10_000
 const UA =
   'SavantCode-DiscoveryBot/1.0 (+https://github.com/savant-code/savant-code)'
@@ -185,8 +204,8 @@ export async function probeEndpoint({
         location.length > 0
       ) {
         const target = new URL(location, current)
-        if (target.origin !== new URL(base).origin)
-          throw new Error('Cross-origin probe redirect rejected')
+        if (!isSameSiteRedirect(base, target))
+          throw new Error('Cross-site probe redirect rejected')
         current = target.toString()
         continue
       }
