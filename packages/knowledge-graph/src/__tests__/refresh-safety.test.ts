@@ -35,39 +35,46 @@ function project(): { projectRoot: string; db: Database } {
 function snapshot() {
   return tables.map((table) => db!.query(`SELECT * FROM ${table}`).all())
 }
+/**
+ * FID-2026-1013-007: Windows keeps a handle for a moment after close and reports
+ * whichever lock code it happens to be holding — EBUSY, EPERM, EACCES, or
+ * ENOTEMPTY. The old loop retried EBUSY only, for 250 ms, so a busy machine
+ * turned fixture teardown into a test failure.
+ */
+const TRANSIENT_LOCK_CODES = ['EBUSY', 'EPERM', 'EACCES', 'ENOTEMPTY']
+const LOCK_RETRY_MS = 50
+const LOCK_MAX_RETRIES = 40
+
+async function retryTransient(operation: () => Promise<void>): Promise<void> {
+  for (let attempt = 0; ; attempt++) {
+    try {
+      await operation()
+      return
+    } catch (error) {
+      if (!(error instanceof Error) || !('code' in error)) throw error
+      // Already gone (SQLite removes WAL/SHM when the last handle closes) is
+      // the desired end state, not a cleanup failure.
+      if (error.code === 'ENOENT') return
+      if (
+        !TRANSIENT_LOCK_CODES.includes(String(error.code)) ||
+        attempt >= LOCK_MAX_RETRIES
+      )
+        throw error
+      await Bun.sleep(LOCK_RETRY_MS)
+      Bun.gc(true)
+    }
+  }
+}
+
 async function removeFixture(directory: string): Promise<void> {
   for (const entry of await fs.promises.readdir(directory, {
     withFileTypes: true,
   })) {
     const child = path.join(directory, entry.name)
     if (entry.isDirectory()) await removeFixture(child)
-    else {
-      for (let attempt = 0; ; attempt++) {
-        try {
-          await fs.promises.unlink(child)
-          break
-        } catch (error) {
-          if (!(error instanceof Error) || !('code' in error)) throw error
-          // Already gone (SQLite removes WAL/SHM when the last handle closes)
-          // is the desired end state, not a cleanup failure.
-          if (error.code === 'ENOENT') break
-          if (error.code !== 'EBUSY' || attempt >= 10) throw error
-          await Bun.sleep(25)
-          Bun.gc(true)
-        }
-      }
-    }
+    else await retryTransient(() => fs.promises.unlink(child))
   }
-  try {
-    await fs.promises.rmdir(directory)
-  } catch (error) {
-    if (
-      !(error instanceof Error) ||
-      !('code' in error) ||
-      error.code !== 'ENOENT'
-    )
-      throw error
-  }
+  await retryTransient(() => fs.promises.rmdir(directory))
 }
 
 afterEach(async () => {
@@ -192,7 +199,9 @@ describe('FID-2026-1011-006 refresh safety', () => {
     expect(
       params.db.query('SELECT path FROM files ORDER BY path').all(),
     ).toEqual([{ path: 'a.ts' }])
-  })
+    // 10,001 fabricated entries plus a full refresh: measured 2.2 s idle and
+    // 5.1 s under parallel load, past bun's 5 s default (FID-2026-1013-007).
+  }, 30_000)
 
   test('read/stat race cannot certify same-content freshness', async () => {
     const params = project()
