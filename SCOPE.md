@@ -242,8 +242,10 @@ audit report. The completed probe item grants no continuing write authority.
       named suite** (`git log --all` over the `*redirect-waiver*` path shows only the record's add
       and its archive move). Census over all 569 records: **33 name at least one test path that
       does not resolve** (49 distinct paths) — a triage lead, not a verdict, because a rename looks
-      like an absence. **Automation level: 2** (the census is automatable; rewriting historical
-      records is not permitted and triage is the operator's — Q24).
+      like an absence. The active-record census and focused test are implemented and committed as
+      `1d60b9a8`; its test, active probe, scripts-tree typecheck probe, and quality gate pass.
+      Historical archive triage remains active because rewriting historical records is not permitted
+      and triage is the operator's — Q24. **Automation level: 2**.
 
 - [x] **FID-2026-1014-003. No agent may be attributed — one rule, three enforcement points, no
       exception.** Operator direction 2026-10-14: *"the rule is firm. NEVER allow co-attribution,
@@ -458,7 +460,8 @@ and its remaining operator/external-input holds stay active.
   `packages/agent-runtime/src/tools/handlers/__tests__/run-readonly-redirect-waiver.test.ts`,
   `packages/agent-runtime/src/echo/enforcement/helpers.ts`
 - FID-2026-1014-002: `dev/fids/FID-2026-1014-002-*.md`,
-  `dev/scratchpad/active/fid-artifact-census.ts` (local-only, gitignored)
+  `scripts/fid-artifact-census.ts`,
+  `scripts/__tests__/fid-artifact-census.test.ts`
 - FID-2026-1014-003: `scripts/attribution-guard.ts`,
   `scripts/__tests__/attribution-guard.test.ts`, `scripts/pre-push-scan.ts`
   (re-export only), `.githooks/commit-msg`,

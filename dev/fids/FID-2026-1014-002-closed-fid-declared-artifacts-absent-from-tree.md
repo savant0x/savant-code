@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-1014-002-closed-fid-declared-artifacts-absent-from-tree.md`
 **ID:** FID-2026-1014-002
 **Severity:** medium
-**Status:** analyzed
+**Status:** fixed
 **Created:** 2026-10-14
 **Automation level:** 2
 **Yagni-Compliance:** Verified
@@ -23,7 +23,7 @@ paths) — a lead, not a verdict, because a rename looks like an absence.
 
 - **OS:** Windows (bash/Git Bash shell)
 - **Language/Runtime:** TypeScript 5.5.4, Bun 1.3.14
-- **Commit/State:** `e29e6ddf`, working tree; census probe run locally
+- **Commit/State:** `1d60b9a8`, implementation committed; historical triage remains active
 
 ## Detailed Description
 
@@ -111,24 +111,52 @@ without a history check, and no archived record is rewritten.
 1. `implemented (this session)` — re-land the SEC-3 fix and deliver its promised
    suite under `FID-2026-1014-001`, so no archived claim points at a fix that is
    not in the tree.
-2. `analyzed` — make the census a gate: extend the promise rule so a test path
-   named anywhere in a record (step prose included) must either exist or be
-   marked absent in the record, and run the check over active records.
-3. `blocked (operator)` — triaging the 33 rows is a decision (re-verify,
-   annotate, or leave historical), and rewriting archived records is forbidden by
-   the single-agent protocol's history rule.
+2. `implemented` — make the census a declared probe gate: every test path named
+   anywhere in an active record must exist, or the record must carry an explicit
+   `artifact::absent <path>` marker. Fenced examples are ignored, and archived
+   records are available through the probe's informational `--all` mode.
+3. `blocked` — triaging the 33 historical rows requires rewriting archived
+   records or asserting their history, which is reserved to an explicit operator
+   ruling by the archive-history invariant. The active-record gate is complete
+   without rewriting those records.
 
 ### Steps
 
 1. `implemented` — see `FID-2026-1014-001`.
-2. `deferred` — gate design belongs to the operator's ruling (Q24).
-3. `deferred` — census triage likewise (Q24).
+2. `implemented` — `scripts/fid-artifact-census.ts` and its test provide the
+   active-record gate and explicit absence marker contract.
+3. `blocked` — historical archive triage remains blocked by the archive-history
+   invariant described above.
 
 ### Verification
 
 Gate re-run of the affected suites and the corpus probe is recorded in
 `FID-2026-1014-001`; this record's own claim is the census count and the history
 output above, both reproducible with the two commands pasted.
+
+The implementation gate is `bun run scripts/fid-artifact-census.ts`; its focused
+test is `scripts/__tests__/fid-artifact-census.test.ts`. The default probe scans
+all active records, while `--all` reproduces the historical census without
+turning archived history into a live closure claim.
+
+Implementation commit: `1d60b9a8` (`scripts/fid-artifact-census.ts` and
+`scripts/__tests__/fid-artifact-census.test.ts`).
+
+## Verification Gates
+
+- gate: test scripts/__tests__/fid-artifact-census.test.ts
+- gate: probe scripts/fid-artifact-census.ts
+- gate: probe scripts/scripts-typecheck-check.ts
+- gate: quality
+
+### Verification Receipt
+
+- fingerprint: sha256:3fd0a6de940fd874b9dc3fe378cc0f5323fca90d79c0b696ed1bd28e7d62a8fe
+- verified: 2026-10-14T23:35:39.700Z
+- test scripts/__tests__/fid-artifact-census.test.ts: exit 0
+- probe scripts/fid-artifact-census.ts: exit 0
+- probe scripts/scripts-typecheck-check.ts: exit 0
+- quality: exit 0
 
 ## Perfection Loop
 
@@ -159,6 +187,8 @@ output above, both reproducible with the two commands pasted.
 - [x] Files referenced in Affected Components exist (`dev/fids/**`, this record)
 - [x] Implementation matches the Proposed Solution (step 1 landed in
   `FID-2026-1014-001`; steps 2-3 are registered decisions, not silent work)
+- [x] Implementation commit `1d60b9a8` contains the active-record census and
+  focused test named by this record.
 - [x] Typecheck/tests/lint pass with pasted tool output (the affected suites are
   pasted in `FID-2026-1014-001`; this record's own evidence is the history dump
   and the census count in Evidence)
