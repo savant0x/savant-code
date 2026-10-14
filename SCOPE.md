@@ -179,8 +179,10 @@ and the 2026-10-14 FID-folder audit report. The additions remain active in
       HEAD module carried the **pre-SEC-3 whole-segment waiver**, accepting
       `cat .env > /tmp/exfil.txt 2>&1`, `echo $(whoami) 2>&1` and `ls; rm x 2>&1` through a tool
       that is deliberately not phase-gated. Restored to spec and its promised suite delivered.
-      **Four under-breadth holes are reported, not closed** (`git push`, `git clean -fd`,
-      `git stash pop`, `find | xargs rm` are allowed) — closing them means adding refusals, which
+      **The under-breadth class is reported, not closed** — the guard is a denylist, not a
+      boundary: `git push`, `git clean -fd`, `git stash pop`, `find | xargs rm`, and on a second
+      probe `bun -e "…"`, `bun x <pkg>`, `bun run release:public`, `deno eval "…"`,
+      `find . -delete` and `kill -9 1` are all allowed. Closing them means adding refusals, which
       is the operator's call (Q23). **Automation level: 3.**
 
 - [ ] **FID-2026-1014-002. A closed record's declared fix and promised suite were never in the

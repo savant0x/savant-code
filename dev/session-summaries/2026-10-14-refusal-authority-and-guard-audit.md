@@ -85,7 +85,13 @@
 - **Nothing was closed or archived.** The ten active records keep their closure
   conditions; this session added two records and changed no status.
 - **The under-breadth holes are reported, not closed** — closing them adds refusals,
-  which is exactly what Q23 asks the operator to decide.
+  which is exactly what Q23 asks the operator to decide. A second probe pass (same day,
+  after the commit) showed the class is wider than the four first reported: `bun -e "…"`,
+  `bun x <pkg>`, `bun run release:public`, `deno eval`, `find . -delete` and `kill -9 1`
+  are all ALLOWED. **The guard is a denylist, not a boundary** — its real authority is the
+  phase gate, and this session's own probe harness ran on `bun -e`, i.e. through one of
+  those holes. Nothing was executed through the guard: the SEC-3 reproduction evaluated
+  the predicate on a copy of the HEAD module and read/wrote nothing.
 - **Q23 and Q24 are unanswered**; the architectural option (b) — route instead of
   refuse — is proposed, not implemented.
 - **The 33-row census is untriaged.** No row other than SEC-3 was checked against

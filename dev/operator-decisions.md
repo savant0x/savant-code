@@ -535,10 +535,13 @@ costs a turn. That is measured and partly fixed this session
   orchestrator-level retry through the mutating path. Largest change; touches the executor
   result contract.
 
-**Also measured, and yours to rule on.** The guard is under-broad as well as over-broad:
-`git push origin main`, `git clean -fd`, `git stash pop` and `find . | xargs rm -f` are
-currently **allowed** through a tool whose contract says read-only. (a)/(d) leave that as a
-denylist to widen; (b) closes them by routing.
+**Also measured, and yours to rule on.** The guard is under-broad as well as over-broad. A
+tool whose contract says *read-only* currently **allows** `git push origin main`,
+`git clean -fd`, `git stash pop`, `find . | xargs rm -f`, and — measured on a second probe —
+`bun -e "…"`, `bun x <pkg>`, `bun run release:public`, `deno eval "…"`,
+`find . -name "*.ts" -delete` and `kill -9 1`. So it is a denylist, not a boundary: the
+phase gate is the real control, and this session's own audit harness ran on `bun -e`.
+Options (a)/(d) leave that as a denylist to widen; (b) closes the class by routing.
 
 **Answer:**
 

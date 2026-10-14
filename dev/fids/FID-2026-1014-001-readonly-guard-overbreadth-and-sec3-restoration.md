@@ -116,6 +116,16 @@ corpus=56 allowed=49 rejected=7
 OVER-BREADTH false positives: 0
 ```
 
+Under-breadth probe, predicate-only (nothing executed) — the guard's contract is
+"read-only", and these are not read-only:
+
+```text
+ALLOW  "bun -e \"console.log(1)\""          ALLOW  "bun x eslint . --max-warnings 0"
+ALLOW  "bun run release:public"            ALLOW  "deno eval \"1+1\""
+ALLOW  "find . -name \"*.ts\" -delete"      ALLOW  "kill -9 1"
+REJECT "npx tsx script.ts"  REJECT "eval echo hi"  REJECT "node -e \"1\""  REJECT "python -c \"1\""
+```
+
 Suites (all run from `packages/agent-runtime`):
 
 ```text
@@ -165,10 +175,14 @@ bun run --cwd=packages/agent-runtime typecheck   exit 0
 2. `implemented` — `helpers.ts:11,150,157` renamed consumer, comment corrected.
 3. `implemented` — 7 new pins in `run-readonly-command.test.ts`; new
    `run-readonly-redirect-waiver.test.ts` carrying SEC-3's acceptance matrix.
-4. `blocked (operator)` — the four under-breadth holes above are **reported, not
-   closed**: closing them means adding refusals, which is the operator's ruling
-   (Q23), and `git push`/`git clean -fd` are better handled by routing than by
-   a bigger denylist.
+4. `blocked (operator)` — the under-breadth holes are **reported, not closed**:
+   closing them means adding refusals, which is the operator's ruling (Q23), and
+   `git push`/`git clean -fd` are better handled by routing than by a bigger
+   denylist. A second probe pass shows the list is **a class, not four items — the
+   guard is a denylist, not a boundary**: `bun -e "…"`, `bun x <pkg>`,
+   `bun run release:public`, `deno eval "…"`, `find . -name "*.ts" -delete` and
+   `kill -9 1` are all ALLOWED. This session's own audit harness invoked `bun -e`
+   throughout, so the guard would not have stopped the audit either.
 
 ### Verification
 
@@ -190,8 +204,8 @@ contract), `run-readonly-redirect-waiver.test.ts` (SEC-3 acceptance),
 
 ### Verification Receipt
 
-- fingerprint: sha256:726d33854ef280fa3d1fe8aa8e98735e4c7bfbfdcb015df20e29cf509611911c
-- verified: 2026-10-14T16:11:40.259Z
+- fingerprint: sha256:5ff0f8913092c4f8c14a010beeaa51767c3ba38c1bcd48d60ac3991cb80cc567
+- verified: 2026-10-14T16:24:32.993Z
 - typecheck packages/agent-runtime: exit 0
 - test packages/agent-runtime/src/tools/handlers/__tests__/run-readonly-command.test.ts: exit 0
 - test packages/agent-runtime/src/tools/handlers/__tests__/run-readonly-redirect-waiver.test.ts: exit 0
@@ -221,7 +235,12 @@ contract), `run-readonly-redirect-waiver.test.ts` (SEC-3 acceptance),
   is local, and a pin asserts `PERMITTED_REDIRECT_REGEX.global === false`.
   Stripping cannot hide a violation: the matched text is only ever a null-sink
   redirect, and the denylists still run against the stripped segment, so
-  `rm -rf x > /dev/null` stays refused.
+  `rm -rf x > /dev/null` stays refused. **And the guard is not a control at all
+  for the audit itself:** it permits `bun -e`, which is how every probe in this
+  pass evaluated the predicate — including the probe that reproduced the SEC-3
+  takeover on a copy of the HEAD module. That reproduction evaluated a predicate;
+  it did not read `.env` or write anything (`NEEDS-REVIEW` on the boundary: the
+  guard's real authority is the phase gate, not this denylist).
 - **CHANGE DELTA:** first pass (this document).
 
 ### Missed Questions
