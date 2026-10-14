@@ -53,7 +53,9 @@ flips.
 The approved Q25 closure work is committed locally in `d9a921f9`. FID-017,
 FID-021, and FID-022 remain active. No production repair boundary, recurrence
 cessation, qualified production observation, push, or release is claimed.
-Unrelated dirty paths remain unstaged.
+Operator-owned dirty paths remain unstaged. The repository-wide formatting check
+is recorded as a level-1 blocked item in `SCOPE.md` pending an explicit operator
+ruling.
 
 ## Boundary
 
