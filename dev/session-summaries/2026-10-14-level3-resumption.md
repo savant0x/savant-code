@@ -48,9 +48,16 @@ Fresh wave receipts pass 12/12 (Wave 1), 16/16 (Wave 2), 14/14 (Wave 3), and
 dependency audit pass; the scanner's pinned TypeScript dependency is declared and
 locked. Final root typecheck and repository validation pass.
 
+The built SDK also passes every Node compatibility verification: CommonJS,
+ES modules, TypeScript consumers, bundled ripgrep, and real-source tree-sitter
+queries (`cd sdk; bun run verify --skip-build`, exit 0). The verification run's
+four generated test-package lockfile changes are restored to their original
+state; they contain only the copied SDK package's dependency metadata.
+
 Implementation commit: `b959019e588ff59122a4844d6a43e94ac8d0c7b3` (105 explicit
-paths). All five QOL records are closed and physically moved into the archive;
-CHANGELOG, active/archive indexes, master status board and scope register align.
+paths). Archive/alignment commit: `3517c7b9`. All five QOL records are closed
+and physically moved into the archive. CHANGELOG, active/archive indexes,
+master status board and scope register align.
 The completed scope items and their write grants are removed. Unrelated art,
 idea-shelf/wiki material, provider probes and SDK process-fixture edits stay intact.
 The archive index also omitted fifteen already-archived October 13 records;
