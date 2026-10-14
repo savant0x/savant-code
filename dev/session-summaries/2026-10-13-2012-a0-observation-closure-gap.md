@@ -173,10 +173,26 @@ All three operator rulings were executed and every gate is green on the committe
   the apex→www hop it exists for, and two git fixtures held to a budget below their real spawn cost.
 - **The root chain is green** (`2f003aed`, `FID-2026-1013-007`): all 13 legs, no failures; the
   knowledge-graph leg went from `error: script "test" exited with code 1` to 76 PASS / 0 FAIL.
+- **The scripts suite's fifth independent failure was a clock, not an assertion** (`4be4de9e`,
+  `e0b7be83`, `FID-2026-1013-008`). Capturing the root chain's real exit status (`exit 0`, 13 legs)
+  rather than reading a filtered log surfaced it: `git bundle backup > restore drill` measured
+  4261–5462 ms across three isolated runs — a real baseline clone plus incremental fetch through
+  spawned git — against bun's 5 s default, while its siblings in the same file measured 1.0–3.3 s.
+  The file now declares `GIT_CHILD_TIMEOUT_MS` beside those measurements and passes it to its seven
+  cases; assertions untouched. The third-argument form stops prettier hugging `test('name', () => {`,
+  so the file is committed in the formatter's own expanded layout rather than a hand-formatted
+  near-miss. `cd scripts && bun test` **exit 0 / 960 pass / 0 fail** (157.94 s), the file green on
+  three consecutive isolated runs (drill 3.47–3.53 s, 7 PASS each), declared gates stamped, record
+  closed and archived (`2b8582ef`). **Class remainder, stated honestly:** this is the fourth instance
+  of one class in this tree (`FID-2026-1010-004`, `-1013-006`, `-1013-007`, `-1013-008`), and
+  measuring every other subprocess-spawning suite against the default is recurrence-to-fix-loop work
+  this record does not discharge. Also unfixed because it is a foreign permission boundary, not a
+  code path: the repository's `commit-msg` guard rejects the agent-attribution watermark, so commits
+  here carry the repo's own message style with no bypass (`--no-verify` never used).
 - **Repository gates:** `bun run typecheck` (14 legs), `bun x eslint . --max-warnings 0`,
   `bun run lint:md`, `bunx prettier --check .`, `bun run quality:report` and
-  `bun run validate:repository` all exit 0; `fid:verify --check` PASS. Both suite-health records
-  were closed, archived and given their CHANGELOG entries (`850f7eb7`).
+  `bun run validate:repository` all exit 0; `fid:verify --check` PASS. Three suite-health records
+  were closed, archived and given their CHANGELOG entries (`850f7eb7`, `2b8582ef`).
 - **Still open, by design:** no real repair boundary exists; `expectedness` is still assigned by
   nothing, so a legitimate outcome (a guard refusal) cannot yet be separated from a defect; and
   every class remains unobserved. `--assert-repaired=FID-2026-1012-024` exits 1 with nine unproved
