@@ -189,6 +189,20 @@ describe('ownership census', () => {
     expect(result.issues).toEqual([])
     expect(result.classes[0]?.state).toBe('unresolved')
   })
+  test('clustered post-fix rows still refute a repair individually', () => {
+    const repeated = { ...failure, ts: new Date(NOW - DAY).toISOString() }
+    const result = recurrenceReport(
+      [failure, repeated, repeated],
+      owners,
+      { version: 1, boundaries: [boundary] },
+      NOW,
+    )
+    expect(result.classes[0]?.count).toBe(3)
+    expect(result.classes[0]?.timeClusters).toBe(2)
+    expect(result.classes[0]?.largestTimeCluster).toBe(2)
+    expect(result.classes[0]?.postFixFailures).toBe(2)
+    expect(result.issues).toContain(`unsupported repair: ${key} (recurred)`)
+  })
   test('a claimed repair with no exposure fails the assertion', () => {
     const result = recurrenceReport(
       [failure],

@@ -189,6 +189,9 @@ declared here and none is claimed.
 - gate: test scripts/__tests__/experiences-learning-order.test.ts
 - gate: test scripts/__tests__/experiences-repair-drafts.test.ts
 - gate: test scripts/__tests__/session-end-review.test.ts
+- gate: test scripts/__tests__/experiences-class-horizon.test.ts
+- gate: test common/src/util/__tests__/experience-classes.test.ts
+- gate: typecheck common
 - gate: probe scripts/experiences-recurrence.ts
 - gate: probe scripts/experiences-repair-drafts.ts
 - gate: probe scripts/learnings.ts
@@ -197,12 +200,15 @@ declared here and none is claimed.
 
 ### Verification Receipt
 
-- fingerprint: sha256:479f7a2aa8007d9a4242f2c7dfbbe02831c4ff21c78a88d433a46fb5ae72c44f
-- verified: 2026-10-13T15:04:46.594Z
+- fingerprint: sha256:72d17882926e4c7a0994b3c8fb78578d6b55b12b4348391baea42b4a01adc4eb
+- verified: 2026-10-13T22:17:51.295Z
 - test scripts/__tests__/experiences-coverage.test.ts: exit 0
 - test scripts/__tests__/experiences-learning-order.test.ts: exit 0
 - test scripts/__tests__/experiences-repair-drafts.test.ts: exit 0
 - test scripts/__tests__/session-end-review.test.ts: exit 0
+- test scripts/__tests__/experiences-class-horizon.test.ts: exit 0
+- test common/src/util/__tests__/experience-classes.test.ts: exit 0
+- typecheck common: exit 0
 - probe scripts/experiences-recurrence.ts: exit 0
 - probe scripts/experiences-repair-drafts.ts: exit 0
 - probe scripts/learnings.ts: exit 0
@@ -306,6 +312,42 @@ declared here and none is claimed.
   was written, and no class is claimed to have stopped recurring.
 
 ### Missed Questions
+
+### Loop 5 — Count semantics (2026-10-13, recorded before implementation)
+
+- **RED:** The live recurrence probe reports 589 rows / 58 stable classes / zero
+  ownership issues, but renders each row count as `Nx`. FID-024 Loop 6 established
+  that a response may contribute multiple rows. The ledger has no response id;
+  a 60-second gap cannot establish a response boundary or an occurrence count.
+- **GREEN:** Extend the shared class summary with per-class, per-session time
+  clusters using a declared 60,000 ms consecutive gap. Report rows, time clusters,
+  largest cluster and the gap in text and JSON. Preserve counts, owners, stable
+  keys, promotion thresholds and every horizon assertion. Sort copied timestamps
+  so input order cannot affect clusters; keep invalid timestamps as isolated rows.
+- **AUDIT plan:** Pin unordered input, session/class separation, exact gap edges,
+  long chains, input preservation and unchanged post-fix recurrence rejection.
+  Declare the shared-class and horizon suites plus common/scripts typechecks.
+- **ADVERSARIAL:** A cluster may contain multiple responses or distinct failures.
+  These are descriptive time clusters only, never response counts or repair proof.
+  No ledger rewrite, boundary, exposure receipt or lesson is authorized by them.
+- **CONVERGENCE:** The correction addresses the handoff's next step without
+  claiming correlation the stored data cannot prove. Implementation may proceed
+  under the master's existing authorization; this FID remains open.
+- **Implementation audit:** `summarizeExperienceClasses` now supplies
+  `timeClusters`, `largestTimeCluster` and `clusterGapMs` to `recurrenceReport`;
+  both the JSON projection and text CLI expose them. Shared-class suite: 14 PASS;
+  five scripts suites: 39 PASS; full common suite: 879 PASS / 4 SKIP / zero FAIL.
+  Full root typecheck, scoped ESLint, scoped Prettier, quality and diff checks
+  pass. The expanded declared gate set is re-stamped after the final record edit.
+- **Live re-measure:** 589 rows / 58 classes / zero issues. `read_url:http-404`
+  has 114 rows / 40 time clusters / largest 17; `suggest_followups` incomplete
+  arguments has 23 rows / 7 clusters / largest 17. These are consecutive-gap
+  clusters, not the response estimates in the prior measurement.
+- **Adversarial audit:** Gap equality starts a new cluster; different sessions
+  and classes never merge; arbitrarily long chains remain timing clusters.
+  Invalid timestamps are isolated, and the closure ledger still rejects them.
+  A clustered post-fix pair still reports two failures and state `recurred`.
+  No production closure or release action follows this count correction.
 
 ### Loop 4 — Recorded completion contract (2026-10-13)
 

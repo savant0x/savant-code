@@ -185,7 +185,7 @@ receipt here cannot establish either or close this lane.
 
 ### Verification Receipt
 
-- fingerprint: sha256:0afdc72174980fdcfe244a0f5413e9c2d187ad313da22077eb6c980de9ab2979
+- fingerprint: sha256:9ad39db30a352ed05f24649e28ee1a8a94b3d8b031f1162e835511bc8f763f49
 - verified: 2026-10-13T23:51:37.338Z
 - test common/src/util/__tests__/experience-classes.test.ts: exit 0
 - test packages/agent-runtime/src/tools/tool-executor/tool-result-errors.test.ts: exit 0
@@ -501,6 +501,24 @@ audit trail of the mistaken premise, not as acceptance criteria or class disposi
   existing proof/test surfaces and level-3 authorization.
 - **CHANGE DELTA:** Converged additive instrument correction; no class repair,
   real exposure, fix boundary or closure is claimed.
+
+### Loop 7 — Timing-cluster interpretation correction (2026-10-13)
+
+- **RED:** Loop 6's claim that a response cannot span a minute is unsupported.
+  Neither timestamps nor a consecutive gap identify model responses; a chain
+  of short gaps can span minutes and multiple responses. Historical rows lack
+  response ids, so the earlier cluster figures cannot prove a response bound.
+- **GREEN / implementation:** The shared summary now reports per-class,
+  per-session time clusters with an explicit consecutive gap below 60,000 ms.
+  FID-021 owns their probe presentation and declares the common class suite.
+  Counts, stored class identity, owners and repair assertions retain their
+  original authorities. Every capture row remains untouched.
+- **AUDIT:** 14 shared-summary tests pass, including exact-gap separation,
+  unordered rows, independent sessions/classes and a multi-minute chain.
+  Root typecheck and quality pass. The live census remains 589 rows / 58
+  classes / zero issues; no repair boundary or exposure was created.
+- **ADVERSARIAL:** Time clusters describe temporal grouping only. They are
+  neither exact responses nor failure occurrences and cannot certify repair.
 
 1. **Should the class key be stored at capture time or derived at read time?** Stored, from the
    `FID-2026-1012-009` `errorClass` follow-up: deriving it at read time cannot recover the cause from a

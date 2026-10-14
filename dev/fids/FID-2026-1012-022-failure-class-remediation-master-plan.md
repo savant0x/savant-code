@@ -363,7 +363,7 @@ activation), and the child's id is recorded in this table when it exists.
 | FID-2026-1012-018 — fetch (181) | A1 | `-018` | **fixed** — taxonomy and canonical identity implemented; Loop 4 corrects process-wide caching to isolated SDK run memos, with two reproduced regression controls; recurrence window not started, so **no class claim** |
 | FID-2026-1012-019 — capability integrity (50) | A1 | `-019` | **fixed** — degradation contract, research surface, flag guard and Loop 4 run-start preflight implemented; SDK and child callbacks deliver one refreshed planning notice from effective tools, with configuration-aware local checks and unverified research inventory; full typecheck, SDK 686 PASS, runtime 2,115 PASS, common 879 PASS; production observation and the original host-resolver cause remain open |
 | FID-2026-1012-020 — edit-path friction (72) | A1 | `-020` | **fixed** — Loop 4 completes bounded SDK patch diagnosis, payload-free logging/errors, missing-directory recovery, empty-file patch correctness and the actual frozen-result handler pin; 11 expanded gates PASS, full root typecheck PASS; class observation and lost historical production causes remain open |
-| FID-2026-1012-021 — the recurrence-to-fix loop | A2 | `-021` | verified — coverage gate, qualified lesson-last ordering and idempotent proposed FID drafting; operator routing never inferred; class observation and no-commit hold keep closure open |
+| FID-2026-1012-021 — the recurrence-to-fix loop | A2 | `-021` | verified — coverage gate, qualified lesson-last ordering and idempotent proposed FID drafting; Loop 5 adds explicit row/time-cluster reporting (589 rows / 58 classes / zero ownership issues), preserving every repair assertion; operator routing never inferred; class observation and no-commit hold keep closure open |
 | FID-2026-1012-027 — gate coverage of a record's surfaces | harness | `-027` | **closed 2026-10-13** — coverage is a repository gate: `collectRecordCoverageIssues` joins each enforced record's declared gates to its `SCOPE.md` surface, and `fid:verify --write` refuses an uncovered stamp (option B); it found and repaired two real omissions (`-018` `typecheck common`, `-020` `typecheck sdk`); implementation `5144615b`; 6 declared gates re-ran green |
 | FID-2026-1012-011 — ceiling ungated | B0 | `-011` | **closed 2026-10-13** — both ceilings (1,200 logical lines / 100,000 JS characters) enforced by `learnings:check`, headroom on pass, retirement emits `dev/learnings-move-log.jsonl` and now recovers an interrupted move; implementation `3e0fab27` (+ recovery `ca1f359d`); 6 declared gates re-ran green |
 | FID-2026-1012-014 — rule catalogue vs ledger | B0 | `-014` | **closed 2026-10-13** — tiers, exact class targeting and generated boot projection; implementation `6b847099`; 12 declared gates re-ran green |
@@ -382,6 +382,15 @@ agent: re-runs the item's RED measurement and records it verbatim; drafts the ch
 none; converges it; implements it; runs the declared gates; records the evidence in the child; closes
 and archives the child with its CHANGELOG entry; and updates the **status board** above. The master is
 the index, never a gate of its own.
+
+**Count-semantics continuation (2026-10-13):** FID-021 Loop 5 and FID-024 Loop 7
+complete the handoff's next step: the recurrence probe reports rows, per-session
+time clusters, largest clusters and the declared 60,000 ms consecutive gap in
+text and JSON. The capture lacks response ids, so these clusters do not prove
+response counts or distinct occurrences. No row, owner, class key, promotion
+threshold or repair assertion changed. Shared-class tests 14 PASS; five script
+suites 39 PASS; full common suite 879 PASS / 4 SKIP / zero FAIL; root typecheck
+and quality PASS. Production observation and recorded operator holds remain.
 
 **Current continuation evidence (2026-10-13):** root test chain exits 0 (8,994
 PASS / 23 SKIP / 0 FAIL), full root typecheck, ESLint, Prettier, Markdown lint,

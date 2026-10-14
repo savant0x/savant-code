@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'bun:test'
 
 import {
+  EXPERIENCE_CLUSTER_GAP_MS,
   experienceClassIdentity,
   summarizeExperienceClasses,
 } from '../experience-classes'
@@ -169,5 +170,58 @@ describe('FID-2026-1012-024 stable class identity', () => {
     expect(summary?.lastSeen).toBe(b.ts)
     expect(summary?.sessions).toHaveLength(2)
     expect(summary?.state).toBe('unresolved')
+  })
+
+  test('clusters sort copied times and split at the exact gap', () => {
+    const base = record('read_url', 'Failed to fetch URL: 404 Not Found')
+    const rows = [120_000, 59_999, 0, 119_999].map((offset) => ({
+      ...base,
+      ts: new Date(Date.parse(base.ts) + offset).toISOString(),
+    }))
+    const before = JSON.stringify(rows)
+    const summary = summarizeExperienceClasses(rows)[0]
+    expect(summary?.count).toBe(4)
+    expect(summary?.timeClusters).toBe(2)
+    expect(summary?.largestTimeCluster).toBe(2)
+    expect(summary?.clusterGapMs).toBe(EXPERIENCE_CLUSTER_GAP_MS)
+    expect(JSON.stringify(rows)).toBe(before)
+    expect(summarizeExperienceClasses([...rows].reverse())).toEqual(
+      summarizeExperienceClasses(rows),
+    )
+  })
+
+  test('simultaneous rows in different sessions or classes never merge', () => {
+    const base = record('read_url', 'Failed to fetch URL: 404 Not Found')
+    const summaries = summarizeExperienceClasses([
+      base,
+      { ...base, sessionId: 'other' },
+      { ...base, errorFirstLine: 'Failed to fetch URL: 403 Forbidden' },
+    ])
+    expect(summaries.map((entry) => entry.timeClusters)).toEqual([2, 1])
+    expect(summaries.map((entry) => entry.largestTimeCluster)).toEqual([1, 1])
+  })
+
+  test('a chain spanning minutes is a time cluster, not a response claim', () => {
+    const base = record('read_url', 'Failed to fetch URL: 404 Not Found')
+    const rows = [0, 50_000, 100_000, 150_000].map((offset) => ({
+      ...base,
+      ts: new Date(Date.parse(base.ts) + offset).toISOString(),
+    }))
+    const summary = summarizeExperienceClasses(rows)[0]
+    expect(summary?.timeClusters).toBe(1)
+    expect(summary?.largestTimeCluster).toBe(4)
+  })
+
+  test('invalid timestamps stay isolated without splitting valid clusters', () => {
+    const base = record('read_url', 'Failed to fetch URL: 404 Not Found')
+    const rows = [base, { ...base, ts: 'invalid' }, base]
+    const summary = summarizeExperienceClasses(rows)[0]
+    expect(summary?.count).toBe(3)
+    expect(summary?.timeClusters).toBe(2)
+    expect(summary?.largestTimeCluster).toBe(2)
+    expect(summarizeExperienceClasses([...rows].reverse())).toEqual(
+      summarizeExperienceClasses(rows),
+    )
+    expect(summarizeExperienceClasses([])).toEqual([])
   })
 })

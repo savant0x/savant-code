@@ -98,6 +98,9 @@ export function experienceClassIdentity(
 export interface ExperienceClassSummary extends ExperienceClassIdentity {
   toolName: string
   count: number
+  timeClusters: number
+  largestTimeCluster: number
+  clusterGapMs: number
   sessions: string[]
   firstSeen: string
   lastSeen: string
@@ -105,13 +108,59 @@ export interface ExperienceClassSummary extends ExperienceClassIdentity {
   state: 'unresolved'
 }
 
+/** Descriptive timing only: historical rows have no response or call identity. */
+export const EXPERIENCE_CLUSTER_GAP_MS = 60_000
+
+function summarizeTimeClusters(sessions: ReadonlyMap<string, number[]>): {
+  timeClusters: number
+  largestTimeCluster: number
+} {
+  let timeClusters = 0
+  let largestTimeCluster = 0
+  for (const timestamps of sessions.values()) {
+    const sorted = timestamps.filter(Number.isFinite).sort((a, b) => a - b)
+    const invalid = timestamps.length - sorted.length
+    timeClusters += invalid
+    if (invalid) largestTimeCluster = Math.max(largestTimeCluster, 1)
+    let previous: number | undefined
+    let size = 0
+    for (const timestamp of sorted) {
+      if (
+        previous === undefined ||
+        timestamp - previous >= EXPERIENCE_CLUSTER_GAP_MS
+      ) {
+        timeClusters += 1
+        size = 0
+      }
+      size += 1
+      largestTimeCluster = Math.max(largestTimeCluster, size)
+      previous = timestamp
+    }
+  }
+  return { timeClusters, largestTimeCluster }
+}
+
+function appendClusterTime(
+  classes: Map<string, Map<string, number[]>>,
+  key: string,
+  record: ExperienceRecord,
+): void {
+  const sessions = classes.get(key) ?? new Map<string, number[]>()
+  const timestamps = sessions.get(record.sessionId) ?? []
+  timestamps.push(Date.parse(record.ts))
+  sessions.set(record.sessionId, timestamps)
+  classes.set(key, sessions)
+}
+
 /** All rows remain visible, including old and undetermined classes. */
 export function summarizeExperienceClasses(
   records: readonly ExperienceRecord[],
 ): ExperienceClassSummary[] {
   const groups = new Map<string, ExperienceClassSummary>()
+  const clusterTimes = new Map<string, Map<string, number[]>>()
   for (const record of records) {
     const identity = experienceClassIdentity(record)
+    appendClusterTime(clusterTimes, identity.key, record)
     const legacyKey = `${record.toolName}|${record.errorFirstLine.slice(0, 70)}`
     const existing = groups.get(identity.key)
     if (existing) {
@@ -129,6 +178,9 @@ export function summarizeExperienceClasses(
         ...identity,
         toolName: record.toolName,
         count: 1,
+        timeClusters: 0,
+        largestTimeCluster: 0,
+        clusterGapMs: EXPERIENCE_CLUSTER_GAP_MS,
         sessions: [record.sessionId],
         firstSeen: record.ts,
         lastSeen: record.ts,
@@ -137,7 +189,10 @@ export function summarizeExperienceClasses(
       })
     }
   }
-  return [...groups.values()].sort(
-    (a, b) => b.count - a.count || a.key.localeCompare(b.key),
-  )
+  return [...groups.values()]
+    .map((summary) => ({
+      ...summary,
+      ...summarizeTimeClusters(clusterTimes.get(summary.key) ?? new Map()),
+    }))
+    .sort((a, b) => b.count - a.count || a.key.localeCompare(b.key))
 }

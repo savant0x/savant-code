@@ -6,6 +6,7 @@ import { z } from 'zod/v4'
 
 import { experienceRecordSchema } from '@savant-code/common/types/experience'
 import {
+  EXPERIENCE_CLUSTER_GAP_MS,
   experienceClassIdentity,
   summarizeExperienceClasses,
 } from '@savant-code/common/util/experience-classes'
@@ -251,9 +252,12 @@ if (import.meta.main) {
       console.log(
         `recurrence probe: ${ledger.records.length} records, ${report.classes.length} stable classes, ${issues.length} issues`,
       )
+      console.log(
+        `Time clusters group rows by class and session with a consecutive gap < ${EXPERIENCE_CLUSTER_GAP_MS}ms; they are not response or failure counts.`,
+      )
       for (const entry of report.classes)
         console.log(
-          `${entry.owner ?? 'UNOWNED'} ${entry.state} ${entry.count}x ${entry.key}`,
+          `${entry.owner ?? 'UNOWNED'} ${entry.state} ${entry.count} rows, ${entry.timeClusters} time clusters, largest ${entry.largestTimeCluster} rows, gap ${entry.clusterGapMs}ms ${entry.key}`,
         )
       for (const issue of issues) console.error(issue)
     }
