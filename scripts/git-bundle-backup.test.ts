@@ -18,6 +18,16 @@ import {
   runBundleBackup,
 } from './git-bundle-backup'
 
+// FID-2026-1013-008: every case below drives the real bundle pipeline through
+// spawned git processes, so the clock is a function of machine load rather than
+// of the unit under test. Measured in isolation: the restore drill (baseline
+// clone + incremental fetch) took 4.3s, 5.0s and 5.5s across three runs, and
+// its siblings 1.0-3.3s. Twice in three runs the drill failed on bun's 5s
+// default per-test timeout with no assertion failing. The ceiling is explicit
+// here instead of inherited from a default sized for unit tests. Assertions are
+// untouched.
+const GIT_CHILD_TIMEOUT_MS = 30_000
+
 function git(
   args: string[],
   cwd: string,
@@ -72,7 +82,7 @@ describe('git bundle backup', () => {
       rmSync(repo, { recursive: true, force: true })
       rmSync(dest, { recursive: true, force: true })
     }
-  })
+  }, GIT_CHILD_TIMEOUT_MS)
 
   test('incremental flows from the marker and advances it (full e2e chain)', () => {
     const repo = initScratchRepo()
@@ -98,7 +108,7 @@ describe('git bundle backup', () => {
       rmSync(repo, { recursive: true, force: true })
       rmSync(dest, { recursive: true, force: true })
     }
-  })
+  }, GIT_CHILD_TIMEOUT_MS)
 
   test('incremental fails closed without a marker and does not create one', () => {
     const repo = initScratchRepo()
@@ -114,7 +124,7 @@ describe('git bundle backup', () => {
       rmSync(repo, { recursive: true, force: true })
       rmSync(dest, { recursive: true, force: true })
     }
-  })
+  }, GIT_CHILD_TIMEOUT_MS)
 
   test('same-HEAD rerun is idempotent (no second incremental for one commit)', () => {
     const repo = initScratchRepo()
@@ -139,7 +149,7 @@ describe('git bundle backup', () => {
       rmSync(repo, { recursive: true, force: true })
       rmSync(dest, { recursive: true, force: true })
     }
-  })
+  }, GIT_CHILD_TIMEOUT_MS)
 
   test('baseline path is resolvable and env var overrides the destination', () => {
     expect(SAVANT_BUNDLE_DIR_DEFAULT.length).toBeGreaterThan(0)
@@ -157,7 +167,7 @@ describe('git bundle backup', () => {
       rmSync(repo, { recursive: true, force: true })
       rmSync(dest, { recursive: true, force: true })
     }
-  })
+  }, GIT_CHILD_TIMEOUT_MS)
 
   test('unwritable destination fails closed without touching the marker', () => {
     const repo = initScratchRepo()
@@ -185,7 +195,7 @@ describe('git bundle backup', () => {
     } finally {
       rmSync(repo, { recursive: true, force: true })
     }
-  })
+  }, GIT_CHILD_TIMEOUT_MS)
 
   test('restore drill: baseline clone + incremental fetch reaches main', () => {
     const repo = initScratchRepo()
@@ -220,5 +230,5 @@ describe('git bundle backup', () => {
       rmSync(dest, { recursive: true, force: true })
       rmSync(restore, { recursive: true, force: true })
     }
-  })
+  }, GIT_CHILD_TIMEOUT_MS)
 })
