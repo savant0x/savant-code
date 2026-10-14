@@ -168,6 +168,14 @@ and the 2026-10-14 FID-folder audit report. The additions remain active in
       and the second would renumber live items. Presented, not decided unilaterally.
       **Automation level: 1.**
 
+- [ ] **Repository formatting drift on operator-owned files (found 2026-10-14).**
+      `bunx prettier --check .` reports formatting differences in
+      `sdk/src/__tests__/fixtures/windows-stubborn-grandchild.ts` and
+      `sdk/src/__tests__/run-terminal-command.test.ts`; the Q25 paths pass their
+      scoped formatting check. **Blocker:** both files were already modified before
+      this pass, so formatting them requires an explicit operator ruling before
+      those changes may be edited. **Automation level: 1.**
+
 - [x] **FID-2026-1014-001. The read-only guard refused legitimate reads and
       still carried a closed security FID's unfixed waiver.** Operator direction 2026-10-14
       ("Audit whether any current refusal rule is too broad — a legitimate read-only command the
@@ -416,3 +424,4 @@ and its remaining operator/external-input holds stay active.
   `dev/session-summaries/2026-10-02-0223-fid-003-batch1-implementation.md`
 - T186: (no write surface — blocked on the T122 savant-free removal)
 - T187: (no write surface — operator-owned skills surface)
+- Repository formatting drift: (no write surface — operator-owned)
