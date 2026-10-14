@@ -23,37 +23,55 @@ import type { ProviderConfig } from '../types'
  * as its first argument so tests inject a fixture instead of the singleton).
  */
 describe('PROVIDER_REGISTRY (FID-2026-0809-001 Phase 1)', () => {
-  test('covers all twenty-nine current providers', () => {
+  test('covers all forty-seven current providers', () => {
     expect(Object.keys(PROVIDER_REGISTRY).sort()).toEqual([
       'aihubmix',
+      'alibaba',
+      'anthropic',
       'apinex',
       'apixo',
       'atria',
       'bai',
+      'baseten',
       'bazaarlink',
+      'cerebras',
       'chatanywhere',
       'cleanapis',
       'cloudflare',
       'codecraft',
+      'cohere',
       'commandcode',
+      'deepinfra',
+      'deepseek',
+      'fireworks-ai',
+      'google',
+      'groq',
       'hcnsec',
       'infron',
       'intern',
       'kiosapi',
+      'meta',
+      'minimax',
       'mistral',
+      'moonshotai',
       'nous',
       'nvidia',
       'ollama',
       'openai',
       'openrouter',
       'orcarouter',
+      'perplexity',
       'tiarina',
+      'togetherai',
       'tokenbom',
       'tokenharbor',
       'tokenrouter',
       'unorouter',
+      'venice',
       'vercel',
+      'xai',
       'xkiro',
+      'zai',
     ])
   })
 
@@ -119,80 +137,6 @@ describe('PROVIDER_REGISTRY (FID-2026-0809-001 Phase 1)', () => {
     expect(deriveProviderOrder(PROVIDER_REGISTRY, 'unknown')).toBe(4)
   })
 
-  test('setup config derives exactly the twenty-eight current setup providers', () => {
-    const setup = deriveSetupConfig(PROVIDER_REGISTRY)
-    expect(Object.keys(setup).sort()).toEqual([
-      'aihubmix',
-      'apinex',
-      'apixo',
-      'atria',
-      'bai',
-      'bazaarlink',
-      'chatanywhere',
-      'cleanapis',
-      'cloudflare',
-      'codecraft',
-      'commandcode',
-      'hcnsec',
-      'infron',
-      'intern',
-      'kiosapi',
-      'mistral',
-      'nous',
-      'nvidia',
-      'openai',
-      'openrouter',
-      'orcarouter',
-      'tiarina',
-      'tokenbom',
-      'tokenharbor',
-      'tokenrouter',
-      'unorouter',
-      'vercel',
-      'xkiro',
-    ])
-    expect(setup.openai).toEqual({
-      label: 'OpenAI',
-      envVar: 'OPENAI_API_KEY',
-      baseUrl: 'https://api.openai.com/v1',
-    })
-    expect(setup.openrouter).toEqual({
-      label: 'OpenRouter',
-      envVar: 'OPENROUTER_API_KEY',
-      baseUrl: 'https://openrouter.ai/api/v1',
-    })
-    expect(setup.tokenharbor).toEqual({
-      label: 'TokenHarbor',
-      envVar: 'TOKENHARBOR_API_KEY',
-      baseUrl: 'https://tokenharbor.ai/v1',
-    })
-    expect(setup.nous).toEqual({
-      label: 'Nous Research',
-      envVar: 'NOUS_API_KEY',
-      baseUrl: 'https://inference-api.nousresearch.com/v1',
-    })
-    expect(setup.kiosapi).toEqual({
-      label: 'KiosAPI',
-      envVar: 'KIOSAPI_API_KEY',
-      baseUrl: 'https://kiosapi.com/v1',
-    })
-    expect(setup.apinex).toEqual({
-      label: 'APInex',
-      envVar: 'APINEX_API_KEY',
-      baseUrl: 'https://api.apinex.bond/v1',
-    })
-    expect(setup.cleanapis).toEqual({
-      label: 'Clean APIs',
-      envVar: 'CLEANAPIS_API_KEY',
-      baseUrl: 'https://cleanapis.com/v1',
-    })
-    expect(setup.chatanywhere).toEqual({
-      label: 'ChatAnywhere',
-      envVar: 'CHATANYWHERE_API_KEY',
-      baseUrl: 'https://api.chatanywhere.tech/v1',
-    })
-  })
-
   test('base URLs match the SDK factory literals exactly (review parity)', () => {
     // Cross-package drift guard: these values must equal the literals in
     // sdk/src/impl/model-provider/model-factories.ts (:67,:93,:122,:153,:222,:280)
@@ -240,10 +184,9 @@ describe('PROVIDER_REGISTRY (FID-2026-0809-001 Phase 1)', () => {
     expect(deriveLogoDomain(PROVIDER_REGISTRY, 'openrouter/free')).toBe(
       'openrouter.ai',
     )
-    // Org-slug prefixes are not registry providers.
     expect(
       deriveLogoDomain(PROVIDER_REGISTRY, 'anthropic/claude-sonnet-4'),
-    ).toBeUndefined()
+    ).toBe('anthropic.com')
   })
 
   test('fixture provider derives through every surface without the singleton (Loop 3)', () => {

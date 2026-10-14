@@ -18,6 +18,8 @@
 import { PROVIDER_REGISTRY_PARTITION } from './registry-partitioned'
 import { PROVIDER_REGISTRY_PARTITION_2 } from './registry-partitioned-2'
 import { PROVIDER_REGISTRY_PARTITION_3 } from './registry-partitioned-3'
+import { PROVIDER_REGISTRY_PARTITION_4 } from './registry-partitioned-4'
+import { PROVIDER_REGISTRY_PARTITION_5 } from './registry-partitioned-5'
 
 import type { ProviderConfig } from './types'
 
@@ -197,6 +199,8 @@ export const PROVIDER_REGISTRY = {
   ...PROVIDER_REGISTRY_PARTITION,
   ...PROVIDER_REGISTRY_PARTITION_2,
   ...PROVIDER_REGISTRY_PARTITION_3,
+  ...PROVIDER_REGISTRY_PARTITION_4,
+  ...PROVIDER_REGISTRY_PARTITION_5,
 } as const satisfies Record<string, ProviderConfig>
 
 /** Literal union of registry ids, e.g. 'tokenharbor' | 'commandcode'. */

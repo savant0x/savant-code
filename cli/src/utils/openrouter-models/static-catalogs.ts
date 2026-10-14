@@ -16,6 +16,11 @@ import {
   tokenharborModels,
   tokenrouterModels,
 } from '@savant-code/common/constants/model-config'
+import {
+  TIER1_MODEL_NAMES,
+  TIER1_STATIC_PROVIDER_IDS,
+} from '@savant-code/common/constants/model-config/tier1'
+import { MODEL_CATALOGS } from '@savant-code/common/providers/model-catalogs'
 
 import { TOKENHARBOR_NAMES } from './tokenharbor-names'
 
@@ -238,4 +243,22 @@ export function fetchTokenBomModels(): OpenRouterModel[] {
       TOKENBOM_CONTEXT_WINDOWS[id] ??
       getContextWindowFallback(id).contextWindow,
   }))
+}
+
+export type Tier1StaticProvider = (typeof TIER1_STATIC_PROVIDER_IDS)[number]
+
+/**
+ * Build the measured first-party static catalogs from common's registry maps.
+ * The model ids and names share the Tier 1 row source; the context fallback
+ * resolver supplies the same published window for the picker metadata.
+ */
+export function fetchTier1StaticModels(): OpenRouterModel[] {
+  return TIER1_STATIC_PROVIDER_IDS.flatMap((provider) =>
+    Object.values(MODEL_CATALOGS[provider]).map((id) => ({
+      id,
+      name: TIER1_MODEL_NAMES[id] ?? id.slice(`${provider}/`.length),
+      provider,
+      contextLength: getContextWindowFallback(id).contextWindow,
+    })),
+  )
 }

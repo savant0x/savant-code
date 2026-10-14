@@ -13,6 +13,7 @@ import { fetchChatanywhereModels } from './chatanywhere'
 import {
   fetchCommandCodeModels,
   fetchHcnsecModels,
+  fetchTier1StaticModels,
   fetchTokenBomModels,
   fetchTokenRouterModels,
   getTokenHarborModels,
@@ -56,6 +57,8 @@ export function assembleGatewayCatalog(
     ...live.xkiroModels,
     ...live.apixoModels,
     ...live.aihubmixModels,
+    ...live.deepinfraModels,
+    ...live.veniceModels,
     ...fetchCommandCodeModels(),
     ...fetchHcnsecModels(),
     ...fetchTokenBomModels(),
@@ -71,6 +74,9 @@ export function assembleGatewayCatalog(
     // is wired in the same change that registers the provider, and the census
     // pairing check (providers:parity) proves the rows reach the picker.
     ...fetchTiarinaModels(),
+    // FID-2026-1012-026: measured first-party static catalogs share one
+    // common row source so the registry and picker cannot drift.
+    ...fetchTier1StaticModels(),
     ...live.customModels,
   ]
   combined.sort((a, b) => a.id.localeCompare(b.id))

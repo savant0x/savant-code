@@ -1,12 +1,4 @@
-/**
- * Combined gateway catalog — OpenRouter + TokenRouter + TokenHarbor + NVIDIA NIM
- * + CommandCode + Nous Research + KiosAPI + APInex + OrcaRouter + B.AI +
- * HCNSec + TokenBom + Infron + UnoRouter + BazaarLink + Atria AI +
- * Intern InkStone (FID-2026-1004-008) + Vercel AI Gateway + OpenAI
- * (FID-2026-1001-001) + Mistral AI (FID-2026-1009-005) + Apixo
- * (FID-2026-1013-003) + AIHubMix (FID-2026-1013-004) — plus subscription
- * plumbing.
- */
+/** Combined live and static gateway catalog, plus subscription plumbing. */
 import fs from 'node:fs'
 
 import { modelRequestLimits } from '@savant-code/common/util/model-request-limits'
@@ -19,6 +11,7 @@ import { __resetBaiCacheForTest } from './bai'
 import { __resetCleanApisCacheForTest } from './cleanapis'
 import { __resetCodecraftCacheForTest } from './codecraft'
 import { __resetCustomCatalogsForTest } from './custom-catalog'
+import { __resetDeepInfraCacheForTest } from './deepinfra'
 import { assembleGatewayCatalog } from './gateway-catalog-merge'
 import {
   computeCatalogGaps,
@@ -43,6 +36,7 @@ import { __resetOpenAiCacheForTest } from './openai'
 import { __resetOpenRouterCacheForTest } from './openrouter'
 import { __resetOrcarouterCacheForTest } from './orcarouter'
 import { CATALOG_TTL_MS } from './types'
+import { __resetVeniceCacheForTest } from './venice'
 import { __resetVercelCacheForTest } from './vercel'
 import { __resetXkiroCacheForTest } from './xkiro'
 
@@ -119,6 +113,8 @@ function notifyGatewayCatalogListeners(catalog: OpenRouterModel[]): void {
  * - Mistral AI (live API, authenticated — FID-2026-1009-005)
  * - Apixo (live API, public — FID-2026-1013-003)
  * - AIHubMix (live API, public — FID-2026-1013-004)
+ * - DeepInfra (live API, public — FID-2026-1012-026)
+ * - Venice AI (live API, public — FID-2026-1012-026)
  *
  * Fetches live sources in parallel via Promise.allSettled(). If a source fails,
  * uses cached/empty list for that provider. Returns a combined, sorted list.
@@ -249,6 +245,8 @@ function resetProviderCatalogCaches(): void {
   __resetXkiroCacheForTest()
   __resetApixoCacheForTest()
   __resetAihubmixCacheForTest()
+  __resetDeepInfraCacheForTest()
+  __resetVeniceCacheForTest()
   // Step 9 remainder: lazily-built custom fetchers are cache state too.
   __resetCustomCatalogsForTest()
 }

@@ -262,3 +262,25 @@ export const finetunedVertexModelNames: Record<string, string> = {
 }
 export type FinetunedVertexModel =
   (typeof finetunedVertexModels)[keyof typeof finetunedVertexModels]
+
+// FID-2026-1012-026: first-party Tier 1 catalogs are maintained in row
+// partitions so model names, published windows, and picker ids share one
+// measured source without growing this legacy provider partition.
+export {
+  alibabaModels,
+  anthropicModels,
+  basetenModels,
+  cerebrasModels,
+  cohereModels,
+  deepseekTier1Models,
+  fireworksAiModels,
+  googleModels,
+  groqModels,
+  metaModels,
+  moonshotaiModels,
+  perplexityModels,
+  tier1MinimaxModels,
+  togetheraiModels,
+  xaiModels,
+  zaiModels,
+} from './tier1'

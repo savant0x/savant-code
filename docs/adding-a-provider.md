@@ -67,14 +67,15 @@ without global mutation. Keep any new derivation shaped this way.
 ## The registry entry
 
 `PROVIDER_REGISTRY` is composed in `common/src/providers/registry.ts` from an
-inline object plus spreads of `registry-partitioned.ts` and
-`registry-partitioned-2.ts` (the 300-line file cap forced those splits). Each
-partition is `as const satisfies Record<string, ProviderConfig>`, so a missing
-field or a typo is a **compile error**, not a runtime surprise.
+inline object plus spreads of the numbered `registry-partitioned*.ts` files
+(the 300-line file cap forced those splits). Each partition is
+`as const satisfies Record<string, ProviderConfig>`, so a missing field or a
+typo is a **compile error**, not a runtime surprise.
 
-**Where to put a new entry:** if `registry-partitioned-2.ts` has room under 300
-lines, put it there; otherwise create the next partition and spread it. Do not
-grow a partition past the cap — the quality gate is zero-tolerance.
+**Where to put a new entry:** inspect the highest numbered partition first. If
+it has room under 300 lines, put the entry there; otherwise create the next
+partition and spread it in `registry.ts`. Do not grow a partition past the cap
+— the quality gate is zero-tolerance.
 
 The complete field set, from `ProviderConfig` in
 `common/src/providers/types.ts`:
@@ -251,9 +252,10 @@ Then four things, all mandatory:
    (it publishes `context_window`/`max_tokens` and a numeric `created`, not
    `context_length`/`max_completion_tokens` and a string `created`).
 
-2. **Wire the fan-out** in `cli/src/utils/openrouter-models/gateway.ts`:
-   add the fetch to the `Promise.allSettled` array, and add the cache reset to
-   `__resetOpenRouterModelsCacheForTest`.
+2. **Wire the fan-out** in
+    `cli/src/utils/openrouter-models/gateway-live-results.ts`: add the fetch to
+    the `Promise.allSettled` array, and add the cache reset to
+    `__resetOpenRouterModelsCacheForTest` in `gateway.ts`.
 
 3. **Extend the settled ladder** in
    `cli/src/utils/openrouter-models/gateway-live-results.ts`. This module is a
@@ -461,7 +463,7 @@ Two claims that are routinely overstated, both with a lesson behind them:
 
 Three small additive files, following existing patterns:
 
-- `common/src/providers/__tests__/validate-provider-registry.test.ts` — the
+- `common/src/providers/__tests__/provider-registry.test.ts` — the
   fixture entry is the `fixture` / `FIXTURE_API_KEY` base provider defined in
   that file's `base()` helper. Extend it to assert that your entry's
   derivation (routing, setup, picker grouping, guidance) follows from the

@@ -184,6 +184,24 @@ ollama serve
 | ChatAnywhere | `/provider chatanywhere` | `CHATANYWHERE_API_KEY` | OpenAI 兼容托管网关（静态 27 模型聊天白名单；免费密钥层每日 10,000 积分；`https://api.chatanywhere.tech/v1`） |
 | Tiarina Cloud | `/provider tiarina` | `TIARINA_API_KEY` | OpenAI 兼容托管网关（静态 19 模型聊天白名单，含 `:free` 与 `:cloudflare` 免费层通道；`https://ai.tiarina.cloud/v1`） |
 | Cloudflare | `/provider cloudflare` | `CLOUDFLARE_API_TOKEN` + `CLOUDFLARE_ACCOUNT_ID` | Workers AI 网关；`/provider` 流程先提示输入令牌，再输入账户 ID（环境变量优先） |
+| Alibaba Cloud | `/provider alibaba` | `DASHSCOPE_API_KEY` | 托管网关 |
+| Anthropic | `/provider anthropic` | `ANTHROPIC_API_KEY` | Anthropic Messages 网关 |
+| Baseten | `/provider baseten` | `BASETEN_API_KEY` | 托管网关 |
+| Cerebras | `/provider cerebras` | `CEREBRAS_API_KEY` | 托管网关 |
+| Cohere | `/provider cohere` | `COHERE_API_KEY` | 托管网关 |
+| DeepInfra | `/provider deepinfra` | `DEEPINFRA_API_KEY` | 免密钥实时模型目录；推理需要密钥 |
+| DeepSeek | `/provider deepseek` | `DEEPSEEK_API_KEY` | 托管网关 |
+| Fireworks AI | `/provider fireworks-ai` | `FIREWORKS_API_KEY` | 托管网关 |
+| Google AI | `/provider google` | `GEMINI_API_KEY` | 托管网关 |
+| Groq | `/provider groq` | `GROQ_API_KEY` | 托管网关 |
+| Meta Llama API | `/provider meta` | `META_MODEL_API_KEY` | 托管网关 |
+| MiniMax | `/provider minimax` | `MINIMAX_API_KEY` | Anthropic 兼容托管网关 |
+| Moonshot AI | `/provider moonshotai` | `MOONSHOT_API_KEY` | 托管网关 |
+| Perplexity | `/provider perplexity` | `PERPLEXITY_API_KEY` | 托管网关 |
+| Together AI | `/provider togetherai` | `TOGETHER_API_KEY` | 托管网关 |
+| Venice AI | `/provider venice` | `VENICE_API_KEY` | 免密钥实时模型目录；推理需要密钥 |
+| xAI | `/provider xai` | `XAI_API_KEY` | 托管网关 |
+| Z.AI | `/provider zai` | `ZHIPU_API_KEY` | 托管网关 |
 
 密钥持久化在 Windows 的 `C:\Users\<username>\.savant-code\credentials.json` 或 macOS/Linux 的
 `~/.savant-code/credentials.json`。环境变量优先于已保存的凭据。自动化时，在启动 Savant-Code 前设置一个提供商密钥：
@@ -367,8 +385,10 @@ MCP 工具发现、模式切换（`HYBRID` / `SCAFFOLD` / `STRICT` / `ANALYZE`�
 - **通用复制按钮** —— 在整个 TUI 中悬停即可复制代码块、工具输出与文件 diff。
 - **网关提供商** —— 通过 `@savant-code/llm-providers` 支持 OpenRouter、TokenRouter、TokenHarbor、NVIDIA NIM、
   CommandCode、Nous Research、KiosAPI、APInex、OrcaRouter、B.AI、HCNSec、
-TokenBom、Infron、Intern InkStone、ChatAnywhere、Tiarina Cloud、
-  UnoRouter、BazaarLink、Atria AI、OpenAI、Vercel AI Gateway、Clean APIs、CodeCraft API、Mistral AI、Apixo、AIHubMix、xKiro 与
+ TokenBom、Infron、Intern InkStone、ChatAnywhere、Tiarina Cloud、
+ UnoRouter、BazaarLink、Atria AI、OpenAI、Vercel AI Gateway、Clean APIs、CodeCraft API、Mistral AI、Apixo、AIHubMix、xKiro、
+  Alibaba Cloud、Anthropic、Baseten、Cerebras、Cohere、DeepInfra、DeepSeek、Fireworks AI、Google AI、Groq、Meta Llama API、
+  MiniMax、Moonshot AI、Perplexity、Together AI、Venice AI、xAI、Z.AI 与
   Cloudflare Workers AI。Nous Research 使用 OpenAI 兼容直连
   API；Portal OAuth 是独立集成。
 - **默认模型** —— 通过 OpenRouter 使用 `openrouter/free`（可通过 `/model` 配置）。
@@ -715,6 +735,24 @@ savant-code
 /provider mistral
 /provider apixo
 /provider aihubmix
+/provider alibaba
+/provider anthropic
+/provider baseten
+/provider cerebras
+/provider cohere
+/provider deepinfra
+/provider deepseek
+/provider fireworks-ai
+/provider google
+/provider groq
+/provider meta
+/provider minimax
+/provider moonshotai
+/provider perplexity
+/provider togetherai
+/provider venice
+/provider xai
+/provider zai
 /provider cloudflare
 ```
 
@@ -722,7 +760,11 @@ savant-code
 `COMMAND_CODE_API_KEY`、`OPENAI_API_KEY`、`NOUS_API_KEY`、`KIOSAPI_API_KEY`、`APINEX_API_KEY`、`ORCAROUTER_API_KEY`、
 `BAI_API_KEY`、`HCNSEC_API_KEY`、`TOKENBOM_API_KEY`、`ATRIA_API_KEY`、`INTERN_API_KEY`、`INFRON_API_KEY`、
 `UNOROUTER_API_KEY`、
-`BAZAARLINK_API_KEY`、`CHATANYWHERE_API_KEY`、`TIARINA_API_KEY`、`AI_GATEWAY_API_KEY`、
+`BAZAARLINK_API_KEY`、`DASHSCOPE_API_KEY`、`ANTHROPIC_API_KEY`、`BASETEN_API_KEY`、
+`CEREBRAS_API_KEY`、`COHERE_API_KEY`、`DEEPINFRA_API_KEY`、`DEEPSEEK_API_KEY`、
+`FIREWORKS_API_KEY`、`GEMINI_API_KEY`、`GROQ_API_KEY`、`META_MODEL_API_KEY`、
+`MINIMAX_API_KEY`、`MOONSHOT_API_KEY`、`PERPLEXITY_API_KEY`、`TOGETHER_API_KEY`、
+`VENICE_API_KEY`、`XAI_API_KEY`、`ZHIPU_API_KEY`、`CHATANYWHERE_API_KEY`、`TIARINA_API_KEY`、`AI_GATEWAY_API_KEY`、
 `CLEANAPIS_API_KEY`、`CODECRAFT_API_KEY`、`XKIRO_API_KEY`、`MISTRAL_API_KEY`、`APIXOAI_API_KEY`、`AIHUBMIX_API_KEY` 与
 `CLOUDFLARE_API_TOKEN`。密钥提示为遮罩输入，并将密钥全局存储在
 Savant-Code 配置的 `credentials.json` 中；不会加入

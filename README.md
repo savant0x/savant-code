@@ -72,30 +72,48 @@ history. The supported hosted providers are:
 | TokenRouter | `/provider tokenrouter` or `DIRECT_PROVIDER=tokenrouter` | `TOKENROUTER_API_KEY` | Multi-provider gateway |
 | NVIDIA NIM | `/provider nvidia` or `DIRECT_PROVIDER=nvidia` | `NVIDIA_API_KEY` | NVIDIA-hosted inference |
 | AIHubMix | `/provider aihubmix` or `DIRECT_PROVIDER=aihubmix` | `AIHUBMIX_API_KEY` | Hosted gateway |
+| Alibaba Cloud | `/provider alibaba` or `DIRECT_PROVIDER=alibaba` | `DASHSCOPE_API_KEY` | Hosted gateway |
+| Anthropic | `/provider anthropic` or `DIRECT_PROVIDER=anthropic` | `ANTHROPIC_API_KEY` | Hosted gateway |
 | APInex | `/provider apinex` or `DIRECT_PROVIDER=apinex` | `APINEX_API_KEY` | Hosted gateway with an authenticated live model catalog |
 | Apixo | `/provider apixo` or `DIRECT_PROVIDER=apixo` | `APIXOAI_API_KEY` | [OI]-compatible gateway with a keyless live model catalog |
 | Atria AI | `/provider atria` or `DIRECT_PROVIDER=atria` | `ATRIA_API_KEY` | Hosted gateway |
 | B.AI | `/provider bai` or `DIRECT_PROVIDER=bai` | `BAI_API_KEY` | OpenAI-compatible gateway with an authenticated live model catalog |
+| Baseten | `/provider baseten` or `DIRECT_PROVIDER=baseten` | `BASETEN_API_KEY` | Hosted gateway |
 | BazaarLink | `/provider bazaarlink` or `DIRECT_PROVIDER=bazaarlink` | `BAZAARLINK_API_KEY` | Hosted gateway |
+| Cerebras | `/provider cerebras` or `DIRECT_PROVIDER=cerebras` | `CEREBRAS_API_KEY` | Hosted gateway |
 | ChatAnywhere | `/provider chatanywhere` or `DIRECT_PROVIDER=chatanywhere` | `CHATANYWHERE_API_KEY` | Hosted gateway |
 | Clean APIs | `/provider cleanapis` or `DIRECT_PROVIDER=cleanapis` | `CLEANAPIS_API_KEY` | Hosted gateway |
 | Cloudflare | `/provider cloudflare` or `DIRECT_PROVIDER=cloudflare` | `CLOUDFLARE_API_TOKEN` + `CLOUDFLARE_ACCOUNT_ID` | Workers AI gateway; the `/provider` flow prompts for the token, then the account id (env vars take precedence) |
 | CodeCraft API | `/provider codecraft` or `DIRECT_PROVIDER=codecraft` | `CODECRAFT_API_KEY` | Hosted gateway |
+| Cohere | `/provider cohere` or `DIRECT_PROVIDER=cohere` | `COHERE_API_KEY` | Hosted gateway |
 | CommandCode | `/provider commandcode` or `DIRECT_PROVIDER=commandcode` | `COMMAND_CODE_API_KEY` | OpenAI-compatible hosted inference (dual-protocol) |
+| DeepInfra | `/provider deepinfra` or `DIRECT_PROVIDER=deepinfra` | `DEEPINFRA_API_KEY` | Hosted gateway |
+| DeepSeek | `/provider deepseek` or `DIRECT_PROVIDER=deepseek` | `DEEPSEEK_API_KEY` | Hosted gateway |
+| Fireworks AI | `/provider fireworks-ai` or `DIRECT_PROVIDER=fireworks-ai` | `FIREWORKS_API_KEY` | Hosted gateway |
+| Google AI | `/provider google` or `DIRECT_PROVIDER=google` | `GEMINI_API_KEY` | Hosted gateway |
+| Groq | `/provider groq` or `DIRECT_PROVIDER=groq` | `GROQ_API_KEY` | Hosted gateway |
 | HCNSec | `/provider hcnsec` or `DIRECT_PROVIDER=hcnsec` | `HCNSEC_API_KEY` | OpenAI-compatible gateway on an audited static 7-model allowlist |
 | Infron | `/provider infron` or `DIRECT_PROVIDER=infron` | `INFRON_API_KEY` | Hosted gateway |
 | Intern InkStone | `/provider intern` or `DIRECT_PROVIDER=intern` | `INTERN_API_KEY` | Hosted gateway |
 | KiosAPI | `/provider kiosapi` or `DIRECT_PROVIDER=kiosapi` | `KIOSAPI_API_KEY` | OpenAI-compatible gateway (live catalog) |
+| Meta Llama API | `/provider meta` or `DIRECT_PROVIDER=meta` | `META_MODEL_API_KEY` | Hosted gateway |
+| MiniMax | `/provider minimax` or `DIRECT_PROVIDER=minimax` | `MINIMAX_API_KEY` | Hosted gateway |
 | Mistral AI | `/provider mistral` or `DIRECT_PROVIDER=mistral` | `MISTRAL_API_KEY` | Hosted gateway |
+| Moonshot AI | `/provider moonshotai` or `DIRECT_PROVIDER=moonshotai` | `MOONSHOT_API_KEY` | Hosted gateway |
 | Nous Research | `/provider nous` or `DIRECT_PROVIDER=nous` | `NOUS_API_KEY` | OpenAI-compatible direct inference; Portal OAuth is separate |
 | Ollama | Automatic detection | `OLLAMA_HOST` (optional) | Local inference; no API key required |
 | OrcaRouter | `/provider orcarouter` or `DIRECT_PROVIDER=orcarouter` | `ORCAROUTER_API_KEY` | Multi-provider gateway with a live model catalog (free tier currently gated vendor-side on GitHub account linkage) |
+| Perplexity | `/provider perplexity` or `DIRECT_PROVIDER=perplexity` | `PERPLEXITY_API_KEY` | Hosted gateway |
 | Tiarina Cloud | `/provider tiarina` or `DIRECT_PROVIDER=tiarina` | `TIARINA_API_KEY` | Hosted gateway |
+| Together AI | `/provider togetherai` or `DIRECT_PROVIDER=togetherai` | `TOGETHER_API_KEY` | Hosted gateway |
 | TokenBom | `/provider tokenbom` or `DIRECT_PROVIDER=tokenbom` | `TOKENBOM_API_KEY` | OpenAI-compatible gateway on an audited static 7-model allowlist |
 | TokenHarbor | `/provider tokenharbor` or `DIRECT_PROVIDER=tokenharbor` | `TOKENHARBOR_API_KEY` | OpenAI-compatible hosted gateway |
 | UnoRouter | `/provider unorouter` or `DIRECT_PROVIDER=unorouter` | `UNOROUTER_API_KEY` | Hosted gateway |
+| Venice AI | `/provider venice` or `DIRECT_PROVIDER=venice` | `VENICE_API_KEY` | Hosted gateway |
 | Vercel AI Gateway | `/provider vercel` or `DIRECT_PROVIDER=vercel` | `AI_GATEWAY_API_KEY` | Hosted gateway |
+| xAI | `/provider xai` or `DIRECT_PROVIDER=xai` | `XAI_API_KEY` | Hosted gateway |
 | xKiro | `/provider xkiro` or `DIRECT_PROVIDER=xkiro` | `XKIRO_API_KEY` | Hosted gateway |
+| Z.AI | `/provider zai` or `DIRECT_PROVIDER=zai` | `ZHIPU_API_KEY` | Hosted gateway |
 | Custom endpoint | Environment configuration | `INFERENCE_BASE_URL`, `INFERENCE_API_KEY` | Advanced OpenAI-compatible endpoint; authorized by `INFERENCE_API_KEY` alone |
 <!-- GENERATED:provider-table-end -->
 
@@ -444,8 +462,11 @@ code 2 blocks a tool.
   UnoRouter,
   BazaarLink, Atria AI,
   OpenAI, Vercel AI Gateway, Clean APIs, CodeCraft API, Mistral AI, Apixo, AIHubMix, xKiro, and Cloudflare Workers AI via
-  `@savant-code/llm-providers`. Nous Research uses the direct OpenAI-compatible API; Portal OAuth
-  is a separate integration.
+  `@savant-code/llm-providers`. First-party routes include Alibaba Cloud, Anthropic, Baseten,
+  Cerebras, Cohere, DeepInfra, DeepSeek, Fireworks AI, Google AI, Groq, Meta Llama API,
+  MiniMax, Moonshot AI, Perplexity, Together AI, Venice AI, xAI, and Z.AI. Nous
+  Research uses the direct OpenAI-compatible API; Portal OAuth is a separate
+  integration.
 - **Default model** — `openrouter/free` via OpenRouter (configurable via
   `/model`). One model project-wide: the model selected in the UI panel is the
   only model used — main chat agent, teacher-forge, headless runs, and spawned
@@ -894,6 +915,24 @@ picker or choose one directly:
 /provider mistral
 /provider apixo
 /provider aihubmix
+/provider alibaba
+/provider anthropic
+/provider baseten
+/provider cerebras
+/provider cohere
+/provider deepinfra
+/provider deepseek
+/provider fireworks-ai
+/provider google
+/provider groq
+/provider meta
+/provider minimax
+/provider moonshotai
+/provider perplexity
+/provider togetherai
+/provider venice
+/provider xai
+/provider zai
 /provider cloudflare
 ```
 
@@ -904,6 +943,12 @@ The supported environment variables are `OPENAI_API_KEY`, `OPENROUTER_API_KEY`,
 `ORCAROUTER_API_KEY`, `BAI_API_KEY`, `HCNSEC_API_KEY`, `TOKENBOM_API_KEY`,
 `ATRIA_API_KEY`, `INTERN_API_KEY`, `INFRON_API_KEY`, `UNOROUTER_API_KEY`,
 `BAZAARLINK_API_KEY`,
+`DASHSCOPE_API_KEY`, `ANTHROPIC_API_KEY`, `BASETEN_API_KEY`,
+`CEREBRAS_API_KEY`, `COHERE_API_KEY`, `DEEPINFRA_API_KEY`,
+`DEEPSEEK_API_KEY`, `FIREWORKS_API_KEY`, `GEMINI_API_KEY`,
+`GROQ_API_KEY`, `META_MODEL_API_KEY`, `MINIMAX_API_KEY`,
+`MOONSHOT_API_KEY`, `PERPLEXITY_API_KEY`, `TOGETHER_API_KEY`,
+`VENICE_API_KEY`, `XAI_API_KEY`, `ZHIPU_API_KEY`,
 `AI_GATEWAY_API_KEY`, `CLEANAPIS_API_KEY`, `CODECRAFT_API_KEY`, `XKIRO_API_KEY`,
 `MISTRAL_API_KEY`,
 `APIXOAI_API_KEY`,

@@ -13,6 +13,16 @@ recorded decision or external dependency requires it.
 
 ## Open items
 
+## Full active-FID completion directive (2026-10-14)
+
+The operator directed completion of all actual pending work in every active FID and
+granted automation level 3. The active register is eight records: `FID-2026-1012-017`,
+`-021`, `-022`, `-023`, `-024`, `-026`, `FID-2026-1013-005`, and
+`FID-2026-1014-002`. Execute them in dependency order, implement every automatable
+step, run each declared gate, close and archive every record whose ground truth and
+gates support closure, and leave only specifically evidenced operator or external
+constraints active. **Automation level: 3.**
+
 - [ ] **Local v0.0.36 development line.** `v0.0.35` shipped on 2026-10-11 (GitHub
       release published, npm `latest` = 0.0.35), which made this item's previous
       text — publish 189 local commits for v0.0.35 — stale; it is replaced here.
@@ -91,6 +101,17 @@ recorded decision or external dependency requires it.
       and API token configuration; neither is present in the probe process.
       The persisted provider-key store also contains neither field.
 
+- [ ] **FID-2026-1012-026. Tier 1 provider parity wave.** Implement the eighteen
+      measured provider registrations, coding-harness-compatible catalogs, routing seams, window coverage,
+      exception manifest, generated surfaces and declared verification battery from the converged record. The
+      operator's 2026-10-14 `devoverride` accepts keyless endpoint/catalog accessibility as evidence and does not
+      require paid inference requests or provider credits. **Automation level: 3.**
+
+- [ ] **FID-2026-1013-005. Provider live-list remaining boundaries.** Complete the
+      local Ollama evidence and the account-specific Cloudflare probe; the latter
+      requires the operator-owned account ID and API token if they are still absent.
+      **Automation level: 3.**
+
 - [ ] **T175. Sweep control-manifest authorship + control-armed re-run.**
       Open remainder of archived `FID-2026-1007-016`: the seam is built, but
       verdicts need the operator-owned `<provider>/<family>` control manifest,
@@ -148,6 +169,8 @@ recorded decision or external dependency requires it.
 the deliverable is registry expansion, not dev-held credentials — users bring
 their own keys. Keyless acceptance is surface-verified; the inference leg belongs
 to the user's key under the recorded narrowing of the runbook's real-request step.
+The 2026-10-14 `devoverride` additionally limits Tier 1 picker catalogs to
+coding-harness-compatible chat/text rows and excludes non-chat modality rows.
 The completed probe evidence is in `docs/design/provider-parity-review-2026-10-12.md`
 and the 2026-10-14 FID-folder audit report. The additions remain active in
 `FID-2026-1012-026`; the completed probe item grants no continuing write authority.
@@ -171,10 +194,12 @@ and the 2026-10-14 FID-folder audit report. The additions remain active in
 - [ ] **Repository formatting drift on operator-owned files (found 2026-10-14).**
       `bunx prettier --check .` reports formatting differences in
       `sdk/src/__tests__/fixtures/windows-stubborn-grandchild.ts` and
-      `sdk/src/__tests__/run-terminal-command.test.ts`; the Q25 paths pass their
-      scoped formatting check. **Blocker:** both files were already modified before
-      this pass, so formatting them requires an explicit operator ruling before
-      those changes may be edited. **Automation level: 1.**
+      `sdk/src/__tests__/run-terminal-command.test.ts`; ESLint also reports an
+      import-order warning in `scripts/__tests__/fid-artifact-census.test.ts`.
+      The Q25 paths pass their scoped formatting check. **Blocker:** these files
+      were already modified before this pass, so formatting them requires an
+      explicit operator ruling before those changes may be edited.
+      **Automation level: 1.**
 
 - [x] **FID-2026-1014-001. The read-only guard refused legitimate reads and
       still carried a closed security FID's unfixed waiver.** Operator direction 2026-10-14
@@ -368,6 +393,13 @@ and its remaining operator/external-input holds stay active.
   `docs/design/learnings-root-cause-matrix.md`
 - FID-2026-1012-022: `dev/fids/**`, `SCOPE.md`, `docs/design/**`, `dev/experiences/**`,
   `dev/agenda.md`
+- FID-2026-1012-026: `common/src/constants/model-config/**`,
+  `common/src/constants/context-window-table.ts`,
+  `common/src/constants/window-coverage-register.ts`,
+  `common/src/constants/provider-catalog-census.json`, `common/src/providers/**`,
+  `cli/src/utils/openrouter-models/**`, `.env.example`, `README.md`,
+  `README.zh-CN.md`, `cli/release/README.md`, `docs/**`,
+  `dev/fids/FID-2026-1012-026-*.md`
 - FID-2026-1012-023: `sdk/src/tools/run-terminal-command.ts`, `sdk/src/run-state/**`,
   `sdk/src/run/tool-call.ts`, `sdk/src/__tests__/command-execution-contract.test.ts`,
   `sdk/src/__tests__/run-terminal-command.test.ts`,

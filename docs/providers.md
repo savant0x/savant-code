@@ -36,30 +36,48 @@ closed if this section drifts from the registry.
 | TokenRouter | `tokenrouter` | gateway | `TOKENROUTER_API_KEY` | `https://api.tokenrouter.com/v1` | multi (`TOKENROUTER_PROTOCOLS`) | static (31 models) |
 | NVIDIA NIM | `nvidia` | gateway | `NVIDIA_API_KEY` | `https://integrate.api.nvidia.com/v1` | openai | live |
 | AIHubMix | `aihubmix` | gateway | `AIHUBMIX_API_KEY` | `https://aihubmix.com/v1` | openai | live |
+| Alibaba Cloud | `alibaba` | gateway | `DASHSCOPE_API_KEY` | `https://dashscope-intl.aliyuncs.com/compatible-mode/v1` | openai | static (40 models) |
+| Anthropic | `anthropic` | gateway | `ANTHROPIC_API_KEY` | `https://api.anthropic.com/v1` | anthropic | static (17 models) |
 | APInex | `apinex` | gateway | `APINEX_API_KEY` | `https://api.apinex.bond/v1` | openai | live |
 | Apixo | `apixo` | gateway | `APIXOAI_API_KEY` | `https://api.apixoai.online/v1` | openai | live |
 | Atria AI | `atria` | gateway | `ATRIA_API_KEY` | `https://api.atria-asi.ai/v1` | openai | static (1 model) |
 | B.AI | `bai` | gateway | `BAI_API_KEY` | `https://api.b.ai/v1` | openai | live |
+| Baseten | `baseten` | gateway | `BASETEN_API_KEY` | `https://inference.baseten.co/v1` | openai | static (24 models) |
 | BazaarLink | `bazaarlink` | gateway | `BAZAARLINK_API_KEY` | `https://api.bazaarlink.ai/v1` | openai | static (12 models) |
+| Cerebras | `cerebras` | gateway | `CEREBRAS_API_KEY` | `https://api.cerebras.ai/v1` | openai | static (2 models) |
 | ChatAnywhere | `chatanywhere` | gateway | `CHATANYWHERE_API_KEY` | `https://api.chatanywhere.tech/v1` | openai | static (27 models; evidence: console-verified 2026-10-05) |
 | Clean APIs | `cleanapis` | gateway | `CLEANAPIS_API_KEY` | `https://cleanapis.com/v1` | openai | live |
 | Cloudflare | `cloudflare` | gateway | `CLOUDFLARE_API_TOKEN` + `CLOUDFLARE_ACCOUNT_ID` | `https://api.cloudflare.com/client/v4/accounts/{CLOUDFLARE_ACCOUNT_ID}/ai/v1` | openai | static (14 models) |
 | CodeCraft API | `codecraft` | gateway | `CODECRAFT_API_KEY` | `https://codecraftapi.com/v1` | openai | live |
+| Cohere | `cohere` | gateway | `COHERE_API_KEY` | `https://api.cohere.com/compatibility/v1` | openai | static (13 models) |
 | CommandCode | `commandcode` | gateway | `COMMAND_CODE_API_KEY` | `https://api.commandcode.ai/provider/v1` | openai-anthropic (`COMMANDCODE_PROTOCOLS`) | static (33 models) |
+| DeepInfra | `deepinfra` | gateway | `DEEPINFRA_API_KEY` | `https://api.deepinfra.com/v1/openai` | openai | live |
+| DeepSeek | `deepseek` | gateway | `DEEPSEEK_API_KEY` | `https://api.deepseek.com/v1` | openai | static (3 models) |
+| Fireworks AI | `fireworks-ai` | gateway | `FIREWORKS_API_KEY` | `https://api.fireworks.ai/inference/v1` | openai | static (22 models) |
+| Google AI | `google` | gateway | `GEMINI_API_KEY` | `https://generativelanguage.googleapis.com/v1beta/openai` | openai | static (18 models) |
+| Groq | `groq` | gateway | `GROQ_API_KEY` | `https://api.groq.com/openai/v1` | openai | static (9 models) |
 | HCNSec | `hcnsec` | gateway | `HCNSEC_API_KEY` | `https://api.hcnsec.cn/v1` | openai | static (7 models) |
 | Infron | `infron` | gateway | `INFRON_API_KEY` | `https://llm.onerouter.pro/v1` | openai | static (9 models) |
 | Intern InkStone | `intern` | gateway | `INTERN_API_KEY` | `https://discovery-api.intern-ai.org.cn/v1` | openai | static (10 models) |
 | KiosAPI | `kiosapi` | gateway | `KIOSAPI_API_KEY` | `https://kiosapi.com/v1` | openai | live |
+| Meta Llama API | `meta` | gateway | `META_MODEL_API_KEY` | `https://api.llama.com/llama` | openai | static (6 models) |
+| MiniMax | `minimax` | gateway | `MINIMAX_API_KEY` | `https://api.minimax.io/anthropic` | anthropic | static (7 models) |
 | Mistral AI | `mistral` | gateway | `MISTRAL_API_KEY` | `https://api.mistral.ai/v1` | openai | live |
+| Moonshot AI | `moonshotai` | gateway | `MOONSHOT_API_KEY` | `https://api.moonshot.ai/v1` | openai | static (4 models) |
 | Nous Research | `nous` | gateway | `NOUS_API_KEY` | `https://inference-api.nousresearch.com/v1` | openai | live |
 | Ollama | `ollama` | local | — | `http://localhost:11434/v1` | openai | none |
 | OrcaRouter | `orcarouter` | gateway | `ORCAROUTER_API_KEY` | `https://api.orcarouter.ai/v1` | openai | live |
+| Perplexity | `perplexity` | gateway | `PERPLEXITY_API_KEY` | `https://api.perplexity.ai` | openai | static (3 models) |
 | Tiarina Cloud | `tiarina` | gateway | `TIARINA_API_KEY` | `https://ai.tiarina.cloud/v1` | openai | static (19 models; evidence: console-verified 2026-10-12) |
+| Together AI | `togetherai` | gateway | `TOGETHER_API_KEY` | `https://api.together.xyz/v1` | openai | static (29 models) |
 | TokenBom | `tokenbom` | gateway | `TOKENBOM_API_KEY` | `https://tokenbom.com/v1` | openai | static (7 models) |
 | TokenHarbor | `tokenharbor` | gateway | `TOKENHARBOR_API_KEY` | `https://tokenharbor.ai/v1` | openai | static (68 models) |
 | UnoRouter | `unorouter` | gateway | `UNOROUTER_API_KEY` | `https://api.unorouter.com/v1` | openai | static (17 models) |
+| Venice AI | `venice` | gateway | `VENICE_API_KEY` | `https://api.venice.ai/api/v1` | openai | live |
 | Vercel AI Gateway | `vercel` | gateway | `AI_GATEWAY_API_KEY` | `https://ai-gateway.vercel.sh/v1` | openai | live |
+| xAI | `xai` | gateway | `XAI_API_KEY` | `https://api.x.ai/v1` | openai | static (7 models) |
 | xKiro | `xkiro` | gateway | `XKIRO_API_KEY` | `https://api.xkiro.com/v1` | multi (`XKIRO_PROTOCOLS`) | live |
+| Z.AI | `zai` | gateway | `ZHIPU_API_KEY` | `https://api.z.ai/api/paas/v4` | openai | static (14 models) |
 <!-- GENERATED:registry-table-end -->
 
 ### Notable providers

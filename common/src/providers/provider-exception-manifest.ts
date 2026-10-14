@@ -185,6 +185,29 @@ export const PROVIDER_EXCEPTION_MANIFEST: readonly ProviderExceptionManifestEntr
       ],
     },
     {
+      // FID-2026-1012-026: public ids-only catalog; windows come from the
+      // measured Tier 1 fallback rows because the endpoint publishes none.
+      providerId: 'deepinfra',
+      kinds: ['live-catalog'],
+      owner: 'cli/src/utils/openrouter-models/deepinfra.ts',
+      evidence: [
+        'cli/src/utils/openrouter-models/deepinfra.ts',
+        'cli/src/utils/openrouter-models/gateway.ts',
+        'common/src/constants/model-config/tier1.ts',
+      ],
+    },
+    {
+      // FID-2026-1012-026: public catalog with context_length on every
+      // measured row; runtime windows are authoritative.
+      providerId: 'venice',
+      kinds: ['live-catalog'],
+      owner: 'cli/src/utils/openrouter-models/venice.ts',
+      evidence: [
+        'cli/src/utils/openrouter-models/venice.ts',
+        'cli/src/utils/openrouter-models/gateway.ts',
+      ],
+    },
+    {
       providerId: 'tokenrouter',
       kinds: ['multi-protocol'],
       owner: 'common/src/constants/model-config/provider-protocols.ts',

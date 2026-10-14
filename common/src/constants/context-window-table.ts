@@ -20,6 +20,7 @@ import { CHATANYWHERE_CONTEXT_WINDOW_FALLBACKS } from './context-window-table-ch
 import { KIOSAPI_CONTEXT_WINDOW_FALLBACKS } from './context-window-table-kiosapi'
 import { TIARINA_CONTEXT_WINDOW_FALLBACKS } from './context-window-table-tiarina'
 import { TOKENHARBOR_CONTEXT_WINDOW_FALLBACKS } from './context-window-table-tokenharbor'
+import { TIER1_CONTEXT_WINDOWS } from './model-config/tier1'
 
 export const CONTEXT_WINDOW_FALLBACKS: ReadonlyMap<string, number> = new Map([
   // --- hcnsec (FID-2026-0913-001) ---
@@ -274,4 +275,5 @@ export const CONTEXT_WINDOW_FALLBACKS: ReadonlyMap<string, number> = new Map([
   // conservative minimum of two disagreeing >=2-row groups; the one no-row id
   // (glm-4.7-flash) is documented in the section file) ---
   ...TIARINA_CONTEXT_WINDOW_FALLBACKS,
+  ...TIER1_CONTEXT_WINDOWS,
 ])

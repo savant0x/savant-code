@@ -10,6 +10,41 @@
 > the v0.0.36 cut. Release notes are written here at cut time; nothing in this
 > section ships until then.
 
+## 2026-10-14 — Tier 1 first-party provider parity wave (FID-2026-1012-026)
+
+### Added
+
+- Registered the eighteen measured first-party labs — Anthropic, Google, xAI,
+  DeepSeek, Groq, Cohere, Together, Cerebras, DeepInfra, Perplexity, Alibaba,
+  Moonshot, Z.AI, MiniMax, Meta, Fireworks, Baseten and Venice — across the
+  provider registry, routing, setup, picker, favicon, window-coverage and
+  generated-documentation surfaces.
+- Added sixteen coding-harness-compatible static catalogs and dedicated live
+  catalog parsers for DeepInfra and Venice. The static source contains 288
+  curated chat/text rows with provider-specific window provenance; non-chat
+  modalities and incompatible task-only rows are not exposed by the picker.
+- Added the shared live-catalog filter and regression coverage so live catalogs
+  preserve coding-capable rows while excluding image, video, audio, embedding,
+  translation, OCR, ASR, TTS, safety, deep-research and multi-agent-only rows.
+
+### Changed
+
+- The 2026-10-14 `devoverride` records keyless endpoint/catalog accessibility
+  as acceptance evidence. No paid inference request or provider credit was
+  required; keyed inference remains the user's BYOK leg.
+- Regenerated the provider catalog census and synchronized the hand-maintained
+  provider documentation surfaces. The assembled parity census now contains
+  3,648 runtime rows, while the curated static Tier 1 source remains 288 rows.
+
+### Verification
+
+- Tier 1 and window-coverage suites: 10 pass / 0 fail; selected common
+  provider suites: 44 pass / 0 fail.
+- `bun run typecheck`, `providers:parity:check`, `window-coverage:check`,
+  `quality:report`, `lint:md`, `generate:provider-docs:check`, the declared
+  FID gates, and the refreshed FID receipt all pass. Scoped ESLint and
+  Prettier checks pass; `git diff --check` is clean.
+
 ## 2026-10-14 — refusal authority, guard audit and agent-attribution enforcement
 
 ### Fixed

@@ -6,9 +6,10 @@
  * POSITIONAL CONTRACT: `restResults` is the tail of the Promise.allSettled()
  * array after [openrouter, nvidia], in exactly this order: Nous, KiosAPI,
  * APInex, OpenAI, OrcaRouter, B.AI, Vercel, CleanApis, CodeCraft, Mistral,
- * xKiro, Apixo, AIHubMix, custom catalogs. Fulfilled values win; rejected
- * sources degrade to their per-provider cache — custom catalogs degrade to []
- * (lazily-built custom fetchers have no cache, FID-2026-0910-004 D10).
+ * xKiro, Apixo, AIHubMix, DeepInfra, Venice, custom catalogs. Fulfilled values
+ * win; rejected sources degrade to their per-provider cache — custom catalogs
+ * degrade to [] (lazily-built custom fetchers have no cache, FID-2026-0910-004
+ * D10).
  *
  * FID-2026-1007-006: the fan-out array itself also lives here. The array and
  * the ladder are one contract, and splitting them was how the 300-line cap
@@ -21,6 +22,7 @@ import { fetchBaiModels, getCachedBaiModels } from './bai'
 import { fetchCleanApisModels, getCachedCleanApisModels } from './cleanapis'
 import { fetchCodecraftModels, getCachedCodecraftModels } from './codecraft'
 import { fetchAllCustomModels } from './custom-catalog'
+import { fetchDeepInfraModels, getCachedDeepInfraModels } from './deepinfra'
 import { fetchKiosapiModels, getCachedKiosapiModels } from './kiosapi'
 import { fetchMistralModels, getCachedMistralModels } from './mistral'
 import { fetchNousModels, getCachedNousModels } from './nous'
@@ -28,6 +30,7 @@ import { fetchNvidiaModels, getCachedNvidiaModels } from './nvidia'
 import { fetchOpenAiModels, getCachedOpenAiModels } from './openai'
 import { fetchOpenRouterModels, getCachedOpenRouterModels } from './openrouter'
 import { fetchOrcarouterModels, getCachedOrcarouterModels } from './orcarouter'
+import { fetchVeniceModels, getCachedVeniceModels } from './venice'
 import { fetchVercelModels, getCachedVercelModels } from './vercel'
 import { fetchXkiroModels, getCachedXkiroModels } from './xkiro'
 
@@ -52,6 +55,8 @@ export interface GatewayLiveCatalogs {
   xkiroModels: OpenRouterModel[]
   apixoModels: OpenRouterModel[]
   aihubmixModels: OpenRouterModel[]
+  deepinfraModels: OpenRouterModel[]
+  veniceModels: OpenRouterModel[]
   customModels: OpenRouterModel[]
 }
 
@@ -83,6 +88,8 @@ export async function fetchGatewayLiveCatalogs(forceRefresh: boolean): Promise<{
     // custom-catalogs tail below must stay last (see the positional contract).
     fetchApixoModels(forceRefresh),
     fetchAihubmixModels(forceRefresh),
+    fetchDeepInfraModels(forceRefresh),
+    fetchVeniceModels(forceRefresh),
     // FID-2026-0910-004 Step 9 remainder: custom catalogs (live + inline)
     // merge here; per-provider failures degrade to [] (D10 ladder).
     fetchAllCustomModels(forceRefresh),
@@ -109,6 +116,8 @@ export function resolveGatewayLiveCatalogs(
     xkiroResult,
     apixoResult,
     aihubmixResult,
+    deepinfraResult,
+    veniceResult,
     customResult,
   ] = restResults
 
@@ -175,5 +184,13 @@ export function resolveGatewayLiveCatalogs(
       aihubmixResult?.status === 'fulfilled'
         ? aihubmixResult.value
         : getCachedAihubmixModels(),
+    deepinfraModels:
+      deepinfraResult?.status === 'fulfilled'
+        ? deepinfraResult.value
+        : getCachedDeepInfraModels(),
+    veniceModels:
+      veniceResult?.status === 'fulfilled'
+        ? veniceResult.value
+        : getCachedVeniceModels(),
   }
 }

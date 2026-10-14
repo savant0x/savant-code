@@ -98,6 +98,24 @@ Or configure one directly:
 | ChatAnywhere | `/provider chatanywhere` | `CHATANYWHERE_API_KEY` (OpenAI-compatible gateway on a static 27-model chat roster at `https://api.chatanywhere.tech/v1`; free-key tier) |
 | Tiarina Cloud | `/provider tiarina` | `TIARINA_API_KEY` (OpenAI-compatible gateway on a static 19-model chat roster at `https://ai.tiarina.cloud/v1`; free-key tier) |
 | Cloudflare Workers AI | `/provider cloudflare` | `CLOUDFLARE_API_TOKEN` + `CLOUDFLARE_ACCOUNT_ID` (two credentials — the `/provider` flow prompts for the token, then the account id; env vars take precedence; switch via `/model cloudflare/...`, e.g. `/model cloudflare/meta/llama-3.3-70b-instruct-fp8-fast`) |
+| Alibaba Cloud | `/provider alibaba` | `DASHSCOPE_API_KEY` |
+| Anthropic | `/provider anthropic` | `ANTHROPIC_API_KEY` |
+| Baseten | `/provider baseten` | `BASETEN_API_KEY` |
+| Cerebras | `/provider cerebras` | `CEREBRAS_API_KEY` |
+| Cohere | `/provider cohere` | `COHERE_API_KEY` |
+| DeepInfra | `/provider deepinfra` | `DEEPINFRA_API_KEY` (public live model catalog; inference requires a key) |
+| DeepSeek | `/provider deepseek` | `DEEPSEEK_API_KEY` |
+| Fireworks AI | `/provider fireworks-ai` | `FIREWORKS_API_KEY` |
+| Google AI | `/provider google` | `GEMINI_API_KEY` |
+| Groq | `/provider groq` | `GROQ_API_KEY` |
+| Meta Llama API | `/provider meta` | `META_MODEL_API_KEY` |
+| MiniMax | `/provider minimax` | `MINIMAX_API_KEY` |
+| Moonshot AI | `/provider moonshotai` | `MOONSHOT_API_KEY` |
+| Perplexity | `/provider perplexity` | `PERPLEXITY_API_KEY` |
+| Together AI | `/provider togetherai` | `TOGETHER_API_KEY` |
+| Venice AI | `/provider venice` | `VENICE_API_KEY` (public live model catalog; inference requires a key) |
+| xAI | `/provider xai` | `XAI_API_KEY` |
+| Z.AI | `/provider zai` | `ZHIPU_API_KEY` |
 
 You can also define **your own custom providers**: `/provider add` starts a
 guided wizard (id, label, base URL, wire protocol, key env var, inline model

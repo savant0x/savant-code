@@ -213,6 +213,24 @@ Works with multiple inference providers:
 - **xKiro** — Public live chat catalog (`XKIRO_API_KEY`; `https://api.xkiro.com/v1`). Anthropic model IDs use Messages; other IDs use OpenAI chat. Vendor namespaces remain intact. Catalog tiers describe requirements; paid-model access depends on the account.
 - **ChatAnywhere** — OpenAI-compatible hosted gateway on a static 27-model chat roster (`CHATANYWHERE_API_KEY`; `https://api.chatanywhere.tech/v1`; free-key tier: 10,000 points/day per the vendor's GPT_API_free docs)
 - **Tiarina Cloud** — OpenAI-compatible hosted gateway on a static 19-model chat roster (`TIARINA_API_KEY`; `https://ai.tiarina.cloud/v1`; free-key tier)
+- **Alibaba Cloud** — OpenAI-compatible hosted gateway with a static measured catalog (`DASHSCOPE_API_KEY`)
+- **Anthropic** — Anthropic Messages gateway with a static measured catalog (`ANTHROPIC_API_KEY`)
+- **Baseten** — OpenAI-compatible hosted gateway with a static measured catalog (`BASETEN_API_KEY`)
+- **Cerebras** — OpenAI-compatible hosted gateway with a static measured catalog (`CEREBRAS_API_KEY`)
+- **Cohere** — OpenAI-compatible hosted gateway with a static measured catalog (`COHERE_API_KEY`)
+- **DeepInfra** — OpenAI-compatible public live model catalog with fallback windows (`DEEPINFRA_API_KEY`)
+- **DeepSeek** — OpenAI-compatible hosted gateway with a static measured catalog (`DEEPSEEK_API_KEY`)
+- **Fireworks AI** — OpenAI-compatible hosted gateway with a static measured catalog (`FIREWORKS_API_KEY`)
+- **Google AI** — OpenAI-compatible hosted gateway with a static measured catalog (`GEMINI_API_KEY`)
+- **Groq** — OpenAI-compatible hosted gateway with a static measured catalog (`GROQ_API_KEY`)
+- **Meta Llama API** — OpenAI-compatible hosted gateway with a static measured catalog (`META_MODEL_API_KEY`)
+- **MiniMax** — Anthropic-compatible hosted gateway with a static measured catalog (`MINIMAX_API_KEY`)
+- **Moonshot AI** — OpenAI-compatible hosted gateway with a static measured catalog (`MOONSHOT_API_KEY`)
+- **Perplexity** — OpenAI-compatible hosted gateway with a static measured catalog (`PERPLEXITY_API_KEY`)
+- **Together AI** — OpenAI-compatible hosted gateway with a static measured catalog (`TOGETHER_API_KEY`)
+- **Venice AI** — OpenAI-compatible public live model catalog with runtime windows (`VENICE_API_KEY`)
+- **xAI** — OpenAI-compatible hosted gateway with a static measured catalog (`XAI_API_KEY`)
+- **Z.AI** — OpenAI-compatible hosted gateway with a static measured catalog (`ZHIPU_API_KEY`)
 - **OpenAI** — Platform API keys via `/provider openai` or `OPENAI_API_KEY`; Responses API at `https://api.openai.com/v1`, with an authenticated live catalog
 - **NVIDIA NIM** — NVIDIA-hosted inference
 - **CommandCode** — OpenAI-compatible hosted inference

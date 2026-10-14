@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-1012-026-tier1-provider-parity-wave.md`
 **ID:** FID-2026-1012-026
 **Severity:** medium
-**Status:** converged
+**Status:** fixed
 **Created:** 2026-10-12 21:55
 **Automation level:** 3
 **YAGNI-Compliance:** Verified
@@ -12,7 +12,7 @@
 
 ## Summary
 
-Savant's registry holds **27 providers**; the kilocode-main surface (the models.dev catalog it consumes) holds
+At discovery, Savant's registry held **27 providers**; the kilocode-main surface (the models.dev catalog it consumes) held
 **227**, and the direct id overlap is **8**. Absent are the eighteen first-party labs users ask for by name —
 Anthropic, Google, xAI, DeepSeek, Groq, Cohere, Together, Cerebras, DeepInfra, Perplexity, Alibaba, Moonshot,
 Z.AI, MiniMax, Meta, Fireworks, Baseten, Venice. A keyless sweep
@@ -22,14 +22,21 @@ fields), **14 authenticate** (401/403 keyless — the expected signal for a firs
 **2 expose no public path** (google, perplexity — 404). This record converges the plan to add all eighteen under
 `docs/adding-a-provider.md`, every field derived from the measured shape. Under the operator ruling in `SCOPE.md`
 (2026-10-12) the deliverable is registry expansion — users bring their own keys — so acceptance is
-surface-verified and the inference leg is deferred to the user's credential. No source is changed by this record.
+surface-verified and the live inference request is not executed without the user's credential. The source
+implementation is now present and covered by the gates below.
+
+Developer override (`devoverride`, 2026-10-14): Tier 1 static catalogs are intentionally limited to coding-harness
+compatible chat/text rows. Image, video, audio, embedding, translation, OCR, ASR, TTS, safety, deep-research, and
+multi-agent-only rows are excluded even when the upstream snapshot publishes them. Keyless endpoint/catalog
+accessibility is the acceptance evidence; no paid inference request or provider credit is required, and live inference
+remains the user's BYOK leg.
 
 ## Environment
 
 - **OS:** Windows 11 (win32) · **Runtime:** TypeScript 5.5.4, Bun 1.3.14
-- **Commit/State:** `main` @ `653db58d`; working tree carries the uncommitted parity probe round
+- **Commit/State:** `main` @ `653db58d`; working tree carries the uncommitted parity implementation and verification round
 - **Instruments:** the two checked-in probes under `scripts/providers/audit-probes/`; the models.dev
-  `api.json?type=all` snapshot fetched 2026-10-12 (per-model ids, limits, costs)
+  `api.json?type=all` snapshot fetched 2026-10-14 (per-model ids, limits, costs)
 
 ## Detailed Description
 
@@ -48,7 +55,7 @@ All eighteen are registered with every field derived from a measured surface: ca
 vendor publishes, protocol matching the wire shape, id transform matching the observed id conventions, window
 disposition matching what was observed, exception kinds exactly those each shape implies. Derived surfaces
 (routing, picker, readiness, favicons, generated docs) regenerate from the registry alone, the closed-world pin
-widens to forty-five, and the runbook's battery passes. A user who adds a key gets a working provider; a user
+widens to forty-seven, and the runbook's battery passes. A user who adds a key gets a working provider; a user
 without one sees the roster and the templated credential error, never a silent failure.
 
 ### Root Cause
@@ -70,8 +77,8 @@ key-gated: 14 — anthropic, xai, deepseek, groq, cohere, togetherai, alibaba, m
 no-surface: 2 — google (404, the OpenAI-compatible /models path does not exist), perplexity (404, no public list)
 ```
 
-Roster sizes from the models.dev snapshot (2026-10-12), every model carrying `limit.context`, `limit.output` and
-per-token `cost`: anthropic 17, google 39, xai 13, deepseek 4, groq 16, cohere 17, togetherai 29, cerebras 2,
+Raw roster sizes from the models.dev snapshot (2026-10-14), every model carrying `limit.context`, `limit.output` and
+per-token `cost`: anthropic 17, google 40, xai 13, deepseek 4, groq 16, cohere 17, togetherai 29, cerebras 2,
 deepinfra 177 (live), perplexity 4, alibaba 59, moonshotai 4, zai 18, minimax 7, meta 6, fireworks-ai 22,
 baseten 24, venice 130 (live).
 
@@ -79,16 +86,16 @@ baseten 24, venice 130 (live).
 
 ### Affected Components
 
-- `common/src/providers/registry-partitioned-*.ts` — eighteen entries (a fourth partition is the likely outcome;
+- `common/src/providers/registry-partitioned-*.ts` — eighteen entries (partitions four and five contain the wave;
   the runbook's 300-line rule governs)
 - `common/src/constants/model-config/` + `common/src/providers/model-catalogs.ts` — sixteen static model maps
-- `common/src/constants/context-window-table*.ts` — fallback rows for the sixteen static providers and deepinfra
-  (~458 rows) under the sourcing rule below
+- `common/src/constants/context-window-table*.ts` — curated fallback rows for the sixteen static providers and
+  DeepInfra (288 rows) under the sourcing rule below
 - `common/src/constants/window-coverage-register.ts` — eighteen entries (fail-closed gate)
 - `common/src/providers/provider-exception-manifest.ts` — two `live-catalog` entries (venice, deepinfra)
 - `cli/src/utils/openrouter-models/{venice,deepinfra}.ts`, the `gateway.ts` fan-out, the `gateway-live-results.ts`
   ladder insertion (before the custom-catalogs tail), the cache-reset seam, `static-catalogs.ts` name maps
-- `common/src/providers/__tests__/provider-registry.test.ts:26` — the closed-world pin widens 27 → 45
+- `common/src/providers/__tests__/provider-registry.test.ts:26` — the closed-world pin widens 27 → 47
 - Generated surfaces (`.env.example`, `README.md`, `cli/release/README.md`), the hand surfaces the drift check
   names, `docs/providers.md`, the runbook's three additive test files, and the ladder pin
 
@@ -134,8 +141,8 @@ model protocol for Google's native path is explicitly future work.
 | `venice` | 200, 130 rows, `context_length` 130/130 | live | openai | strip | runtime-published | live-catalog |
 | `deepinfra` | 200, 177 rows, no window/pricing | live | openai | strip (org kept) | table-section | live-catalog |
 | `anthropic` (17), `minimax` (7) | 401 | static | anthropic | strip | table-section | — |
-| `xai` (13), `deepseek` (4), `groq` (16), `cohere` (17), `togetherai` (29), `cerebras` (2), `alibaba` (59), `moonshotai` (4), `zai` (18), `meta` (6), `fireworks-ai` (22), `baseten` (24) | 401/403 | static | openai | strip | table-section | — |
-| `google` (39), `perplexity` (4) | 404 | static | openai | strip | table-section | — |
+| `xai` (7), `deepseek` (3), `groq` (9), `cohere` (13), `togetherai` (29), `cerebras` (2), `alibaba` (40), `moonshotai` (4), `zai` (14), `meta` (6), `fireworks-ai` (22), `baseten` (24) | 401/403 | static | openai | strip | table-section | — |
+| `google` (18), `perplexity` (3) | 404 | static | openai | strip | table-section | — |
 
 Credential env vars, all eighteen verified collision-free against the twenty-seven existing:
 `ANTHROPIC_API_KEY`, `GEMINI_API_KEY`, `XAI_API_KEY`, `DEEPSEEK_API_KEY`, `GROQ_API_KEY`, `COHERE_API_KEY`,
@@ -147,23 +154,23 @@ Credential env vars, all eighteen verified collision-free against the twenty-sev
 
 1. **Re-measure.** Re-run the sweep and record the output verbatim; the roster is a live surface (the snapshot
    already drifted once against Kilo's) and the register notes cite the probe date.
-2. **Registry entries (18).** One typed entry per provider in a new `registry-partitioned-4.ts` (the runbook's
-   300-line rule: eighteen entries will not fit existing headroom), spread in `registry.ts`, order preserved.
+2. **Registry entries (18).** Typed entries in the next available partitions (`registry-partitioned-4.ts` and
+   `registry-partitioned-5.ts`, under the runbook's 300-line rule), spread in `registry.ts`, order preserved.
 3. **Static catalogs (16).** Model maps with the `{provider}/` prefix on every id, registered in
    `MODEL_CATALOGS`, referenced as `catalog: { source: 'static', modelsRef }`; name maps in `static-catalogs.ts`.
 4. **Live wrappers (2).** `venice.ts` and `deepinfra.ts` on `createLiveCatalogFetcher`, URLs via
    `deriveLiveCatalogUrl`, parsers written against the measured envelopes (probe the shape before the parser),
    no resolver.
-5. **Fan-out and ladder (2).** Both fetches into `gateway.ts`'s `Promise.allSettled` and the cache resets; both
-   into `gateway-live-results.ts` immediately before the custom-catalogs tail (the positional contract), pinned
-   by a test asserting each catalog resolves under its own provider name.
+5. **Fan-out and ladder (2).** Both fetches enter `gateway-live-results.ts`'s `Promise.allSettled` array, their
+   cache resets enter `gateway.ts`, and their results enter the ladder immediately before the custom-catalogs tail
+   (the positional contract), pinned by a test asserting each catalog resolves under its own provider name.
 6. **Exception manifest (2).** One `live-catalog` entry each for venice and deepinfra, owner and evidence paths
    existence-checked; the sixteen static entries derive zero kinds and must have none.
 7. **Window coverage (18).** Register entries per the table; `table-section` providers get their
    `context-window-table-*.ts` seam under the consensus rule; `no-runtime-rows` is used nowhere in this wave —
    every static provider has checked-in rows and both live providers were observed with rows.
 8. **Pins and derived surfaces.** Widen the closed-world pin at `provider-registry.test.ts:26` from twenty-seven
-   ids to forty-five; let failing tests name any other count pins; regenerate with `generate:provider-docs`,
+   ids to forty-seven; let failing tests name any other count pins; regenerate with `generate:provider-docs`,
    reconcile every hand surface its drift check names, update `docs/providers.md` by hand.
 9. **Tests (additive).** The runbook's three files extended for the wave, plus the ladder pin and the
    window-truth suite pattern for the new seams.
@@ -181,14 +188,47 @@ The runbook's battery from the workspace roots it names: `cd common && bun test 
 CLI catalog seams; the SDK free-mode routing leg; `generate:provider-docs:check`; `window-coverage:check`;
 `providers:parity`; the four affected workspace typechecks; `bun x eslint . --max-warnings 0`;
 `bun run lint:md`; `bunx prettier --check .`. Acceptance evidence per entry is the sweep verdict plus the
-register note; the inference leg is deferred to the user's credential per the SCOPE.md ruling, and that deferral
-is stated in the register notes rather than left implicit.
+register note; the live inference request is not executed without the user's credential, per the SCOPE.md ruling.
 
 ## Verification Gates
 
-This record is **pre-implementation** (`Status: converged`): a declared gate must point at an artifact that
-exists, and this wave's artifacts do not exist yet, so no gate is declared here. The implementation pass declares
-and stamps the gates named in §Verification against the artifacts step 9 creates.
+- gate: test common/src/providers/__tests__/provider-registry.test.ts
+- gate: test common/src/providers/__tests__/provider-registry-setup.test.ts
+- gate: test common/src/providers/__tests__/provider-registry-gateways.test.ts
+- gate: test common/src/providers/__tests__/provider-audit.test.ts
+- gate: test common/src/providers/__tests__/provider-contract-pins.test.ts
+- gate: test common/src/providers/__tests__/validate-provider-registry.test.ts
+- gate: test cli/src/utils/openrouter-models/__tests__/tier1-provider-catalog.test.ts
+- gate: test cli/src/utils/openrouter-models/__tests__/window-coverage-register.test.ts
+- gate: test sdk/src/impl/__tests__/model-provider-free-mode.test.ts
+- gate: typecheck common
+- gate: typecheck cli
+- gate: typecheck sdk
+- gate: typecheck packages/agent-runtime
+- gate: probe scripts/providers/audit-probes/parity-tier1-catalog-probe.ts
+- gate: probe scripts/window-coverage-check.ts
+- gate: quality
+
+### Verification Receipt
+
+- fingerprint: sha256:2bef430b54f0fd81b396a9288b9986fb32389ae43a3b2d8d11b9b8a3383a3ce2
+- verified: 2026-10-14T22:13:35.863Z
+- test common/src/providers/__tests__/provider-registry.test.ts: exit 0
+- test common/src/providers/__tests__/provider-registry-setup.test.ts: exit 0
+- test common/src/providers/__tests__/provider-registry-gateways.test.ts: exit 0
+- test common/src/providers/__tests__/provider-audit.test.ts: exit 0
+- test common/src/providers/__tests__/provider-contract-pins.test.ts: exit 0
+- test common/src/providers/__tests__/validate-provider-registry.test.ts: exit 0
+- test cli/src/utils/openrouter-models/__tests__/tier1-provider-catalog.test.ts: exit 0
+- test cli/src/utils/openrouter-models/__tests__/window-coverage-register.test.ts: exit 0
+- test sdk/src/impl/__tests__/model-provider-free-mode.test.ts: exit 0
+- typecheck common: exit 0
+- typecheck cli: exit 0
+- typecheck sdk: exit 0
+- typecheck packages/agent-runtime: exit 0
+- probe scripts/providers/audit-probes/parity-tier1-catalog-probe.ts: exit 0
+- probe scripts/window-coverage-check.ts: exit 0
+- quality: exit 0
 
 ## Perfection Loop
 
@@ -198,7 +238,7 @@ and stamps the gates named in §Verification against the artifacts step 9 create
   temptation. (2) The shared fetcher sends Bearer only (`live-catalog.ts:75-79`), so a `live` anthropic or
   minimax catalog would 401 even keyed — discovered mid-session, not assumed. (3) Window provenance: the snapshot
   is third-party, and the repo's rule prefers vendor publication plus cross-vote. (4) The closed-world pin
-  (`provider-registry.test.ts:26`) lists twenty-seven ids and must widen to forty-five. (5) Env-var uniqueness
+  (`provider-registry.test.ts:26`) lists twenty-seven ids and must widen to forty-seven. (5) Env-var uniqueness
   across eighteen new vars was unverified. (6) deepinfra publishes no windows, so `runtime-published` is wrong
   for it. (7) Scale: sixteen static catalogs (~281 model rows) plus ~458 window rows needed a sequencing
   answer. (8) The acceptance model under the ruling was not yet written where the implementation pass could
@@ -209,7 +249,8 @@ and stamps the gates named in §Verification against the artifacts step 9 create
   file and line; the env-var check run (zero collisions); deepinfra on `table-section`; provider-by-provider
   sequencing with venice first; and the acceptance model in step 11 and the SCOPE.md ruling.
 - **AUDIT:** every claim verified against the tree with tool output (pasted under Code Verification Evidence):
-  the registry holds 27 entries; the pin is the explicit sorted list at `provider-registry.test.ts:26-56`; the
+  the registry holds the pre-wave 27 entries; the pin is the explicit sorted list at
+  `provider-registry.test.ts:26-56`; the
   register's five dispositions and `NO_PUBLISH_GATEWAY_IDS` are as cited; the fetcher's auth is Bearer-only; the
   manifest's kinds in use are `live-catalog` (11 owners), `credential-resolver`, `dual-protocol`,
   `multi-protocol`, `extra-credentials` + `id-rewrite`, `local-runtime` + `setup-exclusion`; the ladder's
@@ -250,16 +291,31 @@ and stamps the gates named in §Verification against the artifacts step 9 create
 
 ### Implementation Evidence (REQUIRED for `closed`)
 
-> Pre-implementation record. Nothing below is claimed; the implementation pass fills this section.
+The implementation and surface evidence are present in the current tree.
 
-- [ ] **Commit SHA:** — · **File:line ranges:** — · **Gate output:** — · **Reproducibility:** —
-- [ ] **Step statuses:** all eleven steps pending
+- [x] **Step 1 — Re-measure:** implemented; the checked-in Tier 1 probe and dated parity review carry the keyless verdicts.
+- [x] **Step 2 — Registry entries:** implemented in `registry-partitioned-4.ts`, `registry-partitioned-5.ts`, and `registry.ts`.
+- [x] **Step 3 — Static catalogs:** implemented in `model-config/tier1*.ts`, `model-catalogs.ts`, and `static-catalogs.ts`.
+- [x] **Step 4 — Live wrappers:** implemented in `deepinfra.ts` and `venice.ts` using registry-derived URLs and
+      the shared fetcher.
+- [x] **Step 5 — Fan-out and ladder:** implemented in `gateway-live-results.ts`, `gateway.ts`, and `gateway-catalog-merge.ts`.
+- [x] **Step 6 — Exception manifest:** implemented with two live-catalog owners and evidence paths.
+- [x] **Step 7 — Window coverage:** implemented in `window-coverage-register.ts` and `context-window-table.ts`.
+- [x] **Step 8 — Pins and derived surfaces:** implemented; registry-count pins and generated/hand-maintained
+      surfaces are synchronized.
+- [x] **Step 9 — Tests:** implemented in the registry, catalog, window-coverage, routing, and Tier 1 ladder suites.
+- [x] **Step 10 — Verification battery:** declared below; non-inference gates are run without purchasing credits.
+- [x] **Step 11 — Surface acceptance:** implemented under the operator's BYOK ruling; the live inference request
+      is not executed without the user's credential.
+- [ ] **Live inference request:** blocked — no user credential was supplied for the eighteen first-party labs; no
+      credential or purchase is fabricated.
+- [ ] **Commit SHA:** — · **File:line ranges:** implementation paths above · **Gate output:** recorded by the
+      verification receipt below.
 
 ### Code Verification Evidence
 
-- [x] The registry holds 27 entries; the closed-world pin is the explicit sorted list at
-      `common/src/providers/__tests__/provider-registry.test.ts:26-56` ("covers all twenty-seven current
-      providers") — widening to 45 is mechanical and named in step 8.
+- [x] The registry holds the expanded first-party entries; the closed-world pin is the explicit sorted list at
+      `common/src/providers/__tests__/provider-registry.test.ts:26-75` ("covers all forty-seven current providers").
 - [x] The register's dispositions are exactly `table-section | runtime-published | runtime-partial |
       no-runtime-rows | local`; `NO_PUBLISH_GATEWAY_IDS` lists apinex, bai, chatanywhere, kiosapi, tiarina; the
       fail-closed test requires an entry per registry provider — every disposition in the table is from that set.
@@ -272,12 +328,13 @@ and stamps the gates named in §Verification against the artifacts step 9 create
 - [x] The ladder's positional contract and custom-catalogs tail are real (`gateway-live-results.ts:6,78`), so
       step 5's insertion rule is the documented one; the four gate scripts exist in `package.json`
       (`providers:parity`, `providers:parity:check`, `window-coverage:check`, `generate:provider-docs(:check)`).
-- [x] The eighteen proposed env vars collide with none of the twenty-seven existing (checked mechanically
+- [x] The eighteen proposed env vars collide with none of the twenty-seven pre-wave entries (checked mechanically
       against the partitions).
 - [x] The sweep output in §Evidence is the checked-in probe's verbose output from 2026-10-12; the Kilo
       round-trip is the demonstrated pattern for a keyed leg.
-- [x] **Not yet true, and deliberately not claimed:** any registry entry existing, any gate passing, any keyed
-      round-trip for these eighteen, this record's receipt.
+- [x] **Current-tree implementation is present:** registry entries, catalog builders, live wrappers, fan-out,
+      coverage, manifest, tests, and generated surfaces exist in the paths above.
+- [x] **Not claimed:** a live inference response from each first-party provider without the user's credential.
 
 ### Loop 2 — Independent audit and self-correction
 
@@ -307,12 +364,12 @@ and stamps the gates named in §Verification against the artifacts step 9 create
   pass must land provider-by-provider with gates run per provider, not once at the end.
 - **GREEN:** both are already properties of the plan (step 1's re-measure, the per-provider step structure, the
   sequencing note); no further change.
-- **AUDIT:** the record's claims are those verified in Loop 1 and re-verified in Loop 2; the document passes the
-  repo's markdown gates; no source file is touched by this record.
-- **ADVERSARIAL:** the last challenge — "is `converged` honest with all steps pending?" — is answered by the
-  template's own definition: `converged` is the pre-implementation status, Implementation Evidence is explicitly
-  unfilled, and §Resolution states no source change. The status flips when the pass resolves the steps.
-- **CHANGE DELTA:** 0% — no changes this pass; the loop converged.
+- **AUDIT:** the plan claims were verified in Loops 1 and 2; the implementation now also has the registry,
+  catalog, ladder, coverage, documentation, and quality gates declared above.
+- **ADVERSARIAL:** the implementation follows the live runbook: the registry is authoritative, static catalogs
+  derive from common maps, live catalogs use registry-derived URLs and shared fetcher seams, the positional ladder
+  is pinned, and generated documentation is checked.
+- **CHANGE DELTA:** implementation and verification evidence were added after the plan converged.
 
 ### Authoring-history note (oscillation, recorded per the circuit breaker)
 
@@ -325,14 +382,16 @@ record's substance is the Loop 1–3 passes above.
 
 ## Resolution
 
-**Not implemented — `Status: converged` (pre-implementation).** This record converged the plan to add the
-eighteen measured first-party labs: the three-way catalog split by verdict, the per-provider field decisions, the
-sourcing rule for static rows, the pin widening, and the acceptance model under the operator's
-registry-expansion ruling. It made no source change. The implementation pass resolves the eleven steps, runs the
-runbook's battery per provider, and flips the status as the steps land.
+**Implemented — `Status: fixed`.** The eighteen measured first-party labs are
+registered, their static catalogs and fallback windows share the measured
+models.dev row source, DeepInfra and Venice use dedicated live parsers, the
+positional fan-out is wired, and generated plus hand-maintained provider
+surfaces are synchronized. The keyed inference leg remains an explicit
+credential boundary under the operator's BYOK ruling.
 
-- **Measured basis:** `scripts/providers/audit-probes/parity-tier1-catalog-probe.ts` (2026-10-12) and
-  `docs/design/provider-parity-review-2026-10-12.md`.
+- **Measured basis:** `scripts/providers/audit-probes/parity-tier1-catalog-probe.ts` (2026-10-12),
+  `docs/design/provider-parity-review-2026-10-12.md`, and the models.dev snapshot used by
+  `common/src/constants/model-config/tier1.ts` (2026-10-14).
 - **Governing runbook:** `docs/adding-a-provider.md` (read 0-EOF before this record was written).
 - **Operator ruling:** `SCOPE.md` → Parity-gateway-probes (2026-10-12).
 
