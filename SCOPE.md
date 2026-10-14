@@ -168,6 +168,30 @@ and the 2026-10-14 FID-folder audit report. The additions remain active in
       and the second would renumber live items. Presented, not decided unilaterally.
       **Automation level: 1.**
 
+- [ ] **FID-2026-1014-001. The read-only guard refused legitimate reads and
+      still carried a closed security FID's unfixed waiver.** Operator direction 2026-10-14
+      ("Audit whether any current refusal rule is too broad — a legitimate read-only command the
+      guard rejects — and fix what you find", plus the standing position that a harness must not
+      refuse the operator: Q23). Measured with a 56-command read-only corpus: **5 false refusals**
+      (the POSIX null sink `2>/dev/null` in three spellings, stdin redirection `< file` in two)
+      while the EHEL classifier already treats `/dev/null` as a non-mutation target. Fixed
+      (strip-then-rescan; corpus false positives now **0**). The same pass found the inverse: the
+      HEAD module carried the **pre-SEC-3 whole-segment waiver**, accepting
+      `cat .env > /tmp/exfil.txt 2>&1`, `echo $(whoami) 2>&1` and `ls; rm x 2>&1` through a tool
+      that is deliberately not phase-gated. Restored to spec and its promised suite delivered.
+      **Four under-breadth holes are reported, not closed** (`git push`, `git clean -fd`,
+      `git stash pop`, `find | xargs rm` are allowed) — closing them means adding refusals, which
+      is the operator's call (Q23). **Automation level: 3.**
+
+- [ ] **FID-2026-1014-002. A closed record's declared fix and promised suite were never in the
+      tree.** Found while auditing FID-2026-1014-001. Archived `FID-2026-0919-010` (SEC-3) closes
+      with steps `DONE` and a 4/4 receipt, but **no commit ever contained its implementation or its
+      named suite** (`git log --all` over the `*redirect-waiver*` path shows only the record's add
+      and its archive move). Census over all 569 records: **33 name at least one test path that
+      does not resolve** (49 distinct paths) — a triage lead, not a verdict, because a rename looks
+      like an absence. **Automation level: 2** (the census is automatable; rewriting historical
+      records is not permitted and triage is the operator's — Q24).
+
 - [ ] **T122. Savant-Free removal.** Operator direction 2026-10-12 (Q12/Q5):
       the savant-free flag/feature is to be removed rather than repaired. The
       known failing integration remains open under the removal decision, and the
@@ -391,5 +415,12 @@ and its remaining operator/external-input holds stay active.
   gateway-side; the local write surface is the probe scripts — verified
   2026-10-02: no local catalog directory exists)
 - T122: (no write surface — operator-owned)
+- FID-2026-1014-001: `packages/agent-runtime/src/tools/handlers/tool/readonly-command-validation.ts`,
+  `packages/agent-runtime/src/tools/handlers/tool/run-readonly-command.ts` (consumer),
+  `packages/agent-runtime/src/tools/handlers/__tests__/run-readonly-command.test.ts`,
+  `packages/agent-runtime/src/tools/handlers/__tests__/run-readonly-redirect-waiver.test.ts`,
+  `packages/agent-runtime/src/echo/enforcement/helpers.ts`
+- FID-2026-1014-002: `dev/fids/FID-2026-1014-002-*.md`,
+  `dev/scratchpad/active/fid-artifact-census.ts` (local-only, gitignored)
 - T186: (no write surface — blocked on the T122 savant-free removal)
 - T187: (no write surface — operator-owned skills surface)

@@ -5,12 +5,14 @@ operator decision, implementation, runtime review, or closure evidence.
 
 ## Current active FIDs
 
-The 2026-10-14 resumption leaves ten active records. The four QOL waves and
+The 2026-10-14 resumption leaves twelve active records. The four QOL waves and
 their coordinator are committed in `b959019e`, closed and archived with 52/52
 passing child gates. The failure-class lanes require
 investigated causes and qualified production observation. Provider parity is
 unimplemented, Cloudflare needs external account configuration, and the
-remaining master awaits child closure. These ten records are not eligible for archival yet.
+remaining master awaits child closure. The guard-audit pair opened later on
+2026-10-14 (`-1014-001` verified, `-1014-002` analyzed) carries its own open
+decisions in `dev/operator-decisions.md` Q23/Q24. None of these twelve records is eligible for archival yet.
 
 Evidence and per-record next actions are in the
 [audit report](../session-summaries/2026-10-14-fid-folder-ground-truth-audit.md).
@@ -27,6 +29,8 @@ Evidence and per-record next actions are in the
 | `FID-2026-1012-024` | converged | Instrument is implemented; underlying repair and production observation remain open. |
 | `FID-2026-1012-026` | converged | Provider-parity implementation has not started. |
 | `FID-2026-1013-005` | analyzed | Cloudflare catalog is blocked on the account ID and API token. |
+| `FID-2026-1014-001` | verified | Guard over-breadth fixed and SEC-3 restored; the four under-breadth holes await the Q23 ruling. |
+| `FID-2026-1014-002` | analyzed | Census triage and the artifact-existence gate await the Q24 ruling. |
 
 The active queue is intentionally non-empty under the FID closure contract.
 Completed records are moved to [`archive/`](archive/) with a CHANGELOG entry and

@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'bun:test'
 
+import {
+  PERMITTED_REDIRECT_REGEX,
+  isReadonlyCommand,
+} from '../tool/readonly-command-validation'
 import { handleRunReadonlyCommand } from '../tool/run-readonly-command'
 
 import type {
@@ -232,5 +236,59 @@ describe('handleRunReadonlyCommand', () => {
     const value = getJsonValue(result.output)
     expect(value.exitCode).toBe(1)
     expect(value.stderr).toContain('run_readonly_command rejected')
+  })
+})
+
+// FID-2026-1014-001 Loop 1: an audit corpus of legitimate read-only commands
+// measured five false refusals — the POSIX null sink (`2>/dev/null`) and input
+// redirection (`< file`) — while the EHEL mutation classifier already treated
+// `/dev/null` as a non-mutation target. These pins hold the correction, and the
+// last two hold the line that no genuine write redirect may ride along.
+describe('readonly guard — permitted redirections (FID-2026-1014-001)', () => {
+  const allows = (command: string) => isReadonlyCommand(command).valid
+
+  it('allows the POSIX null sink on either stream spacing', () => {
+    expect(allows('bun test 2>/dev/null')).toBe(true)
+    expect(allows('ls -la 2> /dev/null')).toBe(true)
+    expect(allows('ls -la > /dev/null')).toBe(true)
+    expect(allows('ls -la 2>>/dev/null')).toBe(true)
+  })
+
+  it('allows the Windows null sink and the stream merge', () => {
+    expect(allows('ls -la 2>nul')).toBe(true)
+    expect(allows('bun run typecheck 2>&1')).toBe(true)
+    expect(allows('bun run typecheck 2>&1 | cat')).toBe(true)
+  })
+
+  it('allows input redirection from a file', () => {
+    expect(allows('wc -l < SCOPE.md')).toBe(true)
+    expect(allows('grep -c allow < dev/fids/README.md')).toBe(true)
+  })
+
+  it('still rejects process substitution and heredocs', () => {
+    expect(allows('diff <(ls a) <(ls b)')).toBe(false)
+    expect(allows('cat <<EOF')).toBe(false)
+    expect(allows('cat <<< "payload"')).toBe(false)
+  })
+
+  it('still rejects a real write redirect beside a permitted one', () => {
+    expect(allows('ls 2>/dev/null > out.txt')).toBe(false)
+    expect(allows('ls > out.txt 2>nul')).toBe(false)
+    expect(allows('ls > /dev/null/foo')).toBe(false)
+    expect(allows('echo x >> report.txt')).toBe(false)
+  })
+
+  it('keeps a redirect into a non-sink target refused', () => {
+    expect(allows('ls > nullfile')).toBe(false)
+    expect(allows('ls > nul.txt')).toBe(false)
+  })
+
+  it('ships the permitted-redirect predicate non-global for its EHEL caller', () => {
+    // EHEL consumes this regex with `.test()`; a `g` flag would make alternating
+    // calls return false and silently misclassify a mutation (Law 13).
+    expect(PERMITTED_REDIRECT_REGEX.global).toBe(false)
+    const sample = ' 2>&1'
+    expect(PERMITTED_REDIRECT_REGEX.test(sample)).toBe(true)
+    expect(PERMITTED_REDIRECT_REGEX.test(sample)).toBe(true)
   })
 })

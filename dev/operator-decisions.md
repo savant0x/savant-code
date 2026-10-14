@@ -479,6 +479,86 @@ nothing untracked ships, and close the bloat half of T185.
 **Answer:** files in website are the actual html files for the projects website,
 if they are in website don't touch them.
 
+## H. Harness refusal authority — where a "no" lives, and who owns it
+
+### Q23 — Should any harness layer be able to refuse a hierarchy instruction?
+
+**Your position (2026-10-14, verbatim).** *"i really don't like the idea of an agent
+refusing the opertator, that's not the ethos of savant and it's a very dangerous precident
+to set at the harness layer"* … *"the harness has a feature that has refusal built in or
+attempted to be built in. No matter if thats from orch to agent, the subagent should not
+refuse a task from the hiarchy"*.
+
+**State — every refusal site, with evidence.**
+
+| Layer | Site | What it refuses |
+|---|---|---|
+| Tool | `tools/handlers/tool/run-readonly-command.ts:45,68` | a command its guard judges not read-only |
+| Hook | `hooks/runner.ts:146-150,164-168` | any call when a hook answers `permissionDecision: "deny"` |
+| Hook | `hooks/deny-mutating-terminal.ts` (wired `protocol.config.yaml` → PreToolUse) | worktree-mutating terminal commands |
+| Sandbox | `tools/sandbox/engine.ts`, `tools/sandbox/shell-denylist.ts`, `tools/tool-executor/sandbox-gate.ts` | commands outside the sandbox policy |
+| Pre-write | `echo/pre-write-gates-law3.ts` | writes that fail Law 3 / docs gates |
+| Spawn | `tools/handlers/tool/spawn-agents.ts:61` | harness-owned *inline* agents only |
+| Self-report | `tools/handlers/tool/update-goal.ts:73` | rejects an agent's own `blocked` claim before 3 impasse turns |
+
+**What is NOT there.** Searched the runtime for a task-declining path
+(`grep -rn "decline\|refuse" packages/agent-runtime/src`, tests excluded): no code path
+exists in which a subagent declines an assigned task. Every refusal above is a **tool,
+hook or sandbox decision driven by config or a command string** — none is an agent's
+discretion about the operator's instruction. The spawn boundary refuses only harness-owned
+inline agents and malformed spawns. *(Absence-shaped check; the grep is the evidence.)*
+
+**What that means for your objection.** You are right that the harness has refusal built
+in, and it is broader than the one site I originally defended. Two of those sites are
+triggered by the *operator's* own instruction being translated into a command the guard
+rejects — which is the failure mode you named: the instruction dies at the tool layer and
+costs a turn. That is measured and partly fixed this session
+(`FID-2026-1014-001`: 5 false refusals in a 56-command read-only corpus → 0).
+
+**Options.**
+
+- **(a) Keep refusal, keep it routing.** Today's behaviour: the guard declines, hands back a
+  reason and names the lawful route (`run_terminal_command` in green/audit). Now with 0
+  corpus false positives. Smallest change; the harness still says "no" to a tool call.
+- **(b) Route instead of refuse (proposed).** A command the guard rejects is not refused —
+  it is **automatically dispatched through `run_terminal_command`** under the current
+  phase's authority, where EHEL, the sandbox and the mutation classifier already govern it.
+  Nothing in the hierarchy is ever told "no"; the safety contract is unchanged because the
+  same gates still apply, and it closes the four under-breadth holes below for free (a
+  mutating command reaches the mutating path instead of a denylist's blind spot). Cost: a
+  behaviour change in a phase-gated tool, plus tests.
+- **(c) Remove the guard's judgement entirely.** `run_readonly_command` becomes a thin
+  alias for `run_terminal_command`. Simplest to explain; loses the fail-closed pre-dispatch
+  check for `idle` phase, where the read-only tool is deliberately not phase-gated.
+- **(d) Make refusal non-fatal everywhere.** Keep every check, but return the refusal as a
+  *result the orchestrator can act on* rather than a terminal error — e.g. an
+  orchestrator-level retry through the mutating path. Largest change; touches the executor
+  result contract.
+
+**Also measured, and yours to rule on.** The guard is under-broad as well as over-broad:
+`git push origin main`, `git clean -fd`, `git stash pop` and `find . | xargs rm -f` are
+currently **allowed** through a tool whose contract says read-only. (a)/(d) leave that as a
+denylist to widen; (b) closes them by routing.
+
+**Answer:**
+
+### Q24 — The 33 FID records naming test paths that do not resolve
+
+**State.** Census over `dev/fids/**` (probe `dev/scratchpad/active/fid-artifact-census.ts`):
+569 records scanned, 1429 named test paths, **49 distinct paths that do not exist**, named by
+**33 records**. One is confirmed by history rather than by the census: archived
+`FID-2026-0919-010` closed with a 4/4 receipt claiming an implemented fix and a suite that
+**no commit ever contained** (both re-landed this session under `FID-2026-1014-001`). Most
+other rows look like renames, and no row was triaged.
+
+**Options.** (a) triage all 33 by history and annotate the live ones; (b) make "every test
+path a record names must exist" a repo gate for active records only, leaving history alone;
+(c) leave history untouched and carry only the contract gap (already registered as
+`FID-2026-1014-002`); (d) rebuild the census as a standing `probe` so the count is visible
+each session without a decision.
+
+**Answer:**
+
 ## Z. Anything else
 
 Questions I have not thought to ask, standing rules you want recorded for future
@@ -497,3 +577,5 @@ sessions, or a different priority order than the one above.
 | Q12–Q14 | Savant-Free disposition, gate-chain coverage, `protocol.config.yaml` authority |
 | Q15–Q21 | seven provider and routing items |
 | Q22 | the last of T185 |
+| Q23 | whether the harness keeps tool-level refusal, routes around it, or drops it — and the four under-breadth holes |
+| Q24 | disposition of the 33-record artifact census and whether it becomes a standing gate |

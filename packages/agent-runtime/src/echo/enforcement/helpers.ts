@@ -8,9 +8,9 @@ import { BOOT_LEARNINGS_PATH } from '@savant-code/common/constants/learnings-boo
 import {
   DESTRUCTIVE_COMMAND_REGEX,
   GIT_MUTATING_REGEX,
+  PERMITTED_REDIRECT_REGEX,
   splitSafeAnd,
   splitSafePipes,
-  WINDOWS_STDERR_REDIRECT_REGEX,
 } from '../../tools/handlers/tool/readonly-command-validation'
 
 import type { EnforcementMode } from '../types'
@@ -145,15 +145,16 @@ const DIAGNOSTIC_TARGETS = new Set(['/dev/null', 'nul', 'NUL'])
 
 function terminalMutationTargets(segment: string): string[] {
   const targets: string[] = []
-  // Redirection: `> file`, `>> file`, `2> file` (not `2>nul`/`2>&1`, which
-  // are read-only diagnostic redirects — WINDOWS_STDERR_REDIRECT_REGEX).
+  // Redirection: `> file`, `>> file`, `2> file` (not the permitted
+  // read-only redirects — `2>&1`, or any stream into a null sink, see
+  // PERMITTED_REDIRECT_REGEX).
   const redirect = /(?:^|[\s])(\d?>{1,2})\s*("([^"]+)"|'([^']+)'|([^\s|&;]+))/g
   for (const m of segment.matchAll(redirect)) {
     const target = (m[3] ?? m[4] ?? m[5] ?? '').trim()
     if (
       target &&
       !DIAGNOSTIC_TARGETS.has(target) &&
-      !WINDOWS_STDERR_REDIRECT_REGEX.test(` ${m[1]}${target}`)
+      !PERMITTED_REDIRECT_REGEX.test(` ${m[1]}${target}`)
     ) {
       targets.push(target)
     }
