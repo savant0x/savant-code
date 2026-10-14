@@ -187,8 +187,8 @@ receipt here cannot establish either or close this lane.
 
 ### Verification Receipt
 
-- fingerprint: sha256:82960a203e8f63e9f90551ba22ccf4fd30c32d0dc9cb9d6c70607dafc30d14fd
-- verified: 2026-10-14T15:30:49.290Z
+- fingerprint: sha256:c747d5321bb168c9b8d6f2ff3f3703dc138b65d87d781ab36c8117d240c9d216
+- verified: 2026-10-14T15:42:21.389Z
 - test common/src/util/__tests__/experience-classes.test.ts: exit 0
 - test packages/agent-runtime/src/tools/tool-executor/tool-result-errors.test.ts: exit 0
 - test packages/agent-runtime/src/tools/tool-executor/result-lifecycle.test.ts: exit 0
@@ -629,7 +629,10 @@ audit trail of the mistaken premise, not as acceptance criteria or class disposi
   pre-start cancellation — is a classification with real census impact; `FID-2026-1012-018`
   owns the read_url taxonomy and `FID-2026-1012-023` owns timeout/cancellation semantics,
   and it is presented to the operator rather than assumed here. No historical row, owner
-  or receipt is rewritten, and the census cannot move because no refusal row exists yet.
+  or receipt is rewritten, and the census does not move: the refusal class already holds
+  **two** rows, both captured before this change, and identity is additive — they keep
+  deriving the stored `…:refused:undetermined` key. The key this change produces
+  (`…:refused:expected`) is the one no owner names, which is what the exemption is for.
 - **AUDIT:** three pins in `tool-result-errors.test.ts`: a refusal envelope classifies as
   `expected` with the refusal itself as its line; a real exit whose stderr merely quoted the
   phrase (`grep: run_readonly_command rejected: not found`) still renders as `Command exited
@@ -642,8 +645,12 @@ audit trail of the mistaken premise, not as acceptance criteria or class disposi
   for the undetermined fixture. Suites: `agent-runtime` 2,152 PASS / 0 FAIL (329 files),
   `scripts` 976 PASS / 0 FAIL, common class identity 14 PASS, `quality:report` PASS,
   `typecheck common`, `typecheck packages/agent-runtime` and `typecheck:scripts` exit 0, root
-  `typescript@5.5.4` unchanged. Census unchanged — 589 records / 58 classes / 0 issues — so the
-  classification is live but not yet exercised; no refusal row exists.
+  `typescript@5.5.4` unchanged. Census unchanged — 589 records / 58 classes / 0 issues — because
+  identity is additive: `v1:run_readonly_command:refused` already holds **two** rows, both
+  captured before this change, so both keep their stored `…:undetermined` key. No row carries
+  `expectedness: expected` yet; the first refusal captured from here keys
+  `v1:run_readonly_command:refused:expected`, which no owner names — the case the two census
+  pins above cover (expected and unowned is not an issue; undetermined and unowned is).
 - **ADVERSARIAL:** (a) *Does this let a defect hide?* Only the harness's own refusal channel
   classifies an outcome, and that is the branch that executed nothing (Loop 5); every other
   failure keeps `unexpected`/`undetermined`, and `findUnownedEligibleClasses` still demands an

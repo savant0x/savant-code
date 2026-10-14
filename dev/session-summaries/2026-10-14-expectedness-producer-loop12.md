@@ -104,10 +104,17 @@ SDK process-fixture edits were left untouched and unstaged).
   behaviour — a 404 for a URL that does not exist, a pre-start cancellation — is a
   classification with real census impact and is **presented, not assumed**: `-018` owns the
   read_url taxonomy and `-023` owns timeout/cancellation semantics.
+- **Correction made while verifying this summary.** An earlier draft of both the FID and this
+  summary claimed no refusal row exists; the ledger actually holds two
+  (`v1:run_readonly_command:refused:undetermined`, captured after Loop 5's rename, zero rows
+  carrying `expectedness: expected`). The claims were corrected in place and the FID was
+  re-stamped. The difference matters: the next refusal keys as `refused:expected`, which no
+  owner names — the exact case the ownership exemption was added for.
 - **No class was closed, no boundary declared, no observation claimed.** `fix-boundaries.json`
-  is still empty, the census is unmoved, and the classification is live but not yet exercised —
-  no refusal row exists in the ledger. `--assert-repaired=FID-2026-1012-024` still exits 1 by
-  design.
+  is still empty and the census is unmoved — identity is additive, so the refusal class's
+  **two** existing rows (both captured before this change) keep their stored
+  `…:refused:undetermined` key. Re-verified live: `--assert-repaired=FID-2026-1012-024` exits 1
+  with nine unproved classes, which is the correct fail-closed result.
 - No live TUI or WebView smoke was performed. Nothing was pushed, released or re-credentialed.
 - Root-wide unit chain was not rerun in full; the two workspaces this change touches were run
   in full, and `fid:verify` live-ran all 15 declared gates.
