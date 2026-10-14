@@ -1,3 +1,9 @@
+import {
+  asBoolean,
+  asPositiveInt,
+  truncateSingleLine,
+} from '@savant-code/common/util/tool-display'
+
 import { defineToolComponent, getString } from './types'
 import { createMarkdownPalette } from '../../utils/theme-system'
 import { renderContentWithMarkdown } from '../blocks/content-with-markdown'
@@ -8,40 +14,6 @@ import {
 } from '../traffic-light-panel'
 
 import type { ToolRenderConfig } from './types'
-import type { JSONValue } from '@savant-code/common/types/json'
-
-const PREVIEW_MAX_LENGTH = 160
-
-/**
- * Coerce a block-level input value to a positive integer. The raw print-mode
- * payload may carry stringified numbers (mirrors the params schema's
- * `z.coerce.number().int().min(1)`).
- */
-function asPositiveInt(value: JSONValue | undefined): number | undefined {
-  if (typeof value === 'number' && Number.isInteger(value) && value >= 1) {
-    return value
-  }
-  if (typeof value === 'string' && /^\d+$/.test(value)) {
-    const n = Number(value)
-    if (Number.isInteger(n) && n >= 1) return n
-  }
-  return undefined
-}
-
-/** Coerce a block-level boolean (mirrors the params schema's coercedBoolean). */
-function asBoolean(value: JSONValue | undefined): boolean | undefined {
-  if (typeof value === 'boolean') return value
-  if (value === 'true') return true
-  if (value === 'false') return false
-  return undefined
-}
-
-function truncateSingleLine(value: string): string {
-  const line = value.replace(/\s+/g, ' ').trim()
-  return line.length > PREVIEW_MAX_LENGTH
-    ? `${line.slice(0, PREVIEW_MAX_LENGTH - 1)}…`
-    : line
-}
 
 /**
  * UI component for `sequentialthinking`.

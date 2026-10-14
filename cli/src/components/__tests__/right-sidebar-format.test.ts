@@ -3,7 +3,7 @@ import { describe, expect, test } from 'bun:test'
 import {
   formatCompactionStatus,
   formatTokens,
-  toolDisplayName,
+  sidebarToolDisplayName,
 } from '../right-sidebar-format'
 
 describe('formatCompactionStatus (FID-2026-0919-017 A2: no orphaned outcomes)', () => {
@@ -93,32 +93,34 @@ describe('formatCompactionStatus (FID-2026-0919-017 A2: no orphaned outcomes)', 
 })
 
 // FID-2026-1010-005 — the tool naming matrix. Every tool label in the sidebar
-// routes through `toolDisplayName`, so these pins cover the mapped name, the
-// sentence-case fallback, and the degenerate inputs.
-describe('toolDisplayName (FID-2026-1010-005)', () => {
+// routes through `sidebarToolDisplayName` (renamed from `toolDisplayName` by
+// FID-2026-1013-011 W2-1 so the repo's Title-Case `toolDisplayName` has one
+// unambiguous owner), so these pins cover the mapped name, the sentence-case
+// fallback, and the degenerate inputs.
+describe('sidebarToolDisplayName (FID-2026-1010-005)', () => {
   test('a mapped identifier shows its matrix label', () => {
-    expect(toolDisplayName('suggest_followups')).toBe('Suggest followup')
+    expect(sidebarToolDisplayName('suggest_followups')).toBe('Suggest followup')
   })
 
   test('an unmapped identifier falls back to sentence case', () => {
-    expect(toolDisplayName('read_file')).toBe('Read file')
-    expect(toolDisplayName('web-search')).toBe('Web search')
+    expect(sidebarToolDisplayName('read_file')).toBe('Read file')
+    expect(sidebarToolDisplayName('web-search')).toBe('Web search')
   })
 
   test('an empty identifier shows the unknown-tool label, without throwing', () => {
-    expect(toolDisplayName('')).toBe('Unknown tool')
+    expect(sidebarToolDisplayName('')).toBe('Unknown tool')
   })
 
   test('a separator-only identifier shows the unknown-tool label', () => {
-    expect(toolDisplayName('___')).toBe('Unknown tool')
+    expect(sidebarToolDisplayName('___')).toBe('Unknown tool')
   })
 
   test('a punctuation-only identifier shows the unknown-tool label', () => {
-    expect(toolDisplayName('!!!')).toBe('Unknown tool')
+    expect(sidebarToolDisplayName('!!!')).toBe('Unknown tool')
   })
 
   test('a digit-bearing identifier is still humanized, not replaced', () => {
-    expect(toolDisplayName('step_5_preview')).toBe('Step 5 preview')
+    expect(sidebarToolDisplayName('step_5_preview')).toBe('Step 5 preview')
   })
 })
 

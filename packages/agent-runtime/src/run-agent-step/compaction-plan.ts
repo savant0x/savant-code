@@ -109,6 +109,23 @@ export function foldFileOperations(params: {
   const from = Math.max(0, watermark)
   for (let index = from; index < messages.length; index += 1) {
     for (const call of toolCalls(messages[index])) {
+      if (call.toolName === 'apply_patch') {
+        const op =
+          typeof call.input === 'object' && call.input !== null
+            ? (call.input as { operation?: unknown }).operation
+            : undefined
+        if (typeof op === 'object' && op !== null) {
+          const opRecord = op as { type?: unknown; path?: unknown }
+          if (typeof opRecord.path === 'string' && opRecord.path.length > 0) {
+            if (opRecord.type === 'create_file') {
+              window.createdFiles.push(opRecord.path)
+            } else {
+              window.modifiedFiles.push(opRecord.path)
+            }
+          }
+        }
+        continue
+      }
       const paths = pathValues(call.input)
       if (READ_TOOLS.has(call.toolName)) window.readFiles.push(...paths)
       else if (CREATE_TOOLS.has(call.toolName)) {

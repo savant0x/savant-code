@@ -1,3 +1,5 @@
+import { truncateSingleLine } from '@savant-code/common/util/tool-display'
+
 import { defineToolComponent, getString } from './types'
 import { createMarkdownPalette } from '../../utils/theme-system'
 import { renderContentWithMarkdown } from '../blocks/content-with-markdown'
@@ -8,15 +10,6 @@ import {
 } from '../traffic-light-panel'
 
 import type { ToolRenderConfig } from './types'
-
-const PREVIEW_MAX_LENGTH = 160
-
-function truncateSingleLine(value: string): string {
-  const line = value.replace(/\s+/g, ' ').trim()
-  return line.length > PREVIEW_MAX_LENGTH
-    ? `${line.slice(0, PREVIEW_MAX_LENGTH - 1)}…`
-    : line
-}
 
 /**
  * UI component for `add_message`.

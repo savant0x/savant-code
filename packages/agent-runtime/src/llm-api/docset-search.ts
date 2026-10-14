@@ -1,6 +1,11 @@
 import fs from 'fs'
 import path from 'path'
 
+import {
+  getRuntimeRequire,
+  resolveBunSqliteModule,
+} from '@savant-code/common/util/bun-sqlite'
+
 import { buildMatchExpression, DOCSET_SCHEMA } from './docset-schema'
 
 import type { Database } from 'bun:sqlite'
@@ -48,32 +53,21 @@ export type DocsetHit = {
   snippet?: string
 }
 
-/** The module-scope `require` when it exists; `undefined` under Node ESM. */
-function getRuntimeRequire(): ((id: string) => unknown) | undefined {
-  return typeof require === 'function' ? require : undefined
-}
-
 /**
  * Resolve the bun:sqlite Database constructor, or throw a clear error outside
  * Bun. `requireFn` is injectable for tests; pass `null` to simulate Node ESM.
+ *
+ * FID-2026-1013-011 W2-6: the loader itself is canonical in
+ * `@savant-code/common/util/bun-sqlite`; this wrapper supplies the docset's
+ * own error wording and preserves the exported name and signature.
  */
 export function resolveBunSqlite(
   requireFn: ((id: string) => unknown) | null | undefined = getRuntimeRequire(),
 ): { Database: typeof Database } {
-  if (typeof requireFn !== 'function') {
-    throw new Error(
-      'Docset search requires the Bun runtime: bun:sqlite is only available under Bun.',
-    )
-  }
-  try {
-    return requireFn('bun:sqlite') as { Database: typeof Database }
-  } catch (error) {
-    throw new Error(
-      `Docset search requires the Bun runtime: failed to load bun:sqlite (${
-        error instanceof Error ? error.message : String(error)
-      }).`,
-    )
-  }
+  return resolveBunSqliteModule({
+    requireFn,
+    subject: 'Docset search requires the Bun runtime',
+  })
 }
 
 /**

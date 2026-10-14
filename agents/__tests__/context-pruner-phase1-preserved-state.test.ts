@@ -39,7 +39,7 @@ describe('buildPreservedState (P1b)', () => {
     ])
   })
 
-  test('extracts file ops from tool calls', () => {
+  test('extracts file ops from tool calls including apply_patch', () => {
     const messages: Message[] = [
       assistantMsg('', [
         {
@@ -50,13 +50,33 @@ describe('buildPreservedState (P1b)', () => {
         { toolName: 'str_replace', input: { path: 'src/a.ts' } },
         { toolName: 'propose_write_file', input: { path: 'src/proposed.ts' } },
         { toolName: 'propose_str_replace', input: { path: 'src/b.ts' } },
+        {
+          toolName: 'apply_patch',
+          input: {
+            operation: { type: 'create_file', path: 'src\\patched-new.ts' },
+          },
+        },
+        {
+          toolName: 'apply_patch',
+          input: {
+            operation: { type: 'update_file', path: 'src\\patched-mod.ts' },
+          },
+        },
         { toolName: 'read_subtree', input: { paths: ['src/components'] } },
       ]),
     ]
     const state = buildPreservedState(messages)
     expect(state.readFiles).toEqual(['src/a.ts', 'src/b.ts', 'src/components'])
-    expect(state.createdFiles).toEqual(['src/new.ts', 'src/proposed.ts'])
-    expect(state.modifiedFiles).toEqual(['src/a.ts', 'src/b.ts'])
+    expect(state.createdFiles).toEqual([
+      'src/new.ts',
+      'src/proposed.ts',
+      'src/patched-new.ts',
+    ])
+    expect(state.modifiedFiles).toEqual([
+      'src/a.ts',
+      'src/b.ts',
+      'src/patched-mod.ts',
+    ])
   })
 
   test('extracts loaded skills', () => {

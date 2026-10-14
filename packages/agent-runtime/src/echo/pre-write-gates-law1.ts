@@ -29,11 +29,51 @@
  */
 
 import { existsSync } from 'node:fs'
+import path from 'node:path'
 
 import { canonicalizePath } from './path-canonicalization'
 
 export type Law1GateResult =
   { blocked: true; reason: string } | { blocked: false }
+
+function resolveAgainstRoot(targetPath: string, projectRoot?: string): string {
+  if (!projectRoot || path.isAbsolute(targetPath)) return targetPath
+  return path.resolve(projectRoot, targetPath)
+}
+
+function isTargetRead(
+  targetPath: string,
+  filesRead: Set<string>,
+  projectRoot?: string,
+): boolean {
+  if (filesRead.size === 0) return false
+  const targetCanonical = canonicalizePath(targetPath)
+  const anchoredCanonical = projectRoot
+    ? canonicalizePath(resolveAgainstRoot(targetPath, projectRoot))
+    : targetCanonical
+  for (const registered of filesRead) {
+    if (registered === targetPath) return true
+    const registeredCanonical = canonicalizePath(registered)
+    if (
+      registeredCanonical === targetCanonical ||
+      registeredCanonical === anchoredCanonical
+    ) {
+      return true
+    }
+    if (projectRoot && !path.isAbsolute(registered)) {
+      const registeredAnchored = canonicalizePath(
+        resolveAgainstRoot(registered, projectRoot),
+      )
+      if (
+        registeredAnchored === targetCanonical ||
+        registeredAnchored === anchoredCanonical
+      ) {
+        return true
+      }
+    }
+  }
+  return false
+}
 
 /**
  * Run the Law 1 gate: the write target AND every classified terminal
@@ -43,41 +83,21 @@ export function runLaw1Gate(params: {
   targetPath: string | undefined
   mutationTargets: string[]
   filesRead: Set<string>
+  projectRoot?: string
 }): Law1GateResult {
-  const { targetPath, mutationTargets, filesRead } = params
+  const { targetPath, mutationTargets, filesRead, projectRoot } = params
 
-  let wasRead = false
-  if (targetPath && filesRead.size > 0) {
-    const targetCanonical = canonicalizePath(targetPath)
-    for (const registered of filesRead) {
-      if (
-        registered === targetPath ||
-        canonicalizePath(registered) === targetCanonical
-      ) {
-        wasRead = true
-        break
-      }
-    }
-  }
-  if (targetPath && !wasRead && !isNewFile(targetPath)) {
+  const wasRead = targetPath
+    ? isTargetRead(targetPath, filesRead, projectRoot)
+    : false
+  if (targetPath && !wasRead && !isNewFile(targetPath, projectRoot)) {
     const msg = `Law 1: Read 0-EOF before touch — "${targetPath}" has not been read`
     return { blocked: true, reason: msg }
   }
 
   for (const rawTarget of mutationTargets) {
-    const targetCanonical = canonicalizePath(rawTarget)
-    let targetWasRead = filesRead.size === 0 ? false : undefined
-    for (const registered of filesRead) {
-      if (
-        registered === rawTarget ||
-        canonicalizePath(registered) === targetCanonical
-      ) {
-        targetWasRead = true
-        break
-      }
-    }
-    if (targetWasRead === true) continue
-    if (!isNewFile(rawTarget)) {
+    if (isTargetRead(rawTarget, filesRead, projectRoot)) continue
+    if (!isNewFile(rawTarget, projectRoot)) {
       const msg =
         `Law 1: Read 0-EOF before touch — "${rawTarget}" has not been read ` +
         '(terminal mutation target)'
@@ -92,9 +112,10 @@ export function runLaw1Gate(params: {
  * A path that does not exist on disk is a brand-new file — Law 1 cannot
  * require reading a file that has not been created yet.
  */
-function isNewFile(path: string): boolean {
+function isNewFile(targetPath: string, projectRoot?: string): boolean {
   try {
-    return !existsSync(path)
+    const resolved = resolveAgainstRoot(targetPath, projectRoot)
+    return !existsSync(resolved)
   } catch {
     // Defensive: on stat failure treat as an existing file. Worst case the
     // gate blocks in every mode (FID-2026-0823-007); recovery is one

@@ -28,6 +28,38 @@
     "owner": "cli/src/utils/openrouter-models/wire-guards.ts",
     "note": "Finite number or undefined; wire null coerces to undefined at the parser boundary."
   },
+  "toolDisplayName": {
+    "owner": "common/src/util/tool-display.ts",
+    "note": "Title-Case tool label (list_directory override + MCP server__tool stripping). The CLI sidebar's sentence-case variant is deliberately named sidebarToolDisplayName in cli/src/components/right-sidebar-format.ts (FID-2026-1010-005)."
+  },
+  "truncateSingleLine": {
+    "owner": "common/src/util/tool-display.ts",
+    "note": "Whitespace-collapsing one-line cap, maxLength defaulting to 160; callers pass their own ceiling (120 for the desktop collapse header, SUMMARY_MAX_LENGTH for the CLI cards)."
+  },
+  "renderToolInput": {
+    "owner": "common/src/util/tool-display.ts",
+    "note": "Pretty-prints a tool input for a transcript; '' for absent/empty input."
+  },
+  "renderToolOutput": {
+    "owner": "common/src/util/tool-display.ts",
+    "note": "Pretty-prints a JSON tool result and reports its fence language."
+  },
+  "asPositiveInt": {
+    "owner": "common/src/util/tool-display.ts",
+    "note": "Coerces a block-level input to an integer >= 1, stringified values included; undefined when the value carries no positive integer."
+  },
+  "asBoolean": {
+    "owner": "common/src/util/tool-display.ts",
+    "note": "Coerces a block-level input boolean, stringified 'true'/'false' included; undefined when the value carries no boolean meaning."
+  },
+  "traceRoundedRect": {
+    "owner": "desktop/src/floor/office/nameplate-draw.ts",
+    "note": "2D canvas rounded-rect path helper shared by the office and billboard nameplates."
+  },
+  "getRuntimeRequire": {
+    "owner": "common/src/util/bun-sqlite.ts",
+    "note": "Module-scope require when the runtime provides one; undefined under Node ESM. packages/database keeps its own copy by design (zero-dependency package) and is listed in allowedFiles."
+  },
   "allowedFiles": [
     "cli/src/utils/openrouter-models/wire-guards.ts",
     "common/src/util/promise.ts",
@@ -43,7 +75,8 @@
     "packages/llm-providers/src/schema-sanitize.ts",
     "cli/src/utils/message-block-helpers/spawn-result.ts",
     "common/src/util/axiom-only-log.ts",
-    "sdk/src/run-state/serialization.ts"
+    "sdk/src/run-state/serialization.ts",
+    "packages/database/src/index.ts"
   ],
   "allowedTests": true
 }

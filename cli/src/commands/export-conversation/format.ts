@@ -3,6 +3,16 @@
  * builders of the `/export` command.
  */
 
+// FID-2026-1013-011 W2-1/W2-3: the tool label and the tool input/output
+// renderers were byte-identical copies of the `/copy` ones; both now live in
+// `@savant-code/common/util/tool-display`. Re-exported so the `/export`
+// renderers keep their import site.
+export {
+  renderToolInput,
+  renderToolOutput,
+  toolDisplayName,
+} from '@savant-code/common/util/tool-display'
+
 /** Title-case an agent id/type into a display name, e.g. `code-searcher` → `Code Searcher`. */
 export function formatAgentName(agentName: string): string {
   const cleaned = agentName.replace(/[-_]/g, ' ').trim()
@@ -28,51 +38,10 @@ export function formatExportTimestamp(date: Date): string {
   return `${values.month}-${values.day}-${values.year} ${values.hour}:${values.minute} ${values.dayPeriod ?? ''} EST`
 }
 
-/** Human-friendly tool label, e.g. `read_files` → `Read Files`. */
-export function toolDisplayName(toolName: string): string {
-  if (toolName === 'list_directory') return 'List Directories'
-  return toolName.replace(/_/g, ' ').replace(/\b\w/g, (l) => l.toUpperCase())
-}
-
 export function escapeHtml(text: string): string {
   return text
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
-}
-
-export function renderToolInput(input: unknown): string {
-  if (input == null) return ''
-  if (
-    (Array.isArray(input) && input.length === 0) ||
-    (typeof input === 'object' &&
-      !Array.isArray(input) &&
-      Object.keys(input as Record<string, unknown>).length === 0)
-  ) {
-    return ''
-  }
-  try {
-    return JSON.stringify(input, null, 2)
-  } catch {
-    return String(input)
-  }
-}
-
-export function renderToolOutput(output: string): {
-  body: string
-  lang: string
-} {
-  const trimmed = output.trim()
-  if (trimmed.startsWith('{') || trimmed.startsWith('[')) {
-    try {
-      return {
-        body: JSON.stringify(JSON.parse(trimmed), null, 2),
-        lang: 'json',
-      }
-    } catch {
-      // Not valid JSON — fall through to raw.
-    }
-  }
-  return { body: output, lang: '' }
 }

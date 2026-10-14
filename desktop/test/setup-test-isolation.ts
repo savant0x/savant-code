@@ -15,6 +15,7 @@ import { beforeEach } from 'bun:test'
 import { resetSharedDriver } from '../src/floor/driver/deck-live-driver'
 import { resetTextureCache } from '../src/floor/office/procedural-textures/machinery'
 import { resetTemplateCache } from '../src/floor/office/robot-cast'
+import { resetHoveredAgentCursorCount } from '../src/floor/office/scene-agent-ui'
 import { resetActiveInstances as resetActivityOverlayInstances } from '../src/floor/stage/activity-overlay'
 import { resetDeckRobotsLoaderState } from '../src/floor/stage/deck-robots-loader'
 import { resetActiveInstances as resetPerfHudActiveInstances } from '../src/floor/stage/perf-hud'
@@ -26,6 +27,7 @@ beforeEach(() => {
   resetTextureCache()
   resetTemplateCache()
   resetDeckRobotsLoaderState()
+  resetHoveredAgentCursorCount()
   resetActivityOverlayInstances()
   resetPerfHudActiveInstances()
 })

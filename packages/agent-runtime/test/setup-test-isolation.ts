@@ -24,6 +24,7 @@ import { beforeEach } from 'bun:test'
 import { resetEnforcementInstances } from '../src/echo/enforcement/factory'
 import { __resetYagniEnforcedCacheForTests } from '../src/echo/yagni-pre-write-gate'
 import { resetRetentionRegistry } from '../src/evidence/retention-registry'
+import { resetEvidenceRecordCache } from '../src/evidence/spill-read'
 import { resetComplianceCaptureCache } from '../src/hooks/compliance-capture'
 import { resetEngineCache } from '../src/hooks/engine'
 import { resetExposureCaptureCache } from '../src/hooks/exposure-capture'
@@ -58,6 +59,7 @@ beforeEach(() => {
   resetExposureCaptureCache()
   resetSessionInstances()
   resetRetentionRegistry()
+  resetEvidenceRecordCache()
   resetLastEmittedMicroSummary()
   resetLastEmittedCompactionStatus()
   resetRunProgrammaticStepState()

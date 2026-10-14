@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any -- tool constants: Tool type parameter any constraint */
+/* eslint-disable @typescript-eslint/no-explicit-any -- variance (W3-3): `$ToolParams` narrows the `ai` SDK's `Tool<any, ToolResultOutput[]>` (whose own type parameter is `any` in the upstream declaration), so the constraint cannot be `unknown` without re-declaring the third-party tool type. */
 import { COMPOSIO_META_TOOL_NAMES } from '../constants/composio'
 import { CONNECTOR_TOOL_NAMES } from '../constants/connectors'
 

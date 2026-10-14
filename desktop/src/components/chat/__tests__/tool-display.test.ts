@@ -7,7 +7,11 @@
 
 import { describe, expect, test } from 'bun:test'
 
-import { toolCollapsedPreview, toolDisplayName } from '../tool-display'
+import {
+  setOutputPayloadJson,
+  toolCollapsedPreview,
+  toolDisplayName,
+} from '../tool-display'
 
 describe('toolDisplayName', () => {
   test('Title-Cases snake_case tool names (CLI getToolDisplayInfo)', () => {
@@ -107,5 +111,94 @@ describe('toolCollapsedPreview', () => {
         '{}',
       ),
     ).toBeNull()
+  })
+})
+
+describe('toolCollapsedPreview — apply_patch and set_output (FID-2026-1013-013 W4-2)', () => {
+  test('apply_patch previews the nested operation as Patch|Create|Delete <path>', () => {
+    expect(
+      toolCollapsedPreview(
+        'apply_patch',
+        JSON.stringify({
+          operation: { type: 'update_file', path: 'lib/fib.py', diff: '@@' },
+        }),
+        '{}',
+      ),
+    ).toBe('Patch lib/fib.py')
+    expect(
+      toolCollapsedPreview(
+        'apply_patch',
+        JSON.stringify({
+          operation: { type: 'create_file', path: 'hello.txt', diff: '@@\n+x' },
+        }),
+        '{}',
+      ),
+    ).toBe('Create hello.txt')
+    // delete_file carries no diff but must still render an informative header.
+    expect(
+      toolCollapsedPreview(
+        'apply_patch',
+        JSON.stringify({ operation: { type: 'delete_file', path: 'gone.ts' } }),
+        '{"message":"deleted"}',
+      ),
+    ).toBe('Delete gone.ts')
+  })
+
+  test('apply_patch flat legacy shape still previews a bare Patch', () => {
+    expect(
+      toolCollapsedPreview(
+        'apply_patch',
+        JSON.stringify({ patch: '@@\n+x' }),
+        '{}',
+      ),
+    ).toBe('Patch')
+  })
+
+  test('set_output previews its message or payload instead of a bare }', () => {
+    expect(
+      toolCollapsedPreview(
+        'set_output',
+        JSON.stringify({ data: { message: 'indexed 42 files' } }),
+        '{\n  "ok": true\n}',
+      ),
+    ).toBe('indexed 42 files')
+    expect(
+      toolCollapsedPreview(
+        'set_output',
+        JSON.stringify({ message: 'top-level summary' }),
+        '\n}',
+      ),
+    ).toBe('top-level summary')
+  })
+
+  test('set_output payload without a message renders compact JSON', () => {
+    expect(
+      toolCollapsedPreview(
+        'set_output',
+        JSON.stringify({ data: { ok: true, count: 2 } }),
+        '}',
+      ),
+    ).toBe('{"ok":true,"count":2}')
+    expect(
+      toolCollapsedPreview(
+        'set_output',
+        JSON.stringify({ data: 'plain text payload' }),
+        '}',
+      ),
+    ).toBe('plain text payload')
+    expect(
+      toolCollapsedPreview('set_output', JSON.stringify({ data: 7 }), '}'),
+    ).toBe('7')
+  })
+
+  test('setOutputPayloadJson unwraps the data envelope for the card body', () => {
+    expect(setOutputPayloadJson(JSON.stringify({ data: { ok: true } }))).toBe(
+      '{\n  "ok": true\n}',
+    )
+    expect(setOutputPayloadJson(JSON.stringify({ a: 1 }))).toBe(
+      '{\n  "a": 1\n}',
+    )
+    expect(setOutputPayloadJson('not-json{')).toBeNull()
+    expect(setOutputPayloadJson(null)).toBeNull()
   })
 })

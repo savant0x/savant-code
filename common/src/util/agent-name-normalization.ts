@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any -- dynamic agent registry lookup */
 export const DEFAULT_ORG_PREFIX = 'savant-code/'
 
 /**
@@ -10,10 +9,14 @@ export const DEFAULT_ORG_PREFIX = 'savant-code/'
  * This provides a more robust alternative to string concatenation
  * and handles the common case where users reference spawnable agents
  * without the org prefix.
+ *
+ * FID-2026-1013-012 W3-3: the registry is only probed with `in`, never read
+ * through, so its values are `unknown` — the `any` (and the file-top
+ * `no-explicit-any` suppression) said nothing the lookup needs.
  */
 export function resolveAgentId(
   agentId: string,
-  agentRegistry: Record<string, any>,
+  agentRegistry: Readonly<Record<string, unknown>>,
 ): string | null {
   // Handle empty or invalid input
   if (!agentId || typeof agentId !== 'string') {

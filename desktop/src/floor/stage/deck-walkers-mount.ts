@@ -60,7 +60,7 @@ export function mountFigure(
   // FID-2026-0828-002: the live cast was stuck at 0/10 — the GLB loaded
   // but no figure attached. Instrument the exact failure so the console
   // shows WHERE it breaks instead of silently leaving an empty cast.
-  // eslint-disable-next-line no-console
+  // eslint-disable-next-line no-console -- FID-2026-0828-002: name the mount source so an empty cast is never silent
   console.info(
     `[deck] mount ${entry.roleId}: ${figure === null ? 'fallback' : 'glb'}`,
   )

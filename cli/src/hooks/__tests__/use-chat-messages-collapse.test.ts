@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'bun:test'
 
+import {
+  clearCollapseFlagReset,
+  scheduleCollapseFlagReset,
+} from '../collapse-flag-timer'
 import { updateMessageCollapse } from '../use-chat-messages'
 
 import type { ChatMessage } from '../../types/chat'
@@ -126,5 +130,55 @@ describe('updateMessageCollapse identity preservation (FID-007 P2)', () => {
     expect(result[0]).toBe(messages[0])
     expect(result[1]).toBe(messages[1])
     expect(result[2]).toBe(messages[2])
+  })
+})
+
+/**
+ * FID-2026-1013-013 W4-6: the collapse reset timer used to be a bare
+ * `setTimeout(..., 0)` with no handle — a second rapid toggle's timer cleared
+ * `isUserCollapsingRef` while the first toggle's render was still settling,
+ * and unmount left the timer pointing at a dead ref.
+ */
+describe('collapse reset timer tracking (W4-6)', () => {
+  const idle = { current: null as ReturnType<typeof setTimeout> | null }
+  const flag = { current: false }
+
+  it('a re-trigger replaces the pending timer instead of racing it', async () => {
+    scheduleCollapseFlagReset(idle, flag)
+    const first = idle.current
+    expect(first).not.toBeNull()
+
+    // The second toggle lands before the first timer has ticked.
+    scheduleCollapseFlagReset(idle, flag)
+    expect(idle.current).not.toBeNull()
+    expect(idle.current).not.toBe(first)
+    // The flag is still held — the stale timer cannot have cleared it.
+    expect(flag.current).toBe(false)
+
+    flag.current = true
+    await Bun.sleep(5)
+    expect(flag.current).toBe(false)
+    // The handle is released once it fires, so nothing dangles.
+    expect(idle.current).toBeNull()
+  })
+
+  it('clearing on unmount drops the pending reset entirely', async () => {
+    const timer = { current: null as ReturnType<typeof setTimeout> | null }
+    const held = { current: true }
+    scheduleCollapseFlagReset(timer, held)
+    clearCollapseFlagReset(timer)
+    expect(timer.current).toBeNull()
+
+    await Bun.sleep(5)
+    // The timer never fired: the flag was not written after unmount.
+    expect(held.current).toBe(true)
+  })
+
+  it('clearing an already-settled timer is a no-op', () => {
+    const timer = { current: null as ReturnType<typeof setTimeout> | null }
+    expect(() => {
+      clearCollapseFlagReset(timer)
+    }).not.toThrow()
+    expect(timer.current).toBeNull()
   })
 })

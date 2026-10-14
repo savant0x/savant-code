@@ -10,6 +10,8 @@
  * Laws scanned: 5, 6, 9, 12, 14, 15
  */
 
+import { stripCommentsAndStrings } from './code-surface-stripper'
+
 import type {
   EnforcementMode,
   EnforcementResult,
@@ -17,19 +19,18 @@ import type {
   AdvisoryWarning,
 } from './types'
 
-/** Regex patterns for each extended law scanner. */
+/**
+ * Regex patterns for each single-stage law scanner. Law 6 is deliberately NOT
+ * here: its directive check and its code-keyword check run at different
+ * stages (FID-2026-1013-012 W3-4) — see LAW6_DIRECTIVE_PATTERN /
+ * LAW6_ANY_PATTERN below.
+ */
 const SCANNERS = {
   /** Law 5: No pseudo-code, TODOs, or placeholders. */
   law5: {
     law: 5,
     pattern: /\b(TODO|FIXME|HACK|XXX|placeholder)\b/gi,
     message: 'Law 5: No pseudo-code, TODOs, or placeholders',
-  },
-  /** Law 6: No type safety shortcuts. */
-  law6: {
-    law: 6,
-    pattern: /@ts-ignore|@ts-expect-error|\bany\b/g,
-    message: 'Law 6: No type safety shortcuts (no any, no @ts-ignore)',
   },
   /** Law 9: Production-grade documentation — exported without JSDoc. */
   law9: {
@@ -60,6 +61,21 @@ const SCANNERS = {
 } as const
 
 /**
+ * Law 6 stage A — comment directives. `@ts-ignore` / `@ts-expect-error` exist
+ * only inside comments by definition, so this check must run against the RAW
+ * source text (before any stripping).
+ */
+const LAW6_DIRECTIVE_PATTERN = /@ts-ignore|@ts-expect-error/g
+
+/**
+ * Law 6 stage B — the `any` type keyword. Must run against comment-and-string
+ * stripped code so the common English word "any" in prose comments
+ * (`// returns true when any entry matches`) or string literals
+ * (`'Could not find any files'`) never false-positives Law 6.
+ */
+const LAW6_ANY_PATTERN = /\bany\b/g
+
+/**
  * Run all post-write scanners on written files.
  * Returns blocking violations in strict mode, advisory warnings otherwise.
  */
@@ -76,6 +92,18 @@ export function runPostWriteScanners(params: {
 
   const warnings: AdvisoryWarning[] = []
   const violations: string[] = []
+
+  /** Records one violation and its advisory warning with a uniform shape. */
+  const report = (
+    law: number,
+    message: string,
+    found: string,
+    file: string,
+  ) => {
+    const detail = `${message} in "${file}" (found: "${found}")`
+    violations.push(detail)
+    warnings.push({ law, severity: 'warning', message: detail, file })
+  }
 
   // ── Law 15: Build stays clean ───────────────────────────────────────
   // Cumulative verification credit (FID-2026-0819-001): a dirty file is
@@ -124,17 +152,35 @@ export function runPostWriteScanners(params: {
 
       const matches = scanner.pattern.exec(content)
       if (matches) {
-        const detail =
-          `${scanner.message} in "${filePath}" ` +
-          `(found: "${matches[0].trim()}")`
-        violations.push(detail)
-        warnings.push({
-          law: scanner.law,
-          severity: 'warning',
-          message: detail,
-          file: filePath,
-        })
+        report(scanner.law, scanner.message, matches[0].trim(), filePath)
       }
+    }
+
+    // ── Law 6 (two stages, FID-2026-1013-012 W3-4) ────────────────────
+    // Stage A: directive comments, on the raw text.
+    LAW6_DIRECTIVE_PATTERN.lastIndex = 0
+    const directive = LAW6_DIRECTIVE_PATTERN.exec(content)
+    if (directive) {
+      report(
+        6,
+        'Law 6: No type safety shortcuts (ts-ignore/ts-expect-error directive)',
+        directive[0].trim(),
+        filePath,
+      )
+    }
+    // Stage B: the `any` keyword, on comment/string-stripped code so English
+    // prose containing "any" is never a false positive.
+    LAW6_ANY_PATTERN.lastIndex = 0
+    const anyKeyword = LAW6_ANY_PATTERN.exec(
+      stripCommentsAndStrings(content, filePath),
+    )
+    if (anyKeyword) {
+      report(
+        6,
+        'Law 6: No type safety shortcuts (any keyword)',
+        anyKeyword[0].trim(),
+        filePath,
+      )
     }
   }
 

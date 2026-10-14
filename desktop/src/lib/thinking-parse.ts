@@ -5,6 +5,8 @@
 // desktop otherwise shows raw JSON. This is a pure parser mirroring that exact
 // extraction: (toolName, inputJson) => label + markdown body or null.
 
+import { asBoolean, asPositiveInt } from '@savant-code/common/util/tool-display'
+
 export interface ThinkingPayload {
   /** e.g. '💭 Thought 2/5' or '↩️ Revising thought #3 · branch-1'. */
   label: string
@@ -31,15 +33,6 @@ function asString(value: unknown): string | null {
   return typeof value === 'string' ? value : null
 }
 
-function asPositiveInt(value: unknown): number | undefined {
-  if (typeof value !== 'number') return undefined
-  return Number.isInteger(value) && value > 0 ? value : undefined
-}
-
-function asBoolean(value: unknown): boolean {
-  return value === true
-}
-
 /** Extract a renderable thought from a sequentialthinking input. */
 export function parseThinkingInput(
   inputJson: string | null,
@@ -51,7 +44,7 @@ export function parseThinkingInput(
 
   const thoughtNumber = asPositiveInt(input.thoughtNumber)
   const totalThoughts = asPositiveInt(input.totalThoughts)
-  const isRevision = asBoolean(input.isRevision)
+  const isRevision = asBoolean(input.isRevision) === true
   const revisesThought = asPositiveInt(input.revisesThought)
   const branchId = asString(input.branchId)
 

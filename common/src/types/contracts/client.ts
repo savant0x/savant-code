@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any -- contract type: dynamic tool input/output shapes */
+/* eslint-disable @typescript-eslint/no-explicit-any -- variance, not laziness (W3-3): a tool call's `input` arrives as a union of ~20 tool-input shapes carrying `unknown` index signatures (`packages/agent-runtime/src/tools/tool-executor/client-tool-bridge.ts`) and must flow into a `Record<string, JSONValue>` action (`sdk/src/run/agent-runtime-impl.ts`); `Record<string, unknown>` fails the consumer and `Record<string, JSONValue>` fails every producer, so only `any` satisfies both ends of this boundary. Narrowing it requires editing those two files, which are outside this record's write surface. */
 import type { ServerAction } from '../../actions'
 import type { JSONValue } from '../json'
 import type { MCPConfig } from '../mcp'

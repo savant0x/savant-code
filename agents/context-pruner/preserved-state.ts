@@ -1,20 +1,7 @@
 /**
- * P1b — Preserved-state JSON block (FID-2026-0806-003 Phase 1).
- *
- * Pure functions (embedded via .toString() at factory time) that extract
- * structured state from the message history so FID state, todos, loaded
- * skills, and file operations survive the compaction boundary — the Savant
- * analogue of Zero's `compaction_preserve.go` (active plan + loaded skills
- * carried across compaction as a single-line JSON block).
- *
- * Hard caps keep the block from defeating the compaction it rides in on.
- * The block must also survive reactive compaction (Layer 4) — see
- * `ContextCompactor.reactiveCompact` preserve-set (R4 fix).
- *
- * FID-2026-0915-002 row 6: the merge/normalize cluster
- * (normalizePreservedState / unionNewestFirst / mergePreservedState) moved to
- * preserved-state-merge.ts and is re-exported here unchanged (extract/
- * build/serialize stay — this module remains the import surface).
+ * P1b — Preserved-state JSON block (FID-2026-0806-003 Phase 1; split in FID-2026-0915-002).
+ * Pure functions (embedded via .toString() at factory time) that extract structured state
+ * (FID, todos, skills, file ops) across compaction boundaries.
  */
 import {
   MAX_FID_CHARS,
@@ -58,14 +45,8 @@ export interface PreservedState {
 // (only CONTEXT_PRUNER_CONSTANTS is baked), so regexes live inside functions.
 
 /**
- * FID-2026-0914-002: normalize a file path for the preserved state.
- *
- * (1) When the path lives under the project root, it becomes repo-relative
- * (kills the absolute `C:\Users\...` noise the pasted artifact showed —
- * portable across machines and budget-cheap). (2) Windows separators always
- * become forward slashes. (3) Paths outside the project root are kept but
- * still separator-normalized (they may genuinely point at other locations).
- * Embeddable-safe: params/locals only.
+ * FID-2026-0914-002: normalize a file path for the preserved state (repo-relative
+ * when under projectRoot, forward slashes everywhere). Embeddable-safe.
  */
 export function normalizePathForState(
   path: string,
@@ -190,6 +171,19 @@ export function buildPreservedState(
           case 'propose_str_replace': {
             const path = asString(input.path)
             if (path) pushUnique(state.modifiedFiles, [normalize(path)])
+            break
+          }
+          case 'apply_patch': {
+            const operation = asObject(input.operation)
+            const opPath = operation ? asString(operation.path) : null
+            const opType = operation ? asString(operation.type) : null
+            if (opPath) {
+              const targetList =
+                opType === 'create_file'
+                  ? state.createdFiles
+                  : state.modifiedFiles
+              pushUnique(targetList, [normalize(opPath)])
+            }
             break
           }
           case 'skill': {

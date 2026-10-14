@@ -49,6 +49,14 @@ function asString(value: unknown): string | null {
   return typeof value === 'string' ? value : null
 }
 
+/** Coerce a nested JSON value to a plain object (fail-safe). */
+function asObject(value: unknown): Record<string, unknown> | null {
+  if (typeof value !== 'object' || value === null || Array.isArray(value)) {
+    return null
+  }
+  return value as { [key: string]: unknown }
+}
+
 function linesOf(text: string, type: DiffLine['type']): DiffLine[] {
   return text.split('\n').map((line) => ({ type, text: line }))
 }
@@ -123,11 +131,18 @@ export function parseDiffInput(
   }
 
   if (toolName === 'apply_patch') {
-    const diff = asString(input.diff ?? input.patch)
+    // W4-2: real runtime calls nest the payload under `operation` (the tool
+    // schema is { operation: { type, path, diff } } — `create_file` and
+    // `update_file` carry `diff`, `delete_file` does not), so a top-level-only
+    // read returned null on every real call and the card fell back to raw
+    // JSON. Flat { path, diff | patch } fixtures are still accepted.
+    const operation = asObject(input.operation)
+    const diff = asString(operation?.diff ?? input.diff ?? input.patch)
     if (diff === null) return null
     const hunks = parsePatch(diff)
     if (hunks.length === 0) return null
-    return { path: asString(input.path) ?? extractPatchPath(diff), hunks }
+    const path = asString(operation?.path ?? input.path)
+    return { path: path ?? extractPatchPath(diff), hunks }
   }
 
   // write_file family: the whole-file snapshot renders as one all-add hunk.

@@ -56,6 +56,14 @@ export type ChatBlock =
       inputJson: string | null
       outputText: string | null
       done: boolean
+      /** FID-2026-1013-013 W4-1: the agent that invoked this call (absent for
+       *  root-level calls) and the delegating parent, verbatim from the
+       *  `tool_call` event. */
+      agentId?: string
+      parentAgentId?: string
+      /** W4-1: the roster display label for the invoking subagent, resolved
+       *  at call time so the card can badge who ran the tool. */
+      agentLabel?: string
     }
   | { kind: 'error'; id: number; message: string }
   | {

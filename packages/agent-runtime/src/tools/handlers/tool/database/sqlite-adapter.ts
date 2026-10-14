@@ -1,4 +1,9 @@
 import {
+  getRuntimeRequire,
+  resolveBunSqliteModule,
+} from '@savant-code/common/util/bun-sqlite'
+
+import {
   DbErrorCode,
   StructuredDbError,
   classifySql,
@@ -32,12 +37,9 @@ import type { Database } from 'bun:sqlite'
 // sdk/src/run-state.ts:550).
 let sqliteDatabaseCtor: typeof Database | undefined
 
-/** The module-scope `require` when it exists; `undefined` under Node ESM. */
-function getRuntimeRequire(): ((id: string) => unknown) | undefined {
-  // `typeof` is safe even where `require` is undeclared (Node ESM) — it
-  // evaluates to 'undefined' without throwing a ReferenceError.
-  return typeof require === 'function' ? require : undefined
-}
+/** Guidance appended when there is no `require` at all (Node ESM/CJS). */
+const BUN_RUNTIME_HINT =
+  ' Run the CLI/agent with Bun (e.g. `bun run savant-code`) instead of Node.js.'
 
 /**
  * Resolve the bun:sqlite Database constructor, or throw a clear
@@ -49,24 +51,26 @@ function getRuntimeRequire(): ((id: string) => unknown) | undefined {
  * `requireFn` is injectable for tests. Note the default-parameter semantics:
  * omitting it (or passing explicit `undefined`) injects the runtime `require`;
  * pass explicit `null` to simulate an environment without `require` (Node ESM).
+ *
+ * FID-2026-1013-011 W2-6: the resolution mechanism is canonical in
+ * `@savant-code/common/util/bun-sqlite`; this wrapper supplies the database
+ * tools' own wording and re-wraps the failure in `StructuredDbError`, so the
+ * error-code contract and messages are unchanged.
  */
 export function resolveBunSqliteDatabaseModule(
   requireFn: ((id: string) => unknown) | null | undefined = getRuntimeRequire(),
 ): { Database: typeof Database } {
-  if (typeof requireFn !== 'function') {
-    throw new StructuredDbError(
-      DbErrorCode.CONNECTION_FAILED,
-      'The database tools require the Bun runtime: bun:sqlite is only available under Bun. Run the CLI/agent with Bun (e.g. `bun run savant-code`) instead of Node.js.',
-    )
-  }
   try {
-    return requireFn('bun:sqlite') as { Database: typeof Database }
+    return resolveBunSqliteModule({
+      requireFn,
+      subject: 'The database tools require the Bun runtime',
+      unavailableHint: BUN_RUNTIME_HINT,
+      loadFailureHint: ' Run the CLI/agent with Bun instead of Node.js.',
+    })
   } catch (error) {
     throw new StructuredDbError(
       DbErrorCode.CONNECTION_FAILED,
-      `The database tools require the Bun runtime: failed to load bun:sqlite (${
-        error instanceof Error ? error.message : String(error)
-      }). Run the CLI/agent with Bun instead of Node.js.`,
+      error instanceof Error ? error.message : String(error),
     )
   }
 }

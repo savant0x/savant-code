@@ -148,7 +148,7 @@ export class WalkerLayer {
         })
         .catch((error: unknown) => {
           const message = error instanceof Error ? error.message : String(error)
-          // eslint-disable-next-line no-console
+          // eslint-disable-next-line no-console -- surface the figure-factory failure with its cause
           console.error(
             `[deck] cast figure ${entry.roleId} factory failed: ${message}`,
           )

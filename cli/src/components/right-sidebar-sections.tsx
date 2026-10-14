@@ -3,8 +3,8 @@ import React from 'react'
 import {
   formatCacheUsage,
   formatToolHistoryEvent,
-  toolDisplayName,
   resolveActiveAgentDisplay,
+  sidebarToolDisplayName,
 } from './right-sidebar-format'
 import { SidebarSessionSummary } from './right-sidebar-summary'
 import { useSidebarTheme as useTheme } from './right-sidebar-theme'
@@ -73,7 +73,7 @@ export function SidebarToolsList({
           fg={theme.foreground}
           wrapMode="word"
           selectable={false}
-        >{`${glyph('statusActive')} ${toolDisplayName(tool)}`}</text>
+        >{`${glyph('statusActive')} ${sidebarToolDisplayName(tool)}`}</text>
       ))}
       {available.map((tool) => (
         <text
@@ -81,7 +81,7 @@ export function SidebarToolsList({
           fg={theme.muted}
           wrapMode="word"
           selectable={false}
-        >{`${glyph('statusInactive')} ${toolDisplayName(tool)}`}</text>
+        >{`${glyph('statusInactive')} ${sidebarToolDisplayName(tool)}`}</text>
       ))}
     </SidebarSection>
   )

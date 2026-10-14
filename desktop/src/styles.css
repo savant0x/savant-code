@@ -1622,6 +1622,26 @@ body {
   white-space: pre-wrap;
 }
 
+/* W4-3: the optional operator note/answer rides above the action row. */
+.approval-note {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  margin-top: 8px;
+  padding: 5px 8px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--fg);
+  font-size: 12px;
+  font-family: inherit;
+}
+
+.approval-note:focus {
+  outline: none;
+  border-color: rgba(255, 149, 0, 0.55);
+}
+
 .tool-card {
   border: 1px solid var(--border);
   border-radius: 8px;
@@ -1664,6 +1684,18 @@ body {
 
 .tool-name {
   font-weight: 600;
+}
+
+/* FID-2026-1013-013 W4-1: subagent attribution badge — the roster label of
+   the agent that invoked this tool call (absent on root-level calls). */
+.tool-agent-badge {
+  flex: 0 0 auto;
+  padding: 0 6px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 16px;
 }
 
 .tool-toggle {

@@ -105,16 +105,22 @@ export function createWalkerFrameStepper(): WalkerFrameStepper {
     current: new Map<string, boolean>(),
   }
   let lastMs = performance.now()
+  // W4-4: reusable per-frame index of the walkers. The children loop used
+  // `walkers.find(...)` per child — O(N*W) every frame at 60fps. The Map is
+  // cleared and refilled once per step (O(W)) and never reallocated.
+  const walkerById = new Map<string, StepperWalker>()
 
   const stepper: WalkerFrameStepper = {
     movingMap,
     step: ({ group, walkers, now, reduced, onBurst, accentFor }) => {
       const dt = Math.min(now - lastMs, 100)
       lastMs = now
+      walkerById.clear()
+      for (const walker of walkers) walkerById.set(walker.agentId, walker)
       for (const child of group.children) {
         const id = child.userData.agentId as string | undefined
         if (id === undefined) continue
-        const walker = walkers.find((candidate) => candidate.agentId === id)
+        const walker = walkerById.get(id)
         if (walker === undefined) continue
         // P6c: newly appeared walkers materialize at the console edge and
         // WALK to their post. P8: agents leave their desk ONLY via

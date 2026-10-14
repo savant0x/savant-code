@@ -14,6 +14,14 @@ import type { AdResponse } from '../hooks/use-gravity-ad'
 import type { ChatTheme } from '../types/theme-system'
 import type { FeedbackCategory } from '@savant-code/common/constants/feedback'
 
+// FID-2026-1013-013 W4-5: `showInlineAds: false` used to pass a fresh `{}`
+// literal into the store on every streaming tick (this effect re-runs on every
+// `messageTree`/`timerStartTime` change), invalidating `responseAds`
+// referential identity each time. One frozen module-level constant keeps the
+// identity stable so downstream memoization survives streaming.
+export const EMPTY_RESPONSE_ADS: Readonly<Record<string, AdResponse[]>> =
+  Object.freeze({})
+
 export interface UseMessageBlockSyncArgs {
   theme: ChatTheme
   markdownPalette: ReturnType<typeof useChatUI>['markdownPalette']
@@ -77,7 +85,7 @@ export function useMessageBlockSync({
       isWaitingForResponse,
       timerStartTime,
       availableWidth: messageAvailableWidth,
-      responseAds: showInlineAds ? responseAds : {},
+      responseAds: showInlineAds ? responseAds : EMPTY_RESPONSE_ADS,
     })
   }, [
     theme,

@@ -1,5 +1,6 @@
-/* eslint-disable @typescript-eslint/no-explicit-any -- env schema: satisfies Record<any> constraint */
 import z from 'zod/v4'
+
+import type { ZodType } from 'zod/v4'
 
 export const CLIENT_ENV_PREFIX = 'NEXT_PUBLIC_'
 
@@ -18,7 +19,10 @@ export const clientEnvSchema = z.object({
   NEXT_PUBLIC_STRIPE_CUSTOMER_PORTAL: z.url().min(1),
   NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION_ID: z.string().optional(),
   NEXT_PUBLIC_WEB_PORT: z.coerce.number().min(1000),
-} satisfies Record<`${typeof CLIENT_ENV_PREFIX}${string}`, any>)
+  // FID-2026-1013-012 W3-3: the `satisfies` clause proves every key is
+  // NEXT_PUBLIC_-prefixed and every value is a Zod schema, so it names
+  // `ZodType` instead of `any` (which asserted nothing).
+} satisfies Record<`${typeof CLIENT_ENV_PREFIX}${string}`, ZodType>)
 export const clientEnvVars = clientEnvSchema.keyof().options
 export type ClientEnvVar = (typeof clientEnvVars)[number]
 export type ClientInput = {

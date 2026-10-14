@@ -1,14 +1,21 @@
 import fs from 'fs'
 import path from 'path'
 
+import {
+  getRuntimeRequire,
+  resolveBunSqliteModule,
+} from '@savant-code/common/util/bun-sqlite'
+
 import { applyGraphSchema } from './schema'
 
 import type { Database } from 'bun:sqlite'
 
 /**
  * Graph database store. Follows packages/database conventions: bun:sqlite is
- * Bun-only so the constructor is resolved lazily (mirroring
- * packages/database/src/index.ts and agent-runtime's sqlite-adapter), the
+ * Bun-only so the constructor is resolved lazily (through
+ * @savant-code/common/util/bun-sqlite, the canonical loader — FID-2026-1013-011
+ * W2-6; packages/database keeps its own copy because it is a zero-dependency
+ * package), the
  * connection enables WAL + foreign keys, and the schema is applied on open.
  *
  * The graph database is a distinct file (`.savant/graph.db` under the project
@@ -17,32 +24,21 @@ import type { Database } from 'bun:sqlite'
  * SAVANT_CODE_GRAPH_DB_PATH (used by tests / CI).
  */
 
-/** The module-scope `require` when it exists; `undefined` under Node ESM. */
-function getRuntimeRequire(): ((id: string) => unknown) | undefined {
-  return typeof require === 'function' ? require : undefined
-}
-
 /**
  * Resolve the bun:sqlite Database constructor, or throw a clear error when
  * the runtime cannot provide it. `requireFn` is injectable for tests.
+ *
+ * FID-2026-1013-011 W2-6: the loader itself is canonical in
+ * `@savant-code/common/util/bun-sqlite`; this wrapper supplies the package's
+ * own error wording and preserves the exported name and signature.
  */
 export function resolveBunSqliteDatabaseModule(
   requireFn: ((id: string) => unknown) | null | undefined = getRuntimeRequire(),
 ): { Database: typeof Database } {
-  if (typeof requireFn !== 'function') {
-    throw new Error(
-      'The knowledge-graph package requires the Bun runtime: bun:sqlite is only available under Bun.',
-    )
-  }
-  try {
-    return requireFn('bun:sqlite') as { Database: typeof Database }
-  } catch (error) {
-    throw new Error(
-      `The knowledge-graph package requires the Bun runtime: failed to load bun:sqlite (${
-        error instanceof Error ? error.message : String(error)
-      }).`,
-    )
-  }
+  return resolveBunSqliteModule({
+    requireFn,
+    subject: 'The knowledge-graph package requires the Bun runtime',
+  })
 }
 
 /** Resolve the graph database path for a project root. */

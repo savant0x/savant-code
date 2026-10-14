@@ -87,7 +87,14 @@ export function nameplateLayout(
   }
 }
 
-function traceRoundedRect(
+/**
+ * Trace a rounded rectangle onto `ctx` (path only — the caller fills/strokes).
+ *
+ * FID-2026-1013-011 W2-4: this is the canonical owner of the 2D rounded-rect
+ * path helper; the billboard nameplates in `../stage/nameplate.ts` imports it
+ * from here instead of carrying a byte-identical copy.
+ */
+export function traceRoundedRect(
   ctx: CanvasRenderingContext2D,
   x: number,
   y: number,

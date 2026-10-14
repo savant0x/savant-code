@@ -1,4 +1,5 @@
 import { askUserParams } from '@savant-code/common/tools/params/tool/ask-user'
+import { toolDisplayName } from '@savant-code/common/util/tool-display'
 import { AskUserBridge } from '@savant-code/common/utils/ask-user-bridge'
 import { SavantCodeClient } from '@savant-code/sdk'
 
@@ -117,24 +118,11 @@ export function getToolDisplayInfo(toolName: string): {
   name: string
   type: string
 } {
-  const TOOL_NAME_OVERRIDES: Record<string, string> = {
-    list_directory: 'List Directories',
-  }
-
-  const capitalizeWords = (str: string) => {
-    return str.replace(/_/g, ' ').replace(/\b\w/g, (l) => l.toUpperCase())
-  }
-
-  return {
-    name:
-      TOOL_NAME_OVERRIDES[toolName] ??
-      capitalizeWords(
-        toolName.includes('__')
-          ? toolName.split('__').slice(1).join('_')
-          : toolName,
-      ),
-    type: 'tool',
-  }
+  // FID-2026-1013-011 W2-1: the Title-Case label (list_directory override +
+  // MCP `server__tool` stripping) is canonical in
+  // `@savant-code/common/util/tool-display`; this wrapper keeps the CLI's
+  // `{ name, type }` shape for its two callers.
+  return { name: toolDisplayName(toolName), type: 'tool' }
 }
 
 function toYaml(value: JSONValue, indent = 0): string {

@@ -5,12 +5,16 @@ import {
   safeJson,
   summarizeApproval,
 } from './transcript-format'
+import {
+  mergeOrAppendReasoning,
+  mergeOrAppendText,
+  reduceActivity,
+  reduceCompactionStatus,
+  reduceCompactionSummary,
+  reduceFidUpdate,
+} from './transcript-reducer-events'
 
-import type {
-  ChatBlock,
-  FidQueueEntry,
-  TranscriptState,
-} from './transcript-types'
+import type { ChatBlock, TranscriptState } from './transcript-types'
 import type { PrintModeEvent } from '@savant-code/common/types/print-mode'
 
 // FID-2026-0819-005 Loop 298: pure event-to-block reducer machinery, moved
@@ -28,58 +32,6 @@ export const initialTranscriptState: TranscriptState = {
   fsmPhase: null,
   currentActivity: null,
   model: null,
-}
-
-function mergeOrAppendText(
-  state: TranscriptState,
-  agentId: string | undefined,
-  text: string,
-): TranscriptState {
-  const last = state.blocks[state.blocks.length - 1]
-  if (
-    !state.turnClosed &&
-    last !== undefined &&
-    last.kind === 'text' &&
-    last.agentId === agentId
-  ) {
-    const merged: ChatBlock = {
-      ...last,
-      text: last.text + text,
-      ts: Date.now(),
-    }
-    return { ...state, blocks: [...state.blocks.slice(0, -1), merged] }
-  }
-  const fresh: ChatBlock = {
-    kind: 'text',
-    id: state.blocks.length,
-    text,
-    ts: Date.now(),
-    ...(agentId !== undefined ? { agentId } : {}),
-  }
-  return { ...state, turnClosed: false, blocks: [...state.blocks, fresh] }
-}
-
-function mergeOrAppendReasoning(
-  state: TranscriptState,
-  agentId: string,
-  text: string,
-): TranscriptState {
-  const last = state.blocks[state.blocks.length - 1]
-  if (
-    last !== undefined &&
-    last.kind === 'reasoning' &&
-    last.agentId === agentId
-  ) {
-    const merged: ChatBlock = { ...last, text: last.text + text }
-    return { ...state, blocks: [...state.blocks.slice(0, -1), merged] }
-  }
-  const fresh: ChatBlock = {
-    kind: 'reasoning',
-    id: state.blocks.length,
-    agentId,
-    text,
-  }
-  return { ...state, blocks: [...state.blocks, fresh] }
 }
 
 export function applyEvent(
@@ -112,6 +64,21 @@ export function applyEvent(
           block.kind === 'tool' && block.toolCallId === event.toolCallId,
       )
       if (duplicate) return state
+      // W4-1: attribute the call to the subagent that made it. The roster row
+      // activated by `subagent_start` carries the same agentId the runtime
+      // stamps on the tool_call (see the tool executor's onResponseChunk), and
+      // its label is what the card badges. Root calls carry no agent id and
+      // render unbadged.
+      const attributedAgentId = event.agentId ?? event.parentAgentId
+      const rosterEntry =
+        attributedAgentId === undefined
+          ? undefined
+          : state.roster.find(
+              (entry) =>
+                entry.agentId === attributedAgentId &&
+                entry.presence === 'active' &&
+                entry.roleId !== 'savant',
+            )
       const fresh: ChatBlock = {
         kind: 'tool',
         id: state.blocks.length,
@@ -120,6 +87,11 @@ export function applyEvent(
         inputJson: safeJson(event.input),
         outputText: null,
         done: false,
+        ...(event.agentId !== undefined ? { agentId: event.agentId } : {}),
+        ...(event.parentAgentId !== undefined
+          ? { parentAgentId: event.parentAgentId }
+          : {}),
+        ...(rosterEntry !== undefined ? { agentLabel: rosterEntry.label } : {}),
       }
       return { ...state, blocks: [...state.blocks, fresh] }
     }
@@ -202,72 +174,16 @@ export function applyEvent(
         state,
         `runtime download v${event.version}: ${event.status}`,
       )
-    case 'fid_update': {
-      const nextEntry: FidQueueEntry = {
-        fidId: event.fidId,
-        projectId: event.projectId,
-        status: event.status,
-        ...(event.parentId !== undefined ? { parentId: event.parentId } : {}),
-      }
-      const existing = state.fidQueue.findIndex(
-        (entry) =>
-          entry.fidId === event.fidId && entry.projectId === event.projectId,
-      )
-      const fidQueue =
-        existing === -1
-          ? [...state.fidQueue, nextEntry]
-          : state.fidQueue.map((entry, index) =>
-              index === existing ? nextEntry : entry,
-            )
-      // P17: FID queue updates are already surfaced in the FID panel — a
-      // per-FID transcript notice turned a run into a wall of
-      // "FID … → analyzed/closed" lines. Update the queue only.
-      return { ...state, fidQueue }
-    }
+    // W3-6: the queue/activity/compaction branches live in
+    // ./transcript-reducer-events with the block-merge helpers.
+    case 'fid_update':
+      return reduceFidUpdate(state, event)
     case 'compaction_status':
-      return { ...state, compactionStatus: event }
-    case 'compaction_summary': {
-      // FID-2026-0828-001 desktop parity: the post-compaction summary is a
-      // real transcript block (the CLI renders CompactionSummaryBlock), not
-      // a status chip — the operator reads WHAT the pruner removed.
-      return {
-        ...state,
-        blocks: [
-          ...state.blocks,
-          {
-            kind: 'compaction_summary',
-            id: state.blocks.length,
-            summary: event.summary,
-            removedMessages: event.removedMessages,
-            ...(event.tokensSaved !== undefined
-              ? { tokensSaved: event.tokensSaved }
-              : {}),
-            ...(event.percentUsed !== undefined
-              ? { percentUsed: event.percentUsed }
-              : {}),
-          },
-        ],
-      }
-    }
-    case 'activity': {
-      // FID-2026-0901-006 P2: surface the runtime activity indicator — the
-      // same stream the CLI's status bar consumes. Root-level events only
-      // (no agentId); sub-agent activity stays on the deck.
-      if (event.agentId !== undefined) return state
-      // P17: capture the running model from the thinking activity event so the
-      // header can show what's actually driving the turn (mirrors the CLI's
-      // AgentStatus `activity.model` read).
-      const model =
-        event.activity.kind === 'thinking'
-          ? (event.activity.model ?? state.model)
-          : state.model
-      return {
-        ...state,
-        currentActivity:
-          event.activity.kind === 'idle' ? null : { ...event.activity },
-        model,
-      }
-    }
+      return reduceCompactionStatus(state, event)
+    case 'compaction_summary':
+      return reduceCompactionSummary(state, event)
+    case 'activity':
+      return reduceActivity(state, event)
     default:
       return state
   }

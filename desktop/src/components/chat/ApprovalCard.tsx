@@ -1,8 +1,10 @@
 // FID-2026-0820-010 Step 6 — inline approval card. Surfaces the gateway
 // approval lifecycle with Approve/Deny controls wired to the real
-// `approval_response` method. v1 semantics: the client answers with the
-// empty-answers shape (approve) or the skipped=true fail-closed deny —
-// richer answer collection is deferred until an event needs it.
+// `approval_response` method.
+// FID-2026-1013-013 W4-3: v1 hardcoded the empty-answers shape; the card now
+// carries an optional single-line operator note/answer that rides along as
+// `answers: [{ note }]` (the trailing optional arg keeps 2-arg callers and
+// the previous `answers: []` behaviour intact).
 
 import { memo, useState } from 'react'
 
@@ -18,13 +20,19 @@ export const ApprovalCard = memo(function ApprovalCard({
 }: {
   block: ApprovalBlock
   disabled: boolean
-  onRespond(approvalId: string, skipped: boolean): void
+  onRespond(approvalId: string, skipped: boolean, note?: string): void
 }): JSX.Element {
   const [responded, setResponded] = useState<'approved' | 'denied' | null>(null)
+  const [note, setNote] = useState('')
+  const trimmedNote = note.trim()
   const respond = (skipped: boolean): void => {
     if (responded !== null || disabled) return
     setResponded(skipped ? 'denied' : 'approved')
-    onRespond(block.approvalId, skipped)
+    onRespond(
+      block.approvalId,
+      skipped,
+      trimmedNote === '' ? undefined : trimmedNote,
+    )
   }
   return (
     <section className="blk blk-approval">
@@ -33,31 +41,50 @@ export const ApprovalCard = memo(function ApprovalCard({
       </div>
       <pre className="blk-approval-summary">{block.summary}</pre>
       {responded === null ? (
-        <div className="approval-actions">
-          <button
-            type="button"
-            className="approval-btn approval-approve"
+        <>
+          <input
+            type="text"
+            className="approval-note"
+            aria-label="operator note"
+            placeholder="optional note / answer"
+            value={note}
             disabled={disabled}
-            onClick={() => {
-              respond(false)
+            onChange={(event) => {
+              setNote(event.target.value)
             }}
-          >
-            Approve
-          </button>
-          <button
-            type="button"
-            className="approval-btn approval-deny"
-            disabled={disabled}
-            onClick={() => {
-              respond(true)
+            onKeyDown={(event) => {
+              // Enter approves with the note attached — the fast path for an
+              // operator answering a question inline.
+              if (event.key === 'Enter') respond(false)
             }}
-          >
-            Deny
-          </button>
-        </div>
+          />
+          <div className="approval-actions">
+            <button
+              type="button"
+              className="approval-btn approval-approve"
+              disabled={disabled}
+              onClick={() => {
+                respond(false)
+              }}
+            >
+              Approve
+            </button>
+            <button
+              type="button"
+              className="approval-btn approval-deny"
+              disabled={disabled}
+              onClick={() => {
+                respond(true)
+              }}
+            >
+              Deny
+            </button>
+          </div>
+        </>
       ) : (
         <div className={`approval-state approval-${responded}`}>
           {responded} · {block.approvalId}
+          {trimmedNote === '' ? '' : ` · ${trimmedNote}`}
         </div>
       )}
     </section>

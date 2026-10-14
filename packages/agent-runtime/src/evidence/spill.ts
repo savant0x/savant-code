@@ -164,6 +164,7 @@ export * from './spill-contract'
 export {
   loadEvidenceRecords,
   parseEvidenceFile,
+  resetEvidenceRecordCache,
   resolveRetainedPayload,
 } from './spill-read'
 export type { ResolvedPayload } from './spill-read'

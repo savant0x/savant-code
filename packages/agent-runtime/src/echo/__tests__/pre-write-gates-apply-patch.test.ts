@@ -15,6 +15,7 @@ import { afterEach, describe, expect, it } from 'bun:test'
 
 import { createEnforcementState } from '../enforcement-state'
 import { runPreWriteGates } from '../pre-write-gates'
+import { runLaw1Gate } from '../pre-write-gates-law1'
 
 describe('runPreWriteGates — apply_patch input shape (FID-2026-0820-014 EC-2)', () => {
   const tempDirs: string[] = []
@@ -110,5 +111,42 @@ describe('runPreWriteGates — apply_patch input shape (FID-2026-0820-014 EC-2)'
     expect(result.blocked).toBe(true)
     expect(result.reason).toContain('FID gate')
     expect(result.reason).toContain('not done')
+  })
+
+  it('resolves relative targetPath against projectRoot in runLaw1Gate (FID-2026-1013-010 W1-2)', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'law1-root-'))
+    tempDirs.push(dir)
+    const existingRel = 'sub/existing-in-root.ts'
+    const existingAbs = join(dir, existingRel)
+    rmSync(existingAbs, { force: true })
+    writeFileSync(join(dir, 'root-existing.ts'), '// exists in projectRoot\n')
+
+    // Unread existing relative file inside projectRoot must be blocked even though
+    // `root-existing.ts` does not exist in process.cwd().
+    const blocked = runLaw1Gate({
+      targetPath: 'root-existing.ts',
+      mutationTargets: [],
+      filesRead: new Set(),
+      projectRoot: dir,
+    })
+    expect(blocked.blocked).toBe(true)
+
+    // When read under its absolute path, the relative targetPath is recognized as read.
+    const allowedAfterAbsRead = runLaw1Gate({
+      targetPath: 'root-existing.ts',
+      mutationTargets: [],
+      filesRead: new Set([join(dir, 'root-existing.ts')]),
+      projectRoot: dir,
+    })
+    expect(allowedAfterAbsRead.blocked).toBe(false)
+
+    // Brand-new relative file inside projectRoot is exempt.
+    const allowedNew = runLaw1Gate({
+      targetPath: 'brand-new-in-root.ts',
+      mutationTargets: [],
+      filesRead: new Set(),
+      projectRoot: dir,
+    })
+    expect(allowedNew.blocked).toBe(false)
   })
 })

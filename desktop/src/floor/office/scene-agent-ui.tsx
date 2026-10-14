@@ -23,6 +23,40 @@ import type { SpeechBubble } from './speech-bubbles'
 import type { WalkerState } from '../adapter/floor-adapter'
 import type { JSX } from 'react'
 
+// FID-2026-1013-013 W4-4: `document.body.style.cursor` is process-global and
+// ten AgentCharacter instances mount at once. With a per-instance boolean
+// effect, moving the pointer straight from agent A to agent B ran A's
+// hover-out cleanup after B's hover-in effect and clobbered the cursor back to
+// 'auto' while the pointer was still over B. Reference counting makes the
+// cursor mean "at least one agent is hovered" instead of "the last instance
+// whose effect happened to run".
+let hoveredAgentCursorCount = 0
+
+function applyHoverCursor(): void {
+  document.body.style.cursor = hoveredAgentCursorCount > 0 ? 'pointer' : 'auto'
+}
+
+/** Claim the pointer cursor for one hovered agent. */
+export function acquireHoverCursor(): void {
+  hoveredAgentCursorCount += 1
+  applyHoverCursor()
+}
+
+/** Release one claim — hover-out, or unmount while still hovered. */
+export function releaseHoverCursor(): void {
+  hoveredAgentCursorCount = Math.max(0, hoveredAgentCursorCount - 1)
+  applyHoverCursor()
+}
+
+/**
+ * Test isolation (FID-2026-1007-002): the counter is process-lifetime module
+ * state every desktop suite would otherwise inherit. Deliberately does NOT
+ * touch `document` — the suite has no DOM.
+ */
+export function resetHoveredAgentCursorCount(): void {
+  hoveredAgentCursorCount = 0
+}
+
 export function AgentCharacter({
   walker,
   position,
@@ -50,10 +84,14 @@ export function AgentCharacter({
   // glow (cursor pointer); click eases the camera onto this agent; F then
   // toggles follow-cam; Escape releases.
   const [hovered, setHovered] = useState(false)
+  // W4-4: only a HOVERED instance owns a cursor claim. An un-hovered agent
+  // registers no cleanup, so unmounting it (a subagent leaving the cast) can
+  // never decrement a sibling's claim.
   useEffect(() => {
-    document.body.style.cursor = hovered ? 'pointer' : 'auto'
+    if (!hovered) return
+    acquireHoverCursor()
     return () => {
-      document.body.style.cursor = 'auto'
+      releaseHoverCursor()
     }
   }, [hovered])
   return (

@@ -156,6 +156,7 @@ export function runPreWriteGates(params: {
     targetPath,
     mutationTargets,
     filesRead: params.state.filesRead,
+    projectRoot: params.state.telemetryRootDir,
   })
   if (law1Result.blocked) {
     return finish({ blocked: true, reason: law1Result.reason, warnings }, 1)

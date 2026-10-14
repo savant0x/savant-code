@@ -6,11 +6,16 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import {
+  clearCollapseFlagReset,
+  scheduleCollapseFlagReset,
+} from './collapse-flag-timer'
+import {
   setAllBlocksCollapsedState,
   hasAnyExpandedBlocks,
 } from '../utils/collapse-helpers'
 import { buildMessageTree } from '../utils/message-tree-utils'
 
+import type { CollapseTimerRef } from './collapse-flag-timer'
 import type { ChatMessage, ContentBlock } from '../types/chat'
 
 /** Batch size for message pagination */
@@ -74,6 +79,17 @@ export function useChatMessages({
 
   // Ref to track user-initiated collapse (prevents auto-scroll during collapse)
   const isUserCollapsingRef = useRef<boolean>(false)
+  // FID-2026-1013-013 W4-6: the flag-reset timer is tracked (./collapse-flag-timer).
+  const collapseResetTimerRef = useRef<CollapseTimerRef['current']>(null)
+  const armCollapseFlagReset = useCallback(() => {
+    scheduleCollapseFlagReset(collapseResetTimerRef, isUserCollapsingRef)
+  }, [])
+
+  useEffect(() => {
+    return () => {
+      clearCollapseFlagReset(collapseResetTimerRef)
+    }
+  }, [])
 
   /**
    * Returns true if user is currently collapsing.
@@ -97,11 +113,9 @@ export function useChatMessages({
       // Reset flag after state update completes.
       // Uses setTimeout(0) to defer until after React's batched state updates
       // have been applied, ensuring the flag stays true during the render cycle.
-      setTimeout(() => {
-        isUserCollapsingRef.current = false
-      }, 0)
+      armCollapseFlagReset()
     },
-    [setMessages],
+    [setMessages, armCollapseFlagReset],
   )
 
   /**
@@ -129,10 +143,8 @@ export function useChatMessages({
     // Reset flag after state update completes.
     // Uses setTimeout(0) to defer until after React's batched state updates
     // have been applied, ensuring the flag stays true during the render cycle.
-    setTimeout(() => {
-      isUserCollapsingRef.current = false
-    }, 0)
-  }, [setMessages])
+    armCollapseFlagReset()
+  }, [setMessages, armCollapseFlagReset])
 
   // Build message tree from flat messages array
   const { tree: messageTree, topLevelMessages } = useMemo(

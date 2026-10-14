@@ -12,6 +12,7 @@
 import { describe, expect, it, mock } from 'bun:test'
 
 import { ContextCompactor } from '../../context-compactor'
+import { countTokensJson } from '../../util/token-counter'
 import { runMicroCompactPass } from '../context-tokens-compaction'
 
 import type { LoopAgentStepsParams } from '../types'
@@ -48,7 +49,11 @@ function toolResult(
 function buildHistory(): Message[] {
   return [
     { role: 'user', content: [{ type: 'text', text: 'start' }] },
-    toolResult('run_readonly_command', { command: 'ls', exitCode: 0 }, 't1'),
+    toolResult(
+      'run_readonly_command',
+      { command: 'ls', exitCode: 0, stdout: 'evidence line\n'.repeat(256) },
+      't1',
+    ),
     { role: 'user', content: [{ type: 'text', text: 'next' }] },
     toolResult('run_readonly_command', { command: 'cat x', exitCode: 1 }, 't2'),
     { role: 'user', content: [{ type: 'text', text: 'next' }] },
@@ -135,6 +140,9 @@ describe('runMicroCompactPass compaction_summary emission (FID-2026-0918-004)', 
   it('emits exactly one compaction_summary when stale tool results clear', () => {
     const onResponseChunk = mock(() => {})
     const agentState = buildAgentState()
+    const original = agentState.messageHistory.find(
+      (message): message is ToolMessage => message.role === 'tool',
+    )
 
     runMicroCompactPass({
       agentState,
@@ -146,9 +154,17 @@ describe('runMicroCompactPass compaction_summary emission (FID-2026-0918-004)', 
 
     const events = compactionSummaryEvents(onResponseChunk)
     expect(events.length).toBe(1)
-    // 4 tool results over keep-recent 3 → exactly one cleared, 200 tokens.
+    // Exactly one large result clears; its saved tokens are the actual delta.
     expect(events[0].removedMessages).toBe(1)
-    expect(events[0].tokensSaved).toBe(200)
+    const compacted = agentState.messageHistory.find(
+      (message): message is ToolMessage => message.role === 'tool',
+    )
+    if (!original || !compacted)
+      throw new Error('Expected the oldest tool result')
+    expect(events[0].tokensSaved).toBe(
+      countTokensJson(original.content) - countTokensJson(compacted.content),
+    )
+    expect(events[0].tokensSaved).toBeGreaterThan(200)
     expect(typeof events[0].percentUsed).toBe('number')
     // The block names the layer so the operator can tell micro from full.
     expect(events[0].summary).toContain('micro-compacted')

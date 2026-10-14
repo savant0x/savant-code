@@ -142,8 +142,12 @@ export async function loadLocalAgents({
         continue
       }
 
+      // FID-2026-1013-012 W3-3: `id` and `model` were just checked at runtime
+      // (above); the rest of the definition is the agent file's own contract,
+      // which the spread used to convey implicitly through `any`. The cast
+      // names the shape those checks establish, so nothing here is `any`.
       const processedAgentDefinition: LoadedAgentDefinition = {
-        ...agentDefinition,
+        ...(agentDefinition as AgentDefinition),
         _sourceFilePath: fullPath,
       }
       if (agentDefinition.handleSteps) {
@@ -225,8 +229,20 @@ export async function loadLocalAgents({
   return agents
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any -- dynamic agent module shape from user-provided file
-async function importAgentModule(fullPath: string): Promise<any | null> {
+/**
+ * A dynamically imported agent module. Nothing about an agent file is
+ * guaranteed until the loader's runtime checks run, so the shape is
+ * expressed as a partial definition with an optional `default` export —
+ * FID-2026-1013-012 W3-3 replaced the `any` return type with this named
+ * contract (the imported namespace IS a record of unvalidated values).
+ */
+type AgentDefinitionModule = Partial<AgentDefinition> & {
+  default?: Partial<AgentDefinition>
+}
+
+async function importAgentModule(
+  fullPath: string,
+): Promise<AgentDefinitionModule | null> {
   // Cache-bust to ensure fresh imports when agent files change
   const urlVersion = `?update=${Date.now()}`
   return import(`${pathToFileURL(fullPath).href}${urlVersion}`)

@@ -1,4 +1,4 @@
-import { readFile } from 'node:fs/promises'
+import { readFile, stat } from 'node:fs/promises'
 
 // Canonical body lives in `@savant-code/common/util/hash`
 // (FID-2026-0928-009 Part 4); this module keeps the call-site name.
@@ -11,6 +11,27 @@ import {
 } from './spill-contract'
 
 import type { EvidenceSpillRecord, RetentionHandle } from './spill-contract'
+
+/**
+ * Bounded per-shard cache keyed by `(shardPath -> { mtimeMs, size, records })`
+ * (FID-2026-1013-010 W1-3). Parallel or sequential subagent spawns otherwise
+ * re-read and JSON-parse the same `.savant/evidence/<runId>.jsonl` shards on
+ * every child spawn. Keying on both `mtimeMs` and `size` guarantees that any
+ * append within the same filesystem tick invalidates the cached slice.
+ */
+const MAX_CACHED_SHARDS = 64
+
+type CachedShardEntry = {
+  mtimeMs: number
+  size: number
+  records: EvidenceSpillRecord[]
+}
+
+const shardRecordCache = new Map<string, CachedShardEntry>()
+
+export function resetEvidenceRecordCache(): void {
+  shardRecordCache.clear()
+}
 
 /**
  * The evidence store's READ side (FID-2026-1007-004, ceiling split).
@@ -53,16 +74,44 @@ export async function loadEvidenceRecords(
   if (!projectRoot || !runId) return []
   const records: EvidenceSpillRecord[] = []
   for (const shard of shardNumbers(EVIDENCE_MAX_SHARDS)) {
-    let text: string
+    const shardPath = evidenceShardPath(projectRoot, runId, shard)
+    let mtimeMs: number
+    let size: number
     try {
-      text = await readFile(
-        evidenceShardPath(projectRoot, runId, shard),
-        'utf8',
-      )
+      const stats = await stat(shardPath)
+      mtimeMs = stats.mtimeMs
+      size = stats.size
     } catch {
+      shardRecordCache.delete(shardPath)
       break
     }
-    records.push(...parseEvidenceFile(text))
+
+    const cached = shardRecordCache.get(shardPath)
+    if (cached && cached.mtimeMs === mtimeMs && cached.size === size) {
+      records.push(...cached.records)
+      continue
+    }
+
+    let text: string
+    try {
+      text = await readFile(shardPath, 'utf8')
+    } catch {
+      shardRecordCache.delete(shardPath)
+      break
+    }
+
+    const parsed = parseEvidenceFile(text)
+    if (
+      shardRecordCache.size >= MAX_CACHED_SHARDS &&
+      !shardRecordCache.has(shardPath)
+    ) {
+      const oldestKey = shardRecordCache.keys().next().value
+      if (oldestKey !== undefined) {
+        shardRecordCache.delete(oldestKey)
+      }
+    }
+    shardRecordCache.set(shardPath, { mtimeMs, size, records: parsed })
+    records.push(...parsed)
   }
   return records
 }

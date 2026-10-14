@@ -144,17 +144,13 @@ recorded decision or external dependency requires it.
       its allowance resets; TokenRouter self-identification needs an operator
       top-up. **Blocker:** provider credits/keys. **Automation level: 1.**
 
-- [x] **Parity-gateway-probes. Gateway + Tier 1 surface probes for the
-      provider-parity program.** Measured 2026-10-12 (probes under
-      `scripts/providers/audit-probes/`): Kilo public keyless (200, 391 rows,
-      inference round-trip proven); OpenCode public (200, 83 rows live) but
-      free-tier product-locked (403); Tier 1 swept (2 public, 14 key-gated, 2
-      no-surface). **Operator ruling 2026-10-12:** the deliverable is registry
-      expansion, not dev-held credentials — users bring their own keys;
-      keyless acceptance is surface-verified, inference leg deferred to the
-      user's key (recorded narrowing of the runbook's real-request step).
-      Evidence: `docs/design/provider-parity-review-2026-10-12.md`;
-      additions are `FID-2026-1012-026`. **Automation level: 3.**
+**Parity-gateway-probes acceptance ruling (2026-10-12, retained authority):**
+the deliverable is registry expansion, not dev-held credentials — users bring
+their own keys. Keyless acceptance is surface-verified; the inference leg belongs
+to the user's key under the recorded narrowing of the runbook's real-request step.
+The completed probe evidence is in `docs/design/provider-parity-review-2026-10-12.md`
+and the 2026-10-14 FID-folder audit report. The additions remain active in
+`FID-2026-1012-026`; the completed probe item grants no continuing write authority.
 
 ### Harness and process
 
@@ -182,15 +178,14 @@ recorded decision or external dependency requires it.
 
 ### Learnings store: boot-read and lifecycle (review 2026-10-12)
 
-Full review: `docs/design/learnings-boot-loading-and-lifecycle-review.md`. The ledger is a
-boot-read artifact (`agents/savant/system-prompt.ts:117` reads it 0-EOF in every mode) at
-77,195 chars / 1,174 lines — 23% under the 100,000-char read boundary that once truncated it
-at boot (`CHANGELOG.md:3464`) and 26 lines under a retirement cap no gate enforces. Seven
-records own the repairs; each carries its evidence and its feature in the review's §3/§4. All seven are
-children of the remediation master `FID-2026-1012-022` as **Lane V** — the artifact, the operator's
-line of sight to it, and the pipeline's targeting. Operator ruling 2026-10-12: they are kept, because
-the ledger's value is real only if it is visible and it is not hidden; they are not a substitute for a
-class fix, and the six programme lanes are.
+Historical review: `docs/design/learnings-boot-loading-and-lifecycle-review.md`.
+All seven Lane V artifact records (`FID-2026-1012-010` through `-016`) closed and
+were archived on 2026-10-13. The generated bounded boot digest, enforced ledger
+ceiling, shared live/retired locator, evidence checks, canonical rule targeting,
+and pipeline gates are implemented; `6b847099`, `3e0fab27`, and `ca1f359d` carry
+the implementation and recovery work. Their closure evidence lives in the
+archived records and CHANGELOG. These completed artifact repairs do not establish
+production class repair; the six failure-class lanes remain active.
 
 ### Failure-class remediation program (master `FID-2026-1012-022`, 2026-10-12)
 
@@ -247,13 +242,19 @@ with FID-024 owning capture/expectedness corrections and FID-014 owning class-to
       machinery that turns a recurring class into an owned repair, asserts the class stopped, and
       only then writes the lesson. Must not wire its coverage check before 017–020 have owners.
       Verified machinery: coverage, qualified lesson-last ordering, idempotent proposed
-      FID drafting. Actual observation and the no-commit hold keep closure open.
+      FID drafting. Actual observation keeps closure open. The operator lifted
+      the no-commit hold on 2026-10-13; the held work landed at `2a34e558`.
       **Automation level: 2** (drafting a defect FID is automatable; approving one is the
       operator's).
 
 - [ ] **FID-2026-1012-023. Command execution has no reliability contract.** RC6 — **13 classes /
       27 records**: nine timeout budgets (10 s … 2400 s) discovered one turn at a time, and an
       abort recorded under `run_readonly_command` whose message names `run_terminal_command` → E6.
+      **Verification history:** the sequential validator previously showed
+      intermittent Windows process-fixture failures under shared machine load.
+      The 2026-10-14 audit's live `validate:repository` rerun passes; production
+      timeout/abort observation remains the closure condition. No background
+      process was terminated by this audit.
       **Automation level: 3.**
 
 - [ ] **FID-2026-1012-024. Failure classes have no horizon.** RC7 — **7 classes / 36 records**
@@ -261,14 +262,54 @@ with FID-024 owning capture/expectedness corrections and FID-014 owning class-to
       differently worded failures, uncaptured exit-code/nested errors and overbroad expectedness.
       Investigate all seven before any disposition → E7. **Automation level: 3.**
 
+### Four-Wave QOL, Enterprise Standards, Agent Data-Flow & UI Program (coordinator `FID-2026-1013-009`, 2026-10-13)
+
+- [ ] **FID-2026-1013-009. Four-wave QOL, enterprise standards, agent data-flow, and UI/UX
+      hardening program (coordinator).** Allocates all 24 audit findings across Waves 1–4
+      (`FID-2026-1013-010` … `-013`), enforces disjoint file ownership, and sequences execution
+      (`010` → `011` → `012` → `013`). All four waves are implemented in the
+      working tree with passing declared gates; implementation commits and child
+      closure remain required. **Automation level: 3.**
+
+- [ ] **FID-2026-1013-010. Wave 1 — Agent-to-agent data flow, compaction fidelity, and EHEL
+      path-resolution hardening.** Owns W1-1 through W1-5 (`apply_patch` tracking in
+      `preserved-state.ts`, `compaction-plan.ts`, `graph-injection.ts`, and `tool-pipeline.ts`;
+      `projectRoot`-anchored Law 1 check in `pre-write-gates-law1.ts`; `(mtimeMs, size)` shard
+      caching in `spill-read.ts`; real token delta in `micro-compact.ts`; and formatted/redacted
+      `set_output` diagnostics). **Automation level: 3.**
+
+- [ ] **FID-2026-1013-011. Wave 2 — Law 13 shared-primitive consolidation and utility
+      deduplication.** Owns W2-1 through W2-7 (`common/src/util/tool-display.ts` for
+      `toolDisplayName`, `truncateSingleLine`, `renderToolInput`, `renderToolOutput`,
+      `asPositiveInt`, `asBoolean`; `sidebarToolDisplayName` disambiguation in
+      `right-sidebar-format.ts`; `traceRoundedRect` consolidation in Desktop floor;
+      `common/src/util/bun-sqlite.ts` lazy loader; and `shared-primitives.json` registration).
+      **Automation level: 3.**
+
+- [ ] **FID-2026-1013-012. Wave 3 — Law 6 type hardening, lint-suppression rationale gate, and
+      300-line ceiling relief.** Owns W3-1 through W3-6 (`scripts/audit-eslint-disable-rationale.ts`
+      repo gate + 15 missing `--` rationales; `init-type-files.ts` `@ts-expect-error` removal;
+      7 `no-explicit-any` removals; comment/string-stripped Law 6 post-write scanner;
+      `no-unknown-in-signatures.js` destructuring/default/rest coverage; and 300-line ceiling
+      decompositions for `transcript-reducer.ts` and `handle-steps-template-body-b.ts`).
+      **Automation level: 3.**
+
+- [ ] **FID-2026-1013-013. Wave 4 — CLI and Desktop UI/UX parity, subagent tool attribution,
+      interactive approval, and 3D scene performance.** Owns W4-1 through W4-6 (Desktop
+      `ToolBlock` / `ToolCard` subagent attribution; `apply_patch` nested `operation.diff` parsing
+      in `diff-parse.ts` + `set_output` preview in `tool-display.ts`; `ApprovalCard` operator note
+      input wired through `use-gateway.ts`; 3D `OfficeScene` `O(1)` walker lookup + ref-counted
+      hover cursor; `EMPTY_RESPONSE_ADS` constant in `use-message-block-sync.ts`; and tracked
+      collapse timer cleanup in `use-chat-messages.ts`). **Automation level: 3.**
+
 ### Build orders (formalized as FIDs 2026-10-07)
 
-The build order for **every open item in this register** — the fifteen active records and the nine
-tasks that carry none — lives in the master record `FID-2026-1012-022` (`### Work order` for the
+The build order for the fifteen active records and the remaining register tasks
+lives in the master record `FID-2026-1012-022` (`### Work order` for the
 schedule, `### Status board` for current state), so there is exactly one place an automation run can
 be pointed at. Its three chains: **A**, the failure-class lanes (`-024` → `-023`; `-024` →
-`-017`/`-018`/`-019`/`-020`; then `-021`); **B**, the learnings-store artifact — Lane V (`-011` and
-`-014` first, then `-012`, `-013` and `-010`, then `-016`, with `-015` last); **C**, the register
+`-017`/`-018`/`-019`/`-020`; then `-021`); **B**, the completed learnings-store artifact lane
+(all seven records archived on 2026-10-13); **C**, the register
 tasks (`T122` → `T186`, plus `T119`, `T173`, `T171`, `T175`, `T62-followups`, `T187` and the local
 `0.0.36` development line). Every edge is declared as `**Depends On:**` metadata on the child, so the
 ledger validates the graph and rejects a cycle. Chain C items run under child FIDs drafted at their
@@ -276,14 +317,19 @@ wave start; the operator-gated items — the `0.0.36` cut, `T122`, `T186`, `T171
 `T62`'s credits and `T187` — are named in the master's "What stops for you", and nothing automates
 past them.
 
+The QOL coordinator and Waves 1–4 are also registered above and in the master's
+status board. Their source implementation is present; committing and recording
+closure evidence is the next lifecycle work, not re-implementing the waves.
+
 ## Machine-readable scope targets
 
 Operator authorization: complete the master program at automation level 3 (2026-10-12).
 The planning review is complete; implementation, verification and local commits are authorized.
 Evidence and per-record Loop 2 corrections are in
 `docs/design/perfection-loop-2026-10-12.md`. Additional implementation test/probe surfaces named
-there must be covered by the owning item's targets before source writes begin. Every original
-work item remains active, including the recorded level-1 consolidation and external-input holds.
+there must be covered by the owning item's targets before source writes begin.
+Completed items retain evidence in their archived records; every unresolved item
+and its remaining operator/external-input holds stay active.
 
 <!-- FID-2026-1001-003 step 5a: per-item write targets for the Law 2 gate
      (operator-approved 2026-10-02, "present before writing" honored). Each
@@ -383,7 +429,106 @@ work item remains active, including the recorded level-1 consolidation and exter
 - T62-followups: `dev/scratchpad/active/t62*.ts` (the catalog itself is
   gateway-side; the local write surface is the probe scripts — verified
   2026-10-02: no local catalog directory exists)
-- Parity-gateway-probes: `scripts/providers/audit-probes/**`, `docs/design/provider-parity-review-2026-10-12.md`, `SCOPE.md`
 - T122: (no write surface — operator-owned)
 - T186: (no write surface — blocked on the T122 savant-free removal)
 - T187: (no write surface — operator-owned skills surface)
+- FID-2026-1013-009: `dev/fids/FID-2026-1013-009-*.md`, `SCOPE.md`
+- FID-2026-1013-010: `agents/context-pruner/preserved-state.ts`,
+  `packages/agent-runtime/src/context-compactor-micro.test.ts`,
+  `packages/agent-runtime/src/run-agent-step/__tests__/context-tokens-compaction-micro-summary.test.ts`,
+  `packages/agent-runtime/src/util/format-value.ts`,
+  `agents/__tests__/context-pruner-phase1-preserved-state.test.ts`,
+  `packages/agent-runtime/src/run-agent-step/compaction-plan.ts`,
+  `packages/agent-runtime/src/__tests__/compaction-file-ledger-wiring.test.ts`,
+  `packages/agent-runtime/src/util/graph-injection.ts`,
+  `packages/agent-runtime/src/__tests__/graph-injection.test.ts`,
+  `packages/agent-runtime/src/echo/pre-write-gates-law1.ts`,
+  `packages/agent-runtime/src/echo/pre-write-gates.ts`,
+  `packages/agent-runtime/src/echo/enforcement/tool-pipeline.ts`,
+  `packages/agent-runtime/src/echo/enforcement/write-bookkeeping-pipeline.ts`,
+  `packages/agent-runtime/src/echo/__tests__/pre-write-gates-apply-patch.test.ts`,
+  `packages/agent-runtime/src/evidence/spill-read.ts`,
+  `packages/agent-runtime/src/evidence/spill.ts`,
+  `packages/agent-runtime/src/evidence/__tests__/retention.test.ts`,
+  `packages/agent-runtime/test/setup-test-isolation.ts`,
+  `packages/agent-runtime/src/context-compactor/micro-compact.ts`,
+  `packages/agent-runtime/src/__tests__/micro-compact.test.ts`,
+  `packages/agent-runtime/src/tools/handlers/tool/set-output.ts`,
+  `packages/agent-runtime/src/tools/handlers/tool/__tests__/set-output.test.ts`
+- FID-2026-1013-011: `common/src/util/tool-display.ts`,
+  `common/src/util/bun-sqlite.ts`,
+  `common/src/util/__tests__/tool-display.test.ts`,
+  `common/src/util/__tests__/bun-sqlite.test.ts`,
+  `cli/src/commands/copy-conversation-render.ts`,
+  `cli/src/commands/export-conversation/format.ts`,
+  `cli/src/components/right-sidebar-format.ts`,
+  `cli/src/components/right-sidebar-sections.tsx`,
+  `cli/src/components/__tests__/right-sidebar-format.test.ts`,
+  `cli/src/components/tools/add-message.tsx`,
+  `cli/src/components/tools/sequential-thinking.tsx`,
+  `cli/src/components/tools/set-output.tsx`,
+  `cli/src/utils/savant-code-client.ts`,
+  `desktop/src/components/chat/tool-display.ts`,
+  `desktop/src/components/chat/__tests__/tool-display.test.ts`,
+  `desktop/src/lib/thinking-parse.ts`,
+  `desktop/src/lib/__tests__/thinking-parse.test.ts`,
+  `desktop/src/floor/office/nameplate-draw.ts`,
+  `desktop/src/floor/office/__tests__/nameplate-draw.test.ts`,
+  `desktop/src/floor/stage/nameplate.ts`,
+  `desktop/src/floor/__tests__/nameplate.test.ts`,
+  `packages/knowledge-graph/src/store.ts`,
+  `packages/agent-runtime/src/llm-api/docset-search.ts`,
+  `packages/agent-runtime/src/llm-api/__tests__/docset-search.test.ts`,
+  `packages/agent-runtime/src/tools/handlers/tool/database/sqlite-adapter.ts`,
+  `packages/agent-runtime/src/tools/handlers/tool/database/__tests__/sqlite-adapter.test.ts`,
+  `scripts/eslint-rules/shared-primitives.json`
+- FID-2026-1013-012: `scripts/audit-eslint-disable-rationale.ts`,
+  `packages/agent-runtime/package.json`, `bun.lock`,
+  `packages/agent-runtime/src/echo/code-surface-stripper.ts`,
+  `packages/agent-runtime/src/echo/__tests__/code-surface-stripper.test.ts`,
+  `scripts/__tests__/audit-eslint-disable-rationale.test.ts`,
+  `scripts/validate-repository.ts`,
+  `scripts/gate-declarability.ts`,
+  `scripts/eslint-rules/no-unknown-in-signatures.js`,
+  `scripts/eslint-rules/__tests__/no-unknown-in-signatures.test.ts`,
+  `packages/agent-runtime/src/echo/post-write-scanners.ts`,
+  `packages/agent-runtime/src/echo/__tests__/post-write-scanners.test.ts`,
+  `cli/src/commands/init-type-files.ts`,
+  `cli/src/hooks/use-send-message-options.ts`,
+  `cli/src/index.tsx`,
+  `common/src/util/agent-name-normalization.ts`,
+  `common/src/env-schema.ts`,
+  `common/src/tools/constants.ts`,
+  `common/src/types/contracts/client.ts`,
+  `sdk/src/agents/load-agents.ts`,
+  `sdk/src/custom-tool.ts`,
+  `desktop/src/floor/driver/deck-live-driver.ts`,
+  `desktop/src/floor/stage/deck-robots-loader.ts`,
+  `desktop/src/floor/stage/deck-runtime.ts`,
+  `desktop/src/floor/stage/deck-walkers-mount.ts`,
+  `desktop/src/floor/stage/deck-walkers.ts`,
+  `desktop/src/floor/stage/perf-hud.ts`,
+  `packages/agent-runtime/src/provenance/session.ts`,
+  `packages/agent-runtime/src/tools/handlers/tool/spawn-agent-inline-verdict.ts`,
+  `desktop/src/state/transcript-reducer.ts`,
+  `desktop/src/state/transcript-reducer-events.ts`,
+  `agents/savant/handle-steps-template-body-b.ts`,
+  `agents/savant/handle-steps-template-body-c.ts`
+- FID-2026-1013-013: `desktop/src/state/transcript-types.ts`,
+  `desktop/src/state/transcript-reducer.ts`,
+  `desktop/src/state/__tests__/transcript-store.test.ts`,
+  `desktop/src/components/chat/ToolCard.tsx`,
+  `desktop/src/components/chat/tool-display.ts`,
+  `desktop/src/components/chat/__tests__/tool-display.test.ts`,
+  `desktop/src/lib/diff-parse.ts`,
+  `desktop/src/lib/__tests__/diff-parse.test.ts`,
+  `desktop/src/components/chat/ApprovalCard.tsx`,
+  `desktop/src/components/chat/__tests__/approval-card.test.tsx`,
+  `desktop/src/components/chat/ChatThread.tsx`,
+  `desktop/src/hooks/use-gateway.ts`,
+  `desktop/src/floor/office/scene-frame-loop.ts`,
+  `desktop/src/floor/office/scene-agent-ui.tsx`,
+  `desktop/test/setup-test-isolation.ts`,
+  `cli/src/chat/use-message-block-sync.ts`,
+  `cli/src/hooks/use-chat-messages.ts`,
+  `cli/src/hooks/__tests__/use-chat-messages-collapse.test.ts`

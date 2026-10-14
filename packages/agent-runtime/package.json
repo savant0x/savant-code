@@ -29,7 +29,8 @@
     "@savant-code/knowledge-graph": "workspace:*",
     "gpt-tokenizer": "^2.8.1",
     "zod-from-json-schema": "0.4.2",
-    "lodash": "4.17.23"
+    "lodash": "4.17.23",
+    "typescript": "5.5.4"
   },
   "devDependencies": {}
 }

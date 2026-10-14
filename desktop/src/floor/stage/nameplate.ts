@@ -13,6 +13,10 @@
 
 import { CanvasTexture, Sprite, SpriteMaterial } from 'three'
 
+// FID-2026-1013-011 W2-4: the rounded-rect path helper is canonical in the
+// office nameplate drawing module (it was byte-identical in both).
+import { traceRoundedRect } from '../office/nameplate-draw'
+
 export type NameplateCanvas = HTMLCanvasElement
 
 export interface Nameplate {
@@ -56,23 +60,6 @@ export function statusLabel(
   labels: StatusLabels = DEFAULT_STATUS_LABELS,
 ): string {
   return active ? labels.active : labels.idle
-}
-
-function traceRoundedRect(
-  ctx: CanvasRenderingContext2D,
-  x: number,
-  y: number,
-  w: number,
-  h: number,
-  r: number,
-): void {
-  ctx.beginPath()
-  ctx.moveTo(x + r, y)
-  ctx.arcTo(x + w, y, x + w, y + h, r)
-  ctx.arcTo(x + w, y + h, x, y + h, r)
-  ctx.arcTo(x, y + h, x, y, r)
-  ctx.arcTo(x, y, x + w, y, r)
-  ctx.closePath()
 }
 
 function drawChip(

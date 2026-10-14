@@ -31,7 +31,7 @@ export function lastTemplateOutcome(): string {
 /** One honest console line per load outcome (H1/H2 diagnostics). */
 function reportTemplateOutcome(note: string): void {
   lastOutcome = note
-  // eslint-disable-next-line no-console
+  // eslint-disable-next-line no-console -- one honest console line per template-load outcome (H1/H2 diagnostics)
   console.info(`[deck] robot template ${note}`)
 }
 

@@ -1,4 +1,5 @@
 import { CompactionMessage_ } from './phases'
+import { countTokensJson } from '../util/token-counter'
 
 import type { MicroCompactResult } from './state'
 import type { Logger } from '@savant-code/common/types/contracts/logger'
@@ -73,7 +74,6 @@ export function runMicroCompact(params: {
   if (!enabled) {
     return { messages, tokensSaved: 0, messagesCleared: 0 }
   }
-  const originalCount = messages.length
   const compacted: Message[] = []
   const toolResultIndices: number[] = []
 
@@ -109,6 +109,9 @@ export function runMicroCompact(params: {
     toolResultIndices.filter((idx) => !keepRecentSet.has(idx)),
   )
 
+  let actualMessagesCleared = 0
+  let actualTokensSaved = 0
+
   for (let i = 0; i < messages.length; i++) {
     if (clearSet.has(i)) {
       // Replace with a minimal placeholder that preserves the slot.
@@ -128,9 +131,23 @@ export function runMicroCompact(params: {
         source.toolName,
         source.content,
       )
+      const compactedContent: ToolMessage['content'] = [
+        { type: 'json', value: compactedValue },
+      ]
+      const originalTokens = countTokensJson(source.content)
+      const replacementTokens = countTokensJson(compactedContent)
+      // FID-2026-1013-010 W1-4: never replace a tiny tool result with a
+      // placeholder that is equal or larger in tokens; only clear when the
+      // placeholder genuinely saves tokens, and record the exact token delta.
+      if (originalTokens <= replacementTokens) {
+        compacted.push(source)
+        continue
+      }
+      actualMessagesCleared += 1
+      actualTokensSaved += originalTokens - replacementTokens
       compacted.push({
         role: 'tool',
-        content: [{ type: 'json', value: compactedValue }],
+        content: compactedContent,
         toolName: source.toolName,
         toolCallId: source.toolCallId,
       })
@@ -139,16 +156,21 @@ export function runMicroCompact(params: {
     }
   }
 
-  const messagesCleared = originalCount - compacted.length + clearSet.size
-  // Rough token estimate: ~4 chars per token
-  const tokensSaved = messagesCleared * 200 // ~200 tokens per compacted tool result
+  const tokensSaved =
+    actualMessagesCleared > 0
+      ? Math.max(actualMessagesCleared, actualTokensSaved)
+      : 0
 
-  if (clearSet.size > 0) {
+  if (actualMessagesCleared > 0) {
     logger.debug(
-      { messagesCleared: clearSet.size, tokensSaved },
+      { messagesCleared: actualMessagesCleared, tokensSaved },
       'Micro-compact: cleared stale tool results',
     )
   }
 
-  return { messages: compacted, tokensSaved, messagesCleared: clearSet.size }
+  return {
+    messages: compacted,
+    tokensSaved,
+    messagesCleared: actualMessagesCleared,
+  }
 }

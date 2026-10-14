@@ -41,7 +41,11 @@ function toolResult(
 function buildHistory(): Message[] {
   return [
     { role: 'user', content: [{ type: 'text', text: 'start' }] },
-    toolResult('run_readonly_command', { command: 'ls', exitCode: 0 }, 't1'),
+    toolResult(
+      'run_readonly_command',
+      { command: 'ls', exitCode: 0, stdout: 'evidence line\n'.repeat(256) },
+      't1',
+    ),
     { role: 'user', content: [{ type: 'text', text: 'next' }] },
     toolResult('run_readonly_command', { command: 'cat x', exitCode: 1 }, 't2'),
     { role: 'user', content: [{ type: 'text', text: 'next' }] },

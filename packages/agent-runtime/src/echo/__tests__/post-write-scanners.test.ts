@@ -3,6 +3,24 @@ import { describe, expect, it } from 'bun:test'
 import { createEnforcementState } from '../enforcement-state'
 import { runPostWriteScanners } from '../post-write-scanners'
 
+/** Runs the strict-tier scanner over one written file's content. */
+function scan(content: string): ReturnType<typeof runPostWriteScanners> {
+  const state = createEnforcementState()
+  state.dirtyFiles.add('src/example.ts')
+  state.verifiedFiles.add('src/example.ts')
+  return runPostWriteScanners({
+    state,
+    mode: 'strict',
+    tier: 'all_15',
+    getWrittenFileContent: () => content,
+  })
+}
+
+const law6Warnings = (content: string): string[] =>
+  scan(content)
+    .warnings.filter((warning) => warning.law === 6)
+    .map((warning) => warning.message)
+
 describe('runPostWriteScanners', () => {
   it('scans exact successful content and reports law violations', () => {
     const state = createEnforcementState()
@@ -73,6 +91,55 @@ describe('runPostWriteScanners', () => {
     })
 
     expect(result).toEqual({ blocked: false, warnings: [] })
+  })
+})
+
+describe('runPostWriteScanners — Law 6 two-stage scan (FID-2026-1013-012 W3-4)', () => {
+  it('does not flag the English word any in prose comments', () => {
+    expect(
+      law6Warnings(
+        '// Returns true when any entry matches\nexport const x = 1\n',
+      ),
+    ).toEqual([])
+  })
+
+  it('does not flag the English word any in block comments', () => {
+    expect(
+      law6Warnings('/* any file may match */\nexport const x = 1\n'),
+    ).toEqual([])
+  })
+
+  it('does not flag the English word any in string literals', () => {
+    expect(
+      law6Warnings('export const msg = "Could not find any files"\n'),
+    ).toEqual([])
+  })
+
+  it('still flags the any type keyword in code', () => {
+    const messages = law6Warnings('export const value: any = 1\n')
+    expect(messages).toHaveLength(1)
+    expect(messages[0]).toContain('any keyword')
+  })
+
+  it('still flags as any casts and any arrays', () => {
+    expect(law6Warnings('export const v = input as any\n')).toHaveLength(1)
+    expect(law6Warnings('export const list: any[] = []\n')).toHaveLength(1)
+  })
+
+  it('still flags a ts-expect-error directive on raw content', () => {
+    const messages = law6Warnings(
+      '// @ts-expect-error - upstream typing gap\nexport const x = 1\n',
+    )
+    expect(messages).toHaveLength(1)
+    expect(messages[0]).toContain('ts-ignore/ts-expect-error')
+  })
+
+  it('still flags any inside a template literal interpolation', () => {
+    expect(law6Warnings('type T = `id-${any}`\n')).toHaveLength(1)
+  })
+
+  it('does not flag a template literal text chunk that spells any', () => {
+    expect(law6Warnings('export const s = `no matches for any`\n')).toEqual([])
   })
 })
 

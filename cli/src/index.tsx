@@ -71,7 +71,7 @@ async function main(): Promise<void> {
   // before the buffer flushes. console.log() is synchronous and safe.
   // This also skips the prebuild step overhead for a trivial output.
   if (process.argv.includes('--version') || process.argv.includes('-v')) {
-    // eslint-disable-next-line no-console
+    // eslint-disable-next-line no-console -- --version output must flush before process.exit(0); console.log is synchronous
     console.log(loadPackageVersion())
     process.exit(0)
   }

@@ -114,7 +114,7 @@ class DomPerfHud implements PerfHud {
         this.warnedThisMount = true
         // Deliberate single diagnostic per mount (log-once rule, MQ-9) —
         // the only sanctioned console surface in the deck stage.
-        // eslint-disable-next-line no-console
+        // eslint-disable-next-line no-console -- MQ-9 log-once rule: the deck stage's sanctioned console surface
         console.warn(
           `[deck] frame budget breached: p95 ${p95}ms exceeds ` +
             `${FRAME_BUDGET_MS}ms budget`,

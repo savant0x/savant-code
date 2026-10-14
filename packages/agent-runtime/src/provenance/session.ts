@@ -83,7 +83,7 @@ export class ProvenanceSession implements ProvenanceSessionLike {
           receiptCount: -1,
         })
         // Best-effort surface: ledger failures must never break the write path.
-        // eslint-disable-next-line no-console
+        // eslint-disable-next-line no-console -- best-effort ledger warning; a failed write must not break the write path
         console.warn(`[provenance] ledger write failed: ${String(error)}`)
       },
     )
@@ -273,7 +273,7 @@ export class ProvenanceSession implements ProvenanceSessionLike {
   }
 
   private emitNotice(message: string): void {
-    // eslint-disable-next-line no-console
+    // eslint-disable-next-line no-console -- provenance notices are best-effort diagnostics with no injected logger
     console.warn(`[provenance] ${message}`)
   }
 

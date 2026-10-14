@@ -57,6 +57,37 @@ export default {
       return null
     }
 
+    // Parameter binding patterns that may carry a type annotation
+    // (FID-2026-1013-012 W3-5). A parameter annotation's parent is the
+    // parameter's binding pattern, not necessarily a bare Identifier.
+    const PARAM_PATTERN_TYPES = new Set([
+      'Identifier',
+      'ObjectPattern',
+      'ArrayPattern',
+      'AssignmentPattern',
+      'RestElement',
+      'TSParameterProperty',
+    ])
+
+    /**
+     * Walks the parameter pattern chain up to the function whose `params`
+     * actually contains the annotated node. Returns null when the annotation is
+     * not in a parameter position (e.g. a variable declarator pattern or a
+     * property signature).
+     */
+    function getParameterFunction(node) {
+      let curr = node
+      while (curr && curr.parent) {
+        const parent = curr.parent
+        if (Array.isArray(parent.params) && parent.params.includes(curr)) {
+          return parent
+        }
+        if (!PARAM_PATTERN_TYPES.has(parent.type)) return null
+        curr = parent
+      }
+      return null
+    }
+
     function containsUnknown(node) {
       if (!node) return false
       if (node.type === 'TSUnknownKeyword') return true
@@ -120,9 +151,37 @@ export default {
           return
         }
 
-        // Case C: parameter type — `fn(x: unknown)`
-        // In ESLint's AST, a param annotation's parent is `Identifier` (the param
-        // name), whose parent is the function node. Walk up to confirm.
+        // Case C: parameter type — `fn(x: unknown)`, `fn({ x }: { x: unknown })`,
+        // `fn([x]: [unknown])`, `fn(x: unknown = 1)`, `fn(...args: unknown[])`.
+        // The annotation's parent is the parameter's binding pattern (an
+        // Identifier, ObjectPattern, ArrayPattern, AssignmentPattern, or
+        // RestElement), so walk the pattern chain to the owning function
+        // (FID-2026-1013-012 W3-5).
+        if (PARAM_PATTERN_TYPES.has(parent.type)) {
+          const fn = getParameterFunction(node)
+          if (fn) {
+            // Prefer the classic enclosing function for the guard exemption so
+            // a `v is T` predicate stays legal; fall back to the parameter
+            // owner for function-type/method-signature parameter lists.
+            const guardOwner = getEnclosingFunction(parent) || fn
+            if (isTypeGuardFunction(guardOwner) || isTypeGuardFunction(fn)) {
+              return // unknown is allowed as the guard's input param
+            }
+            context.report({
+              node: typeNode,
+              messageId: 'noUnknownSig',
+              data: { position: 'parameter' },
+            })
+            return
+          }
+        }
+
+        // Case C (legacy leg): an Identifier annotation that is not inside a
+        // parameter list (variable declarator, property signature, and
+        // similar) keeps
+        // pre-Wave-3 behavior — report unless the enclosing function is a
+        // `v is T` guard that consumes it. Narrowing this away would have
+        // silently dropped coverage the rule-test fixture already pins.
         if (parent.type === 'Identifier') {
           const fn = getEnclosingFunction(parent)
           if (fn && isTypeGuardFunction(fn)) {

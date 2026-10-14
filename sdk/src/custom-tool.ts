@@ -4,9 +4,9 @@ import type { z } from 'zod/v4'
 
 export type CustomToolDefinition<
   N extends string = string,
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- variance (W3-3): `Args` is inferred through `z.ZodType<Args, Input>` and then consumed contravariantly by `execute: (params: Args)`; a `unknown` constraint/default would make every definition require an explicit annotation at the call site instead of inferring from `inputSchema`.
   Args extends any = any,
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- variance (W3-3): `Input` is the schema's pre-parse type, inferred from the caller's `z.ZodType<Args, Input>` argument; `unknown` would erase that inference for the same reason as `Args` above.
   Input extends any = any,
 > = {
   toolName: N
@@ -30,9 +30,9 @@ export type CustomToolDefinition<
  */
 export function getCustomToolDefinition<
   TN extends string,
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- variance (W3-3): the factory's `Args` is inferred from the `inputSchema` argument and flows contravariantly into `execute(params: Args)` and `exampleInputs`; see CustomToolDefinition above.
   Args extends any,
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- variance (W3-3): the factory's `Input` is inferred from `z.ZodType<Args, Input>`; see CustomToolDefinition above.
   Input extends any,
 >({
   toolName,

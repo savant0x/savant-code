@@ -46,18 +46,24 @@ describe('compaction file ledger wiring (FID-2026-1006-003 WP2)', () => {
     )
   })
 
-  test('a window folds its own file operations by kind', () => {
+  test('a window folds its own file operations by kind including apply_patch', () => {
     const messages = [
       call('read_files', { paths: ['a.ts', 'b.ts'] }),
       call('write_file', { path: 'c.ts' }),
       call('str_replace', { path: 'd.ts' }),
+      call('apply_patch', {
+        operation: { type: 'create_file', path: 'e.ts', diff: '+x' },
+      }),
+      call('apply_patch', {
+        operation: { type: 'update_file', path: 'f.ts', diff: '+y' },
+      }),
     ]
     const folded = foldFileOperations({ messages, watermark: 0 })
 
     expect(folded.ledger.readFiles).toEqual(['a.ts', 'b.ts'])
-    expect(folded.ledger.createdFiles).toEqual(['c.ts'])
-    expect(folded.ledger.modifiedFiles).toEqual(['d.ts'])
-    expect(folded.watermark).toBe(3)
+    expect(folded.ledger.createdFiles).toEqual(['c.ts', 'e.ts'])
+    expect(folded.ledger.modifiedFiles).toEqual(['d.ts', 'f.ts'])
+    expect(folded.watermark).toBe(5)
   })
 
   test('the fold is incremental — a re-read never double-counts a window', () => {

@@ -69,6 +69,72 @@ describe('diff payload parser (FID-2026-0820-010 Step 4)', () => {
     expect(payload.path).toBe('src/foo.ts')
   })
 
+  test('nested apply_patch operation (real runtime schema) renders the diff', () => {
+    // W4-2: the tool schema is { operation: { type, path, diff } } — a
+    // top-level-only read returned null on every real call.
+    const payload = parseDiffInput(
+      'apply_patch',
+      JSON.stringify({
+        operation: {
+          type: 'create_file',
+          path: 'hello.txt',
+          diff: '@@\n+Hello world\n',
+        },
+      }),
+    )
+    expect(payload).not.toBeNull()
+    if (payload === null) throw new Error('payload missing')
+    expect(payload.path).toBe('hello.txt')
+    expect(payload.hunks).toHaveLength(1)
+    // The create_file example body ends with a newline; parsePatch classifies
+    // that final empty line as context (verbatim parse — the parser is shared
+    // with evals/v2, so its line classification is not narrowed here).
+    expect(payload.hunks[0].lines).toEqual([
+      { type: 'add', text: 'Hello world' },
+      { type: 'ctx', text: '' },
+    ])
+  })
+
+  test('nested update_file keeps the operation path over the codex meta path', () => {
+    const diff = [
+      '*** Begin Patch',
+      '*** Update File: lib/fib.py',
+      '@@',
+      '-def fib(n):',
+      '+def fibonacci(n):',
+      '*** End Patch',
+    ].join('\n')
+    const payload = parseDiffInput(
+      'apply_patch',
+      JSON.stringify({
+        operation: { type: 'update_file', path: 'lib/fib.py', diff },
+      }),
+    )
+    expect(payload?.path).toBe('lib/fib.py')
+    expect(payload?.hunks[0].lines.map((line) => line.type)).toEqual([
+      'del',
+      'add',
+    ])
+  })
+
+  test('nested operation without a path extracts it from the patch meta', () => {
+    const diff = ['*** Update File: src/y.ts', '@@', '+x'].join('\n')
+    const payload = parseDiffInput(
+      'apply_patch',
+      JSON.stringify({ operation: { type: 'update_file', diff } }),
+    )
+    expect(payload?.path).toBe('src/y.ts')
+  })
+
+  test('delete_file (no diff payload) degrades to null, not a fake hunk', () => {
+    expect(
+      parseDiffInput(
+        'apply_patch',
+        JSON.stringify({ operation: { type: 'delete_file', path: 'gone.ts' } }),
+      ),
+    ).toBeNull()
+  })
+
   test('non-diff tools and malformed inputs degrade to null', () => {
     expect(
       parseDiffInput('read_files', JSON.stringify({ path: 'x' })),

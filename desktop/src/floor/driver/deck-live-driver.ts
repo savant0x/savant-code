@@ -153,7 +153,7 @@ export function createDeckLiveDriver(
       if (import.meta.env.DEV) {
         const walkers = [...state.walkers.values()]
         const active = walkers.filter((w) => w.phase === 'active')
-        // eslint-disable-next-line no-console
+        // eslint-disable-next-line no-console -- dev-only deck batch telemetry behind import.meta.env.DEV
         console.info(
           `[deck] batch: ${events.length} events | savant=${state.savantPresent ? 'on' : 'off'} | walkers=${active.length} active/${walkers.length} total | tools=${state.pendingTools.size} in-flight | pulse=${state.lastPulse?.seq ?? 0} phase=${state.fsmPhase ?? '—'}`,
         )

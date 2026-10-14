@@ -15,6 +15,7 @@
 
 import { buildSavantHandleStepsBodyA } from './handle-steps-template-body-a'
 import { buildSavantHandleStepsBodyB } from './handle-steps-template-body-b'
+import { buildSavantHandleStepsBodyC } from './handle-steps-template-body-c'
 
 export const TRIGGER_THRESHOLD_INLINE_SOURCE = `    const minTriggerTokens = 100000
     const autoCompactBuffer = 30000
@@ -67,6 +68,6 @@ export function buildSavantHandleStepsSource(
         // ignore — observability must never gate compaction
       }
     }
-    ${TRIGGER_THRESHOLD_INLINE_SOURCE.trimEnd()}${buildSavantHandleStepsBodyA(baked)}${buildSavantHandleStepsBodyB(baked)}`
+    ${TRIGGER_THRESHOLD_INLINE_SOURCE.trimEnd()}${buildSavantHandleStepsBodyA(baked)}${buildSavantHandleStepsBodyB(baked)}${buildSavantHandleStepsBodyC(baked)}`
   return source
 }

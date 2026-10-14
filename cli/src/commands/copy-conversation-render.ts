@@ -1,3 +1,9 @@
+import {
+  renderToolInput,
+  renderToolOutput,
+  toolDisplayName,
+} from '@savant-code/common/util/tool-display'
+
 import type { ChatMessage, ContentBlock } from '../types/chat'
 
 /**
@@ -7,13 +13,13 @@ import type { ChatMessage, ContentBlock } from '../types/chat'
  * command handler live in copy-conversation.ts.
  */
 
-const byteLen = (text: string): number => Buffer.byteLength(text, 'utf8')
+// FID-2026-1013-011 W2-1/W2-3: the tool label and the tool input/output
+// renderers are canonical in `@savant-code/common/util/tool-display` (they
+// had a byte-identical copy in `/export`); re-exported so this module's own
+// surface is unchanged.
+export { renderToolInput, renderToolOutput }
 
-/** Human-friendly tool label, e.g. `read_files` -> `Read Files`. */
-function toolDisplayName(toolName: string): string {
-  if (toolName === 'list_directory') return 'List Directories'
-  return toolName.replace(/_/g, ' ').replace(/\b\w/g, (l) => l.toUpperCase())
-}
+const byteLen = (text: string): number => Buffer.byteLength(text, 'utf8')
 
 const formatBytes = (bytes: number): string => {
   if (bytes < 1024) return `${bytes} B`
@@ -59,47 +65,6 @@ function fence(content: string, lang = ''): string {
   // Avoid breaking out of the fence if the content itself contains ```.
   const ticks = content.includes('```') ? '````' : '```'
   return `${ticks}${lang}\n${content}\n${ticks}`
-}
-
-export function renderToolInput(input: unknown): string {
-  if (input == null) return ''
-  if (
-    (Array.isArray(input) && input.length === 0) ||
-    (typeof input === 'object' &&
-      !Array.isArray(input) &&
-      Object.keys(input as Record<string, unknown>).length === 0)
-  ) {
-    return ''
-  }
-  try {
-    return JSON.stringify(input, null, 2)
-  } catch {
-    return String(input)
-  }
-}
-
-/**
- * Tool results are stored as strings; many are a JSON envelope (e.g. the
- * `[{"type":"json","value":{...}}]` shape from terminal/tool calls). Pretty-print
- * when the string parses as JSON so the transcript is readable; otherwise keep
- * the raw text. Returns the fence language to use alongside the body.
- */
-export function renderToolOutput(output: string): {
-  body: string
-  lang: string
-} {
-  const trimmed = output.trim()
-  if (trimmed.startsWith('{') || trimmed.startsWith('[')) {
-    try {
-      return {
-        body: JSON.stringify(JSON.parse(trimmed), null, 2),
-        lang: 'json',
-      }
-    } catch {
-      // Not valid JSON — fall through to raw.
-    }
-  }
-  return { body: output, lang: '' }
 }
 
 function roleHeading(message: ChatMessage): string {

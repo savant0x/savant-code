@@ -126,7 +126,8 @@ function BlockView({
   disabled: boolean
   /** P20: streaming edge of a live run (drives reasoning auto-open). */
   live: boolean
-  onRespondApproval(approvalId: string, skipped: boolean): void
+  /** W4-3: optional operator note/answer attached to the decision. */
+  onRespondApproval(approvalId: string, skipped: boolean, note?: string): void
   /** FID-2026-0901-006: click a suggested followup → send it as a prompt. */
   onSendFollowup?: (prompt: string) => void
 }): JSX.Element {
@@ -199,7 +200,7 @@ export function ChatThread(props: {
   /** FID-2026-0901-006: click a suggested followup → send as a prompt. */
   onSendFollowup?: (prompt: string) => void
   onSend(text: string): void
-  onRespondApproval(approvalId: string, skipped: boolean): void
+  onRespondApproval(approvalId: string, skipped: boolean, note?: string): void
   onInterrupt(): void
 }): JSX.Element {
   const scrollRef = useRef<HTMLDivElement | null>(null)

@@ -81,7 +81,7 @@ function createTicker(
       // forever with zero evidence. Log ONCE, keep the loop alive.
       if (!errorLogged) {
         errorLogged = true
-        // eslint-disable-next-line no-console
+        // eslint-disable-next-line no-console -- log-once ticker diagnostic; a dead deck loop must not be silent
         console.error('[deck] ticker error (loop continues):', error)
       }
     } finally {
@@ -174,7 +174,7 @@ export function mountDeckRuntime(
     // FID-2026-0828-002 granular probe: walker cast mount + event fold
     // visibility, so an incoming invocation cannot silently no-op.
     if (walkers.castTelemetry().mounted < walkers.castTelemetry().total) {
-      // eslint-disable-next-line no-console
+      // eslint-disable-next-line no-console -- FID-2026-0828-002 mount probe: an under-mounted cast must not no-op silently
       console.info(
         `[deck] cast ${walkers.castTelemetry().mounted}/${walkers.castTelemetry().total} mounted`,
       )

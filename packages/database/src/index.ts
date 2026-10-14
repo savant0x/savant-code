@@ -10,9 +10,12 @@ import type { Database } from 'bun:sqlite'
 // (failing with a clear error outside Bun). Same hardening as
 // agent-runtime's sqlite-adapter (FID-2026-0804-004); the small
 // getRuntimeRequire/resolveBunSqliteDatabaseModule helpers are deliberately
-// duplicated here rather than extracted to common — packages/database has
-// zero dependencies and adding one for a ~20-line helper is not worth the
-// edge.
+// kept local rather than extracted to common — packages/database has zero
+// dependencies and adding one for a ~20-line helper is not worth the edge.
+// FID-2026-1013-011 W2-6 consolidated the other three copies into
+// `@savant-code/common/util/bun-sqlite` and registered this file in
+// `scripts/eslint-rules/shared-primitives.json` `allowedFiles` as the one
+// deliberate exception (the zero-dependency constraint above is the reason).
 
 /** The module-scope `require` when it exists; `undefined` under Node ESM. */
 function getRuntimeRequire(): ((id: string) => unknown) | undefined {

@@ -1,3 +1,5 @@
+import { truncateSingleLine } from '@savant-code/common/util/tool-display'
+
 import { TrafficLightPanel } from '../traffic-light-panel'
 import {
   isEmptyValue,
@@ -29,13 +31,6 @@ function extractSetOutputPayload(
   return input
 }
 
-function truncateSingleLine(value: string): string {
-  const line = value.replace(/\s+/g, ' ').trim()
-  return line.length > SUMMARY_MAX_LENGTH
-    ? `${line.slice(0, SUMMARY_MAX_LENGTH - 1)}…`
-    : line
-}
-
 /**
  * UI component for `set_output`.
  *
@@ -63,7 +58,9 @@ export const SetOutputComponent = defineToolComponent({
 
     return {
       collapsedPreview:
-        summary !== undefined ? truncateSingleLine(summary) : undefined,
+        summary !== undefined
+          ? truncateSingleLine(summary, SUMMARY_MAX_LENGTH)
+          : undefined,
       content: (
         <TrafficLightPanel>
           <StructuredCard parts={payload} theme={theme} />

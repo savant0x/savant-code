@@ -13,6 +13,7 @@ import {
 import { PROVIDER_REGISTRY } from '@savant-code/common/providers/registry'
 
 import { auditBunfigTestTimeout } from './audit-bunfig-test-timeout.js'
+import { auditEslintDisableRationale } from './audit-eslint-disable-rationale.js'
 import { auditExitCodeMasking } from './audit-exit-codes.js'
 import { auditGateEnvParity } from './audit-gate-env-parity.js'
 import { collectMutatingMatcherIssues } from './audit-mutating-matchers.js'
@@ -179,6 +180,21 @@ const exitCodeMaskingIssues = auditExitCodeMasking(root).map((issue) => ({
 }))
 
 /**
+ * FID-2026-1013-012 W3-1: every tracked non-test `eslint-disable` directive
+ * carries a `-- <rationale>` (the rationale-comment rule). A suppression with
+ * no stated reason is an unauditable hole in ECHO Law 6, and review convention
+ * alone did not hold the line — 15 production directives had none. The
+ * standalone `scripts/audit-eslint-disable-rationale.ts` probe is the
+ * declarable form (`- gate: probe scripts/audit-eslint-disable-rationale.ts`).
+ */
+const eslintDisableRationaleIssues = auditEslintDisableRationale(root).map(
+  (issue) => ({
+    code: 'lint.eslint-disable-rationale',
+    message: `${issue.file}:${issue.line}: ${issue.message}`,
+  }),
+)
+
+/**
  * FID-2026-0919-024: no agent-side scope trimming. Fails the repository gate on
  * any prohibited disposition token (`[OUT-OF-SCOPE]`, `[OPEN-OUT-OF-SCOPE]`,
  * `[DEFERRED]`, or an unapproved `deferred::`/`skipped::`/`dropped::` marker) in
@@ -252,6 +268,7 @@ const issues: FidLedgerIssue[] = [
       }))),
   ...providerAuditIssues,
   ...exitCodeMaskingIssues,
+  ...eslintDisableRationaleIssues,
   ...collectMutatingMatcherIssues(root),
   ...gateEnvParityIssues,
   ...validateCurrentHygiene(),

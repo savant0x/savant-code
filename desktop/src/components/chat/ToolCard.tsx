@@ -15,7 +15,11 @@ import {
 import { ThinkingBlock } from './ThinkingBlock'
 import { TodosBlock } from './TodosBlock'
 import { diffStats, toolCopyText, toolHasCopyButton } from './tool-copy'
-import { toolCollapsedPreview, toolDisplayName } from './tool-display'
+import {
+  setOutputPayloadJson,
+  toolCollapsedPreview,
+  toolDisplayName,
+} from './tool-display'
 import { TrafficLights } from './TrafficLights'
 import { VerificationBlock } from './VerificationBlock'
 import { parseDiffInput } from '../../lib/diff-parse'
@@ -56,6 +60,12 @@ export const ToolCard = memo(function ToolCard({
   const isWholeFileWrite =
     block.toolName === 'write_file' &&
     !diff?.hunks.some((hunk) => hunk.lines.some((line) => line.type === 'del'))
+  // W4-2: set_output publishes its payload through an input envelope; render
+  // the unwrapped payload (pretty JSON) instead of the wrapper's raw JSON.
+  const setOutputJson =
+    block.toolName === 'set_output'
+      ? setOutputPayloadJson(block.inputJson)
+      : null
   const shownInput = isWholeFileWrite ? null : clampPreview(block.inputJson)
   const shownOutput = clampPreview(block.outputText)
   const verification = parseVerificationOutput(block.toolName, block.outputText)
@@ -123,6 +133,12 @@ export const ToolCard = memo(function ToolCard({
             head show FOUR dots (traffic lights + status dot). The lights
             alone encode state: lit while running, dimmed when settled. */}
         <span className="tool-name">{toolDisplayName(block.toolName)}</span>
+        {/* W4-1: subagent attribution — the roster label of the agent that
+            invoked the call, so a Detective/Scout/Forge/Basher card reads
+            differently from a root Savant call at a glance. */}
+        {block.agentLabel !== undefined ? (
+          <span className="tool-agent-badge">{block.agentLabel}</span>
+        ) : null}
         {!expanded ? (
           <span className="tool-preview">
             {toolCollapsedPreview(
@@ -171,6 +187,11 @@ export const ToolCard = memo(function ToolCard({
             <>
               <div className="tool-label">write</div>
               <div className="write-summary">{writeSummary}</div>
+            </>
+          ) : setOutputJson !== null ? (
+            <>
+              <div className="tool-label">output</div>
+              <pre className="tool-pre">{setOutputJson}</pre>
             </>
           ) : shownInput === null ? null : (
             <>

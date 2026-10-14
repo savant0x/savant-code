@@ -8,10 +8,6 @@ import {
   isTerminalTool,
   isWriteTool,
 } from './helpers'
-import {
-  classifyFileKind,
-  hasWiringDeclaration,
-} from '../../util/echo-compliance-core'
 import { canonicalizePath } from '../path-canonicalization'
 import { runPreWriteGates } from '../pre-write-gates'
 import { noteCompliantIntervening } from './escalation'
@@ -21,6 +17,7 @@ import {
   creditVerificationRun,
 } from './verification-credit'
 import { maybeCaptureWorktreeBaseline } from './worktree-capture'
+import { recordAfterToolMutationBookkeeping } from './write-bookkeeping-pipeline'
 
 import type { EnforcementResult } from '../types'
 import type { EnforcementSelf } from './self'
@@ -133,13 +130,9 @@ export function beforeToolCallImpl(
     self.state.intentLogged = true
   }
 
-  // Track FID file writes
+  // Track FID file writes (FID-2026-1013-010 W1-1: includes apply_patch)
   const targetPath = getTargetPath(input)
-  if (
-    (toolName === 'write_file' || toolName === 'str_replace') &&
-    targetPath != null &&
-    isFidFile(targetPath)
-  ) {
+  if (isWriteTool(toolName) && targetPath != null && isFidFile(targetPath)) {
     self.state.fidFilesWritten.add(targetPath)
   }
 
@@ -216,69 +209,17 @@ export function afterToolCallImpl(
   // the caller; afterToolCall never blocks, it may only steer.
   const warnings: EnforcementResult['warnings'] = []
 
-  // FID-2026-1001-003 step 1 (consume): a mutating terminal call's targets
-  // join the tracking sets exactly as a write tool's would — Law 15's batch
-  // predicate and step 2's reconciliation now see the bypass. Consumed and
-  // cleared on the same call; tree-scope mutations leave targets empty and
-  // defer to the reconciliation. Cleared BEFORE any early return below.
   const mutation = self.state.pendingMutation
   self.state.pendingMutation = null
-  if (
-    mutation?.mutates &&
-    !isWriteTool(toolName) &&
-    // A demonstrably FAILED command mutated nothing — never record it.
-    commandSucceeded !== false
-  ) {
-    for (const target of mutation.targets) {
-      self.state.filesWritten.add(target)
-      self.state.dirtyFiles.add(target)
-      // A bypassed file has no verification credit — Law 15 must block
-      // until a verification run re-arms for it.
-      self.state.verifiedFiles.delete(target)
-      self.state.hasVerifiedSinceLastDirty = false
-      self.state.writeCount++
-    }
-    if (mutation.targets.length > 0) {
-      self.state.writtenFileContent.delete(mutation.targets[0])
-    }
-  }
-
-  // Record only successful writes. The exact post-write payload is kept in a
-  // bounded per-path ledger so turn-end scanners never reread unrelated disk
-  // changes and can distinguish an empty file from unavailable content.
-  if (isWriteTool(toolName)) {
-    const path = getTargetPath(input)
-    if (path && writeSucceeded !== false) {
-      self.state.filesWritten.add(path)
-      self.state.dirtyFiles.add(path)
-      // A fresh modification revokes any prior verification credit for
-      // this file (FID-2026-0820-012 AUDIT): the cumulative predicate must
-      // re-arm for re-modified files, or a verified-then-edited file would
-      // keep its stale credit and never block again.
-      self.state.verifiedFiles.delete(path)
-      self.state.hasVerifiedSinceLastDirty = false
-      self.state.writeCount++
-
-      if (writtenContent !== undefined) {
-        self.state.writtenFileContent.set(path, writtenContent)
-      } else {
-        self.state.writtenFileContent.delete(path)
-      }
-
-      // Check for export statements (Law 4 wiring). FID-2026-1001-003
-      // step 6: file type AND declaration structure — the raw probe matched
-      // `export` inside markdown fences and Law 4 then blocked turn end for
-      // a document (row H). Docs verify with lint:md, never Law 4.
-      const content =
-        writtenContent ??
-        (input.content as string) ??
-        (input.newString as string) ??
-        ''
-      if (classifyFileKind(path) === 'code' && hasWiringDeclaration(content)) {
-        self.state.featuresWired.add(path)
-      }
-    }
-  }
+  recordAfterToolMutationBookkeeping({
+    state: self.state,
+    toolName,
+    input,
+    mutation,
+    writtenContent,
+    writeSucceeded,
+    commandSucceeded,
+  })
 
   // Track verification commands for Law 3 (cumulative — FID-2026-0819-001;
   // outcome-aware — FID-2026-0919-015). Extracted to ./verification-credit.

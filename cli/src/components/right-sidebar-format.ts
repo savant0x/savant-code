@@ -178,13 +178,20 @@ export function resolveActiveAgentDisplay(
  * (Law 13). Identifiers listed here get a hand-written label; any other
  * identifier falls back to a deterministic sentence-case transform, so an
  * unmapped tool never shows as raw snake_case (Law 14).
+ *
+ * FID-2026-1013-011 W2-1: this is deliberately NOT the repo's Title-Case
+ * `toolDisplayName` (now canonical in
+ * `@savant-code/common/util/tool-display` for the transcript/copy/export
+ * surfaces) — the sidebar timeline reads as a sentence, not a heading. The
+ * distinct name keeps the registry unambiguous: `toolDisplayName` is
+ * Title-Case everywhere, `sidebarToolDisplayName` is this one.
  */
 const TOOL_DISPLAY_NAMES: Readonly<Record<string, string>> = {
   suggest_followups: 'Suggest followup',
 }
 
 /** Human label for a tool identifier: mapped name, else sentence-case. */
-export function toolDisplayName(identifier: string): string {
+export function sidebarToolDisplayName(identifier: string): string {
   const mapped = TOOL_DISPLAY_NAMES[identifier]
   if (mapped !== undefined) return mapped
   // No letter or digit anywhere (empty, separator-only, punctuation-only):
@@ -202,5 +209,8 @@ export function formatToolHistoryEvent(call: ToolCall): {
   const date = new Date(call.timestamp)
   const hours = date.getHours().toString().padStart(2, '0')
   const minutes = date.getMinutes().toString().padStart(2, '0')
-  return { time: `${hours}:${minutes}`, label: toolDisplayName(call.name) }
+  return {
+    time: `${hours}:${minutes}`,
+    label: sidebarToolDisplayName(call.name),
+  }
 }

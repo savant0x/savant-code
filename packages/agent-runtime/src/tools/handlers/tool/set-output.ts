@@ -1,4 +1,5 @@
 import { jsonToolResult } from '@savant-code/common/util/messages'
+import { redactSecrets } from '@savant-code/common/util/redact'
 import { toLogValue } from '@savant-code/common/util/type-narrowing'
 
 import { getAgentTemplate } from '../../../templates/agent-registry'
@@ -52,20 +53,38 @@ export const handleSetOutput = (async (params: {
         // Show whichever error has fewer issues — that represents the "closer" parse
         // attempt and gives the agent more actionable feedback for retrying.
         const issues1 = getZodIssueCount(error)
-        const issues2 = getZodIssueCount(error2)
+        const issues2 = data !== undefined ? getZodIssueCount(error2) : Infinity
         const usedData = issues2 < issues1
         const bestError = usedData ? error2 : error
         const prefix = usedData
           ? 'Output validation error: Your output was found inside the `data` field but still failed validation. Please fix the issues and try again without wrapping in `data`. Issues: '
           : 'Output validation error: Output failed to match the output schema and was ignored. You might want to try again! Issues: '
-        const errorMessage = `${prefix}${bestError}\n\nOriginal output value:\n${formatValueForError(output as JSONValue)}`
+        const formattedIssues = formatValueForError(
+          formatZodIssues(bestError),
+          500,
+          redactSecrets,
+        )
+        const redactedPreview = formatValueForError(
+          output as JSONValue,
+          500,
+          redactSecrets,
+        )
+        const errorMessage = `${prefix}${formattedIssues}\n\nOriginal output value:\n${redactedPreview}`
         logger.error(
           {
-            output: toLogValue(output),
+            output: toLogValue(redactedPreview),
             agentType: agentState.agentType,
             agentId: agentState.agentId,
-            topLevelError: toLogValue(error),
-            dataFieldError: toLogValue(error2),
+            topLevelError: formatValueForError(
+              formatZodIssues(error),
+              500,
+              redactSecrets,
+            ),
+            dataFieldError: formatValueForError(
+              formatZodIssues(error2),
+              500,
+              redactSecrets,
+            ),
             usedDataFieldError: usedData,
           },
           'set_output validation error',
@@ -97,4 +116,32 @@ function getZodIssueCount(error: unknown): number {
     return (error as { issues: unknown[] }).issues.length
   }
   return Infinity
+}
+
+export function formatZodIssues(error: unknown): string {
+  if (
+    error != null &&
+    typeof error === 'object' &&
+    'issues' in error &&
+    Array.isArray((error as { issues: unknown }).issues)
+  ) {
+    const issues = (error as { issues: unknown[] }).issues
+    const formatted = issues
+      .map((issue) => {
+        if (issue == null || typeof issue !== 'object') return String(issue)
+        const record = issue as { path?: unknown; message?: unknown }
+        const pathParts = Array.isArray(record.path)
+          ? record.path.map((part) => String(part))
+          : []
+        const label = pathParts.length > 0 ? pathParts.join('.') : '<root>'
+        const message =
+          typeof record.message === 'string' ? record.message : 'Invalid value'
+        return `${label}: ${message}`
+      })
+      .filter((line) => line.length > 0)
+    if (formatted.length > 0) {
+      return formatted.join('; ')
+    }
+  }
+  return error instanceof Error ? error.message : String(error)
 }

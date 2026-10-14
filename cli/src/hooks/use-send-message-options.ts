@@ -1,7 +1,7 @@
-/* eslint-disable @typescript-eslint/no-explicit-any -- send message: dynamic action type shapes */
 import type { StreamController } from './stream-state'
 import type { ElapsedTimeTracker } from './use-elapsed-time'
 import type { StreamStatus } from './use-message-queue'
+import type { MultilineInputHandle } from '../components/multiline-input'
 import type { ChatMessage } from '../types/chat'
 import type { PendingAttachment } from '../types/store'
 import type { AgentMode } from '../utils/constants'
@@ -10,9 +10,15 @@ import type { SendMessageTimerEvent } from '../utils/send-message-timer'
 import type { MessageContent, RunState } from '@savant-code/sdk'
 import type { MutableRefObject } from 'react'
 
-/** Options for useSendMessage. Split out of use-send-message.ts (FID-2026-0805-003). */
+/** Options for useSendMessage. Split out of use-send-message.ts (FID-2026-0805-003).
+ *
+ * FID-2026-1013-012 W3-3: `inputRef` carries the real input handle
+ * (`MultilineInputHandle | null`, the same type every other chat surface
+ * uses) instead of `any`; the two consumers only call `focus`/
+ * `getValue`-style members the handle already declares.
+ */
 export interface UseSendMessageOptions {
-  inputRef: React.MutableRefObject<any>
+  inputRef: MutableRefObject<MultilineInputHandle | null>
   activeSubagentsRef: React.MutableRefObject<Set<string>>
   isChainInProgressRef: React.MutableRefObject<boolean>
   setStreamStatus: (status: StreamStatus) => void
@@ -46,7 +52,7 @@ export interface UseSendMessageOptions {
  * (FID-2026-0805-003).
  */
 export type CreateSendMessageBodyParams = {
-  inputRef: React.MutableRefObject<any>
+  inputRef: MutableRefObject<MultilineInputHandle | null>
   isChainInProgressRef: MutableRefObject<boolean>
   setStreamStatus: (status: StreamStatus) => void
   setCanProcessQueue: (can: boolean) => void

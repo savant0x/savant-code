@@ -6,6 +6,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useStore } from 'zustand'
 
+import { approvalAnswerPayload } from '../lib/approval-answers'
 import { GatewayClient, browserTransportFactory } from '../lib/gateway-client'
 import { getGatewayConfig } from '../lib/gateway-config'
 import {
@@ -80,7 +81,11 @@ export type UseGatewayResult = {
     state: { unread?: boolean; pinned?: boolean },
   ): Promise<void>
   send(text: string): Promise<void>
-  respondApproval(approvalId: string, skipped: boolean): Promise<void>
+  respondApproval(
+    approvalId: string,
+    skipped: boolean,
+    note?: string,
+  ): Promise<void>
   interrupt(): Promise<void>
 }
 
@@ -218,12 +223,20 @@ export function useGateway(): UseGatewayResult {
     }
   }, [])
 
-  // v1 note: interactive answer collection is Step 5; this path resolves an
-  // approval as skipped (the fail-closed deny shape the gateway records).
+  // FID-2026-1013-013 W4-3: the optional operator note rides as the
+  // approval's answer payload — otherwise unchanged from v1 (empty answers).
   const respondApproval = useCallback(
-    async (approvalId: string, skipped: boolean): Promise<void> => {
+    async (
+      approvalId: string,
+      skipped: boolean,
+      note?: string,
+    ): Promise<void> => {
       try {
-        await getClient().respondApproval(approvalId, [], skipped)
+        await getClient().respondApproval(
+          approvalId,
+          approvalAnswerPayload(note),
+          skipped,
+        )
       } catch (error) {
         pushLocalError(describeError(error))
       }

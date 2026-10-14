@@ -20,6 +20,7 @@ import {
   EVIDENCE_MAX_RECORD_BYTES,
   evidenceFilePath,
   loadEvidenceRecords,
+  resetEvidenceRecordCache,
   retainOriginal,
   sha256Hex,
 } from '../spill'
@@ -100,6 +101,27 @@ describe('retainOriginal — a handle, never a silent boolean', () => {
 
     const records = await loadEvidenceRecords(root, 'run-1')
     expect(records.map((record) => record.raw)).toEqual(['first', 'second'])
+  })
+
+  it('serves repeated loadEvidenceRecords from cache and invalidates when shard size grows (FID-2026-1013-010 W1-3)', async () => {
+    const root = await tempRoot()
+    resetEvidenceRecordCache()
+    await retainOriginal({ ...base, projectRoot: root, raw: 'alpha' })
+
+    const firstRead = await loadEvidenceRecords(root, 'run-1')
+    const secondRead = await loadEvidenceRecords(root, 'run-1')
+    expect(firstRead.map((r) => r.raw)).toEqual(['alpha'])
+    expect(secondRead.map((r) => r.raw)).toEqual(['alpha'])
+
+    // Appending within the same millisecond changes `size`, invalidating the cache.
+    await retainOriginal({
+      ...base,
+      toolCallId: 'call-2',
+      projectRoot: root,
+      raw: 'beta',
+    })
+    const thirdRead = await loadEvidenceRecords(root, 'run-1')
+    expect(thirdRead.map((r) => r.raw)).toEqual(['alpha', 'beta'])
   })
 })
 

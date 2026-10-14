@@ -8,6 +8,8 @@ import {
   openGraphDatabase,
 } from '@savant-code/knowledge-graph/store'
 
+import { getTargetPath } from '../echo/enforcement/helpers'
+
 import type { Message } from '@savant-code/common/types/messages/savant-code-message'
 import type { Database } from 'bun:sqlite'
 
@@ -53,8 +55,8 @@ export function extractChangedPathsFromHistory(
       ) {
         continue
       }
-      if (input && typeof input === 'object' && 'path' in input) {
-        const raw = (input as { path?: unknown }).path
+      if (input && typeof input === 'object') {
+        const raw = getTargetPath(input as Record<string, unknown>)
         if (typeof raw === 'string' && raw.length > 0) {
           paths.add(raw.replaceAll('\\', '/'))
         }

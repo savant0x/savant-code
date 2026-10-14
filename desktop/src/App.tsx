@@ -211,8 +211,8 @@ export function App(): JSX.Element {
                   onSendFollowup={(prompt) => {
                     void gateway.send(prompt)
                   }}
-                  onRespondApproval={(approvalId, skipped) => {
-                    void gateway.respondApproval(approvalId, skipped)
+                  onRespondApproval={(approvalId, skipped, note) => {
+                    void gateway.respondApproval(approvalId, skipped, note)
                   }}
                   onInterrupt={() => {
                     void gateway.interrupt()
