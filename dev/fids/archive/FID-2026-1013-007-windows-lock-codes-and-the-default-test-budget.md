@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-1013-007-windows-lock-codes-and-the-default-test-budget.md`
 **ID:** FID-2026-1013-007
 **Severity:** medium
-**Status:** converged
+**Status:** closed
 **Created:** 2026-10-13 21:10
 **Automation level:** 3
 **YAGNI-Compliance:** Verified
@@ -148,14 +148,16 @@ The file green repeatedly in isolation and inside the root chain; `quality` and
 
 ## Resolution
 
-**Implemented; closure pending the implementation commit (G2).**
-
+- **Closed Date:** 2026-10-13 21:35
 - **Fix Description:** teardown retries the full Windows transient lock set under a bounded budget;
   the fabricated-enumeration test carries an explicit budget.
 - **Tests Added:** none — assertions untouched.
-- **Verification Evidence:** `bun test src/__tests__/refresh-safety.test.ts` 15 PASS / 0 FAIL, and
-  the root chain's knowledge-graph leg green; declared gates stamped.
-- **Archived:** set when the implementation commit lands.
+- **Verification Evidence:** `bun test src/__tests__/refresh-safety.test.ts` 15 PASS / 0 FAIL on
+  three consecutive runs; the root chain's knowledge-graph leg 76 PASS / 0 FAIL (3.1 s, previously
+  11.98 s with `error: script "test" exited with code 1`); declared gates stamped;
+  `bun run validate:repository` PASS.
+- **Commit SHA:** `2f003aed`
+- **Archived:** 2026-10-13 21:35
 
 ## Lessons Learned
 

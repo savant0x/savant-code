@@ -10,6 +10,24 @@
 > the v0.0.36 cut. Release notes are written here at cut time; nothing in this
 > section ships until then.
 
+## 2026-10-13 — Both suite-health records close (FID-2026-1013-006/-007)
+
+### Fixed
+
+- **The scripts suite is green from its declared cwd** (FID-2026-1013-006). Four independent
+  deterministic failures, none of them load flakes: two live-repository checks resolved the
+  repository root from `process.cwd()` — which is `scripts/` under the FID-2026-1013-001 gate
+  contract — so they read `scripts/CHANGELOG.md`; the boundary probe rejected every cross-origin
+  redirect, including the apex→www hop its own re-POST logic exists for (the guard is now the
+  **site**: same scheme and port, base host, subdomain or parent, so an unrelated host still fails
+  closed); and two git-fixture tests that spend 4-6 s in process spawns on Windows were held to
+  bun's 5 s default. Implementation `722d1c03`; no assertion was removed or weakened.
+- **The graph leg absorbs Windows lock codes and its own fixture cost** (FID-2026-1013-007). The
+  refresh-safety teardown retried `EBUSY` only, for 250 ms, while Windows reports `EBUSY`, `EPERM`,
+  `EACCES` or `ENOTEMPTY`; the fabricated 10,001-entry enumeration test now carries a budget that
+  matches what it deliberately performs. Implementation `2f003aed`. The root `bun run test` chain is
+  green across all 13 legs, and `bun run validate:repository` passes.
+
 ## 2026-10-13 - The AIHubMix gateway joins the built-in registry (FID-2026-1013-004)
 
 ### Added

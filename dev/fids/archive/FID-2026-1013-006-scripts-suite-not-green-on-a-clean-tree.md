@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-1013-006-scripts-suite-not-green-on-a-clean-tree.md`
 **ID:** FID-2026-1013-006
 **Severity:** high
-**Status:** converged
+**Status:** closed
 **Created:** 2026-10-13 20:40
 **Automation level:** 3
 **YAGNI-Compliance:** Verified
@@ -197,8 +197,7 @@ ceiling so the `quality` gate returns to green.
 
 ## Resolution
 
-**Implemented; closure pending the implementation commit (G2).**
-
+- **Closed Date:** 2026-10-13 21:35
 - **Fix Description:** the repository root is resolved from the test module; the redirect guard is
   scoped to the site instead of the origin; the three measured git fixtures carry an explicit spawn
   budget.
@@ -206,8 +205,10 @@ ceiling so the `quality` gate returns to green.
   be pinned directly.
 - **Verification Evidence:** `cd scripts && bun test` → 960 PASS / 0 FAIL; `quality:report` PASS;
   `typecheck common`, `typecheck:scripts`, `bun x eslint . --max-warnings 0`, `bun run lint:md` and
-  `bunx prettier --check .` exit 0; all declared gates stamped.
-- **Archived:** set when the implementation commit lands.
+  `bunx prettier --check .` exit 0; all declared gates stamped; root `bun run test` chain green
+  across all 13 legs; `bun run validate:repository` PASS.
+- **Commit SHA:** `722d1c03`
+- **Archived:** 2026-10-13 21:35
 
 ## Lessons Learned
 
