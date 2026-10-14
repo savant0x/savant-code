@@ -10,6 +10,34 @@
 > the v0.0.36 cut. Release notes are written here at cut time; nothing in this
 > section ships until then.
 
+## 2026-10-14 — QOL hardening program completed (five FIDs archived)
+
+### Fixed
+
+- **FID archive alignment:** Backfilled fifteen missing October 13 archive-index
+  entries and eight existing implementation hashes in the G2 pre-audit's
+  canonical metadata field. Historical verification evidence remains unchanged.
+- **FID-2026-1013-010 (high):** Write-tool paths survive compaction and reach
+  graph evidence; Law 1 resolves against the project root; evidence shards cache
+  by size/mtime; micro-compaction reports actual savings and preserves tiny
+  results; failed structured-output diagnostics and logs redact before truncation.
+- **FID-2026-1013-011 (medium):** Shared display, truncation, coercion, render,
+  nameplate and SQLite primitives replace duplicated implementations, with
+  production consumers and registry enforcement preserving compatibility.
+- **FID-2026-1013-012 (medium):** Type-safety and lint-rationale enforcement,
+  scanner literal/comment handling and ceiling decompositions are complete.
+  Closure review replaced the quote-sensitive scanner with the pinned compiler
+  parser/scanner and regression controls for regex, templates, division and TSX.
+- **FID-2026-1013-013 (medium):** Desktop tool attribution, diff/output previews,
+  approval notes, walker lookup and cursor ownership, plus CLI collapse-timer
+  cleanup and shared empty-ad state are complete.
+- **FID-2026-1013-009 (high):** Coordinator closed after all four children;
+  all 24 allocated findings are committed in `b959019e`. The shared
+  renderer/reducer dependencies ship as one coherent program. All 52 declared
+  child gates, full root tests across thirteen workspaces, root typecheck,
+  ESLint, Markdown lint, SDK build and repository validation pass. Fresh live
+  TUI/WebView visual smoke is unclaimed. No push or release was performed.
+
 ## 2026-10-13 — The bundle restore drill gets a budget it can meet (FID-2026-1013-008)
 
 ### Fixed

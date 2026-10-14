@@ -175,13 +175,11 @@ Auto-drafting a record is mechanical (automation level 2); approving one is not.
 
 ### Verification
 
-Planned, not yet run: the coverage check must fail on a fixture whose top class has no owner
-and pass on the real capture once classes 1, 2, 7 and 12 are owned; the recurrence-assertion
-probe must fail while a class is still being recorded and pass once the window is clear —
-demonstrated by replaying a captured class over the real ledger rather than by a synthetic
-record; and the drafted record for an unowned class must be reproducible from the capture
-alone. The test artifacts this fix would add do not exist yet, so no `- gate:` bullet is
-declared here and none is claimed.
+Implemented deterministic verification covers missing-owner rejection, qualified
+lesson-last ordering, idempotent proposed repair drafting, and horizon proof
+controls. The exact suites and probes are declared below and have passing receipts.
+Real production class observation remains unproved; isolated replay controls do
+not establish a clean production window.
 
 ## Verification Gates
 
@@ -200,8 +198,8 @@ declared here and none is claimed.
 
 ### Verification Receipt
 
-- fingerprint: sha256:feefd3c15a8912a6e90d86e70e5e65839a29370d0a337cc246a61327e7515130
-- verified: 2026-10-14T00:54:19.675Z
+- fingerprint: sha256:45f5d0720b581421deb988cd785921d4306f6876974fe015deb15d2a26834da3
+- verified: 2026-10-14T13:39:41.371Z
 - test scripts/__tests__/experiences-coverage.test.ts: exit 0
 - test scripts/__tests__/experiences-learning-order.test.ts: exit 0
 - test scripts/__tests__/experiences-repair-drafts.test.ts: exit 0
@@ -415,7 +413,8 @@ Current machinery completion evidence (2026-10-13) supersedes the older open lim
 - [x] Combined coverage/order/draft/SessionEnd suites: 23 pass, 0 fail. Fixtures
       prove idempotence and no active-queue/register/raw-capture mutation.
 - [ ] Actual class observation and formal closure remain open: no fix boundary or
-      clean production window is invented, and the no-commit hold prevents G2 closure.
+      clean production window is invented. Loop 6 lifted the no-commit hold and
+      committed the held work at `2a34e558`; it no longer prevents G2 closure.
 
 - [x] Measured at `bee0610d` from the real capture: 559 records / 68 classes / 195 distinct
       sessions, 27 classes at the ≥3-distinct-session bar, 193 incomplete-argument records with
@@ -426,9 +425,9 @@ Current machinery completion evidence (2026-10-13) supersedes the older open lim
       `dev/LEARNINGS-RETIRED.md:1373`.
 - [x] The two producers this record re-routes were read directly:
       `scripts/lessons-to-skills.ts` and `scripts/lesson-feature-pipeline.ts`.
-- [x] **Not yet true, and deliberately not claimed:** the loop, its coverage check, its
-      recurrence assertions, its gates and its receipt. No class is claimed to have stopped
-      recurring.
+- [x] **Historical planning boundary:** the implementation, gates and receipt were
+      unclaimed at the initial baseline. Loops 3–6 supersede that state; no class
+      is currently claimed to have stopped recurring.
 
 ## Boundaries
 
@@ -439,7 +438,7 @@ Current machinery completion evidence (2026-10-13) supersedes the older open lim
   classing needs the capture to record an error class, which is the follow-up
   `FID-2026-1012-009` recorded when it closed (storing `errorClass` and the truncation flag on
   the capture record); this record depends on it for precision but not for existence.
-- Nothing here is implemented, and no class is claimed to have stopped recurring.
+- The machinery is implemented and committed; no class is claimed to have stopped recurring.
 
 ## Resolution
 
@@ -448,10 +447,12 @@ Current machinery completion evidence (2026-10-13) supersedes the older open lim
 The earlier limits (a)/(b) below are superseded by Loop 4: lesson-last ordering is
 now enforced, and unowned eligible classes draft proposed FID documents idempotently
 for operator routing. Proposal storage is not active ownership. The class lanes
-still require genuine qualified observation, and the explicit no-commit hold
-prevents formal closure. No production failure or exposure was fabricated.
+still require genuine qualified observation. Loop 6 lifted the no-commit hold
+on 2026-10-13; `2a34e558` contains the held count-reporting work. The remaining
+closure condition is observation, not commit permission. No production failure
+or exposure was fabricated.
 
-- **Closed Date:** 2026-10-13 (machinery pass; the loop cannot be *closed* until the class lanes
+- **Implementation Date:** 2026-10-13 (machinery pass; the loop cannot be *closed* until the class lanes
   observe clean windows — this record supplies the mechanism, not the proof).
 - **Fix Description.** An eligible failure class with no owner is now a repository-gate failure.
   `scripts/experiences-coverage.ts` consumes `FID-2026-1012-024`'s stable class identity and the owner
@@ -473,11 +474,11 @@ prevents formal closure. No production failure or exposure was fabricated.
   `git diff --stat` clean) · `quality:report` PASS (1,502 baselined files) · ESLint `--max-warnings 0`
   and Prettier clean.
 - **Archived:** not archived. The master (`FID-2026-1012-022`) closes last.
-- **Open, and why this record is not `closed`:** (a) lesson-last ordering is not enforced until
-  `FID-2026-1012-014` supplies the evidence-backed rule links that map a lesson to its class;
-  (b) auto-drafting a defect FID for an unowned class is deliberately not implemented — the check
-  reports, the operator routes; (c) no class has a clean observation window, so no lesson is written
-  and no claim is made.
+- **Open, and why this record is not `closed`:** no class has a qualified clean
+  observation window. Lesson-last ordering and idempotent proposed drafting are
+  implemented; operator routing is still required before a proposal gains active
+  ownership. The former commit hold is resolved, and no class-repair lesson or
+  production repair claim is made.
 
 - **Authorised write surface:** `SCOPE.md` → machine-readable scope targets → this record's line.
 - **Design record:** `docs/design/learnings-root-cause-matrix.md` §3 (the matrix) and §4 RC5

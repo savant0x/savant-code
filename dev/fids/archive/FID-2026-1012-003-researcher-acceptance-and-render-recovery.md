@@ -17,6 +17,9 @@ generic display rather than the existing traffic-light panels.
 
 ## Environment
 
+- **Commit/State:** `f3dd0eee1c1fd91b9389e1916df2e49b6a116770`; G2 field
+  reconciled 2026-10-14 from the existing implementation evidence below.
+
 - Windows, Bun 1.3.14, TypeScript monorepo, OpenTUI 0.5.3.
 - Initial HEAD: 7df92cba; operator-appended experience traces are preserved and
   excluded from task commits. The supplied results.md was read for evidence,

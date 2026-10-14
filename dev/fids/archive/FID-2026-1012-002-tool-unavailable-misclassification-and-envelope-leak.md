@@ -30,6 +30,9 @@ instead of leaking protocol markup.
 
 ## Environment
 
+- **Commit/State:** `1a4721c63f8953d1e788703b0bc06fada15b3322`; G2 field
+  reconciled 2026-10-14 from the existing implementation/recovery evidence below.
+
 - **OS:** Windows, Git Bash terminal.
 - **Language/Runtime:** TypeScript, Bun 1.3.14 (pinned).
 - **Branch/State:** `main`; the worktree carries pre-existing uncommitted changes from other in-flight

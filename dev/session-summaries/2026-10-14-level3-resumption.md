@@ -43,13 +43,29 @@ also exposed four stale micro-compaction consumer assertions; real large-output
 fixtures and exact token-delta assertions now pass while tiny results remain intact.
 
 Fresh wave receipts pass 12/12 (Wave 1), 16/16 (Wave 2), 14/14 (Wave 3), and
-10/10 (Wave 4). Full root tests pass across all thirteen workspaces, with zero
-failures. Full ESLint and Markdown lint pass. SDK production build and undeclared
+10/10 (Wave 4). Full root tests pass across all thirteen workspaces: 9,162 PASS,
+23 SKIP, zero FAIL. Full ESLint and Markdown lint pass. SDK production build and undeclared
 dependency audit pass; the scanner's pinned TypeScript dependency is declared and
-locked. The final root typecheck and repository validator are running before commit.
+locked. Final root typecheck and repository validation pass.
+
+Implementation commit: `b959019e588ff59122a4844d6a43e94ac8d0c7b3` (105 explicit
+paths). All five QOL records are closed and physically moved into the archive;
+CHANGELOG, active/archive indexes, master status board and scope register align.
+The completed scope items and their write grants are removed. Unrelated art,
+idea-shelf/wiki material, provider probes and SDK process-fixture edits stay intact.
+The archive index also omitted fifteen already-archived October 13 records;
+their existing filenames and implementation hashes are now indexed accurately.
+The direct G2 release pre-audit then found eight older closed records lacking
+its canonical `Commit/State` field. Their existing implementation hashes were
+verified against Git and recorded in that field without changing historical
+receipts or claiming another implementation. The affected records are October
+12 `001`, `002`, `003`, `004`, `006`, `007`, `008`, and `025`.
+The actual G2 check now reports zero findings; changelog coverage, archived
+closure status, scope registration and active verification receipts also pass.
 
 ## Tracking
 
-All fifteen underlying records remain active until their individual closure
-conditions are earned. This document records implementation, commits, gates,
-archival, and specific external blockers as the work progresses.
+Ten underlying records remain active until their individual closure conditions
+are earned. Failure-class production observation is still unestablished;
+the provider expansion is unimplemented and Cloudflare needs external account
+configuration. The master remains active while those children remain open.

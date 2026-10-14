@@ -16,6 +16,9 @@ Scratch files are temporary, including those under the legacy archive directory.
 
 ## RED — Current evidence
 
+- **Commit/State:** `57d1d06dd7e7d8865e1537904dce6f393a7e79e3`; G2 field
+  reconciled 2026-10-14 against the scratchpad implementation in Git.
+
 Initial inventory: 162 files, 9,076,029 bytes. Scripts/hygiene.ts only validates
 root entry names; it neither expires nested files nor bounds storage. Several
 reusable provider probes and the scholarly acceptance report use scratch as their

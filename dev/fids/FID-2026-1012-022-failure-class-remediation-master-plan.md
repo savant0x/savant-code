@@ -136,6 +136,11 @@ of its own (`fid.graph.master-nested`).
 | FID-2026-1013-006 | Harness — the scripts suite is not green on a clean tree | harness | — |
 | FID-2026-1013-007 | Harness — Windows lock codes and the default test budget | harness | — |
 | FID-2026-1013-008 | Harness — the bundle restore drill fails on the clock, not its assertions | harness | — |
+| FID-2026-1013-009 | Program coordinator — four-wave QOL, enterprise standards, data-flow & UI program | program | — |
+| FID-2026-1013-010 | Wave 1 — agent-to-agent data flow, compaction fidelity & EHEL Law 1 hardening | wave | — |
+| FID-2026-1013-011 | Wave 2 — Law 13 shared-primitive consolidation & deduplication | wave | — |
+| FID-2026-1013-012 | Wave 3 — Law 6 type hardening, lint-suppression rationale gate & ceiling relief | wave | — |
+| FID-2026-1013-013 | Wave 4 — CLI and Desktop UI/UX parity, subagent attribution & 3D performance | wave | — |
 
 **Instrument sensitivity, stated because it bounds every claim below** — the slice length changes the
 class count, so the number is only meaningful with its instrument:
@@ -348,7 +353,7 @@ activation), and the child's id is recorded in this table when it exists.
 
 ### Status board (the agent updates this; it is what an operator reads)
 
-| Item | Chain · wave | Record | Status (2026-10-13) |
+| Item | Chain · wave | Record | Status (2026-10-14 audit) |
 |---|---|---|---|
 | FID-2026-1012-022 — this master (the index) | — | `-022` | open — closes last, when every child is closed and the allocation re-runs clean |
 | Local `0.0.36` development line | C0 | register item | open — dev-line maintenance live; the cut is operator-called |
@@ -380,6 +385,30 @@ activation), and the child's id is recorded in this table when it exists.
 | FID-2026-1013-006 — scripts suite red on a clean tree | harness | `1013-006` | **closed 2026-10-13** — four independent deterministic failures repaired at their cause (cwd-dependent live checks, an origin-scoped redirect guard that rejected the apex→www hop it exists for, two git-fixture tests below their real spawn budget); every assertion intact; the `quality` ceiling violation it surfaced was repaired in `-024` Loop 11; declared gates green with a stamped receipt |
 | FID-2026-1013-008 — the bundle restore drill on the clock | harness | `1013-008` | **closed 2026-10-13** — the scripts suite's fifth independent failure was a duration, not an assertion: the restore drill (real baseline clone + incremental fetch through spawned git) measured 4261-5462 ms across three isolated runs against bun's 5 s default while its siblings measured 1.0-3.3 s; the file now declares a measured ceiling beside it (`GIT_CHILD_TIMEOUT_MS`), assertions untouched. `cd scripts && bun test` exit 0 / 960 pass; implementation `4be4de9e`; declared gates green with a stamped receipt. **Class remainder:** measuring every other subprocess-spawning suite against the default is recurrence-to-fix-loop work, not discharged by this record. |
 | FID-2026-1013-002 — mutating partial assertions | harness | `1013-002` | **closed 2026-10-13** — three mutation failures reproduced and repaired; 25 focused tests green; standalone AST audit PASS; implementation `9b1d5b4d`; 10 declared gates re-ran green |
+| FID-2026-1013-009 — QOL and enterprise-hardening coordinator | program | `1013-009` | closed + archived 2026-10-14; all four children closed; implementation `b959019e` |
+| FID-2026-1013-010 — agent data flow and compaction hardening | program | `1013-010` | closed + archived 2026-10-14; 12/12 gates; implementation `b959019e` |
+| FID-2026-1013-011 — shared-primitive consolidation | program | `1013-011` | closed + archived 2026-10-14; 16/16 gates; implementation `b959019e` |
+| FID-2026-1013-012 — Law 6 and quality-ceiling hardening | program | `1013-012` | closed + archived 2026-10-14; 14/14 gates; implementation `b959019e` |
+| FID-2026-1013-013 — CLI and Desktop UI/UX parity | program | `1013-013` | closed + archived 2026-10-14; 10/10 gates; implementation `b959019e`; live UI smoke unclaimed |
+| FID-2026-1012-026 — Tier 1 provider parity | provider program | `-026` | converged — eighteen-provider expansion remains unimplemented; registry partitions contain none of the proposed entries |
+
+**Ground-truth resumption (2026-10-14):** ten active records; no closed record
+remains in the active directory. Chain B and the four-wave QOL program are
+completed and archived; QOL implementation commit is `b959019e`. Class repairs
+remain unproved: the current stable census has 589 records / 58 classes / zero
+issues / zero observed classes, and the fix-boundary manifest is empty. Local
+HEAD `6e6998b6` was the pre-resumption baseline. See
+`dev/session-summaries/2026-10-14-fid-folder-ground-truth-audit.md` for callers,
+verification evidence and each active record's next action.
+
+**Archive metadata reconciliation (2026-10-14, automation level 3):** The direct
+G2 pre-audit reports eight archived records lacking its `Commit/State` field:
+`FID-2026-1012-001`, `-002`, `-003`, `-004`, `-006`, `-007`, `-008`, and `-025`.
+Their implementation hashes already exist in prose, headers or Git history.
+Read each record completely, verify each implementation commit with Git, and add
+the existing hash in the consumer's canonical field. Preserve every historical
+verification claim and receipt; no new runtime implementation or live result is
+claimed. Re-run the actual G2 check, archive closure guard and repository validator.
 
 **The automation contract.** Session ceiling is `protocol.config.yaml` → `session.autonomy_level`
 (3). An item runs unattended when its level is ≤ the ceiling and it is not on the operator-gated list;
@@ -451,14 +480,15 @@ without pretending the prerequisite's observation window has completed.
 
 ### Verification
 
-Planned, not yet run: the allocation script must reproduce `68/559`, zero unassigned, on the census
-date; the coverage check must fail on a fixture whose top class has no owner and pass on the real
-capture; and each child's recurrence probe must fail while its class is still being recorded. No test
-artifact for this record exists yet, so no `- gate:` bullet is declared below.
+The original planning contract required allocation to reproduce `68/559` at the
+dated baseline, missing-owner rejection, and recurrence assertions that refuse
+unproved repairs. Those implementations and gates belong to the children and
+their current evidence is on the status board. This coordination record declares
+no test artifact or source gate of its own; production repair remains unproved.
 
 ## Verification Gates
 
-This record is **pre-implementation** (`Status: converged`, FID-2026-0915-004) and declares **no
+This record is a **coordination plan** (`Status: converged`) and declares **no
 gates**: a declared gate must point at an artifact that exists, and this record's deliverable is a
 census plus an allocation, both re-measurable with the command in the Evidence block. Gates are added
 by whichever pass flips a child to `fixed`/`verified`, on the child's artifacts.
@@ -569,8 +599,9 @@ rediscover them — plus a third, measured 2026-10-13 during the `-019` pass:
 
 ### Code Verification Evidence
 
-> Pre-implementation record: `Status: converged` (FID-2026-0915-004). Nothing here is implemented;
-> what follows records what was CHECKED at the cited state.
+> The master remains an open coordination plan (`Status: converged`); source
+> implementation belongs to its children. The checks below retain their original
+> planning baseline. Current child state is recorded in the status board above.
 
 - [x] Census re-run at `6e37aa15`: 559 records / 68 classes / 195 sessions / window 2026-08-24 →
       2026-10-12; 27 classes at the ≥3-distinct-session bar; the four-slice sensitivity table produced
@@ -604,19 +635,23 @@ rediscover them — plus a third, measured 2026-10-13 during the `-019` pass:
 
 ## Resolution
 
-**Not implemented — `Status: converged` (pre-implementation, FID-2026-0915-004).**
+**Coordination plan converged; child implementation has progressed — `Status: converged`.**
 
 This record exists so that the failure classes have a program of record: a published census, an owner
 for every class, a definition of fixed that the capture can falsify, and a closure condition. It made
-no source change. The implementation is the six children, each of which rewrites its own Resolution in
-the closure format when it flips to `fixed`.
+no source change of its own. The class-lane implementation belongs to the six
+children; all seven Chain B artifact records and all five QOL program records
+have closed and archived with committed implementation evidence.
+The master closes only when every child closes and allocation is verified again.
 
 - **Authorised write surface:** `SCOPE.md` → machine-readable scope targets → this record's line.
 - **Program census and lane allocation:** the Evidence block and the census table above;
   `docs/design/learnings-root-cause-matrix.md` for the root-cause matrix and the feature set.
-- **Children (15):** `FID-2026-1012-010` … `-021` (Lane V and RCs 1–5) plus `FID-2026-1012-023`
-  (RC6, execution control), `FID-2026-1012-024` (RC7, class taxonomy and horizon) and
-  `FID-2026-1012-027` (harness: a fixed record's gate set need not cover the surfaces it touched).
+- **Children:** `FID-2026-1012-010` … `-021` (Lane V and RCs 1–5) plus `FID-2026-1012-023`
+  (RC6, execution control), `FID-2026-1012-024` (RC7, class taxonomy and horizon),
+  `FID-2026-1012-027` (harness: a fixed record's gate set need not cover the surfaces it touched), and
+  the completed program records `FID-2026-1013-009`, `FID-2026-1013-010`, `FID-2026-1013-011`,
+  `FID-2026-1013-012`, and `FID-2026-1013-013`.
 - **Ordering:** the schedule is `### Work order` above — Chain A (`023`/`024` make the instrument
   honest, then the four independent class lanes, then `021` wires the gate once `017`–`020` have
   owners) and Chain B (Lane V, the review's §5 order). Every edge is declared as `**Depends On:**`

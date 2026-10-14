@@ -3,6 +3,65 @@
 This directory contains closed or historically completed FIDs. Files here are
 an audit record, not an active work queue.
 
+## 2026-10-14 closure — four-wave QOL hardening program
+
+All 24 findings are implemented in local commit `b959019e`; child receipts pass
+52/52 gates. Full root tests, typecheck, ESLint, Markdown lint, SDK build and
+repository validation pass. Shared renderer/reducer dependencies required one
+coherent implementation commit. Each child retains its own evidence and receipt;
+no fresh live TUI/WebView visual smoke, push or release is claimed.
+
+- [`FID-2026-1013-010`](FID-2026-1013-010-wave1-agent-dataflow-compaction-hardening.md)
+  (high): write-path/evidence propagation, Law 1 anchoring, caching, truthful
+  compaction and redacted diagnostics; 12/12 gates.
+- [`FID-2026-1013-011`](FID-2026-1013-011-wave2-law13-shared-primitive-consolidation.md)
+  (medium): canonical shared primitives and consumers; 16/16 gates.
+- [`FID-2026-1013-012`](FID-2026-1013-012-wave3-law6-type-hardening-and-ceiling-relief.md)
+  (medium): type/gate/scanner hardening and ceiling relief; 14/14 gates.
+- [`FID-2026-1013-013`](FID-2026-1013-013-wave4-cli-desktop-ui-qol-enhancements.md)
+  (medium): attribution, previews, approval notes and UI lifecycle/performance;
+  10/10 gates.
+- [`FID-2026-1013-009`](FID-2026-1013-009-qol-enterprise-dataflow-ui-program.md)
+  (high): program coordinator, closed after all four children. Ten records remain
+  active; completed scope items and their write grants are evicted.
+
+## 2026-10-13 closures — index backfilled 2026-10-14
+
+The fifteen records below were already closed and physically archived yesterday,
+with CHANGELOG coverage and implementation evidence, but this index omitted them.
+This entry reconciles navigation; it claims no new implementation or live run.
+
+- [`FID-2026-1012-010`](FID-2026-1012-010-learnings-boot-read-size-contract.md)
+  (critical): learnings boot-read contract; implementation `6b847099`.
+- [`FID-2026-1012-011`](FID-2026-1012-011-learnings-size-ceiling-ungated.md)
+  (high): learnings size gate; implementation `3e0fab27`.
+- [`FID-2026-1012-012`](FID-2026-1012-012-retirement-strands-lesson-references.md)
+  (high): retirement references; implementation `6b847099`.
+- [`FID-2026-1012-013`](FID-2026-1012-013-lesson-evidence-rot-and-ephemeral-anchors.md)
+  (high): durable lesson evidence; implementation `6b847099`.
+- [`FID-2026-1012-014`](FID-2026-1012-014-canonical-rules-and-ledger-disagree.md)
+  (high): canonical rule/ledger alignment; implementation `6b847099`.
+- [`FID-2026-1012-015`](FID-2026-1012-015-lessons-feature-pipeline-red-and-ungated.md)
+  (high): feature-pipeline gate; implementation `6b847099`.
+- [`FID-2026-1012-016`](FID-2026-1012-016-redundant-lesson-families-inflate-boot-read.md)
+  (medium): redundant lesson families; implementation `6b847099`.
+- [`FID-2026-1012-027`](FID-2026-1012-027-gate-coverage-of-a-fixed-records-surfaces.md)
+  (high): fixed-record gate coverage; implementation `5144615b`.
+- [`FID-2026-1013-001`](FID-2026-1013-001-script-test-gates-search-the-repository-root.md)
+  (medium): script gate working directory; implementation `6b847099`.
+- [`FID-2026-1013-002`](FID-2026-1013-002-asymmetric-partial-matchers-mutate-test-evidence.md)
+  (medium): partial-matcher evidence mutation; implementation `9b1d5b4d`.
+- [`FID-2026-1013-003`](FID-2026-1013-003-apixo-provider-integration.md)
+  (medium): Apixo gateway; implementation `6c32495`.
+- [`FID-2026-1013-004`](FID-2026-1013-004-aihubmix-provider-integration.md)
+  (medium): AIHubMix gateway; implementation `618b7a1a`.
+- [`FID-2026-1013-006`](FID-2026-1013-006-scripts-suite-not-green-on-a-clean-tree.md)
+  (high): scripts suite; implementation `722d1c03`.
+- [`FID-2026-1013-007`](FID-2026-1013-007-windows-lock-codes-and-the-default-test-budget.md)
+  (medium): Windows locks/test budget; implementation `2f003aed`.
+- [`FID-2026-1013-008`](FID-2026-1013-008-bundle-restore-drill-clock.md)
+  (medium): bundle restore budget; implementation `4be4de9e`.
+
 ## 2026-10-12 closure — vendor-path tool-call truncation classification
 
 One record closed on the operator's directive ("if the fid is completed, update

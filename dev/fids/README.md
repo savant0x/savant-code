@@ -5,17 +5,36 @@ operator decision, implementation, runtime review, or closure evidence.
 
 ## Current active FIDs
 
-**No active FIDs remain (2026-10-11).** The release-readiness repair closed
-against clean candidate `a74e92e4` with a fresh 26/26 verification receipt;
-see [`archive/README.md`](archive/README.md).
+The 2026-10-14 resumption leaves ten active records. The four QOL waves and
+their coordinator are committed in `b959019e`, closed and archived with 52/52
+passing child gates. The failure-class lanes require
+investigated causes and qualified production observation. Provider parity is
+unimplemented, Cloudflare needs external account configuration, and the
+remaining master awaits child closure. These ten records are not eligible for archival yet.
 
-**Closed and archived 2026-10-12 — `FID-2026-1012-009`** on the operator's
-directive ("if the fid is completed, update the changelog and archive it"). The
-vendor-path tool-call truncation classification was implemented as `682399fd`;
-the record was the last active one, so the queue is empty again. Receipt 5/5
-LIVE at the archived path, CHANGELOG entry and archive index entry added, and
-the register item evicted from `SCOPE.md`; see
-[`archive/README.md`](archive/README.md).
+Evidence and per-record next actions are in the
+[audit report](../session-summaries/2026-10-14-fid-folder-ground-truth-audit.md).
+
+| FID | Status | Current closure condition |
+|---|---|---|
+| `FID-2026-1012-017` | fixed | Recurrence window open; four classes still recur and the remaining classes are unobserved. |
+| `FID-2026-1012-018` | fixed | Recurrence window not started; no class claim exists. |
+| `FID-2026-1012-019` | fixed | Production observation and the original host-resolver cause remain open. |
+| `FID-2026-1012-020` | fixed | Class observation and lost historical production causes remain open. |
+| `FID-2026-1012-021` | verified | Machinery is green; class observation and formal closure remain open. |
+| `FID-2026-1012-022` | converged | Master plan; closes only after every child closes and allocation is re-run. |
+| `FID-2026-1012-023` | fixed | Production timeout/abort observation remains open. |
+| `FID-2026-1012-024` | converged | Instrument is implemented; underlying repair and production observation remain open. |
+| `FID-2026-1012-026` | converged | Provider-parity implementation has not started. |
+| `FID-2026-1013-005` | analyzed | Cloudflare catalog is blocked on the account ID and API token. |
+
+The active queue is intentionally non-empty under the FID closure contract.
+Completed records are moved to [`archive/`](archive/) with a CHANGELOG entry and
+archive-index entry; see [`archive/README.md`](archive/README.md).
+
+## Historical queue snapshots
+
+The dated entries below describe their own sessions, not the current queue.
 
 FID-2026-1010-001 was already marked closed and recorded as archived in SCOPE;
 its file was moved here on 2026-10-11 to reconcile the active queue and

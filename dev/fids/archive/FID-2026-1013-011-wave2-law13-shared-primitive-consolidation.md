@@ -5,7 +5,8 @@
 **Filename:** `FID-2026-1013-011-wave2-law13-shared-primitive-consolidation.md`
 **ID:** FID-2026-1013-011
 **Severity:** medium
-**Status:** fixed
+**Status:** closed
+**Commit:** b959019e588ff59122a4844d6a43e94ac8d0c7b3
 **Created:** 2026-10-13 19:25
 **Automation level:** 3
 **YAGNI-Compliance:** Verified
@@ -384,7 +385,7 @@ swept into the registry.
 
 ### Implementation Evidence (REQUIRED for `closed`)
 
-- [x] **Commit SHA:** working tree on `main` @ `3ee91a35` (local wave 2 implementation)
+- [x] **Commit SHA:** `b959019e588ff59122a4844d6a43e94ac8d0c7b3` (coherent four-wave implementation).
 - [x] **File:line ranges:**
   - `common/src/util/tool-display.ts:1-133` (new canonical `toolDisplayName`, `truncateSingleLine`, `renderToolInput`, `renderToolOutput`, `asPositiveInt`, `asBoolean`)
   - `common/src/util/bun-sqlite.ts:1-87` (new canonical `getRuntimeRequire` + `resolveBunSqliteModule`)
@@ -471,7 +472,17 @@ swept into the registry.
 
 ## Resolution
 
-**Fixed (`Status: fixed`) — all 7 Wave 2 findings (W2-1 through W2-7) implemented and verified:**
+- **Closed Date:** 2026-10-14.
+- **Fix Description:** All seven primitive-consolidation findings are committed;
+  production consumers share their canonical owners and preserve compatibility.
+- **Tests Added:** Canonical display/coercion and SQLite loader suites, plus
+  existing consumer regressions and the negative registry-enforcement probe.
+- **Verification Evidence:** 16/16 declared gates pass; full root tests,
+  typecheck, ESLint, Markdown lint, SDK build and repository validation pass.
+- **Archived:** `dev/fids/archive/`, 2026-10-14. Receipt records the passing
+  pre-closure document; the dependency-free database exception remains explicit.
+
+**Closed — all 7 Wave 2 findings (W2-1 through W2-7) implemented and verified:**
 
 1. **W2-1 (`toolDisplayName`):** one Title-Case owner in `common/src/util/tool-display.ts` (with the `list_directory`
    override and MCP `server__tool` stripping) consumed by `/copy`, `/export`, `getToolDisplayInfo`, and the desktop

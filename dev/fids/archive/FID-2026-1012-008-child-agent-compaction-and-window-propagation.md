@@ -19,6 +19,9 @@ candidate `LF-002` of the lesson-driven feature pipeline.
 
 ## Environment
 
+- **Commit/State:** `7fbecd995e867e5d38ea34feb2dc05680674f3c3`; G2 field
+  reconciled 2026-10-14 from the existing implementation evidence below.
+
 - Windows, Bun 1.3.14, TypeScript monorepo, initial HEAD `7fbecd99` (the
   LF-001 fix, FID-2026-1012-007, landed first).
 - Candidate source: `dev/feature-pipeline/candidates.json` `LF-002` (P1,

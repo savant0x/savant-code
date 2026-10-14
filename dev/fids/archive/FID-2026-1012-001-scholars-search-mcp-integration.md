@@ -31,6 +31,9 @@ verifies live tool calls and runtime exposure, and completes the closure records
 
 ## Environment
 
+- **Commit/State:** `f0b8ca82af7346d2ee153525a2e8fb401cb17528`; G2 field
+  reconciled 2026-10-14 from the existing runtime-repair evidence below.
+
 - **OS:** Windows, Git Bash terminal.
 - **Language/Runtime:** TypeScript, Bun 1.3.14 (pinned).
 - **Branch/State:** `main`; the worktree carries pre-existing uncommitted changes,

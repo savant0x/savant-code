@@ -5,7 +5,8 @@
 **Filename:** `FID-2026-1013-012-wave3-law6-type-hardening-and-ceiling-relief.md`
 **ID:** FID-2026-1013-012
 **Severity:** medium
-**Status:** fixed
+**Status:** closed
+**Commit:** b959019e588ff59122a4844d6a43e94ac8d0c7b3
 **Created:** 2026-10-13 19:30
 **Automation level:** 3
 **YAGNI-Compliance:** Verified
@@ -33,8 +34,8 @@ parents and misses destructured parameters (`ObjectPattern`, `ArrayPattern` ), d
 (300 lines) and `agents/savant/handle-steps-template-body-b.ts` (299 lines) sit at zero headroom against the
 300-line quality ceiling and require cohesive helper extraction before Wave 4 touches `transcript-reducer.ts` . No
 source code was modified during initial planning. The six findings now have
-working-tree implementations and passing declared gates; committed closure
-evidence is still required.
+committed implementations and passing declared gates; closure evidence is
+recorded below.
 
 `implementation_started: true`
 
@@ -395,9 +396,7 @@ evidence is still required.
 
 ### Implementation Evidence (REQUIRED for `closed`)
 
-- [x] **Implementation state:** uncommitted working tree on `main` based on
-      `6e6998b6`; this baseline is not an implementation commit. G2 closure
-      requires the actual implementation commit hash.
+- [x] **Commit SHA:** `b959019e588ff59122a4844d6a43e94ac8d0c7b3` (coherent four-wave implementation).
 - [x] **File:line ranges:**
   - **W3-1** — `scripts/audit-eslint-disable-rationale.ts:1-208` (new probe: `detectRationaleFreeDirectives` pure
     detector, `collectAuditedSourceFiles` git-tracked resolver, `import.meta.main` CLI exit 0/1);
@@ -501,6 +500,17 @@ evidence is still required.
 
 ## Resolution
 
+- **Closed Date:** 2026-10-14.
+- **Fix Description:** All six type/gate/ceiling findings are committed, including
+  the compiler-backed literal/comment scanner and its explicit locked dependency.
+- **Tests Added:** Rationale and signature-rule contracts, scanner regression
+  controls for regex/division/templates/TSX, and existing reducer regressions.
+- **Verification Evidence:** 14/14 declared gates pass; full root tests,
+  typecheck, ESLint, Markdown lint, SDK build, dependency audit and repository
+  validation pass. The scanner/regression battery passes 22/22.
+- **Archived:** `dev/fids/archive/`, 2026-10-14. Receipt records the passing
+  pre-closure document; Loop 4 records the reproduced scanner defect and repair.
+
 ### Loop 4 — Parser-shaped closure review (2026-10-14)
 
 - **RED:** A shipped-helper probe shows `const pattern = /"/; let value: any = 1;`
@@ -524,14 +534,13 @@ evidence is still required.
   stripper/scanner suites passed 22/22. Runtime typecheck, declared-import audit
   and the complete ESM/CJS/declaration SDK build pass after the dependency change.
 
-**Implemented in the working tree — `Status: fixed`; committed closure evidence remains open.**
+**Closed — committed implementation and passing closure evidence recorded.**
 
 Ground-truth audit 2026-10-14 confirms the rationale probe's production caller
 in `scripts/validate-repository.ts:192`, the scanner's use of
 `stripCommentsAndStrings` at `post-write-scanners.ts:174`, and the reducer/template
-extractions. Declared gates pass. The implementation is uncommitted; the baseline
-HEAD reference is not G2 evidence. Record the actual implementation commit and
-final verification before closure and archival. Planning loops retain their
+extractions. All 14 declared gates pass and the implementation is committed in
+`b959019e`; the former baseline reference is superseded. Planning loops retain their
 original dated measurements, rather than asserting the current code is unstarted.
 
 - **Parent Coordinator:** `FID-2026-1013-009`

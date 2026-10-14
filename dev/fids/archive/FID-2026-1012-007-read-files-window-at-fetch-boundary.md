@@ -17,6 +17,9 @@ implements candidate `LF-001` of the lesson-driven feature pipeline.
 
 ## Environment
 
+- **Commit/State:** `303c683838ad1fa2f1eea1c209dea1fff0ac360d`; G2 field
+  reconciled 2026-10-14 from the existing implementation evidence below.
+
 - Windows, Bun 1.3.14, TypeScript monorepo, initial HEAD `57d1d06d`.
 - Candidate source: `dev/feature-pipeline/candidates.json` `LF-001` (P1,
   `ready`, `observed-gap`), itself derived from the lesson "Files over the

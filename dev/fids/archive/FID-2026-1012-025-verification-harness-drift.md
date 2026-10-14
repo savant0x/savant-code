@@ -124,6 +124,9 @@ reader provide the implementation without exemptions or test-only production sea
 
 ## Resolution
 
+- **Commit/State:** `c4018491fcf0ff7183c009d9bf5b559c84dc329f`; G2 field
+  reconciled 2026-10-14 from the existing implementation header and Git.
+
 Implemented at `c4018491fcf0ff7183c009d9bf5b559c84dc329f`. The focused harness battery
 passes 30 tests. Import-safety RED produced two real attempted-network failures before
 the guards; both import tests pass with zero fetches after implementation. The live

@@ -17,6 +17,9 @@ cleanup with this pipeline.
 
 ## Environment
 
+- **Commit/State:** `2355b520ebe22a7c36b4e8f944fdbf43818cca3c`; G2 field
+  reconciled 2026-10-14 against the feature-pipeline implementation in Git.
+
 - Windows, Bun 1.3.14, initial HEAD 09d212eb.
 - Read dev/LEARNINGS.md 0-EOF: 133,263 characters, 74 headed entries.
 - User-owned experience/telemetry changes and deletion of the preaudit baseline

@@ -5,7 +5,8 @@
 **Filename:** `FID-2026-1013-010-wave1-agent-dataflow-compaction-hardening.md`
 **ID:** FID-2026-1013-010
 **Severity:** high
-**Status:** fixed
+**Status:** closed
+**Commit:** b959019e588ff59122a4844d6a43e94ac8d0c7b3
 **Created:** 2026-10-13 19:20
 **Automation level:** 3
 **YAGNI-Compliance:** Verified
@@ -365,7 +366,7 @@ tools (`write_file`, `str_replace` ) used a flat `{ path }` schema. Only
 
 ### Implementation Evidence (REQUIRED for `closed`)
 
-- [x] **Commit SHA:** working tree on `main` @ `3ee91a35` (local wave 1 implementation)
+- [x] **Commit SHA:** `b959019e588ff59122a4844d6a43e94ac8d0c7b3` (coherent four-wave implementation).
 - [x] **File:line ranges:**
   - `packages/agent-runtime/src/echo/enforcement/write-bookkeeping-pipeline.ts:1-80` (extracted post-tool write/mutation bookkeeping)
   - `packages/agent-runtime/src/echo/enforcement/tool-pipeline.ts:1-225` (consumes `recordAfterToolMutationBookkeeping` and widens `fidFilesWritten` to `isWriteTool`)
@@ -433,6 +434,17 @@ tools (`write_file`, `str_replace` ) used a flat `{ path }` schema. Only
 
 ## Resolution
 
+- **Closed Date:** 2026-10-14.
+- **Fix Description:** All W1-1 through W1-5 findings are implemented in the
+  recorded commit, including closure-review diagnostic redaction and truthful
+  micro-compaction consumer contracts documented below.
+- **Tests Added:** Write-path propagation, evidence caching, tiny-output
+  preservation, exact token savings, and secret-bearing validation diagnostics.
+- **Verification Evidence:** 12/12 declared gates pass; full root test chain,
+  typecheck, ESLint, Markdown lint, SDK build and repository validation pass.
+- **Archived:** `dev/fids/archive/`, 2026-10-14. Receipt records the passing
+  pre-closure document; historical loops retain their original measurements.
+
 ### Loop 4 — Closure security review (2026-10-14)
 
 - **RED:** The failed-output preview is redacted, but `formattedIssues` and the
@@ -479,7 +491,7 @@ tools (`write_file`, `str_replace` ) used a flat `{ path }` schema. Only
   assertions still require exactly one clear, preserved exit code, and the
   correct before/after token delta.
 
-**Fixed (`Status: fixed`) — all 5 Wave 1 findings (W1-1 through W1-5) implemented and verified:**
+**Closed — all 5 Wave 1 findings (W1-1 through W1-5) implemented and verified:**
 
 1. **W1-1 (`apply_patch` tracking):** `preserved-state.ts`, `compaction-plan.ts`, `graph-injection.ts`, and `tool-pipeline.ts` now extract `input.operation.path` and `input.operation.type` (`create_file` vs `update_file` / `delete_file`), ensuring `apply_patch` mutations survive context compaction and feed call-graph blast-radius evidence into Verifier/Reviewer spawns.
 2. **W1-2 (`projectRoot`-anchored Law 1):** `runLaw1Gate` in `pre-write-gates-law1.ts` resolves relative `targetPath` and `mutationTargets` against `projectRoot` (`state.telemetryRootDir`) before probing `existsSync` or matching `filesRead`.

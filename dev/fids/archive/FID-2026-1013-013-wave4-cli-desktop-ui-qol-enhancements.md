@@ -5,7 +5,8 @@
 **Filename:** `FID-2026-1013-013-wave4-cli-desktop-ui-qol-enhancements.md`
 **ID:** FID-2026-1013-013
 **Severity:** medium
-**Status:** fixed
+**Status:** closed
+**Commit:** b959019e588ff59122a4844d6a43e94ac8d0c7b3
 **Created:** 2026-10-13 19:35
 **Automation level:** 3
 **YAGNI-Compliance:** Verified
@@ -402,11 +403,9 @@ the stamped `### Verification Receipt`.
 
 ### Implementation Evidence (REQUIRED for `closed`)
 
-> Working-tree implementation (`Status: fixed`); committed closure evidence remains open.
+> Committed implementation with all declared gates passing; closed 2026-10-14.
 
-- [x] **Implementation state:** working tree on `main` based on `6e6998b6`,
-      uncommitted alongside Waves 1–3. The baseline HEAD is not an implementation
-      commit; G2 closure requires the actual implementation commit hash.
+- [x] **Commit SHA:** `b959019e588ff59122a4844d6a43e94ac8d0c7b3` (coherent four-wave implementation).
 - [x] **File:line ranges:**
   - **W4-1** — `desktop/src/state/transcript-types.ts:52-67` (optional `agentId` / `parentAgentId` / `agentLabel`
     on the `kind: 'tool'` block); `desktop/src/state/transcript-reducer.ts:67-95` (both ids captured on
@@ -510,15 +509,26 @@ the stamped `### Verification Receipt`.
 
 ## Resolution
 
-**Implemented in the working tree — `Status: fixed`; committed closure evidence remains open.**
+- **Closed Date:** 2026-10-14.
+- **Fix Description:** All six UI/dataflow/performance findings are committed,
+  with production callers for attribution, diff previews, approval notes,
+  walker indexing, shared empty ads and collapse-timer disposal.
+- **Tests Added:** Approval interaction, tool attribution, scene frame-loop,
+  diff parsing, display preview and collapse lifecycle regression controls.
+- **Verification Evidence:** 10/10 declared gates pass; full root tests,
+  typecheck, ESLint, Markdown lint and repository validation pass.
+- **Archived:** `dev/fids/archive/`, 2026-10-14. Receipt records the passing
+  pre-closure document. No fresh live TUI/WebView visual smoke is claimed;
+  closure is based on the declared behavioral contract and production wiring.
+
+**Closed — committed implementation and passing closure evidence recorded.**
 
 Ground-truth audit 2026-10-14 confirms production consumers for the tool-agent
 badge (`ToolCard.tsx:139`), output payload renderer (`ToolCard.tsx:67`), approval
 answer builder (`use-gateway.ts:237`), walker index (`scene-frame-loop.ts:123`),
 stable ad map (`use-message-block-sync.ts:88`), and collapse cleanup
-(`use-chat-messages.ts:90`). Declared gates pass. The source changes are
-uncommitted, and no live Desktop/TUI smoke is claimed by this audit. Record the
-actual implementation commit and final closure evidence before archival.
+(`use-chat-messages.ts:90`). All 10 declared gates pass and the source changes
+are committed in `b959019e`. No fresh live Desktop/TUI smoke is claimed.
 
 - **Parent Coordinator:** `FID-2026-1013-009`
 - **Findings Owned:** W4-1, W4-2, W4-3, W4-4, W4-5, W4-6

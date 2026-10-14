@@ -205,12 +205,13 @@ while artifact/machinery children close on their own committed gates. All seven 
 remain unresolved: age and missing records do not establish dormancy. The pipeline keeps running,
 with FID-024 owning capture/expectedness corrections and FID-014 owning class-to-rule targeting.
 
-- [ ] **FID-2026-1012-022. Open-work master plan (build order + status board).** Sequences **all 24
-      open register items** — the fifteen active records and the nine tasks without one — into three
+- [ ] **FID-2026-1012-022. Open-work master plan (build order + status board).** Sequenced the
+      **original 24 open register items** (2026-10-12) — fifteen records and nine tasks — into three
       chains with declared dependencies, exit gates, automation levels and blockers, plus the census
       that gives every failure class an owner (68 classes / 559 records across six lanes). Children:
       `-010`…`-021`, `-023`, `-024`; Chain C tasks get children drafted at wave start. Not gateable
       itself; closes only when every child is closed and the closing pass re-runs the allocation.
+      Its current status board reflects ten active records after Chain B and QOL archival.
       Pointing an automation run at this record **is** the operating instruction. **Automation level: 3.**
 
 - [ ] **FID-2026-1012-017. The incomplete-arguments class has never been fixed at its
@@ -262,49 +263,9 @@ with FID-024 owning capture/expectedness corrections and FID-014 owning class-to
       differently worded failures, uncaptured exit-code/nested errors and overbroad expectedness.
       Investigate all seven before any disposition → E7. **Automation level: 3.**
 
-### Four-Wave QOL, Enterprise Standards, Agent Data-Flow & UI Program (coordinator `FID-2026-1013-009`, 2026-10-13)
-
-- [ ] **FID-2026-1013-009. Four-wave QOL, enterprise standards, agent data-flow, and UI/UX
-      hardening program (coordinator).** Allocates all 24 audit findings across Waves 1–4
-      (`FID-2026-1013-010` … `-013`), enforces disjoint file ownership, and sequences execution
-      (`010` → `011` → `012` → `013`). All four waves are implemented in the
-      working tree with passing declared gates; implementation commits and child
-      closure remain required. **Automation level: 3.**
-
-- [ ] **FID-2026-1013-010. Wave 1 — Agent-to-agent data flow, compaction fidelity, and EHEL
-      path-resolution hardening.** Owns W1-1 through W1-5 (`apply_patch` tracking in
-      `preserved-state.ts`, `compaction-plan.ts`, `graph-injection.ts`, and `tool-pipeline.ts`;
-      `projectRoot`-anchored Law 1 check in `pre-write-gates-law1.ts`; `(mtimeMs, size)` shard
-      caching in `spill-read.ts`; real token delta in `micro-compact.ts`; and formatted/redacted
-      `set_output` diagnostics). **Automation level: 3.**
-
-- [ ] **FID-2026-1013-011. Wave 2 — Law 13 shared-primitive consolidation and utility
-      deduplication.** Owns W2-1 through W2-7 (`common/src/util/tool-display.ts` for
-      `toolDisplayName`, `truncateSingleLine`, `renderToolInput`, `renderToolOutput`,
-      `asPositiveInt`, `asBoolean`; `sidebarToolDisplayName` disambiguation in
-      `right-sidebar-format.ts`; `traceRoundedRect` consolidation in Desktop floor;
-      `common/src/util/bun-sqlite.ts` lazy loader; and `shared-primitives.json` registration).
-      **Automation level: 3.**
-
-- [ ] **FID-2026-1013-012. Wave 3 — Law 6 type hardening, lint-suppression rationale gate, and
-      300-line ceiling relief.** Owns W3-1 through W3-6 (`scripts/audit-eslint-disable-rationale.ts`
-      repo gate + 15 missing `--` rationales; `init-type-files.ts` `@ts-expect-error` removal;
-      7 `no-explicit-any` removals; comment/string-stripped Law 6 post-write scanner;
-      `no-unknown-in-signatures.js` destructuring/default/rest coverage; and 300-line ceiling
-      decompositions for `transcript-reducer.ts` and `handle-steps-template-body-b.ts`).
-      **Automation level: 3.**
-
-- [ ] **FID-2026-1013-013. Wave 4 — CLI and Desktop UI/UX parity, subagent tool attribution,
-      interactive approval, and 3D scene performance.** Owns W4-1 through W4-6 (Desktop
-      `ToolBlock` / `ToolCard` subagent attribution; `apply_patch` nested `operation.diff` parsing
-      in `diff-parse.ts` + `set_output` preview in `tool-display.ts`; `ApprovalCard` operator note
-      input wired through `use-gateway.ts`; 3D `OfficeScene` `O(1)` walker lookup + ref-counted
-      hover cursor; `EMPTY_RESPONSE_ADS` constant in `use-message-block-sync.ts`; and tracked
-      collapse timer cleanup in `use-chat-messages.ts`). **Automation level: 3.**
-
 ### Build orders (formalized as FIDs 2026-10-07)
 
-The build order for the fifteen active records and the remaining register tasks
+The build order for the ten active records and the remaining register tasks
 lives in the master record `FID-2026-1012-022` (`### Work order` for the
 schedule, `### Status board` for current state), so there is exactly one place an automation run can
 be pointed at. Its three chains: **A**, the failure-class lanes (`-024` → `-023`; `-024` →
@@ -432,103 +393,3 @@ and its remaining operator/external-input holds stay active.
 - T122: (no write surface — operator-owned)
 - T186: (no write surface — blocked on the T122 savant-free removal)
 - T187: (no write surface — operator-owned skills surface)
-- FID-2026-1013-009: `dev/fids/FID-2026-1013-009-*.md`, `SCOPE.md`
-- FID-2026-1013-010: `agents/context-pruner/preserved-state.ts`,
-  `packages/agent-runtime/src/context-compactor-micro.test.ts`,
-  `packages/agent-runtime/src/run-agent-step/__tests__/context-tokens-compaction-micro-summary.test.ts`,
-  `packages/agent-runtime/src/util/format-value.ts`,
-  `agents/__tests__/context-pruner-phase1-preserved-state.test.ts`,
-  `packages/agent-runtime/src/run-agent-step/compaction-plan.ts`,
-  `packages/agent-runtime/src/__tests__/compaction-file-ledger-wiring.test.ts`,
-  `packages/agent-runtime/src/util/graph-injection.ts`,
-  `packages/agent-runtime/src/__tests__/graph-injection.test.ts`,
-  `packages/agent-runtime/src/echo/pre-write-gates-law1.ts`,
-  `packages/agent-runtime/src/echo/pre-write-gates.ts`,
-  `packages/agent-runtime/src/echo/enforcement/tool-pipeline.ts`,
-  `packages/agent-runtime/src/echo/enforcement/write-bookkeeping-pipeline.ts`,
-  `packages/agent-runtime/src/echo/__tests__/pre-write-gates-apply-patch.test.ts`,
-  `packages/agent-runtime/src/evidence/spill-read.ts`,
-  `packages/agent-runtime/src/evidence/spill.ts`,
-  `packages/agent-runtime/src/evidence/__tests__/retention.test.ts`,
-  `packages/agent-runtime/test/setup-test-isolation.ts`,
-  `packages/agent-runtime/src/context-compactor/micro-compact.ts`,
-  `packages/agent-runtime/src/__tests__/micro-compact.test.ts`,
-  `packages/agent-runtime/src/tools/handlers/tool/set-output.ts`,
-  `packages/agent-runtime/src/tools/handlers/tool/__tests__/set-output.test.ts`
-- FID-2026-1013-011: `common/src/util/tool-display.ts`,
-  `common/src/util/bun-sqlite.ts`,
-  `common/src/util/__tests__/tool-display.test.ts`,
-  `common/src/util/__tests__/bun-sqlite.test.ts`,
-  `cli/src/commands/copy-conversation-render.ts`,
-  `cli/src/commands/export-conversation/format.ts`,
-  `cli/src/components/right-sidebar-format.ts`,
-  `cli/src/components/right-sidebar-sections.tsx`,
-  `cli/src/components/__tests__/right-sidebar-format.test.ts`,
-  `cli/src/components/tools/add-message.tsx`,
-  `cli/src/components/tools/sequential-thinking.tsx`,
-  `cli/src/components/tools/set-output.tsx`,
-  `cli/src/utils/savant-code-client.ts`,
-  `desktop/src/components/chat/tool-display.ts`,
-  `desktop/src/components/chat/__tests__/tool-display.test.ts`,
-  `desktop/src/lib/thinking-parse.ts`,
-  `desktop/src/lib/__tests__/thinking-parse.test.ts`,
-  `desktop/src/floor/office/nameplate-draw.ts`,
-  `desktop/src/floor/office/__tests__/nameplate-draw.test.ts`,
-  `desktop/src/floor/stage/nameplate.ts`,
-  `desktop/src/floor/__tests__/nameplate.test.ts`,
-  `packages/knowledge-graph/src/store.ts`,
-  `packages/agent-runtime/src/llm-api/docset-search.ts`,
-  `packages/agent-runtime/src/llm-api/__tests__/docset-search.test.ts`,
-  `packages/agent-runtime/src/tools/handlers/tool/database/sqlite-adapter.ts`,
-  `packages/agent-runtime/src/tools/handlers/tool/database/__tests__/sqlite-adapter.test.ts`,
-  `scripts/eslint-rules/shared-primitives.json`
-- FID-2026-1013-012: `scripts/audit-eslint-disable-rationale.ts`,
-  `packages/agent-runtime/package.json`, `bun.lock`,
-  `packages/agent-runtime/src/echo/code-surface-stripper.ts`,
-  `packages/agent-runtime/src/echo/__tests__/code-surface-stripper.test.ts`,
-  `scripts/__tests__/audit-eslint-disable-rationale.test.ts`,
-  `scripts/validate-repository.ts`,
-  `scripts/gate-declarability.ts`,
-  `scripts/eslint-rules/no-unknown-in-signatures.js`,
-  `scripts/eslint-rules/__tests__/no-unknown-in-signatures.test.ts`,
-  `packages/agent-runtime/src/echo/post-write-scanners.ts`,
-  `packages/agent-runtime/src/echo/__tests__/post-write-scanners.test.ts`,
-  `cli/src/commands/init-type-files.ts`,
-  `cli/src/hooks/use-send-message-options.ts`,
-  `cli/src/index.tsx`,
-  `common/src/util/agent-name-normalization.ts`,
-  `common/src/env-schema.ts`,
-  `common/src/tools/constants.ts`,
-  `common/src/types/contracts/client.ts`,
-  `sdk/src/agents/load-agents.ts`,
-  `sdk/src/custom-tool.ts`,
-  `desktop/src/floor/driver/deck-live-driver.ts`,
-  `desktop/src/floor/stage/deck-robots-loader.ts`,
-  `desktop/src/floor/stage/deck-runtime.ts`,
-  `desktop/src/floor/stage/deck-walkers-mount.ts`,
-  `desktop/src/floor/stage/deck-walkers.ts`,
-  `desktop/src/floor/stage/perf-hud.ts`,
-  `packages/agent-runtime/src/provenance/session.ts`,
-  `packages/agent-runtime/src/tools/handlers/tool/spawn-agent-inline-verdict.ts`,
-  `desktop/src/state/transcript-reducer.ts`,
-  `desktop/src/state/transcript-reducer-events.ts`,
-  `agents/savant/handle-steps-template-body-b.ts`,
-  `agents/savant/handle-steps-template-body-c.ts`
-- FID-2026-1013-013: `desktop/src/state/transcript-types.ts`,
-  `desktop/src/state/transcript-reducer.ts`,
-  `desktop/src/state/__tests__/transcript-store.test.ts`,
-  `desktop/src/components/chat/ToolCard.tsx`,
-  `desktop/src/components/chat/tool-display.ts`,
-  `desktop/src/components/chat/__tests__/tool-display.test.ts`,
-  `desktop/src/lib/diff-parse.ts`,
-  `desktop/src/lib/__tests__/diff-parse.test.ts`,
-  `desktop/src/components/chat/ApprovalCard.tsx`,
-  `desktop/src/components/chat/__tests__/approval-card.test.tsx`,
-  `desktop/src/components/chat/ChatThread.tsx`,
-  `desktop/src/hooks/use-gateway.ts`,
-  `desktop/src/floor/office/scene-frame-loop.ts`,
-  `desktop/src/floor/office/scene-agent-ui.tsx`,
-  `desktop/test/setup-test-isolation.ts`,
-  `cli/src/chat/use-message-block-sync.ts`,
-  `cli/src/hooks/use-chat-messages.ts`,
-  `cli/src/hooks/__tests__/use-chat-messages-collapse.test.ts`
