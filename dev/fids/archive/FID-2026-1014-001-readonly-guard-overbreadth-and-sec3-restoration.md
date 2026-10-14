@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-1014-001-readonly-guard-overbreadth-and-sec3-restoration.md`
 **ID:** FID-2026-1014-001
 **Severity:** high
-**Status:** verified
+**Status:** closed
 **Created:** 2026-10-14
 **Automation level:** 3
 **YAGNI-Compliance:** Verified
@@ -204,8 +204,8 @@ contract), `run-readonly-redirect-waiver.test.ts` (SEC-3 acceptance),
 
 ### Verification Receipt
 
-- fingerprint: sha256:5ff0f8913092c4f8c14a010beeaa51767c3ba38c1bcd48d60ac3991cb80cc567
-- verified: 2026-10-14T16:24:32.993Z
+- fingerprint: sha256:d2d71cd591534fbb33d4f980f78b9ca5f9c2926ea16e27292eda50ef63f62a64
+- verified: 2026-10-14T16:55:28.020Z
 - typecheck packages/agent-runtime: exit 0
 - test packages/agent-runtime/src/tools/handlers/__tests__/run-readonly-command.test.ts: exit 0
 - test packages/agent-runtime/src/tools/handlers/__tests__/run-readonly-redirect-waiver.test.ts: exit 0
@@ -281,12 +281,30 @@ contract), `run-readonly-redirect-waiver.test.ts` (SEC-3 acceptance),
 
 ## Resolution
 
-- **Closed Date:** —
-- **Fix Description:** over-broad refusals removed; SEC-3 span scoping restored
-  and its promised suite delivered.
-- **Tests Added:** Yes — 7 pins in the guard suite, 4 in the new waiver suite
-- **Verification Evidence:** see Evidence (corpus 0/56 false positives)
-- **Archived:** —
+- **Closed Date:** 2026-10-14
+- **Commit/State:** `1fd828b9` (guard correction + SEC-3 restoration + the new
+  waiver suite), `2aa5bab4` (under-breadth finding widened from four holes to the
+  measured class after the operator's "did you bypass the guard?" review).
+  Working tree clean for every path this record names; nothing pushed.
+- **Fix Description:** the read-only guard's five false refusals are gone
+  (corpus 5 → 0) and the SEC-3 whole-segment waiver — live at HEAD although
+  `FID-2026-0919-010` described it as fixed — is replaced by the span-scoped
+  strip-then-rescan that record specified, with its promised suite finally in
+  the tree. One exported non-global predicate is shared with the mutation
+  classifier (`helpers.ts:11,157`), so the two layers cannot drift.
+- **Tests Added:** Yes — 7 pins in `run-readonly-command.test.ts`; 4 SEC-3
+  acceptance pins in the new `run-readonly-redirect-waiver.test.ts`.
+- **Verification Evidence:** 7/7 declared gates exit 0 at stamp time (typecheck
+  packages/agent-runtime; the guard, waiver, chains and classifier suites; the
+  corpus probe; quality). Suites: 18/0, 4/0, 10/0, 15/0; the three affected
+  directories 644/0. `fid:verify --check` PASS; `lint:md` and eslint clean.
+- **Blocked step carried at closure (operator-owned, not deferred silently):**
+  step 4 — the under-breadth class (`git push`, `git clean -fd`, `git stash
+  pop`, `find | xargs rm`, `bun -e`, `bun x`, `bun run release:public`,
+  `deno eval`, `find . -delete`, `kill -9 1`) is reported and measured, not
+  closed, because closing it means adding refusals. Ruling: `dev/operator-decisions.md`
+  **Q23**.
+- **Archived:** 2026-10-14
 
 ## Lessons Learned
 

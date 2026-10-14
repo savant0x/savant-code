@@ -168,7 +168,7 @@ and the 2026-10-14 FID-folder audit report. The additions remain active in
       and the second would renumber live items. Presented, not decided unilaterally.
       **Automation level: 1.**
 
-- [ ] **FID-2026-1014-001. The read-only guard refused legitimate reads and
+- [x] **FID-2026-1014-001. The read-only guard refused legitimate reads and
       still carried a closed security FID's unfixed waiver.** Operator direction 2026-10-14
       ("Audit whether any current refusal rule is too broad — a legitimate read-only command the
       guard rejects — and fix what you find", plus the standing position that a harness must not
@@ -183,7 +183,8 @@ and the 2026-10-14 FID-folder audit report. The additions remain active in
       boundary: `git push`, `git clean -fd`, `git stash pop`, `find | xargs rm`, and on a second
       probe `bun -e "…"`, `bun x <pkg>`, `bun run release:public`, `deno eval "…"`,
       `find . -delete` and `kill -9 1` are all allowed. Closing them means adding refusals, which
-      is the operator's call (Q23). **Automation level: 3.**
+      is the operator's call (Q23). **Automation level: 3.** **Closed + archived 2026-10-14**
+      (`1fd828b9`, `2aa5bab4`); the blocked step above stays registered under **Q23**.
 
 - [ ] **FID-2026-1014-002. A closed record's declared fix and promised suite were never in the
       tree.** Found while auditing FID-2026-1014-001. Archived `FID-2026-0919-010` (SEC-3) closes
@@ -206,7 +207,9 @@ and the 2026-10-14 FID-folder audit report. The additions remain active in
       summary; left a dated amendment rather than a silent rewrite.
       **Blocker (operator):** the CI job must be marked a **required status check** in branch
       protection or it cannot block a merge — only the operator can set that.
-      **Automation level: 3.**
+      **Automation level: 3.** **Closed + archived 2026-10-14** (`346ecaff` the rule + hook + CI,
+      `77d3be67` the repository-gate wiring); the branch-protection action above stays the
+      operator's.
 
 - [ ] **T122. Savant-Free removal.** Operator direction 2026-10-12 (Q12/Q5):
       the savant-free flag/feature is to be removed rather than repaired. The

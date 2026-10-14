@@ -3,6 +3,30 @@
 This directory contains closed or historically completed FIDs. Files here are
 an audit record, not an active work queue.
 
+## 2026-10-14 closure — read-only guard audit and attribution enforcement
+
+Two records opened and closed the same day, both on the operator's direct
+instructions. Receipts were re-stamped LIVE at the archived paths; `bun run
+validate:repository` PASS. Neither record claims a production observation window,
+or that the CI job below is a required check — the residual operator actions are
+named in each record and in `SCOPE.md`.
+
+- [`FID-2026-1014-001`](FID-2026-1014-001-readonly-guard-overbreadth-and-sec3-restoration.md)
+  (high): the read-only guard's five false refusals removed (measured against a
+  56-command read-only corpus: 5 → 0), and the SEC-3 whole-segment redirect
+  waiver — live at HEAD although `FID-2026-0919-010` described it as fixed —
+  replaced by the span-scoped rescan that record specified, with its promised
+  suite finally in the tree. 7/7 gates. Blocked at closure: the under-breadth
+  class (`git push`, `git clean -fd`, `bun -e`, `find . -delete`, …) is measured
+  and reported, not closed, pending Q23.
+- [`FID-2026-1014-003`](FID-2026-1014-003-no-agent-attribution-enforcement.md)
+  (high): no coding agent may be attributed — one rule
+  (`scripts/attribution-guard.ts`), three layers (delegating commit-msg hook,
+  pre-push range scan, CI job), and now the standard repository gate itself, so
+  a commit smuggled past the local hooks fails on every clone. 4/4 gates.
+  Blocked at closure: branch protection must mark the CI job a required status
+  check (operator-only) before it machine-refuses a merge.
+
 ## 2026-10-14 closure — four-wave QOL hardening program
 
 All 24 findings are implemented in local commit `b959019e`; child receipts pass

@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-1014-003-no-agent-attribution-enforcement.md`
 **ID:** FID-2026-1014-003
 **Severity:** high
-**Status:** verified
+**Status:** closed
 **Created:** 2026-10-14
 **Automation level:** 3
 **Yagni-Compliance:** Verified
@@ -165,8 +165,8 @@ bun scripts/attribution-guard.ts --all                              exit 0
 
 ### Verification Receipt
 
-- fingerprint: sha256:9361df687350ddc1164894f40646296ae2bef2dcb52f79179b244c9e55713664
-- verified: 2026-10-14T16:42:16.057Z
+- fingerprint: sha256:fb642802cca53cf763cb97bb4beaf13e4232eebbca3551449a2917c1d486274a
+- verified: 2026-10-14T16:55:47.883Z
 - test scripts/__tests__/attribution-guard.test.ts: exit 0
 - test scripts/pre-push-scan-watermark.test.ts: exit 0
 - probe scripts/scripts-typecheck-check.ts: exit 0
@@ -228,8 +228,30 @@ bun scripts/attribution-guard.ts --all                              exit 0
 
 ## Resolution
 
-- **Closed Date:** —
-- **Fix Description:** one rule, three enforcement points, no written exception
+- **Closed Date:** 2026-10-14
+- **Commit/State:** `346ecaff` (single-source rule, delegated hook, re-exported
+  push layer, CI job, amended 2026-10-02 summary), `77d3be67` (the rule wired
+  into the repository gate via `collectAttributionIssues`, plus the two
+  structure/spawn defects the gate then caught). Nothing pushed.
+- **Fix Description:** one rule, three enforcement points, no written exception.
+  The `--no-verify` bypass is no longer merely un-authorized in prose: a bypassed
+  local hook is caught by the pre-push range scan, and the rule now travels with
+  the clone inside `bun run validate:repository` — the standard battery — so a
+  tagged commit fails on every machine, not only in the dedicated CI job.
+- **Tests Added:** Yes — 9 pins in `scripts/__tests__/attribution-guard.test.ts`,
+  including the gate collector's fail-closed branch and a temp-repo range e2e.
+- **Verification Evidence:** 4/4 declared gates exit 0 at stamp time (attribution
+  suite, pre-push watermark suite, `scripts-typecheck-check` probe, quality).
+  Hook: tagged → 1 · clean → 0 · unreadable → 2. Range: tagged → 1 ·
+  unresolvable → 2 · empty → 0. Whole history `--all` → **0**, re-run after each
+  of this session's commits. `bun run validate:repository` → **PASS**.
+- **Blocked step carried at closure (operator-owned, not deferred silently):**
+  step 6 — the CI job refuses a merge only once it is marked a **required status
+  check** in branch protection, which only the operator can set. Registered in
+  `SCOPE.md` under this record; until then the hatch is closed by policy, by the
+  hook, by the pre-push range scan and by the repository gate, but a merge is
+  not machine-refused by CI.
+- **Archived:** 2026-10-14
 - **Tests Added:** Yes — 7 pins in the new suite
 - **Verification Evidence:** see Verification
 - **Archived:** —

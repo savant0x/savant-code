@@ -10,6 +10,41 @@
 > the v0.0.36 cut. Release notes are written here at cut time; nothing in this
 > section ships until then.
 
+## 2026-10-14 — refusal authority, guard audit and agent-attribution enforcement
+
+### Fixed
+
+- **FID-2026-1014-001 (high):** the read-only command guard refused legitimate
+  read-only work — the POSIX null sink `2>/dev/null` in three spellings and
+  input redirection `< file` in two — measured 5 of 56 corpus commands, while the
+  EHEL mutation classifier already treated `/dev/null` as a non-mutation target.
+  Fixed to 0. The same audit found the SEC-3 whole-segment redirect waiver live
+  at HEAD (`2>&1` forgave every other metacharacter, so the read-only tool
+  accepted `cat .env > /tmp/exfil.txt 2>&1`), even though `FID-2026-0919-010`
+  closed with that fix marked DONE and a promised suite no commit ever
+  contained. The span-scoped strip-then-rescan is restored, the promised suite
+  exists, and one exported non-global predicate is shared with the mutation
+  classifier. 7/7 gates; corpus false positives 5 → 0; suites 18/0, 4/0, 10/0,
+  15/0 and 644/0 across the three affected directories. The guard's measured
+  under-breadth class (`git push`, `git clean -fd`, `bun -e`, `bun x`,
+  `bun run release:public`, `deno eval`, `find . -delete`, `kill -9 1`) is
+  reported and registered, pending the operator's routing ruling.
+- **FID-2026-1014-003 (high):** no coding agent may be attributed in this
+  repository — one rule (`scripts/attribution-guard.ts`), enforced by the
+  commit-msg hook, the pre-push commit-range scan and a CI job, and now wired
+  into `bun run validate:repository` so the rule travels with every clone rather
+  than living in layers a `--no-verify` bypass can skip. The two divergent copies
+  of the pattern list are gone; watermarks are anchored to line start (the first
+  whole-history run flagged the guard's own explanatory commit) and the emoji
+  prefix works (it was inert without the `u` flag). 4/4 gates; whole-history scan
+  exit 0; hook fail-closed on an unreadable message (exit 2). The 2026-10-02
+  session summary that invited footer removal "per the operator's own co-author
+  policy" carries a dated amendment; branch protection remains operator-owned.
+- **FID-2026-1014-002 (medium, active):** registered that a closed FID
+  (`FID-2026-0919-010`) asserted an implementation and a test file that no commit
+  ever contained, with a 569-record census finding 33 records naming a test path
+  that does not resolve (triage lead, `NEEDS-REVIEW`).
+
 ## 2026-10-14 — QOL hardening program completed (five FIDs archived)
 
 ### Fixed
