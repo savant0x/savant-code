@@ -562,6 +562,54 @@ each session without a decision.
 
 **Answer:**
 
+### Q25 — Should a lane be closable before its classes are proved? (the archival blocker)
+
+**The question you asked, answered by the instrument.** You have twice asked why
+completed FIDs sit unarchived. I attempted the archival on your 2026-10-14 directive:
+closed `-017`, `-018`, `-019` and `-020` (all four implemented, declared gates green,
+receipts stamped), moved them to `dev/fids/archive/`, updated the master's board, the
+index, the register and the CHANGELOG — and **the program's own gate refused it**:
+
+```text
+$ bun scripts/experiences-recurrence.ts          # a declared gate of FID-2026-1012-021
+closed owner has unproved class: v1:read_url:http-404:undetermined
+closed owner has unproved class: v1:code_search:search-incomplete:undetermined
+… 25 lines, every class owned by the four records
+PROBE_EXIT:1        → validate:repository FAIL (1 issue): 021 gate "probe …" red
+```
+
+So the invariant is already mechanised: **a `closed` lane may not own an unproved
+class.** That is why the folder looks like a mess of completed work — those lanes are
+implemented, not closable, and archiving them as they stand would be the fabricated
+closure the Ground-Truth rule forbids. I reverted my own attempt rather than weaken the
+probe to make it pass; the tree is back to `validate:repository` **PASS** with the
+probe at exit 0.
+
+**What is genuinely complete today:** `-017`, `-018`, `-019`, `-020` (implementation +
+green gates + stamped receipts; only the observation window is unmet). **Not complete:**
+`-021` (its limitations section says step 3 is unimplemented while Loop 4 claims it
+landed — a stale-text conflict to reconcile), `-023` (the abort path is explicitly "not
+yet located in this pass"), `-024` (class repairs remain open), `-026` (all eleven steps
+pending), `-022` (master, closes last), `-1013-005` (your Cloudflare credentials),
+`-1014-002` (Q24 triage).
+
+**Options.**
+
+- **(a) Keep the invariant.** The four lanes stay active until each class is observed. No
+  waiver exists, the folder keeps them, and closure means what it says.
+- **(b) Design a recorded waiver (proposed if you want them archived now).** Add
+  `dev/experiences/closure-waivers.json`: per lane, the directive date, the classes left
+  unproved and why. The probe then fails on a **silent** closure (unchanged) but accepts a
+  lane whose every unproved class is named in a waiver, and the closure block must cite
+  it. This is the same shape as the 2026-08-22 pass that closed eight `fixed` records
+  with live-verification boundaries waived — except here the waiver becomes data the gate
+  reads instead of prose it ignores. Cost: one schema, one probe branch, one test.
+- **(c) Close them and drop the probe from `-021`'s gates.** Makes the gate green by
+  removing the check. Not recommended: it retires the only mechanism that notices an
+  unproved class, which is the mechanism that just caught me.
+
+**Answer:**
+
 ## Z. Anything else
 
 Questions I have not thought to ask, standing rules you want recorded for future
@@ -582,3 +630,4 @@ sessions, or a different priority order than the one above.
 | Q22 | the last of T185 |
 | Q23 | whether the harness keeps tool-level refusal, routes around it, or drops it — and the four under-breadth holes |
 | Q24 | disposition of the 33-record artifact census and whether it becomes a standing gate |
+| Q25 | whether implemented-but-unobserved lanes may close under a recorded waiver, be held until observed, or have the check retired |
