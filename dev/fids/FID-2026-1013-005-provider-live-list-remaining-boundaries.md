@@ -53,6 +53,26 @@ Ollama was queried at `http://127.0.0.1:11434/api/tags` with a 3-second
 deadline. The Cloudflare request was skipped when configuration was absent.
 No credential value, account ID, model completion or payment was emitted.
 
+## Revalidation Evidence — 2026-10-14
+
+The boundary was re-run without changing credentials or provider state. A
+read-only request to `http://127.0.0.1:11434/api/tags` returned:
+
+```json
+{"status":200,"models":3}
+```
+
+The process environment and the persisted provider-key store were checked by
+presence only; neither contained the Cloudflare account ID or API token:
+
+```json
+{"cloudflare":{"accountConfigured":false,"tokenConfigured":false}}
+{"cloudflareAccountConfigured":false,"cloudflareTokenConfigured":false}
+```
+
+No credential value was printed, written, or transmitted. This corroborates the
+existing blocker and does not establish an account-specific Cloudflare catalog.
+
 ## Impact Assessment
 
 ### Affected Components
