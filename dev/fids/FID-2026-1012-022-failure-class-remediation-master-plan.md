@@ -135,6 +135,7 @@ of its own (`fid.graph.master-nested`).
 | FID-2026-1013-005 | C3 — remaining provider live-list boundaries (T119) | artifact | — |
 | FID-2026-1013-006 | Harness — the scripts suite is not green on a clean tree | harness | — |
 | FID-2026-1013-007 | Harness — Windows lock codes and the default test budget | harness | — |
+| FID-2026-1013-008 | Harness — the bundle restore drill fails on the clock, not its assertions | harness | — |
 
 **Instrument sensitivity, stated because it bounds every claim below** — the slice length changes the
 class count, so the number is only meaningful with its instrument:
@@ -377,6 +378,7 @@ activation), and the child's id is recorded in this table when it exists.
 | FID-2026-1013-001 — script test gate discovery | harness | `1013-001` | **closed 2026-10-13** — script gates execute from scripts/, stable receipt labels; implementation `6b847099`; 3 declared gates re-ran green |
 | FID-2026-1013-007 — the graph leg on Windows | harness | `1013-007` | **closed 2026-10-13** — the refresh-safety teardown now retries the full transient lock set (`EBUSY`/`EPERM`/`EACCES`/`ENOTEMPTY`) under a bounded budget and the fabricated-enumeration test carries a budget matching its work; the root chain's final `error` cleared; declared gates green |
 | FID-2026-1013-006 — scripts suite red on a clean tree | harness | `1013-006` | **closed 2026-10-13** — four independent deterministic failures repaired at their cause (cwd-dependent live checks, an origin-scoped redirect guard that rejected the apex→www hop it exists for, two git-fixture tests below their real spawn budget); every assertion intact; the `quality` ceiling violation it surfaced was repaired in `-024` Loop 11; declared gates green with a stamped receipt |
+| FID-2026-1013-008 — the bundle restore drill on the clock | harness | `1013-008` | **closed 2026-10-13** — the scripts suite's fifth independent failure was a duration, not an assertion: the restore drill (real baseline clone + incremental fetch through spawned git) measured 4261-5462 ms across three isolated runs against bun's 5 s default while its siblings measured 1.0-3.3 s; the file now declares a measured ceiling beside it (`GIT_CHILD_TIMEOUT_MS`), assertions untouched. `cd scripts && bun test` exit 0 / 960 pass; implementation `4be4de9e`; declared gates green with a stamped receipt. **Class remainder:** measuring every other subprocess-spawning suite against the default is recurrence-to-fix-loop work, not discharged by this record. |
 | FID-2026-1013-002 — mutating partial assertions | harness | `1013-002` | **closed 2026-10-13** — three mutation failures reproduced and repaired; 25 focused tests green; standalone AST audit PASS; implementation `9b1d5b4d`; 10 declared gates re-ran green |
 
 **The automation contract.** Session ceiling is `protocol.config.yaml` → `session.autonomy_level`

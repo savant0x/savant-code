@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-1013-008-bundle-restore-drill-clock.md`
 **ID:** FID-2026-1013-008
 **Severity:** medium
-**Status:** converged
+**Status:** closed
 **Created:** 2026-10-13 22:00
 **Automation level:** 3
 **YAGNI-Compliance:** Verified
@@ -134,8 +134,8 @@ with an explicit exit status.
 - **AUDIT:** Failure and its timing quoted from the sweep log; sibling costs read from the same log to
   establish that this is a file-wide shape, not one outlier test.
 - **ADVERSARIAL:** Does a longer ceiling hide a hang? The drill is deterministic work with a measured
-  completion at 4.0–5.0 s after the change (three runs: 4097 ms, 3980 ms, 4911 ms), all well inside
-  the 30 s ceiling; an actual hang still fails, just later. Would making the test cheaper be better?
+  completion of 3.5–5.0 s across both the unformatted and final bytes, all well inside the 30 s
+  ceiling; an actual hang still fails, just later. Would making the test cheaper be better?
   The clone-and-fetch is the thing under test — a restore drill that does not restore from the bundle
   would assert nothing — so the budget moves rather than the fixture. Is 30 s generous enough for a
   loaded machine? The precedent case used the same ceiling for the same class, and here the spread
@@ -159,20 +159,28 @@ with an explicit exit status.
 ### Code Verification Evidence
 
 - [x] `scripts/git-bundle-backup.test.ts:29` — `GIT_CHILD_TIMEOUT_MS`, with the measurements that
-      justify it; applied at the seven case call sites (`:85`, `:111`, `:127`, `:152`, `:170`,
-      `:198`, `:233`).
+      justify it; passed as the third argument at the seven case call sites (`:88`, `:118`, `:138`,
+      `:167`, `:189`, `:221`, `:263`). The formatter owns the call layout: a trailing non-function
+      argument stops prettier hugging `test('name', () => {` and it expands the cases, so the file is
+      committed in prettier's own layout rather than a hand-formatted near-miss.
 - [x] Gate output captured with explicit exit statuses in
       `dev/scratchpad/active/2026-10-13-final-gates.log`.
 - [x] FID status reflects the implementation: `converged` until the commit lands (G2).
 
 ## Resolution
 
-- **Closed Date:** PENDING
-- **Fix Description:** PENDING
+- **Closed Date:** 2026-10-13 22:10
+- **Fix Description:** `scripts/git-bundle-backup.test.ts` declares `GIT_CHILD_TIMEOUT_MS = 30_000` —
+  with the isolated measurements recorded beside it — and passes it to its seven cases. No assertion,
+  fixture or production change.
 - **Tests Added:** none — assertions untouched.
-- **Verification Evidence:** PENDING
-- **Commit SHA:** PENDING
-- **Archived:** PENDING
+- **Verification Evidence:** three isolated runs of the file on the final bytes, green and exit 0, with
+  the drill at 3534 ms / 3517 ms / 3474 ms (7 PASS each); the full scripts suite `exit 0`, **960 pass / 0 fail** in 194.01 s from its
+  declared cwd (`dev/scratchpad/active/2026-10-13-scripts-suite-post008.log`); declared gates stamped
+  (fingerprint `sha256:7109e0ae…`); the root `bun run test` chain exit 0 (13 legs) on the pre-fix tree,
+  re-run below on the final bytes.
+- **Commit SHA:** `4be4de9e`
+- **Archived:** 2026-10-13 22:10
 
 ## Lessons Learned
 

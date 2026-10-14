@@ -10,6 +10,18 @@
 > the v0.0.36 cut. Release notes are written here at cut time; nothing in this
 > section ships until then.
 
+## 2026-10-13 — The bundle restore drill gets a budget it can meet (FID-2026-1013-008)
+
+### Fixed
+
+- **The scripts suite is green on a loaded machine, not only a quiet one.** Its fifth independent
+  failure was a clock, not an assertion: `git bundle backup > restore drill` measured 4261-5462 ms
+  across three isolated runs — real baseline clone plus incremental fetch through spawned git —
+  against bun's 5 s default, with siblings in the same file at 1.0-3.3 s. The file now declares
+  `GIT_CHILD_TIMEOUT_MS` beside the measurements that justify it, following the convention already in
+  this tree (`FID-2026-1010-004`); assertions untouched. Implementation `4be4de9e`;
+  `cd scripts && bun test` **960 pass / 0 fail**, exit 0.
+
 ## 2026-10-13 — Both suite-health records close (FID-2026-1013-006/-007)
 
 ### Fixed
