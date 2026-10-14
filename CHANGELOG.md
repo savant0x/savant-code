@@ -44,6 +44,8 @@
   `quality:report`, `lint:md`, `generate:provider-docs:check`, the declared
   FID gates, and the refreshed FID receipt all pass. Scoped ESLint and
   Prettier checks pass; `git diff --check` is clean.
+- **FID-2026-1012-026 closed and archived 2026-10-14** at local commit
+  `f6ce2109`; no push or release was performed.
 
 ## 2026-10-14 — refusal authority, guard audit and agent-attribution enforcement
 

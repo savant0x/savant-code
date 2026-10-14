@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-1012-026-tier1-provider-parity-wave.md`
 **ID:** FID-2026-1012-026
 **Severity:** medium
-**Status:** fixed
+**Status:** closed
 **Created:** 2026-10-12 21:55
 **Automation level:** 3
 **YAGNI-Compliance:** Verified
@@ -34,7 +34,7 @@ remains the user's BYOK leg.
 ## Environment
 
 - **OS:** Windows 11 (win32) · **Runtime:** TypeScript 5.5.4, Bun 1.3.14
-- **Commit/State:** `main` @ `653db58d`; working tree carries the uncommitted parity implementation and verification round
+- **Commit/State:** `main` @ `f6ce2109`; the parity implementation and verification round are committed locally
 - **Instruments:** the two checked-in probes under `scripts/providers/audit-probes/`; the models.dev
   `api.json?type=all` snapshot fetched 2026-10-14 (per-model ids, limits, costs)
 
@@ -309,8 +309,11 @@ The implementation and surface evidence are present in the current tree.
       is not executed without the user's credential.
 - [ ] **Live inference request:** blocked — no user credential was supplied for the eighteen first-party labs; no
       credential or purchase is fabricated.
-- [ ] **Commit SHA:** — · **File:line ranges:** implementation paths above · **Gate output:** recorded by the
-      verification receipt below.
+- [x] **Commit SHA:** `f6ce2109` · **File:line ranges:** `common/src/providers/registry.ts:21-23,202-203`,
+      `common/src/providers/model-catalogs.ts:43-69`, `cli/src/utils/openrouter-models/deepinfra.ts:17-55`,
+      `cli/src/utils/openrouter-models/venice.ts:18-62`, and
+      `cli/src/utils/openrouter-models/__tests__/tier1-provider-catalog.test.ts:1-126` · **Gate output:**
+      recorded by the verification receipt below.
 
 ### Code Verification Evidence
 
@@ -382,12 +385,19 @@ record's substance is the Loop 1–3 passes above.
 
 ## Resolution
 
-**Implemented — `Status: fixed`.** The eighteen measured first-party labs are
-registered, their static catalogs and fallback windows share the measured
-models.dev row source, DeepInfra and Venice use dedicated live parsers, the
-positional fan-out is wired, and generated plus hand-maintained provider
-surfaces are synchronized. The keyed inference leg remains an explicit
-credential boundary under the operator's BYOK ruling.
+**Closed — 2026-10-14.** The eighteen measured first-party labs are registered,
+their static catalogs and fallback windows share the measured models.dev row
+source, DeepInfra and Venice use dedicated live parsers, the positional fan-out
+is wired, and generated plus hand-maintained provider surfaces are synchronized.
+The keyed inference leg remains an explicit credential boundary under the
+operator's BYOK ruling; no provider credential or paid inference request was
+fabricated.
+
+- **Implementation commit:** `f6ce2109`
+- **Verification evidence:** 15 declared FID gates exited 0, including the
+  registry, setup, audit, catalog, window-coverage, SDK routing and quality
+  gates; the receipt was stamped at the active path before closure.
+- **Archived:** `dev/fids/archive/FID-2026-1012-026-tier1-provider-parity-wave.md`
 
 - **Measured basis:** `scripts/providers/audit-probes/parity-tier1-catalog-probe.ts` (2026-10-12),
   `docs/design/provider-parity-review-2026-10-12.md`, and the models.dev snapshot used by

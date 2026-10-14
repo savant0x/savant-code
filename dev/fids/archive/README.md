@@ -3,6 +3,18 @@
 This directory contains closed or historically completed FIDs. Files here are
 an audit record, not an active work queue.
 
+## 2026-10-14 closure — Tier 1 first-party provider parity wave
+
+- [`FID-2026-1012-026-tier1-provider-parity-wave.md`](FID-2026-1012-026-tier1-provider-parity-wave.md)
+  (medium): eighteen measured first-party labs were registered with sixteen
+  coding-harness-compatible static catalogs plus DeepInfra and Venice live
+  catalog parsers. The provider registry, routing, picker, window coverage,
+  exception manifest, generated documentation and regression surfaces are
+  synchronized. The curated static source contains 288 rows and the runtime
+  parity census contains 3,648 assembled rows. Fifteen declared gates passed;
+  the keyed inference boundary remains BYOK. Implementation commit:
+  `f6ce2109`.
+
 ## 2026-10-14 closure — read-only guard audit and attribution enforcement
 
 Two records opened and closed the same day, both on the operator's direct

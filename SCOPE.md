@@ -101,12 +101,6 @@ constraints active. **Automation level: 3.**
       and API token configuration; neither is present in the probe process.
       The persisted provider-key store also contains neither field.
 
-- [ ] **FID-2026-1012-026. Tier 1 provider parity wave.** Implement the eighteen
-      measured provider registrations, coding-harness-compatible catalogs, routing seams, window coverage,
-      exception manifest, generated surfaces and declared verification battery from the converged record. The
-      operator's 2026-10-14 `devoverride` accepts keyless endpoint/catalog accessibility as evidence and does not
-      require paid inference requests or provider credits. **Automation level: 3.**
-
 - [ ] **FID-2026-1013-005. Provider live-list remaining boundaries.** Complete the
       local Ollama evidence and the account-specific Cloudflare probe; the latter
       requires the operator-owned account ID and API token if they are still absent.
@@ -171,11 +165,21 @@ their own keys. Keyless acceptance is surface-verified; the inference leg belong
 to the user's key under the recorded narrowing of the runbook's real-request step.
 The 2026-10-14 `devoverride` additionally limits Tier 1 picker catalogs to
 coding-harness-compatible chat/text rows and excludes non-chat modality rows.
-The completed probe evidence is in `docs/design/provider-parity-review-2026-10-12.md`
-and the 2026-10-14 FID-folder audit report. The additions remain active in
-`FID-2026-1012-026`; the completed probe item grants no continuing write authority.
+The completed Tier 1 parity wave is committed locally as `f6ce2109` and archived
+under `dev/fids/archive/`; its probe evidence is in
+`docs/design/provider-parity-review-2026-10-12.md` and the 2026-10-14 FID-folder
+audit report. The completed probe item grants no continuing write authority.
 
 ### Harness and process
+
+- [ ] **Repository validator execution boundary (found 2026-10-14).** The hard
+      `bun run validate:repository` command produced no validator output in two
+      attempts; the external PowerShell runner returned
+      `Unknown: ChildProcess.kill` after its 120-second and 300-second limits.
+      The repository validator builds its complete issue set before printing and
+      active FID gates run synchronously without an internal timeout, so no
+      repository defect is established by this observation. **Blocker:** the
+      external command runner did not complete the hard gate. **Automation level: 2.**
 
 - [ ] **Task-id reuse hazard (found 2026-10-13).** The register evicts an item on closure and the
       repository keeps no record of the numbers it has issued, so a retired id can be reallocated to
@@ -393,13 +397,6 @@ and its remaining operator/external-input holds stay active.
   `docs/design/learnings-root-cause-matrix.md`
 - FID-2026-1012-022: `dev/fids/**`, `SCOPE.md`, `docs/design/**`, `dev/experiences/**`,
   `dev/agenda.md`
-- FID-2026-1012-026: `common/src/constants/model-config/**`,
-  `common/src/constants/context-window-table.ts`,
-  `common/src/constants/window-coverage-register.ts`,
-  `common/src/constants/provider-catalog-census.json`, `common/src/providers/**`,
-  `cli/src/utils/openrouter-models/**`, `.env.example`, `README.md`,
-  `README.zh-CN.md`, `cli/release/README.md`, `docs/**`,
-  `dev/fids/FID-2026-1012-026-*.md`
 - FID-2026-1012-023: `sdk/src/tools/run-terminal-command.ts`, `sdk/src/run-state/**`,
   `sdk/src/run/tool-call.ts`, `sdk/src/__tests__/command-execution-contract.test.ts`,
   `sdk/src/__tests__/run-terminal-command.test.ts`,
