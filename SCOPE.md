@@ -13,6 +13,14 @@ recorded decision or external dependency requires it.
 
 ## Open items
 
+- [x] **Documentation lifecycle reconciliation (2026-10-14).** Audited every
+      active FID against implementation and gate evidence; `CHANGELOG.md` coverage
+      and the archived-FID closure guard both pass. No active record satisfied
+      closure, so no FID was archived and no false closure entry was added. The
+      pending register is recorded in
+      `dev/session-summaries/2026-10-14-fid-lifecycle-reconciliation.md`.
+      **Automation level: 3.**
+
 ## Full active-FID completion directive (2026-10-14)
 
 The operator directed completion of all actual pending work in every active FID and
