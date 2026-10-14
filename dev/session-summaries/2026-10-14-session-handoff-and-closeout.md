@@ -123,6 +123,7 @@ captured directly (no pipe masking):
 | `bun scripts/experiences-recurrence.ts` | **exit 0** (25 unproved classes owned by four still-active lanes — expected, not an error) | `…-closeout-probe.log` |
 | `bun run fid:verify --check` | **PASS** | `…-closeout-fid-verify.log` |
 | `bun run session-end:review` | **exit 0** — 3 agenda items, no tracked agenda delta, 4 quarantined skill drafts reported | `…-guard-authority-session-end-review.log` |
+| `bun run lessons:to-skills` | **exit 0** — 0 candidates, 0 eligible: this session authored no skill, and the quarantine set is unchanged (4 entries) | `…-closeout-lessons-to-skills.log` |
 
 Earlier in the session: `bun run typecheck` (scripts + touched workspaces), the agent-runtime tool suites
 (644/0 across `handlers`, `tool-executor`, `echo`), `scripts/__tests__/attribution-guard.test.ts` 7/0,
