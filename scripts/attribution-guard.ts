@@ -130,6 +130,33 @@ export function scanRevisions(revArgs: string[]): AttributionViolation[] {
   return violations
 }
 
+/**
+ * Repository-gate collector: every reachable commit, in the shape
+ * `scripts/validate-repository.ts` aggregates. **Fail-closed**: a git failure
+ * becomes an issue (the gate fails) instead of throwing, so an inability to
+ * scan can never read as a clean history — and this gate travels with the clone
+ * (`bun run validate:repository`), which the local hooks and every optional CI
+ * check do not.
+ */
+export function collectAttributionIssues(): {
+  code: string
+  message: string
+}[] {
+  try {
+    return scanRevisions(['--all']).map((violation) => ({
+      code: 'attribution.agent-trailer',
+      message: `${violation.sha.slice(0, 12)}: ${violation.lines.join(' | ')}`,
+    }))
+  } catch (error) {
+    return [
+      {
+        code: 'attribution.scan-failed',
+        message: error instanceof Error ? error.message : String(error),
+      },
+    ]
+  }
+}
+
 function report(violations: AttributionViolation[]): void {
   console.error(
     '❌ agent-attribution guard: a coding agent is credited in this repository.',

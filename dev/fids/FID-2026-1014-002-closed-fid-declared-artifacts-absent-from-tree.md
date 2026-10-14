@@ -154,6 +154,18 @@ output above, both reproducible with the two commands pasted.
    receipt shows gate executions, not an independent audit of the *steps*. The
    step-prose gap is the actionable part.
 
+### Code Verification Evidence
+
+- [x] Files referenced in Affected Components exist (`dev/fids/**`, this record)
+- [x] Implementation matches the Proposed Solution (step 1 landed in
+  `FID-2026-1014-001`; steps 2-3 are registered decisions, not silent work)
+- [x] Typecheck/tests/lint pass with pasted tool output (the affected suites are
+  pasted in `FID-2026-1014-001`; this record's own evidence is the history dump
+  and the census count in Evidence)
+- [ ] Production call-graph evidence: not applicable — no production code path
+- [x] FID status reflects the actual implementation state (`analyzed`: the class
+  is registered and untriaged; nothing is claimed as repaired)
+
 ## Resolution
 
 - **Closed Date:** —

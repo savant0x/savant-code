@@ -12,6 +12,7 @@ import {
 } from '@savant-code/common/providers/audit'
 import { PROVIDER_REGISTRY } from '@savant-code/common/providers/registry'
 
+import { collectAttributionIssues } from './attribution-guard'
 import { auditBunfigTestTimeout } from './audit-bunfig-test-timeout.js'
 import { auditEslintDisableRationale } from './audit-eslint-disable-rationale.js'
 import { auditExitCodeMasking } from './audit-exit-codes.js'
@@ -281,6 +282,7 @@ const issues: FidLedgerIssue[] = [
   ...bunfigTimeoutIssues,
   // FID-2026-1006-004 pin-hardening: helpers inject budgets (./audit-test-budget-injection).
   ...collectTestBudgetIssues(root),
+  ...collectAttributionIssues(), // FID-2026-1014-003: no agent attribution, ever
 ]
 
 // FID-2026-0927-003 F3: `severity: 'warning'` findings are REPORTED but do

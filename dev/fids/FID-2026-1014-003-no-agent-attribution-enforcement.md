@@ -213,6 +213,19 @@ bun scripts/attribution-guard.ts --all                              exit 0
 - [x] **Reproducibility:** `bun scripts/attribution-guard.ts --all`
 - [x] **Step statuses:** 1-5 `implemented`; 6 `blocked (operator)`
 
+### Code Verification Evidence
+
+- [x] Files referenced in Affected Components exist (all six paths listed there)
+- [x] Implementation matches the Proposed Solution (one rule, delegated hook,
+  re-exported push layer, CI job, amended summary, registered gate)
+- [x] Typecheck/tests/lint pass with pasted tool output (see Verification)
+- [x] Production call-graph evidence: `commitWatermarkLines` ← the hook
+  (`.githooks/commit-msg:36`), the pre-push range scan
+  (`scripts/pre-push-scan.ts:131-134` re-export plus its in-scan use) and
+  `collectAttributionIssues` ← `scripts/validate-repository.ts:299`
+- [x] FID status reflects the actual implementation state (`verified`; the CI
+  job is live but not yet a required check — operator-owned)
+
 ## Resolution
 
 - **Closed Date:** —
