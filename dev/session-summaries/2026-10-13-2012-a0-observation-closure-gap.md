@@ -156,6 +156,32 @@ warranted, and no historical row, boundary, exposure or receipt is to be synthes
   inputs, T62 credits, T187's `/skills trust` grant, and Cloudflare's missing account ID and API
   token. No push or release was performed and none is proposed.
 
+## Outcome (session close)
+
+All three operator rulings were executed and every gate is green on the committed tree.
+
+- **The held `-021` work is committed** at `2a34e558`, after re-running its declared gates on the
+  final bytes (14 shared-class tests, 39 scripts tests, `typecheck common`, three probes).
+- **Exposure is derived from the receipt store** (`c7ca48a1`, `-024` Loop 11):
+  `inspectBoundaryEvidence` discovers receipts under `dev/experiences/exposure/`, requires exact
+  class/boundary/fix-time agreement and a filename that re-derives from the receipt's own content,
+  and keeps every ancestry and chronology check. The census reports an in-window boundary as state
+  and still fails on recurrence, missing capture coverage, an elapsed window without exposure and
+  every evidence defect; closure still refuses an unproved class. 32 focused tests.
+- **The scripts suite is green from its declared cwd** (`722d1c03`, `FID-2026-1013-006`):
+  960 PASS / 0 FAIL. Two cwd-dependent live checks, an origin-scoped redirect guard that rejected
+  the apex→www hop it exists for, and two git fixtures held to a budget below their real spawn cost.
+- **The root chain is green** (`2f003aed`, `FID-2026-1013-007`): all 13 legs, no failures; the
+  knowledge-graph leg went from `error: script "test" exited with code 1` to 76 PASS / 0 FAIL.
+- **Repository gates:** `bun run typecheck` (14 legs), `bun x eslint . --max-warnings 0`,
+  `bun run lint:md`, `bunx prettier --check .`, `bun run quality:report` and
+  `bun run validate:repository` all exit 0; `fid:verify --check` PASS. Both suite-health records
+  were closed, archived and given their CHANGELOG entries (`850f7eb7`).
+- **Still open, by design:** no real repair boundary exists; `expectedness` is still assigned by
+  nothing, so a legitimate outcome (a guard refusal) cannot yet be separated from a defect; and
+  every class remains unobserved. `--assert-repaired=FID-2026-1012-024` exits 1 with nine unproved
+  classes — the honest result. No push, no release and no class closure.
+
 ## Next actions
 
 1. Operator ruling on the direction (derived receipts vs. a manifest reconciliation writer) and on
