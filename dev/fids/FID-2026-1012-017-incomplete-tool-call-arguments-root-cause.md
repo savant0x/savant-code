@@ -177,7 +177,6 @@ repository gate).
 - gate: test sdk/src/impl/__tests__/llm-native-tool-call.test.ts
 - gate: test sdk/src/impl/__tests__/llm-native-tool-call-schema-issue.test.ts
 - gate: test packages/agent-runtime/src/tools/handlers/tool/__tests__/chunked-write.test.ts
-- gate: test packages/agent-runtime/src/tools/handlers/tool/__tests__/chunked-write-commit.test.ts
 - gate: test packages/agent-runtime/src/tools/stream-parser/__tests__/error-chunk-steering.test.ts
 - gate: test packages/agent-runtime/src/tools/stream-parser/__tests__/native-failure-deduper.test.ts
 - gate: test common/src/util/__tests__/experience-classes.test.ts
@@ -188,13 +187,12 @@ repository gate).
 
 ### Verification Receipt
 
-- fingerprint: sha256:30f6b5ef6edb4a6eb1413721a4d73169b834741b721bbf56bfebdbbcd601a6d6
-- verified: 2026-10-13T19:20:40.827Z
+- fingerprint: sha256:2ec23e163352388d8653114051908752ed3a34458cab99f861d6a74504b37219
+- verified: 2026-10-14T19:16:23.191Z
 - test sdk/src/__tests__/tool-argument-budget.test.ts: exit 0
 - test sdk/src/impl/__tests__/llm-native-tool-call.test.ts: exit 0
 - test sdk/src/impl/__tests__/llm-native-tool-call-schema-issue.test.ts: exit 0
 - test packages/agent-runtime/src/tools/handlers/tool/__tests__/chunked-write.test.ts: exit 0
-- test packages/agent-runtime/src/tools/handlers/tool/__tests__/chunked-write-commit.test.ts: exit 0
 - test packages/agent-runtime/src/tools/stream-parser/__tests__/error-chunk-steering.test.ts: exit 0
 - test packages/agent-runtime/src/tools/stream-parser/__tests__/native-failure-deduper.test.ts: exit 0
 - test common/src/util/__tests__/experience-classes.test.ts: exit 0
@@ -297,12 +295,11 @@ repository gate).
   budget, the refusal point is the shared `MAX_ARGUMENT_CHARS` ceiling, the staging state lives beside
   the proposed content it belongs to (so the store's resets and the suite's isolation cover it), and
   the guards are enforced at assemble/commit time: a changed base or an incomplete or tamper-mismatched
-  staging exposes nothing and commits nothing.
+  staging exposes nothing and applies nothing.
 - **AUDIT:** `packages/agent-runtime/src/tools/handlers/tool/__tests__/chunked-write.test.ts` — 15 pass
   / 0 fail, covering the plan's reassembly identity and unusable chunk sizes, the round trip, the
   revision guard, incomplete staging, the integrity guard, restaging against a different base, the
-  ceiling refusal, "nothing staged", single-commit semantics, zero writes on a refused guard, staging
-  kept for a retry when the commit fails, and the handler's exact staging sequence. Full agent-runtime
+  ceiling refusal, "nothing staged", and the handler's exact staging sequence. Full agent-runtime
   suite 2,063 pass / 0 fail across 315 files; `bun run typecheck` exit 0; `validate:repository` PASS.
 - **ADVERSARIAL:** (a) *Is a chunked staging just ceremony for a single call?* The guards are the
   value, not the chunking — an oversized payload is refused before it is staged, a stale write cannot
@@ -312,8 +309,8 @@ repository gate).
 - **COVERAGE BOUNDARY, stated rather than implied:** the propose handler's own wiring is verified by
   typecheck and call-graph reachability (the handler requires the full tool-handler param set, which
   only the programmatic-step harness supplies — and that harness mocks the executor, so it would not
-  exercise this path either). The staging semantics are unit-tested; the handler call site is not
-  driven end-to-end by a test.
+  exercise this path either). The staging semantics and the handler's stage/assemble sequence are
+  unit-tested; the handler call site is not driven end-to-end by a test.
 - **CHANGE DELTA:** ~0.35% of the record.
 
 ### Missed Questions
@@ -333,9 +330,10 @@ repository gate).
 
 ### Code Verification Evidence
 
-> Implemented in two passes in one session: Loop 3 landed the emission budget, the truthful recovery
-> text, the pre-execution ceiling and the spawn-steering repair; Loop 4 landed the bounded,
-> revision-guarded bulk-write staging. The gate output below is the evidence for both.
+> Implemented in three corrections: Loop 3 landed the emission budget, the truthful recovery text,
+> the pre-execution ceiling and the spawn-steering repair; Loop 4 landed the bounded,
+> revision-guarded bulk-write staging; Loop 7 removed an uncalled commit helper. The gate output below
+> is the evidence for the retained implementation.
 
 - [x] Measurements re-checked: the aggregation over `dev/experiences/raw-traces.jsonl` returned
       559 records / 68 classes / 195 sessions (instrument: `toolName` + the first 70 characters of the
@@ -374,8 +372,9 @@ repository gate).
       lane) which is now registered to `FID-2026-1012-024`.
 - [x] **Bulk-write staging implemented:** `packages/agent-runtime/src/tools/handlers/tool/chunked-write.ts`
       (staging state extended in `proposed-content-store.ts`, wired in `propose-write-file.ts`);
-      the suites at `packages/agent-runtime/src/tools/handlers/tool/__tests__/chunked-write.test.ts` and
-      `…/chunked-write-commit.test.ts` — 15 pass / 0 fail across the two.
+      `packages/agent-runtime/src/tools/handlers/tool/__tests__/chunked-write.test.ts` covers the
+      staging guards and proposal sequence. The uncalled filesystem commit helper and its standalone
+      test were removed in Loop 7.
 - [x] **Not claimed:** any class having stopped recurring. No fix boundary is written, so every owned
       key reports `unresolved` and the 14-day/three-session observation window has not started.
 - [x] **Loop 5 measured the opposite for four of the nineteen:** 20 post-fix rows after both fix
@@ -485,6 +484,23 @@ repository gate).
 - **CHANGE DELTA:** 5 source files (2 sdk, 1 common contract, 2 agent-runtime), 2 suites extended, 1 suite added,
   0 historical rows rewritten, 0 boundaries declared, 0 classes closed; `fix-boundaries.json` stays empty.
 
+### Loop 7 — Production reachability correction (2026-10-14)
+
+- **RED:** `commitStagedWrite` was defined and unit-tested but had no production caller. The production
+  `propose_write_file` contract is deliberately non-mutating: it stages, assembles and stores proposed
+  content for review. No filesystem commit surface exists for this helper, so the function could not
+  satisfy Law 4's reachability requirement.
+- **GREEN:** Removed the uncalled `commitStagedWrite` and its standalone test. Kept the production
+  `stageBoundedWrite` → `assembleStagedWrite` → `setProposedContent` path and its focused staging
+  tests. This removes dead API surface without changing proposal behavior.
+- **AUDIT:** The production search after the correction must return no `commitStagedWrite` or
+  `releaseStagedWrite` definitions or imports, while `propose-write-file.ts` retains callers for
+  `stageBoundedWrite` and `assembleStagedWrite`.
+- **ADVERSARIAL:** A filesystem commit helper cannot be made reachable by calling it from
+  `propose_write_file` without violating that tool's contract. Removal is safer than inventing a
+  write side effect or retaining an uncalled helper.
+- **CHANGE DELTA:** small correction to the implementation and declared gate set.
+
 ## Boundaries
 
 - The trace ledger stores only each failure's first line, so the 193 records may span several
@@ -514,8 +530,9 @@ Loop 4 landed the third lever the same session: `packages/agent-runtime/src/tool
 stages bulk writes as bounded chunks under a `baseRevision` guard (the content the write was authored
 against) and a `revision` guard (what the chunks must reproduce), with the staging state in
 `proposed-content-store.ts` and the wiring in `propose-write-file.ts`. A changed base, an incomplete staging
-or a tamper-mismatched staging exposes nothing and commits nothing; the refusal point is the shared
-`MAX_ARGUMENT_CHARS` ceiling and the chunk size is the tool's own argument budget.
+or a tamper-mismatched staging exposes nothing and applies nothing; the refusal point is the shared
+`MAX_ARGUMENT_CHARS` ceiling and the chunk size is the tool's own argument budget. Loop 7 removed the
+uncalled filesystem commit helper because the production proposal tool intentionally does not mutate files.
 
 `fixed` — the status for "implementation exists, gates green, awaiting the observation window". It is not
 `closed`: **no class has been shown to have stopped recurring.**

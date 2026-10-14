@@ -5,7 +5,7 @@ operator decision, implementation, runtime review, or closure evidence.
 
 ## Current active FIDs
 
-The 2026-10-14 resumption leaves eleven active records. The four QOL waves and
+The 2026-10-14 resumption leaves eight active records. The four QOL waves and
 their coordinator are committed in `b959019e`, closed and archived with 52/52
 passing child gates. The failure-class lanes require
 investigated causes and qualified production observation. Provider parity is
@@ -14,7 +14,9 @@ remaining master awaits child closure. `FID-2026-1014-001` (guard over-breadth +
 SEC-3 restoration) and `FID-2026-1014-003` (attribution enforcement) closed and
 archived on 2026-10-14; `FID-2026-1014-002` (closed-FID artifact census) stays
 active and carries the open decision in `dev/operator-decisions.md` Q24, and Q23
-owns the read-only guard's routing ruling. None of these eleven records is eligible for archival yet.
+owns the read-only guard's routing ruling. FID-2026-1012-018, -019, and -020
+closed under Q25 and were archived on 2026-10-14; FID-2026-1012-017 remains
+active because four post-fix classes still fail the recurrence gate.
 
 Evidence and per-record next actions are in the
 [audit report](../session-summaries/2026-10-14-fid-folder-ground-truth-audit.md).
@@ -22,9 +24,6 @@ Evidence and per-record next actions are in the
 | FID | Status | Current closure condition |
 |---|---|---|
 | `FID-2026-1012-017` | fixed | Recurrence window open; four classes still recur and the remaining classes are unobserved. |
-| `FID-2026-1012-018` | fixed | Recurrence window not started; no class claim exists. |
-| `FID-2026-1012-019` | fixed | Production observation and the original host-resolver cause remain open. |
-| `FID-2026-1012-020` | fixed | Class observation and lost historical production causes remain open. |
 | `FID-2026-1012-021` | verified | Machinery is green; class observation and formal closure remain open. |
 | `FID-2026-1012-022` | converged | Master plan; closes only after every child closes and allocation is re-run. |
 | `FID-2026-1012-023` | fixed | Production timeout/abort observation remains open. |

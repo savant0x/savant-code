@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-1012-019-silent-capability-degradation.md`
 **ID:** FID-2026-1012-019
 **Severity:** high
-**Status:** fixed
+**Status:** closed
 **Created:** 2026-10-12 20:15
 **Automation level:** 3
 **YAGNI-Compliance:** Verified
@@ -196,8 +196,8 @@ declarations, the test paths and the receipt are added when this record reaches
 
 ### Verification Receipt
 
-- fingerprint: sha256:e365d87c0859141fda5340bc6fd75a14e6046978008f4e2bfc1d69604ae1efc7
-- verified: 2026-10-13T22:34:28.032Z
+- fingerprint: sha256:5bddee9ab577e3d00e3d96eaae87157d2d5836cae37ad999a63c7245dc60472c
+- verified: 2026-10-14T19:08:26.159Z
 - test common/src/util/__tests__/capability-notice.test.ts: exit 0
 - test packages/agent-runtime/src/llm-api/__tests__/research-sources-web.test.ts: exit 0
 - test sdk/src/__tests__/code-search-flags.test.ts: exit 0
@@ -399,10 +399,10 @@ Record the new test gates after the files exist, then re-stamp the receipt.
 
 ## Resolution
 
-**Implemented — `Status: fixed` (deterministic gates green; recurrence assertion OPEN).**
+**Implemented — `Status: closed` under the operator-approved Q25 waiver.**
 
-- **Closed Date:** 2026-10-13 (implementation pass; the record stays open in the sense that the
-  class window has not run — no lesson is written).
+- **Implementation Date:** 2026-10-13. **Closed Date:** 2026-10-14 under Q25; the
+  class window has not run and no lesson is written.
 - **Fix Description.** One degradation contract now exists — `common/src/util/capability-notice.ts`:
   a notice names the capability, states `unavailable` / `did not complete` in its first clause, carries
   the measured reason, the single resolving action and what the result is **not** evidence of; the
@@ -433,9 +433,9 @@ Record the new test gates after the files exist, then re-stamp the receipt.
   `validate:repository` PASS · ESLint `--max-warnings 0` and Prettier clean on every touched file.
   Red-measure at `64ea8c06`: 563 records / 56 stable classes; this lane's three classes live and
   unstopped (24/7, 17/8, 7/4) — pasted verbatim in Loop 3.
-- **Archived:** not archived. Per FID-2026-1012-022's closure condition a child closes only when its
-  classes show no new records in the declared window; the window has not started.
-- **Open, and why this record is not `closed`:** (a) the recurrence window (14 days / 3 sessions) has
+- **Archived:** 2026-10-14. The record is archived under the named Q25 waiver;
+  no qualified observation window is claimed.
+- **Implementation-time boundary:** (a) the recurrence window (14 days / 3 sessions) has
   not run, so no class claim exists and no fix boundary is recorded (`dev/experiences/fix-boundaries.json`
   stays empty); (b) the run-start capability preflight (plan step 7) is now
   implemented by Loop 4: the SDK owns the local probe, child calls share its
@@ -453,3 +453,40 @@ Record the new test gates after the files exist, then re-stamp the receipt.
   written only after the class stops); shares the research surface with `FID-2026-1012-018`
   (fetch taxonomy) and must preserve the "could not run" distinction that
   `FID-2026-1012-017` depends on.
+
+## Implementation Evidence
+
+- [x] **Commit SHA:** `09f0c892` (degradation contract and producer notices) and
+      `3ee91a35` (run-start capability preflight).
+- [x] **File:line ranges:** `common/src/util/capability-notice.ts:24-109`,
+      `packages/agent-runtime/src/llm-api/research-notice.ts:14-43`,
+      `packages/agent-runtime/src/llm-api/research-sources.ts:65-141`,
+      `sdk/src/tools/code-search/flags.ts:22-114`,
+      `packages/agent-runtime/src/run-agent-step/capability-preflight.ts:32-73`,
+      `packages/agent-runtime/src/run-agent-step/loop-context.ts:213-217`,
+      `sdk/src/run/agent-runtime-impl.ts:67-102`.
+- [x] **Gate output:** the seven declared gates in the verification receipt exit 0;
+      the implementation suites and production planning seam are cited in Loop 4 and
+      remain present in the current tree.
+- [x] **Reproducibility:** `searchWebSource` calls
+      `buildWebSearchExhaustionNotice`, `parseSearchFlags` is consumed by the code-search
+      executor, and `withCapabilityPreflight` is called by `createLoopContext`; the
+      current-tree caller search is reproduced in Loop 4.
+- [x] **Step statuses:** implementation steps 1-7 are implemented; recurrence assertion
+      step 8 is blocked by the absence of a qualified production observation window.
+      Q25 is the operator ruling that permits archival of this implementation-complete
+      lane without converting that blocker into a repair claim.
+
+## Closure Record
+
+- **Closure waiver:** Q25 — `dev/experiences/closure-waivers.json`; `fixCutoff: 2026-10-13T22:37:33Z`.
+- **Closed Date:** 2026-10-14.
+- **Fix Description:** a shared capability-degradation contract, actionable research
+  exhaustion notices, structural code-search flag guards, and run-start capability
+  preflight now distinguish unavailable or incomplete capability from completed-empty data.
+- **Tests Added:** Yes — capability notice, research-source, code-search flag, capability
+  preflight, and runtime integration coverage.
+- **Verification Evidence:** 10/10 declared gates exit 0; the recurrence probe remains
+  green while all owned classes are `unresolved`, which is recorded as the Q25 observation
+  boundary rather than a repair claim.
+- **Archived:** 2026-10-14.

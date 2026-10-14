@@ -254,7 +254,7 @@ with FID-024 owning capture/expectedness corrections and FID-014 owning class-to
       that gives every failure class an owner (68 classes / 559 records across six lanes). Children:
       `-010`…`-021`, `-023`, `-024`; Chain C tasks get children drafted at wave start. Not gateable
       itself; closes only when every child is closed and the closing pass re-runs the allocation.
-      Its current status board reflects ten active records after Chain B and QOL archival.
+      Its current status board reflects eight active records after Chain B, QOL, and Q25 child-lane archival.
       Pointing an automation run at this record **is** the operating instruction. **Automation level: 3.**
 
 - [ ] **FID-2026-1012-017. The incomplete-arguments class has never been fixed at its
@@ -268,19 +268,11 @@ with FID-024 owning capture/expectedness corrections and FID-014 owning class-to
       so a class's row count is an upper bound on occurrences. The four classes that are still firing
       stay open and the fifteen others stay unobserved, not clean.
 
-- [ ] **FID-2026-1012-018. read_url is the top recorded class, covered by no lesson and no
-      owner.** RC2 — **11 classes / 181 records** (404 114×/18 sessions, plus 403, 401, 429, 405,
-      503, extraction, oversize, private-address and DNS shapes; ledger coverage zero) → E2.
-      **Automation level: 3.**
-
-- [ ] **FID-2026-1012-019. Three tools degrade silently, breaking a rule the ledger already
-      states.** RC3 — **6 classes / 50 records**: a missing research key, a missing ripgrep binary
-      in two class shapes, an exit-0/zero-match search and two ripgrep argument failures, all
-      indistinguishable from "found nothing" → E3. **Automation level: 3.**
-
-- [ ] **FID-2026-1012-020. Edit-path friction is reported, not diagnosed.** RC4 — **13 classes /
-      72 records** (`str_replace` mismatch, no-op, patch failure, multi-occurrence, readonly;
-      `apply_patch` path failures; `list_directory`) → E4. **Automation level: 3.**
+**Q25 child-lane closure 2026-10-14:** FID-2026-1012-018, FID-2026-1012-019,
+and FID-2026-1012-020 are closed and archived under their named waivers. Their
+deterministic implementation gates are green; no production class repair or
+qualified observation is claimed. FID-2026-1012-017 remains active because its
+four post-fix classes are rejected by the recurrence gate.
 
 - [ ] **FID-2026-1012-021. Nothing closes the loop from recurrence to fix.** RC5 → E5: the
       machinery that turns a recurring class into an owned repair, asserts the class stopped, and
@@ -308,7 +300,7 @@ with FID-024 owning capture/expectedness corrections and FID-014 owning class-to
 
 ### Build orders (formalized as FIDs 2026-10-07)
 
-The build order for the ten active records and the remaining register tasks
+The build order for the eight active records and the remaining register tasks
 lives in the master record `FID-2026-1012-022` (`### Work order` for the
 schedule, `### Status board` for current state), so there is exactly one place an automation run can
 be pointed at. Its three chains: **A**, the failure-class lanes (`-024` → `-023`; `-024` →
@@ -346,7 +338,7 @@ and its remaining operator/external-input holds stay active.
      Only OPEN items carry a line here. A completed item's authority must
      leave with the item: while its globs remain, `loadScopeArtifact` grants
      them to every write, so "present before act" is satisfied by work that
-     finished days ago. Evict the     line in the pass that closes the item. -->
+     finished days ago. Evict the line in the pass that closes the item. -->
 
 - FID-2026-1012-017: `sdk/src/impl/llm/**`, `sdk/src/run/**`,
   `sdk/src/__tests__/tool-argument-budget.test.ts`,
@@ -355,33 +347,9 @@ and its remaining operator/external-input holds stay active.
   `packages/agent-runtime/src/run-agent-step/**`,
   `packages/agent-runtime/src/tools/stream-parser/**`,
   `packages/agent-runtime/src/tools/handlers/tool/**`, `common/src/tools/params/tool/**`
-- FID-2026-1012-018: `sdk/src/tools/read-url/**`, `sdk/src/__tests__/read-url*.test.ts`,
-  `common/src/tools/params/tool/**`, `sdk/src/run/agent-runtime-impl.ts`,
-  `sdk/src/run/tool-call.ts`
-- FID-2026-1012-019: `packages/agent-runtime/src/llm-api/**`, `sdk/src/native/**`,
-  `packages/agent-runtime/src/tools/**`, `common/src/constants/**`,
-  `common/src/util/capability-notice.ts`, `common/src/util/__tests__/capability-notice.test.ts`,
-  `common/src/util/experience-classes.ts`, `sdk/src/tools/code-search/**`,
-  `sdk/src/__tests__/code-search-flags.test.ts`,
-  `sdk/src/__tests__/capability-preflight.test.ts`,
-  `sdk/src/__tests__/ripgrep-path-fallback.test.ts`,
-  `sdk/src/run/agent-runtime-impl.ts`, `sdk/src/impl/agent-runtime.ts`,
-  `common/src/types/contracts/agent-runtime.ts`,
-  `packages/agent-runtime/src/run-agent-step/loop-context.ts`,
-  `packages/agent-runtime/src/run-agent-step/capability-preflight.ts`,
-  `packages/agent-runtime/src/run-agent-step/__tests__/capability-preflight.test.ts`
-- FID-2026-1012-020: `packages/agent-runtime/src/process-str-replace.ts`,
-  `packages/agent-runtime/src/process-file-block.ts`,
-  `packages/agent-runtime/src/edit-diagnostics.ts`,
-  `packages/agent-runtime/src/tools/handlers/tool/**`,
-  `packages/agent-runtime/src/__tests__/process-str-replace*.test.ts`,
-  `packages/agent-runtime/src/__tests__/edit-diagnostics.test.ts`, `sdk/src/run/**`,
-  `sdk/src/tools/change-file.ts`, `sdk/src/tools/apply-patch.ts`,
-  `sdk/src/tools/apply-patch/**`, `sdk/src/tools/patch-diagnostics.ts`,
-  `sdk/src/tools/list-directory.ts`, `sdk/src/__tests__/edit-boundary-diagnostics.test.ts`,
-  `sdk/src/__tests__/apply-patch-create-errors.test.ts`
-- FID-2026-1012-021: `scripts/experiences-dedup.ts`, `scripts/experiences-recurrence.ts`,
+- FID-2026-1012-021: `scripts/experiences-dedup.ts`, `scripts/experiences-recurrence*.ts`,
   `scripts/experiences-learning-order.ts`, `scripts/experiences-repair-drafts.ts`,
+  `scripts/experiences-probe.ts`, `scripts/__tests__/experiences-class-horizon.test.ts`,
   `scripts/learnings-validation.ts`,
   `scripts/__tests__/experiences-learning-order.test.ts`,
   `scripts/__tests__/experiences-repair-drafts.test.ts`,

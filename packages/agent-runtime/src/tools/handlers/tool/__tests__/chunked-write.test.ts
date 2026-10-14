@@ -18,9 +18,7 @@ import {
  * FID-2026-1012-017: the bulk-write staging contract — bounded chunks, a
  * revision guard on the content the write was authored against, and an
  * integrity guard on the reassembled result, so a staging that cannot be
- * committed exposes nothing and leaves the target untouched. Commit and handler
- * sequencing live in `chunked-write-commit.test.ts` (300-line ceiling, same
- * split as `stream-error-chunk.ts`).
+ * assembled exposes nothing and leaves the target untouched.
  */
 
 const RUN = 'run-chunked-write'
@@ -202,7 +200,7 @@ describe('stageBoundedWrite / assembleStagedWrite', () => {
     expect(getStagedWrite(RUN, PATH)).toBeUndefined()
   })
 
-  it('reports "nothing staged" rather than committing an empty write', () => {
+  it('reports "nothing staged" rather than exposing an empty write', () => {
     const assembled = assembleStagedWrite({
       runId: RUN,
       path: PATH,
@@ -221,7 +219,7 @@ describe('stageBoundedWrite / assembleStagedWrite', () => {
  * programmatic-step harness supplies — and that harness mocks the executor, so
  * it would not exercise this path. Its wiring is therefore verified by typecheck
  * plus call-graph reachability; the cases below pin the exact sequence it
- * performs, and the commit half lives in `chunked-write-commit.test.ts`.
+ * performs.
  */
 describe('propose_write_file staging sequence', () => {
   it('stages under the guards, then exposes the assembled revision', () => {

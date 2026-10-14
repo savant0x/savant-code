@@ -188,6 +188,7 @@ not establish a clean production window.
 - gate: test scripts/__tests__/experiences-repair-drafts.test.ts
 - gate: test scripts/__tests__/session-end-review.test.ts
 - gate: test scripts/__tests__/experiences-class-horizon.test.ts
+- gate: test scripts/__tests__/experiences-closure-waiver.test.ts
 - gate: test common/src/util/__tests__/experience-classes.test.ts
 - gate: typecheck common
 - gate: probe scripts/experiences-recurrence.ts
@@ -198,13 +199,14 @@ not establish a clean production window.
 
 ### Verification Receipt
 
-- fingerprint: sha256:45f5d0720b581421deb988cd785921d4306f6876974fe015deb15d2a26834da3
-- verified: 2026-10-14T13:39:41.371Z
+- fingerprint: sha256:3d63e8077e98b161e1949c424b5c53864c581d50d74c2b058729ca22880180b0
+- verified: 2026-10-14T18:45:26.496Z
 - test scripts/__tests__/experiences-coverage.test.ts: exit 0
 - test scripts/__tests__/experiences-learning-order.test.ts: exit 0
 - test scripts/__tests__/experiences-repair-drafts.test.ts: exit 0
 - test scripts/__tests__/session-end-review.test.ts: exit 0
 - test scripts/__tests__/experiences-class-horizon.test.ts: exit 0
+- test scripts/__tests__/experiences-closure-waiver.test.ts: exit 0
 - test common/src/util/__tests__/experience-classes.test.ts: exit 0
 - typecheck common: exit 0
 - probe scripts/experiences-recurrence.ts: exit 0
@@ -487,3 +489,67 @@ or exposure was fabricated.
   recurrence assertions are what this loop must be able to record and check; the coverage check
   cannot be added to `scripts/validate-repository.ts` before those classes have owners, or the
   repository reds on a known-open set.
+
+### Loop 13 — Named closure waivers (2026-10-14, operator-approved Q25)
+
+- **RED:** The four implemented child lanes have green deterministic gates, but their
+  classes have no qualified production observation. Moving them to `closed` therefore
+  makes `closedOwnerIssues` reject the repository, while leaving the only safe
+  alternative as an active queue that mixes implementation-complete work with
+  unresolved observation.
+- **GREEN:** Add a versioned `dev/experiences/closure-waivers.json` manifest. A waiver
+  names one owner FID, its operator decision date, its reason, and every currently
+  unobserved class it covers. `closedOwnerIssues` accepts only unresolved or
+  incomplete-observation classes explicitly named by that FID's waiver; it continues
+  to reject recurrent classes, missing classes, wrong-owner names, duplicate entries,
+  and closed owners without a waiver. The recurrence probe remains the gate and the
+  waiver never changes class state, ownership, or repair-boundary evidence.
+- **AUDIT:** Add focused controls for accepted named waivers, missing coverage, wrong
+  ownership, recurrent classes, duplicate declarations, and schema-invalid manifests.
+  Run the class-horizon suite, scripts typecheck, recurrence probe, repository
+  validation, Markdown lint, and quality.
+- **ADVERSARIAL:** A waiver is not a repair claim: it records the operator's decision
+  to archive implementation-complete work while observation remains open. The probe
+  still reports every class as unresolved and any later recurrence remains visible;
+  the waiver is rejected if it attempts to excuse a recurrent class or silently names
+  a class that is not present and owned.
+- **CHANGE DELTA:** planned governance and probe extension; no class record, boundary,
+  owner, or historical ledger row is rewritten.
+
+### Loop 14 — Recurrence probe quality ceiling (2026-10-14)
+
+- **RED:** The waiver implementation made the recurrence script 309 lines, so the
+  repo-wide quality gate failed even though recurrence and focused tests passed.
+- **GREEN:** Extract stable census/issue rendering into
+  `scripts/experiences-recurrence-output.ts`. Retain the existing recurrence script
+  as the executable probe entry point and cover the helper with the recurrence glob.
+- **AUDIT:** Re-run scripts typecheck, the closure-waiver suite, the recurrence probe,
+  quality, and repository validation. The extraction changes presentation only;
+  class identity, horizon evaluation, waiver validation, and exit status remain in
+  the recurrence module.
+- **ADVERSARIAL:** The helper has one caller in the production probe entry point.
+  The declared probe path remains unchanged, and no capture row, owner, boundary,
+  horizon state, or waiver is rewritten by the extraction.
+- **CHANGE DELTA:** small source-only quality correction; no recurrence or closure
+  claim is changed.
+
+### Loop 15 — Q25 waiver gate audit (2026-10-14)
+
+- **RED:** The first waiver implementation accepted any named `unresolved` class when
+  `fix-boundaries.json` had no boundary, even when the capture already contained rows after
+  the lane's implementation. It also did not require the closed FID to cite the Q25 waiver,
+  and its date-shape check accepted impossible calendar dates.
+- **GREEN:** Each waiver now declares an ISO `fixCutoff`; a named class with a later capture row
+  is rejected even when its horizon is otherwise `unresolved`. Closed waivered FIDs must cite
+  both Q25 and `dev/experiences/closure-waivers.json`. `grantedAt` uses the strict ISO date
+  validator. The four named waiver sets remain unchanged.
+- **AUDIT:** The closure-waiver suite covers accepted unresolved classes, post-fix rows,
+  recurrent classes, incomplete coverage, duplicate/foreign/stale declarations, malformed
+  manifests, impossible dates and missing closure citations. The production recurrence probe
+  remains the caller and gate.
+- **ADVERSARIAL:** A waiver still never changes a class to `observed`, creates a repair boundary,
+  or excuses a recurrent/post-fix class. FID-017's four measured post-fix classes therefore
+  remain ineligible for archival under Q25; the probe must fail rather than turn that evidence
+  into a closure pass.
+- **CHANGE DELTA:** small governance/test correction; no ledger row, owner, class key or repair
+  boundary was rewritten.

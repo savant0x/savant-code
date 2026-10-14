@@ -11,15 +11,18 @@ import {
   type ExposureSession,
 } from '@savant-code/common/types/experience'
 import {
-  EXPERIENCE_CLUSTER_GAP_MS,
-  classCensusLine,
   experienceClassIdentity,
   pushUnownedClassIssue,
   summarizeExperienceClasses,
 } from '@savant-code/common/util/experience-classes'
 
-import { closedOwnerIssues, parseRecurrenceArgs } from './experiences-probe'
+import {
+  closedOwnerIssues,
+  closureWaiverManifestSchema,
+  parseRecurrenceArgs,
+} from './experiences-probe'
 import { inspectBoundaryEvidence } from './experiences-proof'
+import { printRecurrenceOutput } from './experiences-recurrence-output'
 
 const DAY = 86_400_000
 export const OBSERVATION_DAYS = 14
@@ -42,7 +45,6 @@ export interface ClassHorizon {
   exercisedSessions: number
   elapsedDays: number
 }
-
 /** Strict inspection for assertions; capture itself remains fail-open. */
 export function inspectLedger(
   content: string,
@@ -225,6 +227,11 @@ if (import.meta.main) {
         fs.readFileSync(path.join(directory, 'class-owners.json'), 'utf8'),
       ),
     )
+    const waivers = closureWaiverManifestSchema.parse(
+      JSON.parse(
+        fs.readFileSync(path.join(directory, 'closure-waivers.json'), 'utf8'),
+      ),
+    )
     const boundaries = boundaryManifestSchema.parse(
       JSON.parse(
         fs.readFileSync(path.join(directory, 'fix-boundaries.json'), 'utf8'),
@@ -258,6 +265,7 @@ if (import.meta.main) {
         root,
         owners.owners.map((owner) => owner.fid),
         report.classes,
+        waivers,
       ),
     )
     const assertion = options.assertion
@@ -279,14 +287,7 @@ if (import.meta.main) {
         ),
       )
     } else {
-      console.log(
-        `recurrence probe: ${ledger.records.length} records, ${report.classes.length} stable classes, ${issues.length} issues`,
-      )
-      console.log(
-        `Time clusters group rows by class and session with a consecutive gap < ${EXPERIENCE_CLUSTER_GAP_MS}ms; they are not response or failure counts.`,
-      )
-      for (const entry of report.classes) console.log(classCensusLine(entry))
-      for (const issue of issues) console.error(issue)
+      printRecurrenceOutput(ledger.records.length, report.classes, issues)
     }
     process.exitCode = issues.length ? 1 : 0
   } catch (error) {

@@ -14,7 +14,7 @@ import {
  * A bulk write is the one kind of payload that legitimately exceeds a single
  * tool call's argument budget, and the emission budget states a number the model
  * plans a split against. This module is the other half of that contract: the
- * write is staged as bounded chunks and becomes visible to the commit surface
+ * write is staged as bounded chunks and becomes visible to the proposed-content surface
  * only when the staging is complete, contiguous and verified, so
  *
  * - an oversized payload is refused up front instead of being carried whole,
@@ -203,46 +203,4 @@ export function assembleStagedWrite(params: {
     }
   }
   return { ok: true, content, revision }
-}
-
-export type CommitWriteResult =
-  { ok: true; revision: string } | { ok: false; errorMessage: string }
-
-/**
- * Commit once: assemble under both guards, then perform a single write. A
- * refusal returns before the write is attempted; a write that throws leaves the
- * staging in place for a retry and reports the failure.
- */
-export async function commitStagedWrite(params: {
-  runId: string
-  path: string
-  currentContent: string
-  write: (content: string) => Promise<void>
-}): Promise<CommitWriteResult> {
-  const assembled = assembleStagedWrite({
-    runId: params.runId,
-    path: params.path,
-    currentContent: params.currentContent,
-  })
-  if (!assembled.ok) return { ok: false, errorMessage: assembled.errorMessage }
-  try {
-    await params.write(assembled.content)
-  } catch (error) {
-    return {
-      ok: false,
-      errorMessage: `${params.path}: the commit failed (${
-        error instanceof Error ? error.message : String(error)
-      }); the staged write is kept for a retry and nothing partial was applied.`,
-    }
-  }
-  deleteStagedWrite(params.runId, params.path)
-  return { ok: true, revision: assembled.revision }
-}
-
-/** Drop a staging without committing it. */
-export function releaseStagedWrite(params: {
-  runId: string
-  path: string
-}): void {
-  deleteStagedWrite(params.runId, params.path)
 }

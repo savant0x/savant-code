@@ -27,6 +27,27 @@ named in each record and in `SCOPE.md`.
   Blocked at closure: branch protection must mark the CI job a required status
   check (operator-only) before it machine-refuses a merge.
 
+## 2026-10-14 closure — three failure-class lanes under Q25
+
+These implementation-complete lanes were archived under the operator-approved
+Q25 waivers. Their deterministic gates are green, but their classes remain
+`unresolved`; no recurrence cessation, repair boundary, or qualified production
+observation is claimed. FID-2026-1012-017 remains active because four of its
+classes have post-fix captures and the recurrence gate correctly rejects them.
+
+- [`FID-2026-1012-018`](FID-2026-1012-018-read-url-failure-class-uncovered.md)
+  (high): fetch-outcome taxonomy, actionable next steps, canonical URL identity,
+  and run-isolated negative caching; implementations `64ea8c06` and `d9cee722`;
+  7/7 declared gates.
+- [`FID-2026-1012-019`](FID-2026-1012-019-silent-capability-degradation.md)
+  (high): capability-degradation contract, truthful research/code-search
+  outcomes, and run-start preflight; implementations `09f0c892` and `3ee91a35`;
+  10/10 declared gates.
+- [`FID-2026-1012-020`](FID-2026-1012-020-edit-path-friction.md)
+  (medium): bounded edit diagnosis, distinct no-op handling, payload-free patch
+  and filesystem errors, and frozen-result protection; implementations `0e7b3414`
+  and `be66e79f`; 11/11 declared gates.
+
 ## 2026-10-14 closure — four-wave QOL hardening program
 
 All 24 findings are implemented in local commit `b959019e`; child receipts pass

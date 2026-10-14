@@ -45,6 +45,29 @@
   ever contained, with a 569-record census finding 33 records naming a test path
   that does not resolve (triage lead, `NEEDS-REVIEW`).
 
+## 2026-10-14 — three failure-class lanes archived under Q25
+
+### Fixed
+
+- **FID-2026-1012-018 (high):** classified every `read_url` outcome, preserved
+  the original capture first lines, added actionable next steps, canonicalized
+  URL identity, and isolated negative caches per SDK run. Implementations
+  `64ea8c06` and `d9cee722`; 7/7 declared gates pass. Q25 records that the
+  recurrence window remains unproved; no repair or silence claim is made.
+- **FID-2026-1012-019 (high):** added the shared capability-degradation contract,
+  truthful research exhaustion and code-search flag outcomes, and run-start
+  capability preflight. Implementations `09f0c892` and `3ee91a35`; 10/10
+  declared gates pass. The named Q25 waiver preserves the unresolved observation
+  boundary and does not claim the host-side resolver class repaired.
+- **FID-2026-1012-020 (medium):** added bounded edit diagnosis, separated mismatch
+  from no-op outcomes, removed unsafe patch/error payloads, and corrected the
+  frozen client-result mutation path. Implementations `0e7b3414` and `be66e79f`;
+  11/11 declared gates pass. Q25 archives the implementation-complete lane
+  without claiming qualified production observation.
+
+FID-2026-1012-017 remains active: its four measured post-fix classes are rejected
+by the recurrence gate and are not excused by the Q25 waiver.
+
 ## 2026-10-14 — QOL hardening program completed (five FIDs archived)
 
 ### Fixed
@@ -12734,4 +12757,3 @@ Decomposed the comprehensive TUI rebuild into 5 incremental phase FIDs:
 ---
 
 <!-- ECHO FID Auto-Archive rule: closure time-stamped entries above this line. -->
-

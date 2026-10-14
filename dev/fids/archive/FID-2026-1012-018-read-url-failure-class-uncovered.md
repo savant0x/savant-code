@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-1012-018-read-url-failure-class-uncovered.md`
 **ID:** FID-2026-1012-018
 **Severity:** high
-**Status:** fixed
+**Status:** closed
 **Created:** 2026-10-12 20:15
 **Automation level:** 3
 **YAGNI-Compliance:** Verified
@@ -172,7 +172,7 @@ closure gate when that window completes (`FID-2026-1012-021` owns the machinery)
 ### Verification Receipt
 
 - fingerprint: sha256:bfce01bbb7a855d9759efeb51499be071d8fdc2bdd4b645f3a8a3b21cb36503a
-- verified: 2026-10-13T23:19:55.941Z
+- verified: 2026-10-14T17:58:04.776Z
 - test sdk/src/__tests__/read-url.test.ts: exit 0
 - test sdk/src/__tests__/read-url-ssrf.test.ts: exit 0
 - test sdk/src/__tests__/read-url-outcomes.test.ts: exit 0
@@ -353,7 +353,7 @@ closure gate when that window completes (`FID-2026-1012-021` owns the machinery)
 
 ## Resolution
 
-**Implemented — `Status: fixed`.**
+**Implemented — `Status: closed` under the operator-approved Q25 waiver.**
 
 Loop 3 landed the taxonomy and the cache: every fetch outcome is classified (`not-found`, `unauthorized`,
 `denied`, `method-not-allowed`, `rate-limited`, `unavailable`, `server-error`, `client-error`,
@@ -368,11 +368,10 @@ owns a separate memo through its runtime callback; direct readers share state
 only when their caller supplies a cache. Fresh invocations can retry a recovered
 resource without clearing another run's memo.
 
-`fixed` — implementation exists, gates green, awaiting the observation window. It is **not** `closed`: no
-class has been shown to stop recurring, `dev/experiences/fix-boundaries.json` stays empty, and every owned
-key still reports `unresolved` from `bun scripts/experiences-recurrence.ts`. Closure requires that window's
-evidence, at which point this section is rewritten in the closure format (Closed Date / Fix Description /
-Tests Added / Verification Evidence / Archived) and the FID is archived.
+The deterministic implementation gates are green, but no class has been shown to stop recurring:
+`dev/experiences/fix-boundaries.json` stays empty and every owned key reports `unresolved` from
+`bun scripts/experiences-recurrence.ts`. Q25 permits archival of this implementation-complete lane
+only under the named waiver below; it does not claim repair, silence or qualified production observation.
 
 - **Authorised write surface:** `SCOPE.md` → machine-readable scope targets → this record's
   line (registered 2026-10-12 with the root-cause matrix).
@@ -381,3 +380,25 @@ Tests Added / Verification Evidence / Archived) and the FID is archived.
 - **Ordering:** independent of FID-2026-1012-017 (a different layer and a different tool), but
   it hands its class to FID-2026-1012-021's recurrence assertion, so the two should be
   implemented with the same instrument.
+
+### Implementation Evidence
+
+- [x] **Commit SHA:** `64ea8c06` (fetch taxonomy and cache) and `d9cee722` (run-isolated cache correction).
+- [x] **File:line ranges:** `sdk/src/tools/read-url/fetch.ts:73-237`; `sdk/src/tools/read-url/outcomes.ts:124-242`;
+      `sdk/src/run/agent-runtime-impl.ts:67-102`; `sdk/src/run/tool-call.ts:177-183`.
+- [x] **Gate output:** the seven declared gates in the receipt above exit 0.
+- [x] **Reproducibility:** production callers and the run-scoped cache path are cited in Code Verification Evidence.
+- [x] **Step statuses:** implementation steps 1-5 `implemented`; qualified observation step `blocked` by the
+      absence of a proved production observation window, with Q25 recorded as the operator ruling permitting
+      archival without converting that boundary into a repair claim.
+
+## Closure Record
+
+- **Closure waiver:** Q25 — `dev/experiences/closure-waivers.json`; `fixCutoff: 2026-10-13T23:22:20Z`.
+- **Closed Date:** 2026-10-14
+- **Fix Description:** fetch outcomes are classified, canonicalized and cached per SDK run; transient outcomes
+  remain retryable, while final outcomes receive actionable guidance.
+- **Tests Added:** Yes — outcome taxonomy and run-cache regression coverage.
+- **Verification Evidence:** 7/7 declared gates exit 0; recurrence probe exit 0 with all owned classes still
+  `unresolved`, which is reported as the explicit Q25 observation boundary rather than a repair claim.
+- **Archived:** 2026-10-14

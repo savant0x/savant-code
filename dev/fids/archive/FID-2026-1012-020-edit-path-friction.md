@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-1012-020-edit-path-friction.md`
 **ID:** FID-2026-1012-020
 **Severity:** medium
-**Status:** fixed
+**Status:** closed
 **Created:** 2026-10-12 20:15
 **Automation level:** 3
 **YAGNI-Compliance:** Verified
@@ -164,8 +164,8 @@ false declaration.
 
 ### Verification Receipt
 
-- fingerprint: sha256:1e76a5cb28f2abb38d1921f7f1ef89e038226601b273813c3cc5378472869a39
-- verified: 2026-10-13T22:54:58.281Z
+- fingerprint: sha256:163fb12fed2376f5609cce02d2ccd18f9becf6e40e597c6156d8619de7cecf90
+- verified: 2026-10-14T19:08:50.000Z
 - test packages/agent-runtime/src/__tests__/edit-diagnostics.test.ts: exit 0
 - test packages/agent-runtime/src/__tests__/process-str-replace-outcomes.test.ts: exit 0
 - test packages/agent-runtime/src/__tests__/process-str-replace.test.ts: exit 0
@@ -349,10 +349,10 @@ false declaration.
 
 ## Resolution
 
-**Implemented — `Status: fixed` (deterministic gates green; recurrence assertion OPEN).**
+**Implemented — `Status: closed` under the operator-approved Q25 waiver.**
 
-- **Closed Date:** 2026-10-13 (implementation pass; the record stays open in the sense that no class
-  window has run — no lesson is written).
+- **Implementation Date:** 2026-10-13. **Closed Date:** 2026-10-14 under Q25; no
+  class window has run and no lesson is written.
 - **Fix Description.** A failed edit now carries the evidence that repairs it. New pure module
   `packages/agent-runtime/src/edit-diagnostics.ts` classifies a missing target — `partial-line-match`
   (a line of the request appears verbatim, so the surrounding block differs), `whitespace-only-difference`
@@ -379,9 +379,9 @@ false declaration.
   PASS (1,502 baselined files) · ESLint `--max-warnings 0` and Prettier clean on every touched file.
   Red-measure at `09f0c892`: 563 records / 56 stable classes, this lane's causes live and unstopped
   (29/19/12/3/3/2/2/1) — pasted verbatim in Loop 3.
-- **Archived:** not archived. Per FID-2026-1012-022's closure condition a child closes only when its
-  classes show no new records in the declared window; the window has not started.
-- **Open, and why this record is not `closed`:** The recurrence window has not
+- **Archived:** 2026-10-14. The record is archived under the named Q25 waiver;
+  no qualified observation window is claimed.
+- **Implementation-time boundary:** The recurrence window has not
   run, so no class claim or fix boundary exists. Loop 4 completes bounded SDK
   patch diagnosis, safe missing-directory recovery and the frozen-result
   regression test at `handleStrReplace`. Original production causes lost from
@@ -395,3 +395,41 @@ false declaration.
 - **Ordering:** consumes the recurrence assertion defined by `FID-2026-1012-021` (the lesson is
   written only after the class stops); shares one result vocabulary with
   `FID-2026-1012-019`.
+
+## Implementation Evidence
+
+- [x] **Commit SHA:** `0e7b3414` (runtime edit diagnosis and outcome separation) and
+      `be66e79f` (SDK patch diagnostics, payload-free failures, and filesystem codes).
+- [x] **File:line ranges:** `packages/agent-runtime/src/edit-diagnostics.ts:16-121`,
+      `packages/agent-runtime/src/process-str-replace.ts:37-293`,
+      `packages/agent-runtime/src/tools/handlers/tool/str-replace.ts:19-151`,
+      `sdk/src/tools/patch-diagnostics.ts:14-68`,
+      `sdk/src/tools/apply-patch/diff.ts:164-183`,
+      `sdk/src/tools/apply-patch.ts:30-126`,
+      `sdk/src/tools/change-file.ts:38-182`,
+      `sdk/src/tools/list-directory.ts:8-54`.
+- [x] **Gate output:** the eleven expanded declared gates in the verification receipt
+      exit 0; the current implementation retains the payload-free diagnostics, empty-file
+      patch handling, missing-directory outcome, and frozen-result handler correction.
+- [x] **Reproducibility:** `handleStrReplace` calls `processStrReplace` and rebuilds the
+      client result without mutation; `applyPatchTool` and `changeFile` call
+      `diagnosePatchFailure`; `listDirectory` and `changeFile` consume
+      `filesystemErrorCode`.
+- [x] **Step statuses:** implementation steps 1-5 are implemented; recurrence assertion
+      step 6 is blocked by the absence of a qualified production observation window.
+      Q25 is the operator ruling that permits archival of this implementation-complete
+      lane without converting that blocker into a repair claim.
+
+## Closure Record
+
+- **Closure waiver:** Q25 — `dev/experiences/closure-waivers.json`; `fixCutoff: 2026-10-13T22:59:17Z`.
+- **Closed Date:** 2026-10-14.
+- **Fix Description:** edit mismatches now carry bounded diagnosis, no-ops are distinguished
+  from failed matches, patch and filesystem failures redact unsafe detail, empty-file patches
+  remain valid, and the frozen client-result mutation path is removed.
+- **Tests Added:** Yes — edit-diagnostics, replacement-outcome, SDK boundary, patch, change-file,
+  and handler regression coverage.
+- **Verification Evidence:** 11/11 declared gates exit 0; the recurrence probe remains
+  green while all owned classes are `unresolved`, which is recorded as the Q25 observation
+  boundary rather than a repair claim.
+- **Archived:** 2026-10-14.

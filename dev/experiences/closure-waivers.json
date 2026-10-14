@@ -1,0 +1,81 @@
+{
+  "version": 1,
+  "waivers": [
+    {
+      "fid": "FID-2026-1012-017",
+      "grantedAt": "2026-10-14",
+      "fixCutoff": "2026-10-13T04:05:07Z",
+      "reason": "Operator-approved Q25 archival of an implementation-complete lane; deterministic gates are green, but qualified production observation remains unproved. This waiver does not claim repair or silence and does not excuse recurrence.",
+      "classes": [
+        "v1:read_files:incomplete-arguments:unexpected",
+        "v1:str_replace:incomplete-arguments:unexpected",
+        "v1:read_url:incomplete-arguments:unexpected",
+        "v1:write_file:incomplete-arguments:unexpected",
+        "v1:spawn_agents:incomplete-arguments:unexpected",
+        "v1:run_readonly_command:incomplete-arguments:unexpected",
+        "v1:write_todos:incomplete-arguments:unexpected",
+        "v1:suggest_followups:incomplete-arguments:unexpected",
+        "v1:basher:incomplete-arguments:unexpected",
+        "v1:run_terminal_command:incomplete-arguments:unexpected",
+        "v1:transition_parameter:incomplete-arguments:unexpected",
+        "v1:forge:incomplete-arguments:unexpected",
+        "v1:grep:incomplete-arguments:unexpected",
+        "v1:transition_phase:incomplete-arguments:unexpected",
+        "v1:...:incomplete-arguments:unexpected",
+        "v1:apply_patch:incomplete-arguments:unexpected",
+        "v1:savant_code_tool_call:incomplete-arguments:unexpected",
+        "v1:write_files:incomplete-arguments:unexpected",
+        "v1:browser_use:incomplete-arguments:unexpected"
+      ]
+    },
+    {
+      "fid": "FID-2026-1012-018",
+      "grantedAt": "2026-10-14",
+      "fixCutoff": "2026-10-13T23:22:20Z",
+      "reason": "Operator-approved Q25 archival of an implementation-complete lane; deterministic gates are green, but qualified production observation remains unproved. This waiver does not claim repair or silence and does not excuse recurrence.",
+      "classes": [
+        "v1:read_url:http-404:undetermined",
+        "v1:read_url:fetch-unextractable:undetermined",
+        "v1:read_url:http-403:undetermined",
+        "v1:read_url:http-401:undetermined",
+        "v1:read_url:fetch-oversized:undetermined",
+        "v1:read_url:http-429:undetermined",
+        "v1:read_url:http-405:undetermined",
+        "v1:read_url:fetch-unsupported:undetermined",
+        "v1:read_url:fetch-blocked:undetermined",
+        "v1:read_url:fetch-dns:undetermined",
+        "v1:read_url:http-503:undetermined"
+      ]
+    },
+    {
+      "fid": "FID-2026-1012-019",
+      "grantedAt": "2026-10-14",
+      "fixCutoff": "2026-10-13T22:37:33Z",
+      "reason": "Operator-approved Q25 archival of an implementation-complete lane; deterministic gates are green, but qualified production observation remains unproved. This waiver does not claim repair or silence and does not excuse recurrence.",
+      "classes": [
+        "v1:web_search:research-unavailable:undetermined",
+        "v1:code_search:search-executable-missing:undetermined",
+        "v1:code_search:search-incomplete:undetermined",
+        "v1:code_search:unrecognised-0900285fee5eacd3c66c56582953f3898e94383d5056fe0e1e0291cf4359afe7:undetermined",
+        "v1:code_search:unrecognised-31bebff8fe417faff476c7fd9a827339761628b9f801010761b2626d222e2028:undetermined"
+      ]
+    },
+    {
+      "fid": "FID-2026-1012-020",
+      "grantedAt": "2026-10-14",
+      "fixCutoff": "2026-10-13T22:59:17Z",
+      "reason": "Operator-approved Q25 archival of an implementation-complete lane; deterministic gates are green, but qualified production observation remains unproved. This waiver does not claim repair or silence and does not excuse recurrence.",
+      "classes": [
+        "v1:str_replace:edit-target-missing:undetermined",
+        "v1:str_replace:edit-noop:undetermined",
+        "v1:apply_patch:patch-failed:undetermined",
+        "v1:str_replace:immutable-result:undetermined",
+        "v1:write_file:patch-failed:undetermined",
+        "v1:str_replace:edit-target-ambiguous:undetermined",
+        "v1:str_replace:patch-failed:undetermined",
+        "v1:list_directory:directory-missing:undetermined",
+        "v1:str_replace:unrecognised-59a08c3cbc319aa48168284e77fb6d326cc2351c3f16202ff0354e7c095fb939:undetermined"
+      ]
+    }
+  ]
+}
