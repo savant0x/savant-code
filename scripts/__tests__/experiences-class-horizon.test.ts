@@ -15,6 +15,7 @@ import {
 
 import type {
   ExperienceRecord,
+  ExposureByClass,
   ExposureSession,
 } from '@savant-code/common/types/experience'
 
@@ -186,10 +187,30 @@ describe('closure ledger inspection fails closed', () => {
   })
 })
 
+type OwnerManifest = Parameters<typeof recurrenceReport>[1]
+type BoundaryManifest = Parameters<typeof recurrenceReport>[2]
+
 describe('ownership census', () => {
   const owners = {
     version: 1 as const,
     owners: [{ classKey: key, fid: 'FID-2026-1012-023' }],
+  }
+  const noOwners = { version: 1 as const, owners: [] }
+  const noBoundaries = { version: 1 as const, boundaries: [] }
+  /** The census over the fixture ledger; each case names only what it varies. */
+  function census(
+    records: readonly ExperienceRecord[],
+    ownerManifest: OwnerManifest = noOwners,
+    boundaryManifest: BoundaryManifest = noBoundaries,
+    exposureByClass: ExposureByClass = new Map(),
+  ) {
+    return recurrenceReport(
+      records,
+      ownerManifest,
+      boundaryManifest,
+      exposureByClass,
+      NOW,
+    )
   }
   test('closing an owner cannot bypass missing repair boundaries', () => {
     expect(
@@ -200,36 +221,30 @@ describe('ownership census', () => {
       ),
     ).toEqual([`closed owner has unproved class: ${key}`])
   })
+  test('an expected outcome demands no owner and no repair claim', () => {
+    const expected = { ...failure, expectedness: 'expected' as const }
+    const result = census([expected])
+    expect(result.issues).toEqual([])
+    expect(result.classes[0]?.expectedness).toBe('expected')
+    expect(result.classes[0]?.state).toBe('unresolved')
+  })
   test('a single old unknown class still requires an owner', () => {
-    const result = recurrenceReport(
-      [failure],
-      { version: 1, owners: [] },
-      { version: 1, boundaries: [] },
-      new Map(),
-      NOW,
-    )
+    const result = census([failure])
     expect(result.issues).toEqual([`unowned class: ${key}`])
     expect(result.classes[0]?.state).toBe('unresolved')
   })
   test('ownership does not mark a class repaired', () => {
-    const result = recurrenceReport(
-      [failure],
-      owners,
-      { version: 1, boundaries: [] },
-      new Map(),
-      NOW,
-    )
+    const result = census([failure], owners)
     expect(result.issues).toEqual([])
     expect(result.classes[0]?.state).toBe('unresolved')
   })
   test('clustered post-fix rows still refute a repair individually', () => {
     const repeated = { ...failure, ts: new Date(NOW - DAY).toISOString() }
-    const result = recurrenceReport(
+    const result = census(
       [failure, repeated, repeated],
       owners,
       { version: 1, boundaries: [boundary] },
       exposures,
-      NOW,
     )
     expect(result.classes[0]?.count).toBe(3)
     expect(result.classes[0]?.timeClusters).toBe(2)
@@ -238,51 +253,38 @@ describe('ownership census', () => {
     expect(result.issues).toContain(`unsupported repair: ${key} (recurred)`)
   })
   test('exposure the store holds earns an observed repair', () => {
-    const result = recurrenceReport(
+    const result = census(
       [failure],
       owners,
       { version: 1, boundaries: [boundary] },
       exposures,
-      NOW,
     )
     expect(result.classes[0]?.state).toBe('observed')
     expect(result.issues).toEqual([])
   })
   test('an in-window repair is reported as state, not a census failure', () => {
-    const result = recurrenceReport(
-      [failure],
-      owners,
-      {
-        version: 1,
-        boundaries: [
-          { ...boundary, fixedAt: new Date(NOW - DAY).toISOString() },
-        ],
-      },
-      new Map(),
-      NOW,
-    )
+    const result = census([failure], owners, {
+      version: 1,
+      boundaries: [{ ...boundary, fixedAt: new Date(NOW - DAY).toISOString() }],
+    })
     expect(result.classes[0]?.state).toBe('incomplete-observation')
     expect(result.issues).toEqual([])
   })
   test('a window that elapsed without exposure fails the census', () => {
-    const result = recurrenceReport(
-      [failure],
-      owners,
-      { version: 1, boundaries: [boundary] },
-      new Map(),
-      NOW,
-    )
+    const result = census([failure], owners, {
+      version: 1,
+      boundaries: [boundary],
+    })
     expect(result.issues).toContain(
       `repair window elapsed without qualified exposure: ${key}`,
     )
   })
   test('a repair declared without capture coverage fails at once', () => {
-    const result = recurrenceReport(
+    const result = census(
       [failure],
       owners,
       { version: 1, boundaries: [{ ...boundary, captureVerified: false }] },
       exposures,
-      NOW,
     )
     expect(result.issues).toContain(
       `repair declared without capture coverage: ${key}`,

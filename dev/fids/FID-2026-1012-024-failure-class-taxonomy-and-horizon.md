@@ -178,6 +178,8 @@ receipt here cannot establish either or close this lane.
 - gate: test packages/agent-runtime/src/hooks/__tests__/engine.test.ts
 - gate: test scripts/__tests__/experiences-proof.test.ts
 - gate: test scripts/__tests__/experiences-class-horizon.test.ts
+- gate: test scripts/__tests__/experiences-dedup.test.ts
+- gate: test scripts/__tests__/experiences-coverage.test.ts
 - gate: probe scripts/scripts-typecheck-check.ts
 - gate: typecheck common
 - gate: typecheck packages/agent-runtime
@@ -185,8 +187,8 @@ receipt here cannot establish either or close this lane.
 
 ### Verification Receipt
 
-- fingerprint: sha256:a5f3c18f25e969fcf9039def35c9bd106c858161462635d9e54dfd7d75216a7a
-- verified: 2026-10-14T00:54:00.407Z
+- fingerprint: sha256:82960a203e8f63e9f90551ba22ccf4fd30c32d0dc9cb9d6c70607dafc30d14fd
+- verified: 2026-10-14T15:30:49.290Z
 - test common/src/util/__tests__/experience-classes.test.ts: exit 0
 - test packages/agent-runtime/src/tools/tool-executor/tool-result-errors.test.ts: exit 0
 - test packages/agent-runtime/src/tools/tool-executor/result-lifecycle.test.ts: exit 0
@@ -196,6 +198,8 @@ receipt here cannot establish either or close this lane.
 - test packages/agent-runtime/src/hooks/__tests__/engine.test.ts: exit 0
 - test scripts/__tests__/experiences-proof.test.ts: exit 0
 - test scripts/__tests__/experiences-class-horizon.test.ts: exit 0
+- test scripts/__tests__/experiences-dedup.test.ts: exit 0
+- test scripts/__tests__/experiences-coverage.test.ts: exit 0
 - probe scripts/scripts-typecheck-check.ts: exit 0
 - typecheck common: exit 0
 - typecheck packages/agent-runtime: exit 0
@@ -577,6 +581,82 @@ audit trail of the mistaken premise, not as acceptance criteria or class disposi
   classes / zero issues; no repair boundary or exposure was created.
 - **ADVERSARIAL:** Time clusters describe temporal grouping only. They are
   neither exact responses nor failure occurrences and cannot certify repair.
+
+### Loop 12 — `expectedness` gets a producer (2026-10-14, automation level 3)
+
+- **RED:** Loop 11 left one blocker for a first boundary, stated in its own
+  adversarial: *"`expectedness` is assigned by nothing, so a legitimate outcome (a
+  guard refusal that steers the agent) still cannot be told from a defect."* Measured
+  at `c4caff6b`, the channel is inert end to end. `experienceClassIdentity`
+  (`common/src/util/experience-classes.ts:86`) can derive only `unexpected`
+  (`incomplete-arguments`, `tool-unavailable`) or `undetermined` — nothing can derive
+  `expected`. The only carrier is `HookInputData.expectedness`
+  (`packages/agent-runtime/src/hooks/types.ts:25`), forwarded by `buildHookInput`
+  (`hooks/engine.ts:158,180`) and stored by `buildExperienceRecord`
+  (`hooks/experience-capture.ts:75`); a grep over `packages/`, `sdk/`, `cli/` and
+  `common/` finds **no production call site that passes it**, so all three consumers
+  that exist to honour it are unreachable — `experiences-dedup.ts:75`
+  (`isExpectedFailure`), `experiences-coverage.ts:60`, `experiences-learning-order.ts:40`.
+  `experiences-coverage.ts:51-53` documents the intent ("An expected outcome (a 404
+  while searching, a cancellation) is correct behaviour, not a defect, so it never
+  demands an owner") on a branch that can never be taken. The ledger agrees: 589 rows /
+  58 classes, **zero rows carrying `expectedness: 'expected'`** (recurrence probe;
+  row-level read of `raw-traces.jsonl`). Second half of the blocker: expectedness is
+  part of the class identity, so the first producer to classify an outcome expected
+  re-keys its rows to a key no owner names, while `recurrenceReport` requires an owner
+  for **every** class — the census would go red for a *correct* outcome, which is the
+  failure mode Loop 5 measured when a taxonomy change made `validate:repository` fail.
+- **GREEN — one producer, one channel, no heuristic.** Expectedness is assigned where
+  the harness itself makes the decision: the readonly guard's anchored refusal channel
+  Loop 5 already made the renderer partition on (`tool-result-inspection.ts`
+  `REFUSAL_SIGNATURE`).
+  1. `ToolOutputInspection` gains an optional `expectedness`; `scalarFailure` returns the
+     failing line *and* the classification its own branch establishes — the refusal
+     branch returns `expected`, every other branch returns none.
+  2. `inspectToolResultFailure` carries it beside `commandExecution`.
+  3. `result-lifecycle.ts` hands it to `buildHookInput` with the error line, so the row
+     stores the classification its consumers already read.
+  4. `recurrenceReport` stops requiring an owner for an expected class — aligning it with
+     `findUnownedEligibleClasses`, which already excludes them — and prints `EXPECTED`
+     where it printed `UNOWNED`.
+  **Rejected:** (i) a general message heuristic (`not found` → expected) —
+  `experiences-dedup.ts:16` forbids exactly that ("error words cannot establish
+  expectedness"); (ii) reading an `expectedness` field from any result envelope — a
+  tool's own output could then mark itself expected and hide its defect. The refusal
+  channel is a *harness* declaration, not tool data.
+- **Bounded, stated rather than implied:** this assigns `expected` to the refusal outcome
+  only. Which other outcomes are expected — a 404 for a URL that does not exist, a
+  pre-start cancellation — is a classification with real census impact; `FID-2026-1012-018`
+  owns the read_url taxonomy and `FID-2026-1012-023` owns timeout/cancellation semantics,
+  and it is presented to the operator rather than assumed here. No historical row, owner
+  or receipt is rewritten, and the census cannot move because no refusal row exists yet.
+- **AUDIT:** three pins in `tool-result-errors.test.ts`: a refusal envelope classifies as
+  `expected` with the refusal itself as its line; a real exit whose stderr merely quoted the
+  phrase (`grep: run_readonly_command rejected: not found`) still renders as `Command exited
+  with code 1: …` and stays unclassified; and no shape in the corpus gains a classification,
+  so nothing is expected by default. `result-lifecycle.test.ts` drives the refusal through the
+  **real** lifecycle and a real hook engine and asserts the stored row is
+  `v1:run_readonly_command:refused:expected`, while a genuine host exit keeps
+  `v1:run_readonly_command:command-exit:undetermined`. `experiences-class-horizon.test.ts`
+  reports no issue for an expected class with no owner and still reports `unowned class: …`
+  for the undetermined fixture. Suites: `agent-runtime` 2,152 PASS / 0 FAIL (329 files),
+  `scripts` 976 PASS / 0 FAIL, common class identity 14 PASS, `quality:report` PASS,
+  `typecheck common`, `typecheck packages/agent-runtime` and `typecheck:scripts` exit 0, root
+  `typescript@5.5.4` unchanged. Census unchanged — 589 records / 58 classes / 0 issues — so the
+  classification is live but not yet exercised; no refusal row exists.
+- **ADVERSARIAL:** (a) *Does this let a defect hide?* Only the harness's own refusal channel
+  classifies an outcome, and that is the branch that executed nothing (Loop 5); every other
+  failure keeps `unexpected`/`undetermined`, and `findUnownedEligibleClasses` still demands an
+  owner for every eligible non-expected class. (b) *Can tool output set its own expectedness?*
+  No — the walker never reads an expectedness field from a result value, so no tool's data can
+  excuse its own defect; the rejected alternative in GREEN is rejected for exactly this.
+  (c) *Does an expected class disappear from the census?* No: it stays summarized, counted and
+  printed, marked `EXPECTED` instead of `UNOWNED`, and a boundary declared on it still fails
+  `unowned boundary`. (d) *Was any historical row, owner or receipt rewritten?* None: 0 rows
+  changed, `fix-boundaries.json` is still empty, 0 boundaries declared, 0 classes observed.
+- **CHANGE DELTA:** 1 walker, 1 runtime transport, 1 shared classification module (rule +
+  rendering + ownership issue), 3 script call sites (census, coverage, dedup delegation),
+  1 extracted lifecycle fixture, 3 suites extended; 0 rows rewritten; 0 classes closed.
 
 1. **Should the class key be stored at capture time or derived at read time?** Stored, from the
    `FID-2026-1012-009` `errorClass` follow-up: deriving it at read time cannot recover the cause from a

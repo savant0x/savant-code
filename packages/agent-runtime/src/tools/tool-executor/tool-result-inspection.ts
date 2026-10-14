@@ -4,6 +4,7 @@ import {
 } from '@savant-code/common/constants/paths'
 import { commandExecutionMetadata } from '@savant-code/common/util/command-execution'
 
+import type { ExperienceExpectedness } from '@savant-code/common/types/experience'
 import type { CommandExecutionMetadata } from '@savant-code/common/util/command-execution'
 
 /**
@@ -33,6 +34,12 @@ export interface ToolOutputInspection {
   error: string
   /** Identity of the failing value, when it declares one. */
   commandExecution?: CommandExecutionMetadata
+  /**
+   * FID-2026-1012-024 Loop 12: the classification the harness itself
+   * established for the failing value — present only where the failure IS a
+   * validation decision (a guard refusal), never inferred from the message.
+   */
+  expectedness?: ExperienceExpectedness
 }
 
 /** Inspect producer-owned result containers; arbitrary data is never scanned. */
@@ -82,7 +89,12 @@ function inspectValue<T>(
       return { error: '' }
     }
     const scalar = scalarFailure(value)
-    if (scalar) return { error: scalar, ...executionIdentityOf(value) }
+    if (scalar)
+      return {
+        error: scalar.line,
+        ...executionIdentityOf(value),
+        ...(scalar.expectedness ? { expectedness: scalar.expectedness } : {}),
+      }
     if ('results' in value && Array.isArray(value.results)) {
       return inspectValue(value.results, state, depth + 1)
     }
@@ -100,22 +112,28 @@ function executionIdentityOf(value: object): {
   return Object.keys(commandExecution).length > 0 ? { commandExecution } : {}
 }
 
-function scalarFailure<T extends object>(value: T): string {
+/** A failure line plus the classification its own branch establishes. */
+interface ScalarFailure {
+  line: string
+  expectedness?: ExperienceExpectedness
+}
+
+function scalarFailure<T extends object>(value: T): ScalarFailure | undefined {
   if (
     'errorMessage' in value &&
     typeof value.errorMessage === 'string' &&
     value.errorMessage
   ) {
-    return value.errorMessage
+    return { line: value.errorMessage }
   }
   if ('error' in value && typeof value.error === 'string' && value.error)
-    return value.error
+    return { line: value.error }
   if (
     'errorCode' in value &&
     typeof value.errorCode === 'string' &&
     value.errorCode
   ) {
-    return value.errorCode
+    return { line: value.errorCode }
   }
   if (
     'exitCode' in value &&
@@ -127,8 +145,15 @@ function scalarFailure<T extends object>(value: T): string {
     // FID-2026-1012-024: a guard refusal never executed anything, so it is not
     // an execution outcome. The producer declares it on its own channel; a
     // refusal is the declaration itself, never "Command exited with code 1".
-    if (REFUSAL_SIGNATURE.test(detail)) return detail
-    return `Command exited with code ${value.exitCode}${detail ? `: ${detail}` : ''}`
+    // FID-2026-1012-024 Loop 12: the same declaration is the one place the
+    // harness states that this outcome is a deliberate decision rather than a
+    // defect, so it is also where `expected` is assigned. Nothing else in this
+    // walker classifies an outcome, and no message text is matched for it.
+    if (REFUSAL_SIGNATURE.test(detail))
+      return { line: detail, expectedness: 'expected' }
+    return {
+      line: `Command exited with code ${value.exitCode}${detail ? `: ${detail}` : ''}`,
+    }
   }
   if (
     'path' in value &&
@@ -136,9 +161,10 @@ function scalarFailure<T extends object>(value: T): string {
     'content' in value &&
     typeof value.content === 'string'
   ) {
-    return readFailure(value.content)
+    const read = readFailure(value.content)
+    return read === '' ? undefined : { line: read }
   }
-  return ''
+  return undefined
 }
 
 function readFailure(content: string): string {

@@ -3,6 +3,7 @@ import {
   inspectToolOutputFailure,
 } from './tool-result-inspection'
 
+import type { ExperienceExpectedness } from '@savant-code/common/types/experience'
 import type { CommandExecutionMetadata } from '@savant-code/common/util/command-execution'
 
 /** Denotes an unclassified cause, never a repaired class. */
@@ -37,12 +38,15 @@ export function inspectToolResultFailure<T>(content: T): {
   failed: boolean
   line: string
   commandExecution?: CommandExecutionMetadata
+  /** FID-2026-1012-024 Loop 12: only the harness's own validation decision. */
+  expectedness?: ExperienceExpectedness
 } {
-  const { error, commandExecution } = inspectToolOutput(content)
+  const { error, commandExecution, expectedness } = inspectToolOutput(content)
   return {
     failed: error !== '',
     line: error || TOOL_RESULT_ERROR_FALLBACK,
     ...(commandExecution ? { commandExecution } : {}),
+    ...(expectedness ? { expectedness } : {}),
   }
 }
 

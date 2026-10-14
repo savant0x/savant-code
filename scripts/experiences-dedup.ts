@@ -33,7 +33,10 @@ import {
   RAW_TRACES_FILE_NAME,
   experienceRecordSchema,
 } from '@savant-code/common/types/experience'
-import { experienceClassIdentity } from '@savant-code/common/util/experience-classes'
+import {
+  experienceClassIdentity,
+  isExpectedClass,
+} from '@savant-code/common/util/experience-classes'
 
 import type { ExperienceRecord } from '@savant-code/common/types/experience'
 
@@ -69,10 +72,11 @@ export function readExperienceLedger(rootDir: string): ExperienceRecord[] {
   return parseExperienceLedger(fs.readFileSync(file, 'utf8'))
 }
 
+/** Delegates to the one classification rule (FID-2026-1012-024 Loop 12). */
 export function isExpectedFailure(
   record: Pick<ExperienceRecord, 'expectedness'>,
 ): boolean {
-  return record.expectedness === 'expected'
+  return isExpectedClass(record)
 }
 
 export type DedupGroup = {

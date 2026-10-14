@@ -12,7 +12,9 @@ import {
 } from '@savant-code/common/types/experience'
 import {
   EXPERIENCE_CLUSTER_GAP_MS,
+  classCensusLine,
   experienceClassIdentity,
+  pushUnownedClassIssue,
   summarizeExperienceClasses,
 } from '@savant-code/common/util/experience-classes'
 
@@ -189,7 +191,7 @@ export function recurrenceReport(
   }
   const classes = summarizeExperienceClasses(records).map((summary) => {
     const owner = ownerMap.get(summary.key)
-    if (!owner) issues.push(`unowned class: ${summary.key}`)
+    if (!owner) pushUnownedClassIssue(issues, summary)
     const boundary = boundaryMap.get(summary.key)
     const horizon = evaluateClassHorizon(
       records,
@@ -283,10 +285,7 @@ if (import.meta.main) {
       console.log(
         `Time clusters group rows by class and session with a consecutive gap < ${EXPERIENCE_CLUSTER_GAP_MS}ms; they are not response or failure counts.`,
       )
-      for (const entry of report.classes)
-        console.log(
-          `${entry.owner ?? 'UNOWNED'} ${entry.state} ${entry.count} rows, ${entry.timeClusters} time clusters, largest ${entry.largestTimeCluster} rows, gap ${entry.clusterGapMs}ms ${entry.key}`,
-        )
+      for (const entry of report.classes) console.log(classCensusLine(entry))
       for (const issue of issues) console.error(issue)
     }
     process.exitCode = issues.length ? 1 : 0

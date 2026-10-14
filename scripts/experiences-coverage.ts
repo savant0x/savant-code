@@ -19,6 +19,7 @@ import * as path from 'node:path'
 
 import {
   experienceClassIdentity,
+  isExpectedClass,
   summarizeExperienceClasses,
 } from '@savant-code/common/util/experience-classes'
 
@@ -57,7 +58,7 @@ export function findUnownedEligibleClasses(params: {
     if (owned.has(summary.key)) continue
     // An expected outcome (a 404 while searching, a cancellation) is correct
     // behaviour, not a defect, so it never demands an owner.
-    if (summary.expectedness === 'expected') continue
+    if (isExpectedClass(summary)) continue
     const sessions = new Set(
       records
         .filter(

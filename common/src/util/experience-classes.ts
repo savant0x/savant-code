@@ -95,6 +95,54 @@ export function experienceClassIdentity(
   }
 }
 
+/**
+ * FID-2026-1012-024 Loop 12: an expected outcome is correct behaviour — the
+ * harness's own validation decision, such as a guard refusal that steers the
+ * agent — never a defect. Its class owes no owner, sits outside the recurrence
+ * bar and is rendered as `EXPECTED` instead of as an unowned defect. One
+ * authority: the census, its report and the coverage gate all ask here.
+ */
+export function isExpectedClass(entry: {
+  expectedness?: ExperienceExpectedness
+}): boolean {
+  return entry.expectedness === 'expected'
+}
+
+/**
+ * Record the issue for a class nobody owns. An expected class is exempt: it is
+ * correct behaviour, so there is no repair for an owner to make.
+ */
+export function pushUnownedClassIssue(
+  issues: string[],
+  summary: { key: string; expectedness?: ExperienceExpectedness },
+): void {
+  if (isExpectedClass(summary)) return
+  issues.push(`unowned class: ${summary.key}`)
+}
+
+/**
+ * The canonical rendering of one census class: attribution, horizon state and
+ * the descriptive counts, in the order the probe has always printed them.
+ */
+export function classCensusLine(entry: {
+  key: string
+  owner?: string
+  expectedness?: ExperienceExpectedness
+  state: string
+  count: number
+  timeClusters: number
+  largestTimeCluster: number
+  clusterGapMs: number
+}): string {
+  const attribution =
+    entry.owner ?? (isExpectedClass(entry) ? 'EXPECTED' : 'UNOWNED')
+  return (
+    `${attribution} ${entry.state} ${entry.count} rows, ` +
+    `${entry.timeClusters} time clusters, largest ` +
+    `${entry.largestTimeCluster} rows, gap ${entry.clusterGapMs}ms ${entry.key}`
+  )
+}
+
 export interface ExperienceClassSummary extends ExperienceClassIdentity {
   toolName: string
   count: number

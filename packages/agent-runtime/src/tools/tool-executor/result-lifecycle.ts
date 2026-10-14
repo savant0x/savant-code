@@ -278,6 +278,13 @@ export async function runSuccessLifecycle<T extends ToolName>(
         ...(failed && inspection.commandExecution
           ? { commandExecution: inspection.commandExecution }
           : {}),
+        // FID-2026-1012-024 Loop 12: the harness's own classification of the
+        // outcome travels with the failure, so a deliberate steering refusal is
+        // recorded as an expected outcome instead of ranking as a defect. It is
+        // set by the walker's refusal branch only, never inferred here.
+        ...(failed && inspection.expectedness
+          ? { expectedness: inspection.expectedness }
+          : {}),
       }),
     )
   }
