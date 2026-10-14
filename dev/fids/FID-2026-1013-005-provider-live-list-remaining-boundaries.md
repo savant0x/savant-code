@@ -73,6 +73,23 @@ presence only; neither contained the Cloudflare account ID or API token:
 No credential value was printed, written, or transmitted. This corroborates the
 existing blocker and does not establish an account-specific Cloudflare catalog.
 
+## Public Documentation Evidence — 2026-10-14
+
+Cloudflare publishes a public Workers AI model catalog at
+`https://developers.cloudflare.com/workers-ai/models/`. The page is readable
+without an account and is the appropriate public evidence for model
+availability. Savant's release catalog remains a deliberately curated static
+subset of that public catalog.
+
+Cloudflare's official REST guide at
+`https://developers.cloudflare.com/workers-ai/get-started/rest-api/` separately
+states that REST API requests require both an API token and Account ID, and its
+example uses an account-scoped URL. The documented runtime endpoint therefore
+cannot be independently queried from an accountless environment. No personal
+account is required to release or browse Savant's static Cloudflare catalog;
+users supply their own credentials only when they choose to run Cloudflare
+Workers AI.
+
 ## Impact Assessment
 
 ### Affected Components
@@ -94,8 +111,10 @@ The operator retains credential placement; this record grants no secret writes.
 ### Steps
 
 1. Implemented: probe local Ollama; HTTP 200 and three models returned.
-2. Blocked: Cloudflare account catalog needs its account ID and API token.
-3. Blocked on step 2: join account evidence to the prior remote inventory.
+2. Implemented: establish the public Cloudflare catalog boundary from the
+   vendor's documentation without credentials.
+3. Blocked: an account-specific live API roster still requires a Cloudflare
+   Account ID and API token; no account is available in this environment.
 
 ### Verification
 
@@ -129,8 +148,11 @@ evidence, and the root SDK exports the existing Cloudflare environment helpers.
 
 ## Resolution
 
-Local probe completed. Cloudflare remains blocked on external account ID and
-token configuration. T119 and this child remain active; neither is closed.
+Local probe and public documentation evidence are complete. The account-specific
+live API roster remains blocked by Cloudflare's documented credential boundary,
+but that boundary is not a release blocker because Savant ships a curated static
+catalog and uses BYOK for runtime access. T119 and this child remain active for
+the unresolved account-specific audit evidence; no personal account is required.
 
 ## Lessons Learned
 

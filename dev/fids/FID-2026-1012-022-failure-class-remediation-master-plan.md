@@ -359,7 +359,7 @@ activation), and the child's id is recorded in this table when it exists.
 | Local `0.0.36` development line | C0 | register item | open — dev-line maintenance live; the cut is operator-called |
 | T122 — Savant-Free removal | C1 | *drafted at wave start* | blocked — operator must call it |
 | T186 — typecheck/test legs | C2 | *drafted at wave start* | blocked — on T122 |
-| T119 — provider live-list probes | C3 | FID-2026-1013-005 | 25 remote catalogs previously HTTP 200; local Ollama now HTTP 200 / three models; Cloudflare blocked on absent account ID and API token; no purchase or inference |
+| T119 — provider live-list probes | C3 | FID-2026-1013-005 | 25 remote catalogs previously HTTP 200; local Ollama now HTTP 200 / three models; Cloudflare's public model catalog is documented keylessly, while its account-scoped REST roster remains credential-gated; no purchase or inference |
 | T173 — KiosAPI window rows | C4 | register measurement | blocked on vendor evidence — live pricing/model lists publish no window fields; no inferred fallback changes |
 | T171 — harvested-candidate auto-wire | C5 | register review | re-derived — explicit add-host prefill exists; picker branch absent; existing discovery suite 15 PASS; verdict/consent ruling remains operator-owned |
 | T175 — sweep control manifest | C6 | *drafted at wave start* | blocked — six external inputs |
@@ -390,9 +390,9 @@ activation), and the child's id is recorded in this table when it exists.
 | FID-2026-1013-011 — shared-primitive consolidation | program | `1013-011` | closed + archived 2026-10-14; 16/16 gates; implementation `b959019e` |
 | FID-2026-1013-012 — Law 6 and quality-ceiling hardening | program | `1013-012` | closed + archived 2026-10-14; 14/14 gates; implementation `b959019e` |
 | FID-2026-1013-013 — CLI and Desktop UI/UX parity | program | `1013-013` | closed + archived 2026-10-14; 10/10 gates; implementation `b959019e`; live UI smoke unclaimed |
-| FID-2026-1012-026 — Tier 1 provider parity | provider program | `-026` | converged — eighteen-provider expansion remains unimplemented; registry partitions contain none of the proposed entries |
+| FID-2026-1012-026 — Tier 1 provider parity | provider program | `-026` | **closed + archived 2026-10-14** — Tier 1 first-party parity wave implemented and verified; implementation `f6ce2109`; closure `41592403` |
 
-**Ground-truth resumption (2026-10-14):** eight active records; no closed record
+**Ground-truth resumption (2026-10-14):** seven active records; no closed record
 remains in the active directory. Chain B, the four-wave QOL program, and the
 three Q25 child lanes `-018`/`-019`/`-020` are completed and archived; QOL
 implementation commit is `b959019e`. Class repairs remain unproved: the current

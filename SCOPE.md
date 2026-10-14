@@ -16,8 +16,8 @@ recorded decision or external dependency requires it.
 ## Full active-FID completion directive (2026-10-14)
 
 The operator directed completion of all actual pending work in every active FID and
-granted automation level 3. The active register is eight records: `FID-2026-1012-017`,
-`-021`, `-022`, `-023`, `-024`, `-026`, `FID-2026-1013-005`, and
+granted automation level 3. The active register is seven records: `FID-2026-1012-017`,
+`-021`, `-022`, `-023`, `-024`, `FID-2026-1013-005`, and
 `FID-2026-1014-002`. Execute them in dependency order, implement every automatable
 step, run each declared gate, close and archive every record whose ground truth and
 gates support closure, and leave only specifically evidenced operator or external
@@ -94,16 +94,21 @@ constraints active. **Automation level: 3.**
       HTTP 200 model catalogs, using stored keys for the 14 key-gated endpoints.
       Local Ollama and account-specific Cloudflare remain separate boundaries.
       Counts and endpoint evidence are in the learning-remediation session summary;
-      no inference, purchase or provider-parity edit was performed.
+      no inference, purchase or provider-parity edit was performed. **Revalidated
+      2026-10-14:** Cloudflare's official public Workers AI model catalog is
+      readable without credentials, while its REST guide confirms that the
+      account-scoped runtime API requires both an Account ID and API token.
       **Automation level: 3** for the probe.
       **Child:** `FID-2026-1013-005`. Continuation 2026-10-13: local Ollama
       HTTP 200 with three models. Cloudflare is blocked on both account ID
       and API token configuration; neither is present in the probe process.
       The persisted provider-key store also contains neither field.
 
-- [ ] **FID-2026-1013-005. Provider live-list remaining boundaries.** Complete the
-      local Ollama evidence and the account-specific Cloudflare probe; the latter
-      requires the operator-owned account ID and API token if they are still absent.
+- [ ] **FID-2026-1013-005. Provider live-list remaining boundaries.** The local
+      Ollama evidence and public Cloudflare documentation evidence are complete.
+      The account-specific Cloudflare API roster remains blocked on the provider's
+      required Account ID and API token; it is not required to release or browse
+      Savant's curated static catalog, and no personal account is required.
       **Automation level: 3.**
 
 - [ ] **T175. Sweep control-manifest authorship + control-armed re-run.**
@@ -291,7 +296,7 @@ with FID-024 owning capture/expectedness corrections and FID-014 owning class-to
       that gives every failure class an owner (68 classes / 559 records across six lanes). Children:
       `-010`…`-021`, `-023`, `-024`; Chain C tasks get children drafted at wave start. Not gateable
       itself; closes only when every child is closed and the closing pass re-runs the allocation.
-      Its current status board reflects eight active records after Chain B, QOL, and Q25 child-lane archival.
+      Its current status board reflects seven active records after Chain B, QOL, and Q25 child-lane archival.
       Pointing an automation run at this record **is** the operating instruction. **Automation level: 3.**
 
 - [ ] **FID-2026-1012-017. The incomplete-arguments class has never been fixed at its
@@ -337,7 +342,7 @@ four post-fix classes are rejected by the recurrence gate.
 
 ### Build orders (formalized as FIDs 2026-10-07)
 
-The build order for the eight active records and the remaining register tasks
+The build order for the seven active records and the remaining register tasks
 lives in the master record `FID-2026-1012-022` (`### Work order` for the
 schedule, `### Status board` for current state), so there is exactly one place an automation run can
 be pointed at. Its three chains: **A**, the failure-class lanes (`-024` → `-023`; `-024` →
