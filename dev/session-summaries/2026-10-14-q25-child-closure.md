@@ -40,15 +40,20 @@ flips.
   0 issues; all three closed lanes remain `unresolved` and the four FID-017
   post-fix classes remain visible.
 - `bun scripts/validate-repository.ts` — PASS after staging the intended archive moves and the deleted uncalled test.
+- `bun run typecheck` — all 14 configured typecheck legs PASS.
+- `bun run test` — all 13 workspace legs PASS; SDK 767 pass / 1 skip, CLI
+  4167 pass / 18 skip, agent-runtime 2158 pass, and 0 failures overall.
+- `bun test scripts/__tests__/experiences-closure-waiver.test.ts` — 8 pass,
+  0 fail.
 - `bun run lint:md` — PASS.
 - `git diff --cached --check` — PASS.
 
 ## Current state
 
-The approved Q25 closure work is staged but not committed. FID-017, FID-021,
-and FID-022 remain active. No production repair boundary, recurrence cessation,
-qualified production observation, push, or release is claimed. Unrelated dirty
-paths remain unstaged.
+The approved Q25 closure work is committed locally in `d9a921f9`. FID-017,
+FID-021, and FID-022 remain active. No production repair boundary, recurrence
+cessation, qualified production observation, push, or release is claimed.
+Unrelated dirty paths remain unstaged.
 
 ## Boundary
 
