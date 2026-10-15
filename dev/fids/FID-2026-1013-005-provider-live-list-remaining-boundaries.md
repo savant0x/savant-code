@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-1013-005-provider-live-list-remaining-boundaries.md`
 **ID:** FID-2026-1013-005
 **Severity:** low
-**Status:** analyzed
+**Status:** fixed
 **Created:** 2026-10-13 18:51
 **Automation level:** 3
 **YAGNI-Compliance:** Verified
@@ -20,7 +20,7 @@ and token, so an authenticated account-specific model list cannot be requested.
 
 - OS: Windows, PowerShell.
 - Runtime: Bun 1.3.14; local development line 0.0.36.
-- Commit: `3ee91a35`; unrelated existing working-tree changes preserved.
+- Commit: `9d6fe794`; public catalog boundary and acceptance ruling recorded.
 
 ## Detailed Description
 
@@ -113,17 +113,27 @@ The operator retains credential placement; this record grants no secret writes.
 1. Implemented: probe local Ollama; HTTP 200 and three models returned.
 2. Implemented: establish the public Cloudflare catalog boundary from the
    vendor's documentation without credentials.
-3. Blocked: an account-specific live API roster still requires a Cloudflare
-   Account ID and API token; no account is available in this environment.
+3. Implemented: Q27 establishes that an account-specific live API roster is
+   not a completion gate. The static catalog and public vendor evidence are
+   sufficient; no credential is required or claimed.
 
 ### Verification
 
-Actual HTTP status and catalog size are the verification for this read-only
-work. No new implementation or test artifact is proposed or claimed.
+Actual HTTP status, catalog size, public vendor documentation, and the provider
+documentation drift probe are the verification for this read-only work. No
+account-specific roster query is claimed.
 
 ## Verification Gates
 
-No source changes; no implementation receipt or declared source gate.
+- gate: probe scripts/provider-docs-counts-drift.ts
+- gate: quality
+
+### Verification Receipt
+
+- fingerprint: sha256:1eec5b8565e06910bf7bc73fcbcfd47acc24730ac89a27c20469f20446ba8fbc
+- verified: 2026-10-15T00:18:20.937Z
+- probe scripts/provider-docs-counts-drift.ts: exit 0
+- quality: exit 0
 
 ## Perfection Loop
 
@@ -148,11 +158,10 @@ evidence, and the root SDK exports the existing Cloudflare environment helpers.
 
 ## Resolution
 
-Local probe and public documentation evidence are complete. The account-specific
-live API roster remains blocked by Cloudflare's documented credential boundary,
-but that boundary is not a release blocker because Savant ships a curated static
-catalog and uses BYOK for runtime access. T119 and this child remain active for
-the unresolved account-specific audit evidence; no personal account is required.
+Local probe and public documentation evidence are complete. Q27 records that a
+Cloudflare Account ID and API token are not required for completion of the
+curated static catalog code. The account-specific live roster is not claimed as
+queried, and no credential was requested, printed, stored, or transmitted.
 
 ## Lessons Learned
 

@@ -93,7 +93,7 @@ constraints active. **Automation level: 3.**
 
 ### Providers and routing
 
-- [ ] **T119. Provider live-list probes (no purchase).** Operator ruling
+- [x] **T119. Provider live-list probes (no purchase).** Operator ruling
       2026-10-12 (Q15): no provider is funded — providers are tested over free
       endpoints, and a provider the operator has stated as added is already
       confirmed live and real; what remains is a live model-list probe. That
@@ -106,18 +106,17 @@ constraints active. **Automation level: 3.**
       2026-10-14:** Cloudflare's official public Workers AI model catalog is
       readable without credentials, while its REST guide confirms that the
       account-scoped runtime API requires both an Account ID and API token.
-      **Automation level: 3** for the probe.
-      **Child:** `FID-2026-1013-005`. Continuation 2026-10-13: local Ollama
-      HTTP 200 with three models. Cloudflare is blocked on both account ID
-      and API token configuration; neither is present in the probe process.
-      The persisted provider-key store also contains neither field.
+       **Automation level: 3** for the probe. **Completed 2026-10-14:** local
+       Ollama is HTTP 200 / three models; Cloudflare's public catalog and REST
+       credential boundary are documented. Q27 rules that account-specific
+       Cloudflare credentials are not a completion gate for the curated static
+       catalog. **Child:** `FID-2026-1013-005`.
 
-- [ ] **FID-2026-1013-005. Provider live-list remaining boundaries.** The local
-      Ollama evidence and public Cloudflare documentation evidence are complete.
-      The account-specific Cloudflare API roster remains blocked on the provider's
-      required Account ID and API token; it is not required to release or browse
-      Savant's curated static catalog, and no personal account is required.
-      **Automation level: 3.**
+- [x] **FID-2026-1013-005. Provider live-list remaining boundaries.** The local
+       Ollama evidence and public Cloudflare documentation evidence are complete.
+       Q27 records that the account-specific Cloudflare API roster is not a
+       completion gate for Savant's curated static catalog. No roster query is
+       claimed and no credential is required. **Automation level: 3.**
 
 - [ ] **T175. Sweep control-manifest authorship + control-armed re-run.**
       Open remainder of archived `FID-2026-1007-016`: the seam is built, but
@@ -453,6 +452,9 @@ and its remaining operator/external-input holds stay active.
   (re-export only), `.githooks/commit-msg`,
   `.github/workflows/attribution-guard.yml`,
   `dev/session-summaries/2026-10-02-0223-fid-003-batch1-implementation.md`
+- FID-2026-1013-005: `dev/fids/FID-2026-1013-005-*.md`,
+  `dev/session-summaries/2026-10-13-provider-live-list-boundaries.md`,
+  `docs/providers.md`
 - T186: (no write surface — blocked on the T122 savant-free removal)
 - T187: (no write surface — operator-owned skills surface)
 - Repository formatting drift: (no write surface — operator-owned)
