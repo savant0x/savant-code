@@ -90,6 +90,7 @@ Compare export SHA-256 before and after relocation. Re-read changes against this
 - gate: typecheck common
 - gate: typecheck sdk
 - gate: typecheck cli
+- gate: typecheck packages/agent-runtime
 - gate: probe scripts/scripts-typecheck-check.ts
 - gate: test common/src/providers/__tests__/model-route-selection.test.ts
 - gate: test sdk/src/impl/__tests__/model-provider-selected-transport.test.ts
@@ -97,16 +98,18 @@ Compare export SHA-256 before and after relocation. Re-read changes against this
 - gate: test scripts/__tests__/task-id-ledger.test.ts
 - gate: test cli/src/utils/__tests__/settings-provider.test.ts
 - gate: test cli/src/utils/__tests__/openrouter-models-context-window.test.ts
+- gate: test packages/agent-runtime/src/tools/tool-executor/tool-result-coverage.test.ts
 - gate: probe scripts/scope-register-check.ts
 - gate: quality
 
 ### Verification Receipt
 
-- fingerprint: sha256:636dcd76882ab269313ec808bd2ced6d121e2e6deb851d173b5be302308a066f
-- verified: 2026-10-15T04:42:40.833Z
+- fingerprint: sha256:5748799d517ae24f792ced5f5879162c4bf0c94269bcfac5a0bbb38a9b75d3ec
+- verified: 2026-10-15T04:47:14.694Z
 - typecheck common: exit 0
 - typecheck sdk: exit 0
 - typecheck cli: exit 0
+- typecheck packages/agent-runtime: exit 0
 - probe scripts/scripts-typecheck-check.ts: exit 0
 - test common/src/providers/__tests__/model-route-selection.test.ts: exit 0
 - test sdk/src/impl/__tests__/model-provider-selected-transport.test.ts: exit 0
@@ -114,6 +117,7 @@ Compare export SHA-256 before and after relocation. Re-read changes against this
 - test scripts/__tests__/task-id-ledger.test.ts: exit 0
 - test cli/src/utils/__tests__/settings-provider.test.ts: exit 0
 - test cli/src/utils/__tests__/openrouter-models-context-window.test.ts: exit 0
+- test packages/agent-runtime/src/tools/tool-executor/tool-result-coverage.test.ts: exit 0
 - probe scripts/scope-register-check.ts: exit 0
 - quality: exit 0
 
@@ -187,6 +191,9 @@ operator's answer to the narrow Law 1 exception for the 12,807-line changelog.
 The aggregate build's existing Savant-Free failure remains registered under `T122`.
 It does not change the selected-provider or delivery contracts implemented here.
 
+- **Commit SHA:** `83f1712d` contains the five approved changes and their records.
+  A follow-up records the fixture alignment and final verification evidence.
+
 Recorded tool output:
 
 ```text
@@ -195,6 +202,7 @@ SDK: 701 pass, 1 skip, 0 fail (702 tests, 113 files)
 Scripts delivery/review/ledger: 23 pass, 0 fail
 CLI focused settings/window suites: 11 pass, 0 fail
 Initial declared gates: 9 PASS, exit 0
+Expanded declared gates before runtime fixture alignment: 12 PASS, exit 0
 ESLint . --max-warnings 0: exit 0
 Markdown lint: exit 0
 Prettier: All matched files use Prettier code style!
@@ -211,6 +219,13 @@ The two SDK process fixtures retain their previous behavioral edits unstaged;
 this session only repaired their whitespace.
 
 ### Code Verification Evidence
+
+The broader runtime run found a stale guard-refusal fixture: it claimed producer
+authority with only stderr text. Update that fixture with the real rejected-execution
+metadata, keeping the spoofed-message behavior strict. This is test alignment with
+the existing working-tree producer contract, not a production expectedness change.
+The source suite was fully read before editing; its workspace typecheck and test
+are declared above. The first broad runtime result was 2,161 pass / one stale-fixture fail.
 
 - `common/src/providers/model-route.ts:126`: selected provider owns inference.
 - `sdk/src/impl/model-provider.ts:81`: SDK dispatch consumes the resolved route.

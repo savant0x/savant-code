@@ -308,6 +308,7 @@ closure evidence is the next lifecycle work, not re-implementing the waves.
   `sdk/src/impl/__tests__/llm-invalid-vendor-tool-call.test.ts`,
   `cli/src/utils/__tests__/settings-provider.test.ts`,
   `cli/src/utils/__tests__/openrouter-models-context-window.test.ts`,
+  `packages/agent-runtime/src/tools/tool-executor/tool-result-coverage.test.ts`,
   `sdk/src/__tests__/fixtures/windows-stubborn-grandchild.ts`,
   `sdk/src/__tests__/run-terminal-command.test.ts`,
   `common/src/util/skill-lifecycle-events.ts`, `scripts/session-end-notices.ts`,

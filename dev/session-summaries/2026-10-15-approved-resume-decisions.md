@@ -31,7 +31,32 @@ The protocol, workspace gates, and existing credential boundary remain binding.
 - Recurrence census after ownership registration: 591 records, 59 classes, zero issues.
 - SDK ESM, CJS and declarations build succeeds. Aggregate `bun run ci` exits 1
   at the existing Savant-Free build, whose removal remains operator-owned under `T122`.
-- Root test chain and final repository validation are still running or awaiting their final pass.
+- Full CLI rerun: 4,172 pass, 18 skip, 0 fail. Common: 907 pass, 4 skip,
+  0 fail. Agents: 158 pass, 0 fail. Evals: 229 pass, 0 fail.
+- The runtime run found one stale producer-refusal fixture (2,161 pass, one fail).
+  Its metadata is aligned to the existing producer contract; focused coverage is
+  20 pass, 0 fail. The full sequential runtime rerun passes all 2,162 tests.
+- All thirteen configured workspace suites now pass independently: 9,120 passed,
+  23 skipped, zero failures. The initial aggregate root command failed before the
+  stale fixture corrections; no zero exit is claimed for that initial invocation.
+- All fourteen final declared FID gates pass, and the verified receipt is stamped.
+- Final repository validation follows receipt stamping and scratch-log relocation.
+
+| Workspace | Pass | Skip | Fail |
+| --- | ---: | ---: | ---: |
+| SDK | 701 | 1 | 0 |
+| CLI | 4172 | 18 | 0 |
+| Common | 907 | 4 | 0 |
+| Agents | 158 | 0 | 0 |
+| Evals | 229 | 0 | 0 |
+| Agent runtime | 2162 | 0 | 0 |
+| Design systems | 19 | 0 | 0 |
+| Code map | 55 | 0 | 0 |
+| Database | 53 | 0 | 0 |
+| Knowledge graph | 76 | 0 | 0 |
+| LLM providers | 92 | 0 | 0 |
+| Connectors | 23 | 0 | 0 |
+| Desktop | 473 | 0 | 0 |
 
 ## Audit corrections
 
@@ -61,6 +86,10 @@ The two exports named by the old review were already absent; no missing input wa
 The two SDK process-test files retain their earlier behavioral edits unstaged; this
 session's changes to them only restore formatting.
 
+Running broad checks concurrently exhausted five-second Git-fixture budgets in
+the runtime suite. The final sequential rerun passed without changing their
+budgets or production code. Heavy checks should run sequentially on this host.
+
 ## Durable records
 
 Completed holds were removed from the active register, with evidence retained here
@@ -69,3 +98,13 @@ above that reservation and the maximum permanent allocation. No live task was re
 
 A narrow Law 1 exception for the one-megabyte changelog was presented to the operator.
 Until answered, editing CHANGELOG.md and final FID archival remain blocked on that decision.
+
+Implementation is committed as `83f1712d`. Its staging deliberately excluded the
+pre-existing Q26 scope-target extension and all earlier production edits.
+The exact proposed changelog entry is ready at
+`dev/scratchpad/active/approved-resume-changelog-entry.md`.
+
+The validator caught temporary logs at the scratchpad root. They were relocated
+under `active/`, preserving their bytes. One completed initial-test PowerShell
+wrapper retained its log after reporting the CLI failures; it was stopped only
+after process inspection confirmed it had no remaining test children.

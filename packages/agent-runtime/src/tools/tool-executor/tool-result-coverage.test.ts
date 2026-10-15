@@ -80,6 +80,11 @@ describe('FID-2026-1012-024 producer-shaped failure coverage', () => {
     {
       name: 'readonly guard refusal (its own channel, not an exit)',
       value: {
+        executionOutcome: 'rejected',
+        executionStarted: false,
+        executedToolName: 'run_readonly_command',
+        terminationState: 'not-started',
+        rejectionReason: 'readonly-guard',
         command: 'cat a | tee b',
         stdout: '',
         stderr:
@@ -117,8 +122,8 @@ describe('FID-2026-1012-024 producer-shaped failure coverage', () => {
   }
 
   test('a real exit that merely quotes the refusal phrase is still an exit', () => {
-    // The refusal signature is anchored, so a command whose own stderr contains
-    // the phrase is not promoted into a validation refusal.
+    // Refusal authority comes from producer metadata, so quoted stderr alone
+    // cannot promote a normal command into a validation refusal.
     const output = [
       {
         value: {
