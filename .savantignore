@@ -1,9 +1,0 @@
-!codebuff.json
-__mock-projects__
-test-repos
-
-# Codebase knowledge graph (FID-2026-0806-002): .savant/ holds the SQLite
-# index (graph.db) which is regenerable on demand via /graph refresh. Excluded
-# from the project file tree so the indexer never sees its own DB, the agent
-# corpus never indexes it, and it never enters the packaged artifact.
-.savant/

@@ -1,5 +1,0 @@
-{
-  "rank1Floor": 0.96,
-  "measuredAt": "2026-10-05",
-  "note": "FID-2026-1005-005 first measured run: 32/33 positives rank-1 (0.9697). The known miss: savant-design-systems 'marketing site redesign tokens' prompt lost rank-1 to savant-motion (0.0840 vs 0.0852) — description vocabulary gap, fixable under the description-change contract. Ratchet upward as routing improves; lowering requires an operator ruling."
-}

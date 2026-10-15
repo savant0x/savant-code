@@ -1,9 +1,0 @@
-{
-  "extends": "../../../cli/tsconfig.json",
-  "compilerOptions": {
-    "baseUrl": ".",
-    "skipLibCheck": true,
-    "paths": {}
-  },
-  "include": ["**/*.ts", "**/*.tsx"]
-}
