@@ -98,14 +98,19 @@ Completed holds were removed from the active register, with evidence retained he
 and in FID-2026-1015-001. The task-ID ledger reserves 1 through 190; new tasks start
 above that reservation and the maximum permanent allocation. No live task was renumbered.
 
-A narrow Law 1 exception for the one-megabyte changelog was presented to the operator.
-Until answered, editing CHANGELOG.md and final FID archival remain blocked on that decision.
+A narrow Law 1 exception for the one-megabyte changelog was presented earlier.
+On resumption the full 12,807-line file was read before editing, so no exception
+or operator waiver was needed. The closure entry is inserted and the FID is archived
+at `dev/fids/archive/FID-2026-1015-001-approved-resume-decisions.md`; its completed
+scope item and write targets are removed.
 
 Implementation is committed as `83f1712d`. Its staging deliberately excluded the
 pre-existing Q26 scope-target extension and all earlier production edits.
 Fixture alignment and final receipt evidence are committed as `ca94b6f1`.
-The exact proposed changelog entry is ready at
-`dev/scratchpad/active/approved-resume-changelog-entry.md`.
+Final verification is committed as `6fe1ca49`. Closure documentation and final
+checks are included in this path-scoped local commit. Post-archive Markdown lint,
+formatting, scope-register validation, receipt checks and repository validation
+all pass. No push or release is authorized or performed.
 
 The validator caught temporary logs at the scratchpad root. They were relocated
 under `active/`, preserving their bytes. One completed initial-test PowerShell

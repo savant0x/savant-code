@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-1015-001-approved-resume-decisions.md`
 **ID:** FID-2026-1015-001
 **Severity:** medium
-**Status:** verified
+**Status:** closed
 **Created:** 2026-10-15
 **Automation level:** 3
 **YAGNI-Compliance:** Verified
@@ -84,6 +84,15 @@ Delivery tests: `scripts/__tests__/session-end-lifecycle-delivery.test.ts`.
 Ledger tests: `scripts/__tests__/task-id-ledger.test.ts`.
 Run existing affected SDK suites, typecheck, lint, format, repository checks and build.
 Compare export SHA-256 before and after relocation. Re-read changes against this contract.
+
+## Step Status
+
+- [x] Step 1 — implemented: selected-provider routing and budget identity, regression gates pass.
+- [x] Step 2 — implemented: approved SDK fixture formatting, behavior preserved.
+- [x] Step 3 — implemented: exports preserved with identical SHA-256 in the ignored archive.
+- [x] Step 4 — implemented: independent session-end cursor and output acknowledgement, delivery gates pass.
+- [x] Step 5 — implemented: permanent allocation ledger wired into scope and repository validation.
+- [x] Step 6 — implemented: verification recorded, implementation committed, CHANGELOG updated and FID archived.
 
 ## Verification Gates
 
@@ -185,14 +194,14 @@ published catalog entry (1,000,000); replace that fallback input with an actuall
 unlisted fixture ID and retain the conservative 200,000 assertion. No catalog value
 or fallback policy changes. Add both suites and CLI typecheck to the declared gates.
 
-Steps 1 through 5 are implemented. Step 6 has implemented verification and local
-commit preparation; final CHANGELOG insertion and archival are blocked pending the
-operator's answer to the narrow Law 1 exception for the 12,807-line changelog.
+Steps 1 through 6 are implemented. The 12,807-line CHANGELOG was read completely
+before the closure entry was inserted; no read exception or waiver was used.
+The record is archived with its implementation commits and verification evidence.
 The aggregate build's existing Savant-Free failure remains registered under `T122`.
 It does not change the selected-provider or delivery contracts implemented here.
 
 - **Commit SHA:** `83f1712d` contains the five approved changes and their records.
-  A follow-up records the fixture alignment and final verification evidence.
+  `ca94b6f1` records fixture alignment; `6fe1ca49` records final verification.
 
 Recorded tool output:
 
@@ -240,9 +249,19 @@ are declared above. The first broad runtime result was 2,161 pass / one stale-fi
 
 ## Resolution
 
-Implementation verified under the operator's five-decision approval. The final
-declared receipt and local commit evidence are recorded before closure; the changelog
-read exception remains an explicit operator decision, not implied consent.
+Implementation verified under the operator's five-decision approval. All fourteen
+declared gates passed live before closure. All thirteen configured workspace suites
+passed independently: 9,120 passed, 23 skipped, zero failures. Root typecheck,
+ESLint, Markdown lint, formatting, quality, scope and repository validation passed.
+
+- **Commit SHA:** `83f1712d`, `ca94b6f1`, `6fe1ca49`.
+- **Closed:** 2026-10-15.
+- **Archived:** 2026-10-15 to `dev/fids/archive/`.
+- **Tracking:** CHANGELOG entry inserted; completed scope item and write targets removed.
+
+The stored receipt records the live verification that earned closure. Per the
+single-agent protocol, closing edits do not claim a fresh fingerprint over these
+archived bytes. The existing Savant-Free aggregate-build failure remains under `T122`.
 
 ## Lessons Learned
 

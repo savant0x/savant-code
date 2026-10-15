@@ -13,16 +13,6 @@ recorded decision or external dependency requires it.
 
 ## Open items
 
-- [ ] **FID-2026-1015-001. Implement the five approved resume decisions.**
-      Operator ruling 2026-10-15: "yes" to selected-provider transport,
-      formatting the two SDK fixtures, preserving exports in an ignored directory,
-      independent notice cursors, and a permanent issued-task-ID ledger.
-      Steps 1–5 are implemented and verified in `83f1712d` and `ca94b6f1`.
-      **Blocker:** final CHANGELOG insertion and FID archival await the operator's
-      answer to the narrow Law 1 read exception; the exact proposed entry is in
-      `dev/scratchpad/active/approved-resume-changelog-entry.md`.
-      **Automation level: 3.**
-
 - [x] **Documentation lifecycle reconciliation (2026-10-14).** Audited every
       active FID against implementation and gate evidence; `CHANGELOG.md` coverage
       and the archived-FID closure guard both pass. No active record satisfied
@@ -36,7 +26,8 @@ recorded decision or external dependency requires it.
 The operator directed completion of all actual pending work in every active FID and
 granted automation level 3. The five continuing class-program records are
 `FID-2026-1012-017`, `-021`, `-022`, `-023`, and `-024`;
-the approved-resume record is listed above. Execute them in dependency order, implement every automatable
+the approved-resume record is closed and archived. Execute the continuing records
+in dependency order, implement every automatable
 step, run each declared gate, close and archive every record whose ground truth and
 gates support closure, and leave only specifically evidenced operator or external
 constraints active. **Automation level: 3.**
@@ -301,26 +292,6 @@ status board. Their source implementation is present; committing and recording
 closure evidence is the next lifecycle work, not re-implementing the waves.
 
 ## Machine-readable scope targets
-
-- FID-2026-1015-001: `common/src/providers/model-route.ts`,
-  `common/src/providers/__tests__/model-route-selection.test.ts`,
-  `sdk/src/impl/model-provider.ts`,
-  `sdk/src/impl/model-provider/apply-request-budget.ts`,
-  `sdk/src/impl/__tests__/model-provider-selected-transport.test.ts`,
-  `sdk/src/impl/__tests__/model-provider-free-mode.test.ts`,
-  `sdk/src/impl/__tests__/llm-invalid-vendor-tool-call.test.ts`,
-  `cli/src/utils/__tests__/settings-provider.test.ts`,
-  `cli/src/utils/__tests__/openrouter-models-context-window.test.ts`,
-  `packages/agent-runtime/src/tools/tool-executor/tool-result-coverage.test.ts`,
-  `sdk/src/__tests__/fixtures/windows-stubborn-grandchild.ts`,
-  `sdk/src/__tests__/run-terminal-command.test.ts`,
-  `common/src/util/skill-lifecycle-events.ts`, `scripts/session-end-notices.ts`,
-  `scripts/session-end-review.ts`, `scripts/__tests__/session-end-lifecycle-delivery.test.ts`,
-  `scripts/task-id-ledger.ts`, `scripts/__tests__/task-id-ledger.test.ts`,
-  `scripts/scope-register-check.ts`, `scripts/validate-repository.ts`,
-  `dev/task-id-ledger.json`, `dev/task-id-ledger.md`, `dev/exports/session-archives/**`,
-  `dev/experiences/class-owners.json`,
-  `.markdownlintignore`, `SCOPE.md`, `dev/fids/**`, `dev/session-summaries/**`, `CHANGELOG.md`
 
 Operator authorization: complete the master program at automation level 3 (2026-10-12).
 The planning review is complete; implementation, verification and local commits are authorized.

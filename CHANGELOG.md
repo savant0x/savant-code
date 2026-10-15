@@ -10,6 +10,34 @@
 > the v0.0.36 cut. Release notes are written here at cut time; nothing in this
 > section ships until then.
 
+## 2026-10-15 — Approved resume decisions (FID-2026-1015-001, medium)
+
+### Fixed
+
+- A selected provider now owns transport and token-budget catalog identity even
+  when a model ID starts with another registered vendor's name. Custom endpoints
+  retain their own credentials; explicit model replacements retain their own route.
+- Session-end skill notices use an independent cursor, acknowledge after output,
+  preserve interactive delivery, and leave overflow or failed output unread.
+- Numeric task allocations persist after closure. Scope and repository validation
+  reject identity reuse, missing allocations, and mutation of committed history;
+  legacy numbers through 190 remain reserved.
+- Preserved local session exports byte-for-byte in an ignored archive and restored
+  formatting in the two approved SDK process fixtures without changing their behavior.
+- Registered a newly captured file-read failure with the active taxonomy owner;
+  no immutable capture row or production repair claim changed.
+
+### Verification
+
+- All thirteen configured workspace suites pass: 9,120 passed, 23 skipped,
+  zero failures. Delivery/review/ledger suites: 23 passed. All fourteen declared
+  FID gates, root typecheck, ESLint, Markdown lint, formatting, quality, scope,
+  and repository validation pass.
+- SDK build succeeds. The aggregate build still fails at the existing Savant-Free
+  build; its operator-owned removal remains active under `T122`.
+- Implementation commits: `83f1712d` and `ca94b6f1`; final verification record:
+  `6fe1ca49`. Closed and archived 2026-10-15 after a full CHANGELOG read.
+
 ## 2026-10-14 — Tier 1 first-party provider parity wave (FID-2026-1012-026)
 
 ### Added
