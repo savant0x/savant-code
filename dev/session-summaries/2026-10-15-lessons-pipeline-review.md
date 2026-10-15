@@ -102,10 +102,11 @@ source evidence and does not duplicate those owners.
   attempt exposed an order-dependent fixture, which was repaired by isolating
   the new LF-003 test database; the repaired database suite passed 54/0.
   The root test wrapper remains tool-blocked by `Unknown: ChildProcess.kill`,
-  and repository validation reports the locked clean-Linux scratch artifact plus
-  eleven ENOENT findings from Savant-Free test paths deleted by the concurrent
-  FID-2026-1015-002 removal work but not yet staged. Neither finding is caused
-  by LF-003.
+  and the initial repository validation run reported the locked clean-Linux
+  scratch artifact plus eleven ENOENT findings from Savant-Free test paths
+  deleted by concurrent FID-2026-1015-002 removal work. Commit `dea54d85`
+  staged those approved deletions; the current validator reports only the
+  locked scratch artifact. Neither finding is caused by LF-003.
 
 ## Perfection Loop Summary
 
@@ -125,9 +126,9 @@ source evidence and does not duplicate those owners.
 - [x] `bun run learnings:check`: 37 structured entries; PASS.
 - [x] `bun run lessons:features --check`: 74 lessons / 9 candidates; PASS
   after LF-003 routing.
-- [ ] `bun run validate:repository`: reports the locked clean-Linux scratch
-  artifact plus eleven ENOENT findings from the concurrent FID-2026-1015-002
-  removal work; those deleted paths remain unstaged.
+- [ ] `bun run validate:repository`: current result has one hygiene issue for
+  the locked clean-Linux scratch artifact. The eleven stale-index ENOENT
+  findings were cleared by `dea54d85`.
 - [x] LF-003 feature gates: FID receipt stamped; all declared gates passed.
 - [x] Root typecheck, Markdown lint, and repository ESLint passed.
 - [ ] Root `bun run test`: the wrapper returned `Unknown: ChildProcess.kill`; all

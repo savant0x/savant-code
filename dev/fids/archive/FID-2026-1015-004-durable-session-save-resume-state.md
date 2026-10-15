@@ -223,11 +223,11 @@ this record:
 ### Loop 3 — Final convergence
 
 - **RED:** No actionable implementation defect remains in the declared LF-003
-  surfaces. Repository-wide validation remains independently blocked by the
-  already-recorded locked clean-Linux scratch artifact and by eleven ENOENT
-  findings from Savant-Free test paths deleted by the concurrent FID-2026-1015-002
-  removal work but not yet staged. Neither finding is caused by this FID's
-  declared gates.
+  surfaces. The initial repository validation run also reported eleven ENOENT
+  findings from Savant-Free test paths deleted by the concurrent
+  FID-2026-1015-002 removal work; commit `dea54d85` staged those approved
+  deletions, leaving only the already-recorded locked clean-Linux scratch
+  artifact. Neither finding is caused by this FID's declared gates.
 - **GREEN:** No further code changes were required after the focused audit.
 - **AUDIT:** The changed production files and tests were re-read 0-to-EOF.
   The shared serializer uses ancestor-chain detection, so repeated acyclic

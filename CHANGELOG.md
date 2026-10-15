@@ -28,10 +28,11 @@
   The repaired full database suite passes 54/0.
 - Implementation commit: `628375ff`.
 - The root test wrapper remains blocked by `Unknown: ChildProcess.kill`, and
-  repository validation reports the locked clean-Linux scratch artifact plus
-  eleven ENOENT findings from Savant-Free test paths deleted by the concurrent
-  FID-2026-1015-002 removal work but not yet staged; neither finding is caused
-  by the declared LF-003 gates.
+  the initial repository validation run reported the locked clean-Linux scratch
+  artifact plus eleven ENOENT findings from Savant-Free test paths deleted by
+  concurrent FID-2026-1015-002 removal work. Commit `dea54d85` staged those
+  approved deletions; the current validator reports only the locked scratch
+  artifact, and neither finding is caused by the declared LF-003 gates.
 - FID closed and archived on 2026-10-15.
 
 ## 2026-10-15 — clean Linux rebuild (FID-2026-1015-003, high)
