@@ -65,3 +65,30 @@ the root changelog. The complete tool read is truncated at 250,264 tokens;
 the requested top-entry-only exception has no operator answer yet. All five
 records remain active while that ruling is pending; no archival is claimed.
 The master additionally retains its registered operator/external-input holds.
+
+## Approved resumption and closure
+
+Operator response: "yes resume". The prepared CHANGELOG insertion is approved
+as a top-entry-only exception to the full-read requirement. Historical changelog
+text is preserved; the exception does not authorize a historical rewrite.
+
+FID-017, FID-021, FID-023 and FID-024 are closed and moved to `dev/fids/archive/`.
+Each carries committed implementation evidence and its acceptance boundary.
+The named Q25 manifest now covers the final implementation cutoffs for all
+class-owning records; FID-021 closes as machinery with no owned classes.
+The recurrence probe after the move reports 591 records and zero issues;
+all 59 classes remain unresolved. The archive-closure guard passes.
+
+The active README and dated archive index reflect the four closures. Their
+register items and write targets are removed from `SCOPE.md`. The old validator
+runner blocker is removed because final validation completed successfully.
+The master remains active for its specific operator/external-input holds.
+No runtime source changes were made during resumption.
+
+Final closure-tree checks: `validate:repository` PASS; scope-register PASS
+(zero issues); archived-FID closure guard PASS; recurrence probe 591 records /
+zero issues; closure-waiver JSON Prettier PASS. Removing only the inserted
+CHANGELOG block in memory reproduces the pre-edit SHA-256 exactly:
+`15c3b053cca0b7b9f00fe3fe7e4f32bc29df3b3834b304f538c74056512a156a`.
+Historical changelog bytes are unchanged. The agenda's unresolved count is
+reconciled to 59; the capture and class-owner manifests are unchanged.

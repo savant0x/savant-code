@@ -43,10 +43,11 @@ unless the operator explicitly grants a waiver.
 committed at `f6224816`; all four implementation FIDs' declared gate sets pass.
 Root tests pass (9,206 PASS / 23 SKIP / zero FAIL), as do root typecheck, lint,
 formatting, SDK build and repository validation. Q25 already permits named
-implementation-only closure waivers. Final archival is blocked pending the
-operator's requested Law 1 exception for adding the prepared entry to the
-1 MB root changelog after its complete read was truncated by the tool. No
-active FID has been marked closed or moved while that ruling is pending.
+implementation-only closure waivers. The operator approved the top-entry-only
+CHANGELOG exception with "yes resume" on 2026-10-15. FID-017, FID-021,
+FID-023 and FID-024 are closed and archived with committed implementation
+evidence, the CHANGELOG entry and named Q25 waivers. The sole active FID is
+the master; remaining operator/external-input constraints below stay active.
 
 - [ ] **Local v0.0.36 development line.** `v0.0.35` shipped on 2026-10-11 (GitHub
       release published, npm `latest` = 0.0.35), which made this item's previous
@@ -158,15 +159,6 @@ audit report. The completed probe item grants no continuing write authority.
 
 ### Harness and process
 
-- [ ] **Repository validator execution boundary (found 2026-10-14).** The hard
-      `bun run validate:repository` command produced no validator output in two
-      attempts; the external PowerShell runner returned
-      `Unknown: ChildProcess.kill` after its 120-second and 300-second limits.
-      The repository validator builds its complete issue set before printing and
-      active FID gates run synchronously without an internal timeout, so no
-      repository defect is established by this observation. **Blocker:** the
-      external command runner did not complete the hard gate. **Automation level: 2.**
-
 - [x] **FID-2026-1014-001. The read-only guard refused legitimate reads and
       still carried a closed security FID's unfixed waiver.** Operator direction 2026-10-14
       ("Audit whether any current refusal rule is too broad — a legitimate read-only command the
@@ -244,62 +236,13 @@ with FID-024 owning capture/expectedness corrections and FID-014 owning class-to
       that gives every failure class an owner (68 classes / 559 records across six lanes). Children:
       `-010`…`-021`, `-023`, `-024`; Chain C tasks get children drafted at wave start. Not gateable
       itself; closes only when every child is closed and the closing pass re-runs the allocation.
-      Its current status board reflects seven active records after Chain B, QOL, and Q25 child-lane archival.
+      It is the sole active FID; its remaining work is the registered
+      operator/external-input chain. The implementation children are archived.
       Pointing an automation run at this record **is** the operating instruction. **Automation level: 3.**
-
-- [ ] **FID-2026-1012-017. The incomplete-arguments class has never been fixed at its
-      source.** RC1 — **18 classes / 193 records** (35% of the capture; nine tools, 40+ sessions,
-      16 of them dated today) → E1. Learned 2026-08-16, and its lesson was retired out of the boot
-      read on 2026-10-12 while the class still fired. **Automation level: 3.**
-      **Loop 6 (2026-10-13):** the remaining half is the provider-side rejection. The rejection now
-      names the field the schema refused (only the issue path/code/expected — never the payload), and a
-      repeated part of one call-out steers once instead of once per part; no ledger row is dropped.
-      Measured: the 20 post-fix rows are one response's parts (17 the same tool, tail pair 10 ms apart),
-      so a class's row count is an upper bound on occurrences. The four classes that are still firing
-      stay open and the fifteen others stay unobserved, not clean.
-      **Loop 8 (2026-10-15):** re-measured — **zero** incomplete-argument rows after Loop 6's commit, and
-      nothing since the Loop 3/4 fixes for 15 of the 19 owned keys. The rejection half's actionable part
-      landed: the steering the runtime appends is selected by cause (truncation evidence ⇒ the tool's
-      size ladder, an observed rejection ⇒ correct the values), using the same discriminator the SDK's
-      own message uses, and the schema field the classifier read now travels on the chunk. The refusal
-      itself is provider-side and cannot be repaired locally; the strike 2+ escalation stays size-worded
-      because the cause cannot reach `native-strikes.ts` without `packages/agent-runtime/src/tools/stream-parser.ts`,
-      a file this item's target glob (`…/tools/stream-parser/**`) does not cover. No class claim either
-      way.
-
-**Q25 child-lane closure 2026-10-14:** FID-2026-1012-018, FID-2026-1012-019,
-and FID-2026-1012-020 are closed and archived under their named waivers. Their
-deterministic implementation gates are green; no production class repair or
-qualified observation is claimed. FID-2026-1012-017 remains active because its
-four post-fix classes are rejected by the recurrence gate.
-
-- [ ] **FID-2026-1012-021. Nothing closes the loop from recurrence to fix.** RC5 → E5: the
-      machinery that turns a recurring class into an owned repair, asserts the class stopped, and
-      only then writes the lesson. Must not wire its coverage check before 017–020 have owners.
-      Verified machinery: coverage, qualified lesson-last ordering, idempotent proposed
-      FID drafting. Actual observation keeps closure open. The operator lifted
-      the no-commit hold on 2026-10-13; the held work landed at `2a34e558`.
-      **Automation level: 2** (drafting a defect FID is automatable; approving one is the
-      operator's).
-
-- [ ] **FID-2026-1012-023. Command execution has no reliability contract.** RC6 — **13 classes /
-      27 records**: nine timeout budgets (10 s … 2400 s) discovered one turn at a time, and an
-      abort recorded under `run_readonly_command` whose message names `run_terminal_command` → E6.
-      **Verification history:** the sequential validator previously showed
-      intermittent Windows process-fixture failures under shared machine load.
-      The 2026-10-14 audit's live `validate:repository` rerun passes; production
-      timeout/abort observation remains the closure condition. No background
-      process was terminated by this audit.
-      **Automation level: 3.**
-
-- [ ] **FID-2026-1012-024. Failure classes have no horizon.** RC7 — **7 classes / 36 records**
-      whose old wrapper stopped on 2026-09-09; this does not prove repair. Deep probes find later
-      differently worded failures, uncaptured exit-code/nested errors and overbroad expectedness.
-      Investigate all seven before any disposition → E7. **Automation level: 3.**
 
 ### Build orders (formalized as FIDs 2026-10-07)
 
-The build order for the seven active records and the remaining register tasks
+The build order for the remaining register tasks
 lives in the master record `FID-2026-1012-022` (`### Work order` for the
 schedule, `### Status board` for current state), so there is exactly one place an automation run can
 be pointed at. Its three chains: **A**, the failure-class lanes (`-024` → `-023`; `-024` →
@@ -312,9 +255,8 @@ wave start; the operator-gated items — the `0.0.36` cut, `T122`, `T186`, `T171
 `T62`'s credits and `T187` — are named in the master's "What stops for you", and nothing automates
 past them.
 
-The QOL coordinator and Waves 1–4 are also registered above and in the master's
-status board. Their source implementation is present; committing and recording
-closure evidence is the next lifecycle work, not re-implementing the waves.
+The implementation chains and QOL waves are archived with committed evidence.
+The master remains active for Chain C's specific operator/external-input holds.
 
 ## Machine-readable scope targets
 
@@ -339,49 +281,8 @@ and its remaining operator/external-input holds stay active.
      them to every write, so "present before act" is satisfied by work that
      finished days ago. Evict the line in the pass that closes the item. -->
 
-- FID-2026-1012-017: `sdk/src/impl/llm/**`, `sdk/src/run/**`,
-  `sdk/src/__tests__/tool-argument-budget.test.ts`,
-  `common/src/types/contracts/llm.ts`, `common/src/util/tool-argument-budget.ts`,
-  `common/src/util/__tests__/experience-classes.test.ts`,
-  `packages/agent-runtime/src/run-agent-step/**`,
-  `packages/agent-runtime/src/tools/stream-parser/**`,
-  `packages/agent-runtime/src/tools/stream-parser.ts`,
-  `packages/agent-runtime/src/__tests__/loop-agent-steps-native-rejection.test.ts`,
-  `packages/agent-runtime/src/tools/handlers/tool/**`, `common/src/tools/params/tool/**`
-- FID-2026-1012-021: `scripts/experiences-dedup.ts`, `scripts/experiences-recurrence*.ts`,
-  `scripts/experiences-learning-order.ts`, `scripts/experiences-repair-drafts.ts`,
-  `scripts/experiences-probe.ts`, `scripts/__tests__/experiences-class-horizon.test.ts`,
-  `scripts/learnings-validation.ts`,
-  `scripts/__tests__/experiences-learning-order.test.ts`,
-  `scripts/__tests__/experiences-repair-drafts.test.ts`,
-  `scripts/experiences-coverage.ts`, `scripts/hygiene.ts`, `scripts/lessons-to-skills.ts`,
-  `scripts/lesson-feature-pipeline.ts`, `scripts/session-end-review.ts`,
-  `scripts/validate-repository.ts`, `scripts/__tests__/experiences-coverage.test.ts`,
-  `dev/agenda.md`, `dev/experiences/**`, `package.json`,
-  `docs/design/learnings-root-cause-matrix.md`
 - FID-2026-1012-022: `dev/fids/**`, `SCOPE.md`, `docs/design/**`, `dev/experiences/**`,
   `dev/agenda.md`
-- FID-2026-1012-023: `sdk/src/tools/run-terminal-command.ts`, `sdk/src/run-state/**`,
-  `sdk/src/run/tool-call.ts`, `sdk/src/__tests__/command-execution-contract.test.ts`,
-  `sdk/src/__tests__/run-terminal-command.test.ts`,
-  `sdk/src/__tests__/command-execution-cancellation-identity.test.ts`,
-  `packages/agent-runtime/src/tools/**`, `packages/agent-runtime/src/run-agent-step/**`,
-  `packages/agent-runtime/src/hooks/**`, `common/src/types/contracts/**`,
-  `common/src/types/experience.ts`, `common/src/util/command-execution.ts`,
-  `common/src/util/experience-classes.ts`, `common/src/tools/params/tool/**`,
-  `dev/experiences/class-owners.json`, `cli/src/headless-control-plane.ts`,
-  `cli/src/chat/keyboard.ts`, `cli/src/commands/defs/core.ts`,
-  `cli/src/hooks/helpers/send-message-lifecycle.ts`,
-  `cli/src/server/gateway/run-lifecycle.ts`,
-  `cli/src/__tests__/headless-control.test.ts`
-- FID-2026-1012-024: `common/src/types/experience.ts`, `common/src/util/experiences.ts`,
-  `common/src/util/experience-*.ts`, `common/src/util/__tests__/experience-*.test.ts`,
-  `packages/agent-runtime/src/hooks/**`, `packages/agent-runtime/src/tools/tool-executor/**`,
-  `packages/agent-runtime/src/tools/stream-parser.ts`,
-  `packages/agent-runtime/src/tools/stream-parser/**`,
-  `packages/agent-runtime/test/setup-test-isolation.ts`, `common/src/types/hooks.ts`,
-  `protocol.config.yaml`, `scripts/experiences*.ts`, `scripts/__tests__/experiences*.test.ts`,
-  `scripts/session-end-review.ts`, `dev/experiences/**`
 - Release-0.0.36: `VERSION`, `package.json`, `agents/package.json`,
   `cli/package.json`, `cli/release/package.json`, `common/package.json`,
   `common/src/constants/protocol-bundle.generated.ts`, `desktop/package.json`,

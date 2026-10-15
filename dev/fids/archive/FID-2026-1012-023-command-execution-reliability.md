@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-1012-023-command-execution-reliability.md`
 **ID:** FID-2026-1012-023
 **Severity:** medium
-**Status:** fixed
+**Status:** closed
 **Created:** 2026-10-12 23:10
 **Automation level:** 3
 **YAGNI-Compliance:** Verified
@@ -556,6 +556,26 @@ fix that does not remove the records has not fixed the class.
 - Nothing was pushed.
 
 ## Resolution
+
+**Closed 2026-10-15 — execution contract complete under Q25.**
+
+- **Commit/State:** `decacf5edbab3b23fd1ab7e3f9aa2bb2cf3a52e1` plus
+  `cde61d06e6e35c01a578f6dad5f2a7da5a22ee27` (result-hook delivery and suite).
+- **Fix Description:** Finite budget validation, truthful timeout/cancellation
+  outcomes, caller/executor identity and cancellation branding across module
+  copies are implemented. The formerly unlocated abort seam is resolved.
+- **Verification Evidence:** All 16 declared gates pass. The final sequential
+  root chain passes 9,206 tests, with 23 skips and zero failures. An earlier
+  broad run failed the Windows tree-cancellation assertion; its isolated suite
+  and subsequent complete SDK and root runs pass. No cleanup repair is inferred
+  merely from those later runs; the initial result remains in the session record.
+- **Closure waiver:** Q25, `dev/experiences/closure-waivers.json`, names all five
+  stable owned classes and uses the actual final delivery time
+  2026-10-15T05:43:09Z. Historical post-initial-fix timeouts remain recorded;
+  no row follows final delivery. Observation is unproved and classes unresolved.
+- **Archived:** 2026-10-15 with the implementation-only CHANGELOG entry.
+
+### Historical implementation record
 
 **Implemented — `Status: fixed` (deterministic gates green; recurrence assertion OPEN).**
 

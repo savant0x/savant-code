@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-1012-024-failure-class-taxonomy-and-horizon.md`
 **ID:** FID-2026-1012-024
 **Severity:** high
-**Status:** converged
+**Status:** closed
 **Created:** 2026-10-12 23:10
 **Automation level:** 3
 **YAGNI-Compliance:** Verified
@@ -830,6 +830,27 @@ audit trail of the mistaken premise, not as acceptance criteria or class disposi
 - Nothing was pushed.
 
 ## Resolution
+
+**Closed 2026-10-15 — instrument and investigation complete under Q25.**
+
+- **Commit/State:** `891a8c1eec3e93701981121fcf1cfac583c057e0` plus
+  `cde61d06e6e35c01a578f6dad5f2a7da5a22ee27` (shared result-hook delivery).
+- **Fix Description:** Stable identity, complete bounded failure inspection,
+  producer-authoritative expectedness and boundary-bound exposure receipts are
+  implemented. All seven historical tool mechanisms are investigated. The
+  original causes absent from historical rows remain unknown and owned.
+- **Verification Evidence:** All 17 declared gates pass; the sequential root
+  chain passes 9,206 tests, with 23 skips and zero failures. Root typecheck,
+  lint, format, SDK build, scope checks and repository validation pass.
+- **Closure waiver:** Q25, `dev/experiences/closure-waivers.json`, explicitly
+  names all ten current owned classes and the actual final result-hook delivery
+  cutoff, 2026-10-15T05:43:09Z. No capture row follows that delivery. This
+  archives the implemented instrument, not the unknown underlying failures:
+  all classes remain unresolved, `skill_manage` exposure remains absent, and
+  no observation, dormancy, repair boundary or class-repair lesson is fabricated.
+- **Archived:** 2026-10-15 with the implementation-only CHANGELOG entry.
+
+### Historical implementation record
 
 **Instrument implemented and the seven-tool mechanism investigation complete; the observation path
 is derived from the receipt store (Loop 11) and class repairs and production observation remain

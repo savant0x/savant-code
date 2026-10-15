@@ -2,9 +2,40 @@
   "version": 1,
   "waivers": [
     {
+      "fid": "FID-2026-1012-023",
+      "grantedAt": "2026-10-15",
+      "fixCutoff": "2026-10-15T05:43:09Z",
+      "reason": "Q25 implementation-only archival, resumed by operator on 2026-10-15 after reviewing the closure entry. Execution and cancellation contracts are committed at decacf5e and cde61d06; qualified production observation remains unproved. No class repair or silence is claimed, and post-fix recurrence remains rejected.",
+      "classes": [
+        "v1:run_readonly_command:timeout:undetermined",
+        "v1:run_terminal_command:timeout:undetermined",
+        "v1:run_readonly_command:cancelled:undetermined",
+        "v1:glob:cancelled:undetermined",
+        "v1:list_directory:cancelled:undetermined"
+      ]
+    },
+    {
+      "fid": "FID-2026-1012-024",
+      "grantedAt": "2026-10-15",
+      "fixCutoff": "2026-10-15T05:43:09Z",
+      "reason": "Q25 implementation-only archival, resumed by operator on 2026-10-15 after reviewing the closure entry. Instrument, seven-tool investigation and result-hook delivery are committed at 891a8c1e and cde61d06. Historical underlying causes and qualified production observation remain unresolved; no repair, dormancy or silence is claimed, and post-fix recurrence remains rejected.",
+      "classes": [
+        "v1:read_files:read-incomplete:undetermined",
+        "v1:run_readonly_command:command-exit:undetermined",
+        "v1:run_readonly_command:refused:undetermined",
+        "v1:str_replace:cause-not-recorded:undetermined",
+        "v1:read_url:cause-not-recorded:undetermined",
+        "v1:code_search:cause-not-recorded:undetermined",
+        "v1:run_readonly_command:cause-not-recorded:undetermined",
+        "v1:skill_manage:cause-not-recorded:undetermined",
+        "v1:run_terminal_command:cause-not-recorded:undetermined",
+        "v1:write_file:cause-not-recorded:undetermined"
+      ]
+    },
+    {
       "fid": "FID-2026-1012-017",
       "grantedAt": "2026-10-14",
-      "fixCutoff": "2026-10-13T04:05:07Z",
+      "fixCutoff": "2026-10-15T14:40:31Z",
       "reason": "Operator-approved Q25 archival of an implementation-complete lane; deterministic gates are green, but qualified production observation remains unproved. This waiver does not claim repair or silence and does not excuse recurrence.",
       "classes": [
         "v1:read_files:incomplete-arguments:unexpected",

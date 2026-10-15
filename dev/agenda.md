@@ -3,7 +3,7 @@
 > Auto-refreshed at session end from dev/experiences/raw-traces.jsonl.
 > 1-3 active high-leverage capabilities/anti-patterns; ≤ 50 lines.
 
-> All-time unresolved classes: 58; age does not prove repair.
+> All-time unresolved classes: 59; age does not prove repair.
 > Full census and ownership: `bun scripts/experiences-recurrence.ts`.
 
 - [ ] **read_url** — Failed to fetch URL: 404 Not Found

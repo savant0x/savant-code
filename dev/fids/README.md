@@ -5,36 +5,27 @@ operator decision, implementation, runtime review, or closure evidence.
 
 ## Current active FIDs
 
-The 2026-10-14 resumption leaves seven active records. The four QOL waves and
-their coordinator are committed in `b959019e`, closed and archived with 52/52
-passing child gates. The failure-class lanes require
-investigated causes and qualified production observation. The Tier 1 provider-
-parity wave is committed and archived at `f6ce2109`; Cloudflare needs external
-account configuration, and the
-remaining master awaits child closure. `FID-2026-1014-001` (guard over-breadth +
-SEC-3 restoration) and `FID-2026-1014-003` (attribution enforcement) closed and
-archived on 2026-10-14; `FID-2026-1014-002` (closed-FID artifact census) stays
-active and carries the open decision in `dev/operator-decisions.md` Q24, and Q23
-owns the read-only guard's routing ruling. FID-2026-1012-018, -019, and -020
-closed under Q25 and were archived on 2026-10-14; FID-2026-1012-017 remains
-active because four post-fix classes still fail the recurrence gate.
+The 2026-10-15 completion leaves one active record: the master plan. The four
+implementation records `FID-2026-1012-017`, `-021`, `-023` and `-024` are closed
+and archived with committed implementation and passing gates. Named Q25 waivers
+preserve the production observation limitation: 591 capture records / 59 stable
+classes / zero issues, all unresolved. No class repair is claimed.
 
-Evidence and per-record next actions are in the
-[audit report](../session-summaries/2026-10-14-fid-folder-ground-truth-audit.md).
+The master retains the operator/external-input work registered in `SCOPE.md`.
+Earlier provider and artifact-census records are also archived; no Cloudflare
+account configuration is a completion requirement under Q27. Current evidence:
+[completion record](../session-summaries/2026-10-15-active-fid-completion.md).
 
 | FID | Status | Current closure condition |
 |---|---|---|
-| `FID-2026-1012-017` | fixed | Recurrence window open; four classes still recur and the remaining classes are unobserved. |
-| `FID-2026-1012-021` | verified | Machinery is green; class observation and formal closure remain open. |
-| `FID-2026-1012-022` | converged | Master plan; closes only after every child closes and allocation is re-run. |
-| `FID-2026-1012-023` | fixed | Production timeout/abort observation remains open. |
-| `FID-2026-1012-024` | converged | Instrument is implemented; underlying repair and production observation remain open. |
-| `FID-2026-1013-005` | analyzed | Cloudflare catalog is blocked on the account ID and API token. |
-| `FID-2026-1014-002` | analyzed | Census triage and the artifact-existence gate await the Q24 ruling. |
+| `FID-2026-1012-022` | converged | Implementation children archived; remaining operator/external-input register items retain their specific blockers. |
 
 The active queue is intentionally non-empty under the FID closure contract.
 Completed records are moved to [`archive/`](archive/) with a CHANGELOG entry and
 archive-index entry; see [`archive/README.md`](archive/README.md).
+
+The latest four closures are indexed in
+[`archive/2026-10-15-closures.md`](archive/2026-10-15-closures.md).
 
 ## Historical queue snapshots
 

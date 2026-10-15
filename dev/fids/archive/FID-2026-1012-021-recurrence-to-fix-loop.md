@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-1012-021-recurrence-to-fix-loop.md`
 **ID:** FID-2026-1012-021
 **Severity:** high
-**Status:** verified
+**Status:** closed
 **Created:** 2026-10-12 20:15
 **Automation level:** 2
 **YAGNI-Compliance:** Verified
@@ -443,6 +443,25 @@ Current machinery completion evidence (2026-10-13) supersedes the older open lim
 - The machinery is implemented and committed; no class is claimed to have stopped recurring.
 
 ## Resolution
+
+**Closed 2026-10-15 — machinery complete.**
+
+- **Commit/State:** `2a34e558`; committed machinery and subsequent instrument
+  work are present at `f622481661615b8bd544fbda1cdd67340e275b51`.
+- **Fix Description:** Coverage enforcement, qualified lesson-last ordering,
+  idempotent proposed FID drafting and explicit row/time-cluster reporting are
+  implemented with production callers. No implementation step remains open.
+- **Verification Evidence:** All 13 declared gates pass. Root tests: 9,206 PASS /
+  23 SKIP / zero FAIL; root typecheck, lint, format and repository validation pass.
+- **Acceptance boundary:** The master distinguishes machinery closure from
+  class repair. Q25 and the approved 2026-10-15 closure entry accept the completed
+  machinery while its class-owning consumers preserve their named observation
+  waivers in `dev/experiences/closure-waivers.json`. This record owns no classes
+  and makes no production repair claim. Operator routing of future proposals
+  remains enforced behavior, not an unimplemented step.
+- **Archived:** 2026-10-15 with the CHANGELOG entry and committed evidence.
+
+### Historical implementation record
 
 **Machinery implemented — `Status: verified`; class recurrence assertions OPEN.**
 

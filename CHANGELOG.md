@@ -10,6 +10,39 @@
 > the v0.0.36 cut. Release notes are written here at cut time; nothing in this
 > section ships until then.
 
+## 2026-10-15 — failure-class implementation completion
+
+### Fixed
+
+- **FID-2026-1012-017 (critical):** retained the observed rejection cause through
+  stream settlement, later retries and exhaustion. Rejected arguments receive
+  schema-correction guidance; truncation retains size guidance and existing retry
+  limits. Six production-loop regressions pass; implementation `f6224816`.
+- **FID-2026-1012-021 (high):** recurring failures have explicit owners, missing
+  ownership fails repository validation, repair proposals are idempotent and
+  operator-routed, and class-repair lessons require qualified observation.
+  Thirteen declared machinery gates pass.
+- **FID-2026-1012-023 (medium):** validated timeout budgets, caller/executor
+  identity and producer-authoritative cancellation metadata survive SDK dispatch
+  and module-copy boundaries. Sixteen declared gates pass.
+- **FID-2026-1012-024 (high):** stable class identity, bounded result inspection,
+  producer-authoritative expectedness, failure capture and boundary-bound exposure
+  receipts are implemented. All seven historical producer mechanisms have been
+  investigated; seventeen instrument gates pass.
+
+### Verification and archival
+
+Root tests: 9,206 passed / 23 skipped / zero failures. Root typecheck, ESLint,
+Markdown lint, formatting, SDK build and repository validation pass. The four
+implementation records close and archive on 2026-10-15 with local commit evidence.
+
+Q25 permits named archival waivers for implementation-complete lanes; it does
+not prove class repair. The capture still has 591 records / 59 stable classes /
+zero ownership issues, all unresolved. Historical rows, repair boundaries and
+exposure receipts remain unchanged. Each class owner retains its named waiver
+and actual final implementation cutoff in `dev/experiences/closure-waivers.json`.
+The master remains active for its registered operator/external-input holds.
+
 ## 2026-10-15 — Approved resume decisions (FID-2026-1015-001, medium)
 
 ### Fixed

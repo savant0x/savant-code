@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-1012-017-incomplete-tool-call-arguments-root-cause.md`
 **ID:** FID-2026-1012-017
 **Severity:** critical
-**Status:** fixed
+**Status:** closed
 **Created:** 2026-10-12 20:15
 **Automation level:** 3
 **YAGNI-Compliance:** Verified
@@ -629,6 +629,25 @@ repository gate).
   total, and the capture-volume question is registered to `FID-2026-1012-024`.
 
 ## Resolution
+
+**Closed 2026-10-15 — implementation complete under Q25.**
+
+- **Commit/State:** `f622481661615b8bd544fbda1cdd67340e275b51`.
+- **Fix Description:** All nine implementation loops are delivered. The final
+  correction retains the observed rejection cause through later retries and
+  exhaustion; the earlier Loop 8 write-surface limitation no longer applies.
+- **Verification Evidence:** 13 declared gates passed; root tests passed with
+  9,206 PASS / 23 SKIP / zero FAIL. Typecheck, lint, format, SDK build and
+  repository validation passed before archival.
+- **Closure waiver:** Q25, `dev/experiences/closure-waivers.json`, explicitly
+  names all 19 owned classes. Its final implementation cutoff is the actual
+  `f6224816` commit time, 2026-10-15T14:40:31Z. No captured row follows that
+  correction. Earlier post-staging recurrence remains in the immutable ledger.
+  Every class remains unresolved; no qualified observation or repair is claimed.
+- **Archived:** 2026-10-15; the CHANGELOG entry records implementation-only
+  acceptance, preserving the production observation limitation.
+
+### Historical implementation record
 
 **Implemented — `Status: fixed`.**
 

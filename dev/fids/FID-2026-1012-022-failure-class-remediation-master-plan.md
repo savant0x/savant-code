@@ -353,15 +353,25 @@ activation), and the child's id is recorded in this table when it exists.
 
 ### Status board (the agent updates this; it is what an operator reads)
 
-**Continuation 2026-10-15:** Five records remain active: `-017`, `-021`, this
-master, `-023` and `-024`. The live recurrence census reports 591 records / 59
-stable classes / zero issues; no repair boundaries or qualified observations
-exist. FID-017 Loop 9 resolves the table's earlier cause-propagation limitation:
-the rejection decision now survives stream settlement, LLM step results, later
-retry guidance and exhaustion. Production-loop controls failed before repair
-and pass afterwards (29 focused tests). Root typecheck passes; FID-021's 13 and
-FID-023's 16 declared gates pass live. Their production observation requirements
-remain active pending real evidence or an explicit operator waiver.
+**Completion 2026-10-15:** Four final implementation records are closed and
+archived: `-017`, `-021`, `-023` and `-024`. This master is the sole active FID.
+The current census remains 591 records / 59 stable classes / zero issues, with
+zero observed classes and no repair boundaries. Q25 waivers explicitly name
+the implementation-complete class owners and their actual final fix cutoffs;
+archival does not establish class repair. FID-017 Loop 9 is committed at
+`f6224816`; all 59 child verification gates pass (13 + 13 + 16 + 17).
+Root tests pass 9,206 / 23 SKIP / zero FAIL; typecheck, lint, formatting, SDK
+build and repository validation pass. The operator approved the prepared
+CHANGELOG insertion with "yes resume", preserving all historical bytes.
+
+**Remaining master work:** Chain C retains the specific operator/external
+constraints in `SCOPE.md`: release cut, Savant-Free removal and dependent gate
+coverage, provider verdict/consent decisions, control manifest and funding,
+vendor window evidence, provider credits and skill trust grants. No such
+constraint is resolved by archiving implementation-complete children.
+
+**Historical board (2026-10-14):** The dated table below records the earlier
+state; the completion paragraph above is the current state.
 
 | Item | Chain · wave | Record | Status (2026-10-14 audit) |
 |---|---|---|---|
