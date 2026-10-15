@@ -1,7 +1,10 @@
 import { toolNames } from '@savant-code/common/tools/constants'
 import { userMessage } from '@savant-code/common/util/messages'
 
-import { getSteeringMessage } from '../../run-agent-step/constants'
+import {
+  getSteeringMessage,
+  NATIVE_TOOL_CALL_REJECTION_STEERING,
+} from '../../run-agent-step/constants'
 import { withSystemTags } from '../../util/messages'
 
 import type { AgentTemplate } from '../../templates/types'
@@ -138,10 +141,32 @@ export function handleStreamErrorChunk(params: {
   // that reports the name-only failure as native-incomplete, whose own message
   // says "Incomplete arguments"); when the class arrived already honest
   // (`tool-unavailable`) its message is kept.
+  // FID-2026-1012-017: which lever the appended steering pulls depends on the
+  // CAUSE the chunk carries, because the two halves of this class need opposite
+  // advice. Truncation evidence (a reported output-cap cut, or the classifier's
+  // own structural marker) means the payload really was too large, so the
+  // tool's size steering applies. An observed REJECTION means the payload
+  // arrived and was refused, so size is inert: the classifier read the schema
+  // failure, or the provider finished the response normally ('stop' /
+  // 'tool-calls'), which excludes a mid-argument cut. A cause nothing observed
+  // keeps today's ladder (fail-closed) — this narrows advice, never widens a
+  // claim. Both ends of the seam read one discriminator (Law 13).
+  const argumentsTruncated =
+    'argumentsTruncated' in chunk && chunk.argumentsTruncated === true
+  const finishReason = 'finishReason' in chunk ? chunk.finishReason : undefined
+  const schemaIssue = 'schemaIssue' in chunk ? chunk.schemaIssue : undefined
+  const truncationObserved = argumentsTruncated || finishReason === 'length'
+  const rejectionObserved =
+    !truncationObserved &&
+    (schemaIssue !== undefined ||
+      finishReason === 'stop' ||
+      finishReason === 'tool-calls')
   const steering = isUnavailableToolCall
     ? ` Your available tools for this step are: ${availableToolNames.length > 0 ? availableToolNames.join(', ') : 'none'}. Call one of them — a tool outside that list cannot be used, and retrying it will not succeed.`
     : errorClass === 'native-incomplete' && erroredToolName !== undefined
-      ? getSteeringMessage(erroredToolName, 1)
+      ? rejectionObserved
+        ? NATIVE_TOOL_CALL_REJECTION_STEERING
+        : getSteeringMessage(erroredToolName, 1)
       : ''
   const body =
     errorClass === 'native-incomplete' && isUnavailableToolCall

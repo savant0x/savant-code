@@ -110,12 +110,13 @@ export type StreamErrorChunk =
       message: string
       errorClass: 'native-incomplete'
       toolName: string
-      /** Provider finish reason carried through from the native error
-       *  ('length' = output-cap hit). See NativeToolCallError. */
+      /** 'length' = output-cap hit. See NativeToolCallError. */
       finishReason?: string
-      /** FID-2026-1012-009: the arguments were cut mid-document per the
-       *  classifier's structural evidence. See NativeToolCallError. */
+      /** The arguments were cut mid-document. See NativeToolCallError. */
       argumentsTruncated?: boolean
+      /** FID-2026-1012-017: the field/issue the schema refused; carried so the
+       *  runtime can select its steering by cause. See NativeToolCallError. */
+      schemaIssue?: string
     }
   | {
       type: 'error'

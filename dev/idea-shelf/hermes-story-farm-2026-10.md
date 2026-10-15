@@ -36,6 +36,11 @@ Cron: every 3 days, deliver origin. Baseline JSON = the frozen side of the diff.
 Re-activation trigger: any cron failure — check the page is still serving tiles inline
 (they may move to client-render or an API; the extractor assumes inline tiles).
 
+## Sweep log
+- 2026-10-08 (first): 321 tiles, 44 pain / 86 workflow / 72 memory-system / 31 economics / 88 other — baseline v2
+- 2026-10-10: 0 new stories (parser upgraded v2→v3, 7 nav/footer leaks dropped) — delta note
+- 2026-10-13: 0 new stories, 0 rotation (set-comparison verified; keep-first dedupe false-positive pitfall found and recorded) — delta note
+
 ## The pattern (why this matters)
 
 Teknium built the scraper to market Hermes; it doubles as the requirements-research

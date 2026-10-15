@@ -187,5 +187,14 @@ export function normalizeNativeToolCallStreamError(
       finishReason: nativeError.finishReason,
     }),
     ...(isTruncated && { argumentsTruncated: true }),
+    // FID-2026-1012-017: the same cause that selected the message travels on
+    // the chunk, so the runtime selects its steering by evidence instead of
+    // appending size advice to a message that says the payload was not cut.
+    // Exclusive with the truncation marker by construction: a cut payload never
+    // parsed, so it can name no issue (Law 13 — one cause, one discriminator).
+    ...(!isTruncated &&
+      nativeError.schemaIssue !== undefined && {
+        schemaIssue: nativeError.schemaIssue,
+      }),
   }
 }

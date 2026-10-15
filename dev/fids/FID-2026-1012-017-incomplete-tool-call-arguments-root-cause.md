@@ -178,6 +178,7 @@ repository gate).
 - gate: test sdk/src/impl/__tests__/llm-native-tool-call-schema-issue.test.ts
 - gate: test packages/agent-runtime/src/tools/handlers/tool/__tests__/chunked-write.test.ts
 - gate: test packages/agent-runtime/src/tools/stream-parser/__tests__/error-chunk-steering.test.ts
+- gate: test packages/agent-runtime/src/tools/stream-parser/__tests__/error-chunk-rejection-steering.test.ts
 - gate: test packages/agent-runtime/src/tools/stream-parser/__tests__/native-failure-deduper.test.ts
 - gate: test common/src/util/__tests__/experience-classes.test.ts
 - gate: typecheck common
@@ -187,13 +188,14 @@ repository gate).
 
 ### Verification Receipt
 
-- fingerprint: sha256:2ec23e163352388d8653114051908752ed3a34458cab99f861d6a74504b37219
-- verified: 2026-10-14T19:16:23.191Z
+- fingerprint: sha256:1ee67e94e065146d40e71364ca57dad06469dde42ee89e6e99e0f5e1be8fe0b8
+- verified: 2026-10-15T06:10:14.143Z
 - test sdk/src/__tests__/tool-argument-budget.test.ts: exit 0
 - test sdk/src/impl/__tests__/llm-native-tool-call.test.ts: exit 0
 - test sdk/src/impl/__tests__/llm-native-tool-call-schema-issue.test.ts: exit 0
 - test packages/agent-runtime/src/tools/handlers/tool/__tests__/chunked-write.test.ts: exit 0
 - test packages/agent-runtime/src/tools/stream-parser/__tests__/error-chunk-steering.test.ts: exit 0
+- test packages/agent-runtime/src/tools/stream-parser/__tests__/error-chunk-rejection-steering.test.ts: exit 0
 - test packages/agent-runtime/src/tools/stream-parser/__tests__/native-failure-deduper.test.ts: exit 0
 - test common/src/util/__tests__/experience-classes.test.ts: exit 0
 - typecheck common: exit 0
@@ -377,6 +379,16 @@ repository gate).
       test were removed in Loop 7.
 - [x] **Not claimed:** any class having stopped recurring. No fix boundary is written, so every owned
       key reports `unresolved` and the 14-day/three-session observation window has not started.
+- [x] **Loop 8 — the rejection half steers by cause:**
+      `packages/agent-runtime/src/tools/stream-parser/__tests__/error-chunk-rejection-steering.test.ts`
+      **4 pass / 0 fail**. For the measured row the steered message keeps the SDK's rejection body and
+      gains `NATIVE_TOOL_CALL_REJECTION_STEERING`, with no size advice anywhere in it; an output-cap cut
+      keeps `read fewer files at a time`; a readable schema failure steers by cause with no finish
+      reason at all; an unmapped tool takes the correction steering instead of the generic
+      split-the-work fallback. `schemaIssue` now travels on the chunk and is pinned both ways in the SDK
+      suite (a schema failure carries the field path; a cut payload carries the marker and no issue).
+      Typechecks (common, sdk, packages/agent-runtime) exit 0; `quality:report` PASS over 1,502 baselined
+      files after the two ceilings this change first breached were repaired by extraction.
 - [x] **Loop 5 measured the opposite for four of the nineteen:** 20 post-fix rows after both fix
       commits (`suggest_followups` 17, `basher` 1, `transition_phase` 1, `browser_use` 1), all
       `errorClass: native-incomplete` and all carrying this lane's own budget text. The window cannot
@@ -501,6 +513,64 @@ repository gate).
   write side effect or retaining an uncalled helper.
 - **CHANGE DELTA:** small correction to the implementation and declared gate set.
 
+### Loop 8 — The rejection half: steering selected by cause (2026-10-15, automation level 3)
+
+- **RED — the class is silent, and the rejection half was never treated as its own cause.** Re-measured
+  against the capture at HEAD: **zero** `Incomplete arguments for tool` rows after Loop 6's commit
+  (`232f0022`, 2026-10-13T19:19:51Z), and for 15 of the lane's 19 owned keys nothing since the Loop 3/4
+  fixes either — silence, and this record's own Boundaries already say silence is not evidence. The
+  measurable work is therefore the half Loop 5 *did* measure: the 20 post-fix rows, every one
+  `errorClass: native-incomplete`, `finishReason: 'tool-calls'` (the provider finished the response
+  normally), **no** `argumentsTruncated` marker, carrying the SDK's own rejection body — *"the provider
+  rejected the call's arguments and nothing observed indicates truncation. Correct the argument
+  values…"*. The runtime appended payload steering on top of that body — measured verbatim on the last
+  row — `…divide the work across calls instead of sending the same payload again. One tool call's
+  arguments may occupy at most 16384 characters…` — and at strikes 2+ the flat claim *"Your read_files
+  arguments were rejected because the file list is too large"*. That is advice about a cut nobody
+  observed, appended to a message that says the opposite — and it is the loop: the model is told to
+  shrink a payload that already arrived, re-emits it, and the class fires again.
+- **GREEN — one discriminator at both ends of the seam.** `error-chunk` now selects the appended
+  steering from the cause the chunk carries, using the **same** discriminator the message uses (Law 13):
+  truncation evidence (`argumentsTruncated`, or `finishReason: 'length'`) ⇒ the tool's existing size
+  steering; an **observed rejection** — the classifier read the schema failure, or the provider reported
+  a completed response (`stop` / `tool-calls`, which excludes a mid-argument cut) ⇒
+  `NATIVE_TOOL_CALL_REJECTION_STEERING`, which states that no truncation was observed and asks for
+  schema-conforming values instead. An unknown cause (no marker and no finish reason) keeps today's
+  ladder, fail-closed: the change narrows advice, it never widens a claim. The field the classifier read
+  now travels on the chunk — `StreamErrorChunk`'s `native-incomplete` variant gained the optional
+  `schemaIssue`, populated by `errors.ts` under the same exclusivity that governs the message clause — so
+  the vendor path, which has no finish reason to offer, is selected correctly too.
+- **AUDIT (run this pass):** `error-chunk-rejection-steering.test.ts` **4 pass / 0 fail**; the pre-existing
+  `error-chunk-steering.test.ts` **10 pass / 0 fail** and `native-failure-deduper.test.ts`
+  **5 pass / 0 fail** unchanged; the SDK's `llm-native-tool-call.test.ts` +
+  `llm-native-tool-call-schema-issue.test.ts` **20 pass / 0 fail**. Typechecks: common, sdk,
+  packages/agent-runtime exit 0. `quality:report` PASS (1,502 baselined files) after the two ceilings this
+  change first breached were repaired by **extraction, not suppression**: the new pins moved into their
+  own suite (423 → 274 lines) and `common/src/types/contracts/llm.ts`'s duplicated field docs were
+  collapsed to point at `NativeToolCallError` (303 → 297). ESLint and Prettier clean on every changed
+  file.
+- **ADVERSARIAL:** (a) *Is "the provider finished the response" real evidence?* It comes from the
+  provider: had the output cap cut the arguments, the same chunk would carry `finishReason: 'length'`,
+  which is exactly what the truncation branch reads. The measured rows carry `tool-calls`. (b) *Does this
+  weaken the ladder for the class this record exists to fix?* No — the ladder is untouched: the cut cause
+  keeps it, an unknown cause keeps it, and only an **observed** rejection stops asserting size. (c)
+  *Could the new field leak the payload?* No: `schemaIssue` carries only the path/code/expected already
+  rendered into the message, never a value (pinned since Loop 6). (d) *Does this stop the class?* **No,
+  and it is not claimed** — the refusal is provider-side; what this loop removes is the false diagnosis
+  that made the retry re-send the same call.
+- **STATED BOUNDARY — the escalation ladder is outside this record's write surface.**
+  `getSteeringMessage(toolName, strike)` at strikes 2+ (`native-strikes.ts`) still selects its text from
+  the tool name alone, because the cause would have to reach it through
+  `packages/agent-runtime/src/tools/stream-parser.ts` — and this record's register target,
+  `packages/agent-runtime/src/tools/stream-parser/**`, is a directory glob that does **not** cover the
+  sibling file `tools/stream-parser.ts` (the register's matcher anchors `**` after the separator:
+  `^packages/agent-runtime/src/tools/stream-parser/.*$`). The register was **not** edited to widen a
+  surface mid-record. Strike 1 — the only steering the measured recurrence ever reached, and the one
+  FID-2026-0909-007 calls "the first, most-important retry" — is fixed; the escalation path needs either
+  a register target covering that file or the cause carried in the step result.
+- **CHANGE DELTA:** 4 source files (1 common contract, 1 sdk, 2 agent-runtime), 1 suite added, 2 suites
+  extended, 0 ledger rows rewritten, 0 classes closed; `fix-boundaries.json` stays empty.
+
 ## Boundaries
 
 - The trace ledger stores only each failure's first line, so the 193 records may span several
@@ -511,6 +581,12 @@ repository gate).
 - A reduction in the recorded count is claimed only after the recurrence assertion window
   passes. Until then the class is open and no lesson is written for it. Loop 5 shows the reduction has
   not happened for four of the nineteen classes, so the window cannot start for them at all.
+- **Loop 8 states where the cause selection stops:** the steering appended at strike 1 is selected by
+  cause; the strike 2+ escalation (`native-strikes.ts`) still receives only the tool name, so it cannot
+  distinguish a cut from a rejection. Carrying the cause there requires
+  `packages/agent-runtime/src/tools/stream-parser.ts`, which this record's register target
+  (`…/tools/stream-parser/**`) does not cover. No class claim is made either way: the four Loop 5 classes
+  stay open and the other fifteen stay unobserved, not clean.
 - **Loop 6 bounds the count itself:** one response contributes one ledger row per rejected tool-call
   part, so a class's row count is an upper bound on occurrences, not a count of them (measured: 20 rows
   from one response). Every class claim in this record is stated over the window, never over a row
@@ -536,6 +612,13 @@ uncalled filesystem commit helper because the production proposal tool intention
 
 `fixed` — the status for "implementation exists, gates green, awaiting the observation window". It is not
 `closed`: **no class has been shown to have stopped recurring.**
+
+**Loop 8 (2026-10-15)** landed the rejection half's actionable part: the steering the runtime appends to a
+`native-incomplete` call is now selected by the cause the chunk carries — the same discriminator the SDK's
+message uses — so an observed rejection is told the values must satisfy the schema instead of being told its
+payload is too large, while a cut payload (and an unknown cause) keeps the existing size ladder. The field
+the classifier read travels on the chunk (`schemaIssue`) so the vendor path selects correctly with no finish
+reason at all. Nothing here can prevent the provider's refusal: it is provider-side, and it stays open.
 
 **Loop 6 (2026-10-13)** landed the second half of the emit path: the rejection now names the field the schema
 refused (`schemaIssue`), and a repeated part of the same call-out steers once instead of once per part. It makes no

@@ -36,6 +36,15 @@ test('names the field the tool schema rejected', () => {
   expect(result?.message).toContain(
     'Correct the argument values so they satisfy the tool schema',
   )
+  // FID-2026-1012-017 (Loop 8): the cause travels on the chunk too, so the
+  // runtime selects cause-correct steering instead of appending size advice to
+  // a message that says the payload arrived and was refused.
+  if (result?.errorClass !== 'native-incomplete') {
+    throw new Error('the schema failure must classify as native-incomplete')
+  }
+  expect(result.schemaIssue).toBe(
+    'followups[0].prompt — invalid_type (expected string)',
+  )
 })
 
 test('never carries the received value into the recovery text', () => {
@@ -96,6 +105,14 @@ test('a cut payload never claims a schema issue', () => {
 
   expect(result?.message).toContain('Split the work into smaller calls')
   expect(result?.message).not.toContain('failed the tool schema at')
+  // FID-2026-1012-017: the two causes stay exclusive on the chunk as well — a
+  // cut payload carries the truncation marker and can name no issue, so the
+  // runtime keeps its size steering for this one.
+  if (result?.errorClass !== 'native-incomplete') {
+    throw new Error('a cut payload must classify as native-incomplete')
+  }
+  expect(result.argumentsTruncated).toBe(true)
+  expect(result.schemaIssue).toBeUndefined()
 })
 
 test('rejects a hostile non-string schema issue at the guard', () => {

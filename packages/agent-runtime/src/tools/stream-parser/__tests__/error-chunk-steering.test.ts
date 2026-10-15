@@ -268,4 +268,7 @@ describe('native-incomplete strike-one steering (FID-2026-0909-007)', () => {
       )
     })
   })
+  // FID-2026-1012-017: the provider-side rejection pins moved to
+  // `error-chunk-rejection-steering.test.ts` so this suite stays inside the
+  // 300-line ceiling.
 })

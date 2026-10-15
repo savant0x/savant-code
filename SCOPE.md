@@ -241,6 +241,15 @@ with FID-024 owning capture/expectedness corrections and FID-014 owning class-to
       Measured: the 20 post-fix rows are one response's parts (17 the same tool, tail pair 10 ms apart),
       so a class's row count is an upper bound on occurrences. The four classes that are still firing
       stay open and the fifteen others stay unobserved, not clean.
+      **Loop 8 (2026-10-15):** re-measured — **zero** incomplete-argument rows after Loop 6's commit, and
+      nothing since the Loop 3/4 fixes for 15 of the 19 owned keys. The rejection half's actionable part
+      landed: the steering the runtime appends is selected by cause (truncation evidence ⇒ the tool's
+      size ladder, an observed rejection ⇒ correct the values), using the same discriminator the SDK's
+      own message uses, and the schema field the classifier read now travels on the chunk. The refusal
+      itself is provider-side and cannot be repaired locally; the strike 2+ escalation stays size-worded
+      because the cause cannot reach `native-strikes.ts` without `packages/agent-runtime/src/tools/stream-parser.ts`,
+      a file this item's target glob (`…/tools/stream-parser/**`) does not cover. No class claim either
+      way.
 
 **Q25 child-lane closure 2026-10-14:** FID-2026-1012-018, FID-2026-1012-019,
 and FID-2026-1012-020 are closed and archived under their named waivers. Their

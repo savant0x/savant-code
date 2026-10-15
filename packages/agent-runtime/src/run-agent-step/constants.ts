@@ -123,9 +123,32 @@ export function buildToolUnavailableExhaustedMessage(
 }
 
 /**
+ * FID-2026-1012-017 (Loop 8): the steering for the OTHER half of this class —
+ * a call the provider rejected without any truncation being observed. Every
+ * message in the map above names a SIZE cause, which is right only when the
+ * payload was actually cut. Measured 2026-10-13T05:08Z: one response produced 20
+ * `native-incomplete` rows whose SDK body said "the provider rejected the call's
+ * arguments and nothing observed indicates truncation. Correct the argument
+ * values…", and the runtime appended size steering on top of every one — so the
+ * model was told to shrink a payload that had already arrived, re-sent the same
+ * call, and the class did not stop. This states the observed cause and removes
+ * the inert lever; the corrective action (fix the argument values, named by the
+ * SDK when the schema failure was readable) is the one that can succeed.
+ *
+ * Selected by the same discriminator the SDK's message uses — see
+ * `handleStreamErrorChunk` — so both ends of the seam tell one story (Law 13).
+ */
+export const NATIVE_TOOL_CALL_REJECTION_STEERING =
+  ' No truncation was observed for this call, so a different payload size will not help: re-emit it once with argument values that satisfy the tool schema.'
+
+/**
  * FID-2026-0819-004: return the appropriate steering message for a tool at
  * a given strike number. Strike 1 = hint, strike 2 = explicit, 3+ = example.
  * Falls back to the generic message for unknown tools.
+ *
+ * FID-2026-1012-017: this is the TRUNCATION-cause steering (size). A rejection
+ * that was observed as such takes `NATIVE_TOOL_CALL_REJECTION_STEERING`
+ * instead; a cause nothing observed still takes this ladder, fail-closed.
  */
 export function getSteeringMessage(
   toolName: string | undefined,
