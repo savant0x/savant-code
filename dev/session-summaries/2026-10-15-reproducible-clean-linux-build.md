@@ -28,6 +28,9 @@
   use path-scoped staging and must not absorb those changes.
 - The aggregate test run exposed a Windows sandbox-workspace cleanup race; the
   cleanup path now retries removal after child-process shutdown.
+- The first authorized push was refused by the preserved credential scan because
+  historical provider documentation used an environment-variable placeholder in
+  a bearer-header example. The scanner now recognizes that placeholder form.
 
 ### Dependencies
 
@@ -50,7 +53,7 @@
    aggregate test gate.
 5. [implemented] Verified repository state, lockfile install contract, build,
    workspace tests, Docker build/run, path scans, and pre-push hook preservation.
-6. [implemented] Created commit `9d55f7ae`; push
+6. [implemented] Created commits `9d55f7ae` and `914597e5`; push
    `main` to `origin/main` after the pre-push gates pass.
 
 ---
@@ -92,6 +95,12 @@
 - **FID:** None
 - **Status:** resolved by retrying temporary workspace removal after child exit; targeted and full workspace tests pass
 
+### Issue 4: Credential-scan placeholder false positive
+
+- **Severity:** medium
+- **FID:** None
+- **Status:** resolved by distinguishing uppercase environment-variable placeholders from bearer token values; the focused credential-scan suite passes
+
 ---
 
 ## Validation Results
@@ -106,6 +115,7 @@
 - [implemented] `bun run validate:repository`: PASS
 - [implemented] `docker build --tag savant-code:local .`: PASS
 - [implemented] `docker run --rm savant-code:local bun run --cwd=cli src/index.tsx --version`: PASS (`0.0.36`)
+- [implemented] `bun test scripts/public-release-credential-scan.test.ts`: PASS (3 tests)
 
 ---
 
@@ -122,7 +132,7 @@
 
 - **Branch:** `main`
 - **Uncommitted Changes:** yes; pre-existing work plus this session's changes
-- **New Commits:** `9d55f7ae` — `chore(reproducibility): add clean Linux build workflow`
+- **New Commits:** `9d55f7ae` — `chore(reproducibility): add clean Linux build workflow`; `914597e5` — `docs(session): record reproducibility verification`
 
 ---
 
@@ -138,14 +148,16 @@
 ### Priority Tasks
 
 1. [implemented] Reproducibility implementation and local commit.
-2. [blocked] Remote push is waiting on the pre-push hook's aggregate test
-   invocation to return successfully in this shell environment.
+2. [blocked] Remote push is waiting on the pre-push hook's remaining gates after
+   its credential false positive was corrected.
 
 ### Blockers
 
-- Aggregate root test invocation is blocked by the shell runner terminating the
-  long-lived child process before it returns an exit code. The constituent
-  workspace test commands provide the recorded test evidence.
+- The aggregate root test invocation is blocked by the shell runner terminating
+  the long-lived child process before it returns an exit code. The constituent
+  workspace test commands provide the recorded test evidence. The first push
+  attempt also exposed and then received a fix for the historical placeholder
+  false positive in the credential scan.
 
 ### Notes for Next Agent
 

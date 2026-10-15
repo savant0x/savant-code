@@ -66,6 +66,10 @@ describe('public release contract — credential scan', () => {
         path.join(repo, 'docs-example.txt'),
         'Use a token like ghp_abcdefghijklmnopqrstuvwxyz0123456789 in your config\n',
       )
+      writeFileSync(
+        path.join(repo, 'authorization-placeholder.txt'),
+        'Authorization: Bearer AIHUBMIX_API_KEY\n',
+      )
 
       expect(scanStagedCredentials(['safe.ts'], repo)).toEqual([])
       expect(scanStagedCredentials(['leaked.txt'], repo)).toHaveLength(1)
@@ -74,6 +78,11 @@ describe('public release contract — credential scan', () => {
       expect(scanStagedCredentials(['.env.example'], repo)).toEqual([])
       // Sequential/alphabetic token-shaped prose must not block a commit.
       expect(scanStagedCredentials(['docs-example.txt'], repo)).toEqual([])
+      // Provider environment-variable names in documentation are placeholders,
+      // not bearer credentials.
+      expect(
+        scanStagedCredentials(['authorization-placeholder.txt'], repo),
+      ).toEqual([])
       // Source files named credentials* / secrets* are content-scanned, not
       // filename-blocked (FID-2026-0821-002 P3): clean modules pass, and a
       // real secret inside one still flags via the content scan.

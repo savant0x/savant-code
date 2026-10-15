@@ -48,8 +48,13 @@ const CREDENTIAL_CONTENT_PATTERNS = [
   // Complete PEM blocks only (≥64 base64 chars between BEGIN/END) so test
   // fixtures and docs that merely mention the header are never flagged.
   /-----BEGIN (?:RSA |DSA |EC |OPENSSH |ENCRYPTED |PGP )?PRIVATE KEY(?: BLOCK)?-----[A-Za-z0-9+/=\s]{64,}-----END (?:RSA |DSA |EC |OPENSSH |ENCRYPTED |PGP )?PRIVATE KEY(?: BLOCK)?-----/,
-  /\bAUTHORIZATION:\s*(?:bearer|basic)\s+[A-Za-z0-9+/=._~-]{16,}\b/i,
 ]
+
+const AUTHORIZATION_CONTENT_PATTERN =
+  /\bAUTHORIZATION:\s*(?:bearer|basic)\s+([A-Za-z0-9+/=._~-]{16,})\b/i
+
+const AUTHORIZATION_PLACEHOLDER_PATTERN =
+  /^[A-Z][A-Z0-9_]*(?:_KEY|_TOKEN|_SECRET)$/
 
 // Token-shaped patterns: the captured token body must clear the entropy floor
 // and span at least the required character classes (uppercase, lowercase,
@@ -207,7 +212,16 @@ export function scanStagedCredentials(
       continue
     }
     const content = scanBuffer.subarray(0, bytesRead).toString('utf8')
-    if (CREDENTIAL_CONTENT_PATTERNS.some((pattern) => pattern.test(content))) {
+    const authorizationPlaceholder = content.match(
+      AUTHORIZATION_CONTENT_PATTERN,
+    )
+    const hasCredentialContent = CREDENTIAL_CONTENT_PATTERNS.some((pattern) =>
+      pattern.test(content),
+    )
+    const hasCredentialAuthorization =
+      authorizationPlaceholder !== null &&
+      !AUTHORIZATION_PLACEHOLDER_PATTERN.test(authorizationPlaceholder[1] ?? '')
+    if (hasCredentialContent || hasCredentialAuthorization) {
       flagged.push(`${file} (content matches a credential pattern)`)
       continue
     }
