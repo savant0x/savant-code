@@ -99,7 +99,8 @@
 
 - **Severity:** medium
 - **FID:** None
-- **Status:** resolved by distinguishing uppercase environment-variable placeholders from bearer token values; the focused credential-scan suite passes
+- **Status:** resolved by distinguishing uppercase environment-variable
+  placeholders from bearer token values; the focused credential-scan suite passes
 
 ---
 
@@ -132,7 +133,8 @@
 
 - **Branch:** `main`
 - **Uncommitted Changes:** yes; pre-existing work plus this session's changes
-- **New Commits:** `9d55f7ae` — `chore(reproducibility): add clean Linux build workflow`; `914597e5` — `docs(session): record reproducibility verification`
+- **New Commits:** `9d55f7ae` — `chore(reproducibility): add clean Linux
+  build workflow`; `914597e5` — `docs(session): record reproducibility verification`
 
 ---
 
