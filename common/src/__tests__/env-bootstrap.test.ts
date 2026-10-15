@@ -96,13 +96,12 @@ describe('env-bootstrap (FID-2026-0906-007)', () => {
     )
     cleanup = join(startDir, '..')
     // Prove bootstrap without a developer-owned .env.local or shell exports.
+    const envModuleUrl = new URL('../env.ts', import.meta.url).href
     const child = Bun.spawnSync(
       [
-        'bun',
+        process.execPath,
         '-e',
-        "await import('" +
-          import.meta.dir +
-          "/../../../common/src/env.ts'); console.log('BOOTSTRAP_OK')",
+        `await import(${JSON.stringify(envModuleUrl)}); console.log('BOOTSTRAP_OK')`,
       ],
       {
         cwd: startDir,
