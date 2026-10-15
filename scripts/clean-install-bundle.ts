@@ -5,10 +5,9 @@
  *
  * The gate used to bundle the CLI in the working tree, so `bun build` resolved
  * imports against whatever `node_modules` the machine happened to have. That is
- * not a hypothetical hole: measured on this developer's machine there is a
- * stray `C:\Users\spenc\node_modules` holding 428 packages, and it is what
- * supplied `ajv/dist/2020.js` at v0.0.35 while `packages/connectors` declared no
- * `ajv` — every local gate green, CI (resolving the committed lockfile) failed.
+ * not a hypothetical hole: a stray ancestor `node_modules` holding undeclared
+ * packages can supply imports while every local gate stays green and CI
+ * (resolving the committed lockfile) fails.
  * A bundle in the working tree cannot answer the question the gate exists to
  * ask, so this engine answers it somewhere else.
  *

@@ -795,7 +795,6 @@ threshold.
 | `cli/`                    | `@savant-code/cli`           | CLI source — UI, commands, state, hooks, OpenTUI/React components |
 | `common/`                 | `@savant-code/common`        | Shared types, tool definitions, utilities                         |
 | `evals/`                  | `@savant-code/evals`         | ECHO-native benchmark v2 runner + legacy eval fixtures            |
-| `savant-free/`            | `@savant-code/savant-free`   | CLI release + e2e tests for the free variant                      |
 | `packages/agent-runtime/` | `@savant-code/agent-runtime` | Agent loop, tool executor, LLM API integration                    |
 | `packages/design-systems/`| `@savant-code/design-systems`| Offline design-system presets and visual contracts                |
 | `packages/code-map/`      | `@savant-code/code-map`      | tree-sitter code indexing, language detection                     |
@@ -818,7 +817,7 @@ threshold.
 ```bash
 git clone https://github.com/savant0x/savant-code.git
 cd savant-code
-bun install
+bun install --frozen-lockfile
 ```
 
 ### 2. Run the CLI (development)
@@ -840,6 +839,45 @@ bun run build:sdk
 # Build the CLI binary from the CLI workspace
 bun run --cwd=cli build:binary
 ```
+
+### Reproducible clean-Linux workflow
+
+The repository pins Bun `1.3.14` in `.bun-version`, `package.json`, and the
+container image. From a clean Linux checkout, run:
+
+```bash
+git clone https://github.com/savant0x/savant-code.git
+cd savant-code
+test "$(bun --version)" = "1.3.14"
+bun install --frozen-lockfile
+bun run ci
+bun run test
+cp .env.example .env.local
+bun run dev
+```
+
+Edit `.env.local` with a provider key when using a hosted provider, or configure
+the local Ollama endpoint instead. `.env.local` is ignored by Git;
+`.env.example` contains placeholders only.
+
+The same build and runtime are available in Docker. The image installs the
+native Linux libraries required by the workspace dependencies, installs from
+the committed lockfile, and runs the development CLI:
+
+```bash
+docker build --tag savant-code:local .
+docker run --rm --interactive --tty savant-code:local
+```
+
+To pass local settings into the container, use the ignored file created above:
+
+```bash
+docker run --rm --interactive --tty --env-file .env.local savant-code:local
+```
+
+Normal pushes to `main` are supported when explicitly requested. The repository
+`.githooks/pre-push` hook remains active, including its no-attribution scan and
+the configured verification gates.
 
 ### 4. Use the SDK
 
@@ -977,7 +1015,7 @@ naming the variable. OpenRouter can use `OPENROUTER_API_KEY` or
 | `bun run dev`                     | Launch CLI in dev mode           |
 | `bun run build:sdk`               | Build the SDK for npm publish    |
 | `bun run --cwd=cli build:binary`  | Build the CLI binary from `cli/` |
-| `bun run ci`                      | Build SDK and release artifacts  |
+| `bun run ci`                      | Build the SDK declarations       |
 | `bun run test`                    | Run the test suite               |
 | `bun run typecheck`               | Type check (all workspaces)      |
 | `bun x eslint . --max-warnings 0` | Lint                             |
@@ -1031,7 +1069,6 @@ Commands can be entered with `/`; aliases are shown in parentheses.
 | `/init` | Create starter agent types and `knowledge.md` |
 | `/logout` (`/signout`) | End the current session and sign out |
 | `/connect` | Connect a ChatGPT account (OAuth) |
-| `/end-session` | End a free session (lets you switch model) |
 | `/exit` (`/quit`, `/q`) | Quit the CLI |
 
 ---

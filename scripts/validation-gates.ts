@@ -27,7 +27,6 @@ export const VALIDATION_WORKSPACE_POLICY: readonly WorkspacePolicy[] = [
   // tests are owned by `cargo test` in src-tauri and stay outside bun chains.
   { workspace: 'desktop', requiredTypecheck: true, requiredTest: false },
   { workspace: 'evals', requiredTypecheck: true, requiredTest: true },
-  { workspace: 'savant-free', requiredTypecheck: false, requiredTest: false },
   {
     workspace: 'packages/agent-runtime',
     requiredTypecheck: true,
@@ -63,7 +62,7 @@ export const VALIDATION_WORKSPACE_POLICY: readonly WorkspacePolicy[] = [
     requiredTypecheck: true,
     requiredTest: true,
   },
-  { workspace: 'scripts/tmux', requiredTypecheck: false, requiredTest: false },
+  { workspace: 'scripts/tmux', requiredTypecheck: true, requiredTest: true },
   { workspace: 'sdk', requiredTypecheck: true, requiredTest: true },
 ] as const
 
@@ -190,9 +189,9 @@ export function repositoryValidationGates(
       // install of the frozen lockfile: the probe materializes the release file
       // set, installs it, runs the build's own prebundle steps, and fails when
       // any module it loaded resolved from a node_modules outside that tree.
-      // The earlier form bundled the working tree, so a stray install (measured
-      // on this machine: `C:\Users\spenc\node_modules`) satisfied an undeclared
-      // import and the gate stayed green while CI failed — v0.0.35.
+      // The earlier form bundled the working tree, so a stray ancestor install
+      // satisfied an undeclared import and the gate stayed green while CI
+      // failed — v0.0.35.
       //
       // The `--external '@opentui/core-*'` rationale, the scratch-tree location
       // and the provenance check live in `scripts/clean-install-bundle.ts` and

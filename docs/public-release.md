@@ -247,9 +247,9 @@ needs a bump.
 
 1. The ZTAP provenance code imports `@noble/hashes/sha512` (`common/src/crypto/keys.ts`).
 2. `@noble/hashes` was never declared in `common/package.json` nor locked in `bun.lock`.
-3. Locally, the import resolved from `C:\Users\spenc\node_modules\@noble\hashes` — a
-   node_modules **outside the repo** (a phantom hoist left by another project) — so
-   typecheck, the full test suite, and all 13 diagnostic gates passed.
+3. Locally, the import resolved from a `node_modules` directory **outside the
+   repo** (a phantom hoist left by another project) — so typecheck, the full test
+   suite, and all 13 diagnostic gates passed.
 4. Only CI's fresh checkout had nothing up-tree to resolve against, so the compile
    failed — after the release was already live.
 

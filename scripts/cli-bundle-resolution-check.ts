@@ -7,10 +7,10 @@
  * (`scripts/validation-gates.ts`) and the probe that contract invokes. It used
  * to be the bare `bun build cli/src/index.tsx --production --target=bun …`
  * command, which bundles against whatever `node_modules` the machine has. That
- * is exactly how v0.0.35 shipped: a stray `C:\Users\spenc\node_modules` supplied
+ * is exactly how v0.0.35 shipped: a stray ancestor `node_modules` supplied
  * `ajv/dist/2020.js` to an undeclared import, the bundle resolved, every local
- * gate passed, and CI — resolving the committed lockfile, which has only ajv 6 —
- * failed on all five binary jobs after npm had published.
+ * gate passed, and CI — resolving the committed lockfile — failed on all five
+ * binary jobs after npm had published.
  *
  * So the gate now resolves inside a tree materialized for this run and installed
  * from the frozen lockfile, and reads the bundler's metafile to prove every

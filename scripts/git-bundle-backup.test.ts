@@ -190,6 +190,27 @@ describe('git bundle backup', () => {
   )
 
   test(
+    'default destination is relative to the repository being backed up',
+    () => {
+      const repo = initScratchRepo()
+      const previous = process.env.SAVANT_BUNDLE_DIR
+      try {
+        delete process.env.SAVANT_BUNDLE_DIR
+        const result = runBundleBackup({ cwd: repo, mode: 'baseline' })
+        expect(result.ok).toBe(true)
+        expect(result.bundlePath).toBe(
+          path.join(repo, SAVANT_BUNDLE_DIR_DEFAULT, 'baseline.bundle'),
+        )
+      } finally {
+        if (previous === undefined) delete process.env.SAVANT_BUNDLE_DIR
+        else process.env.SAVANT_BUNDLE_DIR = previous
+        rmSync(repo, { recursive: true, force: true })
+      }
+    },
+    GIT_CHILD_TIMEOUT_MS,
+  )
+
+  test(
     'unwritable destination fails closed without touching the marker',
     () => {
       const repo = initScratchRepo()

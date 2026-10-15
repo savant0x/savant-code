@@ -209,7 +209,12 @@ export class SubprocessSandboxBackend implements SandboxBackend {
       }
     } finally {
       if (child && child.exitCode === null && !child.killed) child.kill()
-      fs.rmSync(workspace, { recursive: true, force: true })
+      fs.rmSync(workspace, {
+        recursive: true,
+        force: true,
+        maxRetries: 10,
+        retryDelay: 100,
+      })
     }
   }
 }

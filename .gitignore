@@ -96,6 +96,10 @@ dev/releases/*.md
 /database.db-wal
 /database.db-shm
 
+# Git bundle backup output; configure SAVANT_BUNDLE_DIR for an external sync
+# destination when durable off-machine backups are required.
+.git-bundles/
+
 # Codebase knowledge graph (FID-2026-0806-002): the SQLite index holds
 # structural metadata only, but it is regenerable on demand (/graph refresh)
 # and must never enter the repository or the packaged artifact.

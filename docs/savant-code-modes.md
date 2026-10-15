@@ -237,7 +237,7 @@ with a master-key OpenRouter path), this would silently **fail every paid-mode r
 Verify before redesign ships:
 
 ```bash
-cd /c/Users/spenc/dev/savant-code
+cd /path/to/savant-code
 grep -rn 'amazon-bedrock' agents/ common/ sdk/ packages/ 2>/dev/null | grep -v __tests__
 ```
 
@@ -289,7 +289,7 @@ There's no Option D / "do nothing" — the latent `amazon-bedrock` risk in §7 a
 
 Run these to confirm the wire path:
 
-1. Boot the CLI: `cd /c/Users/spenc/dev/savant-code && bun dev`.
+1. Boot the CLI: `cd /path/to/savant-code && bun dev`.
 2. Add a one-line debug log at `cli/src/components/agent-mode-toggle.tsx` `handleSegmentClick`, e.g.
    `console.log('[modes] click', mode, '→', agent)`.
 3. Add a debug log at `cli/src/hooks/use-send-message.ts` near line 632: `console.log('[modes] sending', { agent,

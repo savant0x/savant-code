@@ -4,7 +4,7 @@
 // Implements the operator-approved git-workflow research
 // (docs/design/Solo Git Workflow Optimization.md) via
 // BO-2026-08-23 FID 3: full bundle once (--baseline), then
-// `last-backup..main` incrementals to a OneDrive-synced directory.
+// `last-backup..main` incrementals to a configurable backup directory.
 // Every bundle is `git bundle verify`-checked after creation; the
 // `last-backup` marker tag advances ONLY on verified success
 // (verify-or-no-advance, fail-closed).
@@ -25,13 +25,11 @@ import path from 'path'
 export const BACKUP_MARKER_TAG = 'last-backup'
 
 /**
- * Destination for bundle archives. Override with SAVANT_BUNDLE_DIR
- * (BO Open Question 2: the operator confirms the OneDrive path); the
- * constant is a documented placeholder that keeps the script runnable
- * before that confirmation lands.
+ * Destination for bundle archives. Override with SAVANT_BUNDLE_DIR for an
+ * external sync destination; the portable default is inside the repository
+ * and is ignored by Git.
  */
-export const SAVANT_BUNDLE_DIR_DEFAULT =
-  'C:/Users/spenc/OneDrive/savant-backups'
+export const SAVANT_BUNDLE_DIR_DEFAULT = '.git-bundles'
 
 export type BundleResult = {
   ok: boolean
@@ -52,10 +50,10 @@ function git(
   }
 }
 
-function resolveBundleDir(explicit?: string): string {
+function resolveBundleDir(explicit: string | undefined, cwd: string): string {
   const dir =
     explicit ?? process.env.SAVANT_BUNDLE_DIR ?? SAVANT_BUNDLE_DIR_DEFAULT
-  const resolved = path.isAbsolute(dir) ? dir : path.join(process.cwd(), dir)
+  const resolved = path.isAbsolute(dir) ? dir : path.join(cwd, dir)
   if (!existsSync(resolved)) {
     try {
       mkdirSync(resolved, { recursive: true })
@@ -115,7 +113,7 @@ export function runBundleBackup(options: {
 }): BundleResult {
   const { cwd, mode } = options
   assertMainBranch(cwd)
-  const bundleDir = resolveBundleDir(options.bundleDir)
+  const bundleDir = resolveBundleDir(options.bundleDir, cwd)
   const head = currentHead(cwd)
   const marker = markerTarget(cwd)
   const files: string[] = []

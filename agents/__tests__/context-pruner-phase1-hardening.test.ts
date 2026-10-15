@@ -24,7 +24,7 @@ import { summarizeMessages } from '../context-pruner/summarize-messages'
 
 import type { Message } from '../types/util-types'
 
-const PROJECT_ROOT = 'C:\\Users\\spenc\\dev\\savant-code'
+const PROJECT_ROOT = 'C:\\Users\\example\\dev\\savant-code'
 
 describe('assistant-turn coalescing (fragment-storm fix)', () => {
   test('N consecutive assistant messages coalesce into ONE Progress note entry', () => {
@@ -154,14 +154,17 @@ describe('repo-relative preserved-state paths', () => {
   test('normalizePathForState converts absolute paths under the project root to repo-relative', () => {
     expect(
       normalizePathForState(
-        'C:\\Users\\spenc\\dev\\savant-code\\src\\auth.ts',
+        'C:\\Users\\example\\dev\\savant-code\\src\\auth.ts',
         PROJECT_ROOT,
       ),
     ).toBe('src/auth.ts')
     expect(normalizePathForState('src/b.ts', PROJECT_ROOT)).toBe('src/b.ts')
     expect(
-      normalizePathForState('C:\\Users\\spenc\\elsewhere\\x.ts', PROJECT_ROOT),
-    ).toBe('C:/Users/spenc/elsewhere/x.ts')
+      normalizePathForState(
+        'C:\\Users\\example\\elsewhere\\x.ts',
+        PROJECT_ROOT,
+      ),
+    ).toBe('C:/Users/example/elsewhere/x.ts')
   })
 
   test('buildPreservedState normalizes absolute paths to repo-relative', () => {
@@ -171,14 +174,14 @@ describe('repo-relative preserved-state paths', () => {
           toolName: 'read_files',
           input: {
             paths: [
-              'C:\\Users\\spenc\\dev\\savant-code\\src\\auth.ts',
+              'C:\\Users\\example\\dev\\savant-code\\src\\auth.ts',
               'src/b.ts',
             ],
           },
         },
         {
           toolName: 'str_replace',
-          input: { path: 'C:\\Users\\spenc\\dev\\savant-code\\src\\c.ts' },
+          input: { path: 'C:\\Users\\example\\dev\\savant-code\\src\\c.ts' },
         },
       ]),
     ]
