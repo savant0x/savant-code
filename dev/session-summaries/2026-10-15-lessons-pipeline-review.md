@@ -101,13 +101,14 @@ source evidence and does not duplicate those owners.
   `quality:report`, targeted ESLint, targeted Prettier, root typecheck,
   Markdown lint, and full repository ESLint passed. The first database suite
   attempt exposed an order-dependent fixture, which was repaired by isolating
-  the new LF-003 test database; the repaired database suite passed 54/0.
-  The root test wrapper remains tool-blocked by `Unknown: ChildProcess.kill`,
-  and the initial repository validation run reported the locked clean-Linux
-  scratch artifact plus eleven ENOENT findings from Savant-Free test paths
-  deleted by concurrent FID-2026-1015-002 removal work. Commit `dea54d85`
-  staged those approved deletions; the current validator reports only the
-  locked scratch artifact. Neither finding is caused by LF-003.
+  the new LF-003 test database; the repaired database suite passed 54/0. The
+  full root test suite passed 9,162/23 skipped/0 failed across all registered
+  workspace suites with a 10-minute execution budget. The initial repository
+  validation run reported the locked clean-Linux scratch artifact plus eleven
+  ENOENT findings from Savant-Free test paths deleted by concurrent
+  FID-2026-1015-002 removal work. Commit `dea54d85` staged those approved
+  deletions; the current validator reports only the locked scratch artifact.
+  Neither finding is caused by LF-003.
 
 ## Perfection Loop Summary
 
@@ -132,9 +133,9 @@ source evidence and does not duplicate those owners.
   findings were cleared by `dea54d85`.
 - [x] LF-003 feature gates: FID receipt stamped; all declared gates passed.
 - [x] Root typecheck, Markdown lint, and repository ESLint passed.
-- [ ] Root `bun run test`: the wrapper returned `Unknown: ChildProcess.kill`; all
-  workspace test commands were then run individually. The repaired database
-  suite passed 54/0; the other workspace suites passed with zero failures.
+- [x] Root `bun run test`: 9,162 pass / 23 skip / 0 fail across all registered
+  workspace suites with a 10-minute execution budget. The shorter initial
+  wrapper run was terminated by the command tool before completion.
 
 ---
 
@@ -164,8 +165,9 @@ source evidence and does not duplicate those owners.
 
 ## Open Questions
 
-- The root test wrapper's `Unknown: ChildProcess.kill` result needs no source
-  change; individual workspace test evidence is recorded above.
+- The initial `Unknown: ChildProcess.kill` result was a command-wrapper timeout;
+  the full root test passes with a 10-minute execution budget and needs no
+  source change.
 
 ---
 

@@ -236,6 +236,12 @@ this record:
   I/O failures; it removes the observed cyclic-serialization failure mode and
   proves durable message preservation through the real CLI save path. The
   separate database error fallback remains unchanged and is not over-claimed.
+- **FINAL VALIDATION:** The full root `bun run test` gate passes with 9,162
+  tests passed, 23 skipped, and 0 failed across all registered workspace suites
+  when given a 10-minute execution budget. The earlier `Unknown:
+  ChildProcess.kill` result came from the shorter command-wrapper timeout, not
+  from a test failure. Repository validation has one remaining hygiene issue:
+  the locked clean-Linux scratch artifact.
 - **CHANGE DELTA:** 0% after Loop 2.
 
 ### Missed Questions
@@ -288,7 +294,9 @@ this record:
 - **Tests Added:** Yes — common serializer, SDK nested transport, database
   nested-session, and CLI save-path recovery coverage.
 - **Verification Evidence:** Four workspace typechecks, four targeted test
-  suites, quality, ESLint, Prettier, and `git diff --check` passed.
+  suites, the full root test suite (9,162 pass / 23 skip / 0 fail), quality,
+  ESLint, Prettier, and `git diff --check` passed. Repository validation has
+  one unrelated locked-scratch hygiene blocker.
 - **Archived:** 2026-10-15
 
 ## Lessons Learned
