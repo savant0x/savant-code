@@ -1,3 +1,8 @@
+import {
+  commandCancellationMetadata,
+  type CommandExecutionMetadata,
+} from '@savant-code/common/util/command-execution'
+
 import type { ExecuteToolCallParams } from './types'
 import type { ToolName } from '@savant-code/common/tools/constants'
 import type {
@@ -5,7 +10,6 @@ import type {
   ClientToolName,
   SavantCodeToolOutput,
 } from '@savant-code/common/tools/list'
-import type { CommandExecutionMetadata } from '@savant-code/common/util/command-execution'
 
 /**
  * Client-tool bridge (extracted verbatim from `tool-executor/native.ts` —
@@ -42,6 +46,7 @@ export function createClientToolBridge<T extends ToolName>(deps: {
         executionStarted: false,
         executedToolName: clientToolCall.toolName,
         terminationState: 'not-started',
+        ...commandCancellationMetadata(signal),
       }
       return [
         {

@@ -1,6 +1,7 @@
 import * as fs from 'node:fs'
 import * as path from 'node:path'
 
+import { abortForUserCancellation } from '@savant-code/common/util/command-execution'
 import { describe, expect, it } from 'bun:test'
 
 import { buildLifecycleFixture, withCaptureRoot } from './lifecycle-fixture'
@@ -35,7 +36,11 @@ async function readCapturedRecords(root: string): Promise<CapturedRecord[]> {
 }
 
 /** A readonly batch whose single command failed, so a pin states only what varies. */
-function readonlyBatch(root: string, toolCallId: string) {
+function readonlyBatch(
+  root: string,
+  toolCallId: string,
+  signal: AbortSignal = new AbortController().signal,
+) {
   const fixture = buildLifecycleFixture(root)
   const toolCall: SavantCodeToolCall<'run_readonly_command'> = {
     toolName: 'run_readonly_command',
@@ -50,17 +55,35 @@ function readonlyBatch(root: string, toolCallId: string) {
       ...fixture.ctx.params,
       toolName: 'run_readonly_command',
       input: toolCall.input,
+      signal,
     },
   }
   return { ctx, trace: fixture.trace }
 }
 
 /** The command envelope the readonly producer returns on a failed command. */
-function failedCommand(stderr: string) {
+function failedCommand(stderr: string, refusal = false) {
   return [
     {
       type: 'json' as const,
-      value: { commands: ['fixture'], results: [{ exitCode: 1, stderr }] },
+      value: {
+        commands: ['fixture'],
+        results: [
+          {
+            exitCode: 1,
+            stderr,
+            ...(refusal
+              ? {
+                  executionOutcome: 'rejected' as const,
+                  executionStarted: false,
+                  executedToolName: 'run_readonly_command',
+                  terminationState: 'not-started' as const,
+                  rejectionReason: 'readonly-guard' as const,
+                }
+              : {}),
+          },
+        ],
+      },
     },
   ]
 }
@@ -131,6 +154,7 @@ describe('runSuccessLifecycle error-capture wiring', () => {
         { ctx, trace, hookProjectRoot: root },
         failedCommand(
           'run_readonly_command rejected: forbidden metacharacters',
+          true,
         ) as SavantCodeToolOutput<'run_readonly_command'>,
         undefined,
       )
@@ -142,6 +166,80 @@ describe('runSuccessLifecycle error-capture wiring', () => {
       expect(records[0]?.expectedness).toBe('expected')
       expect(records[0]?.classKey).toBe(
         'v1:run_readonly_command:refused:expected',
+      )
+    })
+  })
+
+  it('captures a later real failure after an expected refusal in a batch', async () => {
+    await withCaptureRoot(async (root) => {
+      const { ctx, trace } = readonlyBatch(root, 'mixed-batch')
+      await runSuccessLifecycle(
+        { ctx, trace, hookProjectRoot: root },
+        [
+          {
+            type: 'json' as const,
+            value: {
+              commands: ['forbidden', 'host-failure'],
+              results: [
+                {
+                  exitCode: 1,
+                  stderr: 'run_readonly_command rejected: forbidden',
+                  executionOutcome: 'rejected' as const,
+                  executionStarted: false,
+                  executedToolName: 'run_readonly_command',
+                  terminationState: 'not-started' as const,
+                  rejectionReason: 'readonly-guard' as const,
+                },
+                { exitCode: 1, stderr: 'host failure' },
+              ],
+            },
+          },
+        ] as SavantCodeToolOutput<'run_readonly_command'>,
+        undefined,
+      )
+      const records = await readCapturedRecords(root)
+      expect(records).toHaveLength(1)
+      expect(records[0]?.errorFirstLine).toBe(
+        'Command exited with code 1: host failure',
+      )
+      expect(records[0]?.expectedness).toBe('undetermined')
+      expect(records[0]?.classKey).toBe(
+        'v1:run_readonly_command:command-exit:undetermined',
+      )
+    })
+  })
+
+  it('records only a typed user cancellation as expected', async () => {
+    await withCaptureRoot(async (root) => {
+      const controller = new AbortController()
+      abortForUserCancellation(controller)
+      const { ctx, trace } = readonlyBatch(
+        root,
+        'user-cancel',
+        controller.signal,
+      )
+      await runSuccessLifecycle(
+        { ctx, trace, hookProjectRoot: root },
+        [
+          {
+            type: 'json' as const,
+            value: {
+              errorMessage: 'Command cancelled: execution did not complete.',
+              executionOutcome: 'cancelled',
+              executionStarted: false,
+              executedToolName: 'run_readonly_command',
+              terminationState: 'not-started',
+              cancellationReason: 'user-request',
+            },
+          },
+        ] as SavantCodeToolOutput<'run_readonly_command'>,
+        undefined,
+      )
+      const records = await readCapturedRecords(root)
+      expect(records).toHaveLength(1)
+      expect(records[0]?.expectedness).toBe('expected')
+      expect(records[0]?.classKey).toBe(
+        'v1:run_readonly_command:cancelled:expected',
       )
     })
   })

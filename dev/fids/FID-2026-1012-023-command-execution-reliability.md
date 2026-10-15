@@ -152,37 +152,48 @@ the declared window — because the claim being made is about production, not ab
 
 Planned: the recurrence probe (exit 0 clean / 1 with issues) declared as a gate when the status flips;
 a test for the timeout error's content (budget present, advice actionable); the `sdk` and
-`packages/agent-runtime` typechecks; and `quality`. The capture is the arbiter: a fix that does not
-remove the records has not fixed the class.
+`packages/agent-runtime` typechecks; `quality`; and — since Loop 7 — the cross-copy cancellation
+identity regression, declared as the gate named in `## Verification Gates`. The capture is the arbiter: a
+fix that does not remove the records has not fixed the class.
 
 ## Verification Gates
 
 - gate: test sdk/src/__tests__/command-execution-contract.test.ts
 - gate: test sdk/src/__tests__/run-terminal-command.test.ts
+- gate: test sdk/src/__tests__/command-execution-cancellation-identity.test.ts
 - gate: test sdk/src/__tests__/run-state-child-process.test.ts
 - gate: test packages/agent-runtime/src/tools/tool-executor/client-tool-bridge.test.ts
 - gate: test packages/agent-runtime/src/tools/tool-executor/tool-result-errors.test.ts
+- gate: test packages/agent-runtime/src/tools/tool-executor/expectedness.test.ts
 - gate: test packages/agent-runtime/src/tools/tool-executor/result-lifecycle.test.ts
 - gate: test packages/agent-runtime/src/hooks/__tests__/experience-capture.test.ts
+- gate: test common/src/util/__tests__/experience-classes.test.ts
+- gate: test cli/src/__tests__/headless-control.test.ts
 - gate: typecheck common
 - gate: typecheck sdk
 - gate: typecheck packages/agent-runtime
+- gate: typecheck cli
 - gate: quality
 
 ### Verification Receipt
 
-- fingerprint: sha256:fe547f40711695659ded7d499d01e87cde11abad5c921bd4429393c1596fb2fb
-- verified: 2026-10-13T23:30:46.609Z
+- fingerprint: sha256:9f64425991d4af12a3b63ae37b0467eb250921189689a5da4aa670b2e88d07f1
+- verified: 2026-10-15T05:28:09.100Z
 - test sdk/src/__tests__/command-execution-contract.test.ts: exit 0
 - test sdk/src/__tests__/run-terminal-command.test.ts: exit 0
+- test sdk/src/__tests__/command-execution-cancellation-identity.test.ts: exit 0
 - test sdk/src/__tests__/run-state-child-process.test.ts: exit 0
 - test packages/agent-runtime/src/tools/tool-executor/client-tool-bridge.test.ts: exit 0
 - test packages/agent-runtime/src/tools/tool-executor/tool-result-errors.test.ts: exit 0
+- test packages/agent-runtime/src/tools/tool-executor/expectedness.test.ts: exit 0
 - test packages/agent-runtime/src/tools/tool-executor/result-lifecycle.test.ts: exit 0
 - test packages/agent-runtime/src/hooks/__tests__/experience-capture.test.ts: exit 0
+- test common/src/util/__tests__/experience-classes.test.ts: exit 0
+- test cli/src/__tests__/headless-control.test.ts: exit 0
 - typecheck common: exit 0
 - typecheck sdk: exit 0
 - typecheck packages/agent-runtime: exit 0
+- typecheck cli: exit 0
 - quality: exit 0
 
 ## Perfection Loop
@@ -331,6 +342,151 @@ remove the records has not fixed the class.
   narrowed timeout identity survives SDK conversion. No timeout is automatically
   labelled expected, and no command is replayed.
 
+### Loop 6 — Producer-authoritative expectedness for cancellation (2026-10-14)
+
+- **RED:** Q26 identified a remaining ambiguity: all cancellation producers emit
+  `executionOutcome: cancelled`, but none records whether the abort was an explicit
+  user action, an internal timeout/transport event, or an untyped signal. Treating
+  every cancellation as expected would hide defects; treating every cancellation as
+  unexpected would misclassify an intentional user stop.
+- **GREEN:** Add one canonical typed user-cancellation reason to the shared command
+  execution contract. Actual SDK/terminal/bridge cancellation producers copy only
+  that allowlisted reason when the signal carries it. The lifecycle assigns
+  `expected` only when the signal itself carries the canonical reason and the
+  execution metadata says `cancelled`; all other cancellations and all timeouts stay
+  `undetermined`. The signal marker is an opaque module-private sentinel exposed
+  only through the user-cancellation helper; parent-control, timer and internal
+  aborts remain untyped. Wire explicit user interrupt surfaces to the canonical
+  helper. Do not read expectedness from arbitrary tool output and do not rewrite
+  historical rows.
+- **GREEN correction:** readonly-guard expectedness is carried by the producer's
+  rejected execution metadata, not inferred from stderr text. The bounded result
+  inspection retains every nested failure so an expected refusal cannot hide a later
+  host exit; the lifecycle captures the first non-expected failure, or the refusal
+  when it is the only failure. Untyped SDK cancellation uses neutral cancellation
+  wording and stays in the existing `cancelled:undetermined` class.
+- **AUDIT:** Add contract assertions for typed versus untyped pre-start and
+  in-flight cancellation, a real lifecycle capture assertion for the expected class,
+  and production call-graph checks from the CLI user-interrupt surfaces through the
+  shared helper. Re-run the declared SDK/agent-runtime gates and the recurrence
+  assertion; this change creates no fix boundary or production repair claim.
+- **ADVERSARIAL:** A provider or override result cannot self-excuse a failure because
+  expectedness is resolved from the run signal plus cancellation identity, not from a
+  result envelope field. A command that merely prints the readonly refusal phrase
+  lacks the producer rejection marker and remains undetermined. A parent-control
+  frame lacks the user sentinel. A timeout cannot become expected because timeout
+  producers never carry the typed user reason. A bare `AbortController.abort()`
+  remains `undetermined`, preserving the distinction between explicit user intent
+  and an unknown cancellation origin. Contradictory metadata is rejected or
+  normalized away at the shared schema boundary.
+- **CHANGE DELTA:** Additive metadata, producer-owned refusal provenance, complete
+  nested-failure inspection and lifecycle classification only; no historical rows,
+  owners, exposure receipts or repair boundaries are changed.
+
+### Loop 7 — Cancellation identity across a module-copy boundary (2026-10-15, automation level 3)
+
+- **RED:** Loop 6 made a typed user cancellation an *identity comparison*, and the identity
+  it compares — `USER_CANCELLATION_SIGNAL_REASON = Symbol('savant-user-cancellation')`
+  (`common/src/util/command-execution.ts:27`) — is minted once per module *instance*. The
+  comparison therefore holds only while the aborting copy and the reading copy are the same
+  instance, and in the topology the CLI actually runs they are not: `common/package.json`
+  exports resolve to SOURCE (`"bun": "./src/*.ts"`) while `sdk/package.json` publishes only
+  dist (`"import": "./dist/index.mjs"`, no `bun` condition), so `cli/src/**` aborts through
+  the source copy while `@savant-code/sdk` resolves to the bundle — and the bundle carries
+  its own inlined copy of the module (`grep -c 'savant-user-cancellation' sdk/dist/index.mjs`
+  → **1**, same for `index.cjs`), alongside the runtime it imports
+  (`@savant-code/agent-runtime/...`). Reproduced against a bundle built at this revision,
+  rather than inferred from the topology:
+
+  ```text
+  $ bun run /tmp/ce-probe3.ts
+  fresh dist (built at this revision):
+    executionOutcome   : cancelled
+    cancellationReason : <absent>
+    source copy types it: {"cancellationReason":"user-request"}
+  ```
+
+  The same signal whose reason the source copy reads as `user-request` is read as *untyped*
+  by the bundle. The impact is not cosmetic: `resolveToolFailureExpectedness`
+  (`tool-result-errors.ts:65`) requires the typed reason on **both** the envelope metadata
+  (produced by the bundle's own `commandCancellationMetadata`) and the signal, so an explicit
+  user stop records `undetermined` — the exact ambiguity Loop 6 exists to remove, and, under
+  `FID-2026-1012-024`, a class that then demands an owner for a *correct* outcome. The failure
+  is silent: no error, no warning, one lost field.
+- **GREEN (planned):** Move the marker's identity out of the module instance and publish it in
+  ONE process-wide registry reached through `Symbol.for`, comparing registry membership instead
+  of symbol equality. `abortForUserCancellation` remains the only mint — a module-private
+  marker object is registered there and is never exported — and `isUserCancellationSignal` /
+  `commandCancellationMetadata` read the registry, so a marker minted by any loaded copy is
+  recognized by every loaded copy. Rejected alternatives: (i) pointing the in-repo SDK
+  resolution at source, a package-resolution change that leaves every other mixed-copy
+  topology broken, including any consumer that bundles its own copy; (ii) a well-known *string*
+  reason, which any code can forge without going through the helper; (iii) a `Symbol.for`
+  reason *value*, which is a symbol value rather than a registered identity and is equally
+  forgeable by key.
+- **AUDIT (planned):** a NEW declared gate — `sdk/src/__tests__/command-execution-cancellation-identity.test.ts`,
+  added to the gate list below and registered as a write target — that builds a second copy of the
+  module and drives all four directions: copy A aborts / copy B reads, copy B aborts / copy A reads, and
+  both same-copy directions, plus an ordinary untyped `abort()` and a plain non-marker reason, which must
+  stay untyped in both copies. It is a new file rather than an addition to
+  `command-execution-contract.test.ts` because that file is at 260 lines and the quality ceiling is 300;
+  then the declared gate set, the SDK rebuild, and the bundle-boundary probe re-run as the boundary smoke.
+- **ADVERSARIAL:** (a) *Does the registry widen the forgery surface?* It moves the identity
+  space from module-private to process-wide, so in-process code that reaches the key can
+  register a marker and have it read as user intent — but in-process code could already call
+  `abortForUserCancellation` freely, so nothing that was unreachable to the process becomes
+  reachable; what is added is a shared key, which is the price of cross-copy identity and is
+  stated rather than hidden. (b) *Can a tool result forge it?* No — expectedness is resolved
+  from the run signal plus the producer's own metadata, and no result envelope can register a
+  marker. (c) *Does an untyped abort start typing itself?* No — only markers minted by the
+  helper are registered, and the regression pins that an ordinary `abort()` stays untyped in
+  both copies. (d) *Is the marker's shape now matchable?* No — identity is by reference in the
+  registry, so shape is irrelevant, and the marker stays unexported. (e) *Does this rewrite any
+  stored class, receipt, boundary or row?* No; it changes what a live signal is read as, not
+  what was recorded.
+- **GREEN (implemented):** the marker carries a registered brand —
+  `USER_CANCELLATION_MARKER = Symbol.for('savant-code.user-cancellation')` plus
+  `Object.freeze<UserCancellationReason>({ [USER_CANCELLATION_MARKER]: true })`
+  (`common/src/util/command-execution.ts:41,48`) — and identity is read from the brand instead of from
+  symbol equality: `isUserCancellationReason` requires an **own** property whose value is exactly `true`
+  (`Object.getOwnPropertyDescriptor`), so an inherited, spoofed or foreign property cannot claim it.
+  `abortForUserCancellation` remains the only mint (the marker is never exported) and
+  `isUserCancellationSignal` / `commandCancellationMetadata` read the brand — the idiom this repository
+  already uses for cross-copy identity (`PRESET_MARKER`,
+  `packages/connectors/src/core/presets/preset.ts:9`).
+- **AUDIT (measured — RED first, then GREEN):**
+  - RED, two copies of the module built from the pre-fix source: `same copy (A reads A):
+    {"cancellationReason":"user-request"}`, `cross copy (B reads A): {}`, `cross copy (A reads B): {}`,
+    `same copy (B reads B): {"cancellationReason":"user-request"}`, untyped `(A): {}`.
+  - RED, the real published boundary: `executionOutcome: cancelled` with `cancellationReason: <absent>`
+    out of `sdk/dist/index.mjs`, while the source copy typed the same signal `user-request`.
+  - GREEN, new declared gate `sdk/src/__tests__/command-execution-cancellation-identity.test.ts`: **3
+    PASS / 0 FAIL, 13 expectations** — both directions across two copies, an ordinary `abort()` and a
+    reason that merely *claims* `user-request` both staying untyped in both copies, and the copied
+    terminal runner plus the source runner agreeing on one `user-request` outcome.
+  - GREEN, boundary smoke after rebuilding the SDK at this revision: `dist/index.mjs` and
+    `dist/index.cjs` each carry the brand key once, and the probe reports `cancellationReason :
+    user-request` where it reported `<absent>`.
+  - `typecheck common`, `typecheck sdk` and `typecheck packages/agent-runtime` exit 0; the declared
+    gate set is re-stamped in the receipt below.
+- **IMPLEMENTATION DISCOVERY (a green suite is not a gate, this lane's own repeat):** the first
+  formulation of the brand was `const … : UserCancellationReason = Object.freeze({ [MARKER]: true })`.
+  `Object.freeze` widens the literal to `boolean`, so the annotated constant was rejected —
+  `error TS2322: Type 'boolean' is not assignable to type 'true'` at `command-execution.ts(48,7)` —
+  and it was **the SDK build's declaration bundling** that found it, after the focused suites and the
+  runtime typecheck were green. The correction is the explicit type argument
+  `Object.freeze<UserCancellationReason>`, not a cast and not a weakened annotation.
+- **ADVERSARIAL (answered by measurement):** (a) *Does a claimed reason type itself?* No — the gate
+  pins that a reason carrying `cancellationReason: 'user-request'` is read as untyped by both copies,
+  because only the brand is read and only the helper mints it. (b) *Does an ordinary abort type
+  itself?* No — pinned in both copies. (c) *Can the brand be matched by shape?* No — it is an own
+  property keyed by the registered symbol with the exact value `true`, checked by descriptor. (d) *Did
+  any stored row, owner, boundary or receipt change?* No: the fix changes what a live signal is read
+  as; `fix-boundaries.json` stays empty and every class stays `unresolved`.
+- **CHANGE DELTA:** `common/src/util/command-execution.ts` (the brand, the reader and the two helpers
+  that consume it), one new declared SDK gate file with its `SCOPE.md` write target line, and the gate
+  line in this record; no class closure, no repair boundary, no historical row, receipt or owner change.
+
 ### Review questions
 
 1. **Should the timeout be raised automatically by the runtime, or should the model be told?** Told,
@@ -391,6 +547,12 @@ remove the records has not fixed the class.
   `toMatchObject` mutates the received value when a key's expectation is an asymmetric matcher. It is
   recorded in Loop 4 and carried to the session record; it is not repaired by this lane and is not
   claimed as fixed.
+- **The cancellation brand is deliberately process-wide (Loop 7).** `Symbol.for` makes the identity
+  space well-known so a marker minted by one module copy is recognized by another; the corollary is
+  stated rather than hidden — in-process code that knows the key can brand its own reason object. That
+  is not a new capability (any module could already call `abortForUserCancellation`), and it is the
+  price of an identity that survives the copy boundary instead of silently degrading to "unknown
+  cancellation".
 - Nothing was pushed.
 
 ## Resolution
@@ -444,7 +606,7 @@ exits non-zero, and declaring it would make `fid:verify` red on a correct today-
   (`sdk/src/tools/run-terminal-command.ts`, `sdk/src/run-state/**`, `common/src/util/command-execution.ts`,
   `common/src/types/experience.ts`, `common/src/tools/params/tool/**`,
   `packages/agent-runtime/src/tools/**`, `packages/agent-runtime/src/hooks/**`,
-  `dev/experiences/class-owners.json`, the two sdk test paths).
+  `dev/experiences/class-owners.json`, the three sdk test paths).
 - **Master program:** `FID-2026-1012-022` (census rows 18, 26, 30, 41, 42, 43, 49, 52, 53, 56, 62, 63,
   66).
 - **Design record:** `docs/design/learnings-root-cause-matrix.md` — RC6 and feature E6.

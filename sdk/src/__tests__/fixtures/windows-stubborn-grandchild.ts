@@ -1,6 +1,8 @@
 import { spawn } from 'child_process'
 import { existsSync, writeFileSync } from 'fs'
 
+const FIXTURE_START_TIMEOUT_MS = 30_000
+
 const mode = process.argv[2]
 const pidFile = mode === 'grandchild' ? process.argv[3] : mode
 if (!pidFile) throw new Error('PID file path is required')
@@ -26,7 +28,7 @@ if (mode === 'grandchild') {
 
   keepHeartbeat(`${pidFile}.parent`)
   const grandchildHeartbeat = `${pidFile}.grandchild`
-  const readyDeadline = Date.now() + 5_000
+  const readyDeadline = Date.now() + FIXTURE_START_TIMEOUT_MS
   while (!existsSync(grandchildHeartbeat) && Date.now() < readyDeadline) {
     Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 10)
   }

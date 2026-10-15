@@ -26,7 +26,7 @@ const CAUSE_PATTERNS: ReadonlyArray<readonly [RegExp, string]> = [
   // the distinct-identity fallback below is) (FID-2026-1012-024 Step 4).
   [/^tool result contains an error$/, 'cause-not-recorded'],
   [/^Command timed out after\b|^Code search timed out\b/, 'timeout'],
-  [/^Tool call aborted:/, 'cancelled'],
+  [/^Tool call aborted:|^Command cancelled:/, 'cancelled'],
   // FID-2026-1012-024: a guard REFUSAL is a validation decision, not an execution
   // outcome. The readonly producer declares one on its own channel (`stderr`
   // starting with the refusal, exitCode 1 — the envelope shape FID-2026-0908-001

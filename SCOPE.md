@@ -337,11 +337,16 @@ and its remaining operator/external-input holds stay active.
 - FID-2026-1012-023: `sdk/src/tools/run-terminal-command.ts`, `sdk/src/run-state/**`,
   `sdk/src/run/tool-call.ts`, `sdk/src/__tests__/command-execution-contract.test.ts`,
   `sdk/src/__tests__/run-terminal-command.test.ts`,
+  `sdk/src/__tests__/command-execution-cancellation-identity.test.ts`,
   `packages/agent-runtime/src/tools/**`, `packages/agent-runtime/src/run-agent-step/**`,
   `packages/agent-runtime/src/hooks/**`, `common/src/types/contracts/**`,
   `common/src/types/experience.ts`, `common/src/util/command-execution.ts`,
   `common/src/util/experience-classes.ts`, `common/src/tools/params/tool/**`,
-  `dev/experiences/class-owners.json`
+  `dev/experiences/class-owners.json`, `cli/src/headless-control-plane.ts`,
+  `cli/src/chat/keyboard.ts`, `cli/src/commands/defs/core.ts`,
+  `cli/src/hooks/helpers/send-message-lifecycle.ts`,
+  `cli/src/server/gateway/run-lifecycle.ts`,
+  `cli/src/__tests__/headless-control.test.ts`
 - FID-2026-1012-024: `common/src/types/experience.ts`, `common/src/util/experiences.ts`,
   `common/src/util/experience-*.ts`, `common/src/util/__tests__/experience-*.test.ts`,
   `packages/agent-runtime/src/hooks/**`, `packages/agent-runtime/src/tools/tool-executor/**`,

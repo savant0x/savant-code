@@ -2,21 +2,17 @@ import { BOOT_LEARNINGS_PATH } from '@savant-code/common/constants/learnings-boo
 
 import { captureToolResultEvidence } from './evidence-capture'
 import { completeGroundingReads } from './grounding-read'
+import { emitToolResultHook } from './result-hook'
 import {
   isRedispatchable,
   markToolOutcomeReady,
   resetToolOutcomes,
   toolOutcomeState,
 } from './tool-outcome-state'
-import {
-  hasCommandFailure,
-  hasToolResultError,
-  inspectToolResultFailure,
-} from './tool-result-errors'
+import { hasCommandFailure, hasToolResultError } from './tool-result-errors'
 import { extractFailingPathsFromContent } from './verification-failure-paths'
 import { isWriteToolName, resolveFidIdForWrite } from './write-bookkeeping'
 import { appendGroundingRefresh } from '../../echo/grounding'
-import { buildHookInput, getHookEngine } from '../../hooks/engine'
 import { getOrCreateProvenance } from '../../provenance'
 import { setActivity } from '../../util/activity-tracking'
 import { getSuccessfulFileContent } from '../handlers/tool/write-file'
@@ -255,39 +251,15 @@ export async function runSuccessLifecycle<T extends ToolName>(
   // After tool completes, resolve any pending creditsUsed promise
   trace.finishToolEvent('completed')
 
-  // FID-2026-0814-003: PostToolUse / PostToolUseFailure — observation
-  // only, fire-and-forget. A tool whose result carries an error counts as
-  // a PostToolUseFailure so the event has an honest caller.
-  if (hookProjectRoot) {
-    // FID-2026-1012-023: one traversal yields the failure line AND the
-    // identity of the value that produced it, so the record can name the tool
-    // that was executed and not only the one the message mentions.
-    const inspection = inspectToolResultFailure(toolResult.content)
-    const failed = inspection.failed
-    getHookEngine(hookProjectRoot).fireAndForgetTrigger(
-      buildHookInput({
-        event: failed ? 'PostToolUseFailure' : 'PostToolUse',
-        sessionId: agentState.runId ?? agentState.agentId,
-        cwd: hookProjectRoot,
-        toolName,
-        toolInput: toolCall.input as Record<string, JSONValue>,
-        toolResult: toolResult.content as unknown as JSONValue,
-        // FID-2026-0909-005: surface the real error text so the ledger's
-        // dedup key groups by error class; generic = shape-drift fallback.
-        ...(failed ? { errorMessage: inspection.line } : {}),
-        ...(failed && inspection.commandExecution
-          ? { commandExecution: inspection.commandExecution }
-          : {}),
-        // FID-2026-1012-024 Loop 12: the harness's own classification of the
-        // outcome travels with the failure, so a deliberate steering refusal is
-        // recorded as an expected outcome instead of ranking as a defect. It is
-        // set by the walker's refusal branch only, never inferred here.
-        ...(failed && inspection.expectedness
-          ? { expectedness: inspection.expectedness }
-          : {}),
-      }),
-    )
-  }
+  if (hookProjectRoot)
+    emitToolResultHook({
+      hookProjectRoot,
+      signal: params.signal,
+      sessionId: agentState.runId ?? agentState.agentId,
+      toolName,
+      toolInput: toolCall.input as Record<string, JSONValue>,
+      toolResult: toolResult.content as unknown as JSONValue,
+    })
 
   if (creditsUsed) {
     void params.onCostCalculated(creditsUsed)

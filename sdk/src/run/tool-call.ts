@@ -7,7 +7,10 @@ import { toolNames } from '@savant-code/common/tools/constants'
 import { clientToolCallSchema } from '@savant-code/common/tools/list'
 import { applyPatchOperationSchema } from '@savant-code/common/tools/params/tool/apply-patch'
 import { jsonObjectSchema } from '@savant-code/common/types/json'
-import { commandExecutionMetadata } from '@savant-code/common/util/command-execution'
+import {
+  commandCancellationMetadata,
+  commandExecutionMetadata,
+} from '@savant-code/common/util/command-execution'
 import {
   getOptionalNumber,
   getOptionalString,
@@ -73,12 +76,12 @@ export async function handleToolCall({
           type: 'json',
           value: {
             ...commandResultFields,
-            errorMessage:
-              'Tool call cancelled: the run was aborted by the user.',
+            errorMessage: `Tool call aborted: ${toolName}`,
             executionOutcome: 'cancelled',
             executionStarted: false,
             executedToolName: toolName,
             terminationState: 'not-started',
+            ...commandCancellationMetadata(signal),
           },
         },
       ],

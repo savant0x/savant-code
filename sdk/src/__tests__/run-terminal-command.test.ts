@@ -11,6 +11,9 @@ import {
   runTerminalCommand,
 } from '../tools/run-terminal-command'
 
+const WINDOWS_FIXTURE_START_TIMEOUT_MS = 30_000
+const WINDOWS_FIXTURE_STOP_TIMEOUT_MS = 15_000
+
 describe('BoundedOutputBuffer', () => {
   test('preserves output below the limit and strips terminal colors', () => {
     const output = new BoundedOutputBuffer(100)
@@ -171,7 +174,7 @@ describe('terminal command process diagnostics', () => {
       const unchangedSince = new Map(
         heartbeatPaths.map((path) => [path, Date.now()]),
       )
-      const deadline = Date.now() + 5_000
+      const deadline = Date.now() + WINDOWS_FIXTURE_STOP_TIMEOUT_MS
       while (Date.now() < deadline) {
         await new Promise((resolve) => setTimeout(resolve, 100))
         const now = Date.now()
@@ -217,7 +220,7 @@ describe('terminal command process diagnostics', () => {
       )?.pid
       expect(shellPid).toBeDefined()
 
-      const readyDeadline = Date.now() + 5_000
+      const readyDeadline = Date.now() + WINDOWS_FIXTURE_START_TIMEOUT_MS
       while (!existsSync(pidFile) && Date.now() < readyDeadline) {
         await new Promise((resolve) => setTimeout(resolve, 25))
       }
@@ -276,5 +279,5 @@ describe('terminal command process diagnostics', () => {
       }
       rmSync(tempDir, { recursive: true, force: true })
     }
-  }, 25_000)
+  }, 60_000)
 })

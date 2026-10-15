@@ -1,3 +1,5 @@
+import { abortForUserCancellation } from '@savant-code/common/util/command-execution'
+
 import { useChatStore } from '../../state/chat-store'
 import { useFeedbackStore } from '../../state/feedback-store'
 import { getSystemMessage } from '../../utils/message-history'
@@ -215,7 +217,8 @@ export const CORE_COMMANDS = [
     name: 'logout',
     aliases: ['signout'],
     handler: (params) => {
-      params.abortControllerRef.current?.abort()
+      if (params.abortControllerRef.current)
+        abortForUserCancellation(params.abortControllerRef.current)
       params.stopStreaming()
       params.setCanProcessQueue(false)
 

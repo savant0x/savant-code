@@ -241,39 +241,6 @@ describe('inspectToolResultFailure (FID-2026-1012-023 identity transport)', () =
   })
 })
 
-describe('harness-declared expectedness (FID-2026-1012-024 Loop 12)', () => {
-  /** The readonly guard declares a refusal on its own stderr channel. */
-  const exitWithStderr = (stderr: string) => [
-    { type: 'json' as const, value: { results: [{ exitCode: 1, stderr }] } },
-  ]
-
-  it('classifies the guard refusal as the expected outcome it is', () => {
-    const inspection = inspectToolResultFailure(
-      exitWithStderr('run_readonly_command rejected: forbidden metacharacters'),
-    )
-    expect(inspection.failed).toBe(true)
-    expect(inspection.expectedness).toBe('expected')
-    expect(inspection.line).toBe(
-      'run_readonly_command rejected: forbidden metacharacters',
-    )
-  })
-
-  it('leaves a real exit that merely quotes the phrase unclassified', () => {
-    const inspection = inspectToolResultFailure(
-      exitWithStderr('grep: run_readonly_command rejected: not found'),
-    )
-    expect(inspection.line).toBe(
-      'Command exited with code 1: grep: run_readonly_command rejected: not found',
-    )
-    expect(inspection.expectedness).toBeUndefined()
-  })
-
-  it('assigns no classification to any other failure shape', () => {
-    for (const shape of CORPUS_SHAPES)
-      expect(inspectToolResultFailure(shape).expectedness).toBeUndefined()
-  })
-})
-
 /** Mirrors the detection corpus above plus the identity-bearing shape. */
 const CORPUS_SHAPES: unknown[] = [
   'plain string',

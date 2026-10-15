@@ -1,3 +1,4 @@
+import { isUserCancellationSignal } from '@savant-code/common/util/command-execution'
 import { describe, expect, test } from 'bun:test'
 
 import {
@@ -93,6 +94,7 @@ describe('runHeadlessPrint control frames (FID-2026-0907-006)', () => {
           // The parent writes the cancel frame on stdin, then an agent event
           // arrives — the step boundary must drain the cancel FIRST and stop.
           control.emitData('{"v":1,"type":"cancel"}\n')
+          expect(isUserCancellationSignal(runOptions.signal)).toBe(false)
           runOptions.handleEvent?.({
             type: 'tool_call',
             toolCallId: 't1',
@@ -150,6 +152,7 @@ describe('runHeadlessPrint control frames (FID-2026-0907-006)', () => {
           // must abort regardless of stream state — waiting for the next
           // boundary rode the run timeout (92s live).
           control.emitData('{"v":1,"type":"cancel"}\n')
+          expect(isUserCancellationSignal(runOptions.signal)).toBe(false)
           await Promise.race([
             new Promise((resolve) => {
               runOptions.signal?.addEventListener('abort', () =>

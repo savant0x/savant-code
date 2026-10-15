@@ -1,6 +1,7 @@
 import { commandExecutionMetadata } from '@savant-code/common/util/command-execution'
 
 import { markToolOutcomeReady } from './tool-outcome-state'
+import { resolveToolFailureExpectedness } from './tool-result-errors'
 import { buildHookInput, getHookEngine } from '../../hooks/engine'
 
 import type { GateContext } from './gate-context'
@@ -48,6 +49,10 @@ export async function runRejectionLifecycle<T extends ToolName>(
     // execution identity, so the ledger can attribute the failure to the tool
     // that ran and the budget it hit instead of a bare message.
     const commandExecution = commandExecutionMetadata(error)
+    const expectedness = resolveToolFailureExpectedness({
+      signal: params.signal,
+      commandExecution,
+    })
     getHookEngine(hookProjectRoot).fireAndForgetTrigger(
       buildHookInput({
         event: 'PostToolUseFailure',
@@ -59,6 +64,7 @@ export async function runRejectionLifecycle<T extends ToolName>(
         ...(Object.keys(commandExecution).length > 0
           ? { commandExecution }
           : {}),
+        ...(expectedness ? { expectedness } : {}),
       }),
     )
   }

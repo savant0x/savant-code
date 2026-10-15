@@ -1,3 +1,5 @@
+import { abortForUserCancellation } from '@savant-code/common/util/command-execution'
+
 import { getSelectedSlashCommand } from './slash-selection'
 import { buildDriveControlMessage } from '../commands/auto-drive'
 import { getProjectRoot } from '../project-files'
@@ -143,7 +145,8 @@ export function buildChatKeyboardHandlers(
       setInputMode('default')
     },
     onInterruptStream: () => {
-      abortControllerRef.current?.abort()
+      if (abortControllerRef.current)
+        abortForUserCancellation(abortControllerRef.current)
       if (queuedMessagesLength > 0) {
         pauseQueue()
       }
@@ -153,7 +156,8 @@ export function buildChatKeyboardHandlers(
       // (second press). Aborts the current turn, then routes the control
       // through the same `<drive-control>` directive the /auto-drive subcommands use,
       // so the runtime records the pause/stop on the durable drive record.
-      abortControllerRef.current?.abort()
+      if (abortControllerRef.current)
+        abortForUserCancellation(abortControllerRef.current)
       const store = useChatStore.getState()
       const action = store.drivePaused ? 'stop' : 'pause'
       store.setDrivePaused(action === 'pause')

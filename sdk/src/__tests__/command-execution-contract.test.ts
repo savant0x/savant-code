@@ -3,8 +3,10 @@ import { promises as fs } from 'node:fs'
 import { runReadonlyCommandParams } from '@savant-code/common/tools/params/tool/run-readonly-command'
 import { runTerminalCommandParams } from '@savant-code/common/tools/params/tool/run-terminal-command'
 import {
+  abortForUserCancellation,
   CommandTimeoutError,
   commandExecutionMetadata,
+  commandExecutionMetadataSchema,
 } from '@savant-code/common/util/command-execution'
 import { describe, expect, test } from 'bun:test'
 
@@ -87,6 +89,33 @@ describe('FID-2026-1012-023 command budget and cancellation contract', () => {
     })
   })
 
+  test('typed user cancellation is preserved by SDK dispatch', async () => {
+    const controller = new AbortController()
+    abortForUserCancellation(controller)
+    const result = await handleToolCall({
+      action: {
+        type: 'tool-call-request',
+        requestId: 'typed-cancellation-transport-fixture',
+        userInputId: 'fixture',
+        toolName: 'run_terminal_command',
+        input: { command: 'echo fixture' },
+        timeout: undefined,
+      },
+      overrides: {},
+      customToolDefinitions: {},
+      signal: controller.signal,
+      fs,
+    })
+    const parsed = runTerminalCommandParams.outputSchema.parse(result.output)
+    expect(commandExecutionMetadata(parsed[0]?.value)).toEqual({
+      executionOutcome: 'cancelled',
+      executionStarted: false,
+      executedToolName: 'run_terminal_command',
+      terminationState: 'not-started',
+      cancellationReason: 'user-request',
+    })
+  })
+
   test('SDK errors omit invalid execution metadata and unrelated exception fields', async () => {
     const result = await handleToolCall({
       action: {
@@ -151,7 +180,7 @@ describe('FID-2026-1012-023 command budget and cancellation contract', () => {
 
   test('a pre-cancelled call reports incomplete execution without starting a process', async () => {
     const controller = new AbortController()
-    controller.abort()
+    abortForUserCancellation(controller)
     const output = await runTerminalCommand({
       command: 'echo fixture',
       process_type: 'SYNC',
@@ -167,10 +196,44 @@ describe('FID-2026-1012-023 command budget and cancellation contract', () => {
         executionStarted: false,
         executedToolName: 'run_terminal_command',
         terminationState: 'not-started',
+        cancellationReason: 'user-request',
         errorMessage: expect.stringContaining('cancelled'),
       }),
     )
     expect(JSON.stringify(parsed)).toBe(receivedBefore)
+  })
+
+  test('an in-flight typed cancellation preserves user provenance', async () => {
+    const controller = new AbortController()
+    const outputPromise = runTerminalCommand({
+      command: `bun -e 'await new Promise((resolve) => setTimeout(resolve, 3000))'`,
+      process_type: 'SYNC',
+      cwd: process.cwd(),
+      timeout_seconds: 5,
+      signal: controller.signal,
+    })
+    setTimeout(() => abortForUserCancellation(controller), 50)
+    const parsed = runTerminalCommandParams.outputSchema.parse(
+      await outputPromise,
+    )
+    expect(commandExecutionMetadata(parsed[0]?.value)).toMatchObject({
+      executionOutcome: 'cancelled',
+      executionStarted: true,
+      cancellationReason: 'user-request',
+    })
+  })
+
+  test('execution metadata rejects contradictory cancellation provenance', () => {
+    const metadata = {
+      executionOutcome: 'timed-out',
+      cancellationReason: 'user-request',
+    } as const
+    expect(commandExecutionMetadataSchema.safeParse(metadata).success).toBe(
+      false,
+    )
+    expect(commandExecutionMetadata(metadata)).toEqual({
+      executionOutcome: 'timed-out',
+    })
   })
 
   test('a command that outlives its budget reports that budget, the advice and its identity', async () => {

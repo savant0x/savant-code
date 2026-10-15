@@ -1,3 +1,7 @@
+import {
+  abortForUserCancellation,
+  commandExecutionMetadata,
+} from '@savant-code/common/util/command-execution'
 import { describe, expect, test } from 'bun:test'
 
 import { createClientToolBridge } from './client-tool-bridge'
@@ -76,6 +80,18 @@ describe('client-tool bridge abort attribution (FID-2026-1012-023)', () => {
       executionOutcome: 'cancelled',
       executedToolName: 'run_terminal_command',
       terminationState: 'not-started',
+    })
+  })
+
+  test('the bridge preserves a typed user-cancellation reason', async () => {
+    const controller = new AbortController()
+    abortForUserCancellation(controller)
+
+    const output = await bridgeFor(controller.signal, () => {})(TERMINAL_CALL)
+
+    expect(commandExecutionMetadata(output[0]?.value)).toMatchObject({
+      executionOutcome: 'cancelled',
+      cancellationReason: 'user-request',
     })
   })
 

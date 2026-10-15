@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto'
 import path from 'node:path'
 
+import { abortForUserCancellation } from '@savant-code/common/util/command-execution'
 import {
   STATE_SNAPSHOT_INTERRUPTION_MESSAGE,
   closeTurn,
@@ -146,7 +147,7 @@ export const createRunLifecycle = (
       if (abortController.signal.aborted) {
         return
       }
-      abortController.abort()
+      abortForUserCancellation(abortController)
       // The abort listener has synchronously finalized the streaming
       // message (interruption notice + markComplete), and the caller is
       // about to switch away from this chat. Queue one final checkpoint of

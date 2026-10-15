@@ -8,6 +8,7 @@
 
 import { randomUUID } from 'node:crypto'
 
+import { abortForUserCancellation } from '@savant-code/common/util/command-execution'
 import { AskUserBridge } from '@savant-code/common/utils/ask-user-bridge'
 
 import { loadMostRecentChatState } from '../../utils/run-state-storage'
@@ -226,9 +227,7 @@ export function handleInterruptStream(
     )
     return
   }
-  ctx.activeRun.abortController.abort(
-    new Error('Interrupted by interrupt_stream'),
-  )
+  abortForUserCancellation(ctx.activeRun.abortController)
   send(JSON.stringify(success(id, { interrupting: true })))
 }
 

@@ -1,3 +1,5 @@
+import { isUserCancellationSignal } from '@savant-code/common/util/command-execution'
+
 import {
   inspectToolOutput,
   inspectToolOutputFailure,
@@ -53,4 +55,25 @@ export function inspectToolResultFailure<T>(content: T): {
 /** Command verification and capture use the same outcome authority. */
 export function hasCommandFailure<T>(content: T): boolean {
   return hasToolResultError(content)
+}
+
+/**
+ * Q26: expectedness comes from the harness signal and the producer's outcome,
+ * never from arbitrary tool-result data. The refusal walker classification wins
+ * when it exists; a typed user cancellation is the only cancellation exception.
+ */
+export function resolveToolFailureExpectedness(params: {
+  signal?: AbortSignal
+  commandExecution?: CommandExecutionMetadata
+  harnessExpectedness?: ExperienceExpectedness
+}): ExperienceExpectedness | undefined {
+  if (params.harnessExpectedness !== undefined)
+    return params.harnessExpectedness
+  if (
+    params.commandExecution?.executionOutcome === 'cancelled' &&
+    params.commandExecution.cancellationReason === 'user-request' &&
+    isUserCancellationSignal(params.signal)
+  )
+    return 'expected'
+  return undefined
 }

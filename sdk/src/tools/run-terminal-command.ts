@@ -3,6 +3,7 @@ import * as os from 'os'
 import * as path from 'path'
 
 import {
+  commandCancellationMetadata,
   CommandTimeoutError,
   validateCommandTimeoutSeconds,
 } from '@savant-code/common/util/command-execution'
@@ -72,6 +73,7 @@ export function runTerminalCommand({
             executionStarted: false,
             executedToolName: 'run_terminal_command',
             terminationState: 'not-started',
+            ...commandCancellationMetadata(signal),
           },
         },
       ])
@@ -159,6 +161,7 @@ export function runTerminalCommand({
             executionStarted: true,
             executedToolName: 'run_terminal_command',
             terminationState: 'requested',
+            ...commandCancellationMetadata(signal),
           },
         },
       ])
