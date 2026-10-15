@@ -18,9 +18,10 @@ import path from 'path'
  * (pre-write-gates.ts) — MUST route through this one function.
  */
 export function canonicalizePath(input: string): string {
-  const absolute = path.isAbsolute(input)
-    ? input
-    : path.resolve(process.cwd(), input)
+  const normalized = input.replace(/\\/g, '/').replace(/^[A-Za-z]:(?=\/)/, '')
+  const absolute = path.isAbsolute(normalized)
+    ? normalized
+    : path.resolve(process.cwd(), normalized)
   const resolved = path.resolve(absolute)
   return resolved.replace(/\\/g, '/').replace(/^[A-Za-z]:/, '')
 }

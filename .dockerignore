@@ -21,6 +21,17 @@ dev/scratchpad
 dev/exports
 .savant
 .savant-code
+.savant-free
+.freebuff
+.codex
+.git-bundles
+**/*.bundle
+**/.env
+**/.env.*
+!**/.env.example
+**/credentials.json
+**/tauri-key.key
+**/tauri-key.key.pub
 .gstack
 resources
 resorucs

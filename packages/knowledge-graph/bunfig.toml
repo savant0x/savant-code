@@ -2,4 +2,4 @@
 # test` runs with this directory as the working directory, and Bun does not walk
 # up for a `[test] preload`, so the root preload never reached this suite.
 [test]
-preload = ["./test/setup-test-isolation.ts"]
+preload = ["../../sdk/test/setup-env.ts", "./test/setup-test-isolation.ts"]

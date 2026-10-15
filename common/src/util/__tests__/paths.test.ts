@@ -101,6 +101,13 @@ describe('paths.resolveAndContain — exempt prefixes', () => {
 })
 
 describe('paths.resolveAndContain — rejection cases', () => {
+  test('a sibling sharing the project-root prefix is rejected', () => {
+    expect(
+      resolveAndContain(`${PROJECT_ROOT}-outside/file.ts`, {
+        projectRoot: PROJECT_ROOT,
+      }).kind,
+    ).toBe('reject')
+  })
   test('Q1: absolute /etc/passwd → reject', () => {
     const result = resolveAndContain('/etc/passwd', {
       projectRoot: PROJECT_ROOT,

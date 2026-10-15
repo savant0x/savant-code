@@ -15,13 +15,13 @@ import type { BoxRenderable } from '@opentui/core'
 
 /** Fake terminal "deletion" output — purely visual string literals. */
 export const FAKE_DELETED_LINES = [
-  'DELETED C:\\Users\\spenc\\dev\\savant-code\\cli\\src\\app.tsx',
+  'DELETED cli/src/app.tsx',
   'DELETED cli/src/chat/panels.tsx',
   'DELETED cli/src/components/dialog-overlay.tsx',
   'DELETED cli/src/hooks/use-animation-timeline.ts',
   'DELETED dev/fids/FID-2026-0816-008-savant-logo-easter-egg.md',
   'DELETED sdk/src/index.ts',
-  'DELETED C:\\Users\\spenc\\dev\\savant-code\\ARCHITECTURE.md',
+  'DELETED ARCHITECTURE.md',
   'DELETED README.md',
   'DELETED docs/design/ui-overhaul-plan.md',
   'DELETED CHANGELOG.md',

@@ -237,7 +237,7 @@ pass.
 
 | Layer           | Tech                              | Version                                           |
 | --------------- | --------------------------------- | ------------------------------------------------- |
-| Runtime         | Bun                               | 1.3.14 (engines `>=1.3.11`)                       |
+| Runtime         | Bun                               | 1.3.14 (exact runtime and package-manager pin)    |
 | Language        | TypeScript                        | 5.5.4 (`strict: true`, `noImplicitReturns: true`) |
 | TUI             | OpenTUI + React 19                | `@opentui/core` 0.5.3, `react` ^19.0.0            |
 | State           | Zustand + Immer                   | zustand ^5.0.8, immer ^10.1.3                     |
@@ -843,7 +843,19 @@ bun run --cwd=cli build:binary
 ### Reproducible clean-Linux workflow
 
 The repository pins Bun `1.3.14` in `.bun-version`, `package.json`, and the
-container image. From a clean Linux checkout, run:
+container image. For a native Debian 12+/Ubuntu 24.04+ setup, install the prerequisites
+and the pinned runtime first (other distributions need equivalent packages):
+
+```bash
+sudo apt-get update
+sudo apt-get install -y build-essential ca-certificates curl git unzip python3 nodejs npm \
+  pkg-config libfontconfig1-dev libgif-dev libjpeg-dev libpango1.0-dev \
+  librsvg2-dev libsqlite3-dev
+curl -fsSL https://bun.sh/install | bash -s "bun-v1.3.14"
+export PATH="$HOME/.bun/bin:$PATH"
+```
+
+Then, from a clean Linux checkout, run:
 
 ```bash
 git clone https://github.com/savant0x/savant-code.git
@@ -866,6 +878,7 @@ the committed lockfile, and runs the development CLI:
 
 ```bash
 docker build --tag savant-code:local .
+docker run --rm savant-code:local bun run test
 docker run --rm --interactive --tty savant-code:local
 ```
 
@@ -874,6 +887,15 @@ To pass local settings into the container, use the ignored file created above:
 ```bash
 docker run --rm --interactive --tty --env-file .env.local savant-code:local
 ```
+
+The container runs the terminal CLI as the unprivileged `bun` user. The image
+also includes digest-pinned Node `22.20.0` and npm for release-wrapper tests.
+does not build the optional Tauri desktop application. For Ollama running on
+the Linux host, add `--network host` and set `OLLAMA_HOST` in `.env.local`.
+Keep only the credentials for your chosen provider in that local file; remove
+unused dummy keys, especially `OR_MASTER_KEY`, which takes precedence over
+`OPENROUTER_API_KEY`. Environment files and local credential/backup state are
+excluded from the Docker context.
 
 Normal pushes to `main` are supported when explicitly requested. The repository
 `.githooks/pre-push` hook remains active, including its no-attribution scan and

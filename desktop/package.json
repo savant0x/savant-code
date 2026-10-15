@@ -8,7 +8,7 @@
     "dev:renderer": "bun scripts/sync-version.ts && vite",
     "build:renderer": "bun scripts/sync-version.ts && vite build",
     "typecheck": "tsc --noEmit",
-    "test": "bun test scripts/ src/",
+    "test": "bun scripts/test.ts",
     "tauri": "tauri",
     "build:sidecar": "bun scripts/build-sidecar.ts",
     "gen:icon": "bun scripts/generate-icon.ts",

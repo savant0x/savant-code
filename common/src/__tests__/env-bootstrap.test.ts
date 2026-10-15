@@ -86,9 +86,16 @@ describe('env-bootstrap (FID-2026-0906-007)', () => {
   })
 
   test('CLASS PIN: a spawned import of common/src/env.ts over a scrubbed env succeeds when .env.local is findable', async () => {
-    // The real repo root has .env.local with the 3 non-defaultable keys.
-    // Scrub the shell env (the hook/spawn context) and import env.ts in a
-    // child bun process — today this throws; after GREEN it must not.
+    const startDir = makeTree(
+      1,
+      [
+        'NEXT_PUBLIC_CB_ENVIRONMENT=dev',
+        'NEXT_PUBLIC_SAVANT_CODE_APP_URL=http://localhost:3000',
+        'NEXT_PUBLIC_WEB_PORT=3000',
+      ].join('\n'),
+    )
+    cleanup = join(startDir, '..')
+    // Prove bootstrap without a developer-owned .env.local or shell exports.
     const child = Bun.spawnSync(
       [
         'bun',
@@ -98,7 +105,7 @@ describe('env-bootstrap (FID-2026-0906-007)', () => {
           "/../../../common/src/env.ts'); console.log('BOOTSTRAP_OK')",
       ],
       {
-        cwd: import.meta.dir,
+        cwd: startDir,
         env: {
           PATH: process.env.PATH ?? '',
           SystemRoot: process.env.SystemRoot ?? '',

@@ -60,6 +60,17 @@ function safeRealpath(
   let current = path.resolve(projectRoot, filePath)
   const missingSegments: string[] = []
   while (!fs.existsSync(current)) {
+    try {
+      if (fs.lstatSync(current).isSymbolicLink()) return null
+    } catch (error) {
+      if (
+        !(error instanceof Error) ||
+        !('code' in error) ||
+        error.code !== 'ENOENT'
+      ) {
+        return null
+      }
+    }
     const parent = path.dirname(current)
     if (parent === current) return null // hit filesystem root
     missingSegments.unshift(path.basename(current))
@@ -143,6 +154,9 @@ export function resolveAndContain(
     .resolve(opts.projectRoot)
     .replace(/\\/g, '/')
   const normalized = filePath.replace(/\\/g, '/')
+  const rootPrefix = projectRootForCompare.endsWith('/')
+    ? projectRootForCompare
+    : `${projectRootForCompare}/`
 
   // Check exempt prefixes. After an exempt match we STILL run containment
   // (Q8) so `dev/fids/x/../etc/passwd` is rejected.
@@ -152,7 +166,10 @@ export function resolveAndContain(
   // Stage-2: collapse `..` and `.` segments via path.resolve.
   const resolvedAbs = path.resolve(opts.projectRoot, normalized)
   const resolvedAbsForCompare = resolvedAbs.replace(/\\/g, '/')
-  if (!resolvedAbsForCompare.startsWith(projectRootForCompare)) {
+  if (
+    resolvedAbsForCompare !== projectRootForCompare &&
+    !resolvedAbsForCompare.startsWith(rootPrefix)
+  ) {
     return { kind: 'reject', reason: 'path escapes project root' }
   }
 
@@ -162,7 +179,7 @@ export function resolveAndContain(
   // node:fs.realpathSync.native). Tests pass identity for mock fs.
   // realpath is `string | null`; the null-check below narrows to `string`.
   const realpathFn = opts?.realpathFn ?? fs.realpathSync.native
-  const realpath = safeRealpath(filePath, opts!.projectRoot!, realpathFn)
+  const realpath = safeRealpath(normalized, opts.projectRoot, realpathFn)
   if (realpath === null) {
     return {
       kind: 'reject',
@@ -170,7 +187,10 @@ export function resolveAndContain(
     }
   }
   const realpathForCompare = realpath.replace(/\\/g, '/')
-  if (!realpathForCompare.startsWith(projectRootForCompare)) {
+  if (
+    realpathForCompare !== projectRootForCompare &&
+    !realpathForCompare.startsWith(rootPrefix)
+  ) {
     return { kind: 'reject', reason: 'symlink escapes project root' }
   }
 

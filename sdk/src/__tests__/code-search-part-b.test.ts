@@ -34,7 +34,7 @@ describe('codeSearch', () => {
   describe('edge cases with context lines', () => {
     it('should handle filenames with hyphens correctly', async () => {
       const searchPromise = codeSearch({
-        projectPath: '/test/project',
+        projectPath: process.cwd(),
         pattern: 'import',
         flags: '-A 1',
       })
@@ -59,7 +59,7 @@ describe('codeSearch', () => {
 
     it('should handle filenames with multiple hyphens and underscores', async () => {
       const searchPromise = codeSearch({
-        projectPath: '/test/project',
+        projectPath: process.cwd(),
         pattern: 'test',
         flags: '-A 1',
       })
@@ -83,7 +83,7 @@ describe('codeSearch', () => {
 
     it('should not accumulate entire file content (regression test)', async () => {
       const searchPromise = codeSearch({
-        projectPath: '/test/project',
+        projectPath: process.cwd(),
         pattern: 'import.*env',
         flags: '-A 2',
         maxOutputStringLength: 20000,
@@ -112,7 +112,7 @@ describe('codeSearch', () => {
   describe('result limiting with context lines', () => {
     it('should respect maxResults per file with context lines', async () => {
       const searchPromise = codeSearch({
-        projectPath: '/test/project',
+        projectPath: process.cwd(),
         pattern: 'test',
         flags: '-A 1',
         maxResults: 2,
@@ -152,7 +152,7 @@ describe('codeSearch', () => {
 
     it('should not report truncation when matches exactly equal maxResults', async () => {
       const searchPromise = codeSearch({
-        projectPath: '/test/project',
+        projectPath: process.cwd(),
         pattern: 'test',
         maxResults: 2,
       })
@@ -174,7 +174,7 @@ describe('codeSearch', () => {
 
     it('should respect globalMaxResults with context lines', async () => {
       const searchPromise = codeSearch({
-        projectPath: '/test/project',
+        projectPath: process.cwd(),
         pattern: 'test',
         flags: '-A 1',
         globalMaxResults: 3,
@@ -209,7 +209,7 @@ describe('codeSearch', () => {
 
     it('should not count context lines toward maxResults limit', async () => {
       const searchPromise = codeSearch({
-        projectPath: '/test/project',
+        projectPath: process.cwd(),
         pattern: 'match',
         flags: '-A 2 -B 2',
         maxResults: 1,
@@ -243,7 +243,7 @@ describe('codeSearch', () => {
   describe('malformed output handling', () => {
     it('should skip lines without separator', async () => {
       const searchPromise = codeSearch({
-        projectPath: '/test/project',
+        projectPath: process.cwd(),
         pattern: 'test',
       })
 
@@ -266,7 +266,7 @@ describe('codeSearch', () => {
 
     it('should handle empty output', async () => {
       const searchPromise = codeSearch({
-        projectPath: '/test/project',
+        projectPath: process.cwd(),
         pattern: 'nonexistent',
       })
 

@@ -34,7 +34,7 @@ describe('codeSearch', () => {
   describe('basic search', () => {
     it('should parse standard ripgrep output without context flags', async () => {
       const searchPromise = codeSearch({
-        projectPath: '/test/project',
+        projectPath: process.cwd(),
         pattern: 'import',
       })
 
@@ -61,7 +61,7 @@ describe('codeSearch', () => {
   describe('context flags handling', () => {
     it('should correctly parse output with -A flag (after context)', async () => {
       const searchPromise = codeSearch({
-        projectPath: '/test/project',
+        projectPath: process.cwd(),
         pattern: 'import.*env',
         flags: '-A 2',
       })
@@ -98,7 +98,7 @@ describe('codeSearch', () => {
 
     it('should correctly parse output with -B flag (before context)', async () => {
       const searchPromise = codeSearch({
-        projectPath: '/test/project',
+        projectPath: process.cwd(),
         pattern: 'export',
         flags: '-B 2',
       })
@@ -135,7 +135,7 @@ describe('codeSearch', () => {
 
     it('should correctly parse output with -C flag (context before and after)', async () => {
       const searchPromise = codeSearch({
-        projectPath: '/test/project',
+        projectPath: process.cwd(),
         pattern: 'TODO',
         flags: '-C 1',
       })
@@ -163,7 +163,7 @@ describe('codeSearch', () => {
 
     it('should handle -A flag with multiple matches in same file', async () => {
       const searchPromise = codeSearch({
-        projectPath: '/test/project',
+        projectPath: process.cwd(),
         pattern: 'import',
         flags: '-A 1',
       })
@@ -191,7 +191,7 @@ describe('codeSearch', () => {
 
     it('should handle -B flag at start of file', async () => {
       const searchPromise = codeSearch({
-        projectPath: '/test/project',
+        projectPath: process.cwd(),
         pattern: 'import',
         flags: '-B 2',
       })
@@ -211,7 +211,7 @@ describe('codeSearch', () => {
 
     it('should skip separator lines between result groups', async () => {
       const searchPromise = codeSearch({
-        projectPath: '/test/project',
+        projectPath: process.cwd(),
         pattern: 'test',
         flags: '-A 1',
       })

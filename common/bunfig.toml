@@ -7,4 +7,4 @@
 # defaults were all `undefined` inside a common test, so nothing in this
 # workspace was isolated between test files.
 [test]
-preload = ["./test/setup-test-isolation.ts"]
+preload = ["../sdk/test/setup-env.ts", "./test/setup-test-isolation.ts"]

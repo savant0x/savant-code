@@ -35,7 +35,7 @@ describe('codeSearch', () => {
       // Bug: Patterns starting with '-' were misparsed as flags
       // Fix: Added '--' separator before pattern in args
       const searchPromise = codeSearch({
-        projectPath: '/test/project',
+        projectPath: process.cwd(),
         pattern: '-foo',
       })
 
@@ -55,7 +55,7 @@ describe('codeSearch', () => {
       // Bug: JSON lineText includes trailing \n, causing blank lines
       // Fix: Strip \r?\n from lineText
       const searchPromise = codeSearch({
-        projectPath: '/test/project',
+        projectPath: process.cwd(),
         pattern: 'import',
       })
 
@@ -84,7 +84,7 @@ describe('codeSearch', () => {
       // Bug: Only processed one JSON object in remainder
       // Fix: Loop through all complete lines in remainder
       const searchPromise = codeSearch({
-        projectPath: '/test/project',
+        projectPath: process.cwd(),
         pattern: 'test',
       })
 
@@ -112,7 +112,7 @@ describe('codeSearch', () => {
       // Bug: Output size only checked at end, could exceed limit
       // Fix: Check estimatedOutputLen during streaming and stop early
       const searchPromise = codeSearch({
-        projectPath: '/test/project',
+        projectPath: process.cwd(),
         pattern: 'test',
         maxOutputStringLength: 200, // Very small limit
         globalMaxResults: 1000, // Set high so output size limit is hit first
@@ -152,7 +152,7 @@ describe('codeSearch', () => {
 
     it('reports unsupported byte paths instead of fabricating filenames', async () => {
       const searchPromise = codeSearch({
-        projectPath: '/test/project',
+        projectPath: process.cwd(),
         pattern: 'test',
       })
 
@@ -178,7 +178,7 @@ describe('codeSearch', () => {
 
     it('preserves UTF-8 characters split across process chunks', async () => {
       const searchPromise = codeSearch({
-        projectPath: '/test/project',
+        projectPath: process.cwd(),
         pattern: 'café',
       })
       const output = Buffer.from(createRgJsonMatch('café.ts', 1, 'café'))
@@ -210,7 +210,7 @@ describe('codeSearch', () => {
       }))
 
       const searchPromise = codeSearch({
-        projectPath: '/test/project',
+        projectPath: process.cwd(),
         pattern: 'test',
         timeoutSeconds: 1,
       })

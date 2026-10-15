@@ -45,7 +45,7 @@ describe('codeSearch', () => {
   describe('glob pattern handling', () => {
     it('should handle -g flag with glob patterns like *.ts', async () => {
       const searchPromise = codeSearch({
-        projectPath: '/test/project',
+        projectPath: process.cwd(),
         pattern: 'import',
         flags: '-g *.ts',
       })
@@ -72,7 +72,7 @@ describe('codeSearch', () => {
 
     it('should handle -g flag with multiple glob patterns', async () => {
       const searchPromise = codeSearch({
-        projectPath: '/test/project',
+        projectPath: process.cwd(),
         pattern: 'import',
         flags: '-g *.ts -g *.tsx',
       })
@@ -104,7 +104,7 @@ describe('codeSearch', () => {
 
     it('should strip single quotes from glob pattern arguments (regression: spawn has no shell)', async () => {
       const searchPromise = codeSearch({
-        projectPath: '/test/project',
+        projectPath: process.cwd(),
         pattern: 'auth',
         flags: "-g 'authentication.knowledge.md'",
       })
@@ -130,7 +130,7 @@ describe('codeSearch', () => {
 
     it('should strip double quotes from glob pattern arguments', async () => {
       const searchPromise = codeSearch({
-        projectPath: '/test/project',
+        projectPath: process.cwd(),
         pattern: 'import',
         flags: '-g "*.ts"',
       })
@@ -151,7 +151,7 @@ describe('codeSearch', () => {
 
     it('should strip quotes from multiple glob patterns', async () => {
       const searchPromise = codeSearch({
-        projectPath: '/test/project',
+        projectPath: process.cwd(),
         pattern: 'import',
         flags: "-g '*.ts' -g '*.tsx'",
       })
@@ -172,7 +172,7 @@ describe('codeSearch', () => {
 
     it('should not deduplicate flag-argument pairs', async () => {
       const searchPromise = codeSearch({
-        projectPath: '/test/project',
+        projectPath: process.cwd(),
         pattern: 'import',
         flags: '-g *.ts -i -g *.tsx',
       })
