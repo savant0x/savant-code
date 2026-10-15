@@ -85,6 +85,13 @@
   the Q24 read-only Git-history audit classified `44` historical missing paths
   without rewriting archived FIDs. Implementation commits: `1d60b9a8`,
   `33f5c2f2`; evidence and closure record: `ad5c18d7`.
+- **FID-2026-1013-005 (low, closed + archived 2026-10-14):** verified local
+  Ollama availability at HTTP 200 with three models and documented Cloudflare's
+  public Workers AI catalog plus its account-scoped REST credential boundary.
+  Q27 makes the Account ID/token an audit limitation rather than a completion
+  gate for the curated static catalog. No account-specific roster query or
+  credential use is claimed. Public-boundary commit `9d6fe794`; completion
+  evidence commit `e834228f`.
 
 ## 2026-10-14 — three failure-class lanes archived under Q25
 

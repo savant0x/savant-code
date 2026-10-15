@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-1013-005-provider-live-list-remaining-boundaries.md`
 **ID:** FID-2026-1013-005
 **Severity:** low
-**Status:** fixed
+**Status:** closed
 **Created:** 2026-10-13 18:51
 **Automation level:** 3
 **YAGNI-Compliance:** Verified
@@ -20,7 +20,7 @@ and token, so an authenticated account-specific model list cannot be requested.
 
 - OS: Windows, PowerShell.
 - Runtime: Bun 1.3.14; local development line 0.0.36.
-- Commit: `9d6fe794`; public catalog boundary and acceptance ruling recorded.
+- Commit: `e834228f`; public catalog boundary and acceptance ruling recorded.
 
 ## Detailed Description
 
@@ -149,12 +149,14 @@ account-specific roster query is claimed.
 ### Missed Questions
 
 Does a public provider inventory establish an account catalog? No. Keep the
-account-specific probe blocked until the operator supplies its configuration.
+account-specific roster limitation explicit; Q27 establishes that this is not a
+completion gate for the curated static catalog.
 
 ### Code Verification Evidence
 
-No implementation status is claimed. The live read-only output above is the
-evidence, and the root SDK exports the existing Cloudflare environment helpers.
+The live read-only output, public vendor documentation, and provider-doc drift
+probe are the evidence. The root SDK exports the existing Cloudflare
+environment helpers, and no account-specific roster is claimed.
 
 ## Resolution
 
@@ -162,6 +164,16 @@ Local probe and public documentation evidence are complete. Q27 records that a
 Cloudflare Account ID and API token are not required for completion of the
 curated static catalog code. The account-specific live roster is not claimed as
 queried, and no credential was requested, printed, stored, or transmitted.
+
+- **Closed Date:** 2026-10-14
+- **Fix Description:** Established the local Ollama and public Cloudflare
+  catalog evidence boundary and removed the account-specific roster from the
+  completion contract without claiming an authenticated query.
+- **Tests Added:** No source tests; the declared provider-doc drift probe and
+  quality gate passed.
+- **Verification Evidence:** public-boundary commit `9d6fe794`, acceptance
+  tracking commit `e834228f`, and the stamped receipt above.
+- **Archived:** `dev/fids/archive/FID-2026-1013-005-provider-live-list-remaining-boundaries.md`
 
 ## Lessons Learned
 

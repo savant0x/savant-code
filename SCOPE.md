@@ -93,31 +93,6 @@ constraints active. **Automation level: 3.**
 
 ### Providers and routing
 
-- [x] **T119. Provider live-list probes (no purchase).** Operator ruling
-      2026-10-12 (Q15): no provider is funded — providers are tested over free
-      endpoints, and a provider the operator has stated as added is already
-      confirmed live and real; what remains is a live model-list probe. That
-      withdraws the previous "needs an operator-provided paid xKiro account"
-      blocker. **Measured 2026-10-13:** all 25 remote registry endpoints return
-      HTTP 200 model catalogs, using stored keys for the 14 key-gated endpoints.
-      Local Ollama and account-specific Cloudflare remain separate boundaries.
-      Counts and endpoint evidence are in the learning-remediation session summary;
-      no inference, purchase or provider-parity edit was performed. **Revalidated
-      2026-10-14:** Cloudflare's official public Workers AI model catalog is
-      readable without credentials, while its REST guide confirms that the
-      account-scoped runtime API requires both an Account ID and API token.
-       **Automation level: 3** for the probe. **Completed 2026-10-14:** local
-       Ollama is HTTP 200 / three models; Cloudflare's public catalog and REST
-       credential boundary are documented. Q27 rules that account-specific
-       Cloudflare credentials are not a completion gate for the curated static
-       catalog. **Child:** `FID-2026-1013-005`.
-
-- [x] **FID-2026-1013-005. Provider live-list remaining boundaries.** The local
-       Ollama evidence and public Cloudflare documentation evidence are complete.
-       Q27 records that the account-specific Cloudflare API roster is not a
-       completion gate for Savant's curated static catalog. No roster query is
-       claimed and no credential is required. **Automation level: 3.**
-
 - [ ] **T175. Sweep control-manifest authorship + control-armed re-run.**
       Open remainder of archived `FID-2026-1007-016`: the seam is built, but
       verdicts need the operator-owned `<provider>/<family>` control manifest,
@@ -428,10 +403,6 @@ and its remaining operator/external-input holds stay active.
   `dev/operator-decisions.md`, `dev/fids/**`, `dev/feature-pipeline/**`,
   `dev/session-summaries/**`, `scripts/version-docs.ts`,
   `scripts/version-docs-drift.test.ts`, `.agents/skills/**/SKILL.md`
-- T119: `.env.local`, `docs/providers.md`,
-  `dev/session-summaries/2026-10-03-provider-*.md`,
-  `dev/scratchpad/active/provider-catalogs-2026-10-03/**`,
-  `dev/scratchpad/active/provider-integration-*`
 - T175: (no write surface — operator-owned)
 - T171: `cli/src/utils/provider-wizard-discovery.ts`,
   `cli/src/chat/use-chat-pickers.ts`,
@@ -452,9 +423,6 @@ and its remaining operator/external-input holds stay active.
   (re-export only), `.githooks/commit-msg`,
   `.github/workflows/attribution-guard.yml`,
   `dev/session-summaries/2026-10-02-0223-fid-003-batch1-implementation.md`
-- FID-2026-1013-005: `dev/fids/FID-2026-1013-005-*.md`,
-  `dev/session-summaries/2026-10-13-provider-live-list-boundaries.md`,
-  `docs/providers.md`
 - T186: (no write surface — blocked on the T122 savant-free removal)
 - T187: (no write surface — operator-owned skills surface)
 - Repository formatting drift: (no write surface — operator-owned)
