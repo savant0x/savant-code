@@ -147,6 +147,20 @@ Landed as two local commits, each staged with explicit paths (no push, no releas
 - `891a8c1e` — `fix(agent-runtime): stop result inspection at the node budget and measure it honestly
   (FID-2026-1012-024)` (3 files): the bounded sequential traversal, its strengthened regression, and the
   FID-024 record with Loop 15/16 and the re-stamped receipt.
+- `cde61d06` — `fix(agent-runtime): add the result-hook module and expectedness suite the pass referenced
+  (FID-2026-1012-023)` (2 files): a repair, not new work.
+
+**Staging-completeness failure and its repair.** `decacf5e` staged paths, and two files it depends on were
+still untracked: the extracted `result-hook.ts` (imported by the committed `result-lifecycle.ts`) and
+`expectedness.test.ts` (a declared gate of both records). The commit therefore imported a module its tree
+did not contain and declared a gate whose suite lived only on this machine — invisible locally, because both
+files were on disk the whole time. Found by enumerating the untracked set instead of assuming it, and
+repaired without rewriting history. The cheap guard for next time: after staging, `git ls-tree -r HEAD`
+every path the committed code references — explicit-path staging is not staging by completeness.
+
+A third untracked file, `scripts/providers/audit-probes/parity-gateway-probe.ts`, was left alone: nothing
+in the tracked tree imports it (only a design doc names it in prose) and it belongs to the provider-parity
+lane, which owns those probes.
 
 Unrelated idea-shelf, wiki and operator artifacts, plus three older untracked session summaries, remain
 untouched and uncommitted. No processes were left running; the SDK builds and all verification runs
