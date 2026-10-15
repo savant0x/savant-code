@@ -1,7 +1,7 @@
 # Session Summary: 2026-10-15 13:39
 
 **Session ID:** 2026-10-15-reproducible-clean-linux-build
-**Duration:** 2026-10-15 13:39 — active
+**Duration:** 2026-10-15 13:39 — 2026-10-15 15:29
 **Status:** active
 
 ---
@@ -40,13 +40,17 @@
 
 ## Planned Work
 
-1. [ ] Confirm the existing `.bun-version`; add the Dockerfile and Docker ignore rules.
-2. [ ] Document clean-Linux setup, build, test, local run, and Docker run commands.
-3. [ ] Remove the active workstation path default and machine-specific active examples.
-4. [ ] Repair and verify the sandbox cleanup race found by the aggregate test gate.
-5. [ ] Verify repository state, lockfile install contract, build, tests, Docker build,
-   secret/path scans, and pre-push hook preservation.
-6. [ ] Create one logical path-scoped commit containing only this pass and push
+1. [implemented] Confirmed `.bun-version` at `1.3.14`; added the Dockerfile and
+   Docker ignore rules.
+2. [implemented] Documented clean-Linux setup, build, test, local run, and Docker
+   run commands.
+3. [implemented] Removed the active workstation path default and machine-specific
+   active examples.
+4. [implemented] Repaired and verified the sandbox cleanup race found by the
+   aggregate test gate.
+5. [implemented] Verified repository state, lockfile install contract, build,
+   workspace tests, Docker build/run, path scans, and pre-push hook preservation.
+6. [implemented] Created commit `9d55f7ae`; push
    `main` to `origin/main` after the pre-push gates pass.
 
 ---
@@ -55,12 +59,16 @@
 
 ### Task 1: Reproducible clean-Linux project workflow
 
-- **Status:** in-progress
+- **Status:** implemented; remote push pending pre-push gates
 - **FIDs Created:** None; the change is infrastructure/documentation work without a new API.
 - **Changes Made:** Added the reproducibility files and documentation, removed
   active workstation-specific paths, and hardened sandbox workspace cleanup.
-- **Verification:** Targeted tests and workspace gates are passing; remaining
-  repository-wide gates and Docker build are pending.
+- **Verification:** `bun run ci`, `bun run typecheck`, ESLint, Markdownlint,
+  Prettier, repository validation, protocol-bundle check, FID receipt check,
+  governance smoke, all workspace test commands, Docker build, and container
+  CLI version run passed. The aggregate `bun run test` invocation is not captured
+  by the shell runner because it terminates the long-lived child before returning
+  an exit code; each constituent workspace test command passed independently.
 
 ---
 
@@ -70,13 +78,13 @@
 
 - **Severity:** medium
 - **FID:** None
-- **Status:** resolved by the existing `.bun-version` plus the pinned Docker base image; verification pending
+- **Status:** resolved by the existing `.bun-version` plus the pinned Docker base image; `bun --version` reported `1.3.14`
 
 ### Issue 2: Workstation-specific bundle destination
 
 - **Severity:** medium
 - **FID:** None
-- **Status:** resolved by this session's planned portable default; verification pending
+- **Status:** resolved by `.git-bundles` plus `SAVANT_BUNDLE_DIR` override; targeted bundle tests pass
 
 ### Issue 3: Sandbox workspace cleanup race
 
@@ -88,12 +96,16 @@
 
 ## Validation Results
 
-- [ ] `bun run ci`: pending
-- [ ] `bun run test`: pending
-- [ ] `bun run typecheck`: pending
-- [ ] `bun x eslint . --max-warnings 0`: pending
-- [ ] `bun run lint:md`: pending
-- [ ] `docker build -t savant-code:local .`: pending or blocked if Docker is unavailable
+- [implemented] `bun run ci`: PASS
+- [blocked] `bun run test`: the aggregate shell invocation is terminated by the
+  command runner before it returns; all workspace test commands pass independently
+- [implemented] `bun run typecheck`: PASS
+- [implemented] `bun x eslint . --max-warnings 0`: PASS
+- [implemented] `bun run lint:md`: PASS
+- [implemented] `bun x prettier --check .`: PASS
+- [implemented] `bun run validate:repository`: PASS
+- [implemented] `docker build --tag savant-code:local .`: PASS
+- [implemented] `docker run --rm savant-code:local bun run --cwd=cli src/index.tsx --version`: PASS (`0.0.36`)
 
 ---
 
@@ -101,16 +113,16 @@
 
 ### Code Changes
 
-- **Files Modified:** pending
-- **Lines Added:** pending
-- **Lines Removed:** pending
-- **Net Change:** pending
+- **Files Modified:** 14 committed files
+- **Lines Added:** 306
+- **Lines Removed:** 38
+- **Net Change:** +268
 
 ### Git Status
 
 - **Branch:** `main`
 - **Uncommitted Changes:** yes; pre-existing work plus this session's changes
-- **New Commits:** pending
+- **New Commits:** `9d55f7ae` — `chore(reproducibility): add clean Linux build workflow`
 
 ---
 
@@ -125,11 +137,15 @@
 
 ### Priority Tasks
 
-1. [ ] None after verification and commit.
+1. [implemented] Reproducibility implementation and local commit.
+2. [blocked] Remote push is waiting on the pre-push hook's aggregate test
+   invocation to return successfully in this shell environment.
 
 ### Blockers
 
-- None known; Docker availability will be checked during verification.
+- Aggregate root test invocation is blocked by the shell runner terminating the
+  long-lived child process before it returns an exit code. The constituent
+  workspace test commands provide the recorded test evidence.
 
 ### Notes for Next Agent
 
