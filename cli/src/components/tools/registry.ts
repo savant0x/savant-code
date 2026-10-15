@@ -1,0 +1,192 @@
+import { AddMessageComponent } from './add-message'
+import { ApplyPatchComponent } from './apply-patch'
+import { CodeSearchComponent } from './code-search'
+import {
+  ManageConnectionsComponent,
+  ExecuteToolComponent,
+  SearchToolsComponent,
+  GetToolSchemasComponent,
+} from './composio'
+import { GlobComponent } from './glob'
+import { GravityIndexComponent } from './gravity-index'
+import { ListDirectoryComponent } from './list-directory'
+import { McpResultComponent } from './mcp-result'
+import { OutputResultComponent } from './output-result'
+import { ReadDocsComponent } from './read-docs'
+import { ReadFilesComponent } from './read-files'
+import { ReadSubtreeComponent } from './read-subtree'
+import { ReadURLComponent } from './read-url'
+import { RenderUIComponent } from './render-ui'
+import { RunTerminalCommandComponent } from './run-terminal-command'
+import { SequentialThinkingComponent } from './sequential-thinking'
+import { SetOutputComponent } from './set-output'
+import { SkillComponent } from './skill'
+import { SkillManageComponent } from './skill-manage'
+import { StrReplaceComponent } from './str-replace'
+import { SuggestFollowupsComponent } from './suggest-followups'
+import { TaskCompleteComponent } from './task-completed'
+import { TransitionPhaseComponent } from './transition-phase'
+import { WebSearchComponent } from './web-search'
+import { WriteFileComponent } from './write-file'
+import { WriteTodosComponent } from './write-todos'
+import { logger } from '../../utils/logger'
+
+import type {
+  ToolComponent,
+  ToolRenderConfig,
+  ToolRenderOptions,
+  ToolBlock,
+} from './types'
+import type { ChatTheme } from '../../types/theme-system'
+import type { ToolName } from '@savant-code/sdk'
+
+/**
+ * Registry of all tool-specific UI components.
+ * Add new tool components here to make them available in the CLI.
+ */
+const toolComponentRegistry = new Map<ToolName, ToolComponent>([
+  [ApplyPatchComponent.toolName, ApplyPatchComponent],
+  [CodeSearchComponent.toolName, CodeSearchComponent],
+  [ManageConnectionsComponent.toolName, ManageConnectionsComponent],
+  [ExecuteToolComponent.toolName, ExecuteToolComponent],
+  [SearchToolsComponent.toolName, SearchToolsComponent],
+  [GetToolSchemasComponent.toolName, GetToolSchemasComponent],
+  [GlobComponent.toolName, GlobComponent],
+  [GravityIndexComponent.toolName, GravityIndexComponent],
+  [ListDirectoryComponent.toolName, ListDirectoryComponent],
+  [RunTerminalCommandComponent.toolName, RunTerminalCommandComponent],
+  // `run_readonly_command` shares the exact input/output schema with
+  // `run_terminal_command` (command + terminalCommandOutputSchema), so it
+  // reuses the same TerminalCommandDisplay renderer (Law 13 — one renderer,
+  // two tools). Without this it fell through to the generic collapsed
+  // ToolCallItem fallback.
+  ['run_readonly_command', RunTerminalCommandComponent],
+  // FID-2026-0910-001 P1: skill_manage emits the same command-class output
+  // template (FID-2026-0908-001) but carries no `command` input, so it gets a
+  // dedicated component that synthesizes the `skill {action} {name}` label
+  // and delegates to the same TerminalCommandDisplay (Law 13). Without this
+  // it fell through to the generic collapsed ToolCallItem fallback and skill
+  // lifecycle changes were invisible in the chat.
+  [SkillManageComponent.toolName, SkillManageComponent],
+  [ReadDocsComponent.toolName, ReadDocsComponent],
+  [ReadFilesComponent.toolName, ReadFilesComponent],
+  [ReadSubtreeComponent.toolName, ReadSubtreeComponent],
+  [ReadURLComponent.toolName, ReadURLComponent],
+  [RenderUIComponent.toolName, RenderUIComponent],
+  [WebSearchComponent.toolName, WebSearchComponent],
+  [WriteTodosComponent.toolName, WriteTodosComponent],
+  [StrReplaceComponent.toolName, StrReplaceComponent],
+  [SuggestFollowupsComponent.toolName, SuggestFollowupsComponent],
+  [TransitionPhaseComponent.toolName, TransitionPhaseComponent],
+  [WriteFileComponent.toolName, WriteFileComponent],
+  [TaskCompleteComponent.toolName, TaskCompleteComponent],
+  // Propose tools reuse the same rendering as their base counterparts
+  ['propose_str_replace', StrReplaceComponent],
+  ['propose_write_file', WriteFileComponent],
+  [SkillComponent.toolName, SkillComponent],
+  [SequentialThinkingComponent.toolName, SequentialThinkingComponent],
+  [SetOutputComponent.toolName, SetOutputComponent],
+  // FID-2026-0822-011: tmux-cli narration calls previously fell through to
+  // the generic collapsed fallback (header-only, pre-chrome).
+  [AddMessageComponent.toolName, AddMessageComponent],
+  // FID-2026-0821-007: result-bearing tools share one renderer — their
+  // meaningful content is the formatted `output`, so they reuse
+  // OutputResultComponent (Law 13, mirroring run_readonly_command above).
+  [OutputResultComponent.toolName, OutputResultComponent], // deep_research
+  ['find_files', OutputResultComponent],
+  ['list_tables', OutputResultComponent],
+  ['describe_table', OutputResultComponent],
+  ['execute_query', OutputResultComponent],
+  ['analyze_query', OutputResultComponent],
+  ['lookup_agent_info', OutputResultComponent],
+  ['query_blast_radius', OutputResultComponent],
+  ['query_domain_clusters', OutputResultComponent],
+  ['query_node_edges', OutputResultComponent],
+  ['ponytail_debt', OutputResultComponent],
+  ['run_file_change_hooks', OutputResultComponent],
+  ['get_goal', OutputResultComponent],
+  ['browser_logs', OutputResultComponent],
+])
+
+/** The built-in entries, captured before any runtime registration. */
+const INITIAL_TOOL_COMPONENT_ENTRIES: ReadonlyArray<
+  readonly [ToolName, ToolComponent]
+> = [...toolComponentRegistry]
+
+/**
+ * Register a new tool component.
+ * This allows plugins or extensions to add custom tool renderers.
+ *
+ * @param component - The tool component to register
+ */
+export function registerToolComponent(component: ToolComponent): void {
+  toolComponentRegistry.set(component.toolName, component)
+}
+
+/**
+ * Get the registered component for a specific tool name.
+ *
+ * @param toolName - The name of the tool
+ * @returns The tool component, or undefined if not registered
+ */
+export function getToolComponent(
+  toolName: ToolName,
+): ToolComponent | undefined {
+  return (
+    toolComponentRegistry.get(toolName) ??
+    (/^[\w.-]+__[\w.-]+$/.test(toolName) ? McpResultComponent : undefined)
+  )
+}
+
+/**
+ * Render a tool using its registered component, or return null for default rendering.
+ * This is the main entry point for the tool rendering system.
+ *
+ * @param toolBlock - The tool block to render
+ * @param theme - The current chat theme
+ * @param options - Rendering options
+ * @returns Render configuration, or null to use default rendering
+ */
+export function renderToolComponent(
+  toolBlock: ToolBlock,
+  theme: ChatTheme,
+  options: ToolRenderOptions,
+): ToolRenderConfig | undefined {
+  const component = getToolComponent(toolBlock.toolName)
+
+  if (component === undefined) {
+    return undefined
+  }
+
+  try {
+    return component.render(
+      toolBlock as Parameters<typeof component.render>[0],
+      theme,
+      options,
+    )
+  } catch (error) {
+    logger.error(
+      `Error rendering tool component for ${toolBlock.toolName}:`,
+      error,
+    )
+    return undefined
+  }
+}
+
+/**
+ * Get all registered tool names.
+ * Useful for debugging or listing available tool renderers.
+ */
+export function getRegisteredToolNames(): ToolName[] {
+  return Array.from(toolComponentRegistry.keys())
+}
+
+/** Test isolation: restores the built-in entries a `registerToolComponent`
+ *  call in an earlier file would otherwise leave behind — process-lifetime
+ *  state `bun test` shares across files (FID-2026-1007-002). */
+export function resetToolComponentRegistry(): void {
+  toolComponentRegistry.clear()
+  for (const [toolName, component] of INITIAL_TOOL_COMPONENT_ENTRIES) {
+    toolComponentRegistry.set(toolName, component)
+  }
+}

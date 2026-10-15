@@ -1,0 +1,4 @@
+# FID-2026-0820-009 Q2: pin an exact stable minor, honored by rustup and CI
+# alike. Bumps are deliberate and recorded in the FID (Tauri v2 moves fast).
+[toolchain]
+channel = "1.97.1"

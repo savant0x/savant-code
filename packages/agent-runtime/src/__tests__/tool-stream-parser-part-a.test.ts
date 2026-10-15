@@ -1,0 +1,235 @@
+import { TEST_AGENT_RUNTIME_IMPL } from '@savant-code/common/testing/impl/agent-runtime'
+import { promptSuccess } from '@savant-code/common/util/error'
+import { beforeEach, describe, expect, it } from 'bun:test'
+
+import { processStreamWithTools } from '../tool-stream-parser'
+import { createToolCallChunk } from './test-utils'
+
+import type { AgentRuntimeDeps } from '@savant-code/common/types/contracts/agent-runtime'
+import type { StreamChunk } from '@savant-code/common/types/contracts/llm'
+import type { JSONValue } from '@savant-code/common/types/json'
+
+describe('processStreamWithTags', () => {
+  async function* createMockStream(chunks: StreamChunk[]) {
+    for (const chunk of chunks) {
+      yield chunk
+    }
+
+    return promptSuccess('mock-message-id')
+  }
+
+  function textChunk(text: string): StreamChunk {
+    return { type: 'text' as const, text }
+  }
+
+  let agentRuntimeImpl: AgentRuntimeDeps
+
+  beforeEach(() => {
+    agentRuntimeImpl = { ...TEST_AGENT_RUNTIME_IMPL }
+  })
+
+  it('should handle basic tool call parsing', async () => {
+    const streamChunks: StreamChunk[] = [
+      createToolCallChunk('test_tool', { param1: 'value1' }),
+    ]
+    const stream = createMockStream(streamChunks)
+
+    const events: any[] = []
+
+    const processors = {
+      test_tool: {
+        params: ['param1'] as string[],
+        onTagStart: (tagName: string, attributes: Record<string, string>) => {
+          events.push({ tagName, type: 'start', attributes })
+        },
+        onTagEnd: (tagName: string, params: Record<string, JSONValue>) => {
+          events.push({ tagName, type: 'end', params })
+        },
+      },
+    }
+
+    const result: string[] = []
+    const responseChunks: any[] = []
+
+    function onResponseChunk(chunk: any) {
+      responseChunks.push(chunk)
+    }
+
+    function defaultProcessor(toolName: string) {
+      return {
+        onTagStart: () => {},
+        onTagEnd: () => {},
+      }
+    }
+
+    for await (const chunk of processStreamWithTools({
+      ...agentRuntimeImpl,
+      stream,
+      processors,
+      defaultProcessor,
+      onResponseChunk,
+      executeXmlToolCall: async () => {},
+    })) {
+      if (chunk.type === 'text') {
+        result.push(chunk.text)
+      }
+    }
+
+    expect(events).toEqual([
+      {
+        tagName: 'test_tool',
+        type: 'start',
+        attributes: {},
+      },
+      {
+        tagName: 'test_tool',
+        type: 'end',
+        params: { param1: 'value1' },
+      },
+    ])
+  })
+
+  it('should handle tool calls with text before', async () => {
+    const streamChunks: StreamChunk[] = [
+      textChunk('Some text before tool call'),
+      createToolCallChunk('test_tool', { param1: 'value1' }),
+    ]
+    const stream = createMockStream(streamChunks)
+
+    const events: any[] = []
+
+    const processors = {
+      test_tool: {
+        params: ['param1'] as string[],
+        onTagStart: (tagName: string, attributes: Record<string, string>) => {
+          events.push({ tagName, type: 'start', attributes })
+        },
+        onTagEnd: (tagName: string, params: Record<string, JSONValue>) => {
+          events.push({ tagName, type: 'end', params })
+        },
+      },
+    }
+
+    const result: string[] = []
+    const responseChunks: any[] = []
+
+    function onResponseChunk(chunk: any) {
+      responseChunks.push(chunk)
+    }
+
+    function defaultProcessor(toolName: string) {
+      return {
+        onTagStart: () => {},
+        onTagEnd: () => {},
+      }
+    }
+
+    for await (const chunk of processStreamWithTools({
+      ...agentRuntimeImpl,
+      stream,
+      processors,
+      defaultProcessor,
+      onResponseChunk,
+      executeXmlToolCall: async () => {},
+    })) {
+      if (chunk.type === 'text') {
+        result.push(chunk.text)
+      }
+    }
+
+    expect(events).toEqual([
+      {
+        tagName: 'test_tool',
+        type: 'start',
+        attributes: {},
+      },
+      {
+        tagName: 'test_tool',
+        type: 'end',
+        params: { param1: 'value1' },
+      },
+    ])
+  })
+
+  it('should handle multiple tool calls in sequence', async () => {
+    const streamChunks: StreamChunk[] = [
+      createToolCallChunk('tool1', { param1: 'value1' }),
+      textChunk('text between tools'),
+      createToolCallChunk('tool2', { param2: 'value2' }),
+    ]
+    const stream = createMockStream(streamChunks)
+
+    const events: any[] = []
+
+    const processors = {
+      tool1: {
+        params: ['param1'] as string[],
+        onTagStart: (tagName: string, attributes: Record<string, string>) => {
+          events.push({ tagName, type: 'start', attributes })
+        },
+        onTagEnd: (tagName: string, params: Record<string, JSONValue>) => {
+          events.push({ tagName, type: 'end', params })
+        },
+      },
+      tool2: {
+        params: ['param2'] as string[],
+        onTagStart: (tagName: string, attributes: Record<string, string>) => {
+          events.push({ tagName, type: 'start', attributes })
+        },
+        onTagEnd: (tagName: string, params: Record<string, JSONValue>) => {
+          events.push({ tagName, type: 'end', params })
+        },
+      },
+    }
+
+    const result: string[] = []
+    const responseChunks: any[] = []
+
+    function onResponseChunk(chunk: any) {
+      responseChunks.push(chunk)
+    }
+
+    function defaultProcessor(toolName: string) {
+      return {
+        onTagStart: () => {},
+        onTagEnd: () => {},
+      }
+    }
+
+    for await (const chunk of processStreamWithTools({
+      ...agentRuntimeImpl,
+      stream,
+      processors,
+      defaultProcessor,
+      onResponseChunk,
+      executeXmlToolCall: async () => {},
+    })) {
+      if (chunk.type === 'text') {
+        result.push(chunk.text)
+      }
+    }
+
+    expect(events).toEqual([
+      {
+        tagName: 'tool1',
+        type: 'start',
+        attributes: {},
+      },
+      {
+        tagName: 'tool1',
+        type: 'end',
+        params: { param1: 'value1' },
+      },
+      {
+        tagName: 'tool2',
+        type: 'start',
+        attributes: {},
+      },
+      {
+        tagName: 'tool2',
+        type: 'end',
+        params: { param2: 'value2' },
+      },
+    ])
+  })
+})

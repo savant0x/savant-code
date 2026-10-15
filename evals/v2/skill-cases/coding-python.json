@@ -1,0 +1,38 @@
+{
+  "skillName": "coding-python",
+  "descriptionSha256": "3380f2dccc8c41cb3628d5e93afd27403d79cacac1bb7f82ebb0d08508f8077f",
+  "trigger": {
+    "positive": [
+      {
+        "prompt": "type hints for this python function returning a dict of lists",
+        "topK": 1
+      },
+      {
+        "prompt": "naming conventions for this python module's constants and imports"
+      },
+      {
+        "prompt": "import patterns for a python package with circular dependency risk"
+      }
+    ],
+    "negative": [
+      {
+        "prompt": "rust error handling with thiserror",
+        "owner": "coding-rust"
+      },
+      { "prompt": "C# async await convention", "owner": "coding-csharp" }
+    ]
+  },
+  "behavioral": [
+    {
+      "id": "typed-default-review",
+      "taskId": "skill-dialogue",
+      "kind": "dialogue",
+      "prompt": "Review this Python function: def collect(items=[]):\n    try: return list(items)\n    except Exception: return []. Show a corrected public signature and explain the failure behavior.",
+      "expectedOutput": "A Python-specific correction for typing, defaults, and exception scope.",
+      "expectations": [
+        "Replaces the mutable default argument and gives public parameter and return type hints.",
+        "Avoids blanket except Exception and silent fallback to an empty list."
+      ]
+    }
+  ]
+}

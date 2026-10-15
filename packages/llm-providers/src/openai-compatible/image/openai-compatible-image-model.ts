@@ -1,0 +1,129 @@
+import { InvalidArgumentError } from '@ai-sdk/provider'
+import {
+  combineHeaders,
+  createJsonErrorResponseHandler,
+  createJsonResponseHandler,
+  postJsonToApi,
+} from '@ai-sdk/provider-utils'
+import { z } from 'zod/v4'
+
+import { defaultOpenAICompatibleErrorStructure } from '../openai-compatible-error'
+
+import type {
+  OpenAICompatibleErrorData,
+  ProviderErrorStructure,
+} from '../openai-compatible-error'
+import type { OpenAICompatibleImageModelId } from './openai-compatible-image-settings'
+import type { ImageModelV2, ImageModelV2CallWarning } from '@ai-sdk/provider'
+import type { FetchFunction } from '@ai-sdk/provider-utils'
+
+export type OpenAICompatibleImageModelConfig = {
+  provider: string
+  headers: () => Record<string, string | undefined>
+  url: (options: { modelId: string; path: string }) => string
+  fetch?: FetchFunction
+  errorStructure?: ProviderErrorStructure<OpenAICompatibleErrorData>
+  _internal?: {
+    currentDate?: () => Date
+  }
+}
+
+export class OpenAICompatibleImageModel implements ImageModelV2 {
+  readonly specificationVersion = 'v2'
+  readonly maxImagesPerCall = 10
+
+  get provider(): string {
+    return this.config.provider
+  }
+
+  constructor(
+    readonly modelId: OpenAICompatibleImageModelId,
+    private readonly config: OpenAICompatibleImageModelConfig,
+  ) {}
+
+  get providerOptionsName(): string {
+    return this.config.provider.split('.')[0].trim()
+  }
+
+  async doGenerate({
+    prompt,
+    n,
+    size,
+    aspectRatio,
+    seed,
+    providerOptions,
+    headers,
+    abortSignal,
+  }: Parameters<ImageModelV2['doGenerate']>[0]): Promise<
+    Awaited<ReturnType<ImageModelV2['doGenerate']>>
+  > {
+    const warnings: Array<ImageModelV2CallWarning> = []
+
+    // FID-2026-0803-002 DB-7: enforce the per-call image limit like the
+    // embedding model enforces maxEmbeddingsPerCall (TooManyEmbeddingValues-
+    // ForCallError); there is no image-specific error class in @ai-sdk/provider,
+    // so InvalidArgumentError carries the same contract-violation meaning.
+    if (n != null && n > this.maxImagesPerCall) {
+      throw new InvalidArgumentError({
+        argument: 'n',
+        message: `n (${n}) exceeds maxImagesPerCall (${this.maxImagesPerCall}).`,
+      })
+    }
+
+    if (aspectRatio != null) {
+      warnings.push({
+        type: 'unsupported-setting',
+        setting: 'aspectRatio',
+        details:
+          'This model does not support aspect ratio. Use `size` instead.',
+      })
+    }
+
+    if (seed != null) {
+      warnings.push({ type: 'unsupported-setting', setting: 'seed' })
+    }
+
+    const currentDate = this.config._internal?.currentDate?.() ?? new Date()
+    const { value: response, responseHeaders } = await postJsonToApi({
+      url: this.config.url({
+        path: '/images/generations',
+        modelId: this.modelId,
+      }),
+      headers: combineHeaders(this.config.headers(), headers),
+      body: {
+        model: this.modelId,
+        prompt,
+        n,
+        size,
+        // FID-006 LLM3: key by the provider's own options name (not the
+        // hard-coded `openai` key) so non-OpenAI providers' options apply.
+        ...(providerOptions?.[this.providerOptionsName] ?? {}),
+        response_format: 'b64_json',
+      },
+      failedResponseHandler: createJsonErrorResponseHandler(
+        this.config.errorStructure ?? defaultOpenAICompatibleErrorStructure,
+      ),
+      successfulResponseHandler: createJsonResponseHandler(
+        openaiCompatibleImageResponseSchema,
+      ),
+      abortSignal,
+      fetch: this.config.fetch,
+    })
+
+    return {
+      images: response.data.map((item) => item.b64_json),
+      warnings,
+      response: {
+        timestamp: currentDate,
+        modelId: this.modelId,
+        headers: responseHeaders,
+      },
+    }
+  }
+}
+
+// minimal version of the schema, focussed on what is needed for the implementation
+// this approach limits breakages when the API changes and increases efficiency
+const openaiCompatibleImageResponseSchema = z.object({
+  data: z.array(z.object({ b64_json: z.string() })),
+})

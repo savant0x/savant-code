@@ -1,0 +1,176 @@
+name: Desktop Release Artifacts
+
+# FID-2026-0820-011 Step 5: build Windows + Linux desktop bundles and the
+# fail-closed updater manifest. Manual promotion gate (missed-Q3): artifacts
+# upload to the draft release; a human smoke-tests BOTH platform installers
+# before publishing. Updater signatures require the `desktop-updater-signing`
+# ENVIRONMENT secret (TAURI_SIGNING_PRIVATE_KEY / _PASSWORD) — environment-
+# scoped per missed-Q2, never repo-wide, never echoed.
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: 'Release tag to build (for example v0.0.27)'
+        required: true
+        type: string
+      source_ref:
+        description: 'Optional branch or tag ref; defaults to release_tag.'
+        required: false
+        default: ''
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  build-desktop:
+    name: Build ${{ matrix.name }}
+    runs-on: ${{ matrix.os }}
+    environment: desktop-updater-signing
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: windows-x86_64
+            os: windows-latest
+            bun-target: bun-windows-x64
+            bundles: nsis,msi
+          - name: linux-x86_64
+            os: ubuntu-latest
+            bun-target: bun-linux-x64
+            # deb only (FID-2026-0906-001, operator decision 2026-09-06):
+            # AppImage bundling core-dumps in linuxdeploy over the static
+            # bun sidecar (oven-sh/bun#28281, tauri-apps/tauri#14796, fix
+            # pending tauri#12491), and the bundler's patchelf pass would
+            # corrupt the sidecar even if bundling survived. deb has no
+            # linuxdeploy stage; Linux auto-update returns when tauri#12491
+            # lands. The manifest is windows-only (generator contract).
+            bundles: deb
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.source_ref || inputs.release_tag }}
+      - uses: oven-sh/setup-bun@v2
+      - run: bun install --frozen-lockfile
+      # Same contract as desktop-ci.yml: the gitignored generated agent bundle
+      # must exist before the sidecar bundle can resolve its import chain.
+      - name: Generate bundled agents bundle
+        run: bun run --cwd=cli prebuild:agents
+
+      # FID-2026-0906-001: the signing secret is consumed by the Tauri
+      # signer after a 40+ minute Rust compile; a corrupted value must fail
+      # here, in under a second, with a remediation message instead. The
+      # v0.0.29 cut lost its Windows desktop job to an undecodable secret
+      # ("Invalid symbol 33, offset 10") that no gate ever checked. The key
+      # is never printed — only the pass/fail shape reaches the log.
+      - name: Verify updater signing secret decodes (fail fast, never echo)
+        shell: bash
+        env:
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+        run: |
+          if printf '%s' "$TAURI_SIGNING_PRIVATE_KEY" | base64 -d > /dev/null 2>&1; then
+            echo "Updater signing secret: base64 decode OK."
+          else
+            echo "Updater signing secret did not decode as base64. Re-create" >&2
+            echo "TAURI_SIGNING_PRIVATE_KEY in the desktop-updater-signing" >&2
+            echo "environment: private-key line ONLY (no 'untrusted comment:'" >&2
+            echo "header), no quotes, no trailing whitespace." >&2
+            exit 1
+          fi
+
+      # FID-2026-0906-001: the Tauri Linux build needs the GTK/WebKit system
+      # libraries; the v0.0.29 Linux job died at glib-sys with
+      # "Package 'glib-2.0', required by 'virtual:world', not found". This is
+      # the Tauri-documented ubuntu package set. Versions follow the runner
+      # image (GitHub owns that drift); no pinning.
+      - name: Install Linux desktop build dependencies (apt)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            libwebkit2gtk-4.1-dev \
+            build-essential \
+            curl \
+            wget \
+            file \
+            libxdo-dev \
+            libssl-dev \
+            libayatana-appindicator3-dev \
+            librsvg2-dev
+
+      - name: Build sidecar (${{ matrix.bun-target }})
+        run: >
+          bun run --cwd=desktop build:sidecar --
+          --entry cli/src/server-command.ts
+          --target ${{ matrix.bun-target }}
+      - name: Tauri build (${{ matrix.bundles }})
+        env:
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+          # standard Tauri-documented switch makes linuxdeploy extract
+          # itself to a temp dir instead of mounting — no FUSE required.
+          APPIMAGE_EXTRACT_AND_RUN: '1'
+          # FID-2026-0906-001 (run 34047404386): APPIMAGE_EXTRACT_AND_RUN
+          # alone was not sufficient — linuxdeploy still aborts ~16s in.
+          # The linuxdeploy strip step fails on modern toolchains and
+          # kills the whole bundling run (tauri-apps/tauri#14796 class);
+          # NO_STRIP skips it. Upstream has no fix (issue open); if this
+          # still fails, --verbose surfaces linuxdeploy's swallowed stderr.
+          NO_STRIP: '1'
+        # The committed target list is the full v1 matrix; each runner builds
+        # only its own platform bundles (Linux bundle types cannot build on
+        # Windows hosts and vice versa).
+        run: bun run --cwd=desktop tauri build --verbose --bundles ${{ matrix.bundles }}
+      - name: Collect bundle artifacts
+        shell: bash
+        run: |
+          mkdir -p dist-out
+          find desktop/src-tauri/target/release/bundle -type f \
+            \( -name '*.exe' -o -name '*.msi' -o -name '*.AppImage' \
+               -o -name '*.deb' -o -name '*.sig' \) \
+            -not -path '*savant-sidecar*' -exec cp {} dist-out/ \;
+          ls -la dist-out
+      - uses: actions/upload-artifact@v4
+        with:
+          name: desktop-${{ matrix.name }}
+          path: dist-out/*
+          if-no-files-found: error
+
+  latest-json:
+    name: Fail-closed latest.json
+    needs: build-desktop
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.source_ref || inputs.release_tag }}
+      - uses: oven-sh/setup-bun@v2
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: desktop-*
+          merge-multiple: true
+          path: dist-all
+      # FID-2026-0903-001 (Loop 1 AUDIT V2 + Loop 2 correction 3): the
+      # generator's --version must be BARE X.Y.Z (VERSION_PATTERN rejects a
+      # v prefix; artifact filenames are unprefixed too), while asset URLs
+      # need the v-tag verbatim — so the tag's `v` is stripped only here.
+      - name: Derive bare version from the release tag
+        id: bare-version
+        shell: bash
+        run: echo "bare=${RELEASE_TAG#v}" >> "$GITHUB_OUTPUT"
+        env:
+          RELEASE_TAG: ${{ inputs.release_tag }}
+      - name: Generate latest.json (fails closed on any missing artifact/.sig)
+        run: >
+          bun desktop/scripts/generate-latest-json.ts
+          --version "${{ steps.bare-version.outputs.bare }}"
+          --artifacts-dir dist-all
+          --base-download-url
+          "https://github.com/${{ github.repository }}/releases/download/${{ inputs.release_tag }}"
+          --out dist-all/latest.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: desktop-latest-json
+          path: dist-all/latest.json
+          if-no-files-found: error

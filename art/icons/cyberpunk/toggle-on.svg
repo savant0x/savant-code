@@ -1,0 +1,40 @@
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  viewBox="0 0 64 64"
+  fill="none"
+  role="img"
+  aria-label="Toggle: on — enabled, energized"
+>
+  <defs>
+    <filter id="glow" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="2.5" result="blur" />
+      <feMerge>
+        <feMergeNode in="blur" />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
+    </filter>
+  </defs>
+  <!-- toggle track: energized -->
+  <rect
+    x="10"
+    y="22"
+    width="44"
+    height="20"
+    rx="10"
+    stroke="#3dff9a"
+    stroke-width="3"
+  />
+  <rect
+    x="14"
+    y="26"
+    width="24"
+    height="12"
+    rx="6"
+    fill="#3dff9a"
+    opacity="0.4"
+    filter="url(#glow)"
+  />
+  <!-- the on state: node to the right -->
+  <circle cx="44" cy="32" r="7" fill="#3dff9a" filter="url(#glow)" />
+  <circle cx="44" cy="32" r="3" fill="#ffffff" opacity="0.9" />
+</svg>

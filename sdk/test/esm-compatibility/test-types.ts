@@ -1,0 +1,64 @@
+// Test TypeScript type resolution in ESM environment
+import {
+  SavantCodeClient as ClientClass,
+  getCustomToolDefinition,
+} from '@savant-code/sdk'
+import * as FullSDK from '@savant-code/sdk'
+
+import type {
+  SavantCodeClient,
+  CustomToolDefinition,
+  RunState,
+} from '@savant-code/sdk'
+;(async () => {
+  // Test 1: Type imports work correctly
+  const _testClient: SavantCodeClient = {} as any
+  const _testTool: CustomToolDefinition = {} as any
+  const _testState: RunState = {} as any
+
+  console.log('✅ Type imports successful')
+
+  // Test 2: Value imports work correctly in TypeScript
+  const clientConstructor = ClientClass
+  const toolDefFunction = getCustomToolDefinition
+
+  console.log(
+    '✅ Value imports successful:',
+    typeof clientConstructor,
+    typeof toolDefFunction,
+  )
+
+  // Test 3: Test actual instantiation would work (without requiring API key)
+  // FID-2026-1010-004: `apiKey` was removed from `SavantCodeClientOptions` when
+  // the backend-mode surface was retired (FID-2026-0929-005, commit 06220bc6:
+  // direct mode is the product), and this fixture kept the removed field — so
+  // the shipped consumer declaration test failed against its own published
+  // types.
+  type ClientOptions = ConstructorParameters<typeof ClientClass>[0]
+
+  const mockOptions: ClientOptions = {
+    cwd: '/tmp/savant-code-consumer',
+  }
+
+  // This should compile without errors
+  const _mockClient = new ClientClass(mockOptions)
+
+  console.log('✅ Client instantiation types work correctly')
+
+  // Test 4: Custom tool definition types (compile-time only)
+  type MockTool = ReturnType<typeof getCustomToolDefinition>
+  const _toolTypeTest: MockTool = {} as any
+
+  console.log('✅ Custom tool definition types work correctly')
+
+  // Test 5: Dynamic imports also work in TypeScript ESM
+  const dynamicSDK = await import('@savant-code/sdk')
+  const _ClientFromDynamic: typeof ClientClass = dynamicSDK.SavantCodeClient
+  console.log('✅ Dynamic imports work in TypeScript ESM')
+
+  // Test 6: Namespace imports work
+  const _ClientFromNamespace: typeof ClientClass = FullSDK.SavantCodeClient
+  console.log('✅ Namespace imports work correctly')
+})()
+
+export {} // Make this a module

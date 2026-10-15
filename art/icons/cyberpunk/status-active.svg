@@ -1,0 +1,25 @@
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  viewBox="0 0 64 64"
+  fill="none"
+  role="img"
+  aria-label="Status: active — live and working"
+>
+  <defs>
+    <filter id="glow" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="2.5" result="blur" />
+      <feMerge>
+        <feMergeNode in="blur" />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
+    </filter>
+  </defs>
+  <circle cx="32" cy="32" r="10" fill="#3dff9a" filter="url(#glow)" />
+  <circle cx="32" cy="32" r="4" fill="#ffffff" opacity="0.9" />
+  <g stroke="#3dff9a" stroke-width="2" stroke-linecap="round" opacity="0.7">
+    <path d="M32 12 L32 16" />
+    <path d="M52 32 L48 32" />
+    <path d="M32 52 L32 48" />
+    <path d="M12 32 L16 32" />
+  </g>
+</svg>

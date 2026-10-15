@@ -1,0 +1,31 @@
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  viewBox="0 0 64 64"
+  fill="none"
+  role="img"
+  aria-label="Skill tool — hexagon with star core"
+>
+  <!-- SAVANT // CYBERDECK — hand-authored vector geometry, no external assets -->
+  <defs>
+    <filter id="glow" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="2.5" result="blur" />
+      <feMerge>
+        <feMergeNode in="blur" />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
+    </filter>
+  </defs>
+  <!-- flat-top hexagon -->
+  <path
+    d="M50 32 L41 48 L23 48 L14 32 L23 16 L41 16 Z"
+    stroke="#18faf9"
+    stroke-width="3"
+    stroke-linejoin="round"
+  />
+  <!-- four-point star core -->
+  <path
+    d="M32 22 L35 29 L42 32 L35 35 L32 42 L29 35 L22 32 L29 29 Z"
+    fill="#ff2bd6"
+    filter="url(#glow)"
+  />
+</svg>

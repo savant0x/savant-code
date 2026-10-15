@@ -1,0 +1,274 @@
+import { getEffectiveProviderRegistry } from '@savant-code/common/providers/custom-providers'
+import {
+  deriveSetupConfig,
+  type ProviderSetupInfo,
+} from '@savant-code/common/providers/derive'
+import { captureModelRoute } from '@savant-code/common/providers/model-route'
+import { seedProviderAccountRevision } from '@savant-code/common/providers/provider-account-revisions'
+import { hasProviderCredentials } from '@savant-code/common/providers/readiness'
+import { PROVIDER_REGISTRY } from '@savant-code/common/providers/registry'
+import { resetOpenRouterApiKeyCache } from '@savant-code/sdk'
+
+import { invalidateGatewayCatalog } from './openrouter-models/gateway'
+import {
+  readCredentialsRecord,
+  readStoredProviderKeys,
+} from './provider-credentials'
+import {
+  adoptPersistedSelectionRevision,
+  persistProviderKey,
+  synchronizeAccountRevision,
+} from './provider-key-persistence'
+// The routing/activation effects of a saved primary key live in their own
+// module (extracted at the quality ceiling); this file owns the key store.
+import { activateProviderRouting } from './provider-routing-activation'
+import {
+  getActiveProvider,
+  loadActiveProvider,
+  saveModelSelection,
+  loadSavantCodeModelPreference,
+} from './settings'
+
+export const PROVIDER_SETUP_DEFAULT = 'openrouter' as const
+
+/**
+ * Derived from the unified provider registry (FID-2026-0809-001 Phase 1):
+ * the entries where `setupAvailable` is true. Cloudflare and Ollama are
+ * intentionally absent — Cloudflare enters the setup flow in a later phase
+ * (it needs two credentials), and Ollama is local (no key to set up).
+ */
+export const PROVIDER_SETUP_CONFIG = deriveSetupConfig(PROVIDER_REGISTRY)
+
+/**
+ * Setup-flow provider id (FID-2026-0910-004 Step 6, D8 widening): built-in
+ * ids keep literal autocomplete; custom ids are legal as plain strings.
+ * Runtime truth stays the effective-registry id set — getProviderSetupInfo
+ * returns undefined for unknowns, so the widening can never admit an
+ * unvalidated id into the setup flow. The ModelProvider settings union
+ * widens separately at Step 9 (model-picker surface).
+ */
+export type ProviderSetupName =
+  keyof typeof PROVIDER_SETUP_CONFIG | (string & {})
+
+/** Setup metadata for any effective provider — built-in or custom
+ * (FID-2026-0910-004 Step 6). Custom ids are plain strings; the
+ * `ModelProvider` union widens at Step 9 per the FID. */
+export type MissingProviderSetup = ProviderSetupInfo & { provider: string }
+
+/**
+ * The effective setup view (FID-2026-0910-004 Step 6): `deriveSetupConfig`
+ * over the effective registry — the SAME derivation as the built-in const
+ * (one truth, Law 13), applied to built-ins + registered customs. Customs
+ * carry `setupAvailable: true` from `toProviderConfig`, so they appear here
+ * automatically the moment they are registered.
+ */
+export function getEffectiveProviderSetupConfig(): Record<
+  string,
+  ProviderSetupInfo
+> {
+  return deriveSetupConfig(getEffectiveProviderRegistry())
+}
+
+export function getProviderSetupInfo(
+  provider: string,
+): MissingProviderSetup | undefined {
+  const normalized = provider.trim().toLowerCase()
+  const setupConfig = getEffectiveProviderSetupConfig()
+  if (!(normalized in setupConfig)) return undefined
+
+  return {
+    provider: normalized,
+    ...setupConfig[normalized],
+  }
+}
+
+/**
+ * Apply persisted direct-provider keys without overriding explicit shell env.
+ * Environment variables are intentionally the higher-precedence configuration.
+ */
+export function applyPersistedProviderApiKeys(): void {
+  const storedKeys = readStoredProviderKeys()
+
+  for (const config of Object.values(getEffectiveProviderSetupConfig())) {
+    const storedKey = storedKeys[config.envVar]
+    if (storedKey && !process.env[config.envVar]?.trim()) {
+      process.env[config.envVar] = storedKey
+    }
+
+    // Dual-credential providers (T61 Option A): apply persisted extras too.
+    // Extras are stored under their OWN env-var names, so the lookup is by
+    // name and needs no per-provider wiring here.
+    for (const extra of config.extraEnvVars ?? []) {
+      if (process.env[extra.envVar]?.trim()) continue
+      const storedExtra = storedKeys[extra.envVar]
+      if (storedExtra) {
+        process.env[extra.envVar] = storedExtra
+      }
+    }
+  }
+  const revisions = readCredentialsRecord().providerAccountRevisions
+  if (revisions && typeof revisions === 'object' && !Array.isArray(revisions)) {
+    for (const config of Object.values(getEffectiveProviderRegistry())) {
+      const revision = revisions[config.id]
+      if (typeof revision === 'string' && /^[0-9a-f-]{36}$/.test(revision))
+        seedProviderAccountRevision(config, revision)
+    }
+  }
+  adoptPersistedSelectionRevision() // FID-2026-1009-001
+
+  // Restore direct mode from an earlier-saved provider key.
+  // FID-2026-0929-005: the hasEnvBackendCredentials() deferral term is
+  // deleted with the backend it deferred to — there is no key source left
+  // that could outrank a stored provider selection.
+  if (
+    !process.env.DIRECT_PROVIDER?.trim() &&
+    !process.env.INFERENCE_BASE_URL?.trim()
+  ) {
+    const configured = Object.entries(getEffectiveProviderSetupConfig()).find(
+      ([, config]) => Boolean(storedKeys[config.envVar]),
+    )
+    if (configured) {
+      const [provider, config] = configured
+      process.env.DIRECT_PROVIDER = provider
+      process.env.INFERENCE_BASE_URL = config.baseUrl
+    }
+  }
+}
+
+/**
+ * Activate direct-provider mode for the selected gateway during first-run
+ * onboarding. This intentionally does not require a key: it lets the user
+ * reach `/provider` instead of being trapped in backend login, while the SDK
+ * still reports the exact missing-key instruction when they submit a prompt.
+ */
+export function configureDefaultDirectProvider(): void {
+  // FID-2026-0929-005: the hasEnvBackendCredentials() deferral term is
+  // deleted with the backend credential it keyed on (FID-2026-0929-003's
+  // single-source rule keeps only the mode flags).
+  if (
+    process.env.DIRECT_PROVIDER?.trim() ||
+    process.env.INFERENCE_BASE_URL?.trim()
+  ) {
+    return
+  }
+
+  // A persisted /provider selection is explicit and wins over environment
+  // discovery. Otherwise, if exactly one hosted provider is configured in the
+  // environment, prefer it over the OpenRouter bootstrap default. This makes a
+  // `.env.local` with only `NOUS_API_KEY` self-select Nous without requiring a
+  // second setup step, while preserving an existing user selection.
+  const configuredProviders = getConfiguredProviderNames()
+  const configuredProvider =
+    configuredProviders.length === 1 ? configuredProviders[0] : undefined
+  const provider =
+    loadActiveProvider() ?? configuredProvider ?? getActiveProvider()
+  const info = getProviderSetupInfo(provider)
+  if (!info) return
+
+  process.env.DIRECT_PROVIDER = info.provider
+  process.env.INFERENCE_BASE_URL = info.baseUrl
+}
+
+/** Save one provider key and make it available to the current process.
+ * Accepts any effective provider id — built-in or custom
+ * (FID-2026-0910-004 Step 6). */
+export function saveProviderApiKey(provider: string, apiKey: string): void {
+  const trimmedKey = apiKey.trim()
+  if (!trimmedKey) {
+    throw new Error('Provider API key cannot be empty.')
+  }
+
+  const config = getEffectiveProviderSetupConfig()[provider]
+  if (!config) {
+    throw new Error(
+      `Unknown provider '${provider}'. Register custom providers or pick a built-in.`,
+    )
+  }
+  persistProviderKey(config.envVar, trimmedKey)
+
+  const hasShellKey = Boolean(process.env[config.envVar]?.trim())
+  if (!hasShellKey) {
+    process.env[config.envVar] = trimmedKey
+  }
+  if (process.env[config.envVar] === trimmedKey)
+    synchronizeAccountRevision(provider)
+
+  activateProviderRouting(provider, config)
+
+  // FID-2026-1011-006 R20: the model catalog is keyed on credentials, so the
+  // process cache must not outlive the mutation that changed them.
+  invalidateGatewayCatalog()
+
+  if (provider === 'openrouter') {
+    resetOpenRouterApiKeyCache()
+  }
+}
+
+/**
+ * Save one additional (extra) credential for a dual-credential provider
+ * (T61 Option A, FID-2026-0928-008). The value is persisted under the
+ * extra's own env-var name in the same 0600 credentials store and applied
+ * to the process env with the same shell-precedence rule as the primary
+ * key. No routing state changes — activation stays the primary key's job.
+ */
+export function saveProviderApiKeyExtra(
+  provider: string,
+  extraEnvVar: string,
+  value: string,
+): void {
+  const trimmed = value.trim()
+  if (!trimmed) {
+    throw new Error('Credential value cannot be empty.')
+  }
+  const config = getEffectiveProviderSetupConfig()[provider]
+  if (!config) {
+    throw new Error(
+      `Unknown provider '${provider}'. Register custom providers or pick a built-in.`,
+    )
+  }
+  const extra = config.extraEnvVars?.find((e) => e.envVar === extraEnvVar)
+  if (!extra) {
+    throw new Error(
+      `Provider '${provider}' has no additional credential '${extraEnvVar}'.`,
+    )
+  }
+  persistProviderKey(extraEnvVar, trimmed)
+
+  if (!process.env[extraEnvVar]?.trim()) {
+    process.env[extraEnvVar] = trimmed
+  }
+  if (process.env[extraEnvVar] === trimmed) {
+    synchronizeAccountRevision(provider)
+    if (getActiveProvider() === provider)
+      saveModelSelection(
+        loadSavantCodeModelPreference() ?? 'openrouter/free',
+        captureModelRoute(provider),
+      )
+  }
+  // FID-2026-1011-006 R20: an extra credential (e.g. a base URL key) also
+  // changes what the provider's catalog can serve.
+  invalidateGatewayCatalog()
+}
+
+/**
+ * Return the stored API key for a provider, or undefined when none is saved.
+ * Shell environment keys are not read here; callers compose env precedence.
+ */
+export function getConfiguredProviderKey(provider: string): string | undefined {
+  const info = getProviderSetupInfo(provider)
+  if (!info) return undefined
+  return readStoredProviderKeys()[info.envVar]
+}
+
+export function getConfiguredProviderNames(): string[] {
+  const storedKeys = readStoredProviderKeys()
+  const setupConfig = getEffectiveProviderSetupConfig()
+  return Object.keys(setupConfig).filter((provider) => {
+    return hasProviderCredentials(getEffectiveProviderRegistry()[provider], {
+      ...storedKeys,
+      ...Object.fromEntries(
+        Object.entries(process.env).filter(([, value]) => value?.trim()),
+      ),
+    })
+  })
+}

@@ -1,0 +1,33 @@
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  viewBox="0 0 64 64"
+  fill="none"
+  role="img"
+  aria-label="Export command — arrow out of a tray"
+>
+  <!-- SAVANT // CYBERDECK — hand-authored vector geometry, no external assets -->
+  <defs>
+    <filter id="glow" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="2.5" result="blur" />
+      <feMerge>
+        <feMergeNode in="blur" />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
+    </filter>
+  </defs>
+  <!-- tray -->
+  <path
+    d="M14 26 L50 26 L50 52 L14 52 Z"
+    stroke="#18faf9"
+    stroke-width="3"
+    stroke-linejoin="round"
+  />
+  <!-- export arrow -->
+  <path
+    d="M32 44 L32 18"
+    stroke="#18faf9"
+    stroke-width="3"
+    stroke-linecap="round"
+  />
+  <polygon points="25,24 32,16 39,24" fill="#ff2bd6" filter="url(#glow)" />
+</svg>

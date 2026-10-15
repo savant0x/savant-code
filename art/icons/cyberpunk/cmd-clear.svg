@@ -1,0 +1,64 @@
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  viewBox="0 0 64 64"
+  fill="none"
+  role="img"
+  aria-label="Clear command — trash can"
+>
+  <!-- SAVANT // CYBERDECK — hand-authored vector geometry, no external assets -->
+  <defs>
+    <filter id="glow" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="2.5" result="blur" />
+      <feMerge>
+        <feMergeNode in="blur" />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
+    </filter>
+  </defs>
+  <!-- can body -->
+  <path
+    d="M18 18 L46 18 L43 50 L21 50 Z"
+    stroke="#18faf9"
+    stroke-width="3"
+    stroke-linejoin="round"
+  />
+  <!-- lid -->
+  <path
+    d="M14 14 L50 14"
+    stroke="#18faf9"
+    stroke-width="3"
+    stroke-linecap="round"
+  />
+  <!-- handle -->
+  <path
+    d="M27 10 L37 10"
+    stroke="#18faf9"
+    stroke-width="2.5"
+    stroke-linecap="round"
+  />
+  <path
+    d="M29 10 L29 14"
+    stroke="#18faf9"
+    stroke-width="2"
+    stroke-linecap="round"
+  />
+  <path
+    d="M35 10 L35 14"
+    stroke="#18faf9"
+    stroke-width="2"
+    stroke-linecap="round"
+  />
+  <!-- inner lines -->
+  <path
+    d="M26 24 L26 42"
+    stroke="#4fa8ff"
+    stroke-width="1.5"
+    stroke-linecap="round"
+  />
+  <path
+    d="M38 24 L38 42"
+    stroke="#4fa8ff"
+    stroke-width="1.5"
+    stroke-linecap="round"
+  />
+</svg>

@@ -1,0 +1,235 @@
+// Shared test harness for the model-provider free-mode test family.
+// Sibling of the Loop 325 decomposition: each suite file calls
+// setupModelProviderTestHarness() inside its describe block to register
+// the env save/restore + module-mock lifecycle and get the importFresh
+// helper. Lives in the same directory so `../../credentials` and
+// `../model-provider` resolve identically to the original monolith.
+
+import {
+  clearMockedModules,
+  mockModule,
+} from '@savant-code/common/testing/mock-modules'
+import { beforeEach, afterEach, mock } from 'bun:test'
+
+export const REAL_FETCH = globalThis.fetch
+export const COMMAND_CODE_MODEL = 'commandcode/deepseek/deepseek-v4-pro'
+export const COMMAND_CODE_CLAUDE_MODEL = 'commandcode/claude-sonnet-4-6'
+export const TOKEN_HARBOR_MODEL = 'tokenharbor/anthropic/claude-opus-5'
+export const ORCAROUTER_MODEL = 'orcarouter/anthropic/claude-opus-5'
+export const BAI_MODEL = 'bai/deepseek/deepseek-v4-flash'
+export const HCNSEC_MODEL = 'hcnsec/glm-5.3-flash'
+export const TOKENBOM_MODEL = 'tokenbom/gpt-5.5'
+export const INFRON_MODEL = 'infron/deepseek/deepseek-v4-flash:free'
+export const UNOROUTER_MODEL = 'unorouter/glm-5.3-flash:free'
+export const NOUS_MODEL = 'nous/anthropic/claude-sonnet-4.6'
+export const VERCEL_MODEL = 'vercel/alibaba/qwen-3-14b'
+export const MISTRAL_MODEL = 'mistral/codestral-2508'
+export const APIXO_MODEL = 'apixo/deepseek-v4.1-flash'
+export const COMMAND_CODE_PROMPT = [
+  {
+    role: 'user' as const,
+    content: [{ type: 'text' as const, text: 'test' }],
+  },
+]
+
+export function setupModelProviderTestHarness() {
+  const mockGetValidChatGptOAuthCredentials = mock(() => Promise.resolve(null))
+  let originalCommandCodeApiKey: string | undefined
+  let originalTokenRouterApiKey: string | undefined
+  let originalTokenHarborApiKey: string | undefined
+  let originalOrcarouterApiKey: string | undefined
+  let originalBaiApiKey: string | undefined
+  let originalHcnsecApiKey: string | undefined
+  let originalTokenbomApiKey: string | undefined
+  let originalInfronApiKey: string | undefined
+  let originalUnorouterApiKey: string | undefined
+  let originalNousApiKey: string | undefined
+  let originalVercelApiKey: string | undefined
+  let originalMistralApiKey: string | undefined
+  let originalApixoApiKey: string | undefined
+  let originalAihubmixApiKey: string | undefined
+  let originalOpenRouterApiKey: string | undefined
+  let originalOrMasterKey: string | undefined
+  let originalInferenceApiKey: string | undefined
+  let originalDirectProvider: string | undefined
+  let originalInferenceBaseUrl: string | undefined
+
+  beforeEach(async () => {
+    // FID-2026-0914-001: warm the module graph BEFORE the env deletions
+    // below. The transitive import of @savant-code/common/env applies
+    // .env.local exactly once per process ("Using environment: dev");
+    // when that first application fires inside a test body (importFresh),
+    // keys deleted here re-appear mid-test and the FIRST key-missing leg
+    // in a fresh process resolves instead of throwing. Importing the same
+    // module the tests import guarantees the one-shot bootstrap has fired
+    // before any deletion; the cached import is a no-op afterwards.
+    await import('../model-provider')
+    originalCommandCodeApiKey = process.env.COMMAND_CODE_API_KEY
+    delete process.env.COMMAND_CODE_API_KEY
+    originalTokenRouterApiKey = process.env.TOKENROUTER_API_KEY
+    delete process.env.TOKENROUTER_API_KEY
+    originalTokenHarborApiKey = process.env.TOKENHARBOR_API_KEY
+    delete process.env.TOKENHARBOR_API_KEY
+    originalOrcarouterApiKey = process.env.ORCAROUTER_API_KEY
+    delete process.env.ORCAROUTER_API_KEY
+    originalBaiApiKey = process.env.BAI_API_KEY
+    delete process.env.BAI_API_KEY
+    originalHcnsecApiKey = process.env.HCNSEC_API_KEY
+    delete process.env.HCNSEC_API_KEY
+    originalTokenbomApiKey = process.env.TOKENBOM_API_KEY
+    delete process.env.TOKENBOM_API_KEY
+    originalInfronApiKey = process.env.INFRON_API_KEY
+    delete process.env.INFRON_API_KEY
+    originalUnorouterApiKey = process.env.UNOROUTER_API_KEY
+    delete process.env.UNOROUTER_API_KEY
+    originalNousApiKey = process.env.NOUS_API_KEY
+    delete process.env.NOUS_API_KEY
+    originalVercelApiKey = process.env.AI_GATEWAY_API_KEY
+    delete process.env.AI_GATEWAY_API_KEY
+    originalMistralApiKey = process.env.MISTRAL_API_KEY
+    delete process.env.MISTRAL_API_KEY
+    // FID-2026-1013-003: the repo-root .env.local carries a live Apixo key,
+    // so the key-missing leg only resolves when it is deleted here.
+    originalApixoApiKey = process.env.APIXOAI_API_KEY
+    delete process.env.APIXOAI_API_KEY
+    originalAihubmixApiKey = process.env.AIHUBMIX_API_KEY
+    delete process.env.AIHUBMIX_API_KEY
+    originalOpenRouterApiKey = process.env.OPENROUTER_API_KEY
+    originalOrMasterKey = process.env.OR_MASTER_KEY
+    originalInferenceApiKey = process.env.INFERENCE_API_KEY
+    originalDirectProvider = process.env.DIRECT_PROVIDER
+    originalInferenceBaseUrl = process.env.INFERENCE_BASE_URL
+    delete process.env.OPENROUTER_API_KEY
+    delete process.env.OR_MASTER_KEY
+    delete process.env.INFERENCE_API_KEY
+    delete process.env.DIRECT_PROVIDER
+    delete process.env.INFERENCE_BASE_URL
+    const { resetOpenRouterApiKeyCache } =
+      await import('../openrouter-key-resolver')
+    resetOpenRouterApiKeyCache()
+    // Mock CHATGPT_OAUTH_ENABLED to true so the ChatGPT OAuth path is entered.
+    // Uses mockModule helper since this is an absolute package specifier.
+    await mockModule('@savant-code/common/constants/chatgpt-oauth', () => ({
+      CHATGPT_OAUTH_ENABLED: true,
+    }))
+
+    // Mock credentials directly with Bun's mock.module — the helper resolves
+    // relative paths from common/src/testing/, not from this test file.
+    mock.module('../../credentials', () => ({
+      getValidChatGptOAuthCredentials: mockGetValidChatGptOAuthCredentials,
+    }))
+
+    mockGetValidChatGptOAuthCredentials.mockReset()
+    mockGetValidChatGptOAuthCredentials.mockResolvedValue(null)
+  })
+
+  afterEach(() => {
+    mock.restore()
+    globalThis.fetch = REAL_FETCH
+    if (originalCommandCodeApiKey === undefined) {
+      delete process.env.COMMAND_CODE_API_KEY
+    } else {
+      process.env.COMMAND_CODE_API_KEY = originalCommandCodeApiKey
+    }
+    if (originalTokenRouterApiKey === undefined) {
+      delete process.env.TOKENROUTER_API_KEY
+    } else {
+      process.env.TOKENROUTER_API_KEY = originalTokenRouterApiKey
+    }
+    if (originalTokenHarborApiKey === undefined) {
+      delete process.env.TOKENHARBOR_API_KEY
+    } else {
+      process.env.TOKENHARBOR_API_KEY = originalTokenHarborApiKey
+    }
+    if (originalOrcarouterApiKey === undefined) {
+      delete process.env.ORCAROUTER_API_KEY
+    } else {
+      process.env.ORCAROUTER_API_KEY = originalOrcarouterApiKey
+    }
+    if (originalBaiApiKey === undefined) {
+      delete process.env.BAI_API_KEY
+    } else {
+      process.env.BAI_API_KEY = originalBaiApiKey
+    }
+    if (originalHcnsecApiKey === undefined) {
+      delete process.env.HCNSEC_API_KEY
+    } else {
+      process.env.HCNSEC_API_KEY = originalHcnsecApiKey
+    }
+    if (originalTokenbomApiKey === undefined) {
+      delete process.env.TOKENBOM_API_KEY
+    } else {
+      process.env.TOKENBOM_API_KEY = originalTokenbomApiKey
+    }
+    if (originalInfronApiKey === undefined) {
+      delete process.env.INFRON_API_KEY
+    } else {
+      process.env.INFRON_API_KEY = originalInfronApiKey
+    }
+    if (originalUnorouterApiKey === undefined) {
+      delete process.env.UNOROUTER_API_KEY
+    } else {
+      process.env.UNOROUTER_API_KEY = originalUnorouterApiKey
+    }
+    if (originalNousApiKey === undefined) {
+      delete process.env.NOUS_API_KEY
+    } else {
+      process.env.NOUS_API_KEY = originalNousApiKey
+    }
+    if (originalVercelApiKey === undefined) {
+      delete process.env.AI_GATEWAY_API_KEY
+    } else {
+      process.env.AI_GATEWAY_API_KEY = originalVercelApiKey
+    }
+    if (originalMistralApiKey === undefined) {
+      delete process.env.MISTRAL_API_KEY
+    } else {
+      process.env.MISTRAL_API_KEY = originalMistralApiKey
+    }
+    if (originalApixoApiKey === undefined) {
+      delete process.env.APIXOAI_API_KEY
+    } else {
+      process.env.APIXOAI_API_KEY = originalApixoApiKey
+    }
+    if (originalAihubmixApiKey === undefined) {
+      delete process.env.AIHUBMIX_API_KEY
+    } else {
+      process.env.AIHUBMIX_API_KEY = originalAihubmixApiKey
+    }
+    if (originalOpenRouterApiKey === undefined) {
+      delete process.env.OPENROUTER_API_KEY
+    } else {
+      process.env.OPENROUTER_API_KEY = originalOpenRouterApiKey
+    }
+    if (originalOrMasterKey === undefined) {
+      delete process.env.OR_MASTER_KEY
+    } else {
+      process.env.OR_MASTER_KEY = originalOrMasterKey
+    }
+    if (originalInferenceApiKey === undefined) {
+      delete process.env.INFERENCE_API_KEY
+    } else {
+      process.env.INFERENCE_API_KEY = originalInferenceApiKey
+    }
+    if (originalDirectProvider === undefined) {
+      delete process.env.DIRECT_PROVIDER
+    } else {
+      process.env.DIRECT_PROVIDER = originalDirectProvider
+    }
+    if (originalInferenceBaseUrl === undefined) {
+      delete process.env.INFERENCE_BASE_URL
+    } else {
+      process.env.INFERENCE_BASE_URL = originalInferenceBaseUrl
+    }
+    clearMockedModules()
+  })
+
+  async function importFresh() {
+    const mod = await import('../model-provider')
+    // Ensure clean rate-limit state
+    mod.resetChatGptOAuthRateLimit()
+    return mod
+  }
+
+  return { mockGetValidChatGptOAuthCredentials, importFresh }
+}

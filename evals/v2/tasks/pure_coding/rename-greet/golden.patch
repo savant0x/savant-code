@@ -1,0 +1,19 @@
+--- greet.js
++++ greet.js
+@@ -1,5 +1,5 @@
+ module.exports = {
+-  greet: function greet(name) {
++  welcome: function welcome(name) {
+     return 'Hello, ' + name
+   },
+ }
+--- app.js
++++ app.js
+@@ -1,5 +1,5 @@
+-const { greet } = require('./greet')
++const { welcome } = require('./greet')
+
+ module.exports = function app(name) {
+-  return greet(name)
++  return welcome(name)
+ }

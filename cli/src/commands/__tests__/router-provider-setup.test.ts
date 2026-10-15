@@ -1,0 +1,234 @@
+import fs from 'fs'
+import os from 'os'
+import path from 'path'
+
+import { afterEach, beforeEach, describe, expect, mock, test } from 'bun:test'
+
+import { useChatStore } from '../../state/chat-store'
+import {
+  beginProviderSetup,
+  getProviderSetupInfo,
+} from '../../utils/provider-setup'
+
+import type { ChatMessage } from '../../types/chat'
+import type { RouterParams } from '../command-registry'
+
+describe('routeUserPrompt providerSetup mode', () => {
+  let originalConfigDir: string | undefined
+  let originalApiKey: string | undefined
+  let originalTokenrouterApiKey: string | undefined
+  let originalNousApiKey: string | undefined
+  let originalDirectProvider: string | undefined
+  let originalInferenceBaseUrl: string | undefined
+  let tempDir: string
+
+  beforeEach(() => {
+    originalConfigDir = process.env.SAVANT_CODE_CONFIG_DIR
+    originalApiKey = process.env.TOKENHARBOR_API_KEY
+    originalTokenrouterApiKey = process.env.TOKENROUTER_API_KEY
+    originalNousApiKey = process.env.NOUS_API_KEY
+    originalDirectProvider = process.env.DIRECT_PROVIDER
+    originalInferenceBaseUrl = process.env.INFERENCE_BASE_URL
+    tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'savant-provider-route-'))
+    process.env.SAVANT_CODE_CONFIG_DIR = tempDir
+    delete process.env.TOKENHARBOR_API_KEY
+    delete process.env.TOKENROUTER_API_KEY
+    delete process.env.NOUS_API_KEY
+    delete process.env.DIRECT_PROVIDER
+    delete process.env.INFERENCE_BASE_URL
+    useChatStore.getState().reset()
+    beginProviderSetup('tokenharbor')
+    useChatStore.getState().setInputMode('providerSetup')
+  })
+
+  afterEach(() => {
+    useChatStore.getState().reset()
+    if (originalConfigDir === undefined)
+      delete process.env.SAVANT_CODE_CONFIG_DIR
+    else process.env.SAVANT_CODE_CONFIG_DIR = originalConfigDir
+    if (originalApiKey === undefined) delete process.env.TOKENHARBOR_API_KEY
+    else process.env.TOKENHARBOR_API_KEY = originalApiKey
+    if (originalTokenrouterApiKey === undefined)
+      delete process.env.TOKENROUTER_API_KEY
+    else process.env.TOKENROUTER_API_KEY = originalTokenrouterApiKey
+    if (originalNousApiKey === undefined) delete process.env.NOUS_API_KEY
+    else process.env.NOUS_API_KEY = originalNousApiKey
+    if (originalDirectProvider === undefined) delete process.env.DIRECT_PROVIDER
+    else process.env.DIRECT_PROVIDER = originalDirectProvider
+    if (originalInferenceBaseUrl === undefined)
+      delete process.env.INFERENCE_BASE_URL
+    else process.env.INFERENCE_BASE_URL = originalInferenceBaseUrl
+    fs.rmSync(tempDir, { recursive: true, force: true })
+  })
+
+  test('blocks a keyless ordinary prompt before sendMessage', async () => {
+    process.env.DIRECT_PROVIDER = 'tokenharbor'
+    useChatStore.getState().setInputMode('default')
+    const sendMessage = mock(async () => {})
+    let renderedMessages: ChatMessage[] = []
+    const setMessages = mock(
+      (update: ChatMessage[] | ((prev: ChatMessage[]) => ChatMessage[])) => {
+        renderedMessages =
+          typeof update === 'function' ? update(renderedMessages) : update
+      },
+    )
+    const params = {
+      abortControllerRef: { current: null },
+      agentMode: 'HYBRID',
+      inputRef: { current: null },
+      inputValue: 'hello',
+      isChainInProgressRef: { current: false },
+      isStreaming: false,
+      logoutMutation: {} as RouterParams['logoutMutation'],
+      streamMessageIdRef: { current: null },
+      addToQueue: () => {},
+      clearMessages: () => {},
+      saveToHistory: mock(() => {}),
+      scrollToLatest: () => {},
+      sendMessage,
+      setCanProcessQueue: () => {},
+      setInputFocused: () => {},
+      setInputValue: () => {},
+      setIsAuthenticated: () => {},
+      setMessages,
+      setUser: () => {},
+      stopStreaming: () => {},
+    } satisfies RouterParams
+
+    const { routeUserPrompt } = await import('../router')
+    await routeUserPrompt(params)
+
+    expect(sendMessage).not.toHaveBeenCalled()
+    expect(JSON.stringify(renderedMessages)).toContain('/provider tokenharbor')
+  })
+
+  test('keeps slash-command routing available before provider setup', async () => {
+    process.env.DIRECT_PROVIDER = 'tokenharbor'
+    useChatStore.getState().setInputMode('default')
+    const params = {
+      abortControllerRef: { current: null },
+      agentMode: 'HYBRID',
+      inputRef: { current: null },
+      inputValue: '/provider tokenharbor',
+      isChainInProgressRef: { current: false },
+      isStreaming: false,
+      logoutMutation: {} as RouterParams['logoutMutation'],
+      streamMessageIdRef: { current: null },
+      addToQueue: () => {},
+      clearMessages: () => {},
+      saveToHistory: mock(() => {}),
+      scrollToLatest: () => {},
+      sendMessage: mock(async () => {}),
+      setCanProcessQueue: () => {},
+      setInputFocused: () => {},
+      setInputValue: () => {},
+      setIsAuthenticated: () => {},
+      setMessages: () => {},
+      setUser: () => {},
+      stopStreaming: () => {},
+    } satisfies RouterParams
+
+    const { routeUserPrompt } = await import('../router')
+    await routeUserPrompt(params)
+
+    expect(useChatStore.getState().inputMode).toBe('providerSetup')
+  })
+
+  test('skips key setup when Nous is already configured in the environment', async () => {
+    // Slash commands are only parsed in normal input mode; providerSetup mode
+    // deliberately treats all input as the masked secret to avoid leaking it.
+    useChatStore.getState().setInputMode('default')
+    process.env.NOUS_API_KEY = 'env-nous-key'
+    const setInputValue = mock(() => {})
+    const setInputFocused = mock(() => {})
+    let renderedMessages: ChatMessage[] = []
+    const setMessages = mock(
+      (update: ChatMessage[] | ((prev: ChatMessage[]) => ChatMessage[])) => {
+        renderedMessages =
+          typeof update === 'function' ? update(renderedMessages) : update
+      },
+    )
+
+    const params = {
+      abortControllerRef: { current: null },
+      agentMode: 'HYBRID',
+      inputRef: { current: null },
+      inputValue: '/provider nous',
+      isChainInProgressRef: { current: false },
+      isStreaming: false,
+      logoutMutation: {} as RouterParams['logoutMutation'],
+      streamMessageIdRef: { current: null },
+      addToQueue: () => {},
+      clearMessages: () => {},
+      saveToHistory: mock(() => {}),
+      scrollToLatest: () => {},
+      sendMessage: mock(async () => {}),
+      setCanProcessQueue: () => {},
+      setInputFocused,
+      setInputValue,
+      setIsAuthenticated: () => {},
+      setMessages,
+      setUser: () => {},
+      stopStreaming: () => {},
+    } satisfies RouterParams
+
+    const { routeUserPrompt } = await import('../router')
+    await routeUserPrompt(params)
+
+    expect(useChatStore.getState().inputMode).toBe('default')
+    expect(setInputFocused).toHaveBeenCalledWith(true)
+    expect(JSON.stringify(renderedMessages)).toContain(
+      'existing configured key',
+    )
+    expect(JSON.stringify(renderedMessages)).not.toContain('env-nous-key')
+  })
+
+  test('stores the key without saving or rendering the secret', async () => {
+    const saveToHistory = mock(() => {})
+    const setInputValue = mock(() => {})
+    const setInputFocused = mock(() => {})
+    let renderedMessages: ChatMessage[] = []
+    const setMessages = mock(
+      (update: ChatMessage[] | ((prev: ChatMessage[]) => ChatMessage[])) => {
+        renderedMessages =
+          typeof update === 'function' ? update(renderedMessages) : update
+      },
+    )
+    const secret = 'sentinel-tokenharbor-api-key'
+
+    const params = {
+      abortControllerRef: { current: null },
+      agentMode: 'HYBRID',
+      inputRef: { current: null },
+      inputValue: secret,
+      isChainInProgressRef: { current: false },
+      isStreaming: false,
+      logoutMutation: {} as RouterParams['logoutMutation'],
+      streamMessageIdRef: { current: null },
+      addToQueue: () => {},
+      clearMessages: () => {},
+      saveToHistory,
+      scrollToLatest: () => {},
+      sendMessage: async () => {},
+      setCanProcessQueue: () => {},
+      setInputFocused,
+      setInputValue,
+      setIsAuthenticated: () => {},
+      setMessages,
+      setUser: () => {},
+      stopStreaming: () => {},
+    } satisfies RouterParams
+
+    const { routeUserPrompt } = await import('../router')
+    await routeUserPrompt(params)
+
+    expect(saveToHistory).not.toHaveBeenCalled()
+    expect(process.env.TOKENHARBOR_API_KEY).toBe(secret)
+    expect(useChatStore.getState().inputMode).toBe('default')
+    expect(setInputFocused).toHaveBeenCalledWith(true)
+
+    const setupInfo = getProviderSetupInfo('tokenharbor')
+    expect(setupInfo?.envVar).toBe('TOKENHARBOR_API_KEY')
+    expect(JSON.stringify(renderedMessages)).not.toContain(secret)
+  })
+})

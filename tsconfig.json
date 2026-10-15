@@ -1,0 +1,33 @@
+{
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "baseUrl": ".",
+    "paths": {
+      "@savant-code/common/*": ["./common/src/*"],
+      "@savant-code/evals/*": ["./evals/*"],
+      "@savant-code/sdk": ["./sdk/src/index.ts"],
+      "@savant-code/sdk/*": ["./sdk/*"],
+      "@savant-code/agent-runtime/*": ["./packages/agent-runtime/src/*"],
+      "@savant-code/llm-providers/*": ["./packages/llm-providers/src/*"],
+      "@savant-code/code-map/*": ["./packages/code-map/*"],
+      "@savant-code/knowledge-graph/*": ["./packages/knowledge-graph/src/*"],
+      "@savant-code/knowledge-graph": [
+        "./packages/knowledge-graph/src/index.ts"
+      ]
+    }
+  },
+  "files": [],
+  "references": [
+    { "path": "./common" },
+    { "path": "./desktop" },
+    { "path": "./agents" },
+    { "path": "./sdk" },
+    { "path": "./cli" },
+    { "path": "./evals" },
+    { "path": "./packages/agent-runtime" },
+    { "path": "./packages/code-map" },
+    { "path": "./packages/knowledge-graph" },
+    { "path": "./packages/llm-providers" }
+  ]
+}

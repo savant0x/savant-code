@@ -1,0 +1,225 @@
+import {
+  describe,
+  test,
+  expect,
+  mock,
+  beforeEach,
+  afterEach,
+  spyOn,
+} from 'bun:test'
+
+import { createMockApiClient } from '../../__tests__/helpers/mock-api-client'
+import * as SavantCodeApiModule from '../../utils/savant-code-api'
+import { fetchUserDetails } from '../use-user-details-query'
+
+import type { Logger } from '@savant-code/common/types/contracts/logger'
+
+describe('fetchUserDetails', () => {
+  const mockLogger: Logger = {
+    error: mock(() => {}),
+    warn: mock(() => {}),
+    info: mock(() => {}),
+    debug: mock(() => {}),
+  }
+
+  const originalEnv = process.env.NEXT_PUBLIC_SAVANT_CODE_APP_URL
+
+  const originalDirectProvider = process.env.DIRECT_PROVIDER
+
+  beforeEach(() => {
+    process.env.NEXT_PUBLIC_SAVANT_CODE_APP_URL = 'https://test.savant-code.com'
+    process.env.DIRECT_PROVIDER = ''
+  })
+
+  afterEach(() => {
+    process.env.NEXT_PUBLIC_SAVANT_CODE_APP_URL = originalEnv
+    process.env.DIRECT_PROVIDER = originalDirectProvider
+  })
+
+  describe('API failure handling', () => {
+    test('throws error on 401 Unauthorized response', async () => {
+      const meMock = mock(() =>
+        Promise.resolve({
+          ok: false,
+          status: 401,
+        }),
+      )
+      const apiClient = createMockApiClient({ me: meMock })
+
+      await expect(
+        fetchUserDetails({
+          authToken: 'invalid-token',
+          fields: ['email'] as const,
+          logger: mockLogger,
+          apiClient,
+        }),
+      ).rejects.toThrow('Failed to fetch user details (HTTP 401)')
+    })
+
+    test('throws error on 500 Internal Server Error response', async () => {
+      const meMock = mock(() =>
+        Promise.resolve({
+          ok: false,
+          status: 500,
+        }),
+      )
+      const apiClient = createMockApiClient({ me: meMock })
+
+      await expect(
+        fetchUserDetails({
+          authToken: 'valid-token',
+          fields: ['email'] as const,
+          logger: mockLogger,
+          apiClient,
+        }),
+      ).rejects.toThrow('Failed to fetch user details (HTTP 500)')
+    })
+
+    test('throws error on 403 Forbidden response', async () => {
+      const meMock = mock(() =>
+        Promise.resolve({
+          ok: false,
+          status: 403,
+        }),
+      )
+      const apiClient = createMockApiClient({ me: meMock })
+
+      await expect(
+        fetchUserDetails({
+          authToken: 'valid-token',
+          fields: ['email'] as const,
+          logger: mockLogger,
+          apiClient,
+        }),
+      ).rejects.toThrow('Failed to fetch user details (HTTP 403)')
+    })
+
+    test('throws error on 404 Not Found response', async () => {
+      const meMock = mock(() =>
+        Promise.resolve({
+          ok: false,
+          status: 404,
+        }),
+      )
+      const apiClient = createMockApiClient({ me: meMock })
+
+      await expect(
+        fetchUserDetails({
+          authToken: 'valid-token',
+          fields: ['id', 'email'] as const,
+          logger: mockLogger,
+          apiClient,
+        }),
+      ).rejects.toThrow('Failed to fetch user details (HTTP 404)')
+    })
+
+    test('logs error before throwing on API failure', async () => {
+      const errorSpy = mock(() => {})
+      const testLogger: Logger = {
+        ...mockLogger,
+        error: errorSpy,
+      }
+
+      const meMock = mock(() =>
+        Promise.resolve({
+          ok: false,
+          status: 500,
+        }),
+      )
+      const apiClient = createMockApiClient({ me: meMock })
+
+      await expect(
+        fetchUserDetails({
+          authToken: 'valid-token',
+          fields: ['email'] as const,
+          logger: testLogger,
+          apiClient,
+        }),
+      ).rejects.toThrow()
+
+      expect(errorSpy).toHaveBeenCalled()
+    })
+  })
+
+  describe('successful responses', () => {
+    test('returns user details on successful response', async () => {
+      const mockUserDetails = {
+        email: 'test@example.com',
+      }
+
+      const meMock = mock(() =>
+        Promise.resolve({
+          ok: true,
+          status: 200,
+          data: mockUserDetails,
+        }),
+      )
+      const apiClient = createMockApiClient({ me: meMock })
+
+      const result = await fetchUserDetails({
+        authToken: 'valid-token',
+        fields: ['email'] as const,
+        logger: mockLogger,
+        apiClient,
+      })
+
+      expect(result).toEqual(mockUserDetails)
+    })
+  })
+
+  describe('environment validation', () => {
+    test('uses shared API client when apiClient is not provided', async () => {
+      const meMock = mock(() =>
+        Promise.resolve({
+          ok: true,
+          status: 200,
+          data: { email: 'test@example.com' },
+        }),
+      )
+      const apiClient = createMockApiClient({ me: meMock })
+
+      const setTokenSpy = spyOn(SavantCodeApiModule, 'setApiClientAuthToken')
+      spyOn(SavantCodeApiModule, 'getApiClient').mockReturnValue(
+        apiClient as ReturnType<typeof SavantCodeApiModule.getApiClient>,
+      )
+
+      await expect(
+        fetchUserDetails({
+          authToken: 'valid-token',
+          fields: ['email'] as const,
+          logger: mockLogger,
+        }),
+      ).resolves.toEqual({ email: 'test@example.com' })
+
+      expect(setTokenSpy).toHaveBeenCalledWith('valid-token')
+    })
+  })
+
+  describe('direct provider mode', () => {
+    test('returns stub user details without calling API', async () => {
+      process.env.DIRECT_PROVIDER = 'openrouter'
+
+      const meMock = mock(() =>
+        Promise.resolve({
+          ok: true,
+          status: 200,
+          data: {},
+        }),
+      )
+      const apiClient = createMockApiClient({ me: meMock })
+
+      const result = await fetchUserDetails({
+        authToken: 'valid-token',
+        fields: ['id', 'email'] as const,
+        logger: mockLogger,
+        apiClient,
+      })
+
+      expect(meMock).not.toHaveBeenCalled()
+      expect(result).toEqual({
+        id: 'direct-provider',
+        email: 'direct-provider@savant-code.local',
+      })
+    })
+  })
+})

@@ -1,0 +1,73 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "SavantMotionFingerprintRow",
+  "description": "One append-only registry row describing a completed motion build. A new build must score a weighted Hamming distance of at least 5 of a possible 8 against EVERY existing row (grammar weight 2, signatureMove weight 2, nav/hero/actShape/close weight 1).",
+  "type": "object",
+  "required": [
+    "schemaVersion",
+    "name",
+    "created",
+    "grammar",
+    "nav",
+    "hero",
+    "actShape",
+    "close",
+    "signatureMove"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": 1
+    },
+    "name": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Build identifier, matches motion/builds/<name>/."
+    },
+    "created": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "grammar": {
+      "type": "string",
+      "enum": [
+        "continuous-world",
+        "pinned-chapters",
+        "horizontal-drift",
+        "layered-depth-stack",
+        "kinetic-editorial",
+        "product-showcase",
+        "data-narrative",
+        "world-flight"
+      ]
+    },
+    "nav": {
+      "type": "string",
+      "description": "Navigation treatment, e.g. 'fixed minimal bar', 'waypoint map', 'none'."
+    },
+    "hero": {
+      "type": "string",
+      "description": "Hero device, e.g. 'full-bleed scrub', 'title page, no media'."
+    },
+    "actShape": {
+      "type": "string",
+      "description": "Act sequence shape, e.g. 'scrub > pin > flow > pan, 6 acts, ~13vh'."
+    },
+    "close": {
+      "type": "string",
+      "description": "Close pattern, e.g. 'pinned spotlight CTA', 'running-text colophon'."
+    },
+    "signatureMove": {
+      "type": "string",
+      "description": "The bespoke interaction unique to this build. Never reused across rows."
+    },
+    "summary": {
+      "type": "string",
+      "description": "Optional one-line world/palette note for future planning context."
+    },
+    "overriddenBy": {
+      "type": "string",
+      "description": "Present only when the operator approved a collision via --allow-collision."
+    }
+  },
+  "additionalProperties": false
+}

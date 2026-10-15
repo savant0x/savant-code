@@ -1,0 +1,21 @@
+{
+  "name": "esm-compatibility-test",
+  "version": "1.0.0",
+  "type": "module",
+  "private": true,
+  "main": "index.js",
+  "scripts": {
+    "setup": "node -e \"const fs=require('fs'),p='node_modules/@savant-code/sdk';fs.rmSync(p,{recursive:true,force:true});fs.mkdirSync(p,{recursive:true});fs.cpSync('../../dist',p+'/dist',{recursive:true});fs.copyFileSync('../../package.json',p+'/package.json')\"",
+    "test": "node test-imports.js",
+    "test:types": "tsc --noEmit --skipLibCheck test-types.ts",
+    "test:compile": "tsc test-types.ts --outDir ./dist --skipLibCheck --module ESNext --target ES2022 --moduleResolution bundler && node ./dist/test-types.js",
+    "test:all": "npm run setup && npm run test && npm run test:types && npm run test:compile"
+  },
+  "dependencies": {
+    "@savant-code/sdk": "file:../.."
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "typescript": "^5.0.0"
+  }
+}

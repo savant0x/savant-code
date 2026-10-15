@@ -1,0 +1,118 @@
+#!/usr/bin/env bash
+# Pre-push hook — enforce the credential scan + hard gates before anything
+# reaches the remote.
+#
+# Runs the same gates as `protocol.config.yaml` (type_check + test + lint +
+# lint_md + format) plus the fail-closed credential scan over the exact pushed
+# commit range. ECHO Law 3 (Verify Before Proceed) and Law 15 (build stays
+# clean) require every change to be verified with the build and test commands
+# before delivery, so the typecheck and test gates are enforced here too:
+#   - bun run scripts/pre-push-scan.ts   (pushed-range credential scan, F-A)
+#   - bun x eslint . --max-warnings 0   (zero-tolerance ESLint, FID-069)
+#   - bun run lint:md                   (markdownlint on governed docs)
+#   - bun run typecheck                 (protocol.config.yaml `type_check` gate)
+#   - bun run test                      (protocol.config.yaml `test` gate)
+#   - bunx prettier --check .           (format gate)
+#
+# Wired automatically by the root `prepare` script (`git config core.hooksPath
+# .githooks`), which runs on every `bun install`. Skip with `--no-verify`.
+#
+# The credential scan is the critical path and fails CLOSED: if bun is missing
+# the push is refused rather than silently pushing unscanned content.
+
+set -uo pipefail
+
+HOOK_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+SCAN_SCRIPT="$HOOK_DIR/../scripts/pre-push-scan.ts"
+
+# Git invokes hooks with cwd = the top level of the repo being pushed. Stay
+# there: the scan must target the pushed repository (not the hook's own repo,
+# which differs when hooksPath points elsewhere), and the cwd-relative lint
+# gates must cover the pushed tree. Only the script path is resolved via
+# HOOK_DIR so the hooks remain portable across repos.
+PUSH_ROOT="$(pwd)"
+cd "$PUSH_ROOT" || exit 1
+
+if ! command -v bun >/dev/null 2>&1; then
+  echo "❌ pre-push: bun is required for the credential scan — run \`bun install\` (or install Bun ≥ 1.3.14) before pushing." >&2
+  exit 1
+fi
+
+echo "🔍 pre-push: scanning pushed commit range for credential-shaped content..."
+
+bun run "$SCAN_SCRIPT"
+scan_status=$?
+if [ "$scan_status" -ne 0 ]; then
+  echo "❌ pre-push: credential scan refused the push — fix before pushing (or use --no-verify)" >&2
+  exit "$scan_status"
+fi
+
+echo "🔍 pre-push: running hard lint gates (eslint --max-warnings 0 + markdownlint + prettier --check)..."
+
+bun x eslint . --max-warnings 0
+eslint_status=$?
+if [ "$eslint_status" -ne 0 ]; then
+  echo "❌ pre-push: ESLint reported errors/warnings — fix before pushing (or use --no-verify)" >&2
+  exit "$eslint_status"
+fi
+
+bun run lint:md
+md_status=$?
+if [ "$md_status" -ne 0 ]; then
+  echo "❌ pre-push: markdownlint reported violations — fix before pushing (or use --no-verify)" >&2
+  exit "$md_status"
+fi
+
+bun run generate:protocol-bundle:check
+bundle_status=$?
+if [ "$bundle_status" -ne 0 ]; then
+  echo "❌ pre-push: embedded protocol bundle is stale — run \`bun run generate:protocol-bundle\` before pushing (or use --no-verify)" >&2
+  exit "$bundle_status"
+fi
+
+# FID-2026-0823-009: structural verification-contract scan (C1+C2, no
+# execution). Active fixed/verified FIDs must carry a valid gates declaration
+# + receipt; the live re-run (C3) fires at the release gate.
+echo "🔍 pre-push: scanning FID verification receipts (fid:verify --check)..."
+bun run fid:verify --check
+fid_check_status=$?
+if [ "$fid_check_status" -ne 0 ]; then
+  echo "❌ pre-push: fixed/verified FIDs missing valid verification receipts — run \`bun run fid:verify <fid> --write\` before pushing (or use --no-verify)" >&2
+  exit "$fid_check_status"
+fi
+
+echo "🔍 pre-push: running Tier-1 governance smoke (zero-token, deterministic)..."
+bun run evals:smoke
+evals_smoke_status=$?
+if [ "$evals_smoke_status" -ne 0 ]; then
+  echo "❌ pre-push: Tier-1 governance smoke failed — push refused (or use --no-verify)" >&2
+  exit "$evals_smoke_status"
+fi
+
+echo "🔍 pre-push: running typecheck gate (protocol.config.yaml type_check — all workspaces)..."
+
+bun run typecheck
+typecheck_status=$?
+if [ "$typecheck_status" -ne 0 ]; then
+  echo "❌ pre-push: typecheck reported errors — ECHO Law 3 (verify before proceed) refuses the push (or use --no-verify)" >&2
+  exit "$typecheck_status"
+fi
+
+echo "🔍 pre-push: running test gate (protocol.config.yaml test — all workspace suites)..."
+
+bun run test
+test_status=$?
+if [ "$test_status" -ne 0 ]; then
+  echo "❌ pre-push: test suites failed — ECHO Law 3 (verify before proceed) refuses the push (or use --no-verify)" >&2
+  exit "$test_status"
+fi
+
+bunx prettier --check .
+prettier_status=$?
+if [ "$prettier_status" -ne 0 ]; then
+  echo "❌ pre-push: prettier found unformatted files — run \`bunx prettier --write .\` before pushing (or use --no-verify)" >&2
+  exit "$prettier_status"
+fi
+
+echo "✅ pre-push: all gates passed (credential scan + ESLint + markdownlint + typecheck + tests + prettier)"
+exit 0

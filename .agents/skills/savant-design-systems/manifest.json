@@ -1,0 +1,2541 @@
+{
+  "manifestVersion": "1",
+  "generatedFrom": "packages/design-systems/library",
+  "nativeDefaultId": "savant-cyberpunk",
+  "rawCount": 74,
+  "admittedCount": 74,
+  "resources": [
+    {
+      "schemaVersion": "1",
+      "id": "airbnb-design-analysis",
+      "displayName": "Airbnb-design-analysis",
+      "description": "A warm, generous consumer marketplace anchored on a clean white canvas and Airbnb Rausch (#ff385c), the single brand voltage that carries every primary CTA, search-button orb, and rating dot. Type runs Airbnb Cereal VF at modest weights — display sits at 22–28px in weight 500/600 rather than the heavy 700+ that fintech and enterprise systems use; the brand trusts photography and generous whitespace over typographic muscle. Three product entries (Homes, Experiences, Services) sit in the top nav with hand-illustrated 32-icon glyphs and \"NEW\" badges, signaling a marketplace expansion rather than a feature dump. Pill-shaped search bars (`{rounded.full}`), softly rounded property cards (`{rounded.lg}` ~14px), and 32px button radii read as friendly and human — there is no hard corner anywhere except the body grid.",
+      "source": "embedded",
+      "status": "curated-reference",
+      "targets": ["terminal", "react"],
+      "contentPath": "packages/design-systems/library/airbnb.design.md",
+      "sourceContentHash": "add34130d67209ad105346d60fe2b290728b9711683969db4b7760e29477a5fe",
+      "normalizedContentHash": "61c124f572670631f8f2ac7e7756614c286d6be105154d911d1ce07da7bfcfb4",
+      "provenance": {
+        "sourceRepository": "VoltAgent/awesome-design-md",
+        "sourceRevision": "working-tree-curated-snapshot",
+        "sourcePath": "packages/design-systems/library/airbnb.design.md",
+        "license": "MIT"
+      },
+      "fonts": [
+        {
+          "family": "Airbnb Cereal VF",
+          "fallback": ["system-ui", "sans-serif"],
+          "redistributable": false
+        },
+        {
+          "family": "Circular",
+          "fallback": ["system-ui", "sans-serif"],
+          "redistributable": false
+        },
+        {
+          "family": "Helvetica Neue",
+          "fallback": ["system-ui", "sans-serif"],
+          "redistributable": false
+        },
+        {
+          "family": "Roboto",
+          "fallback": ["system-ui", "sans-serif"],
+          "redistributable": false
+        }
+      ]
+    },
+    {
+      "schemaVersion": "1",
+      "id": "airtable-design-analysis",
+      "displayName": "Airtable-design-analysis",
+      "description": "A sober, editorial workflow-software interface anchored on white canvas and dark-ink type, where brand voltage comes from full-bleed signature cards in coral, dark green, peach, and dark navy that punctuate long-scroll explainer pages. Primary actions use a near-black pill CTA; secondary actions sit in a white outlined button. Type runs Haas Grotesk in modest weights — never bold for its own sake.",
+      "source": "embedded",
+      "status": "curated-reference",
+      "targets": ["terminal", "react"],
+      "contentPath": "packages/design-systems/library/airtable.design.md",
+      "sourceContentHash": "1d225e511213044d3c705bde50265ad010932bfd8a15740a144dd4f480128889",
+      "normalizedContentHash": "097adf758faf66d28a5b708c017ebabeb02ab6734b758d82b0e8674eb39b60e1",
+      "provenance": {
+        "sourceRepository": "VoltAgent/awesome-design-md",
+        "sourceRevision": "working-tree-curated-snapshot",
+        "sourcePath": "packages/design-systems/library/airtable.design.md",
+        "license": "MIT"
+      },
+      "fonts": [
+        {
+          "family": "Haas",
+          "fallback": ["system-ui", "sans-serif"],
+          "redistributable": false
+        },
+        {
+          "family": "Haas Groot Disp",
+          "fallback": ["system-ui", "sans-serif"],
+          "redistributable": false
+        },
+        {
+          "family": "Inter Display",
+          "fallback": ["system-ui", "sans-serif"],
+          "redistributable": false
+        }
+      ]
+    },
+    {
+      "schemaVersion": "1",
+      "id": "apple-design-analysis",
+      "displayName": "Apple-design-analysis",
+      "description": "A photography-first interface that turns marketing into a museum gallery. Edge-to-edge product tiles alternate light and dark canvases, framed by SF Pro Display headlines with negative letter-spacing and a single Action Blue (#0066cc) interactive color. UI chrome recedes so the product can speak — no decorative gradients, no shadows on chrome, only the one signature drop-shadow under product imagery resting on a surface.",
+      "source": "embedded",
+      "status": "curated-reference",
+      "targets": ["terminal", "react"],
+      "contentPath": "packages/design-systems/library/apple.design.md",
+      "sourceContentHash": "83fbc614443a9b3d7569e9956a43e7b8740f9d0f939f58b8154f7a7cec3002b2",
+      "normalizedContentHash": "2e3e5b1ef96ef8da54e66c17b680f7787f5394a0e01073804e51e73d96177e4f",
+      "provenance": {
+        "sourceRepository": "VoltAgent/awesome-design-md",
+        "sourceRevision": "working-tree-curated-snapshot",
+        "sourcePath": "packages/design-systems/library/apple.design.md",
+        "license": "MIT"
+      },
+      "fonts": [
+        {
+          "family": "SF Pro Display",
+          "fallback": ["system-ui", "sans-serif"],
+          "redistributable": false
+        },
+        {
+          "family": "SF Pro Text",
+          "fallback": ["system-ui", "sans-serif"],
+          "redistributable": false
+        }
+      ]
+    },
+    {
+      "schemaVersion": "1",
+      "id": "binance-design-analysis",
+      "displayName": "Binance-design-analysis",
+      "description": "A confident financial-platform interface anchored on a deep near-black canvas, where Binance's iconic yellow (#FCD535) carries every primary CTA, brand accent, and value-claim moment. Type runs Binance's custom BinanceNova / BinancePlex stack at modest weights — the system trusts size and yellow voltage over bold weight. Marketing and product surfaces default to the dark theme; transactional surfaces (buy crypto, deposit, exchange) flip to a light theme that shares the same yellow CTAs and gray-blue hairlines. Trading green (up) and red (down) accents thread through both modes for price-direction signals.",
+      "source": "embedded",
+      "status": "curated-reference",
+      "targets": ["terminal", "react"],
+      "contentPath": "packages/design-systems/library/binance.design.md",
+      "sourceContentHash": "378ff97d568ccbc316519b9d45a29d6649ed8961c9c486c3ed4cea7501d72371",
+      "normalizedContentHash": "aa0c1ee6734e8cbbab29c905332916d7e356cea3926a364e2ea6a89ccc3affd3",
+      "provenance": {
+        "sourceRepository": "VoltAgent/awesome-design-md",
+        "sourceRevision": "working-tree-curated-snapshot",
+        "sourcePath": "packages/design-systems/library/binance.design.md",
+        "license": "MIT"
+      },
+      "fonts": [
+        {
+          "family": "BinanceNova",
+          "fallback": ["system-ui", "sans-serif"],
+          "redistributable": false
+        },
+        {
+          "family": "BinancePlex",
+          "fallback": ["system-ui", "sans-serif"],
+          "redistributable": false
+        },
+        {
+          "family": "BlinkMacSystemFont",
+          "fallback": ["system-ui", "sans-serif"],
+          "redistributable": false
+        }
+      ]
+    },
+    {
+      "schemaVersion": "1",
+      "id": "bmw-m-design-analysis",
+      "displayName": "BMW-M-design-analysis",
+      "description": "A motorsport-engineering interface anchored on a near-black canvas with white BMW Type Next Latin display headlines in confident UPPERCASE. The brand carries no decorative voltage — its energy comes from full-bleed automotive photography (cars on tracks, driver-cockpit shots, carbon-fiber detail) and the iconic M tricolor stripe (light blue → dark blue → red) used sparingly as a brand signature on logos, dividers, and motorsport chrome. Type stays light to medium weight to feel European-engineered, never American-bombastic.",
+      "source": "embedded",
+      "status": "curated-reference",
+      "targets": ["terminal", "react"],
+      "contentPath": "packages/design-systems/library/bmw-m.design.md",
+      "sourceContentHash": "824a1707c0a8d1609d72477d0fa211b9ebe4bdeb3e1fd701790af7b7bb669a4a",
+      "normalizedContentHash": "29c04f739636b1aac72bec4df5d383a4a9b5e9a6c0a239cf2d5acba1a2f29d10",
+      "provenance": {
+        "sourceRepository": "VoltAgent/awesome-design-md",
+        "sourceRevision": "working-tree-curated-snapshot",
+        "sourcePath": "packages/design-systems/library/bmw-m.design.md",
+        "license": "MIT"
+      },
+      "fonts": [
+        {
+          "family": "BMWTypeNextLatin",
+          "fallback": ["system-ui", "sans-serif"],
+          "redistributable": false
+        },
+        {
+          "family": "BMWTypeNextLatin Light",
+          "fallback": ["system-ui", "sans-serif"],
+          "redistributable": false
+        }
+      ]
+    },
+    {
+      "schemaVersion": "1",
+      "id": "bmw-design-analysis",
+      "displayName": "BMW-design-analysis",
+      "description": "BMW's corporate site — distinct from BMW M's motorsport-bombastic variant, this is a measured and settled corporate-automotive interface. On a light (cream-tinted white) canvas, BMW corporate blue (#1c69d4) carries every primary CTA; dark navy hero bands frame model photography. BMW Type Next Latin sets the entire hierarchy on two weights — heavy 700 display and Light 300 body. Configuration and reservation flows ride a card-based 4-up grid, where each card holds a model render, a name, and a \"Learn More\" link.",
+      "source": "embedded",
+      "status": "curated-reference",
+      "targets": ["terminal", "react"],
+      "contentPath": "packages/design-systems/library/bmw.design.md",
+      "sourceContentHash": "b7268279e7c98e85fb80890e06765f4ee8340ba1ea1ccb5a8a5b134de43dac3e",
+      "normalizedContentHash": "13ab977fd775d8548a4603cded8d01dcec3cd54a16a2544d278b8f7b27918293",
+      "provenance": {
+        "sourceRepository": "VoltAgent/awesome-design-md",
+        "sourceRevision": "working-tree-curated-snapshot",
+        "sourcePath": "packages/design-systems/library/bmw.design.md",
+        "license": "MIT"
+      },
+      "fonts": [
+        {
+          "family": "BlinkMacSystemFont",
+          "fallback": ["system-ui", "sans-serif"],
+          "redistributable": false
+        },
+        {
+          "family": "BMW Type Next Latin",
+          "fallback": ["system-ui", "sans-serif"],
+          "redistributable": false
+        },
+        {
+          "family": "Roboto",
+          "fallback": ["system-ui", "sans-serif"],
+          "redistributable": false
+        },
+        {
+          "family": "Segoe UI",
+          "fallback": ["system-ui", "sans-serif"],
+          "redistributable": false
+        }
+      ]
+    },
+    {
+      "schemaVersion": "1",
+      "id": "bugatti-design-analysis",
+      "displayName": "Bugatti-design-analysis",
+      "description": "An austere luxury-automotive interface that uses near-pure black canvas, white uppercase letterspaced display, and full-bleed automotive photography as the only voltage. The system runs three custom Bugatti typefaces — Bugatti Display, Bugatti Text Regular, and Bugatti Monospace — and combines them at modest weights with wide tracking to feel European-engineered, hyper-minimal, and quietly expensive. There is no accent color, no decorative element, no chrome — only photography, typography, and the brand wordmark.",
+      "source": "embedded",
+      "status": "curated-reference",
+      "targets": ["terminal", "react"],
+      "contentPath": "packages/design-systems/library/bugatti.design.md",
+      "sourceContentHash": "375f0a20ada88cdee5e995ca7edcfbd584ddf5f887024deebd1bc75bfd55b1bc",
+      "normalizedContentHash": "80163adbdecf774a2bb09a8194c332f3d6fbae02eea6b7593f11a1a7caa2914d",
+      "provenance": {
+        "sourceRepository": "VoltAgent/awesome-design-md",
+        "sourceRevision": "working-tree-curated-snapshot",
+        "sourcePath": "packages/design-systems/library/bugatti.design.md",
+        "license": "MIT"
+      },
+      "fonts": [
+        {
+          "family": "Bugatti Display",
+          "fallback": ["system-ui", "sans-serif"],
+          "redistributable": false
+        },
+        {
+          "family": "Bugatti Monospace",
+          "fallback": ["system-ui", "sans-serif"],
+          "redistributable": false
+        },
+        {
+          "family": "Bugatti Text Regular",
+          "fallback": ["system-ui", "sans-serif"],
+          "redistributable": false
+        },
+        {
+          "family": "ui-monospace",
+          "fallback": ["system-ui", "sans-serif"],
+          "redistributable": false
+        }
+      ]
+    },
+    {
+      "schemaVersion": "1",
+      "id": "cal-com-design-analysis",
+      "displayName": "Cal.com-design-analysis",
+      "description": "A clean, calendar-software-first interface anchored on white canvas with black primary CTAs and custom Cal Sans display typography. The system reads as friendly modern SaaS — generous whitespace, soft-rounded cards (~12px), product UI fragments shown directly inside cards, and a dark navy footer that visually closes long-scroll pages. Brand voltage comes from the Cal Sans display headline (a custom geometric face) and from product UI artifacts shown in-card rather than from accent colors.",
+      "source": "embedded",
+      "status": "curated-reference",
+      "targets": ["terminal", "react"],
+      "contentPath": "packages/design-systems/library/cal.design.md",
+      "sourceContentHash": "8cd21b7d67e94c899843d517f4b426e4fee33d47354a433d6a63ebcf79d5a654",
+      "normalizedContentHash": "df21eaab7ba14d34e0e252edbe7465685f5605a5287996d31c0c3bf886145588",
+      "provenance": {
+        "sourceRepository": "VoltAgent/awesome-design-md",
+        "sourceRevision": "working-tree-curated-snapshot",
+        "sourcePath": "packages/design-systems/library/cal.design.md",
+        "license": "MIT"
+      },
+      "fonts": [
+        {
+          "family": "Cal Sans",
+          "fallback": ["system-ui", "sans-serif"],
+          "redistributable": false
+        },
+        {
+          "family": "Inter",
+          "fallback": ["system-ui", "sans-serif"],
+          "redistributable": false
+        },
+        {
+          "family": "JetBrains Mono",
+          "fallback": ["system-ui", "sans-serif"],
+          "redistributable": false
+        },
+        {
+          "family": "ui-monospace",
+          "fallback": ["system-ui", "sans-serif"],
+          "redistributable": false
+        }
+      ]
+    },
+    {
+      "schemaVersion": "1",
+      "id": "claude-design-analysis",
+      "displayName": "Claude-design-analysis",
+      "description": "A warm-canvas editorial interface for Anthropic's Claude product. The system anchors on a tinted cream canvas with serif display headlines, warm coral CTAs, and dark navy product surfaces (code editor mockups, model showcase cards). Brand voltage comes from the cream/coral pairing — deliberately warm and humanist where most AI brands use cool blue + slate. Type voice runs a slab-serif display (\"Copernicus\" / Tiempos Headline) for h1/h2 and a humanist sans for body. The signature Anthropic black-radial-spike mark anchors the wordmark.",
+      "source": "embedded",
+      "status": "curated-reference",
+      "targets": ["terminal", "react"],
+      "contentPath": "packages/design-systems/library/claude.design.md",
+      "sourceContentHash": "3d972f34f8d4f33b442fa28220cf3b7ca2f13c0a97c468e3988148f82521f9df",
+      "normalizedContentHash": "af63c9330d70ce63e4d98901f4dd0fa2cb6ff08dc23e196d4109ef3ee51ac252",
+      "provenance": {
+        "sourceRepository": "VoltAgent/awesome-design-md",
+        "sourceRevision": "working-tree-curated-snapshot",
+        "sourcePath": "packages/design-systems/library/claude.design.md",
+        "license": "MIT"
+      },
+      "fonts": [
+        {
+          "family": "Copernicus",
+          "fallback": ["system-ui", "sans-serif"],
+          "redistributable": false
+        },
+        {
+          "family": "Inter",
+          "fallback": ["system-ui", "sans-serif"],
+          "redistributable": false
+        },
+        {
+          "family": "JetBrains Mono",
+          "fallback": ["system-ui", "sans-serif"],
+          "redistributable": false
+        },
+        {
+          "family": "StyreneB",
+          "fallback": ["system-ui", "sans-serif"],
+          "redistributable": false
+        },
+        {
+          "family": "Tiempos Headline",
+          "fallback": ["system-ui", "sans-serif"],
+          "redistributable": false
+        },
+        {
+          "family": "ui-monospace",
+          "fallback": ["system-ui", "sans-serif"],
+          "redistributable": false
+        }
+      ]
+    },
+    {
+      "schemaVersion": "1",
+      "id": "clay-design-analysis",
+      "displayName": "Clay-design-analysis",
+      "description": "A vibrant claymation-meets-data interface for Clay.com (GTM data-orchestration platform). Anchors on white canvas with dark-navy primary CTAs, custom rounded display type, and saturated single-color feature cards — hot pink, deep teal, lavender, peach, ochre — that punctuate long-scroll explainer pages. Brand voltage comes from 3D-rendered claymation illustrations (mountains, characters, mascots) used as full-bleed hero artifacts and the bright multi-color card surfaces showing product UI fragments.",
+      "source": "embedded",
+      "status": "curated-reference",
+      "targets": ["terminal", "react"],
+      "contentPath": "packages/design-systems/library/clay.design.md",
+      "sourceContentHash": "1abd803a207fbe950a06e155adcd6013c2e149b13e7b88844f5069f9d3d99eb3",
+      "normalizedContentHash": "2d7bb5214218d811e2b2ed45eb2668084f62f0682208a3982e71fd74a127a8b0",
+      "provenance": {
+        "sourceRepository": "VoltAgent/awesome-design-md",
+        "sourceRevision": "working-tree-curated-snapshot",
+        "sourcePath": "packages/design-systems/library/clay.design.md",
+        "license": "MIT"
+      },
+      "fonts": [
+        {
+          "family": "Inter",
+          "fallback": ["system-ui", "sans-serif"],
+          "redistributable": false
+        },
+        {
+          "family": "Plain Black",
+          "fallback": ["system-ui", "sans-serif"],
+          "redistributable": false
+        }
+      ]
+    },
+    {
+      "schemaVersion": "1",
+      "id": "clickhouse-design-analysis",
+      "displayName": "ClickHouse-design-analysis",
+      "description": "A high-performance database interface anchored on near-pure black canvas with electric yellow as the brand voltage. White typography in confident sans, yellow CTAs, and yellow-text stat numbers carry the brand voice across every page. Code blocks and product UI fragments embed directly in dark cards. The yellow + black pairing (and yellow used scarcely as accent) is the system's signature — brand identity without atmospheric decoration.",
+      "source": "embedded",
+      "status": "curated-reference",
+      "targets": ["terminal", "react"],
+      "contentPath": "packages/design-systems/library/clickhouse.design.md",
+      "sourceContentHash": "50987e29b603cc7503ebe724af810fcf43845e96fdd4083e0fbe5fe00d2cdd2e",
+      "normalizedContentHash": "ba74099b5a95ba2369039f4bf9081e1ac871a92baa7dc4afcd3926adc91581d6",
+      "provenance": {
+        "sourceRepository": "VoltAgent/awesome-design-md",
+        "sourceRevision": "working-tree-curated-snapshot",
+        "sourcePath": "packages/design-systems/library/clickhouse.design.md",
+        "license": "MIT"
+      },
+      "fonts": [
+        {
+          "family": "Inter",
+          "fallback": ["system-ui", "sans-serif"],
+          "redistributable": false
+        },
+        {
+          "family": "JetBrains Mono",
+          "fallback": ["system-ui", "sans-serif"],
+          "redistributable": false
+        },
+        {
+          "family": "ui-monospace",
+          "fallback": ["system-ui", "sans-serif"],
+          "redistributable": false
+        }
+      ]
+    },
+    {
+      "schemaVersion": "1",
+      "id": "cohere-design-analysis",
+      "displayName": "Cohere-design-analysis",
+      "description": "Cohere's 2026 web system is a controlled enterprise AI interface built from stark white editorial space, deep green-black product bands, soft mineral surfaces, rounded media cards, and a distinctive type split between monospaced-feeling display headlines and precise Unica77 UI text.",
+      "source": "embedded",
+      "status": "curated-reference",
+      "targets": ["terminal", "react", "web"],
+      "contentPath": "packages/design-systems/library/cohere.design.md",
+      "sourceContentHash": "1c49a5a5f88d43841d4f4afa33831328d47a5715048700a3b75086a822575883",
+      "normalizedContentHash": "13c6a689428d5b21e80a84e3a8452e31e6de2f6290ede3a09412435c9eae8f8a",
+      "provenance": {
+        "sourceRepository": "VoltAgent/awesome-design-md",
+        "sourceRevision": "working-tree-curated-snapshot",
+        "sourcePath": "packages/design-systems/library/cohere.design.md",
+        "license": "MIT"
+      },
+      "fonts": [
+        {
+          "family": "CohereMono",
+          "fallback": ["system-ui", "sans-serif"],
+          "redistributable": false
+        },
+        {
+          "family": "CohereText",
+          "fallback": ["system-ui", "sans-serif"],
+          "redistributable": false
+        },
+        {
+          "family": "Unica77 Cohere Web",
+          "fallback": ["system-ui", "sans-serif"],
+          "redistributable": false
+        }
+      ]
+    },
+    {
+      "schemaVersion": "1",
+      "id": "coinbase-design-analysis",
+      "displayName": "Coinbase-design-analysis",
+      "description": "An institutional-grade crypto exchange whose marketing surfaces read like a quietly-confident financial-services brand. The base canvas is pure white; Coinbase Blue (`#0052ff`) is the single brand voltage, used scarcely on primary CTAs, signature glyphs, and inline accent moments. Type runs Coinbase's licensed CoinbaseDisplay (display) and CoinbaseSans (body) at modest weights — display sits at weight 400 not 700, signaling editorial calm rather than fintech-bombastic. Page rhythm rotates between bright white sections, soft gray elevation bands, and full-bleed dark editorial heroes (`#0a0b0d`) carrying product-ui mockup cards. Iconography is geometric and minimal; depth comes from card-on-card layering, never decorative shadows.",
+      "source": "embedded",
+      "status": "curated-reference",
+      "targets": ["terminal", "react"],
+      "contentPath": "packages/design-systems/library/coinbase.design.md",
+      "sourceContentHash": "c8c67800dd7f58fcc87ed7d267a3bba862e3419e499e8a66d67731a69d2de1d6",
+      "normalizedContentHash": "c75ad7e101f060e98c80947cd17e3d28659730490130dca7bcedb029ed10fc3d",
+      "provenance": {
+        "sourceRepository": "VoltAgent/awesome-design-md",
+        "sourceRevision": "working-tree-curated-snapshot",
+        "sourcePath": "packages/design-systems/library/coinbase.design.md",
+        "license": "MIT"
+      },
+      "fonts": [
+        {
+          "family": "Arial",
+          "fallback": ["system-ui", "sans-serif"],
+          "redistributable": false
+        },
+        {
+          "family": "Coinbase Display",
+          "fallback": ["system-ui", "sans-serif"],
+          "redistributable": false
+        },
+        {
+          "family": "Coinbase Mono",
+          "fallback": ["system-ui", "sans-serif"],
+          "redistributable": false
+        },
+        {
+          "family": "Coinbase Sans",
+          "fallback": ["system-ui", "sans-serif"],
+          "redistributable": false
+        },
+        {
+          "family": "Helvetica",
+          "fallback": ["system-ui", "sans-serif"],
+          "redistributable": false
+        },
+        {
+          "family": "Roboto",
+          "fallback": ["system-ui", "sans-serif"],
+          "redistributable": false
+        },
+        {
+          "family": "Segoe UI",
+          "fallback": ["system-ui", "sans-serif"],
+          "redistributable": false
+        }
+      ]
+    },
+    {
+      "schemaVersion": "1",
+      "id": "composio-design-analysis",
+      "displayName": "Composio-design-analysis",
+      "description": "A developer-tools brand for AI-agent tool integration whose marketing surfaces lean into a dark, technical aesthetic with a single deep-electric-blue voltage (`#0007cd`). The page floor is near-black (`#0f0f0f`); cards float above on subtle gray-tinted surfaces. abcDiatype carries display and body in a single sans family with weights 400-600. The brand's strongest visual signature is a four-pane terminal-style mockup (a 2×2 grid of dark code/output panels) with a central blue spotlight glow — used as the homepage hero anchor.",
+      "source": "embedded",
+      "status": "curated-reference",
+      "targets": ["terminal", "react"],
+      "contentPath": "packages/design-systems/library/composio.design.md",
+      "sourceContentHash": "e7db886dabecca61f29b83e8f46d7a1e8a43889d30b81bc6e48162ccaafcbb2f",
+      "normalizedContentHash": "629347b20b0a8e537a2e21edcccba746d989488c02a0f0e3b92b4bedc557810d",
+      "provenance": {
+        "sourceRepository": "VoltAgent/awesome-design-md",
+        "sourceRevision": "working-tree-curated-snapshot",
+        "sourcePath": "packages/design-systems/library/composio.design.md",
+        "license": "MIT"
+      },
+      "fonts": [
+        {
+          "family": "abcDiatype",
+          "fallback": ["system-ui", "sans-serif"],
+          "redistributable": false
+        },
+        {
+          "family": "Fira Code",
+          "fallback": ["system-ui", "sans-serif"],
+          "redistributable": false
+        },
+        {
+          "family": "JetBrains Mono",
+          "fallback": ["system-ui", "sans-serif"],
+          "redistributable": false
+        }
+      ]
+    },
+    {
+      "schemaVersion": "1",
+      "id": "cursor-design-analysis",
+      "displayName": "Cursor-design-analysis",
+      "description": "An AI-first code editor whose marketing site reads like a quietly-confident developer-tools brand with a warm-cream editorial canvas (`#f7f7f4`) instead of the typical dark IDE atmosphere. Near-black warm ink (`#26251e`) carries body and display alike — display sits at weight 400 with negative letter-spacing for a magazine feel rather than a bold tech voice. The single brand voltage is **Cursor Orange** (`#f54e00`) reserved for primary CTAs and the wordmark. A signature pastel timeline palette (peach, mint, blue, lavender, gold) marks AI-action stages (Thinking / Reading / Editing / Grepping / Done) — only inside in-product timeline visualizations. Cards use minimal hairlines, no shadows, generous 80px section rhythm. CursorGothic for display/body, JetBrains Mono on every code surface (which is roughly half the page).",
+      "source": "embedded",
+      "status": "curated-reference",
+      "targets": ["terminal", "react"],
+      "contentPath": "packages/design-systems/library/cursor.design.md",
+      "sourceContentHash": "a3db9b3019dc2f514fdee7cd0ca0a5232c0bd0119e23178e8eebaf6916258d9d",
+      "normalizedContentHash": "016e8cd4a4d926dc6d6e36ae0c32c3f39da4f647ec278adc9a52d61e1c1e0495",
+      "provenance": {
+        "sourceRepository": "VoltAgent/awesome-design-md",
+        "sourceRevision": "working-tree-curated-snapshot",
+        "sourcePath": "packages/design-systems/library/cursor.design.md",
+        "license": "MIT"
+      },
+      "fonts": [
+        {
+          "family": "Arial",
+          "fallback": ["system-ui", "sans-serif"],
+          "redistributable": false
+        },
+        {
+          "family": "CursorGothic",
+          "fallback": ["system-ui", "sans-serif"],
+          "redistributable": false
+        },
+        {
+          "family": "Fira Code",
+          "fallback": ["system-ui", "sans-serif"],
+          "redistributable": false
+        },
+        {
+          "family": "Helvetica",
+          "fallback": ["system-ui", "sans-serif"],
+          "redistributable": false
+        },
+        {
+          "family": "Helvetica Neue",
+          "fallback": ["system-ui", "sans-serif"],
+          "redistributable": false
+        },
+        {
+          "family": "JetBrains Mono",
+          "fallback": ["system-ui", "sans-serif"],
+          "redistributable": false
+        }
+      ]
+    },
+    {
+      "schemaVersion": "1",
+      "id": "dell-1996-inspired",
+      "displayName": "Dell 1996 Inspired",
+      "description": "An inspired interpretation of Dell.com's 1996 design language — a catalog-era enterprise web design built around a literal black page frame, vivid flat color-block \"ribbon cards\" tinted in sage, salmon, periwinkle, sky, peach and lime, chunky Helvetica-Black display titles, Times Roman body copy, and an entire visual vocabulary of pre-Photoshop hand-cut GIF stickers (NEW! bursts, award seals, beveled product photos).",
+      "source": "embedded",
+      "status": "curated-reference",
+      "targets": ["terminal", "react", "web"],
+      "contentPath": "packages/design-systems/library/dell-1996.design.md",
+      "sourceContentHash": "e186c614b1223fe7015670472ac6bc84b5b3fdd5de5325b3ce5bfb7fbe9c8d6e",
+      "normalizedContentHash": "55f367ad6f6db3e0e87adacd73466b4cf1a5873300620024db5ab58f0c4ab505",
+      "provenance": {
+        "sourceRepository": "VoltAgent/awesome-design-md",
+        "sourceRevision": "working-tree-curated-snapshot",
+        "sourcePath": "packages/design-systems/library/dell-1996.design.md",
+        "license": "MIT"
+      },
+      "fonts": [
+        {
+          "family": "Arial Black",
+          "fallback": ["system-ui", "sans-serif"],
+          "redistributable": false
+        },
+        {
+          "family": "Helvetica",
+          "fallback": ["system-ui", "sans-serif"],
+          "redistributable": false
+        },
+        {
+          "family": "Times New Roman",
+          "fallback": ["system-ui", "sans-serif"],
+          "redistributable": false
+        }
+      ]
+    },
+    {
+      "schemaVersion": "1",
+      "id": "elevenlabs",
+      "displayName": "Elevenlabs",
+      "description": "Design system Elevenlabs",
+      "source": "embedded",
+      "status": "curated-reference",
+      "targets": ["terminal", "react"],
+      "contentPath": "packages/design-systems/library/elevenlabs.design.md",
+      "sourceContentHash": "3b359acfaafadbb499c7ed3eebe813a76e0be497a7157b77de207fe275068a66",
+      "normalizedContentHash": "25254948cdb17370d23bd7169cd32e4ab0b588eb9ee10e17cbb4bc96f04879e5",
+      "provenance": {
+        "sourceRepository": "VoltAgent/awesome-design-md",
+        "sourceRevision": "working-tree-curated-snapshot",
+        "sourcePath": "packages/design-systems/library/elevenlabs.design.md",
+        "license": "MIT"
+      },
+      "fonts": []
+    },
+    {
+      "schemaVersion": "1",
+      "id": "expo-design-analysis",
+      "displayName": "Expo-design-analysis",
+      "description": "A React Native developer-platform whose marketing site reads like a quietly-confident infrastructure brand. The base canvas is pure white with a soft sky-blue gradient atmospheric wash behind the hero; near-black ink (`#171717`) carries body and display alike. The single brand voltage is **pure black** (`#000000`) for primary CTAs — minimal and editorial-feeling, paired with a small blue text-link accent (`#0d74ce`) reserved for inline body links. Type pairs Inter at modest weights (display 600, body 400) with JetBrains Mono on every code surface. The brand's strongest visual signature is the **device-mockup hero** — a centered MacBook + iPhone composite showing real Expo dev surfaces — over the gradient sky wash.",
+      "source": "embedded",
+      "status": "curated-reference",
+      "targets": ["terminal", "react"],
+      "contentPath": "packages/design-systems/library/expo.design.md",
+      "sourceContentHash": "1be7e129b6f75afaa12318a7c51ab22f6f74a214dec22c4827cecc519f112363",
+      "normalizedContentHash": "9184be8e719ae77c7116bafbe60cb3615a2af2af36b8f0369c82e8a89d9a378e",
+      "provenance": {
+        "sourceRepository": "VoltAgent/awesome-design-md",
+        "sourceRevision": "working-tree-curated-snapshot",
+        "sourcePath": "packages/design-systems/library/expo.design.md",
+        "license": "MIT"
+      },
+      "fonts": [
+        {
+          "family": "Fira Code",
+          "fallback": ["system-ui", "sans-serif"],
+          "redistributable": false
+        },
+        {
+          "family": "Inter",
+          "fallback": ["system-ui", "sans-serif"],
+          "redistributable": false
+        },
+        {
+          "family": "JetBrains Mono",
+          "fallback": ["system-ui", "sans-serif"],
+          "redistributable": false
+        }
+      ]
+    },
+    {
+      "schemaVersion": "1",
+      "id": "ferrari-design-analysis",
+      "displayName": "Ferrari-design-analysis",
+      "description": "A luxury-automotive brand whose marketing surfaces read as cinematic editorial. The base canvas is **near-black** (`#181818`) holding pure white display type; white-canvas bands appear only inside specific editorial contexts (preowned listings, pricing tables). The single brand voltage is **Rosso Corsa** (`#da291c`) — the iconic Ferrari racing red — used scarcely on primary CTAs, the Cavallino mark, and Formula 1 race-position highlights. Type runs **FerrariSans** at modest weights (display 500, body 400) — never bombastic. Spacing follows an explicit 8px token ladder (`xxxs` 4px through `super` 128px); generous editorial pacing throughout. The brand's strongest visual signature is the **full-bleed cinematic hero photograph** that fills the viewport top with car photography, model details, or trackside livery — followed by a tighter editorial body layout below.",
+      "source": "embedded",
+      "status": "curated-reference",
+      "targets": ["terminal", "react"],
+      "contentPath": "packages/design-systems/library/ferrari.design.md",
+      "sourceContentHash": "1199e2832641cac7e384aaf3b1f3db87f992240cea5d3d1eee04d9dc00acb17c",
+      "normalizedContentHash": "5d9664b1db45d4e372253fb804991e5488a796e49829a03ee3cca0b44e578849",
+      "provenance": {
+        "sourceRepository": "VoltAgent/awesome-design-md",
+        "sourceRevision": "working-tree-curated-snapshot",
+        "sourcePath": "packages/design-systems/library/ferrari.design.md",
+        "license": "MIT"
+      },
+      "fonts": [
+        {
+          "family": "FerrariSans",
+          "fallback": ["system-ui", "sans-serif"],
+          "redistributable": false
+        }
+      ]
+    },
+    {
+      "schemaVersion": "1",
+      "id": "figma-design-analysis",
+      "displayName": "Figma-design-analysis",
+      "description": "A confident black-and-white editorial frame interrupted by oversized, hand-cut pastel color blocks. The marketing canvas is rigorously monochrome — figmaSans variable type, pure white surfaces, pure black ink, pill-shaped CTAs — while each story section drops the page into a saturated lime, lavender, cream, mint, or pink panel that reads like a sticky note placed on a clean desk. The result is a design system that feels both technical and joyful — a tool for serious work, made by people who like color.",
+      "source": "embedded",
+      "status": "curated-reference",
+      "targets": ["terminal", "react"],
+      "contentPath": "packages/design-systems/library/figma.design.md",
+      "sourceContentHash": "716ce8431f47eb8b8135552710e3c4d538bccccf1202e4ceac5428c9aada9972",
+      "normalizedContentHash": "32384427041b50f70fd9bd4cfcefbcf50f6d2e78c098ae122ee2ccc624fa5c3c",
+      "provenance": {
+        "sourceRepository": "VoltAgent/awesome-design-md",
+        "sourceRevision": "working-tree-curated-snapshot",
+        "sourcePath": "packages/design-systems/library/figma.design.md",
+        "license": "MIT"
+      },
+      "fonts": [
+        {
+          "family": "figmaMono",
+          "fallback": ["system-ui", "sans-serif"],
+          "redistributable": false
+        },
+        {
+          "family": "figmaSans",
+          "fallback": ["system-ui", "sans-serif"],
+          "redistributable": false
+        }
+      ]
+    },
+    {
+      "schemaVersion": "1",
+      "id": "framer-design-analysis",
+      "displayName": "Framer-design-analysis",
+      "description": "A confident dark-canvas builder marketing site that treats the page like a working artboard — pure black surfaces, white display type set in GT Walsheim Medium with aggressive negative tracking, and a single confident blue (#0099ff) reserved for hyperlinks and selection states. The page rhythm is broken by oversized vibrant gradient atmosphere panels — magenta, violet, orange spotlights — that act as living showcase tiles, not decoration. Every CTA is a white pill on dark; every card is a translucent or charcoal surface; every section title pulls letter-spacing tight enough to feel like a poster.",
+      "source": "embedded",
+      "status": "curated-reference",
+      "targets": ["terminal", "react"],
+      "contentPath": "packages/design-systems/library/framer.design.md",
+      "sourceContentHash": "a5d47dddacf5a04577cec0be6fe0fc53b7402254c7686874af3e59bcc7588cb4",
+      "normalizedContentHash": "d147b2ddacf609e5e71c86291c050d47ece79b78e63d71666885a197bae1f5c5",
+      "provenance": {
+        "sourceRepository": "VoltAgent/awesome-design-md",
+        "sourceRevision": "working-tree-curated-snapshot",
+        "sourcePath": "packages/design-systems/library/framer.design.md",
+        "license": "MIT"
+      },
+      "fonts": [
+        {
+          "family": "GT Walsheim Framer Medium",
+          "fallback": ["system-ui", "sans-serif"],
+          "redistributable": false
+        },
+        {
+          "family": "GT Walsheim Medium",
+          "fallback": ["system-ui", "sans-serif"],
+          "redistributable": false
+        },
+        {
+          "family": "Inter",
+          "fallback": ["system-ui", "sans-serif"],
+          "redistributable": false
+        },
+        {
+          "family": "Inter Variable",
+          "fallback": ["system-ui", "sans-serif"],
+          "redistributable": false
+        }
+      ]
+    },
+    {
+      "schemaVersion": "1",
+      "id": "hashicorp-design-analysis",
+      "displayName": "HashiCorp-design-analysis",
+      "description": "An enterprise-infrastructure marketing canvas built around a near-black ground (#000000) and a system of per-product accent colors — Terraform purple, Vault yellow, Consul pink, Waypoint cyan, Vagrant blue — that act as identity tokens rather than decorative palette. Display type is hashicorpSans set in 600/700 with tight 1.17–1.21 line-heights; body type runs the same family at 500 weight with relaxed 1.50–1.71 line-heights. Cards live as charcoal surfaces with 1px translucent gray borders; product showcase cards lift into per-product chromatic gradients. The system reads as confident, technical, and intentionally multi-product — every section quietly signals which HashiCorp tool it represents.",
+      "source": "embedded",
+      "status": "curated-reference",
+      "targets": ["terminal", "react"],
+      "contentPath": "packages/design-systems/library/hashicorp.design.md",
+      "sourceContentHash": "d2df9be72d867e48d318fd18db04e60a78357c27e392ab921fc2ba7f46951442",
+      "normalizedContentHash": "ed8d1219ef98fa41c9f13b2f3e9463629694a45d8d16a2718a746db2b210761d",
+      "provenance": {
+        "sourceRepository": "VoltAgent/awesome-design-md",
+        "sourceRevision": "working-tree-curated-snapshot",
+        "sourcePath": "packages/design-systems/library/hashicorp.design.md",
+        "license": "MIT"
+      },
+      "fonts": [
+        {
+          "family": "hashicorpSans",
+          "fallback": ["system-ui", "sans-serif"],
+          "redistributable": false
+        }
+      ]
+    },
+    {
+      "schemaVersion": "1",
+      "id": "hp-design-analysis",
+      "displayName": "HP-design-analysis",
+      "description": "An inspired interpretation of HP's design language — a white-paper enterprise-consumer system anchored by HP Electric Blue (`#024ad8`) as the lone signal CTA, near-black ink (`#1a1a1a`) for headlines, geometric Forma-DJR sans throughout, and angular blue-chevron decorations that nod to the HP wordmark's slashes. Cards round at 8–16px, photos sit in soft 16px frames, and dark navy slabs anchor the customer-story and \"how can we help\" closing bands.",
+      "source": "embedded",
+      "status": "curated-reference",
+      "targets": ["terminal", "react"],
+      "contentPath": "packages/design-systems/library/hp.design.md",
+      "sourceContentHash": "4c9a248046684bdde5311a0c9881814f50e2381c2b0f3c75b02a35fc64bc8bb8",
+      "normalizedContentHash": "a463dbb903b38d55ab1a43e8878988cf1f58d3641d305520444849ae0f94993b",
+      "provenance": {
+        "sourceRepository": "VoltAgent/awesome-design-md",
+        "sourceRevision": "working-tree-curated-snapshot",
+        "sourcePath": "packages/design-systems/library/hp.design.md",
+        "license": "MIT"
+      },
+      "fonts": [
+        {
+          "family": "Forma DJR Micro",
+          "fallback": ["system-ui", "sans-serif"],
+          "redistributable": false
+        }
+      ]
+    },
+    {
+      "schemaVersion": "1",
+      "id": "ibm-design-analysis",
+      "displayName": "IBM-design-analysis",
+      "description": "An enterprise-marketing canvas faithful to Carbon Design System: white surfaces, charcoal type, IBM Blue (#0f62fe) as the single confident accent, and a deliberately flat-square aesthetic where corners stay at 0–4px. Type runs IBM Plex Sans at light weight 300 for display sizes (a brand signature) and 400/600 for body and emphasis. Cards live as thin-bordered tiles with no shadow; sections separate via subtle gray rows. The chrome is square, the typography is light, and the only color in the system is one assertive blue — the result reads as old-world enterprise gravitas reframed for the cloud era.",
+      "source": "embedded",
+      "status": "curated-reference",
+      "targets": ["terminal", "react"],
+      "contentPath": "packages/design-systems/library/ibm.design.md",
+      "sourceContentHash": "46f6fd65b5e7524fed1133b9b3c0dd619f9a0f145fbb2b87f3675c701a88f3bd",
+      "normalizedContentHash": "9d67b7a56a895d61d7d7e48bd62333ab3f0c7802147e9058fcb932e7b194d248",
+      "provenance": {
+        "sourceRepository": "VoltAgent/awesome-design-md",
+        "sourceRevision": "working-tree-curated-snapshot",
+        "sourcePath": "packages/design-systems/library/ibm.design.md",
+        "license": "MIT"
+      },
+      "fonts": [
+        {
+          "family": "IBM Plex Sans",
+          "fallback": ["system-ui", "sans-serif"],
+          "redistributable": false
+        }
+      ]
+    },
+    {
+      "schemaVersion": "1",
+      "id": "intercom-design-analysis",
+      "displayName": "Intercom-design-analysis",
+      "description": "An editorial customer-service marketing canvas built around a soft cream-white ground, charcoal type set in Saans (Intercom's proprietary geometric sans), and a single confident Fin Orange (#ff5600) reserved for the Fin AI brand. Cards live as floating white tiles with thin hairline borders and minimal radii (8–16px). Display headlines run Saans at weight 500 with measured negative tracking. The system reads as a careful, product-led publication: product screenshots dominate, ornament is rare, and the only place chromatic energy enters is the Fin Orange CTA.",
+      "source": "embedded",
+      "status": "curated-reference",
+      "targets": ["terminal", "react"],
+      "contentPath": "packages/design-systems/library/intercom.design.md",
+      "sourceContentHash": "962be23cd947e87a86b2ffbc0440e9d0808243a6ef3af2aa04e8e7cc04d48ba3",
+      "normalizedContentHash": "27d9a9656dd0f6a5e9bba60d74da4ccc72a3ec1f6b3dc2b7b95a5b8d42ea4c92",
+      "provenance": {
+        "sourceRepository": "VoltAgent/awesome-design-md",
+        "sourceRevision": "working-tree-curated-snapshot",
+        "sourcePath": "packages/design-systems/library/intercom.design.md",
+        "license": "MIT"
+      },
+      "fonts": [
+        {
+          "family": "Saans",
+          "fallback": ["system-ui", "sans-serif"],
+          "redistributable": false
+        },
+        {
+          "family": "SaansMono",
+          "fallback": ["system-ui", "sans-serif"],
+          "redistributable": false
+        }
+      ]
+    },
+    {
+      "schemaVersion": "1",
+      "id": "kraken",
+      "displayName": "Kraken",
+      "description": "Design system Kraken",
+      "source": "embedded",
+      "status": "curated-reference",
+      "targets": ["terminal", "react"],
+      "contentPath": "packages/design-systems/library/kraken.design.md",
+      "sourceContentHash": "41bcbd5642c926a549f0d50f1151484c5776b4536233240c8415cfb79bcf1f38",
+      "normalizedContentHash": "b31441a124eea40a1b8ed807908cd9494972518c365b6cc4dd264cfdb297985a",
+      "provenance": {
+        "sourceRepository": "VoltAgent/awesome-design-md",
+        "sourceRevision": "working-tree-curated-snapshot",
+        "sourcePath": "packages/design-systems/library/kraken.design.md",
+        "license": "MIT"
+      },
+      "fonts": []
+    },
+    {
+      "schemaVersion": "1",
+      "id": "lamborghini",
+      "displayName": "Lamborghini",
+      "description": "Design system Lamborghini",
+      "source": "embedded",
+      "status": "curated-reference",
+      "targets": ["terminal", "react"],
+      "contentPath": "packages/design-systems/library/lamborghini.design.md",
+      "sourceContentHash": "9aa68c53b481a0befdf72859db5625f85454122294509989aa58414aaee04b34",
+      "normalizedContentHash": "0390dfd19ed2735e5f6bdfa72ba1bda4872b06310b9c1ea8979ec3aa4eb2c5b6",
+      "provenance": {
+        "sourceRepository": "VoltAgent/awesome-design-md",
+        "sourceRevision": "working-tree-curated-snapshot",
+        "sourcePath": "packages/design-systems/library/lamborghini.design.md",
+        "license": "MIT"
+      },
+      "fonts": []
+    },
+    {
+      "schemaVersion": "1",
+      "id": "linear-design-analysis",
+      "displayName": "Linear-design-analysis",
+      "description": "A near-black product-focused marketing canvas built around #010102 (the deepest dark surface of any tool in this collection), light gray text (#f7f8f8), and the signature Linear lavender-blue (#5e6ad2) used as the single chromatic accent. The system reads as software-craft documentation: dense, technical, and quietly luxurious. Display type is set in the Linear custom sans (SF Pro Display fallback) at 500–700 with measured negative tracking. Cards live as charcoal panels (#0f1011) with hairline borders. The accent lavender appears on the brand mark, focus rings, and a few intentional CTAs — never decoratively. Page rhythm leans on product UI screenshots framed in dark panels rather than atmospheric color.",
+      "source": "embedded",
+      "status": "curated-reference",
+      "targets": ["terminal", "react"],
+      "contentPath": "packages/design-systems/library/linear.app.design.md",
+      "sourceContentHash": "30bd30e72c48a16e4bdbd010f2d1c85fab657c6fae3cc85389399aab10f9cb5f",
+      "normalizedContentHash": "58fee554c2b6356e5539cf356d21db031fdcfb533b5be7e40fb036e0252ed09e",
+      "provenance": {
+        "sourceRepository": "VoltAgent/awesome-design-md",
+        "sourceRevision": "working-tree-curated-snapshot",
+        "sourcePath": "packages/design-systems/library/linear.app.design.md",
+        "license": "MIT"
+      },
+      "fonts": [
+        {
+          "family": "Linear Display",
+          "fallback": ["system-ui", "sans-serif"],
+          "redistributable": false
+        },
+        {
+          "family": "Linear Mono",
+          "fallback": ["system-ui", "sans-serif"],
+          "redistributable": false
+        },
+        {
+          "family": "Linear Text",
+          "fallback": ["system-ui", "sans-serif"],
+          "redistributable": false
+        }
+      ]
+    },
+    {
+      "schemaVersion": "1",
+      "id": "lovable",
+      "displayName": "Lovable",
+      "description": "Design system Lovable",
+      "source": "embedded",
+      "status": "curated-reference",
+      "targets": ["terminal", "react"],
+      "contentPath": "packages/design-systems/library/lovable.design.md",
+      "sourceContentHash": "92790895c833104072643929ba56ebbf42c8f88ffb7bff1926462545d0ace6c7",
+      "normalizedContentHash": "a5c7660ffbad3952e5db5ba4e7476b051b81c234db13e9fb0707a2d1b841f8a3",
+      "provenance": {
+        "sourceRepository": "VoltAgent/awesome-design-md",
+        "sourceRevision": "working-tree-curated-snapshot",
+        "sourcePath": "packages/design-systems/library/lovable.design.md",
+        "license": "MIT"
+      },
+      "fonts": []
+    },
+    {
+      "schemaVersion": "1",
+      "id": "mastercard",
+      "displayName": "Mastercard",
+      "description": "Design system Mastercard",
+      "source": "embedded",
+      "status": "curated-reference",
+      "targets": ["terminal", "react"],
+      "contentPath": "packages/design-systems/library/mastercard.design.md",
+      "sourceContentHash": "e76ceaa187f43bd24b8338d2b2314e71e9225b36492e40f32a55782281a10437",
+      "normalizedContentHash": "afa9d949f987f7a581f6080f219141ab5dab40bda5de0ed9ffdaa601cc49b85b",
+      "provenance": {
+        "sourceRepository": "VoltAgent/awesome-design-md",
+        "sourceRevision": "working-tree-curated-snapshot",
+        "sourcePath": "packages/design-systems/library/mastercard.design.md",
+        "license": "MIT"
+      },
+      "fonts": []
+    },
+    {
+      "schemaVersion": "1",
+      "id": "meta-design-analysis",
+      "displayName": "Meta-design-analysis",
+      "description": "Meta's design system spans hardware commerce (Quest VR, Ray-Ban Meta AI glasses) and brand surfaces with a confident product-merchandising voice. The system pairs a stark white canvas with full-bleed photographic product cards, a confident Optimistic VF wordmark/headline face, dual-CTA hero patterns (black primary + outlined secondary), and a saturated cobalt blue (#0064E0) for in-product purchase actions. Pill-shaped 100px-radius buttons, generous 24-32px card rounding, and tight three-tier text hierarchy carry across homepage, product detail (PDP), buy-now configurator, and accessory subpages.",
+      "source": "embedded",
+      "status": "curated-reference",
+      "targets": ["terminal", "react"],
+      "contentPath": "packages/design-systems/library/meta.design.md",
+      "sourceContentHash": "306dfad97c006d47b134fb0dbd55ff68d3baa526844d6eb37346373c9ef35339",
+      "normalizedContentHash": "51d4837b859cc4d2a3d1f57182438d8b6e9f4cf4853d781e0ebc78300fe07e9c",
+      "provenance": {
+        "sourceRepository": "VoltAgent/awesome-design-md",
+        "sourceRevision": "working-tree-curated-snapshot",
+        "sourcePath": "packages/design-systems/library/meta.design.md",
+        "license": "MIT"
+      },
+      "fonts": [
+        {
+          "family": "Optimistic VF",
+          "fallback": ["system-ui", "sans-serif"],
+          "redistributable": false
+        }
+      ]
+    },
+    {
+      "schemaVersion": "1",
+      "id": "minimax-design-analysis",
+      "displayName": "MiniMax-design-analysis",
+      "description": "MiniMax presents itself as a premium AI infrastructure brand through a striking duality — bold black-pill CTAs and stark white canvas for marketing, paired with vibrant gradient product cards (orange-red, magenta-pink, purple, blue) that turn each model release into a distinctive visual identity. The system uses DM Sans across all surfaces, employs an oversized 80px hero display, anchors major actions in deep near-black pills, and layers content density via a 3-column documentation grid with sidebar nav, prose body, and TOC. Coverage spans the marketing homepage, model showcase pages, developer documentation, and platform pricing surfaces.",
+      "source": "embedded",
+      "status": "curated-reference",
+      "targets": ["terminal", "react"],
+      "contentPath": "packages/design-systems/library/minimax.design.md",
+      "sourceContentHash": "2658b96488bb629749259b152c5ba2912a0e8feb6a03477e265879abd9264c50",
+      "normalizedContentHash": "9474cb977ad9bf3e57de11187f399720c1a3b9d4def2dc4a084248dd9687ac79",
+      "provenance": {
+        "sourceRepository": "VoltAgent/awesome-design-md",
+        "sourceRevision": "working-tree-curated-snapshot",
+        "sourcePath": "packages/design-systems/library/minimax.design.md",
+        "license": "MIT"
+      },
+      "fonts": [
+        {
+          "family": "DM Sans",
+          "fallback": ["system-ui", "sans-serif"],
+          "redistributable": false
+        }
+      ]
+    },
+    {
+      "schemaVersion": "1",
+      "id": "mintlify-design-analysis",
+      "displayName": "Mintlify-design-analysis",
+      "description": "Mintlify presents documentation infrastructure with a dual-mode aesthetic — atmospheric sky-gradient marketing heroes (cloud illustration backdrops, soft cream-to-blue washes) paired with dense developer-grade documentation surfaces. The system uses Inter for UI prose, Geist Mono for code, and a signature Mintlify green ({colors.brand-green}) reserved for accent CTAs and active states. Black-pill primary buttons dominate marketing, white-on-dark inversions appear on dark hero bands, and a 3-column documentation layout (sidebar / prose / TOC) anchors the developer experience. Coverage spans homepage, startups program, pricing comparison, and the live tabs documentation page.",
+      "source": "embedded",
+      "status": "curated-reference",
+      "targets": ["terminal", "react"],
+      "contentPath": "packages/design-systems/library/mintlify.design.md",
+      "sourceContentHash": "754ffcf35dcd39ef8aef450085ce936aaca5b872ff92caa66be99e91a5c3d5ec",
+      "normalizedContentHash": "425702149bc8cc647babcb97bd7a6540add112cadf6e7fa0374dba1484bdb027",
+      "provenance": {
+        "sourceRepository": "VoltAgent/awesome-design-md",
+        "sourceRevision": "working-tree-curated-snapshot",
+        "sourcePath": "packages/design-systems/library/mintlify.design.md",
+        "license": "MIT"
+      },
+      "fonts": [
+        {
+          "family": "Geist Mono",
+          "fallback": ["system-ui", "sans-serif"],
+          "redistributable": false
+        },
+        {
+          "family": "Inter",
+          "fallback": ["system-ui", "sans-serif"],
+          "redistributable": false
+        }
+      ]
+    },
+    {
+      "schemaVersion": "1",
+      "id": "miro-design-analysis",
+      "displayName": "Miro-design-analysis",
+      "description": "Miro presents itself as the AI-powered visual workspace through a confident, almost playful brand voice — anchored by its signature canary yellow ({colors.brand-yellow}) wordmark over white canvas, broken open by colorful pastel feature tints (rose, teal, coral, orange, mint) that echo the actual sticky-note color palette used on the live whiteboard. Black-pill primary buttons dominate marketing, real Miro-board mockups serve as feature illustrations, and a 4-tier pricing grid leads into a dense comparison table. Roobert PRO carries display headlines; the system supports homepage, pricing, AI Workflows product page, agile vertical, and customer stories surfaces.",
+      "source": "embedded",
+      "status": "curated-reference",
+      "targets": ["terminal", "react"],
+      "contentPath": "packages/design-systems/library/miro.design.md",
+      "sourceContentHash": "87c71f76297277d64f9679e015a50da88e72d86d7b41badf8733eae1e4cde335",
+      "normalizedContentHash": "cd1e193f1ab496e42b2b628d2a866b1fedddf0ce517d4f99f81a9fc86fc247de",
+      "provenance": {
+        "sourceRepository": "VoltAgent/awesome-design-md",
+        "sourceRevision": "working-tree-curated-snapshot",
+        "sourcePath": "packages/design-systems/library/miro.design.md",
+        "license": "MIT"
+      },
+      "fonts": [
+        {
+          "family": "Roobert PRO",
+          "fallback": ["system-ui", "sans-serif"],
+          "redistributable": false
+        }
+      ]
+    },
+    {
+      "schemaVersion": "1",
+      "id": "mistral-ai-design-analysis",
+      "displayName": "Mistral-AI-design-analysis",
+      "description": "Mistral AI brands itself with a singular signature — atmospheric sunset gradients (mustard, orange, deep red) layered over photography of mountains, plus a horizontal \"sunset stripe\" bar that closes every page. The system pairs warm cream-yellow surfaces ({colors.cream}) with a saturated orange primary CTA ({colors.primary}) and uses an elegant near-serif voice for hero displays. Coverage spans homepage (Frontier AI hero), Le Studio product page, Coding solutions, news article surfaces, contact form, and services tier page — all anchored by the signature gradient closing band.",
+      "source": "embedded",
+      "status": "curated-reference",
+      "targets": ["terminal", "react"],
+      "contentPath": "packages/design-systems/library/mistral.ai.design.md",
+      "sourceContentHash": "40e2c692d72c54bae1e43446e2d059b71d773668d39d71ccb7ededa9fa07d145",
+      "normalizedContentHash": "d5364e26f9d5e8e51409509ec08d36ecc41ca30e9609f5f84d4aa5e6c0e7e8e2",
+      "provenance": {
+        "sourceRepository": "VoltAgent/awesome-design-md",
+        "sourceRevision": "working-tree-curated-snapshot",
+        "sourcePath": "packages/design-systems/library/mistral.ai.design.md",
+        "license": "MIT"
+      },
+      "fonts": [
+        {
+          "family": "Inter",
+          "fallback": ["system-ui", "sans-serif"],
+          "redistributable": false
+        },
+        {
+          "family": "JetBrains Mono",
+          "fallback": ["system-ui", "sans-serif"],
+          "redistributable": false
+        },
+        {
+          "family": "PP Editorial Old",
+          "fallback": ["system-ui", "sans-serif"],
+          "redistributable": false
+        }
+      ]
+    },
+    {
+      "schemaVersion": "1",
+      "id": "mongodb-design-analysis",
+      "displayName": "MongoDB-design-analysis",
+      "description": "MongoDB carries a strong dual-mode visual identity — dark deep-teal hero bands with bright MongoDB green ({colors.brand-green}) CTAs paired with stark white documentation surfaces. The signature green pill button is unmistakable across product, pricing, learning, and AI use-case surfaces. The system uses Euclid Circular A as its display face, anchors a 3-tier pricing comparison (Free / Flex / Dedicated), and presents extensive course catalogs in card grids with colored category tags. Coverage spans homepage, Atlas product page, Community Edition, MongoDB University, AI use cases, and pricing.",
+      "source": "embedded",
+      "status": "curated-reference",
+      "targets": ["terminal", "react"],
+      "contentPath": "packages/design-systems/library/mongodb.design.md",
+      "sourceContentHash": "4523f10efd5ccd46f9aeac3b98626e24bcf907bc0c1e46500cb0e3920f932e71",
+      "normalizedContentHash": "0930ca27e3ec07c0d2b1ade1f457ce4f7fbfbe46044fb74f23e6eb5e0bfd3ecd",
+      "provenance": {
+        "sourceRepository": "VoltAgent/awesome-design-md",
+        "sourceRevision": "working-tree-curated-snapshot",
+        "sourcePath": "packages/design-systems/library/mongodb.design.md",
+        "license": "MIT"
+      },
+      "fonts": [
+        {
+          "family": "Euclid Circular A",
+          "fallback": ["system-ui", "sans-serif"],
+          "redistributable": false
+        },
+        {
+          "family": "Source Code Pro",
+          "fallback": ["system-ui", "sans-serif"],
+          "redistributable": false
+        }
+      ]
+    },
+    {
+      "schemaVersion": "1",
+      "id": "nike-design-analysis",
+      "displayName": "Nike-design-analysis",
+      "description": "A photography-first commerce system built on extreme typographic contrast — towering uppercase Futura display lockups burned into editorial campaign imagery, sitting above a dense, neutral, near-monochrome retail chrome of pill-shaped black CTAs, gray search and tag pills, and tight 8px-grid product cards. The brand's voice is athletic, kinetic, and absolute: pure black, pure white, a single soft surface gray, and a deliberately small set of semantic accents (sale red, success green, restrained category tints) — every chromatic moment is reserved for editorial photography or pricing signal, never decorative chrome.\n",
+      "source": "embedded",
+      "status": "curated-reference",
+      "targets": ["terminal", "react"],
+      "contentPath": "packages/design-systems/library/nike.design.md",
+      "sourceContentHash": "d2a3d363665839e2ddc15c91b8a9f3e92b1962ff55a7ca5d964ab3bb88b8186c",
+      "normalizedContentHash": "8812e984bd08660e321d6b3a31259e22c87923abc7b1857ad88a6e17563a942a",
+      "provenance": {
+        "sourceRepository": "VoltAgent/awesome-design-md",
+        "sourceRevision": "working-tree-curated-snapshot",
+        "sourcePath": "packages/design-systems/library/nike.design.md",
+        "license": "MIT"
+      },
+      "fonts": [
+        {
+          "family": "Helvetica Neue",
+          "fallback": ["system-ui", "sans-serif"],
+          "redistributable": false
+        },
+        {
+          "family": "Helvetica Now Display Medium",
+          "fallback": ["system-ui", "sans-serif"],
+          "redistributable": false
+        },
+        {
+          "family": "Helvetica Now Text",
+          "fallback": ["system-ui", "sans-serif"],
+          "redistributable": false
+        },
+        {
+          "family": "Helvetica Now Text Medium",
+          "fallback": ["system-ui", "sans-serif"],
+          "redistributable": false
+        },
+        {
+          "family": "Nike Futura ND",
+          "fallback": ["system-ui", "sans-serif"],
+          "redistributable": false
+        }
+      ]
+    },
+    {
+      "schemaVersion": "1",
+      "id": "nintendo-com-2001-analysis",
+      "displayName": "Nintendo.com (2001) Analysis",
+      "description": "An analysis of Nintendo.com's 2001 design language — a brushed-periwinkle \"console chrome\" interface where every panel is a beveled metal plate, navigation glows amber over a halftone-dotted carbon bar, and bold outlined display type sits on circuit-board hero fields. A Y2K hardware aesthetic that treats the web page like the faceplate of a game system.",
+      "source": "embedded",
+      "status": "curated-reference",
+      "targets": ["terminal", "react", "web"],
+      "contentPath": "packages/design-systems/library/nintendo-2001.design.md",
+      "sourceContentHash": "9630af17090d5c39ba9d8b5915a597a96c7552efe1422b3b8c3f31fb3e636716",
+      "normalizedContentHash": "b1f1c79ec8ee49ebec9faa33212469d52abdbf467ed72cdea30c42259898ae73",
+      "provenance": {
+        "sourceRepository": "VoltAgent/awesome-design-md",
+        "sourceRevision": "working-tree-curated-snapshot",
+        "sourcePath": "packages/design-systems/library/nintendo-2001.design.md",
+        "license": "MIT"
+      },
+      "fonts": [
+        {
+          "family": "Arial",
+          "fallback": ["system-ui", "sans-serif"],
+          "redistributable": false
+        },
+        {
+          "family": "Arial Black",
+          "fallback": ["system-ui", "sans-serif"],
+          "redistributable": false
+        }
+      ]
+    },
+    {
+      "schemaVersion": "1",
+      "id": "notion-design-analysis",
+      "displayName": "Notion-design-analysis",
+      "description": "Notion presents itself as the all-in-one workspace through a confident, illustration-rich brand voice — anchored by a deep navy hero band ({colors.brand-navy}) decorated with brand-colored sticky-note dots and mesh wire illustrations, a signature purple pill primary CTA ({colors.primary}), and a rich palette of pastel-tinted feature cards that echo the colorful database properties of the live product. The system uses a Notion-Sans (Inter-based) typeface across every UI surface, anchors a 4-tier pricing comparison (Free / Plus / Business / Enterprise), and presents the live workspace UI mockup directly inside the hero band. Coverage spans homepage, Enterprise, Product AI, Product Agents, Startups, and Pricing surfaces.",
+      "source": "embedded",
+      "status": "curated-reference",
+      "targets": ["terminal", "react"],
+      "contentPath": "packages/design-systems/library/notion.design.md",
+      "sourceContentHash": "fa9d6e78216d8f3e5d3990709ca2de6bc2e268e945bb94f255fd1bfb15455266",
+      "normalizedContentHash": "7583edc4752a5b1055b9d15cfbb51f99d5f1c6654ea4f0c97a3c86d71cd71834",
+      "provenance": {
+        "sourceRepository": "VoltAgent/awesome-design-md",
+        "sourceRevision": "working-tree-curated-snapshot",
+        "sourcePath": "packages/design-systems/library/notion.design.md",
+        "license": "MIT"
+      },
+      "fonts": [
+        {
+          "family": "Notion Sans",
+          "fallback": ["system-ui", "sans-serif"],
+          "redistributable": false
+        }
+      ]
+    },
+    {
+      "schemaVersion": "1",
+      "id": "nvidia-design-analysis",
+      "displayName": "NVIDIA-design-analysis",
+      "description": "An engineering-grade marketing system organized around two surface modes — a deep black canvas for hero and footer chapters and a flat paper-white canvas for body content — connected by a single, almost violently saturated NVIDIA Green accent that carries every CTA, every active tab, and the small decorative corner squares that mark out cards. The system is unapologetically angular: 2px radius across every surface, tight bold sans-serif typography in NVIDIA's proprietary EMEA cut, and a hairline gray rule that separates dense multi-column technical content. There is no decorative gradient, no atmospheric mesh, no soft drop shadow — just black, white, gray, and green stacked into a structured editorial grid that scales from product cards to massive industry landing pages without bending its rules.\n",
+      "source": "embedded",
+      "status": "curated-reference",
+      "targets": ["terminal", "react"],
+      "contentPath": "packages/design-systems/library/nvidia.design.md",
+      "sourceContentHash": "d649be85daf075c98a17071e707e3901c6e19150044a81716acd01ef1169cc83",
+      "normalizedContentHash": "01823a74b8fadd2da1a871831cb114dce958a2afd65a97e8e933531290c43aef",
+      "provenance": {
+        "sourceRepository": "VoltAgent/awesome-design-md",
+        "sourceRevision": "working-tree-curated-snapshot",
+        "sourcePath": "packages/design-systems/library/nvidia.design.md",
+        "license": "MIT"
+      },
+      "fonts": [
+        {
+          "family": "NVIDIA-EMEA",
+          "fallback": ["system-ui", "sans-serif"],
+          "redistributable": false
+        }
+      ]
+    },
+    {
+      "schemaVersion": "1",
+      "id": "ollama-design-analysis",
+      "displayName": "Ollama-design-analysis",
+      "description": "An almost defiantly minimal documentation-first system that treats the home page like a Markdown README — paper-white canvas, 36px center-aligned heading, a single black pill CTA, an inline terminal install snippet, and a hand-drawn llama mascot as the only ornamental element. No gradient, no hero photography, no marketing pyrotechnics. The chrome is a tiny utility palette of pure black, pure white, and three neutral grays; every interactive element is fully rounded into a pill (`{rounded.full}`); typography is SF Pro Rounded for headings paired with system sans for body and ui-monospace for code. Pricing tiers, FAQs, and \"your data stays yours\" guarantees all sit on the same flat canvas inside thin-border cards — the system is the documentation, and the documentation is the system.\n",
+      "source": "embedded",
+      "status": "curated-reference",
+      "targets": ["terminal", "react"],
+      "contentPath": "packages/design-systems/library/ollama.design.md",
+      "sourceContentHash": "3f36f897e5aad870344dd97e282c8f125ad208dc99449bb08dd38b9259d2f451",
+      "normalizedContentHash": "fb0f7087564584a7812b58f07fb5f832281dc0e3bbc3ccb7a24d1d82544e4cf5",
+      "provenance": {
+        "sourceRepository": "VoltAgent/awesome-design-md",
+        "sourceRevision": "working-tree-curated-snapshot",
+        "sourcePath": "packages/design-systems/library/ollama.design.md",
+        "license": "MIT"
+      },
+      "fonts": [
+        {
+          "family": "SF Pro Rounded",
+          "fallback": ["system-ui", "sans-serif"],
+          "redistributable": false
+        },
+        {
+          "family": "ui-monospace",
+          "fallback": ["system-ui", "sans-serif"],
+          "redistributable": false
+        }
+      ]
+    },
+    {
+      "schemaVersion": "1",
+      "id": "opencode-design-analysis",
+      "displayName": "OpenCode-design-analysis",
+      "description": "A terminal-native marketing system rendered entirely in Berkeley Mono — every word on the page, from the hero headline down to the footer fine print, is monospaced. The page itself reads like a manpage or a static-site README: warm cream canvas (`#fdfcfc`), nearly-black ink (`#201d1d`), 4px-radius rectangles for the few interactive elements, and bracketed `[+]`/`[-]` ASCII markers used as bullets. The brand's only \"visual moment\" is a single dark hero card that mocks up the OpenCode TUI itself — black background, monospaced terminal output, ASCII pipe characters, and a wordmark rendered as block-pixel ASCII. Every section sits as a hairline-bordered text block on the cream canvas with no shadows, no gradients, no decorative imagery, and no non-monospaced character anywhere in the system.\n",
+      "source": "embedded",
+      "status": "curated-reference",
+      "targets": ["terminal", "react"],
+      "contentPath": "packages/design-systems/library/opencode.ai.design.md",
+      "sourceContentHash": "d1a8893c4b8ac90b1e86230eee2effa8bd15add3582853477920e32432336dda",
+      "normalizedContentHash": "01bd99fad03db1dece627c4e6889d73da95ab703959423daa5cfb65c502cd9ae",
+      "provenance": {
+        "sourceRepository": "VoltAgent/awesome-design-md",
+        "sourceRevision": "working-tree-curated-snapshot",
+        "sourcePath": "packages/design-systems/library/opencode.ai.design.md",
+        "license": "MIT"
+      },
+      "fonts": [
+        {
+          "family": "Berkeley Mono",
+          "fallback": ["system-ui", "sans-serif"],
+          "redistributable": false
+        }
+      ]
+    },
+    {
+      "schemaVersion": "1",
+      "id": "pinterest-design-analysis",
+      "displayName": "Pinterest-design-analysis",
+      "description": "A photography-first discovery system organized around the Pinterest Red CTA, the masonry pin grid, and a soft warm-cream chrome that gets out of the imagery's way. The home page is a content-discovery tool wearing the chrome of a magazine publisher: 70px display headlines, friendly Pin Sans typography, fully-rounded pill buttons (16px) on a cream-tinted neutral palette, and a sticky red \"Sign up\" CTA that anchors every viewport. Pin imagery is the system's load-bearing visual element — square, portrait, and landscape pins tile in a column-based masonry grid where each tile is a fully-rounded 16px-radius card, separated by tight 8px gutters. The chrome is otherwise quiet: warm grays, true whites, and a single saturated red — no decorative gradients, no atmospheric backgrounds, no shadows beyond a soft modal scrim.\n",
+      "source": "embedded",
+      "status": "curated-reference",
+      "targets": ["terminal", "react"],
+      "contentPath": "packages/design-systems/library/pinterest.design.md",
+      "sourceContentHash": "26a202fd244e9213d5e2475d81581828da1dd97e089e44639d9783d04f96e4a8",
+      "normalizedContentHash": "795b717bb37c672f1e5d5d19a3783402dfc64cba70c98bccf37a2858ae7ac031",
+      "provenance": {
+        "sourceRepository": "VoltAgent/awesome-design-md",
+        "sourceRevision": "working-tree-curated-snapshot",
+        "sourcePath": "packages/design-systems/library/pinterest.design.md",
+        "license": "MIT"
+      },
+      "fonts": [
+        {
+          "family": "Pin Sans",
+          "fallback": ["system-ui", "sans-serif"],
+          "redistributable": false
+        }
+      ]
+    },
+    {
+      "schemaVersion": "1",
+      "id": "playstation-design-analysis",
+      "displayName": "PlayStation-design-analysis",
+      "description": "A three-surface marketing system organized around alternating black, white, and PlayStation Blue chapters that scroll past the viewer like a console launch trailer. Each section has a single editorial purpose — hero photography, console product render, PS Plus tier callout, news strip — and each owns one of three full-bleed canvas modes. The chrome is unusually quiet for a gaming brand: bright PlayStation Blue (`#0070d1`) carries every primary CTA as a fully-rounded pill, the proprietary SST face renders display copy at a signature weight 300 (light) for an airy, premium feel, and a crisp 8px-radius secondary card system carries product info on either canvas mode. The system never decorates — no gradient backgrounds on chrome, no atmospheric mesh, no drop shadows beyond a faint section-divide. Imagery does all the heavy lifting: console glamour shots, game key art, and PS Plus tier illustrations occupy 60-90% of every section, with copy compressed into a small editorial slot.\n",
+      "source": "embedded",
+      "status": "curated-reference",
+      "targets": ["terminal", "react"],
+      "contentPath": "packages/design-systems/library/playstation.design.md",
+      "sourceContentHash": "2a56c109af6cb847fa091b768f719b498ac56b582d010860e73ea5fb72a1590d",
+      "normalizedContentHash": "5644ef2aeb4baa70f223ca0f43a1d691d95f82f429e0d80c4376eb0ba1be7544",
+      "provenance": {
+        "sourceRepository": "VoltAgent/awesome-design-md",
+        "sourceRevision": "working-tree-curated-snapshot",
+        "sourcePath": "packages/design-systems/library/playstation.design.md",
+        "license": "MIT"
+      },
+      "fonts": [
+        {
+          "family": "PlayStation SST",
+          "fallback": ["system-ui", "sans-serif"],
+          "redistributable": false
+        }
+      ]
+    },
+    {
+      "schemaVersion": "1",
+      "id": "posthog-design-analysis",
+      "displayName": "PostHog-design-analysis",
+      "description": "A playful developer-tools system rendered on a warm cream canvas with hand-drawn hedgehog mascots dotted across every page like marginalia in a sketchbook. The chrome reads like a friendly engineering blog: olive-gray ink (#4d4f46) for body, deep olive-charcoal (#23251d) for headlines, IBM Plex Sans Variable typography in tight 1.43-line-height paragraphs, and a single saturated yellow-orange CTA pill (#f7a501) carrying every primary action. The system actively rejects the genre's typical somber dark-tech aesthetic in favor of a creamy, textbook-illustration sensibility — bordered cards stack on the cream canvas with 4–6px radii, doc sidebars use rounded outline-icon mini-illustrations, and the home page leans on cartoon characters (hedgehogs in lab coats, hedgehogs at terminals, hedgehogs in lounge chairs) as its signature decoration. Code samples and product analytics charts live inside white-on-cream cards with thin olive borders; the contrast between the playful illustration and the data-dense product imagery is the brand's signature voice.\n",
+      "source": "embedded",
+      "status": "curated-reference",
+      "targets": ["terminal", "react"],
+      "contentPath": "packages/design-systems/library/posthog.design.md",
+      "sourceContentHash": "01f497f751d56296bfcd5eb8806325a4bb4786d364941ec6e65c65fa9ee6d362",
+      "normalizedContentHash": "019ceb68df65cee07d51b07640c9973586628e2fbf1f36812b1600c5f6405ec9",
+      "provenance": {
+        "sourceRepository": "VoltAgent/awesome-design-md",
+        "sourceRevision": "working-tree-curated-snapshot",
+        "sourcePath": "packages/design-systems/library/posthog.design.md",
+        "license": "MIT"
+      },
+      "fonts": [
+        {
+          "family": "IBM Plex Sans Variable",
+          "fallback": ["system-ui", "sans-serif"],
+          "redistributable": false
+        },
+        {
+          "family": "Source Code Pro",
+          "fallback": ["system-ui", "sans-serif"],
+          "redistributable": false
+        },
+        {
+          "family": "ui-monospace",
+          "fallback": ["system-ui", "sans-serif"],
+          "redistributable": false
+        }
+      ]
+    },
+    {
+      "schemaVersion": "1",
+      "id": "raycast",
+      "displayName": "Raycast",
+      "description": "Design system Raycast",
+      "source": "embedded",
+      "status": "curated-reference",
+      "targets": ["terminal", "react"],
+      "contentPath": "packages/design-systems/library/raycast.design.md",
+      "sourceContentHash": "6e2c5137e4d914b70996d589688374a801b6f29a35c9c019c22abb5e0170bda3",
+      "normalizedContentHash": "d9a2e867d03abbcc6a7d0454cdaf1686b36cfd3fad6bd49a7bf977951c746fb6",
+      "provenance": {
+        "sourceRepository": "VoltAgent/awesome-design-md",
+        "sourceRevision": "working-tree-curated-snapshot",
+        "sourcePath": "packages/design-systems/library/raycast.design.md",
+        "license": "MIT"
+      },
+      "fonts": []
+    },
+    {
+      "schemaVersion": "1",
+      "id": "renault-design-analysis",
+      "displayName": "Renault-design-analysis",
+      "description": "Renault's web presence pairs the freshly-modernised Renault diamond\n(the 2021 flat-line rhombus mark) with a stark black-and-white canvas, a\nsignature Sunlight Yellow accent, and the proprietary NouvelR display\ntypeface. The system reads as confident, photography-first automotive — large\nhero cars on neutral or atmospheric backdrops, square-edged or barely-rounded\ncontainers, and a small disciplined palette where every coloured element is\nintentional. Tile grids, full-bleed banners, and a recurring \"configurator\"\nsurface (white card, yellow accent dots, neutral product chrome) carry the\nmass-market dealership tone without crossing into luxury.\n",
+      "source": "embedded",
+      "status": "curated-reference",
+      "targets": ["terminal", "react", "web"],
+      "contentPath": "packages/design-systems/library/renault.design.md",
+      "sourceContentHash": "b343df9a67e57f248e9eee704f52b17dff9cf6a46d1dc9f8d7ab36741940db59",
+      "normalizedContentHash": "3cccd7576b9623bfa58beab1e1eccaaf2dab5976c5f6066fbf9908db94ac1f60",
+      "provenance": {
+        "sourceRepository": "VoltAgent/awesome-design-md",
+        "sourceRevision": "working-tree-curated-snapshot",
+        "sourcePath": "packages/design-systems/library/renault.design.md",
+        "license": "MIT"
+      },
+      "fonts": [
+        {
+          "family": "NouvelR",
+          "fallback": ["system-ui", "sans-serif"],
+          "redistributable": false
+        }
+      ]
+    },
+    {
+      "schemaVersion": "1",
+      "id": "replicate-design-analysis",
+      "displayName": "Replicate-design-analysis",
+      "description": "Replicate's marketing surfaces pair the warm-cream developer-tools aesthetic\nof an indie ML playground with a confident hot-orange brand accent and a\nsignature display typeface (rb-freigeist-neue) sized aggressively large at\n72px+. The system reads as \"AI lab notebook crossed with print magazine\":\ncream and bone surfaces, dark ink type, monospace code wells, irregular\nhand-drawn-feeling diagrams, and a rich orange used scarcely on the most\nconsequential CTA. Photography of contributors and example outputs is\nsquare-ish with mid-radius corners; everything else is borderless or hairline.\n",
+      "source": "embedded",
+      "status": "curated-reference",
+      "targets": ["terminal", "react"],
+      "contentPath": "packages/design-systems/library/replicate.design.md",
+      "sourceContentHash": "c22062d7b4174bf9ced7bc61c48389086cf6eed96a958e098ee70389893b0a15",
+      "normalizedContentHash": "de265a687a2c30288329cfe8001baa314d38e3f24926e3db97891224020acec3",
+      "provenance": {
+        "sourceRepository": "VoltAgent/awesome-design-md",
+        "sourceRevision": "working-tree-curated-snapshot",
+        "sourcePath": "packages/design-systems/library/replicate.design.md",
+        "license": "MIT"
+      },
+      "fonts": [
+        {
+          "family": "basier-square",
+          "fallback": ["system-ui", "sans-serif"],
+          "redistributable": false
+        },
+        {
+          "family": "jetbrains-mono",
+          "fallback": ["system-ui", "sans-serif"],
+          "redistributable": false
+        },
+        {
+          "family": "rb-freigeist-neue",
+          "fallback": ["system-ui", "sans-serif"],
+          "redistributable": false
+        }
+      ]
+    },
+    {
+      "schemaVersion": "1",
+      "id": "resend-design-analysis",
+      "displayName": "Resend-design-analysis",
+      "description": "Resend's marketing surfaces sit on a near-pure black canvas with off-white\ntext and a single signature color — the deep editorial-serif Domaine\nDisplay headline mark — that gives an otherwise utilitarian developer-tool\nbrand its print-magazine confidence. The system pairs Domaine Display\n(oversized 76px–96px serif, ss01/ss04/ss11 features on) with ABC Favorit\nfor body and Inter for UI. Surfaces rely on subtle 6–9% opacity gradient\nglows, hairline 1px borders made from translucent white, and a strict\nrounded-12px container vocabulary. There is no decorative chrome — just\ntype, code, and atmospheric depth.\n",
+      "source": "embedded",
+      "status": "curated-reference",
+      "targets": ["terminal", "react"],
+      "contentPath": "packages/design-systems/library/resend.design.md",
+      "sourceContentHash": "99536f1b2380511a539f7f3466d46d351e4bf35a5af0c0df395bdc20af05c9be",
+      "normalizedContentHash": "bff7520e7107adba74cc2c0dafa0b513eb7069982031966915be64d0a6b18dd3",
+      "provenance": {
+        "sourceRepository": "VoltAgent/awesome-design-md",
+        "sourceRevision": "working-tree-curated-snapshot",
+        "sourcePath": "packages/design-systems/library/resend.design.md",
+        "license": "MIT"
+      },
+      "fonts": [
+        {
+          "family": "ABC Favorit",
+          "fallback": ["system-ui", "sans-serif"],
+          "redistributable": false
+        },
+        {
+          "family": "Domaine Display",
+          "fallback": ["system-ui", "sans-serif"],
+          "redistributable": false
+        },
+        {
+          "family": "Geist Mono",
+          "fallback": ["system-ui", "sans-serif"],
+          "redistributable": false
+        },
+        {
+          "family": "Helvetica",
+          "fallback": ["system-ui", "sans-serif"],
+          "redistributable": false
+        },
+        {
+          "family": "Inter",
+          "fallback": ["system-ui", "sans-serif"],
+          "redistributable": false
+        }
+      ]
+    },
+    {
+      "schemaVersion": "1",
+      "id": "revolut-design-analysis",
+      "displayName": "Revolut-design-analysis",
+      "description": "Revolut's marketing surfaces pair a stark black canvas with the brand's\ncobalt-violet (`#494fdf`) and a wide accent palette of deep, fully-saturated\nproduct colours — teal, light-blue, deep pink, light-green, warning orange.\nThe system reads as fintech-meets-product-brochure: oversized 80px–136px\nAeonik Pro display headlines, generous whitespace, photography-led hero\nbands, and full-width product mockups (cards, phones, terminals) shown as\nhero objects inside near-black sections. Most surfaces are either black or\noff-white; pill-shaped buttons and rounded-12/20px content cards carry the\nconsumer-financial-app feel without crossing into playful territory.\n",
+      "source": "embedded",
+      "status": "curated-reference",
+      "targets": ["terminal", "react"],
+      "contentPath": "packages/design-systems/library/revolut.design.md",
+      "sourceContentHash": "b7fa8473315541f5d7e7d76f68a77105d255e6dae00d31d5eb34621d1d52de59",
+      "normalizedContentHash": "90c7e2e5fe63a4561bf8f709fb281c0657b81dc77c2fdd02d3aedb4d00ffd467",
+      "provenance": {
+        "sourceRepository": "VoltAgent/awesome-design-md",
+        "sourceRevision": "working-tree-curated-snapshot",
+        "sourcePath": "packages/design-systems/library/revolut.design.md",
+        "license": "MIT"
+      },
+      "fonts": [
+        {
+          "family": "Aeonik Pro",
+          "fallback": ["system-ui", "sans-serif"],
+          "redistributable": false
+        },
+        {
+          "family": "Inter",
+          "fallback": ["system-ui", "sans-serif"],
+          "redistributable": false
+        }
+      ]
+    },
+    {
+      "schemaVersion": "1",
+      "id": "runwayml",
+      "displayName": "Runwayml",
+      "description": "Design system Runwayml",
+      "source": "embedded",
+      "status": "curated-reference",
+      "targets": ["terminal", "react"],
+      "contentPath": "packages/design-systems/library/runwayml.design.md",
+      "sourceContentHash": "b0e69bf643f89bb57ac0b82a3bf025e59ff1478c244cb0528ad1e38b3f80dac9",
+      "normalizedContentHash": "64cc46ca76e3981a5d6d8071af319be677b26746995d39fa5043c7969395daf9",
+      "provenance": {
+        "sourceRepository": "VoltAgent/awesome-design-md",
+        "sourceRevision": "working-tree-curated-snapshot",
+        "sourcePath": "packages/design-systems/library/runwayml.design.md",
+        "license": "MIT"
+      },
+      "fonts": []
+    },
+    {
+      "schemaVersion": "1",
+      "id": "sanity",
+      "displayName": "Sanity",
+      "description": "Design system Sanity",
+      "source": "embedded",
+      "status": "curated-reference",
+      "targets": ["terminal", "react"],
+      "contentPath": "packages/design-systems/library/sanity.design.md",
+      "sourceContentHash": "ea1c442de2b23443f79af46524a81f33951606c8ff043ea9c25ba886264fbdd8",
+      "normalizedContentHash": "023f9f4c6655c77fc539adcd8303404770247044918b5be2cee5941adaa321bb",
+      "provenance": {
+        "sourceRepository": "VoltAgent/awesome-design-md",
+        "sourceRevision": "working-tree-curated-snapshot",
+        "sourcePath": "packages/design-systems/library/sanity.design.md",
+        "license": "MIT"
+      },
+      "fonts": []
+    },
+    {
+      "schemaVersion": "1",
+      "id": "sentri-inspired-design-analysis",
+      "displayName": "Sentri-Inspired-design-analysis",
+      "description": "An inspired interpretation of Sentri's design language — a developer-tools brand built on a deep purple-violet midnight canvas, electric lime accents, and a slightly subversive illustrated personality. The system pairs a custom display sans (chunky, playful, near-condensed) with the open Rubik family for UI copy and Monaco for code, then leans on dark-on-light pricing surfaces, sticker-style mascots, and a single-color CTA hierarchy where black-violet buttons read as the primary action against either polarity.",
+      "source": "embedded",
+      "status": "curated-reference",
+      "targets": ["terminal", "react"],
+      "contentPath": "packages/design-systems/library/sentry.design.md",
+      "sourceContentHash": "655c91d7d23b5e869a966b7f1b63ae650567ad5d69003cfc64b0ee62c8e02c1f",
+      "normalizedContentHash": "4b82c49b15e2f559fb871124fd4136bbb37b48ace494cd132d0110a44d5f77b6",
+      "provenance": {
+        "sourceRepository": "VoltAgent/awesome-design-md",
+        "sourceRevision": "working-tree-curated-snapshot",
+        "sourcePath": "packages/design-systems/library/sentry.design.md",
+        "license": "MIT"
+      },
+      "fonts": [
+        {
+          "family": "Arial",
+          "fallback": ["system-ui", "sans-serif"],
+          "redistributable": false
+        },
+        {
+          "family": "Helvetica",
+          "fallback": ["system-ui", "sans-serif"],
+          "redistributable": false
+        },
+        {
+          "family": "Menlo",
+          "fallback": ["system-ui", "sans-serif"],
+          "redistributable": false
+        },
+        {
+          "family": "Monaco",
+          "fallback": ["system-ui", "sans-serif"],
+          "redistributable": false
+        },
+        {
+          "family": "Rubik",
+          "fallback": ["system-ui", "sans-serif"],
+          "redistributable": false
+        },
+        {
+          "family": "Segoe UI",
+          "fallback": ["system-ui", "sans-serif"],
+          "redistributable": false
+        },
+        {
+          "family": "Sentri Display",
+          "fallback": ["system-ui", "sans-serif"],
+          "redistributable": false
+        },
+        {
+          "family": "Ubuntu Mono",
+          "fallback": ["system-ui", "sans-serif"],
+          "redistributable": false
+        }
+      ]
+    },
+    {
+      "schemaVersion": "1",
+      "id": "shopifi-inspired-design-analysis",
+      "displayName": "Shopifi-Inspired-design-analysis",
+      "description": "An inspired interpretation of Shopifi's design language — a cinematic commerce platform that runs two parallel design tracks. The marketing-hero and product-narrative pages live on near-black canvases with full-bleed photography of merchants, giant Neue Haas Grotesk display type at thin weights, and a single black-pill CTA stroked in white. The transactional pages (pricing, signup, dashboards) flip to a cream-mint canvas with pastel aloe and pistachio greens, the same pill button vocabulary, and Inter for UI body. The two tracks share typographic DNA but diverge sharply in canvas polarity — and that choice is the brand.",
+      "source": "embedded",
+      "status": "curated-reference",
+      "targets": ["terminal", "react"],
+      "contentPath": "packages/design-systems/library/shopify.design.md",
+      "sourceContentHash": "495e89b8d0a1848ded013c040f7a2ae62077e9d87fc4385350e25dee02ccdb38",
+      "normalizedContentHash": "53e4cfcd0b0d87a3da7ec6fa9e42cc6929da1ea4561693c97344b09e403919ed",
+      "provenance": {
+        "sourceRepository": "VoltAgent/awesome-design-md",
+        "sourceRevision": "working-tree-curated-snapshot",
+        "sourcePath": "packages/design-systems/library/shopify.design.md",
+        "license": "MIT"
+      },
+      "fonts": [
+        {
+          "family": "Arial",
+          "fallback": ["system-ui", "sans-serif"],
+          "redistributable": false
+        },
+        {
+          "family": "Consolas",
+          "fallback": ["system-ui", "sans-serif"],
+          "redistributable": false
+        },
+        {
+          "family": "Helvetica",
+          "fallback": ["system-ui", "sans-serif"],
+          "redistributable": false
+        },
+        {
+          "family": "Inter",
+          "fallback": ["system-ui", "sans-serif"],
+          "redistributable": false
+        },
+        {
+          "family": "Inter Variable",
+          "fallback": ["system-ui", "sans-serif"],
+          "redistributable": false
+        },
+        {
+          "family": "Menlo",
+          "fallback": ["system-ui", "sans-serif"],
+          "redistributable": false
+        },
+        {
+          "family": "Monaco",
+          "fallback": ["system-ui", "sans-serif"],
+          "redistributable": false
+        },
+        {
+          "family": "NeueHaasGrotesk Display",
+          "fallback": ["system-ui", "sans-serif"],
+          "redistributable": false
+        },
+        {
+          "family": "SFMono-Regular",
+          "fallback": ["system-ui", "sans-serif"],
+          "redistributable": false
+        },
+        {
+          "family": "ui-monospace",
+          "fallback": ["system-ui", "sans-serif"],
+          "redistributable": false
+        }
+      ]
+    },
+    {
+      "schemaVersion": "1",
+      "id": "slacc-inspired-design-analysis",
+      "displayName": "Slacc-Inspired-design-analysis",
+      "description": "An inspired interpretation of Slacc's design language — a workplace messaging brand built on a deep aubergine primary, with cream-lavender hero gradients, blue inline links, and pill CTAs. The system pairs a proprietary humanist sans for display with a separate utility sans for body, and stages product UI mockups inside soft pastel-mesh hero composites that act as both decoration and feature explanation.",
+      "source": "embedded",
+      "status": "curated-reference",
+      "targets": ["terminal", "react"],
+      "contentPath": "packages/design-systems/library/slack.design.md",
+      "sourceContentHash": "03cb243015a2e11d0faf05caba7f3d0c7fda6839b1f5ce707a23e8d46d1a11bd",
+      "normalizedContentHash": "c6c24d73f7f2884e97a49e44c025832d130a0fb547f090fca83dbb58b062d12e",
+      "provenance": {
+        "sourceRepository": "VoltAgent/awesome-design-md",
+        "sourceRevision": "working-tree-curated-snapshot",
+        "sourcePath": "packages/design-systems/library/slack.design.md",
+        "license": "MIT"
+      },
+      "fonts": [
+        {
+          "family": "BlinkMacSystemFont",
+          "fallback": ["system-ui", "sans-serif"],
+          "redistributable": false
+        },
+        {
+          "family": "Salesforce-Avant-Garde",
+          "fallback": ["system-ui", "sans-serif"],
+          "redistributable": false
+        },
+        {
+          "family": "Salesforce-Sans",
+          "fallback": ["system-ui", "sans-serif"],
+          "redistributable": false
+        }
+      ]
+    },
+    {
+      "schemaVersion": "1",
+      "id": "spacex-inspired-design-analysis",
+      "displayName": "Spacex-Inspired-design-analysis",
+      "description": "An inspired interpretation of Spasex's design language — a mission-oriented aerospace brand built on pure black canvas, full-bleed photographic and video heroes of rockets and Mars landscapes, and uppercase D-DIN display type set in tight vertical leading. UI chrome is intentionally minimal a single ghost outlined pill button per band, all-caps eyebrow microtext, and a fixed top nav over photography. The system is unapologetically austere — black, white, and the imagery itself.",
+      "source": "embedded",
+      "status": "curated-reference",
+      "targets": ["terminal", "react"],
+      "contentPath": "packages/design-systems/library/spacex.design.md",
+      "sourceContentHash": "495450c79faab54d12d677649ca0a2c30a60f64f536a802e945ad54185c5baad",
+      "normalizedContentHash": "dc51270961aca021da4ece9d3b43eca0fe074430144c3a466f8eb1167665bbb7",
+      "provenance": {
+        "sourceRepository": "VoltAgent/awesome-design-md",
+        "sourceRevision": "working-tree-curated-snapshot",
+        "sourcePath": "packages/design-systems/library/spacex.design.md",
+        "license": "MIT"
+      },
+      "fonts": [
+        {
+          "family": "Arial",
+          "fallback": ["system-ui", "sans-serif"],
+          "redistributable": false
+        },
+        {
+          "family": "Arial Narrow",
+          "fallback": ["system-ui", "sans-serif"],
+          "redistributable": false
+        },
+        {
+          "family": "D-DIN",
+          "fallback": ["system-ui", "sans-serif"],
+          "redistributable": false
+        },
+        {
+          "family": "D-DIN-Bold",
+          "fallback": ["system-ui", "sans-serif"],
+          "redistributable": false
+        },
+        {
+          "family": "Verdana",
+          "fallback": ["system-ui", "sans-serif"],
+          "redistributable": false
+        }
+      ]
+    },
+    {
+      "schemaVersion": "1",
+      "id": "spotify",
+      "displayName": "Spotify",
+      "description": "Design system Spotify",
+      "source": "embedded",
+      "status": "curated-reference",
+      "targets": ["terminal", "react"],
+      "contentPath": "packages/design-systems/library/spotify.design.md",
+      "sourceContentHash": "72e964a6cf551d0603f9854f2f42ee08e97ad4d9e17e037f50f6233508288295",
+      "normalizedContentHash": "335f5a19ec2381adb55204a7abd41c408d90e596d8f86b12f5b25abce14adf24",
+      "provenance": {
+        "sourceRepository": "VoltAgent/awesome-design-md",
+        "sourceRevision": "working-tree-curated-snapshot",
+        "sourcePath": "packages/design-systems/library/spotify.design.md",
+        "license": "MIT"
+      },
+      "fonts": []
+    },
+    {
+      "schemaVersion": "1",
+      "id": "starbucks",
+      "displayName": "Starbucks",
+      "description": "Design system Starbucks",
+      "source": "embedded",
+      "status": "curated-reference",
+      "targets": ["terminal", "react"],
+      "contentPath": "packages/design-systems/library/starbucks.design.md",
+      "sourceContentHash": "e20338ee10226c63cf2588207288c08e12d60754a53f681657adaf364dfe8fa7",
+      "normalizedContentHash": "63b5a79b7575ec8d9ae167e5bbd62dc8cd298c399a747b5f8aaab864afb49e66",
+      "provenance": {
+        "sourceRepository": "VoltAgent/awesome-design-md",
+        "sourceRevision": "working-tree-curated-snapshot",
+        "sourcePath": "packages/design-systems/library/starbucks.design.md",
+        "license": "MIT"
+      },
+      "fonts": []
+    },
+    {
+      "schemaVersion": "1",
+      "id": "stripi-inspired-design-analysis",
+      "displayName": "Stripi-Inspired-design-analysis",
+      "description": "An inspired interpretation of Stripi's design language — a financial-infrastructure brand built on a deep navy ink, an electric indigo primary, and a recurring atmospheric gradient mesh that occupies the upper third of nearly every marketing page. The system pairs the proprietary Sohne family at thin (300) weights with negative letter-spacing for editorial-density display headlines, and uses tabular-figure body type where money and numerics matter. Buttons are tight-radius pills, cards live on near-white surfaces, and the dashboard track flips polarity to a familiar dark-app shell.",
+      "source": "embedded",
+      "status": "curated-reference",
+      "targets": ["terminal", "react"],
+      "contentPath": "packages/design-systems/library/stripe.design.md",
+      "sourceContentHash": "5c8806b7dd3e0c2554ccba9d1e2a7c78e7c6e50e44fcf6ff5daea6026f8a9ed9",
+      "normalizedContentHash": "2451cbcc694cf4945e3291cda2533dc38bde773fe2a6da3177affc9a7780bf05",
+      "provenance": {
+        "sourceRepository": "VoltAgent/awesome-design-md",
+        "sourceRevision": "working-tree-curated-snapshot",
+        "sourcePath": "packages/design-systems/library/stripe.design.md",
+        "license": "MIT"
+      },
+      "fonts": [
+        {
+          "family": "SF Pro Display",
+          "fallback": ["system-ui", "sans-serif"],
+          "redistributable": false
+        },
+        {
+          "family": "sohne-var",
+          "fallback": ["system-ui", "sans-serif"],
+          "redistributable": false
+        }
+      ]
+    },
+    {
+      "schemaVersion": "1",
+      "id": "supabase",
+      "displayName": "Supabase",
+      "description": "Design system Supabase",
+      "source": "embedded",
+      "status": "curated-reference",
+      "targets": ["terminal", "react"],
+      "contentPath": "packages/design-systems/library/supabase.design.md",
+      "sourceContentHash": "f57287d7f44d59e8169dc4b4304ff03c1a2efb37f5433b9c04460caae7710880",
+      "normalizedContentHash": "b747dd69c021f9aadbe0c174f37be39ce12216cf02db18e21b9678a9e8dc52e9",
+      "provenance": {
+        "sourceRepository": "VoltAgent/awesome-design-md",
+        "sourceRevision": "working-tree-curated-snapshot",
+        "sourcePath": "packages/design-systems/library/supabase.design.md",
+        "license": "MIT"
+      },
+      "fonts": []
+    },
+    {
+      "schemaVersion": "1",
+      "id": "superhumon-inspired-design-analysis",
+      "displayName": "Superhumon-Inspired-design-analysis",
+      "description": "An inspired interpretation of Superhumon's design language — a fast-email productivity brand split between an editorial dark hero (deep indigo navy with violet-sky atmospheric backdrop and a portrait subject) and a quiet white content body with off-warm-grey ink. The system uses a single proprietary variable display sans, heavy weight 460–540 with tight tracking, and a deep-teal closing CTA band that breaks the indigo/white rhythm with a warm dark interlude. Buttons are tight rounded rectangles, pricing is sober and dense, and the brand reads more like a high-end newsletter than a SaaS app.",
+      "source": "embedded",
+      "status": "curated-reference",
+      "targets": ["terminal", "react"],
+      "contentPath": "packages/design-systems/library/superhuman.design.md",
+      "sourceContentHash": "3640298bd2957aee80ce88eb465a7541ba835ec105cba364a6a621d885c7f34f",
+      "normalizedContentHash": "d0ac8ef3a414da87e1bbf85b43e8b5ce55e7c7ebd0bfac43cf6d0a576c92465f",
+      "provenance": {
+        "sourceRepository": "VoltAgent/awesome-design-md",
+        "sourceRevision": "working-tree-curated-snapshot",
+        "sourcePath": "packages/design-systems/library/superhuman.design.md",
+        "license": "MIT"
+      },
+      "fonts": [
+        {
+          "family": "Roboto",
+          "fallback": ["system-ui", "sans-serif"],
+          "redistributable": false
+        },
+        {
+          "family": "Segoe UI",
+          "fallback": ["system-ui", "sans-serif"],
+          "redistributable": false
+        },
+        {
+          "family": "Super Sans VF",
+          "fallback": ["system-ui", "sans-serif"],
+          "redistributable": false
+        }
+      ]
+    },
+    {
+      "schemaVersion": "1",
+      "id": "tesla",
+      "displayName": "Tesla",
+      "description": "Design system Tesla",
+      "source": "embedded",
+      "status": "curated-reference",
+      "targets": ["terminal", "react"],
+      "contentPath": "packages/design-systems/library/tesla.design.md",
+      "sourceContentHash": "19f2f7e6073d708f46d2512e6bab3c7c417cf2b4d9f57ff6ec6f2e056ea942b0",
+      "normalizedContentHash": "3e291dfb9730c462b8c3cc763cd6b4413a5d3de1a0c776c27a3eaa069a7a54b2",
+      "provenance": {
+        "sourceRepository": "VoltAgent/awesome-design-md",
+        "sourceRevision": "working-tree-curated-snapshot",
+        "sourcePath": "packages/design-systems/library/tesla.design.md",
+        "license": "MIT"
+      },
+      "fonts": []
+    },
+    {
+      "schemaVersion": "1",
+      "id": "theverge",
+      "displayName": "Theverge",
+      "description": "Design system Theverge",
+      "source": "embedded",
+      "status": "curated-reference",
+      "targets": ["terminal", "react"],
+      "contentPath": "packages/design-systems/library/theverge.design.md",
+      "sourceContentHash": "5da2c3116e6845826b043ac115a80896a399efda2cebc0188981fba2ef9bb526",
+      "normalizedContentHash": "b6130cc9755829fc99cf36f7bc028c8b0cb5c83c7c7dfd96417fb694b865c6c3",
+      "provenance": {
+        "sourceRepository": "VoltAgent/awesome-design-md",
+        "sourceRevision": "working-tree-curated-snapshot",
+        "sourcePath": "packages/design-systems/library/theverge.design.md",
+        "license": "MIT"
+      },
+      "fonts": []
+    },
+    {
+      "schemaVersion": "1",
+      "id": "together-ai-inspired-design-analysis",
+      "displayName": "Together-AI-Inspired-design-analysis",
+      "description": "An inspired interpretation of Together AI's design language — an AI infrastructure platform whose surface alternates between near-black hero bands (with a three-color orange-magenta-periwinkle gradient as the single piece of brand chrome) and bright white research / pricing / docs bands, knit together by a custom display sans and an uppercase mono eyebrow face.",
+      "source": "embedded",
+      "status": "curated-reference",
+      "targets": ["terminal", "react"],
+      "contentPath": "packages/design-systems/library/together.ai.design.md",
+      "sourceContentHash": "aee472c583f55a2f2c7ee1c403a96dddadb3ff6dc518335451f431e313bf43cf",
+      "normalizedContentHash": "a79d986580ddcce4bc3110fedd043e87c70536108f63ad0f53aae79fd2b1426a",
+      "provenance": {
+        "sourceRepository": "VoltAgent/awesome-design-md",
+        "sourceRevision": "working-tree-curated-snapshot",
+        "sourcePath": "packages/design-systems/library/together.ai.design.md",
+        "license": "MIT"
+      },
+      "fonts": [
+        {
+          "family": "Arial",
+          "fallback": ["system-ui", "sans-serif"],
+          "redistributable": false
+        },
+        {
+          "family": "Helvetica Neue",
+          "fallback": ["system-ui", "sans-serif"],
+          "redistributable": false
+        },
+        {
+          "family": "Inter",
+          "fallback": ["system-ui", "sans-serif"],
+          "redistributable": false
+        },
+        {
+          "family": "Menlo",
+          "fallback": ["system-ui", "sans-serif"],
+          "redistributable": false
+        },
+        {
+          "family": "PP Neue Montreal Mono",
+          "fallback": ["system-ui", "sans-serif"],
+          "redistributable": false
+        },
+        {
+          "family": "SF Mono",
+          "fallback": ["system-ui", "sans-serif"],
+          "redistributable": false
+        },
+        {
+          "family": "The Future",
+          "fallback": ["system-ui", "sans-serif"],
+          "redistributable": false
+        },
+        {
+          "family": "ui-monospace",
+          "fallback": ["system-ui", "sans-serif"],
+          "redistributable": false
+        }
+      ]
+    },
+    {
+      "schemaVersion": "1",
+      "id": "uber-inspired-design-analysis",
+      "displayName": "Uber-Inspired-design-analysis",
+      "description": "An inspired interpretation of Uber's design language — a transportation-and-delivery super-app brand whose web surface is a black-and-white duet, framed by a custom geometric display sans, accented by a single signature pill shape (radius 999px) on every interactive element, and decorated only by editorial 4:3 illustrations of riders, drivers, and city objects.",
+      "source": "embedded",
+      "status": "curated-reference",
+      "targets": ["terminal", "react", "web"],
+      "contentPath": "packages/design-systems/library/uber.design.md",
+      "sourceContentHash": "f30d2257d2d090790332d00ccb16cd2516c3c6008be61ad2ce83c4e991bcc803",
+      "normalizedContentHash": "942603a70f17fe4c1a89ec60976e6ed31a06f29995d8f106d41a7ee45018a533",
+      "provenance": {
+        "sourceRepository": "VoltAgent/awesome-design-md",
+        "sourceRevision": "working-tree-curated-snapshot",
+        "sourcePath": "packages/design-systems/library/uber.design.md",
+        "license": "MIT"
+      },
+      "fonts": [
+        {
+          "family": "Arial",
+          "fallback": ["system-ui", "sans-serif"],
+          "redistributable": false
+        },
+        {
+          "family": "Helvetica Neue",
+          "fallback": ["system-ui", "sans-serif"],
+          "redistributable": false
+        },
+        {
+          "family": "UberMove",
+          "fallback": ["system-ui", "sans-serif"],
+          "redistributable": false
+        },
+        {
+          "family": "UberMoveText",
+          "fallback": ["system-ui", "sans-serif"],
+          "redistributable": false
+        }
+      ]
+    },
+    {
+      "schemaVersion": "1",
+      "id": "vercel-inspired-design-analysis",
+      "displayName": "Vercel-Inspired-design-analysis",
+      "description": "An inspired interpretation of Vercel's design language — a developer-platform brand whose surface is a stark black-and-ink duet on near-white canvas, broken at hero scale by a multi-color mesh gradient (cyan / blue / magenta / amber) that acts as the entire decorative system, paired with a custom geometric sans for headlines and a monospaced caption face for technical labels.",
+      "source": "embedded",
+      "status": "curated-reference",
+      "targets": ["terminal", "react"],
+      "contentPath": "packages/design-systems/library/vercel.design.md",
+      "sourceContentHash": "d0951b93c2b4ce9840c715c9f9b3e58a386c6c58ae5cc0f804dec3b116b95bd8",
+      "normalizedContentHash": "c48cc12c19f2d1d6ea4afba7c6f93ed7e21d594a11e01080034de141ab871614",
+      "provenance": {
+        "sourceRepository": "VoltAgent/awesome-design-md",
+        "sourceRevision": "working-tree-curated-snapshot",
+        "sourcePath": "packages/design-systems/library/vercel.design.md",
+        "license": "MIT"
+      },
+      "fonts": [
+        {
+          "family": "Geist",
+          "fallback": ["system-ui", "sans-serif"],
+          "redistributable": false
+        },
+        {
+          "family": "Geist Mono",
+          "fallback": ["system-ui", "sans-serif"],
+          "redistributable": false
+        },
+        {
+          "family": "Inter",
+          "fallback": ["system-ui", "sans-serif"],
+          "redistributable": false
+        },
+        {
+          "family": "Menlo",
+          "fallback": ["system-ui", "sans-serif"],
+          "redistributable": false
+        },
+        {
+          "family": "Monaco",
+          "fallback": ["system-ui", "sans-serif"],
+          "redistributable": false
+        },
+        {
+          "family": "SFMono-Regular",
+          "fallback": ["system-ui", "sans-serif"],
+          "redistributable": false
+        },
+        {
+          "family": "ui-monospace",
+          "fallback": ["system-ui", "sans-serif"],
+          "redistributable": false
+        }
+      ]
+    },
+    {
+      "schemaVersion": "1",
+      "id": "vodafone-inspired-design-analysis",
+      "displayName": "Vodafone-Inspired-design-analysis",
+      "description": "An inspired interpretation of Vodafone's design language — a telecom super-brand whose web surface alternates between editorial photography hero bands with massive uppercase display headlines and clean white content bands, anchored by the company's signature scarlet red CTA and the proprietary Vodafone display sans set at impossibly heavy 800 weight.",
+      "source": "embedded",
+      "status": "curated-reference",
+      "targets": ["terminal", "react", "web"],
+      "contentPath": "packages/design-systems/library/vodafone.design.md",
+      "sourceContentHash": "293a40951e654283978fa744b24177a159d8f2a60f402bc735bf081618af0ef6",
+      "normalizedContentHash": "bda36a869308457a79f67f41e0b9aefd1685c35a93a82402c4d19e656c4e6408",
+      "provenance": {
+        "sourceRepository": "VoltAgent/awesome-design-md",
+        "sourceRevision": "working-tree-curated-snapshot",
+        "sourcePath": "packages/design-systems/library/vodafone.design.md",
+        "license": "MIT"
+      },
+      "fonts": [
+        {
+          "family": "Arial",
+          "fallback": ["system-ui", "sans-serif"],
+          "redistributable": false
+        },
+        {
+          "family": "Helvetica Neue",
+          "fallback": ["system-ui", "sans-serif"],
+          "redistributable": false
+        },
+        {
+          "family": "Vodafone",
+          "fallback": ["system-ui", "sans-serif"],
+          "redistributable": false
+        },
+        {
+          "family": "Vodafone Rg",
+          "fallback": ["system-ui", "sans-serif"],
+          "redistributable": false
+        }
+      ]
+    },
+    {
+      "schemaVersion": "1",
+      "id": "voltagent-inspired-design-analysis",
+      "displayName": "Voltagent-Inspired-design-analysis",
+      "description": "An inspired interpretation of Voltagent's design language — a developer-focused AI agent engineering platform whose surface is an unrelenting near-black canvas broken only by a single electric-green brand accent, code-editor mockups inside the hero, and a precise grid of dark feature cards that read like a documentation site dressed as marketing.",
+      "source": "embedded",
+      "status": "curated-reference",
+      "targets": ["terminal", "react"],
+      "contentPath": "packages/design-systems/library/voltagent.design.md",
+      "sourceContentHash": "4457887741ae5e965e205282b03c4bff83e47dd7a03cd7f38c64623a17569fcd",
+      "normalizedContentHash": "378ca496f06d04d2f2f0f2f713df98d0084c74d4fb06880652d2bc8084befff8",
+      "provenance": {
+        "sourceRepository": "VoltAgent/awesome-design-md",
+        "sourceRevision": "working-tree-curated-snapshot",
+        "sourcePath": "packages/design-systems/library/voltagent.design.md",
+        "license": "MIT"
+      },
+      "fonts": [
+        {
+          "family": "Consolas",
+          "fallback": ["system-ui", "sans-serif"],
+          "redistributable": false
+        },
+        {
+          "family": "Inter",
+          "fallback": ["system-ui", "sans-serif"],
+          "redistributable": false
+        },
+        {
+          "family": "Liberation Mono",
+          "fallback": ["system-ui", "sans-serif"],
+          "redistributable": false
+        },
+        {
+          "family": "Menlo",
+          "fallback": ["system-ui", "sans-serif"],
+          "redistributable": false
+        },
+        {
+          "family": "Monaco",
+          "fallback": ["system-ui", "sans-serif"],
+          "redistributable": false
+        },
+        {
+          "family": "Roboto",
+          "fallback": ["system-ui", "sans-serif"],
+          "redistributable": false
+        },
+        {
+          "family": "Segoe UI",
+          "fallback": ["system-ui", "sans-serif"],
+          "redistributable": false
+        },
+        {
+          "family": "SFMono-Regular",
+          "fallback": ["system-ui", "sans-serif"],
+          "redistributable": false
+        }
+      ]
+    },
+    {
+      "schemaVersion": "1",
+      "id": "warp-inspired-design-analysis",
+      "displayName": "Warp-Inspired-design-analysis",
+      "description": "An inspired interpretation of Warp's design language — an agentic terminal-and-development-environment brand whose surface is a warm near-charcoal canvas (a tint warmer than pure black), broken only by clean Inter typography, the occasional Instrument Serif italic moment, and dense terminal-mockup imagery; CTAs are unusually understated, with shape geometry running tighter than most marketing sites.",
+      "source": "embedded",
+      "status": "curated-reference",
+      "targets": ["terminal", "react"],
+      "contentPath": "packages/design-systems/library/warp.design.md",
+      "sourceContentHash": "5b1201f7b1b4e72570d148d1f980fd1cb35e6e4122d48dd271787aa3538a25ad",
+      "normalizedContentHash": "039339b0d961ca0a11577b3a8a8d2c31cca63354041913012342bdd8a0300902",
+      "provenance": {
+        "sourceRepository": "VoltAgent/awesome-design-md",
+        "sourceRevision": "working-tree-curated-snapshot",
+        "sourcePath": "packages/design-systems/library/warp.design.md",
+        "license": "MIT"
+      },
+      "fonts": [
+        {
+          "family": "DM Mono",
+          "fallback": ["system-ui", "sans-serif"],
+          "redistributable": false
+        },
+        {
+          "family": "Georgia",
+          "fallback": ["system-ui", "sans-serif"],
+          "redistributable": false
+        },
+        {
+          "family": "Instrument Serif",
+          "fallback": ["system-ui", "sans-serif"],
+          "redistributable": false
+        },
+        {
+          "family": "Inter",
+          "fallback": ["system-ui", "sans-serif"],
+          "redistributable": false
+        },
+        {
+          "family": "Menlo",
+          "fallback": ["system-ui", "sans-serif"],
+          "redistributable": false
+        },
+        {
+          "family": "Roboto",
+          "fallback": ["system-ui", "sans-serif"],
+          "redistributable": false
+        },
+        {
+          "family": "Segoe UI",
+          "fallback": ["system-ui", "sans-serif"],
+          "redistributable": false
+        },
+        {
+          "family": "SFMono-Regular",
+          "fallback": ["system-ui", "sans-serif"],
+          "redistributable": false
+        },
+        {
+          "family": "Times New Roman",
+          "fallback": ["system-ui", "sans-serif"],
+          "redistributable": false
+        },
+        {
+          "family": "ui-monospace",
+          "fallback": ["system-ui", "sans-serif"],
+          "redistributable": false
+        }
+      ]
+    },
+    {
+      "schemaVersion": "1",
+      "id": "webflow-inspired-design-analysis",
+      "displayName": "Webflow-Inspired-design-analysis",
+      "description": "An inspired interpretation of Webflow's design language — a visual web development platform whose surface contrasts a deep near-black `#080808` primary against a generous white canvas, broken by a five-stop chromatic accent system (purple / pink / blue / orange / green) that maps to the brand's product categories, and anchored by the proprietary WF Visual Sans family used at restrained 500 / 600 weights with negative tracking.",
+      "source": "embedded",
+      "status": "curated-reference",
+      "targets": ["terminal", "react", "web"],
+      "contentPath": "packages/design-systems/library/webflow.design.md",
+      "sourceContentHash": "9230c7b3951371fc2edc04958962e32bb7ec9a9b703aa6b72eaf5c7991b7c984",
+      "normalizedContentHash": "0c1e01775b3cc31b8142fd802bb950de0f442a70e64f5be50eda8c9616a5d00f",
+      "provenance": {
+        "sourceRepository": "VoltAgent/awesome-design-md",
+        "sourceRevision": "working-tree-curated-snapshot",
+        "sourcePath": "packages/design-systems/library/webflow.design.md",
+        "license": "MIT"
+      },
+      "fonts": [
+        {
+          "family": "Inconsolata",
+          "fallback": ["system-ui", "sans-serif"],
+          "redistributable": false
+        },
+        {
+          "family": "Inter",
+          "fallback": ["system-ui", "sans-serif"],
+          "redistributable": false
+        },
+        {
+          "family": "Menlo",
+          "fallback": ["system-ui", "sans-serif"],
+          "redistributable": false
+        },
+        {
+          "family": "SFMono-Regular",
+          "fallback": ["system-ui", "sans-serif"],
+          "redistributable": false
+        },
+        {
+          "family": "ui-monospace",
+          "fallback": ["system-ui", "sans-serif"],
+          "redistributable": false
+        },
+        {
+          "family": "WF Visual Sans Variable",
+          "fallback": ["system-ui", "sans-serif"],
+          "redistributable": false
+        },
+        {
+          "family": "WFVisualSans-Mono",
+          "fallback": ["system-ui", "sans-serif"],
+          "redistributable": false
+        }
+      ]
+    },
+    {
+      "schemaVersion": "1",
+      "id": "wired-inspired-design-analysis",
+      "displayName": "Wired-Inspired-design-analysis",
+      "description": "An inspired interpretation of Wired's design language — a flagship technology-magazine brand whose surface is a strict editorial duet of stark black wordmark on white canvas, anchored by a tall narrow custom display serif for hero headlines, a humanist serif body face for long-form reading, and a clean sans face for metadata; layout reads like a printed magazine ported to the web with very little marketing chrome.",
+      "source": "embedded",
+      "status": "curated-reference",
+      "targets": ["terminal", "react", "web"],
+      "contentPath": "packages/design-systems/library/wired.design.md",
+      "sourceContentHash": "eb439dcc573401dc30583f40e7eef8a60b769232da59e524de6dce56d5c3593e",
+      "normalizedContentHash": "315ecaaca46ef4f3078f0eb9a92a81bf07d48e872f2f756cc82160b5d1012e6b",
+      "provenance": {
+        "sourceRepository": "VoltAgent/awesome-design-md",
+        "sourceRevision": "working-tree-curated-snapshot",
+        "sourcePath": "packages/design-systems/library/wired.design.md",
+        "license": "MIT"
+      },
+      "fonts": [
+        {
+          "family": "Apercu",
+          "fallback": ["system-ui", "sans-serif"],
+          "redistributable": false
+        },
+        {
+          "family": "Arial",
+          "fallback": ["system-ui", "sans-serif"],
+          "redistributable": false
+        },
+        {
+          "family": "BreveText",
+          "fallback": ["system-ui", "sans-serif"],
+          "redistributable": false
+        },
+        {
+          "family": "Georgia",
+          "fallback": ["system-ui", "sans-serif"],
+          "redistributable": false
+        },
+        {
+          "family": "Helvetica",
+          "fallback": ["system-ui", "sans-serif"],
+          "redistributable": false
+        },
+        {
+          "family": "Helvetica Neue",
+          "fallback": ["system-ui", "sans-serif"],
+          "redistributable": false
+        },
+        {
+          "family": "Times New Roman",
+          "fallback": ["system-ui", "sans-serif"],
+          "redistributable": false
+        },
+        {
+          "family": "WiredDisplay",
+          "fallback": ["system-ui", "sans-serif"],
+          "redistributable": false
+        }
+      ]
+    },
+    {
+      "schemaVersion": "1",
+      "id": "wise-inspired-design-analysis",
+      "displayName": "Wise-Inspired-design-analysis",
+      "description": "An inspired interpretation of Wise's design language — a global money-transfer brand whose surface combines an unusually heavy near-black display sans (weight 900 at 64–126 px) with a vivid lime-green brand accent, sage-tinted surface neutrals, and rounded white cards on a pale green-tinted canvas; the whole system reads more like a Scandinavian fintech magazine than a bank.",
+      "source": "embedded",
+      "status": "curated-reference",
+      "targets": ["terminal", "react"],
+      "contentPath": "packages/design-systems/library/wise.design.md",
+      "sourceContentHash": "442df0ad7380efd8712f5574bdca34a73cfb41a2a43454ff459863a6258af547",
+      "normalizedContentHash": "479a3ed35b87aeca26e803fe0f92449562f9b138d6a3787c582ab1b161967978",
+      "provenance": {
+        "sourceRepository": "VoltAgent/awesome-design-md",
+        "sourceRevision": "working-tree-curated-snapshot",
+        "sourcePath": "packages/design-systems/library/wise.design.md",
+        "license": "MIT"
+      },
+      "fonts": [
+        {
+          "family": "Inter",
+          "fallback": ["system-ui", "sans-serif"],
+          "redistributable": false
+        },
+        {
+          "family": "Wise Sans",
+          "fallback": ["system-ui", "sans-serif"],
+          "redistributable": false
+        }
+      ]
+    },
+    {
+      "schemaVersion": "1",
+      "id": "xai-inspired-design-analysis",
+      "displayName": "xAI-Inspired-design-analysis",
+      "description": "An inspired interpretation of xAI's design language — Elon Musk's frontier-AI company whose web surface is a strict near-black canvas broken only by white pill outlines, occasional warm sunset / dusk gradient accents, a custom geometric sans (Universal Sans) for display, and an uppercase tracked monospace caption face; the whole system reads as engineered-cosmic, unmarketed.",
+      "source": "embedded",
+      "status": "curated-reference",
+      "targets": ["terminal", "react", "web"],
+      "contentPath": "packages/design-systems/library/x.ai.design.md",
+      "sourceContentHash": "9c9ef45d8c0c3b9a7622833cdff8bd125ed6bf296a82cc7274215276706e52eb",
+      "normalizedContentHash": "3f61e0b8c401c144e6a2bbf2b488d1971c6884610a7b6802e806082ec19d3dd6",
+      "provenance": {
+        "sourceRepository": "VoltAgent/awesome-design-md",
+        "sourceRevision": "working-tree-curated-snapshot",
+        "sourcePath": "packages/design-systems/library/x.ai.design.md",
+        "license": "MIT"
+      },
+      "fonts": [
+        {
+          "family": "GeistMono",
+          "fallback": ["system-ui", "sans-serif"],
+          "redistributable": false
+        },
+        {
+          "family": "Inter",
+          "fallback": ["system-ui", "sans-serif"],
+          "redistributable": false
+        },
+        {
+          "family": "Menlo",
+          "fallback": ["system-ui", "sans-serif"],
+          "redistributable": false
+        },
+        {
+          "family": "Monaco",
+          "fallback": ["system-ui", "sans-serif"],
+          "redistributable": false
+        },
+        {
+          "family": "SFMono-Regular",
+          "fallback": ["system-ui", "sans-serif"],
+          "redistributable": false
+        },
+        {
+          "family": "ui-monospace",
+          "fallback": ["system-ui", "sans-serif"],
+          "redistributable": false
+        },
+        {
+          "family": "universalSans",
+          "fallback": ["system-ui", "sans-serif"],
+          "redistributable": false
+        }
+      ]
+    },
+    {
+      "schemaVersion": "1",
+      "id": "zapier-inspired-design-analysis",
+      "displayName": "Zapier-Inspired-design-analysis",
+      "description": "An inspired interpretation of Zapier's design language — a workflow-automation platform whose surface combines warm-cream neutrals (`#fffefb` canvas, `#f8f4f0` soft cream) with deep coffee ink (`#201515`) and a single saturated orange CTA accent (`#ff4f00`); typography pairs the proprietary Degular Display family at hero scale with Inter for sub-displays and body, giving the brand a confident-warm rather than cool-tech voice.",
+      "source": "embedded",
+      "status": "curated-reference",
+      "targets": ["terminal", "react"],
+      "contentPath": "packages/design-systems/library/zapier.design.md",
+      "sourceContentHash": "9aee43ba8ece1b4fd0753b4cad0a29f3497331882fa376f0dd4fea8a018c32fc",
+      "normalizedContentHash": "297ad62b5d37d655c9ec5017dea4b2a79b23e4aa3f584f59cd8b3908724c1bd9",
+      "provenance": {
+        "sourceRepository": "VoltAgent/awesome-design-md",
+        "sourceRevision": "working-tree-curated-snapshot",
+        "sourcePath": "packages/design-systems/library/zapier.design.md",
+        "license": "MIT"
+      },
+      "fonts": [
+        {
+          "family": "Degular Display",
+          "fallback": ["system-ui", "sans-serif"],
+          "redistributable": false
+        },
+        {
+          "family": "Inter",
+          "fallback": ["system-ui", "sans-serif"],
+          "redistributable": false
+        }
+      ]
+    }
+  ]
+}

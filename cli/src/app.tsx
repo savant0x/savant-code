@@ -1,0 +1,206 @@
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useShallow } from 'zustand/react/shallow'
+
+import { AuthedSurface } from './components/app-authed-surface'
+import { AppShell } from './components/app-shell'
+import { ProjectPickerScreen } from './components/project-picker-screen'
+import {
+  EasterEggOverlays,
+  EasterEggProvider,
+} from './components/savant-ui/easter-egg-logo'
+import { ToastContainer } from './components/toast'
+import { useAuthState } from './hooks/use-auth-state'
+import { useTerminalFocus } from './hooks/use-terminal-focus'
+import { useTheme } from './hooks/use-theme'
+import { getProjectRoot, startNewChat } from './project-files'
+import { useChatHistoryStore } from './state/chat-history-store'
+import { useChatStore } from './state/chat-store'
+import { abandonActiveRun } from './utils/branch-summary'
+import { findGitRoot } from './utils/git'
+
+import type { MultilineInputHandle } from './components/multiline-input'
+import type { TopBannerType } from './types/store'
+import type { AgentMode } from './utils/constants'
+import type { PermissionMode } from './utils/settings'
+import type { AuthStatus } from './utils/status-indicator-state'
+import type { FileTreeNode } from '@savant-code/common/util/file'
+
+interface AppProps {
+  initialPrompt: string | null
+  agentId?: string
+  fileTree: FileTreeNode[]
+  continueChat: boolean
+  continueChatId?: string
+  initialMode?: AgentMode
+  initialPermissionMode?: PermissionMode
+  showProjectPicker: boolean
+  onProjectChange: (projectPath: string) => void
+}
+
+export const App = ({
+  initialPrompt,
+  agentId,
+  fileTree,
+  continueChat,
+  continueChatId,
+  initialMode,
+  initialPermissionMode,
+  showProjectPicker,
+  onProjectChange,
+}: AppProps) => {
+  const theme = useTheme()
+  const inputRef = useRef<MultilineInputHandle | null>(null)
+  const {
+    setInputFocused,
+    setIsFocusSupported,
+    resetChatStore,
+    activeTopBanner,
+    setActiveTopBanner,
+    closeTopBanner,
+  } = useChatStore(
+    useShallow((store) => ({
+      setInputFocused: store.setInputFocused,
+      setIsFocusSupported: store.setIsFocusSupported,
+      resetChatStore: store.reset,
+      activeTopBanner: store.activeTopBanner,
+      setActiveTopBanner: store.setActiveTopBanner,
+      closeTopBanner: store.closeTopBanner,
+    })),
+  )
+
+  const handleSupportDetected = useCallback(() => {
+    setIsFocusSupported(true)
+  }, [setIsFocusSupported])
+
+  useTerminalFocus({
+    onFocusChange: setInputFocused,
+    onSupportDetected: handleSupportDetected,
+  })
+
+  const { setIsAuthenticated, setUser, logoutMutation } = useAuthState({
+    inputRef,
+    setInputFocused,
+    resetChatStore,
+  })
+
+  const projectRoot = getProjectRoot()
+  const gitRoot = useMemo(
+    () => findGitRoot({ cwd: projectRoot }),
+    [projectRoot],
+  )
+  const showGitRootBanner = Boolean(gitRoot && gitRoot !== projectRoot)
+  const [gitRootBannerDismissed, setGitRootBannerDismissed] = useState(false)
+  const prevTopBannerRef = useRef<TopBannerType | null>(null)
+
+  useEffect(() => {
+    setGitRootBannerDismissed(false)
+  }, [projectRoot])
+
+  useEffect(() => {
+    const prevBanner = prevTopBannerRef.current
+    if (
+      prevBanner === 'gitRoot' &&
+      activeTopBanner === null &&
+      showGitRootBanner
+    ) {
+      setGitRootBannerDismissed(true)
+    }
+    prevTopBannerRef.current = activeTopBanner
+  }, [activeTopBanner, showGitRootBanner])
+
+  useEffect(() => {
+    if (!showGitRootBanner) {
+      if (activeTopBanner === 'gitRoot') closeTopBanner()
+      return
+    }
+    if (!gitRootBannerDismissed && activeTopBanner === null) {
+      setActiveTopBanner('gitRoot')
+    }
+  }, [
+    activeTopBanner,
+    closeTopBanner,
+    gitRootBannerDismissed,
+    setActiveTopBanner,
+    showGitRootBanner,
+  ])
+
+  const handleSwitchToGitRoot = useCallback(() => {
+    if (gitRoot) onProjectChange(gitRoot)
+  }, [gitRoot, onProjectChange])
+
+  const { showChatHistory, closeChatHistory } = useChatHistoryStore()
+  const [resumeChatId, setResumeChatId] = useState<string | null>(null)
+
+  const handleResumeChat = useCallback(
+    (chatId: string) => {
+      // FID-2026-1006-003 WP6: resuming abandons a mid-turn run, which leaves
+      // a branch summary of the conversation being left behind.
+      abandonActiveRun()
+      closeChatHistory()
+      resetChatStore()
+      setResumeChatId(chatId)
+    },
+    [closeChatHistory, resetChatStore],
+  )
+
+  const handleNewChat = useCallback(() => {
+    // FID-2026-1006-003 WP6: as in handleResumeChat, abandoning a mid-turn run
+    // leaves a branch summary of the conversation being left behind.
+    abandonActiveRun()
+    closeChatHistory()
+    resetChatStore()
+    startNewChat()
+    setResumeChatId(null)
+  }, [closeChatHistory, resetChatStore])
+
+  const effectiveContinueChat = continueChat || resumeChatId !== null
+  const effectiveContinueChatId = resumeChatId ?? continueChatId
+
+  // FID-2026-0929-005 (gut the backend): the auth query and its error-driven
+  // retrying/unreachable status are deleted with the backend they pinged.
+  // There is no auth round-trip to degrade, so the indicator is always 'ok'.
+  const authStatus: AuthStatus = 'ok'
+
+  if (showProjectPicker) {
+    return (
+      <AppShell backgroundColor={theme.background}>
+        <ProjectPickerScreen
+          onSelectProject={onProjectChange}
+          initialPath={projectRoot}
+        />
+      </AppShell>
+    )
+  }
+
+  const chatKey = resumeChatId ?? 'current'
+
+  return (
+    <EasterEggProvider>
+      <AppShell backgroundColor={theme.background}>
+        <AuthedSurface
+          chatKey={chatKey}
+          initialPrompt={initialPrompt}
+          agentId={agentId}
+          fileTree={fileTree}
+          inputRef={inputRef}
+          setIsAuthenticated={setIsAuthenticated}
+          setUser={setUser}
+          logoutMutation={logoutMutation}
+          continueChat={effectiveContinueChat}
+          continueChatId={effectiveContinueChatId}
+          authStatus={authStatus}
+          initialMode={initialMode}
+          initialPermissionMode={initialPermissionMode}
+          gitRoot={gitRoot}
+          onSwitchToGitRoot={handleSwitchToGitRoot}
+          showChatHistory={showChatHistory}
+          onSelectChat={handleResumeChat}
+          onCancelChatHistory={closeChatHistory}
+          onNewChat={handleNewChat}
+        />
+      </AppShell>
+      <EasterEggOverlays />
+      <ToastContainer />
+    </EasterEggProvider>
+  )
+}

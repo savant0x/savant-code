@@ -1,0 +1,223 @@
+import { isUnavailableToolError } from '@savant-code/common/types/contracts/llm'
+import { buildArray } from '@savant-code/common/util/array'
+import { getErrorObject } from '@savant-code/common/util/error'
+import {
+  APICallError,
+  InvalidToolInputError,
+  JSONParseError,
+  NoSuchToolError,
+  ToolCallRepairError,
+  TypeValidationError,
+} from 'ai'
+
+import {
+  normalizeNativeToolCallStreamError,
+  normalizeUnavailableToolStreamError,
+} from './errors'
+
+/**
+ * FID-2026-0913-002: pure error-branch helpers extracted from
+ * `promptAiSdkStream` when the module hit the 300-line ceiling. The
+ * generator in `stream.ts` keeps the `yield`/`yield*` authority — these
+ * functions only decide WHAT happens; `stream.ts` performs it.
+ */
+
+/** The fullStream error-chunk shape this module inspects (`error` is opaque). */
+type AiSdkErrorChunk = {
+  type: 'error'
+  error: unknown
+  [key: string]: unknown
+}
+
+/**
+ * FID-2026-1012-017: the request's output allowance, forwarded so the recovery
+ * text can state the tool's real argument budget. Optional — a caller that
+ * cannot resolve it still gets the truthful cause and the split advice.
+ */
+export type NativeRecoveryOptions = { maxOutputTokens?: number }
+
+/**
+ * The OpenAI-compatible provider uses a typed object for incomplete native
+ * arguments so this path never relies on parsing a user-facing message.
+ * Returns null for non-object errors and hostile shapes (the factory's own
+ * contract).
+ */
+export function classifyNativeToolCallError(
+  error: unknown,
+  options: NativeRecoveryOptions = {},
+):
+  | ReturnType<typeof normalizeNativeToolCallStreamError>
+  | ReturnType<typeof normalizeUnavailableToolStreamError> {
+  if (typeof error !== 'object' || error === null) return null
+  // FID-2026-1012-002: the provider transform already separated the name-only
+  // class; route it to its own message instead of letting it fall through to
+  // the generic agent-retryable path (which loses the class entirely).
+  if (isUnavailableToolError(error)) {
+    return normalizeUnavailableToolStreamError(error.toolName)
+  }
+  return normalizeNativeToolCallStreamError(error, options)
+}
+
+/**
+ * FID-2026-1012-009: was this invalid tool call's input cut mid-document?
+ *
+ * `ai` core already separates the two cases for us. `safeParseJSON` returns a
+ * `JSONParseError` when the arguments never parsed at all and a
+ * `TypeValidationError` when well-formed arguments missed the tool's schema,
+ * and `doParseToolCall` attaches that result as the `InvalidToolInputError`'s
+ * `cause` (verified against the installed ai 5.0.122). Only the parse failure
+ * means the payload was cut — and therefore only that case may prescribe
+ * splitting the work instead of re-sending it. Fail-closed: any other shape,
+ * including a missing cause, keeps today's generic advice.
+ */
+export function isTruncatedToolInput(error: unknown): boolean {
+  if (!InvalidToolInputError.isInstance(error)) return false
+  const cause = (error as { cause?: unknown }).cause
+  return JSONParseError.isInstance(cause)
+}
+
+/** FID-2026-1012-017 Loop 6: how much of a schema issue travels into the
+ *  recovery text. The field path is the actionable part; the cap keeps a
+ *  pathological path from dominating the message and the ledger's first line. */
+const MAX_SCHEMA_ISSUE_CHARS = 120
+
+/**
+ * FID-2026-1012-017 Loop 6 — name the field the schema rejected.
+ *
+ * The lane's earlier half removed the re-send prescription and stated the
+ * argument budget, and the class still recurred: 17 duplicate rejections of one
+ * `suggest_followups` call inside a single response carried the budget text and
+ * nothing else the model could act on. `ai` core attaches the validation
+ * failure as the `InvalidToolInputError`'s cause, so the field IS observable —
+ * but `TypeValidationError`'s own message embeds the RECEIVED VALUE
+ * (`Type validation failed: Value: {...}`), so that message is never read here.
+ * Only the issue's `path`, `code` and `expected` are taken; the value and the
+ * free-text message are dropped. Bounded and fail-closed: any other shape
+ * yields undefined and the caller keeps the generic advice.
+ */
+export function summarizeSchemaIssue(error: unknown): string | undefined {
+  if (!InvalidToolInputError.isInstance(error)) return undefined
+  const cause = (error as { cause?: unknown }).cause
+  if (!TypeValidationError.isInstance(cause)) return undefined
+  const issues = (cause as { cause?: { issues?: unknown } }).cause?.issues
+  if (!Array.isArray(issues)) return undefined
+  const issue = issues[0] as
+    { path?: unknown; code?: unknown; expected?: unknown } | undefined
+  if (typeof issue !== 'object' || issue === null) return undefined
+  const path = Array.isArray(issue.path)
+    ? issue.path
+        .map((segment) =>
+          typeof segment === 'number' ? `[${segment}]` : `.${String(segment)}`,
+        )
+        .join('')
+        .replace(/^\./, '')
+    : ''
+  const code = typeof issue.code === 'string' ? issue.code : ''
+  const expected =
+    typeof issue.expected === 'string' ? ` (expected ${issue.expected})` : ''
+  if (path === '' && code === '') return undefined
+  const summary = `${path === '' ? '<root>' : path} — ${code}${expected}`
+  return summary.slice(0, MAX_SCHEMA_ISSUE_CHARS)
+}
+
+/**
+ * Assemble the agent-facing message: the error's own message plus the API
+ * response body when the error is an APICallError.
+ */
+export function buildStreamErrorMessage(chunk: AiSdkErrorChunk): string {
+  const errorBody = APICallError.isInstance(chunk.error)
+    ? chunk.error.responseBody
+    : undefined
+  const mainErrorMessage =
+    chunk.error instanceof Error
+      ? chunk.error.message
+      : typeof chunk.error === 'string'
+        ? chunk.error
+        : JSON.stringify(chunk.error)
+  return buildArray([mainErrorMessage, errorBody]).join('\n')
+}
+
+/**
+ * Tool-call failures passed back to the agent so it can see what went wrong
+ * and retry. Note: If you find any other error types that should be passed
+ * through to the agent, add them here!
+ */
+export function isAgentRetryableToolError(error: unknown): boolean {
+  return (
+    NoSuchToolError.isInstance(error) ||
+    InvalidToolInputError.isInstance(error) ||
+    ToolCallRepairError.isInstance(error) ||
+    TypeValidationError.isInstance(error)
+  )
+}
+
+/**
+ * FID-2026-0912-005: vendor SDK transformers (e.g. @ai-sdk/anthropic,
+ * @ai-sdk/google) emit tool-call parts unconditionally — including parts
+ * that `ai` core has marked `invalid: true` (unparseable args, unknown tool)
+ * and filtered from execution. Forwarding them raw degrades into a generic
+ * tool-error in the runtime, bypassing the native-incomplete machinery
+ * (tool-specific steering, strike counting with exhaustion, and the
+ * PostToolUseFailure ledger record). The OpenAI-compatible family gets this
+ * classification from our own flush gate; vendor families get it here.
+ * Reuses the one message factory (Law 13). Returns null for a hostile
+ * non-string toolName shape — the caller fails closed (Law 14).
+ */
+export function classifyInvalidToolCall(
+  chunk: {
+    toolName: unknown
+    error?: unknown
+  },
+  options: NativeRecoveryOptions = {},
+):
+  | ReturnType<typeof normalizeNativeToolCallStreamError>
+  | ReturnType<typeof normalizeUnavailableToolStreamError> {
+  const toolName =
+    typeof chunk.toolName === 'string' ? chunk.toolName : 'unknown'
+  // FID-2026-1012-002: `ai` core marks an undeclared tool name with
+  // NoSuchToolError and a truncated/ill-typed argument object with
+  // InvalidToolInputError. Discarding `error` here — as this function used to —
+  // made the two indistinguishable, so every undeclared name was reported to
+  // the model as an oversized payload.
+  if (NoSuchToolError.isInstance(chunk.error)) {
+    return normalizeUnavailableToolStreamError(toolName)
+  }
+  // FID-2026-1012-009: the vendor path cannot supply a finish reason (the
+  // stream's `finish` part arrives after this classification), so a payload cut
+  // by the output budget used to be reported as if the model had written bad
+  // arguments — and answered with a re-send that truncates identically. The
+  // classifier's own structural evidence distinguishes the two cases.
+  // FID-2026-1012-017 Loop 6: the two causes stay exclusive. A cut payload keeps
+  // the split-the-work advice and can name no issue (the arguments never
+  // parsed); a well-formed payload that missed the schema names its field, which
+  // is the only half of the advice the model can act on.
+  const truncated = isTruncatedToolInput(chunk.error)
+  const schemaIssue = truncated ? undefined : summarizeSchemaIssue(chunk.error)
+  return normalizeNativeToolCallStreamError(
+    {
+      type: 'native-incomplete',
+      toolName,
+      ...(truncated && { argumentsTruncated: true }),
+      ...(schemaIssue !== undefined && { schemaIssue }),
+    },
+    options,
+  )
+}
+
+/**
+ * Redacted log fields shared by the warn/error paths: the chunk is logged
+ * with its `error` stripped (it is logged separately via getErrorObject)
+ * so log lines never grow the full serialized error twice. Accepts any
+ * fullStream chunk shape carrying an `error` field (error chunks and
+ * invalid tool-call parts alike).
+ */
+export function streamErrorLogFields(
+  chunk: { error?: unknown; [key: string]: unknown },
+  model: unknown,
+): { chunk: Record<string, unknown>; error: unknown; model: unknown } {
+  return {
+    chunk: { ...chunk, error: undefined },
+    error: getErrorObject(chunk.error),
+    model,
+  }
+}

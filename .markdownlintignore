@@ -1,0 +1,126 @@
+node_modules/
+dev/fids/archive/**
+CHANGELOG.md
+research/
+resources/
+master-fetch-master/
+packages/design-systems/library/**
+cli/bin/savant-design-systems/SKILL.md
+dev/test-prompts/archive/**
+# Deep-research prompts (moved from dev/idea-shelf/ 2026-09-28) — paste-ready
+# research payloads, not shipped documentation; carry long URLs and prose lines
+# by design. Exemption follows the dev/idea-shelf/** and research-payload
+# precedent.
+dev/test-prompts/*-deep-research-prompt.md
+dev/nova/inbox/archive/**
+dev/nova/outbox/archive/**
+dev/nova/reports/**
+dev/archive/2026-08-02-repository-hygiene/**
+MCP Servers Operational Audit.md
+
+# Archived docs (FID-2026-0815-016) — historical one-off design/research/
+# reports/launch artifacts relocated to docs/archive/ during the v0.0.24
+# release audit. Reference-only records, not live docs; consolidates the
+# former per-file exemptions for the moved paths.
+docs/archive/**
+
+# Shelved ideas and design references — not active work, not governed by
+# strict MD013 (same exemption precedent as the archived docs).
+dev/idea-shelf/**
+
+# Ephemeral working area (FID-2026-0806-008) — scratchpad reports/artifacts
+# are regenerated per audit run; matches the existing eslint ignore.
+dev/scratchpad/**
+
+# Third-party audit channel (FID-2026-0806-008) — Nova's own files (requests,
+# audit responses, outbox prompts) are not governed by our lint; matches the
+# existing dev/nova/reports/** precedent.
+dev/nova/inbox/**
+dev/nova/outbox/**
+dev/nova/scratchpad/**
+
+# Design research scratch docs (2026-08-19) — long-form research notes with
+# extensive code blocks and tables; not shipped documentation. Line-length
+# exemptions follow the docs/archive/** and dev/idea-shelf/** precedent.
+docs/design/Savant Desktop Architecture Research.md
+docs/design/Savant-Code Keyless Search Research.md
+docs/design/Savant Desktop App Architecture.md
+dev/session-summaries/2026-08-19-desktop-app-research-planning.md
+
+# Rust/tauri build output (FID-2026-0820-011 Loop 5 local bundling smoke,
+# 2026-09-03) — generated codegen assets under target/ are binary/ephemeral
+# build artifacts, not documentation.
+desktop/src-tauri/target/
+
+# Pasted session-transcript + design-research artifacts (2026-09-11) — operator-
+# pasted reference records, not shipped documentation. Same exemption precedent
+# as the design research scratch docs above (raw transcripts/design docs with
+# long lines; enforcing MD013 on transcripts is meaningless).
+docs/design/SkillOpt Integration into Savant.md
+
+# Withdrawn 2026-10-03: the docs/lastsession.md, continue.md, and review-error.md
+# exemptions all named scratch transcript files that no longer exist. Each was
+# untracked and never committed, so none can be linted and none can be cited as
+# precedent — the review-error.md evidence it protected is quoted verbatim in
+# dev/fids/FID-2026-1002-003-request-token-budget-enforcement.md. Do not restore
+# an exemption for a file that is absent; a re-pasted transcript gets its own
+# entry with its own justification, not a dead file's precedent.
+
+# Deep-research intake docs (FID-2026-0914-003) — pasted research report
+# (Gemini Deep Research output) + its adversarial verification record;
+# reference-only research artifacts, not shipped documentation. Same
+# exemption precedent as the design research scratch docs above.
+docs/design/Free LLM API Aggregator Research.md
+docs/design/Free LLM API Aggregator Research — Verification.md
+
+# Pasted model-catalog audit report (2026-09-19) — operator-pasted external
+# research artifact whose claims were independently re-verified against the
+# shipped code + live APIs (FID-2026-0919-020); reference-only input, not
+# shipped documentation. Long prose/URL lines make MD013 meaningless. Same
+# exemption precedent as the Free LLM API Aggregator Research docs above.
+docs/Model Context Window Review.md
+
+# Provider identity gauntlet report (FID-2026-1007-008) — machine-generated
+# per operator run (replace-in-place), gitignored; MD013 on generated evidence
+# tables is meaningless. Same exemption precedent as provider-candidates below.
+dev/provider-identity/**
+
+# Discovery-pipeline daily report (FID-2026-0914-003) — machine-generated
+# per harvest run (replaced in place), gitignored; MD013 on generated
+# evidence tables is meaningless. Same exemption precedent as the scratchpad.
+dev/provider-candidates/**
+
+# Session-end wiki pattern capture (FID-2026-0912-003) — machine-generated
+# distillations of recurring tool-failure patterns, updated by the
+# session-end review; never hand-edited. Long machine-authored sample lines
+# make MD013 meaningless. Same exemption precedent as the scratchpad and
+# provider-candidates.
+dev/wiki/**
+
+# Deep-research report (2026-10-06, operator ruling on register item T154) —
+# an independently sourced Savant/ECHO prompt-cache optimization study whose
+# long cited prose and wide capability/pricing tables are intentionally kept
+# in source form, exactly like the design-research scratch docs above
+# (Savant-Code Keyless Search Research, Free LLM API Aggregator Research).
+# It carried 108 MD013 violations, all of them wrappable prose; the file's 24
+# base64 figure definitions were never flagged, because MD013 does not report
+# a line it cannot wrap. Per the 2026-10-03 withdrawal note this entry carries
+# its own justification rather than borrowing a dead file's.
+# NOTE: ignoring a file skips EVERY rule, so this also silences one MD001
+# heading-increment defect (line 243, a `####` directly under a `##`) —
+# recorded as an accepted limit in FID-2026-1006-005, not repaired blind.
+# The file is untracked today; re-evaluate with the per-file MD013 header
+# route if it is committed and becomes governed documentation.
+docs/design/Savant_ECHO Cache Optimization Research.md
+
+# Operator-pasted session transcript (2026-10-03) — docs/trash/lastsession.md,
+# a re-pasted Codex session dump (~93k lines) parked in the operator's scratch
+# trash directory for grounding reads; untracked, never shipped. MD013 on a raw
+# transcript is meaningless. This is the re-pasted transcript the 2026-10-03
+# withdrawal note above requires its own entry for; same exemption precedent as
+# the pasted session-transcript artifacts.
+docs/trash/**
+
+# Operator-approved raw session archive (2026-10-15): byte-preserved local
+# conversation exports, already gitignored; never repository documentation.
+dev/exports/**

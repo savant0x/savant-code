@@ -1,0 +1,160 @@
+.DS_Store
+.idea/
+.vercel
+
+# Environment files (secrets) - Bun loads .env.* files natively
+.env
+.env.*
+!.env.example
+
+# ctags
+tags
+
+node_modules
+dev/debug/
+dev/context/
+dev/.context/
+**/dist/
+dist-env
+tsconfig.tsbuildinfo
+.manicode
+__mock-projects__
+npm-app/src/__tests__/data/
+.aider*
+.savant-code*
+.qoder/
+**.log
+
+debug/
+.context/
+docs/bot-detection.md
+
+# Internal analysis notes — not public documentation (competitive idea-farm audits).
+docs/idea-farm-*.md
+.codex
+
+# Nx cache directories
+.nx/cache
+.nx/workspace-data
+
+# Infisical config (user-specific)
+.infisical.json
+.gstack/
+
+# Buffbench DEBUG_ERROR dumps
+
+# Compiled CLI binaries and their sibling artifacts
+/cli/bin/
+
+# SavantFree Desktop local runtime state in an opened project (SQLite DB, git
+# worktrees, materialized built-in skills) — never source, always regenerated.
+.savant-free/
+
+# Scratchpad (ephemeral working area, .gitkeep preserves directory)
+dev/scratchpad/*
+!dev/scratchpad/.gitkeep
+
+# Free-compute discovery pipeline artifacts (FID-2026-0914-003): daily
+# harvest report + candidate state + agent-context sidecars — regenerated
+# in place by every run, never source.
+dev/provider-candidates/
+# Provider identity gauntlet reports (FID-2026-1007-008) — regenerated fresh on
+# every operator run, replace-in-place, never committed.
+dev/provider-identity/
+# Model-compliance telemetry (FID-2026-1007-012): compliance.jsonl is tracked
+# source data (churn-committed like raw-traces); drift runs and proposal
+# drafts are derived/local review surface, regenerated in place, never
+# committed.
+dev/telemetry/*
+!dev/telemetry/compliance.jsonl
+
+# Materialized by release package prepack scripts and removed by postpack.
+cli/release/launcher.js
+cli/release/http.js
+cli/release-staging/launcher.js
+cli/release-staging/http.js
+savant-free/cli/release/launcher.js
+savant-free/cli/release/http.js
+
+# Local resource/resorucs directories — user-added content, not source controlled
+/resources/
+/resorucs/
+
+# dev/releases/ -- ephemeral staging area for release notes drafts.
+# Canonical in-repo history: CHANGELOG.md. Canonical external source: GitHub Releases.
+# README.md is the permanent index. All *.md drafts are gitignored.
+dev/releases/*.md
+!dev/releases/README.md
+
+# Savant-Code desktop runtime state (SQLite DB, worktrees, session cache)
+# Keep legacy .freebuff/ ignored while transitioning to .savant-code/
+.freebuff/
+.savant-code/
+
+# Local SQLite fallback created by runtime/database tooling; never source.
+/database.db
+/database.db-wal
+/database.db-shm
+
+# Git bundle backup output; configure SAVANT_BUNDLE_DIR for an external sync
+# destination when durable off-machine backups are required.
+.git-bundles/
+
+# Codebase knowledge graph (FID-2026-0806-002): the SQLite index holds
+# structural metadata only, but it is regenerable on demand (/graph refresh)
+# and must never enter the repository or the packaged artifact.
+.savant/
+# /graph-export output — regenerated fresh on every export; formatting the
+# artifact is pure churn (a 3MB HTML reflow) and the next export would not match.
+savant-graph-*.html
+
+# CommandCode CLI local state (settings + taste config)
+.commandcode/
+
+# ohmyagent CLI local state (permission rules) — local tool config, never source.
+.ohmyagent/
+
+# opencode CLI local state (agent and command definitions, MCP config) — local
+# tool config, never source. Operator ruling 2026-10-13: the tree gets its own
+# ignore entry rather than being committed as a new top-level root, so the
+# release automation's `git add --all` cannot stage it whole.
+.opencode/
+
+# Vendored reference codebase (Hound/master-fetch, the keyless-search design
+# source) — third-party snapshot, not part of the monorepo. Mirrors the
+# .prettierignore + .markdownlintignore entries; never committed.
+master-fetch-master/
+
+# Evals v2 test-generated artifacts
+**/evals/v2/tests/.test-*/
+# Evals v2 harness output — regenerated on every `harness:v2` run
+**/evals/v2/reports/
+
+# /export + /graph-export command output — regenerated fresh on every export;
+# formatting the artifact is pure churn (a 2MB HTML reflow) and the next export
+# would not match. dev/exports/ is the default single-file-rotation target
+# (FID-2026-0806-016); legacy root-level artifacts remain ignored.
+dev/exports/
+**/dev/exports/
+savant-export-*.html
+
+# Playwright and browser harness output — disposable local test artifacts.
+**/test-results/
+
+# Desktop shell build output (FID-2026-0820-009): Cargo target dir, Tauri
+# generated schemas, and compiled sidecar binaries are regenerable artifacts.
+desktop/src-tauri/target/
+desktop/src-tauri/gen/
+desktop/src-tauri/binaries/
+
+# Tauri updater minisign keypair (FID-2026-0820-011 escrow procedure): the
+# PRIVATE key must never enter the repository — a leaked key lets anyone
+# publish malicious updates to every installed client. The public key lives
+# inline in tauri.conf.json; these local files are operator escrow only.
+# Patterns cover every location `tauri signer generate -w <relative-path>`
+# may have landed the pair (repo root, desktop/, or nested).
+tauri-key.key
+tauri-key.key.pub
+**/tauri-key.key
+**/tauri-key.key.pub
+desktop/tauri-key.key.pub

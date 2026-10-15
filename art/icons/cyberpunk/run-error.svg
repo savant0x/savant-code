@@ -1,0 +1,33 @@
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  viewBox="0 0 64 64"
+  fill="none"
+  role="img"
+  aria-label="Run: error — a flaw, identified"
+>
+  <defs>
+    <filter id="glow" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="2.5" result="blur" />
+      <feMerge>
+        <feMergeNode in="blur" />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
+    </filter>
+  </defs>
+  <!-- error: the magenta alert — a crack in the frame -->
+  <circle cx="32" cy="32" r="18" stroke="#ff2bd6" stroke-width="3" />
+  <!-- the crack: lightning through the core -->
+  <path
+    d="M35 16 L27 32 L33 32 L29 48"
+    stroke="#ff2bd6"
+    stroke-width="3"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    filter="url(#glow)"
+  />
+  <!-- frame fracture ticks -->
+  <g stroke="#ff2bd6" stroke-width="1.5" opacity="0.6">
+    <path d="M20 18 L24 24" />
+    <path d="M44 46 L48 52" />
+  </g>
+</svg>

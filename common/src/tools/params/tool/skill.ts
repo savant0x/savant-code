@@ -1,0 +1,65 @@
+import z from 'zod/v4'
+
+import { $getNativeToolCallExampleString, jsonToolResultSchema } from '../utils'
+
+import type { $ToolParams } from '../../constants'
+
+const toolName = 'skill'
+const endsAgentStep = true
+
+const inputSchema = z
+  .object({
+    name: z.string().min(1).describe('The name of the skill to load'),
+    // FID-2026-0824-012 S0-D progressive disclosure: Level-2 sub-file load.
+    // Omit to load the core SKILL.md (Level 0/1); provide to load one
+    // references/ file instead — context cost proportional to the answer.
+    path: z
+      .string()
+      .optional()
+      .describe(
+        'Optional references/ sub-path to load (e.g. details/checklist.md) instead of the core SKILL.md',
+      ),
+  })
+  .describe(
+    'Load a skill by name to get its full instructions. Skills provide reusable behaviors and instructions.',
+  )
+
+const outputValueSchema = z.object({
+  name: z.string(),
+  description: z.string(),
+  content: z.string(),
+  license: z.string().optional(),
+})
+
+/**
+ * Placeholder marker that will be replaced with the actual available skills XML.
+ * This is replaced at runtime when generating tool prompts.
+ */
+export const AVAILABLE_SKILLS_PLACEHOLDER = '{{AVAILABLE_SKILLS}}'
+
+// Base description - the full description with available skills is generated dynamically
+const baseDescription = `Load a skill by name to get its full instructions. Skills provide reusable behaviors and domain-specific knowledge that you can use to complete tasks.
+
+The following are the pre-loaded skills available at session start:
+${AVAILABLE_SKILLS_PLACEHOLDER}
+
+Note: You can load any skill by name, including ones created or installed during this session (e.g. via \`npx skills add\`). The skill is always read fresh from disk, so its latest contents are used.
+
+Example:
+${$getNativeToolCallExampleString({
+  toolName,
+  inputSchema,
+  input: {
+    name: 'git-release',
+  },
+  endsAgentStep,
+})}
+`
+
+export const skillParams = {
+  toolName,
+  endsAgentStep,
+  description: baseDescription.trim(),
+  inputSchema,
+  outputSchema: jsonToolResultSchema(outputValueSchema),
+} satisfies $ToolParams

@@ -1,0 +1,185 @@
+// ===== JSON Types =====
+export type JSONValue =
+  null | string | number | boolean | JSONObject | JSONArray
+
+export type JSONObject = { [key: string]: JSONValue }
+
+export type JSONArray = JSONValue[]
+
+/**
+ * JSON Schema definition (for prompt schema or output schema).
+ *
+ * Defined locally, deliberately importing nothing (SCOPE T87-A): `/init`
+ * copies this scaffold into a user's project, which is not required to have
+ * any package installed — an import here would be a compile error in their
+ * editor before they wrote a line of their own agent.
+ *
+ * A JSON Schema is a JSON document, so the bound is "an object, or the
+ * booleans `true`/`false`". Values are `unknown` rather than `JSONValue`
+ * because schemas also arrive from dynamic sources (a published template, a
+ * generated document) whose shape is validated at runtime, not statically;
+ * that is the accept-bound the runtime enforces, and `unknown` narrowed at the
+ * boundary is the pattern the coding standard prescribes.
+ *
+ * Validation is not this type's job: the runtime compiles the schema with
+ * `convertJsonSchemaToZod` when the agent loads, and that is the real contract.
+ * Enumerating keywords here would advertise a partial list as if it were the
+ * whole spec.
+ *
+ * @see https://json-schema.org/draft/2020-12/json-schema-core
+ */
+export type JsonSchema = boolean | JsonSchemaObject
+
+export interface JsonSchemaObject {
+  [key: string]: unknown
+}
+
+export type JsonObjectSchema = JsonSchemaObject & { type: 'object' }
+export type JsonStringSchema = JsonSchemaObject & { type: 'string' }
+
+// ===== Data Content Types =====
+export type DataContent = string | Uint8Array | ArrayBuffer | Buffer | URL
+
+// ===== Provider Metadata Types =====
+export type ProviderMetadata = Record<string, Record<string, JSONValue>>
+
+// ===== Content Part Types =====
+export type TextPart = {
+  type: 'text'
+  text: string
+  providerOptions?: ProviderMetadata
+}
+
+export type ImagePart = {
+  type: 'image'
+  image: DataContent
+  mediaType?: string
+  providerOptions?: ProviderMetadata
+}
+
+export type FilePart = {
+  type: 'file'
+  data: DataContent
+  filename?: string
+  mediaType: string
+  providerOptions?: ProviderMetadata
+}
+
+export type ReasoningPart = {
+  type: 'reasoning'
+  text: string
+  providerOptions?: ProviderMetadata
+}
+
+export type ToolCallPart = {
+  type: 'tool-call'
+  toolCallId: string
+  toolName: string
+  input: Record<string, JSONValue>
+  providerOptions?: ProviderMetadata
+  providerExecuted?: boolean
+}
+
+export type ToolResultOutput =
+  | {
+      type: 'json'
+      value: JSONValue
+    }
+  | {
+      type: 'media'
+      data: string
+      mediaType: string
+    }
+
+// ===== Message Types =====
+export type AuxiliaryMessageData = {
+  providerOptions?: ProviderMetadata
+  tags?: string[]
+
+  /**
+   * Unix timestamp (ms) when the message was added to history.
+   * Used to detect prompt cache expiry (>5 min gap = cache miss).
+   * This field is stripped before sending to the LLM.
+   */
+  sentAt?: number
+
+  /** @deprecated Use tags instead. */
+  timeToLive?: 'agentStep' | 'userPrompt'
+  /** @deprecated Use tags instead. */
+  keepDuringTruncation?: boolean
+  /** @deprecated Use tags instead. */
+  keepLastTags?: string[]
+}
+
+export type SystemMessage = {
+  role: 'system'
+  content: TextPart[]
+} & AuxiliaryMessageData
+
+export type UserMessage = {
+  role: 'user'
+  content: (TextPart | ImagePart | FilePart)[]
+} & AuxiliaryMessageData
+
+export type AssistantMessage = {
+  role: 'assistant'
+  content: (TextPart | ReasoningPart | ToolCallPart)[]
+} & AuxiliaryMessageData
+
+export type ToolMessage = {
+  role: 'tool'
+  toolCallId: string
+  toolName: string
+  content: ToolResultOutput[]
+} & AuxiliaryMessageData
+
+export type Message =
+  SystemMessage | UserMessage | AssistantMessage | ToolMessage
+
+// ===== MCP Server Types =====
+
+/**
+ * MCP server configuration for stdio-based servers.
+ *
+ * Environment variables in `env` can be:
+ * - A plain string value (hardcoded, e.g., `'production'`)
+ * - A `$VAR_NAME` reference to read from local environment (e.g., `'$NOTION_TOKEN'`)
+ *
+ * The `$VAR_NAME` syntax reads from `process.env.VAR_NAME` at agent load time.
+ * This keeps secrets out of your agent definitions - store them in `.env.local` instead.
+ *
+ * @example
+ * ```typescript
+ * env: {
+ *   // Read NOTION_TOKEN from local .env file
+ *   NOTION_TOKEN: '$NOTION_TOKEN',
+ *   // Read MY_API_KEY from local env, pass as API_KEY to MCP server
+ *   API_KEY: '$MY_API_KEY',
+ *   // Hardcoded value (non-secret)
+ *   NODE_ENV: 'production',
+ * }
+ * ```
+ */
+export type MCPConfig =
+  | {
+      type?: 'stdio'
+      command: string
+      args?: string[]
+      env?: Record<string, string>
+    }
+  | {
+      type?: 'http' | 'sse'
+      url: string
+      params?: Record<string, string>
+      headers?: Record<string, string>
+    }
+
+// ============================================================================
+// Logger Interface
+// ============================================================================
+export interface Logger<TData = JSONValue> {
+  debug: (data: TData, msg?: string) => void
+  info: (data: TData, msg?: string) => void
+  warn: (data: TData, msg?: string) => void
+  error: (data: TData, msg?: string) => void
+}

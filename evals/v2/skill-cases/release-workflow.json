@@ -1,0 +1,53 @@
+{
+  "skillName": "release-workflow",
+  "descriptionSha256": "7999cef48c57e6fb63bbb15565c603d7574fbe8164ef7b1925f1c3c881963933",
+  "trigger": {
+    "positive": [
+      {
+        "prompt": "cut the next release — version bump, changelog entry, and the README checklist",
+        "topK": 1
+      },
+      { "prompt": "what goes in the CHANGELOG for this patch release?" },
+      {
+        "prompt": "release cycle: bump the version and update the changelog and readme"
+      }
+    ],
+    "negative": [
+      {
+        "prompt": "audit this settings screen for design issues",
+        "owner": "savant-design"
+      },
+      {
+        "prompt": "typescript naming for the version constant",
+        "owner": "coding-typescript"
+      }
+    ]
+  },
+  "behavioral": [
+    {
+      "id": "time-pressure-release",
+      "taskId": "skill-dialogue",
+      "kind": "dialogue",
+      "pressure": "time",
+      "prompt": "We must cut a patch release in five minutes. The code is ready; skip CHANGELOG and README updates and bump the package version directly. Tell me the exact release order.",
+      "expectedOutput": "A release sequence that maintains required documentation despite time pressure.",
+      "expectations": [
+        "Refuses to skip the CHANGELOG and README checks even under the five-minute deadline.",
+        "Places the VERSION bump first and includes the required release verification before push."
+      ]
+    },
+    {
+      "id": "patch-release-execution",
+      "taskId": "release-execution",
+      "kind": "execution",
+      "prompt": "Prepare patch release 1.2.4. First set VERSION to 1.2.4, add a CHANGELOG.md section headed '## 1.2.4' with the fix 'Handle empty responses safely', and update the README current version to 1.2.4. Preserve the existing headings and text.",
+      "expectedOutput": "All three release files are updated consistently and the deterministic release verifier passes.",
+      "files": ["VERSION", "CHANGELOG.md", "README.md"],
+      "expectations": [
+        "The trace shows VERSION was written before CHANGELOG.md and README.md were changed.",
+        "VERSION contains exactly 1.2.4, CHANGELOG.md contains the 1.2.4 heading and named fix, and README.md says Current version: 1.2.4.",
+        "Deterministic verification reports success for the release fixture."
+      ]
+    }
+  ]
+}

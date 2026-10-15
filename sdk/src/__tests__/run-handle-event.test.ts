@@ -1,0 +1,126 @@
+import * as mainPromptModule from '@savant-code/agent-runtime/main-prompt'
+import { getInitialSessionState } from '@savant-code/common/types/session-state'
+import { getStubProjectFileContext } from '@savant-code/common/util/file'
+import { afterEach, describe, expect, it, mock, spyOn } from 'bun:test'
+
+import { SavantCodeClient } from '../client'
+
+import type { SavantCodeClientOptions } from '../run'
+import type { PrintModeEvent } from '@savant-code/common/types/print-mode'
+
+describe('SavantCodeClient handleEvent / handleStreamChunk', () => {
+  afterEach(() => {
+    mock.restore()
+  })
+
+  it('streams subagent start/finish once and forwards subagent chunks to handleStreamChunk', async () => {
+    spyOn(mainPromptModule, 'callMainPrompt').mockImplementation(
+      async (params: Parameters<typeof mainPromptModule.callMainPrompt>[0]) => {
+        const { sendAction, action: promptAction, promptId } = params
+        const sessionState = getInitialSessionState(getStubProjectFileContext())
+
+        await sendAction({
+          action: {
+            type: 'response-chunk',
+            userInputId: promptId,
+            chunk: {
+              type: 'subagent_start',
+              agentId: 'sub-1',
+              agentType: 'commander',
+              displayName: 'Commander',
+              onlyChild: true,
+              parentAgentId: 'main-agent',
+              prompt: promptAction.prompt,
+              params: promptAction.promptParams,
+            },
+          },
+        })
+
+        await sendAction({
+          action: {
+            type: 'subagent-response-chunk',
+            userInputId: promptId,
+            agentId: 'sub-1',
+            agentType: 'commander',
+            chunk: 'hello from subagent',
+          },
+        })
+
+        await sendAction({
+          action: {
+            type: 'response-chunk',
+            userInputId: promptId,
+            chunk: {
+              type: 'subagent_finish',
+              agentId: 'sub-1',
+              agentType: 'commander',
+              displayName: 'Commander',
+              onlyChild: true,
+              parentAgentId: 'main-agent',
+              prompt: promptAction.prompt,
+              params: promptAction.promptParams,
+            },
+          },
+        })
+
+        await sendAction({
+          action: {
+            type: 'prompt-response',
+            promptId,
+            sessionState,
+            output: {
+              type: 'lastMessage',
+              value: [],
+            },
+          },
+        })
+
+        return {
+          sessionState,
+          output: {
+            type: 'lastMessage' as const,
+            value: [],
+          },
+        }
+      },
+    )
+
+    type StreamChunk = Parameters<
+      NonNullable<SavantCodeClientOptions['handleStreamChunk']>
+    >[0]
+
+    const events: PrintModeEvent[] = []
+    const streamChunks: StreamChunk[] = []
+
+    const client = new SavantCodeClient({})
+
+    const result = await client.run({
+      agent: 'savant',
+      prompt: 'hello world',
+      handleEvent: (event) => {
+        events.push(event)
+      },
+      handleStreamChunk: (chunk) => {
+        streamChunks.push(chunk)
+      },
+    })
+
+    expect(
+      events.filter((e) => e.type === 'subagent_start').map((e) => e.agentId),
+    ).toEqual(['sub-1'])
+    expect(
+      events.filter((e) => e.type === 'subagent_finish').map((e) => e.agentId),
+    ).toEqual(['sub-1'])
+
+    expect(streamChunks).toEqual([
+      {
+        type: 'subagent_chunk',
+        agentId: 'sub-1',
+        agentType: 'commander',
+        chunk: 'hello from subagent',
+      },
+    ])
+
+    expect(result.output.type).toBe('lastMessage')
+  })
+})

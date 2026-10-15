@@ -1,0 +1,167 @@
+import type { JSONSchema as ZodJSONSchemaNamespace } from 'zod/v4/core'
+
+// ===== JSON Types =====
+export type JSONValue =
+  null | string | number | boolean | JSONObject | JSONArray
+
+export type JSONObject = { [key: string]: JSONValue }
+
+export type JSONArray = JSONValue[]
+
+type ZodJSONSchema = ZodJSONSchemaNamespace.JSONSchema
+
+/**
+ * JSON Schema definition (for prompt schema or output schema).
+ * Reuse Zod's built-in JSON Schema type so generated and hand-written
+ * schemas remain structurally compatible.
+ */
+export type JsonSchema = ZodJSONSchema
+export type JsonObjectSchema = ZodJSONSchema & { type: 'object' }
+export type JsonStringSchema = ZodJSONSchema & { type: 'string' }
+
+// ===== Data Content Types =====
+export type DataContent = string | Uint8Array | ArrayBuffer | Buffer | URL
+
+// ===== Provider Metadata Types =====
+export type ProviderMetadata = Record<string, Record<string, JSONValue>>
+
+// ===== Content Part Types =====
+export type TextPart = {
+  type: 'text'
+  text: string
+  providerOptions?: ProviderMetadata
+}
+
+export type ImagePart = {
+  type: 'image'
+  image: DataContent
+  mediaType?: string
+  providerOptions?: ProviderMetadata
+}
+
+export type FilePart = {
+  type: 'file'
+  data: DataContent
+  filename?: string
+  mediaType: string
+  providerOptions?: ProviderMetadata
+}
+
+export type ReasoningPart = {
+  type: 'reasoning'
+  text: string
+  providerOptions?: ProviderMetadata
+}
+
+export type ToolCallPart = {
+  type: 'tool-call'
+  toolCallId: string
+  toolName: string
+  input: Record<string, JSONValue>
+  providerOptions?: ProviderMetadata
+  providerExecuted?: boolean
+}
+
+export type ToolResultOutput =
+  | {
+      type: 'json'
+      value: JSONValue
+    }
+  | {
+      type: 'media'
+      data: string
+      mediaType: string
+    }
+
+// ===== Message Types =====
+export type AuxiliaryMessageData = {
+  providerOptions?: ProviderMetadata
+  tags?: string[]
+
+  /**
+   * Unix timestamp (ms) when the message was added to history.
+   * Used to detect prompt cache expiry (>5 min gap = cache miss).
+   * This field is stripped before sending to the LLM.
+   */
+  sentAt?: number
+
+  /** @deprecated Use tags instead. */
+  timeToLive?: 'agentStep' | 'userPrompt'
+  /** @deprecated Use tags instead. */
+  keepDuringTruncation?: boolean
+  /** @deprecated Use tags instead. */
+  keepLastTags?: string[]
+}
+
+export type SystemMessage = {
+  role: 'system'
+  content: TextPart[]
+} & AuxiliaryMessageData
+
+export type UserMessage = {
+  role: 'user'
+  content: (TextPart | ImagePart | FilePart)[]
+} & AuxiliaryMessageData
+
+export type AssistantMessage = {
+  role: 'assistant'
+  content: (TextPart | ReasoningPart | ToolCallPart)[]
+} & AuxiliaryMessageData
+
+export type ToolMessage = {
+  role: 'tool'
+  toolCallId: string
+  toolName: string
+  content: ToolResultOutput[]
+} & AuxiliaryMessageData
+
+export type Message =
+  SystemMessage | UserMessage | AssistantMessage | ToolMessage
+
+// ===== MCP Server Types =====
+
+/**
+ * MCP server configuration for stdio-based servers.
+ *
+ * Environment variables in `env` can be:
+ * - A plain string value (hardcoded, e.g., `'production'`)
+ * - A `$VAR_NAME` reference to read from local environment (e.g., `'$NOTION_TOKEN'`)
+ *
+ * The `$VAR_NAME` syntax reads from `process.env.VAR_NAME` at agent load time.
+ * This keeps secrets out of your agent definitions - store them in `.env.local` instead.
+ *
+ * @example
+ * ```typescript
+ * env: {
+ *   // Read NOTION_TOKEN from local .env file
+ *   NOTION_TOKEN: '$NOTION_TOKEN',
+ *   // Read MY_API_KEY from local env, pass as API_KEY to MCP server
+ *   API_KEY: '$MY_API_KEY',
+ *   // Hardcoded value (non-secret)
+ *   NODE_ENV: 'production',
+ * }
+ * ```
+ */
+export type MCPConfig =
+  | {
+      type?: 'stdio'
+      command: string
+      args?: string[]
+      env?: Record<string, string>
+    }
+  | {
+      type?: 'http' | 'sse'
+      url: string
+      params?: Record<string, string>
+      headers?: Record<string, string>
+    }
+
+// ============================================================================
+// Logger Interface
+// ============================================================================
+export interface Logger<TData = JSONValue> {
+  debug: (data: TData, msg?: string) => void
+  info: (data: TData, msg?: string) => void
+  warn: (data: TData, msg?: string) => void
+  error: (data: TData, msg?: string) => void
+}

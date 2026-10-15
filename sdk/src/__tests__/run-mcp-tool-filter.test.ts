@@ -1,0 +1,109 @@
+import * as mainPromptModule from '@savant-code/agent-runtime/main-prompt'
+import * as mcpClientModule from '@savant-code/common/mcp/client'
+import { getInitialSessionState } from '@savant-code/common/types/session-state'
+import { getStubProjectFileContext } from '@savant-code/common/util/file'
+import { afterEach, describe, expect, it, mock, spyOn } from 'bun:test'
+
+import { SavantCodeClient } from '../client'
+
+import type { AgentDefinition } from '@savant-code/common/templates/initial-agents-dir/types/agent-definition'
+import type { MCPConfig } from '@savant-code/common/types/mcp'
+
+const browserMcpConfig: MCPConfig = {
+  type: 'stdio',
+  command: 'npx',
+  args: ['-y', 'fake-mcp-server'],
+  env: {},
+}
+
+const TEST_AGENT: AgentDefinition = {
+  id: 'mcp-filter-agent',
+  displayName: 'MCP Filter Agent',
+  model: 'openai/gpt-5-mini',
+  reasoningOptions: { effort: 'minimal' },
+  mcpServers: {
+    browser: browserMcpConfig,
+  },
+  toolNames: ['browser/browser_navigate', 'browser/browser_snapshot'],
+  systemPrompt: 'Test MCP filtering.',
+}
+
+describe('MCP tool filtering', () => {
+  afterEach(() => {
+    mock.restore()
+  })
+
+  it('returns only allowlisted MCP tools when an agent restricts toolNames', async () => {
+    spyOn(mcpClientModule, 'getMCPClient').mockResolvedValue('mcp-client-id')
+    spyOn(mcpClientModule, 'listMCPTools').mockResolvedValue({
+      tools: [
+        {
+          name: 'browser_navigate',
+          description: 'Navigate to a page',
+          inputSchema: { type: 'object', properties: {} },
+        },
+        {
+          name: 'browser_snapshot',
+          description: 'Capture snapshot',
+          inputSchema: { type: 'object', properties: {} },
+        },
+        {
+          name: 'browser_click',
+          description: 'Click an element',
+          inputSchema: { type: 'object', properties: {} },
+        },
+      ],
+    } as Awaited<ReturnType<typeof mcpClientModule.listMCPTools>>)
+
+    let filteredTools: Array<{ name: string }> = []
+
+    spyOn(mainPromptModule, 'callMainPrompt').mockImplementation(
+      async (params: Parameters<typeof mainPromptModule.callMainPrompt>[0]) => {
+        const { sendAction, promptId, requestMcpToolData } = params
+        const sessionState = getInitialSessionState(getStubProjectFileContext())
+
+        filteredTools = await requestMcpToolData({
+          mcpConfig: browserMcpConfig,
+          toolNames: TEST_AGENT.toolNames!.filter((toolName) =>
+            toolName.startsWith('browser/'),
+          ).map((toolName) => toolName.slice('browser/'.length)),
+        })
+
+        await sendAction({
+          action: {
+            type: 'prompt-response',
+            promptId,
+            sessionState,
+            output: {
+              type: 'lastMessage',
+              value: [],
+            },
+          },
+        })
+
+        return {
+          sessionState,
+          output: {
+            type: 'lastMessage' as const,
+            value: [],
+          },
+        }
+      },
+    )
+
+    const client = new SavantCodeClient({
+      agentDefinitions: [TEST_AGENT],
+    })
+
+    const result = await client.run({
+      agent: TEST_AGENT.id,
+      prompt: 'List MCP tools',
+    })
+
+    expect(result.output.type).toBe('lastMessage')
+    expect(filteredTools.map((tool: { name: string }) => tool.name)).toEqual([
+      'browser_navigate',
+      'browser_snapshot',
+    ])
+  })
+})

@@ -1,0 +1,42 @@
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  viewBox="0 0 64 64"
+  fill="none"
+  role="img"
+  aria-label="History — session history archive"
+>
+  <defs>
+    <filter id="glow" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="2.5" result="blur" />
+      <feMerge>
+        <feMergeNode in="blur" />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
+    </filter>
+  </defs>
+  <!-- clock face: the archive of what happened -->
+  <circle cx="32" cy="32" r="20" stroke="#18faf9" stroke-width="3" />
+  <!-- hands: pointing back in time -->
+  <path
+    d="M32 32 L32 18"
+    stroke="#18faf9"
+    stroke-width="2.5"
+    stroke-linecap="round"
+  />
+  <path
+    d="M32 32 L44 38"
+    stroke="#ff2bd6"
+    stroke-width="2.5"
+    stroke-linecap="round"
+    filter="url(#glow)"
+  />
+  <!-- archive ticks -->
+  <g stroke="#4fa8ff" stroke-width="1.5" opacity="0.6">
+    <path d="M32 8 L32 12" />
+    <path d="M52 32 L56 32" />
+    <path d="M32 52 L32 56" />
+    <path d="M8 32 L12 32" />
+  </g>
+  <!-- terminal node: now -->
+  <circle cx="32" cy="32" r="2.5" fill="#ff2bd6" filter="url(#glow)" />
+</svg>

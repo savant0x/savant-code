@@ -1,0 +1,862 @@
+{
+  "set": "savant-cyberdeck",
+  "version": "3.0.0",
+  "created": "2026-10-09",
+  "description": "Custom cyberpunk icon set for the Savant CLI: 132 hand-authored vector icons in the canonical Savant neon palette — the identity core (logo, S-monogram), 10 ECHO agent roles and 5 protocol marks with 5 variation marks, the Perfection Loop phase vocabulary plus 4 generic run-lifecycle marks, 20 tool glyphs, 13 status indicators, 15 command marks, 15 dev-object marks, 15 cyberpunk motif marks, 6 sidebar-section marks, 4 activity indicators, 4 nav glyphs, 4 alert glyphs, and 2 toggle glyphs. No external assets, no icon fonts, no downloaded content.",
+  "viewBox": "0 0 64 64",
+  "palette": {
+    "cyan": "#18faf9",
+    "magenta": "#ff2bd6",
+    "blue": "#4fa8ff",
+    "white": "#ffffff",
+    "green": "#3dff9a",
+    "acid": "#f3e600"
+  },
+  "paletteSources": [
+    "cli/src/utils/theme-system/icon-palette.ts (ICON_PALETTE export)"
+  ],
+  "style": {
+    "strokeWidth": 3,
+    "detailWidth": 1.5,
+    "linecap": "round",
+    "linejoin": "round",
+    "ground": "transparent",
+    "glow": "feGaussianBlur merge filter, stdDeviation 2.5",
+    "familyRule": "every icon shares the circuit-trace + node-dot grammar; magenta = the mind/energy, cyan = the structure, blue = the frame, green = verification, acid = the caveat",
+    "motifs": [
+      "circuit traces with 90-degree elbows",
+      "terminal node dots",
+      "neon glow",
+      "HUD corner brackets",
+      "glitch offset layer",
+      "scanlines"
+    ]
+  },
+  "vocabulary": {
+    "perfectionLoopPhases": [
+      "idle",
+      "red",
+      "green",
+      "audit",
+      "self_correct",
+      "complete"
+    ],
+    "phaseMarkMapping": {
+      "idle": "phase-idle.svg",
+      "red": "phase-red.svg",
+      "green": "phase-green.svg",
+      "audit": "phase-audit.svg",
+      "self_correct": "phase-self-correct.svg",
+      "complete": "phase-complete.svg"
+    },
+    "subMarks": {
+      "implement": "phase-implement.svg — the GREEN implementation sub-mark",
+      "archive": "phase-archive.svg — the FID-archival duty at complete"
+    },
+    "runLifecycle": ["active", "error", "fix", "done"],
+    "note": "The ECHO Perfection Loop vocabulary is authoritative for phase-* marks; run-* marks carry the generic run lifecycle (the engine running, a flaw identified, repair in progress, shipped and archived)."
+  },
+  "icons": [
+    {
+      "file": "logo.svg",
+      "name": "Savant Logo",
+      "category": "identity-mark",
+      "subject": "One Mind. A Thousand Faces. — magenta core with ten radiating cyan circuit facets, HUD bracket frame, scanline accents"
+    },
+    {
+      "file": "logo-s.svg",
+      "name": "Savant S-Monogram",
+      "category": "identity-mark",
+      "subject": "The S as a circuit trace — 90-degree elbows, terminal nodes at entry/exit, the core dot at center"
+    },
+    {
+      "file": "orchestrator.svg",
+      "name": "Orchestrator",
+      "category": "echo-agent",
+      "subject": "Protocol enforcement — hexagonal hub with six radiating circuit spokes and terminal nodes"
+    },
+    {
+      "file": "detective.svg",
+      "name": "Detective",
+      "category": "echo-agent",
+      "subject": "Codebase analysis — magnifier with scanline lens and circuit handle"
+    },
+    {
+      "file": "forge.svg",
+      "name": "Forge",
+      "category": "echo-agent",
+      "subject": "Code implementation — anvil, hammer and circuit sparks"
+    },
+    {
+      "file": "verifier.svg",
+      "name": "Verifier",
+      "category": "echo-agent",
+      "subject": "Double-audit validation — shield with circuit check"
+    },
+    {
+      "file": "recorder.svg",
+      "name": "Recorder",
+      "category": "echo-agent",
+      "subject": "FID lifecycle management — document with folded corner and elbow traces"
+    },
+    {
+      "file": "thinker.svg",
+      "name": "Thinker",
+      "category": "echo-agent",
+      "subject": "Sequential logic engine — neural mesh with via diamonds"
+    },
+    {
+      "file": "scout.svg",
+      "name": "Scout",
+      "category": "echo-agent",
+      "subject": "Contextual exploration — radar with sweep beam and contacts"
+    },
+    {
+      "file": "researcher.svg",
+      "name": "Researcher",
+      "category": "echo-agent",
+      "subject": "External verification — flask with neon liquid and rising bubbles"
+    },
+    {
+      "file": "scribe.svg",
+      "name": "Scribe",
+      "category": "echo-agent",
+      "subject": "Documentation synthesis — pen nib with writing traces"
+    },
+    {
+      "file": "adversary.svg",
+      "name": "Adversary",
+      "category": "echo-agent",
+      "subject": "Meta-verification override — crossed blades with chromatic glitch layer"
+    },
+    {
+      "file": "detective-crosshair.svg",
+      "name": "Detective Crosshair",
+      "category": "variation-mark",
+      "subject": "Analysis scanner, crosshair variant"
+    },
+    {
+      "file": "loop-minimal.svg",
+      "name": "Loop Minimal",
+      "category": "variation-mark",
+      "subject": "The ECHO fix/verify cycle, minimal variant"
+    },
+    {
+      "file": "orchestrator-solid.svg",
+      "name": "Orchestrator Solid",
+      "category": "variation-mark",
+      "subject": "Protocol enforcement hub, solid variant"
+    },
+    {
+      "file": "scope-crosshair.svg",
+      "name": "Scope Crosshair",
+      "category": "variation-mark",
+      "subject": "Target reticle, crosshair variant"
+    },
+    {
+      "file": "verifier-bold.svg",
+      "name": "Verifier Bold",
+      "category": "variation-mark",
+      "subject": "Double-audit validation shield, bold variant"
+    },
+    {
+      "file": "fid.svg",
+      "name": "FID",
+      "category": "protocol-mark",
+      "subject": "Feature Implementation Document — folded-corner document, code lines and phase dots"
+    },
+    {
+      "file": "loop.svg",
+      "name": "Perfection Loop",
+      "category": "protocol-mark",
+      "subject": "The fix/verify cycle — 270-degree arc, arrowhead and four phase nodes"
+    },
+    {
+      "file": "law.svg",
+      "name": "Law",
+      "category": "protocol-mark",
+      "subject": "The ECHO protocol laws — gavel with impact ticks"
+    },
+    {
+      "file": "audit.svg",
+      "name": "Audit",
+      "category": "protocol-mark",
+      "subject": "Double-audit — HUD brackets, circuit check and scanline sweep"
+    },
+    {
+      "file": "scope.svg",
+      "name": "Scope",
+      "category": "protocol-mark",
+      "subject": "Target reticle — dual rings, crosshair ticks and cardinal nodes"
+    },
+    {
+      "file": "phase-idle.svg",
+      "name": "IDLE",
+      "category": "phase-mark",
+      "subject": "Hollow core, dim frame — present, not active"
+    },
+    {
+      "file": "phase-red.svg",
+      "name": "RED",
+      "category": "phase-mark",
+      "subject": "Investigating the codebase"
+    },
+    {
+      "file": "phase-green.svg",
+      "name": "GREEN",
+      "category": "phase-mark",
+      "subject": "Implementing fixes"
+    },
+    {
+      "file": "phase-audit.svg",
+      "name": "AUDIT",
+      "category": "phase-mark",
+      "subject": "Scanner examining the core — magnifier with scanline, circuit handle"
+    },
+    {
+      "file": "phase-self-correct.svg",
+      "name": "SELF-CORRECT",
+      "category": "phase-mark",
+      "subject": "Revising the approach"
+    },
+    {
+      "file": "phase-complete.svg",
+      "name": "COMPLETE",
+      "category": "phase-mark",
+      "subject": "Verified check in a green frame"
+    },
+    {
+      "file": "phase-implement.svg",
+      "name": "IMPLEMENT",
+      "category": "phase-mark",
+      "subject": "Writing the fix — the GREEN implementation sub-mark"
+    },
+    {
+      "file": "phase-archive.svg",
+      "name": "ARCHIVE",
+      "category": "phase-mark",
+      "subject": "Archiving the FID — archive box with closure check"
+    },
+    {
+      "file": "run-active.svg",
+      "name": "Run: Active",
+      "category": "run-mark",
+      "subject": "The engine is running — solid glowing core, dashed energized ring, radiating energy"
+    },
+    {
+      "file": "run-error.svg",
+      "name": "Run: Error",
+      "category": "run-mark",
+      "subject": "A flaw, identified — lightning crack through a magenta frame"
+    },
+    {
+      "file": "run-fix.svg",
+      "name": "Run: Fix",
+      "category": "run-mark",
+      "subject": "Repair in progress — repair loop with wrench-trace, acid sparks at the repair point"
+    },
+    {
+      "file": "run-done.svg",
+      "name": "Run: Done",
+      "category": "run-mark",
+      "subject": "Shipped, verified, archived — sealed diamond, corner ticks"
+    },
+    {
+      "file": "tool-bash.svg",
+      "name": "Bash",
+      "category": "tool-glyph",
+      "subject": "Terminal window"
+    },
+    {
+      "file": "tool-build.svg",
+      "name": "Build",
+      "category": "tool-glyph",
+      "subject": "Gear"
+    },
+    {
+      "file": "tool-call.svg",
+      "name": "Call",
+      "category": "tool-glyph",
+      "subject": "Arrow into a port box"
+    },
+    {
+      "file": "tool-deploy.svg",
+      "name": "Deploy",
+      "category": "tool-glyph",
+      "subject": "Rocket"
+    },
+    {
+      "file": "tool-diff.svg",
+      "name": "Diff",
+      "category": "tool-glyph",
+      "subject": "Two documents with spark"
+    },
+    {
+      "file": "tool-edit.svg",
+      "name": "Edit",
+      "category": "tool-glyph",
+      "subject": "Pencil"
+    },
+    {
+      "file": "tool-fetch.svg",
+      "name": "Fetch",
+      "category": "tool-glyph",
+      "subject": "Download arrow onto a tray"
+    },
+    {
+      "file": "tool-glob.svg",
+      "name": "Glob",
+      "category": "tool-glyph",
+      "subject": "Orbital spokes"
+    },
+    {
+      "file": "tool-grep.svg",
+      "name": "Grep",
+      "category": "tool-glyph",
+      "subject": "Search lens over text lines"
+    },
+    {
+      "file": "tool-lint.svg",
+      "name": "Lint",
+      "category": "tool-glyph",
+      "subject": "Broom sweeping"
+    },
+    {
+      "file": "tool-read.svg",
+      "name": "Read",
+      "category": "tool-glyph",
+      "subject": "Open book"
+    },
+    {
+      "file": "tool-search.svg",
+      "name": "Search",
+      "category": "tool-glyph",
+      "subject": "Lens with crosshair"
+    },
+    {
+      "file": "tool-skill.svg",
+      "name": "Skill",
+      "category": "tool-glyph",
+      "subject": "Hexagon with star core"
+    },
+    {
+      "file": "tool-task.svg",
+      "name": "Task",
+      "category": "tool-glyph",
+      "subject": "Clipboard with checked rows"
+    },
+    {
+      "file": "tool-test.svg",
+      "name": "Test",
+      "category": "tool-glyph",
+      "subject": "Flask with passing check"
+    },
+    {
+      "file": "tool-think.svg",
+      "name": "Think",
+      "category": "tool-glyph",
+      "subject": "Thought bubble with nodes"
+    },
+    {
+      "file": "tool-todo.svg",
+      "name": "Todo",
+      "category": "tool-glyph",
+      "subject": "List with checkboxes"
+    },
+    {
+      "file": "tool-typecheck.svg",
+      "name": "Typecheck",
+      "category": "tool-glyph",
+      "subject": "T monogram with check"
+    },
+    {
+      "file": "tool-web.svg",
+      "name": "Web",
+      "category": "tool-glyph",
+      "subject": "Globe with meridians"
+    },
+    {
+      "file": "tool-write.svg",
+      "name": "Write",
+      "category": "tool-glyph",
+      "subject": "Pen on document"
+    },
+    {
+      "file": "status-active.svg",
+      "name": "Active",
+      "category": "status-indicator",
+      "subject": "Live and working — solid green core, white-hot center"
+    },
+    {
+      "file": "status-blocked.svg",
+      "name": "Blocked",
+      "category": "status-indicator",
+      "subject": "Octagon with bar"
+    },
+    {
+      "file": "status-complete.svg",
+      "name": "Complete",
+      "category": "status-indicator",
+      "subject": "Ringed check"
+    },
+    {
+      "file": "status-connecting.svg",
+      "name": "Connecting",
+      "category": "status-indicator",
+      "subject": "Plug and cable"
+    },
+    {
+      "file": "status-error.svg",
+      "name": "Error",
+      "category": "status-indicator",
+      "subject": "Ringed cross"
+    },
+    {
+      "file": "status-idle.svg",
+      "name": "Idle",
+      "category": "status-indicator",
+      "subject": "Dim ring"
+    },
+    {
+      "file": "status-inactive.svg",
+      "name": "Inactive",
+      "category": "status-indicator",
+      "subject": "Present, not running — hollow core, dim ticks"
+    },
+    {
+      "file": "status-offline.svg",
+      "name": "Offline",
+      "category": "status-indicator",
+      "subject": "Slashed ring"
+    },
+    {
+      "file": "status-partial.svg",
+      "name": "Partial",
+      "category": "status-indicator",
+      "subject": "Running with a caveat — half-lit core, acid-yellow split"
+    },
+    {
+      "file": "status-paused.svg",
+      "name": "Paused",
+      "category": "status-indicator",
+      "subject": "Double bars"
+    },
+    {
+      "file": "status-retrying.svg",
+      "name": "Retrying",
+      "category": "status-indicator",
+      "subject": "Circular arrow"
+    },
+    {
+      "file": "status-syncing.svg",
+      "name": "Syncing",
+      "category": "status-indicator",
+      "subject": "Counter-rotating arcs"
+    },
+    {
+      "file": "status-warning.svg",
+      "name": "Warning",
+      "category": "status-indicator",
+      "subject": "Triangle with exclamation"
+    },
+    {
+      "file": "cmd-agents.svg",
+      "name": "Agents",
+      "category": "command-mark",
+      "subject": "Three figures"
+    },
+    {
+      "file": "cmd-clear.svg",
+      "name": "Clear",
+      "category": "command-mark",
+      "subject": "Trash can"
+    },
+    {
+      "file": "cmd-commit.svg",
+      "name": "Commit",
+      "category": "command-mark",
+      "subject": "Node graph with branch"
+    },
+    {
+      "file": "cmd-compact.svg",
+      "name": "Compact",
+      "category": "command-mark",
+      "subject": "Converging arrows"
+    },
+    {
+      "file": "cmd-config.svg",
+      "name": "Config",
+      "category": "command-mark",
+      "subject": "Sliders"
+    },
+    {
+      "file": "cmd-exit.svg",
+      "name": "Exit",
+      "category": "command-mark",
+      "subject": "Door with arrow"
+    },
+    {
+      "file": "cmd-export.svg",
+      "name": "Export",
+      "category": "command-mark",
+      "subject": "Arrow out of a tray"
+    },
+    {
+      "file": "cmd-graph.svg",
+      "name": "Graph",
+      "category": "command-mark",
+      "subject": "Triangle of nodes"
+    },
+    {
+      "file": "cmd-help.svg",
+      "name": "Help",
+      "category": "command-mark",
+      "subject": "Question mark"
+    },
+    {
+      "file": "cmd-logs.svg",
+      "name": "Logs",
+      "category": "command-mark",
+      "subject": "Console with lines"
+    },
+    {
+      "file": "cmd-model.svg",
+      "name": "Model",
+      "category": "command-mark",
+      "subject": "Stacked layers"
+    },
+    {
+      "file": "cmd-new.svg",
+      "name": "New",
+      "category": "command-mark",
+      "subject": "Circled plus"
+    },
+    {
+      "file": "cmd-skills.svg",
+      "name": "Skills",
+      "category": "command-mark",
+      "subject": "Medal with ribbon"
+    },
+    {
+      "file": "cmd-status.svg",
+      "name": "Status",
+      "category": "command-mark",
+      "subject": "Gauge"
+    },
+    {
+      "file": "cmd-theme.svg",
+      "name": "Theme",
+      "category": "command-mark",
+      "subject": "Half-filled circle"
+    },
+    {
+      "file": "obj-api.svg",
+      "name": "API",
+      "category": "dev-object-mark",
+      "subject": "Plug and socket"
+    },
+    {
+      "file": "obj-branch.svg",
+      "name": "Branch",
+      "category": "dev-object-mark",
+      "subject": "Git branch"
+    },
+    {
+      "file": "obj-calendar.svg",
+      "name": "Calendar",
+      "category": "dev-object-mark",
+      "subject": "Month grid"
+    },
+    {
+      "file": "obj-clock.svg",
+      "name": "Clock",
+      "category": "dev-object-mark",
+      "subject": "Analog clock"
+    },
+    {
+      "file": "obj-cloud.svg",
+      "name": "Cloud",
+      "category": "dev-object-mark",
+      "subject": "Cloud with rain"
+    },
+    {
+      "file": "obj-code.svg",
+      "name": "Code",
+      "category": "dev-object-mark",
+      "subject": "Angle brackets with slash"
+    },
+    {
+      "file": "obj-database.svg",
+      "name": "Database",
+      "category": "dev-object-mark",
+      "subject": "Cylinder"
+    },
+    {
+      "file": "obj-file.svg",
+      "name": "File",
+      "category": "dev-object-mark",
+      "subject": "Document"
+    },
+    {
+      "file": "obj-folder.svg",
+      "name": "Folder",
+      "category": "dev-object-mark",
+      "subject": "Open folder"
+    },
+    {
+      "file": "obj-key.svg",
+      "name": "Key",
+      "category": "dev-object-mark",
+      "subject": "Circle and shaft"
+    },
+    {
+      "file": "obj-lock.svg",
+      "name": "Lock",
+      "category": "dev-object-mark",
+      "subject": "Padlock"
+    },
+    {
+      "file": "obj-merge.svg",
+      "name": "Merge",
+      "category": "dev-object-mark",
+      "subject": "Converging paths"
+    },
+    {
+      "file": "obj-server.svg",
+      "name": "Server",
+      "category": "dev-object-mark",
+      "subject": "Rack unit"
+    },
+    {
+      "file": "obj-tag.svg",
+      "name": "Tag",
+      "category": "dev-object-mark",
+      "subject": "Rotated square"
+    },
+    {
+      "file": "obj-terminal.svg",
+      "name": "Terminal",
+      "category": "dev-object-mark",
+      "subject": "Monitor"
+    },
+    {
+      "file": "motif-binary.svg",
+      "name": "Binary",
+      "category": "cyberpunk-motif",
+      "subject": "Bit cells"
+    },
+    {
+      "file": "motif-chip.svg",
+      "name": "Chip",
+      "category": "cyberpunk-motif",
+      "subject": "Microprocessor"
+    },
+    {
+      "file": "motif-chrome.svg",
+      "name": "Chrome",
+      "category": "cyberpunk-motif",
+      "subject": "Stacked chevrons"
+    },
+    {
+      "file": "motif-circuit.svg",
+      "name": "Circuit",
+      "category": "cyberpunk-motif",
+      "subject": "Traces and nodes"
+    },
+    {
+      "file": "motif-drone.svg",
+      "name": "Drone",
+      "category": "cyberpunk-motif",
+      "subject": "Quad rotor"
+    },
+    {
+      "file": "motif-glitch.svg",
+      "name": "Glitch",
+      "category": "cyberpunk-motif",
+      "subject": "Offset bars"
+    },
+    {
+      "file": "motif-hex.svg",
+      "name": "Hex",
+      "category": "cyberpunk-motif",
+      "subject": "Nested hexagons"
+    },
+    {
+      "file": "motif-holo.svg",
+      "name": "Holo",
+      "category": "cyberpunk-motif",
+      "subject": "Projected diamond"
+    },
+    {
+      "file": "motif-matrix.svg",
+      "name": "Matrix",
+      "category": "cyberpunk-motif",
+      "subject": "Dot grid with highlight columns"
+    },
+    {
+      "file": "motif-neon.svg",
+      "name": "Neon",
+      "category": "cyberpunk-motif",
+      "subject": "Radiant core"
+    },
+    {
+      "file": "motif-node.svg",
+      "name": "Node",
+      "category": "cyberpunk-motif",
+      "subject": "Hub and satellites"
+    },
+    {
+      "file": "motif-pulse.svg",
+      "name": "Pulse",
+      "category": "cyberpunk-motif",
+      "subject": "Heartbeat line"
+    },
+    {
+      "file": "motif-scan.svg",
+      "name": "Scan",
+      "category": "cyberpunk-motif",
+      "subject": "Corner brackets with sweep"
+    },
+    {
+      "file": "motif-voxel.svg",
+      "name": "Voxel",
+      "category": "cyberpunk-motif",
+      "subject": "Isometric cube"
+    },
+    {
+      "file": "motif-wave.svg",
+      "name": "Wave",
+      "category": "cyberpunk-motif",
+      "subject": "Sine wave"
+    },
+    {
+      "file": "sidebar-activity.svg",
+      "name": "Activity",
+      "category": "sidebar-section",
+      "subject": "Agent activity stream — vertical timeline with pulse nodes and branch events"
+    },
+    {
+      "file": "sidebar-trust-matrix.svg",
+      "name": "Trust Matrix",
+      "category": "sidebar-section",
+      "subject": "Trust verification grid — 3x3 lattice, magenta verified cells, blue pending cells"
+    },
+    {
+      "file": "sidebar-fid.svg",
+      "name": "FID Section",
+      "category": "sidebar-section",
+      "subject": "Flaw Identification Document — notched document frame, magenta crack, green verification check"
+    },
+    {
+      "file": "sidebar-history.svg",
+      "name": "History",
+      "category": "sidebar-section",
+      "subject": "Session history archive — clock face pointing back, magenta now-node, archive ticks"
+    },
+    {
+      "file": "sidebar-loop.svg",
+      "name": "Loop Section",
+      "category": "sidebar-section",
+      "subject": "The ECHO Perfection Loop — cycle closing on itself, magenta return arrow, iteration nodes"
+    },
+    {
+      "file": "sidebar-session.svg",
+      "name": "Session",
+      "category": "sidebar-section",
+      "subject": "Persistent session state — container pod, state layers, green always-on indicator"
+    },
+    {
+      "file": "activity-thinking.svg",
+      "name": "Thinking",
+      "category": "activity-indicator",
+      "subject": "Branching thought trace — paths the model tried, green cross on the kept branch"
+    },
+    {
+      "file": "activity-tool.svg",
+      "name": "Tool",
+      "category": "activity-indicator",
+      "subject": "Sandbox gear — circuit-trace cog with stub teeth, executing core"
+    },
+    {
+      "file": "activity-subagent.svg",
+      "name": "Subagent",
+      "category": "activity-indicator",
+      "subject": "Parent node spawning a child — delegation trace, smaller child one generation down"
+    },
+    {
+      "file": "activity-researching.svg",
+      "name": "Researching",
+      "category": "activity-indicator",
+      "subject": "Magnifier over indexed sources — source lines, glowing match, circuit handle"
+    },
+    {
+      "file": "nav-back.svg",
+      "name": "Nav: Back",
+      "category": "nav-glyph",
+      "subject": "Left chevron with magenta terminal node and HUD corner tick"
+    },
+    {
+      "file": "nav-forward.svg",
+      "name": "Nav: Forward",
+      "category": "nav-glyph",
+      "subject": "Right chevron with magenta terminal node and HUD corner tick"
+    },
+    {
+      "file": "nav-up.svg",
+      "name": "Nav: Up",
+      "category": "nav-glyph",
+      "subject": "Up chevron with magenta terminal node and HUD corner tick"
+    },
+    {
+      "file": "nav-down.svg",
+      "name": "Nav: Down",
+      "category": "nav-glyph",
+      "subject": "Down chevron with magenta terminal node and HUD corner tick"
+    },
+    {
+      "file": "alert-info.svg",
+      "name": "Alert: Info",
+      "category": "alert-glyph",
+      "subject": "Blue circle frame, info dot and stroke, terminal dot at the base"
+    },
+    {
+      "file": "alert-success.svg",
+      "name": "Alert: Success",
+      "category": "alert-glyph",
+      "subject": "Green circle frame, verified check"
+    },
+    {
+      "file": "alert-warning.svg",
+      "name": "Alert: Warning",
+      "category": "alert-glyph",
+      "subject": "Acid-yellow triangle, glowing exclamation stroke, HUD ticks"
+    },
+    {
+      "file": "alert-error.svg",
+      "name": "Alert: Error",
+      "category": "alert-glyph",
+      "subject": "Magenta octagon (hard stop), crossing circuit traces, terminal nodes"
+    },
+    {
+      "file": "toggle-on.svg",
+      "name": "Toggle: On",
+      "category": "toggle-glyph",
+      "subject": "Energized track, glowing node right, white-hot center"
+    },
+    {
+      "file": "toggle-off.svg",
+      "name": "Toggle: Off",
+      "category": "toggle-glyph",
+      "subject": "Dim track, hollow node left"
+    }
+  ],
+  "integration": {
+    "status": "source assets — not yet wired into a CLI surface",
+    "candidatePaths": [
+      "HTML export inlining (pattern: cli/src/constants/savant-logo.ts SAVANT_LOGO_PNG_BASE64)",
+      "PNG rasterization for TUI image protocols (cli deps: terminal-image, jimp) — needs an external rasterizer; none present on the authoring box",
+      "desktop/public asset adoption"
+    ],
+    "decision": "operator"
+  }
+}

@@ -1,0 +1,31 @@
+{
+  "compilerOptions": {
+    "target": "ES2023",
+    "lib": ["ES2023", "DOM"],
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "strict": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "declaration": true,
+    "outDir": "./dist",
+    // FID-2026-0930-003: the program path-maps @savant-code/agent-runtime/*
+    // to source, which transitively compiles the connectors package — and
+    // connectors uses Deno-style `.ts` import extensions (vendored
+    // convention). noEmit typecheck only, so the flag is TS-legal here.
+    "allowImportingTsExtensions": true,
+    "types": ["node", "bun-types"],
+    "rootDir": "..",
+    "paths": {
+      "@savant-code/common/*": ["../common/src/*"],
+      "@savant-code/agent-runtime/*": ["../packages/agent-runtime/src/*"],
+      "@savant-code/code-map": ["../packages/code-map/src/index.ts"],
+      "@savant-code/code-map/*": ["../packages/code-map/src/*"],
+      "@savant-code/llm-providers/*": ["../packages/llm-providers/src/*"]
+    }
+  },
+  "include": ["src/**/*.ts"],
+  "exclude": ["node_modules", "dist"]
+}

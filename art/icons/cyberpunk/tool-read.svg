@@ -1,0 +1,33 @@
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  viewBox="0 0 64 64"
+  fill="none"
+  role="img"
+  aria-label="Read tool — open book"
+>
+  <!-- SAVANT // CYBERDECK — hand-authored vector geometry, no external assets -->
+  <defs>
+    <filter id="glow" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="2.5" result="blur" />
+      <feMerge>
+        <feMergeNode in="blur" />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
+    </filter>
+  </defs>
+  <!-- open book -->
+  <path
+    d="M32 20 L20 14 L20 46 L32 52 L44 46 L44 14 Z"
+    stroke="#18faf9"
+    stroke-width="3"
+    stroke-linejoin="round"
+  />
+  <path d="M32 20 L32 52" stroke="#4fa8ff" stroke-width="1.5" />
+  <!-- page lines -->
+  <g stroke-linecap="round">
+    <path d="M24 22 L29 20" stroke="#ff2bd6" stroke-width="1.5" />
+    <path d="M24 29 L29 27" stroke="#ff2bd6" stroke-width="1.5" />
+    <path d="M35 20 L40 22" stroke="#18faf9" stroke-width="1.5" />
+    <path d="M35 27 L40 29" stroke="#18faf9" stroke-width="1.5" />
+  </g>
+</svg>

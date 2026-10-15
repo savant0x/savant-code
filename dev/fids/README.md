@@ -1,0 +1,1602 @@
+# Feature Implementation Documents
+
+This directory contains **active** FIDs only: findings that still require
+operator decision, implementation, runtime review, or closure evidence.
+
+## Current active FIDs
+
+The 2026-10-15 completion leaves one active record: the master plan. The four
+implementation records `FID-2026-1012-017`, `-021`, `-023` and `-024` are closed
+and archived with committed implementation and passing gates. Named Q25 waivers
+preserve the production observation limitation: 591 capture records / 59 stable
+classes / zero issues, all unresolved. No class repair is claimed.
+
+The master retains the operator/external-input work registered in `SCOPE.md`.
+Earlier provider and artifact-census records are also archived; no Cloudflare
+account configuration is a completion requirement under Q27. Current evidence:
+[completion record](../session-summaries/2026-10-15-active-fid-completion.md).
+
+| FID | Status | Current closure condition |
+|---|---|---|
+| `FID-2026-1012-022` | converged | Implementation children archived; remaining operator/external-input register items retain their specific blockers. |
+
+The active queue is intentionally non-empty under the FID closure contract.
+Completed records are moved to [`archive/`](archive/) with a CHANGELOG entry and
+archive-index entry; see [`archive/README.md`](archive/README.md).
+
+The latest four closures are indexed in
+[`archive/2026-10-15-closures.md`](archive/2026-10-15-closures.md).
+
+## Historical queue snapshots
+
+The dated entries below describe their own sessions, not the current queue.
+
+FID-2026-1010-001 was already marked closed and recorded as archived in SCOPE;
+its file was moved here on 2026-10-11 to reconcile the active queue and
+repository validator.
+
+The operator cancelled the icon-integration and sidebar work on 2026-10-11.
+Five FIDs are archived as operator-declined; their prior implementation and
+test notes are historical and do not assert product acceptance.
+
+**2026-10-08 — six completed FIDs closed and archived:**
+`FID-2026-1007-013`, `-015`, `FID-2026-1008-001`, `-002`, `-004`, `-005`.
+Implementation commits and fresh verification receipts are recorded in
+[`archive/README.md`](archive/README.md) and each archived FID. The remaining
+eval wire stage, harvested-candidate wiring decisions, and five vendor window
+values stay registered in `SCOPE.md` as `T164-D`, `T171` and `T173`. Later the
+same day, `-011` (T164-B) closed and archived on its 7/7 coverage suite with a
+refreshed receipt; that historical queue then contained three. Later still,
+`-014` (T164-E) closed and archived on its 20/20 preflight suite with a
+refreshed receipt; that historical queue then contained two. Finally, `-016`
+(T165) closed and archived on its 43/43 provider suites with a refreshed
+receipt; that historical queue then contained one, before the sidebar FID opened.
+
+**2026-10-08 — `FID-2026-1007-017` (T166, model picker free-key lane +
+provider order) closed and archived** on the operator's directive after their
+live confirmation ("i tested it live, everything confirmed"). It was opened
+after the historical queue was written and never entered it. Receipt 3/3 at the archived path; see
+[`archive/README.md`](archive/README.md).
+
+The prior queue (`FID-2026-1007-007`, `-008`, `-009`) closed and archived
+2026-10-07 under the operator's standing ruling (verbatim: "approve, work until
+everything is completed, no more blockers and all fixed with echo compliance").
+Their closure sections are in [`archive/README.md`](archive/README.md):
+
+- **`FID-2026-1006-005` (T155, cache program)** — all eleven steps resolved. Four
+  implementation commits (`ba4dee65`, `f0d365fa`, `7901568f`, `70cec07c`), step 11
+  landed by `FID-2026-1007-004`, and steps 8 and 10 re-scoped to offline evidence
+  under the operator's ruling that the live/paid leg was never a requirement.
+- **`FID-2026-1007-005` (T160, ChatAnywhere `/model` gap)** — `edc761a8`. The
+  provider's 27 rows reach the picker (live census: `chatanywhere: 27`), the
+  free-key section hoists free-**token** entries only, and
+  `catalogPairingIssues` fails a `modelsRef` provider with no picker rows.
+- **`FID-2026-1007-006` (T161, suite isolation)** — `d396d091` + `8c92d087`. The
+  root `bun run test` chain's `cli` leg is green again, publish authority is
+  explicit, and the config dir is suite-owned.
+
+**Closed 2026-10-06 — `FID-2026-1006-004-law15-capture-budget-refusal`
+(status `closed`; register item T153; implementation committed as `ba38c548`).**
+The Law 15 worktree
+backstop was inert in this repository: capture content-hashed the full
+5,455-path / 27.1 MB inventory inside a 5,000 ms budget, the blow was refused by
+design and stamped `worktreeBaselineMethod = 'unavailable'`, and
+`reconcileWorktree` treats that as an unconditional cannot-verify, so no
+out-of-band mutation was detected for the life of the session. A second budget
+defect sat behind it in the reconcile deletion leg (one `statSync` per baseline
+key inside a 500 ms budget). **Implemented and verified 2026-10-06:** the
+split-baseline capture (a path inventory plus content hashes for only the
+initially-dirty set), the leg-named refusal, the change-bounded deletion source
+(four terms), the unknown rule for walk-sourced candidates, the honest spawn
+classification with a retry-once policy, and a bounded recapture — in two new
+modules (`worktree-git.ts`, `worktree-scan.ts`) plus rewrites of
+`worktree-capture.ts` / `worktree-reconcile.ts`, pinned by ten deterministic
+pins and one moved pin across two new suites and an sdk transport leg.
+`bun run fid:verify <record> --check` is 10/10 exit 0; the live probe on this
+repository measures capture 244-254 ms / 18 hashes / 5,464 paths (was
+956-1,128 ms / 5,454 hashes) and a reconcile that now VERIFIES (`degraded:
+false`). **Closed and archived the same day** on operator G2 authorization: the
+record moved to [`archive/`](archive/), its CHANGELOG entry landed under
+Unreleased/`### Fixed`, and its three lessons were promoted to
+`dev/LEARNINGS.md`. Its deletion-suite pins were hardened after the first stamp
+(an injected budget), and the amendment is recorded in the record's Loop 3.
+
+**2026-10-06 (earlier) — the active queue was empty.**
+
+**2026-10-06 — `FID-2026-1006-002-pi-harness-adoption-program` is `closed`
+and archived to [`archive/`](archive/); register item T150 is complete.** It
+was the adoption record for T149's thirteen ranked pi-harness ideas: twelve
+work packages, each mapped to an existing seam with declared gates, plus one
+determined non-adoption (idea 13 miscellanies). All twelve work packages were
+implemented and verified: `fid:verify --check` 22/22 — 5 workspace typechecks,
+16 named test gates and `quality: PASS (1498 baselined files)` — receipt
+`sha256:b1a3f13c7fa33e485ca6bbffeb366226be2a1a3470d06341651d87c95b50a8c0`,
+root `bun run typecheck` (13 workspaces) exit 0, `validate:repository` PASS.
+Committed locally as `81733c16` (path-scoped, operator-approved); no push or
+release. **Renumbered from
+`-001` to `-002` at 03:31:** a concurrent session had allocated `-001` to
+`FID-2026-1006-001-codecraft-model-picker.md` (Created 03:29) while this
+record was being loop-passed, and `fid.metadata.duplicate-active-id` is a hard
+repo-gate failure. This record moved because the other file belongs to a live
+concurrent session; the chronological claim (03:15 vs 03:29) is recorded in
+that FID's Loop 4 so the operator can reverse the assignment deliberately.
+
+**2026-10-06 — six FIDs closed and archived in local batch commit
+`e229d9a1`; no push or release.** The verified skill-evaluation,
+provider-failure, stream-recovery, availability/quota, provider-evidence,
+and ChatAnywhere records are now closed with refreshed receipts in
+[`archive/`](archive/). The deliberate `website/` root under T145 is also
+committed locally as `cef88023`; repository validation passes.
+
+**2026-10-05 — the all-FIDs session: five FIDs closed and archived; the active
+queue is empty.** Operator directive ("complete all open fids in full then
+properly close out the session", automation level 3, single-agent ECHO
+v0.1.2): `FID-2026-1005-004` (provider registry reference — gates re-verified,
+stale duplicate step fixed), `FID-2026-1004-005` (provider runbook, T131 —
+record authored from live tree verification), `FID-2026-1004-007` (launch
+digest + inbox, T132 — Step 7 completion watcher implemented),
+`FID-2026-1005-001` (inter-agent message integrity, T134 — three boundaries
+fixed and pinned), `FID-2026-1005-002` (right sidebar, T135 — keyboard access,
+rail-below-100, overflow removed, count path), and `FID-2026-1005-003` (skill
+learning, T136 — single proposal path, durable lifecycle events, content-bound
+proof labels) were all closed with pasted gate output at their archived paths
+and per-FID entries under CHANGELOG `Unreleased — 2026-10-04`. NEEDS-REVIEW
+boundaries recorded honestly: live TUI keyboard traversal + theme contrast
+(-002) and the live capture-to-trust exercise (-003) require operator sessions.
+Nothing committed (G2 withheld). **The active FID queue is empty again.**
+
+**2026-10-03 — the October batch: eleven FIDs closed and archived with the
+batch landing (`9f1b8068`).** The operator granted G2 ("Batch + close all"):
+the verified tree (351 files) landed as one batch commit on local main after
+a pristine full-repository battery (7,878 pass / 0 fail), and
+`FID-2026-1002-002`/-003/-004/-005/-006/-007/-008 plus
+`FID-2026-1003-002`/-003/-005/-006 were flipped to
+`closed (implemented + verified, 2026-10-03, commit 9f1b8068)` and moved to
+`dev/fids/archive/`, with per-FID entries under CHANGELOG
+`Unreleased — 2026-10-03`. Local commits only — no push, no release.
+**The active FID queue is empty again.**
+
+**The active FID queue is empty** (2026-09-27): the records below were closed and
+archived on operator directive, with their receipts re-stamped at the archived
+paths. Each block is kept as the record of what it claimed while it was active.
+
+**2026-09-27 — Vercel AI Gateway as a built-in provider (FID-2026-0927-001,
+`closed` + archived 2026-09-27).** FID-bound first: the Perfection Loop converged
+before any code, then one registry entry (`vercel` — label "Vercel AI Gateway",
+`AI_GATEWAY_API_KEY` + masked `/provider vercel` store with shell precedence,
+base `https://ai-gateway.vercel.sh/v1`, `protocol: 'openai'`, `idTransform:
+'strip'`, keyless live catalog at `/v1/models`) landed in a new second partition
+module (`registry-partitioned.ts` was measured at 298/300 lines against the
+quality ceiling). The archived "one registry entry" walkthrough was treated as a
+claim, not the contract: the gateway's list is OpenAI-shaped but not
+OpenRouter-typed (`context_window`/`max_tokens`, numeric `created`), so the new
+parser maps the drift explicitly, and the FID-2026-0809-008 audit contract
+requires a `live-catalog` exception-manifest entry (owner + evidence paths) the
+runbook never mentioned. Boundary measured at intake (keyless catalog 200 /
+keyless chat 401); RED-first with named failures (common 4 fail / cli 3 fail +
+import error / sdk 2 fail — the routing leg captured `POST
+https://ai-gateway.vercel.sh/v1/chat/completions` with `Bearer` auth and the
+stripped wire id `alibaba/qwen-3-14b`); two new suites (parser contract;
+two-way credential legs split at the 300-line ceiling) + widened pins in four;
+full chain `bun run test` 12/12 workspaces 0 fail, typecheck exit 0, eslint 0,
+lint:md clean, `quality:report` PASS, `generate:provider-docs:check` clean.
+Keyed live inference deliberately not claimed (no `AI_GATEWAY_API_KEY` this
+session). Receipt 13/13 live at the archived path (`sha256:8e60648f…`,
+`2026-09-27T16:07:49Z`). Nothing committed (G2 withheld).
+
+**2026-09-24 — release-pipeline verdict integrity: four asymmetries found and
+fixed (FID-2026-0924-001, `closed` + archived 2026-09-25).** The direct follow-on to the entry below,
+authored from the operator's directive to "audit the rest of the release pipeline for
+the same asymmetry — single-shot reads and mode parameters that only some branches
+honor". **Four live instances, each with file:line evidence.** **(F-1)**
+`runDesktopBundlesStage` injected `sleepMs: () => setTimeout(…, 1000)` — a lambda
+that ignored its own `ms` argument — while `watchDesktopRun` passed the declared 30 s
+interval (`desktop-workflow.ts:167`), so DESKTOP_BUNDLES polled GitHub at **1 Hz for
+up to 45 minutes (≈2,700 requests where 90 were intended)** against
+`githubApiRequest`, a client with **no 429 branch** that fails the cut on any
+unexpected status. **(F-2)** `validateResumeReceipt` collapsed `git`/`bun`/`npm`
+failing to run into the HEAD-binding message "Resume gate evidence is not bound to
+the current release environment", so an unverifiable toolchain read as a receipt
+mismatch. **(F-3)** the command precheck skipped the `gh` requirement for automation
+(`transaction.ts:105-109`) — but the desktop stages are admitted **only** in
+automation (`desktop-stages.ts:92-96`) and shell out to `gh run download` /
+`gh release upload`, so a missing binary failed *after* the npm publishes as
+"Failed to download desktop artifacts…". **(F-4)** `pruneLocalOnlyFailedTag`
+returned one `false` for "the tag is on origin" and for "`git ls-remote` failed", so
+preflight asserted "Tag `v<version>` already exists; use --resume with its receipt" —
+a fact it had not established, and the **same shape as the deadlock below, one layer
+down** (`pre-audit-local.ts:167-176` already had the correct "cannot verify" warn
+pattern). **(F-5)** the desktop poll window was the only bounded wait not
+env-overridable, while `assets.ts:27` and `npm-guards.ts:102` both are. **Fixes, all
+fail-closed preserved:** `desktopRunPoller` is the single production poller seam and
+honors `ms`; the resume failure names the tool that did not run;
+`requiresGhCli(options, env)` derives the requirement from the mode **and** the
+desktop flag; `FailedTagPruneOutcome` (`pruned | kept | kept-unverified`) plus
+`blockedTagMessage` keep "present" and "unknown" distinct — the guard still never
+deletes on an unverifiable claim; `desktopPollTimeoutMs` / `desktopPollIntervalMs`
+read `SAVANT_RELEASE_DESKTOP_TIMEOUT_MS` / `SAVANT_RELEASE_DESKTOP_POLL_MS` through
+the shared `positiveEnvMs`. **Deliberately NOT done:** retry/429 handling in
+`githubApiRequest` — it carries non-idempotent POSTs (`/releases` 201, `/dispatches`
+204), so a blind retry could double-create a release or re-dispatch the workflow;
+the load was removed at its source instead. **Candidates audited and CLEARED:**
+the gh-vs-REST release-absence assertions (mode-consistent), `verifyGitHubTagHead`
+vs `verifyGitHubTagHeadApi` (behaviourally equivalent), the `GITHUB_RELEASE` dual
+branches (complete in both modes), and `watchDesktopRun`'s testability (never the
+problem — the window was injectable; F-1 broke the production seam alone).
+**Evidence:** 6 new pins across 4 files; two proven load-bearing by mutation (the
+cadence pin fails at **1002.88 ms** when the argument-ignoring lambda is restored;
+the verdict pin fails when the `kept-unverified` branch is collapsed); release suites
+**143 pass / 0 fail across 22 files** (was 138); the six changed modules + five test
+files **type-clean** under a root-inheriting `tsc` probe (exit 0, probe deleted
+after use). Nothing committed (G2 withheld). Registered as **Task 85**; the record is
+`verified`, not closed — closure + archive is the operator's call. Second
+consecutive session in which a release-module signature change had to be proven by a
+hand-built probe: direct evidence for **Task 84-B**'s ruling.
+
+**2026-09-24 — the `--resume` deadlock is FIXED; FID-2026-0922-001 is `closed` +
+archived with a live 3/3 receipt, and the active queue is empty again.** The
+operator authorized the fix the 2026-09-22 ruling (recorded below) had held back,
+and it landed as one unit. **RED first, both legs
+failing against the unmodified tree:** the guard pin with `Expected: "warn" /
+Received: "block"` (`scripts/__tests__/pre-audit.test.ts:195`) and the npm leg with
+`SyntaxError: Export named 'npmVerifyPollIntervalMs' not found` — no bounded window
+existed at all. **Then the change:** `checkStaleTag` consults its `resume` parameter
+on the **on-origin** branch too — mutation mode still blocks a re-cut (the
+shipped-version guard, retained and still pinned), while resume returns a `warn` and
+keeps the tag, because the tag on origin *is* the release being finished and its
+HEAD binding is enforced downstream (`preflight.ts:126-141` dereferences the tag and
+fails unless it points at release HEAD; `transaction.ts:139` re-checks the receipt
+binding) — and `verifyPublishedPackage` now polls a bounded, env-overridable window
+(`awaitPublishedPackage`, `npm-guards.ts:127-146`) instead of failing the stage on
+the first `npm view`, retrying only the not-found class and failing closed on expiry
+with the `--resume` remediation. `positiveEnvMs` moved to
+`scripts/public-release/env-ms.ts` so both retry windows share one parse.
+**Evidence:** 4 new pins; the pre-audit suite 11/0 with both tag-on-origin modes
+covered; the release suites 138/0 across 22 files; a negative leg that proves the
+pins load-bearing (collapsing the window to single-shot makes the absorb pin fail in
+0.73 ms; both sources restored); typecheck 12/12 exit 0; eslint `--max-warnings 0`
+exit 0; prettier clean; `lint:md` 0; `quality: PASS (1498 baselined files)`;
+`validate:repository` PASS; `version:check` PASS; receipt stamped live at **3/3
+gates** (test pre-audit, test npm-guards, quality) and re-stamped at the archived
+path (`sha256:a3fe41e4…`). The v0.0.33 receipt stays
+unreachable **by design** (its HEAD binding) and remains recorded as the
+hand-verified erratum below. Nothing committed (G2 withheld; the operator holds the
+commit). Also registered this session: **Task 84** — `scripts/` has no standing
+type-check surface (a root-inherited `scripts/**` probe reports 117 errors today),
+blocked pending an operator ruling because adding it changes the fail-closed release
+gate battery. The 2026-09-22 entry below is retained as history; its "document only"
+ruling is **superseded** by the 2026-09-24 authorization. **Closed + archived 2026-09-24** on the operator's closure
+directive: status `closed`, Resolution in the closure format, file moved to
+`dev/fids/archive/`, receipt re-stamped LIVE there, and the CHANGELOG + archive
+index entries added.
+
+**2026-09-22 — v0.0.33 shipped and verified complete; its receipt carries a
+`failedStage`, and the `--resume` remedy is deadlocked (FID-2026-0922-001).**
+The v0.0.33 cut published successfully and then exited 1 in the pipeline's own
+`POST_RELEASE_VERIFY`: the npm read-after-write check (`npm-guards.ts:70-83`) does a
+single `npm view` with no retry, so it read an unpropagated 404 seconds after the
+registry accepted the publish — the registry itself warned ("being processed and
+may take a few minutes"). **The release is complete.** Verified independently,
+assertion by assertion, from this machine: the GitHub release `v0.0.33` is
+published (`draft: false`, `pre: false`, `2026-09-22T18:22:40Z`) carrying all five
+binary tarballs (darwin-arm64/x64, linux-arm64/x64, win32-x64); the tag resolves to
+release HEAD (`v0.0.33^{commit}` = `8f40f6f2945e56fa7edaff92d1da3986ba090a5b` =
+HEAD); npm serves `savant-code@0.0.33` with `dist-tags.latest` = `0.0.33` and 81
+files including both required entries (`README.md`, `index.js`); the desktop-absence
+claim holds (`…/releases/download/v0.0.33/latest.json` → **404**); `VERSION` is
+`0.0.33` and the shipped CHANGELOG heading is `## 0.0.33 — 2026-09-22`. All five
+`POST_RELEASE_VERIFY` assertions therefore pass — the stage would have been green had
+the registry propagated in time. **The receipt was deliberately left honest**
+(`failedStage: "Post-release verification failed for savant-code@0.0.33."`,
+`restored: true`, no `POST_RELEASE_VERIFY` mark): hand-writing that mark would
+fabricate evidence for a stage the pipeline did not complete. Its `restored: true`
+means the next cut is **not** blocked (`local-state.ts` keys that guard to
+`restored`, not `failedStage`). **The recovery path is the real finding
+(FID-2026-0922-001, `analyzed`, severity high):** `bun run release:public:resume`
+fails at its first step — `[pre-audit BLOCK] tag v0.0.33 already exists on origin —
+the release already shipped; use --resume or delete the release` — because
+`checkStaleTag` returns `severity: block` whenever the tag is on origin in **every**
+mode (`pre-audit-local.ts:174-185`; `resume` alters only the local-only-tag branch),
+and the orchestrator makes any non-preview block fatal (`transaction.ts:256`). The
+message recommends the command that just failed. No exit exists for a failure after
+`GIT_PUSH`: a fix commit moves HEAD and the HEAD-bound receipt refuses
+(`transaction.ts:139`), while deleting the release or tag fails the tag/release
+assertions (`stages-verify.ts:96-101`). Operator ruling (SCOPE.md T83-C):
+**document only this session — change no guard code.** The fix and its RED-first
+pins are specified in the FID for the next session.
+
+**2026-09-22 erratum — local history rewrite:** to unblock the v0.0.33 pre-push
+credential scan (the unpushed range carried credential-shaped literals in
+`cli/src/utils/__tests__/logger-mask-secret-values.test.ts` — the synthetic
+FID-2026-0919-011 masking fixtures, which the scan refuses fail-closed), the **13
+unpushed commits from `9c2dcd5e` (position 10 of 22) through the tip** were
+rewritten to carry **8–19-character fixture bodies**: below the scan's
+≥20-character threshold, still above the masking layer's ≥8 requirement, so every
+pin's intent is unchanged. The only content change in the whole range is that one
+file (`16 insertions(+), 4 deletions(-)`); the nine unpushed commits before
+`9c2dcd5e` keep their SHAs. Executed as a `checkout --detach` + `commit --amend` +
+`rebase --onto` rewrite; **fast-forward push preserved** (origin/main remains an
+ancestor — no force-push; nothing left this machine). All commit SHAs cited in FID
+records, `CHANGELOG.md`, and `SCOPE.md` for work authored 2026-09-22 or earlier are
+stale by this rewrite; the commit messages and diffs are unchanged. Pre-rewrite
+branch retained as `backup-pre-rewrite-20260922`.
+
+**2026-09-19 — FID-2026-0919-031 (the last five hook events, and the contract
+that described them), status `closed`, receipt re-stamped 7/7 LIVE at the archived
+path (`sha256:341fc2fe…`):** operator directives
+to implement the five inert events ("starting with the Stop vs Interrupt split and
+the compaction attempt-vs-effect predicate") and to review the whole hook surface
+against the documented contract for anything that over-promises. **Wired:** `Stop`
+= the turn finished on its own terms, `Interrupt` = it was cancelled (a failure
+fires neither; both main-agent only), with `Stop` fired once at the loop's single
+completed-turn exit (now `loop/completed-turn.ts`); `PreCompact` = the compaction
+ATTEMPT at the pruner spawn and `PostCompact` only on the runtime's existing
+`pruned` predicate, so an ineffective attempt cannot claim the context was
+compacted; `Notification` = the `ask_user` seam, before the client call.
+`FIRED_HOOK_EVENTS` is 12/12 and `NEVER_FIRED_HOOK_EVENTS` is empty (kept as the
+extension point whose rule is the useful part). **The census now demands
+reachability, not spelling:** a helper mention counts only with a caller outside
+the module, and only with a caller passing the event when the helper is
+event-parameterized — both proved by negative legs that failed first and were
+then made to fail for the right reason. **The contract was read back against the
+source:** the events table, the payload-field table, the `Source` paths (the
+parser is `protocol-config-parser.ts` via `applyHooksSection`; three listed
+wiring files fire nothing), the missing `action` row, and the unstated `matcher`
+behaviour on tool-less events (documented and pinned as a deliberate fail-open
+choice). 16 new pins / 4 negative legs; full chain 7593 pass / 0 fail; nothing
+committed; automation level 3. **Closed + archived 2026-09-22** on the operator's
+closure directive; the Resolution was restructured to the closure format (Closed
+Date / Fix Description / Tests Added / Verification Evidence / Archived) and the
+receipt re-stamped LIVE at the archived path (`sha256:341fc2fe…`), so the closed
+record is byte-consistent with its final content. Commit SHA pending operator git
+execution (G2 withheld).
+
+**The active FID queue is empty.** FID-2026-0919-030 was closed + archived on
+operator directive ("Close and archive FID-2026-0919-030 with its archive index
+entry, leaving the commit to me"); its receipt was re-stamped LIVE at the archived
+path (`sha256:724b6c62…`) so the closed record is byte-consistent with its final
+content. See `archive/README.md`.
+
+**2026-09-19 — FID-2026-0919-030 (the hook surface tells the truth), status
+`closed`, receipt re-stamped 5/5 LIVE at the archived path:** operator directive to audit the other hook events
+for the same observability gap `SubagentStop` had — asked of the whole surface
+instead of the one event. Three findings. **(A)** `PreToolUse` — the only
+BLOCKING event, documented as composing with the per-agent EHEL gate — sent no
+agent identity at either site, so "only `forge` may write" was inexpressible and a
+subagent's call arrived under the child's run id with nothing naming it; both
+sites now carry the acting agent, pinned by a census that makes a third site
+without it impossible. **(B)** `SessionStart`/`SessionEnd` were outcome-blind
+(`SessionEnd` fires from a `finally` with identity only); the outcome is now
+computed on every path and reported, with one shared builder for both lifecycles.
+**(C)** Five of the twelve declared events (`PreCompact`, `PostCompact`, `Stop`,
+`Interrupt`, `Notification`) had **zero firing sites** while the vocabulary
+accepted them and the docs presented them as active — a silently inert operator
+hook, the one failure mode nobody can observe. They are now classified with a
+reason each, compile-time gated, census-verified against the runtime source by
+`scripts/hook-events-check.ts` (which also fails if this repo's own config
+declares an inert hook), and the docs table states what fires today. 10 new pins /
+49 expectations; full chain 7577 pass / 0 fail; three negative legs (3 red, 3 red,
+2 red + probe exit 1), all sources restored. Closed + archived 2026-09-19;
+nothing committed; automation level 3.
+
+**The archive holds the earlier 2026-09-19 records.** FID-2026-0919-029 was closed
+and archived on operator directive ("Close and archive FID-2026-0919-029 with its
+archive index entry, leaving the commit to me"); its receipt was re-stamped LIVE
+at the archived path (`sha256:fb6eabb5…`) so the closed record is byte-consistent
+with its final content. See `archive/README.md`.
+
+**2026-09-19 — FID-2026-0919-029 (boundary observability and enumeration), status
+`closed`, receipt re-stamped 7/7 LIVE at the archived path:** operator directives to give `SubagentStop` an
+outcome payload ("so operator hooks can tell a finished child from a failed one")
+and to extend the field-partition gate to `SessionState` and `ProjectFileContext`
+— the second being the extension FID-2026-0919-028 recorded for itself.
+**(A)** `SubagentStart`/`SubagentStop` fired with identity only, so a completed
+child, a child whose loop returned the error form, and a child that threw were
+indistinguishable at the hook — the contract already had `tool_result` /
+`error_message` and the call site never set them. `hooks/subagent-outcome.ts` +
+the `executeSubagent` funnel now report `completed` / `failed` with the cause
+(identity and shape only, never transcript content; unknown ⇒ failed). **(B)**
+`common/src/types/session-boundary-fields.ts` partitions `SessionState` (2 keys:
+deep-copied vs shared-by-reference) and `ProjectFileContext` (16 keys: 10
+refreshed at run start with write-site citations, 6 carried with a reason each) with
+the same `AssertNever` gates as FID-028, plus pins driven off the shipped lists and
+a **writer census** over the two modules that assign `fileContext.*` — a boundary
+can drift by gaining a writer without gaining a type key. 15 new pins; full chain
+7567 pass / 0 fail. Every gate proven by a negative leg (3 pins red without the
+wiring; `error TS2344` for a field injected into either type; census
+`unclassified` for a new writer; probe exit 1 for a carried-field writer and for a
+copied `fileContext`), all sources restored. Closed + archived 2026-09-19;
+nothing committed; automation level 3.
+
+**The archive holds the rest of the 2026-09-19 records.** FID-2026-0919-027 and
+FID-2026-0919-028 were closed + archived on operator directive ("Close and archive
+FID-2026-0919-027 and FID-2026-0919-028 with their archive index entries, leaving
+the commit to me"); each receipt was re-stamped LIVE at its archived path
+(`sha256:c705a855…` and `sha256:d85e2256…`) so the closed records are
+byte-consistent with their final content. See `archive/README.md`.
+
+**2026-09-19 — FID-2026-0919-028 (spawn boundary self-enforcing), status
+`closed`, receipt re-stamped 6/6 LIVE at the archived path:** the follow-up FID-2026-0919-027 recorded for
+itself — *"nothing checks that a new `AgentState` field is transported… a
+`Pick`/required-fields list derived from `AgentState` would make the omission a
+type error instead of a review finding."* FID-027 fixed the fields the boundary
+was dropping; this closes the mechanism that dropped them. All **54**
+`AgentState` keys are classified exactly once in `spawn-child-fields.ts` (13
+inherited, 14 child-owned, 27 by-design **with a reason each**), the inherited
+half of the child state is produced by a typed picker over that same list (so the
+list drives construction instead of documenting it), and four `AssertNever` gates
+make an unclassified field, a category overlap, or a governance field missing
+from the inherited list fail `typecheck` — proven by injecting a field into
+`AgentState` (`error TS2344: Type 'string' does not satisfy the constraint
+'never'`). The handoff probe now reads the authority's lists rather than copies.
+7 new pins / 114 expectations; nothing committed (G2 withheld); automation level
+3.
+
+**2026-09-19 — FID-2026-0919-027 (inter-agent handoff transport), status
+`closed`, receipt re-stamped 6/6 LIVE at the archived path:** operator directive
+to review information flow
+between agents — "anything that agent B needs from agent A, but it doesnt
+properly transport… We need to ensure all the info/packages flow flawlessly
+through the entire system." **Audit result: the spawn boundary was the leak, and
+it was total** — `createAgentState` is the only child-state constructor in the
+runtime and it copied identity, ancestry, protocol variant, FSM phase,
+`echoCompliance` and `provenance` into every child while dropping the run's
+resolved governance configuration. Live probe over a fully-configured root:
+`enforcementMode`/`designContract`/`protocolSource`/`provenanceMode` all
+`undefined` on the child, with the consequence lines `all_15 → core_4` (strict
+EHEL silent in every subagent), `off → record`, and a diverged grounding
+identity — plus the design gate unable to fire on Forge, the roster's only
+writer and always a child. Three further boundary defects: raw evidence was
+transported on one audit-spawn path of three (the batch path required a ROOT
+parent; the inline path never loaded records), the context-pruner was
+batch-spawnable as an expensive no-op, and the inline relay dropped a
+`structured_output` child's artifact. All fixed, contract-enforced (the
+propagation snapshot now carries the four fields and rejects a child missing
+any), pinned with 27 new tests (agent-runtime 1462/0, full chain 7545 pass / 0
+fail), and observable through the new `scripts/handoff-transport-check.ts` probe
+whose negative leg was proven by reverting the fix. `maxContextLength` and
+`digestCaps` are **not** defects — `createLoopContext` re-stamps both per run.
+Nothing committed (G2 withheld); automation level 3 throughout.
+
+**The 2026-09-19 records before these** were closed + archived on the same terms
+(FID-2026-0919-025 and -026, then -023 and -024 and -021/-022); each receipt was
+re-stamped LIVE at its archived path so the closed record is byte-consistent with
+its final content. See `archive/README.md`.
+
+**2026-09-19 — FID-2026-0919-026 (B.AI credit-gate audit + provider quota
+visibility), status `closed`, receipt re-stamped 8/8 LIVE at the archived path:** operator directive to
+audit `docs.b.ai` and test the key for the five named models, after live use
+returned `credit insufficient balance: balance=0
+required=3672` while the vendor's key page showed 100% free usage. **Audit
+result: the integration is correct and the account is unfunded.** Both keys in the
+working tree authenticate and resolve to the same account
+(`user_P2SuQ53ei5CZ`) whose `personal_balance` is 0; the live catalog resolves 47
+internal ids including all five named models; the production chain emits
+`POST https://api.b.ai/v1/chat/completions` with the correctly stripped upstream
+id and bearer auth; and every model is refused `400 insufficient_user_quota`.
+B.AI is **prepaid** (1 USD = 1,000,000 Credits) and none of the five is free —
+they are the cheapest paid tier, and the only documented free credit is a bonus
+that expires after 30 days. `required=3672` is therefore ~$0.0037 against a
+balance of 0. Corroborated by FID-2026-0911-004 (same key reached HTTP 200 on
+`qwen3.8-flash` on 2026-09-11). No repository claim is false and the vendor error
+reaches the operator intact, so no code change is warranted for the report; the
+repository-side finding was that the vendor's documented `/v1/balance` endpoint
+went unused, leaving account-state refusals undiagnosable in-tool. The operator
+ruled **"Both"** and it is implemented: a data-only `quota?: { url; valuePath;
+unit?; note }` on `ProviderConfig` (declared for B.AI against its documented
+balance endpoint) drives a bounded, fail-silent reader and one `**Quota:**` line
+in `/health` for the active provider, plus `quotaHint` in the existing
+send-message hint seam, which appends the provider's declared note to a
+quota-class refusal and points at `/health`. 15 new pins; a registry pin enforces
+that only providers documenting such an endpoint declare one. Evidence: live
+outputs transcribed in the FID; probes at
+`dev/scratchpad/active/bai-free-quota-audit.ts` + `bai-chain-proof.ts` (gitignored,
+no key material printed). **Closed + archived 2026-09-19** on operator closure
+directive; receipt re-stamped LIVE at the archived path (8/8 gates, fingerprint
+`sha256:5a85c231…`). Commit SHA pending operator git execution (G2 withheld).
+
+**2026-09-19 — FID-2026-0919-025 (register completeness: a line for every
+tracked item), status `closed`, receipt re-stamped 5/5 LIVE at the archived
+path:** the operator asked
+for the quiet half of the scope guard — "flag approved items that appear in FIDs
+or session summaries but never got a SCOPE.md line." FID-2026-0919-024 removed
+the *label* an agent trimmed scope with; the omission writes no token, so an item
+with no register line stayed invisible and droppable with no operator decision.
+Fix: new `echo/scope-register-completeness.ts` enforces two decidable legs —
+every active `dev/fids/FID-*.md` must be named in `SCOPE.md`, and every task
+cited by an active FID or a current session summary (`Task NN`, `TNN-X`) must
+exist there as a `## Task NN` section or a `TNN-X` item — as
+`scope.unregistered-item` in `validate:repository` and as the
+`scripts/scope-register-check.ts` probe. A reference in inline code is a
+quotation, a bare one is the claim (the disposition guard's rule, now shared via
+one exported helper). **The check's first catch was its own author**: 8 gaps in
+this very record → 4 after the quotation rule → 0 after the register line, all on
+the real tree. 15 pins / 24 expectations, 25/0 across both scope-guard suites.
+**Closed + archived 2026-09-19** on operator closure directive; receipt re-stamped
+LIVE at the archived path (5/5 gates, fingerprint `sha256:dd7cd79f…`). Commit SHA
+pending operator git execution (G2 withheld). Every "the active FID queue is
+empty" line further down is a closure note dated to its own entry.
+
+**2026-09-19 release quality pass — FID-2026-0919-023 (automation levels,
+documented-version surfaces, cross-suite test isolation) — status `verified`,
+receipt stamped 9/9 from a live gate run:** the 0.0.33 release-readiness pass
+(operator: "this is a project wide quality pass, update every issue you find w/
+automation level 3" + "we need to document automation levels level 1 = extremely
+limited … level 3 = complete agent automation"). Three defect classes closed.
+(1) **Automation levels were undocumented**: a canonical `## Automation Levels`
+section now defines all three levels, the session-ceiling-vs-item rule, the
+Law 2 semantics at level 3 (a *recorded* presentation, not a skipped one), and
+the invariants no level lifts; `ECHO.md` carries the matching ladder (reconciled
+with G1–G9), `protocol.config.yaml` documents the ladder on
+`session.autonomy_level`, `templates/FID-TEMPLATE.md` gained a required
+`Automation level` field, and every SCOPE.md item is tagged. (2) **Documented
+version surfaces are now a checked contract**: `updateDocSurfaces` silently
+skipped any surface that was not *exactly one release behind*, so
+`ARCHITECTURE.md` sat at `0.0.26` through seven bumps, the localized README
+blurb label had no pattern, and the 0.0.33 bump relabelled the `**v0.0.32** —`
+blurb so `README.md` advertised the previous release under the new version. One
+`DOC_VERSION_SURFACES` table now drives both the writer (converges from whatever
+version the surface states) and the checker (`collectVersionDrift` reports
+drifted **or missing** surfaces via `version:check`) — the new check found the
+stale `ARCHITECTURE.md` on its first run. (3) **The root `bun run test` gate was
+RED**: a process-wide `mock.module` on `@savant-code/common/crypto` in the SEC-5
+suite leaked into `teacher/progression` and made its receipt signing return
+`null` (2 failures, invisible when either suite ran alone); the stub is now
+input-scoped and inert for all other callers — 12/12 workspaces, 0 fail. Six
+pre-existing `format`-gate violations were also fixed.
+**Closed + archived 2026-09-19** on operator closure directive ("Close and
+archive FID-2026-0919-023 with its archive index entry, leaving the commit to
+me"); receipt re-stamped LIVE at the archived path (9/9 gates, fingerprint
+`sha256:e3c9453a…`). Commit SHA pending operator git execution (G2 withheld).
+See `archive/README.md`.
+
+**2026-09-19 — FID-2026-0919-024 (no agent-side scope trimming), status
+`closed`, receipt re-stamped 6/6 LIVE at the archived path:** the operator reported that approved work
+kept being marked out-of-scope without their approval, and ruled it out
+absolutely ("nothing is ever out of scope... we complete the work, we never
+defer"). Investigation found the protocol authorizing it — the Scope Boundary
+section let the agent mark a dropped item with a scope/deferred label "with a
+one-line reason" and required only a *presentation*, which a summary mention
+discharges — contradicting the same document's Step-Level Anti-Deferral rule that
+only the operator sets those statuses (already enforced for FID steps). Measured
+before the fix: 2 live register items, 1 index line, 3 changelog lines and 12
+session summaries carried the label since 2026-09-03. Fix: the vocabulary is
+removed from both protocols (a prohibition table, the two lawful states with a
+specific blocker required, and a single lawful exit — an operator-approved ruling
+recorded verbatim with its date), and a new `echo/scope-disposition-guard.ts`
+enforces it mechanically as a write-time block, as
+`scope.prohibited-disposition` in `validate:repository`, and as the
+`scripts/scope-guard-check.ts` probe. The live register is clean; historical
+records are scanned only from 2026-09-19 forward and are not rewritten.
+**Closed + archived 2026-09-19** on operator closure directive ("Close and
+archive FID-2026-0919-024 with its archive index entry, leaving the commit to
+me"); receipt re-stamped LIVE at the archived path (6/6 gates, fingerprint
+`sha256:195a024a…`). Commit SHA pending operator git execution (G2 withheld).
+See `archive/README.md` — every "the active FID queue is empty" line further
+down is a closure note dated to its own entry.
+
+**2026-09-19 closure — FID-2026-0919-021 + FID-2026-0919-022 (contract
+widening, repo-gate completeness) closed + archived (operator closure
+directive):** two governance records produced by one audit of
+FID-2026-0918-007. **021** (medium) — the FID-2026-0918-006 sweep reported 0
+errors over two test artifacts covered by no declared gate (its promise
+pattern matched only the literal "new (runtime) test" wording and read only
+`### Verification`), and the receipt contract skipped every status outside
+`fixed`/`verified` silently (284 of 315 archived `closed` records carry a
+drifted fingerprint). Fix: a whole-document, novelty-marker promise rule; the
+new `echo/fid-verification-enforcement` module as the single authority for the
+enforced-status set (validator behavior unchanged, pinned); a non-fatal
+`fid:verify --check` information tier; closure semantics documented in the
+single-agent protocol; and FID-2026-0918-007 amended with both gates. LIVE
+proof on the real record: **0 → 3 → 0** violations. **022** (medium) —
+`validate:repository` was RED with 13 issues, 2 shipped by
+FID-2026-0918-007's own part-3 code (bare `'bun'` spawns). A FID could not
+declare a repo-gate check, and `validate:repository` can never be one (C3
+self-recursion). Fix: `process.execPath` at both sites; the check made
+independently runnable so the existing `probe` kind expresses it (declared in
+the record, PASS); probe route + recursion boundary + closed-record semantics
+documented on the template with the protocol bundle regenerated; 11
+scratchpad-root scripts moved to `dev/scratchpad/archive/`.
+`validate:repository` **FAIL (13) → PASS**. Both receipts re-stamped LIVE at
+the archived paths (10/10 and 8/8 gates; fingerprints `sha256:4a6dadaa…` /
+`sha256:55b5c4fc…`). Commit SHAs pending operator git execution (G2 withheld);
+evidence is the file:line + grep ranges in each record. See
+`archive/README.md` and the CHANGELOG entry. **The active FID queue is empty.**
+
+**2026-09-18 closure — FID-2026-0917-006 (compaction signal durable
+retirement) closed and archived:** the in-stream `CompactionSignal` panel
+re-pinned after compaction because two run-end mirror sites
+(`send-message-monitors.ts:90` heartbeat; `send-message-lifecycle.ts:218-223`
+`adoptAndPersist`) re-hydrated the store from the runtime's
+`mainAgentState.compactionStatus`, which retains a terminal `compacted` phase
+indefinitely — the FID-2026-0916-008 retirement cleared the store copy but
+was resurrected within the same run. Fix: `onNewUserMessage` stamps a
+two-epoch-half identity (`retiredCompactionStatusEpoch` /
+`retiredCompactionReportEpoch`; `percentUsed` excluded, live phases never
+produce terminal epochs) before clearing, and both mirrors drop
+epoch-matching re-deliveries while a genuinely new compaction still displays.
+6 new regression pins (suite 16/0, 47 expects); receipt 3/3 PASS re-stamped
+live at the archived path. Record also restructured to the
+FID-2026-0915-004 validator template (flat metadata + required headings) —
+its legacy list-dash metadata defeated the ledger regex. **The active FID
+queue is empty.**
+
+**2026-09-17 closure — FID-2026-0917-005 (/model picker provider
+passthrough) closed and archived:** selecting a model in the `/model` picker
+persisted the provider to `settings.json` only, never writing
+`process.env.DIRECT_PROVIDER` / `INFERENCE_BASE_URL`, so every downstream gate
+(`isDirectProviderMode`, `useUsageMonitor`, `getActiveProviderId`,
+`createDefaultInferenceModel`) kept routing to `getWebsiteUrl()` =
+savant-code.com → 402 "Out of credits". Selection extracted into
+`applyModelPickerSelection(model)` in `cli/src/utils/provider-setup.ts` —
+resolve + persist + activate through the same guarded seam the `/provider`
+picker uses; `handleModelPickerSelect` is now a one-line delegation. Fail-
+closed preserved (unkeyed provider declines, explicit route untouched).
+Receipt 3/3 PASS re-stamped live at the archived path. **The active FID queue
+is empty.**
+
+**2026-09-17 closure — FID-2026-0917-003 + FID-2026-0917-004 (OpenRouter
+key shadow + rejected-master-key fallthrough) closed and archived:** both
+authored from a live audit of the operator-reported `User not found.` vendor
+401. FID-003 (critical): Bun's dotenv auto-loader was not disabled by `--cwd
+..` in the dev script, so it pre-seeded the stale `cli/.env.local` key and the
+"existing wins" rule permanently shadowed the good root key — fixed with
+`--no-env-file` + comment correction + stale-key removal (local-only), and
+the stale `OPENROUTER_API_KEY` cleared from the registry. FID-004 (high): a
+401/403 from the `/api/v1/keys` exchange is now terminal (negative-cache +
+`undefined`) instead of silently falling through to a stale regular key; the
+active-provider guard throws the templated missing-key error on the live
+`DIRECT_PROVIDER=openrouter` path. Both shipped to the rebuilt `sdk/dist`.
+Receipts 3/3 PASS at the archived paths. **The active FID queue is empty.**
+
+**2026-09-17 closure — FID-2026-0917-002 (EHEL docs/write deadlock) closed
+and archived:** the Law 3 pre-write gate deadlocked every write tool call
+after a markdown doc failed markdownlint — the violation blocked its own
+fix. One-predicate fix reusing `classifyFileKind` (docs gate on markdownlint,
+never on the hard-blocking code gate); the Law 15 advisory scanner
+intentionally stays unguarded. `dev/wiki/**` exempted (MD013,
+machine-generated) so repo-wide `lint:md` could reach exit 0. The fix was
+also proven shipped in the rebuilt `sdk/dist` the running CLI loads. Receipt
+re-stamped 3/3 LIVE at the archived path. **The active FID queue is empty.**
+
+**2026-08-22 ledger update (four passes):** (1) full inventory — the
+0821/0822 queues were folded into this table; every status below is
+re-verified against the FID's own header + Resolution/Step Status. (2)
+**Closure pass — operator directive ("archive the completed ones"):** eight
+`fixed` FIDs closed + archived (live-verification boundaries waived). (3)
+**Perfection-loop pass + master plan — operator directive:** all pending
+FIDs carry full planning loops (RED/GREEN/AUDIT/ADVERSARIAL); NEW
+coordination master [`FID-2026-0822-013`](FID-2026-0822-013-master-completion-plan.md)
+sequences the whole queue to zero (desktop chain -008→-009→-010, deck
+fixtures-now/live-after-008, four order-free implementables, ratchet HOLD).
+(4) **Master-plan execution — automation level 3:** `-0822-008` (edit-diff
+fallback) and `-0822-004` (yagni_check leak: streaming stripper at the
+ingestion boundary + text-channel gate + payload sanitization + prompt
+alignment, 1193/0 agent-runtime suite) closed + archived. The `-007` number
+collision was resolved earlier the same day — hex keeps `-007`, the deck is
+`FID-2026-0822-012`. Historical closure notes further down are unchanged.
+**2026-08-23 supersession:** `-0822-013` (the master completion plan above)
+was superseded by [`FID-2026-0823-003`](FID-2026-0823-003-overnight-queue-to-zero-master.md)
+as queue-to-zero coordinator and closed + archived (see `archive/README.md`).
+
+**2026-08-27 reconciliation (tree-drain migration):** table refreshed to
+match disk ground truth — four archived records removed (-0820-009,
+-0822-012, -0822-014, -0824-011; see `archive/README.md`) and the nine
+on-disk records missing from the table added (-0823-003, -0824-003…-008,
+-0824-028, -0824-030). Statuses verified against each record's own header.
+
+| FID | Status | Purpose / blocking gate |
+|---|---|---|
+| [FID-2026-0917-001](archive/FID-2026-0917-001-openrouter-env-split-and-silent-exchange.md) | closed | OpenRouter `User not found.` 401 (high): dev-mode `.env.local` discovery used first-match `findUp` and never loaded the repo-root file (a root `OPENROUTER_API_KEY` was invisible in dev), and the resolver's `OR_MASTER_KEY` exchange fell through on failure with zero diagnostics — a management key lists models (200) but cannot run inference. Live probe proved the client correct: the regular key streams chat-completions 200 through the unchanged code; the management key reproduces the exact 401. Fixes: `findAllUp`/`applyOneEnvLocal` apply every `.env.local` repo-root-down; non-2xx exchanges log status/body (200-char cap, no key material) before falling through. Gates: typecheck cli+sdk 0, eslint 0, prettier clean, tests 4/0 + 8/0, quality PASS, receipt 5/5 LIVE, Verifier PASS. **Closed 2026-09-17; archived.** |
+| [FID-2026-0916-008](archive/FID-2026-0916-008-compaction-signal-pin-and-fold.md) | closed | Compaction signal pin & fold (high): the in-stream "✓ Compaction complete (−N tokens) — P% of window" panel pinned below every later message indefinitely (events cleared only on session `reset()`, never at a run boundary) and dumped the full ~96K-char report excerpt with no toggle. Two fixes: `onNewUserMessage` (the canonical pre-run zeroing path, `send-message-prepare.ts:165`) now clears `compactionStatus`/`compactionEvents`/`lastCompactionReport` while preserving `compactionCount`; the report excerpt folds behind a `▾ expand`/`▴ collapse` toggle (collapsed by default, 160-char `REPORT_EXCERPT_PREVIEW_CHARS` preview) through a new prop-driven `CompactionReportExcerpt` sub-component — same shape as `CompactionSummaryBlock`'s `isCollapsed` so both fold states are statically testable. Independent Verifier AUDIT: 4 PASS + 2 FAIL (magic number → constant; premature `verified` status → `fixed` until audit passed), both fixed in self-correct. Gates: typecheck cli 0, eslint 0, prettier clean, `compaction-signal.test.tsx` 13/0, `chat-store-compaction.test.ts` 10/0. **Closed 2026-09-16; archived.** |
+| [FID-2026-0916-007](archive/FID-2026-0916-007-learnings-structure-rebuild.md) | closed | LEARNINGS.md structural rebuild (high): the file exceeded the 100,000-char tool read cap (102,520 chars — boot truncation) and was structurally inverted — the insertion marker sat at EOF, below the legacy boundary, so every new lesson landed ungoverned and `learnings:check` printed a false `PASS (16)` over a 32-lesson file. Safe Core two-tier fix: 27 legacy `## Session` blocks moved verbatim to `dev/LEARNINGS-RETIRED.md` (byte-identity proven), marker relocated to line 3 (top of governed space), 16 pre-schema narrative lessons preserved below the boundary deliberately unvalidated (conforming them would require fabricating Evidence/Verification claims — Law 5). Two `learnings:retire` defects fixed (NaN `--cap` retired every entry; `applyRetirement` silently deleted all prose/markers). Gates: 27 tests, `learnings:check` PASS, retire dry-run 0 candidates, prettier/eslint/markdownlint clean. **Closed 2026-09-16; archived.** |
+| [FID-2026-0916-005](archive/FID-2026-0916-005-atria-gateway-provider.md) | closed | Atria gateway provider (low): `https://api.atria-asi.ai/v1` as a built-in provider exposing the single `Atria-Dawn-Preview` model (vendor-published 256K pinned at 262,144, not family-derived). Bazaarlink one-model static-catalog pattern verbatim (Law 13) — the vendor `/v1/models` is key-protected, so a static map is the known-checked-in set. `setupAvailable: true` derives the masked `ATRIA_API_KEY` entry through the standard `/provider` flow. Six derived surfaces wired (registry, catalog map, `MODEL_CATALOGS`, fallback row, cli fetcher + gateway merge, re-export) + docs regen. Gates: typecheck ×3 exit 0, RED-first pin 4/4, openrouter-models family 58/0, Law 4 greps land at `gateway.ts:62`/`:210` + `openrouter-models.ts:54` + `static-catalogs-gateways.ts:211`; eslint/prettier/lint:md clean. **Closed 2026-09-16; archived.** |
+| [FID-2026-0916-006](archive/FID-2026-0916-006-compaction-summary-contamination.md) | closed | Compaction-summary contamination (medium): the `/compact` pinned turn carried a harness/system dump, Decisions held literal `-.`/`- hosts`/`- ok`, Goal was `hey`. Four root causes fixed at source: `ECHO_REFRESH` excluded from summary intake, harness framing stripped from transcribed turns (`stripHarnessFraming`), tag-density detector applied per-line, substance floors on Decisions/Goal + greeting-run coalescing (operator-ruled MQ2=exclude, MQ3=coalesce). Guards extracted to `contamination-guards.ts` under the 300-line ceiling; RED pin suite 8F→11/0 GREEN; receipt 6/6 LIVE. |
+| [FID-2026-0916-004](archive/FID-2026-0916-004-gateway-catalog-realignment.md) | closed | Gateway catalog re-alignment (medium): Task 62 zero-credit gauntlet found 22/28 commandcode ids stale vs the live roster (vendor renormalized spellings), 3/20 tokenharbor ids stale (incl. the kimi-k3:free launch channel that ended), and the OpenCode Zen free-tier gate blocking zen/go from Savant entirely. RULED (ask_user): remove dead ids + fix spellings + coding-set additions only; **opencode-zen/opencode-go removed from Savant** (zen gate makes them unusable here). **Implemented 2026-09-16:** RED-first pin module (observed 9 fail / 3 pass pre-change); commandcode catalog + protocol map re-aligned to the vendor roster (coding-relevant additions only), tokenharbor 3 dead ids removed, opencode-zen AND opencode-go removed end-to-end (registry, catalogs, protocol maps, zen/go modules, context-window rows, sdk opencode resolver chain + getter, exception manifest, fixtures re-pointed to tokenharbor; cyclic-tool regression suite re-pointed to TokenRouter per-model protocols preserving all four wire-protocol legs). Receipt stamped 10/10 LIVE (typecheck common/cli/sdk + 6 suites + quality); providers.ts dropped under ceiling → dataConstantExemptions entry removed, freeze tightened 335→295; parallel FID-005 (atria) derived surfaces completed to keep the shared tree validating. **Closed 2026-09-16:** same session (agent-executed lifecycle per the G1 amendment); archived. |
+| [FID-2026-0916-003](archive/FID-2026-0916-003-stamp-receipt-eof-fingerprint.md) | closed | stampReceipt EOF fingerprint edge (medium): a FID whose `## Verification Gates` section runs to EOF got receipts that always validated as stale — the stamp's EOF branches rewrite the document tail (trimEnd + separator reinsertion) while the pre-stamp hash and the post-stamp receipt-span removal disagreed on the trailing-newline shape (sha256 mismatch; fail-closed). **Implemented 2026-09-16:** RED-first EOF-identity pin (observed failing pre-fix) + freshness pin; fix = tail-normalize the hashed view to exactly one trailing `\n` inside `computeFidFingerprint` on BOTH paths (the single hashing authority — `stampReceipt`/`buildReceipt` unchanged); fingerprint describe split move-only into `fid-verification-gates-fingerprint.test.ts` (ceiling: the contract test file was at 315 with the new pins). Gates: contract suites 34/0, executor suites 35/0, typecheck ×4, quality PASS, LIVE e2e both legs (gates-to-EOF fixture stamped via real `fid:verify --write`; `--check` accepted it single-file AND repo-wide; fixture destroyed). **Closed 2026-09-16:** same session (agent-executed lifecycle per the G1 amendment); receipt stamped 9/9 on closed content; archived. |
+| [FID-2026-0916-002](archive/FID-2026-0916-002-catalog-window-truth.md) | closed | Catalog window truth + dead-channel hygiene (medium): the four pre-program static providers (tokenrouter/tokenharbor/opencode-go/commandcode) migrated off the family heuristic — 94 vendor-sourced exact-id rows into CONTEXT_WINDOW_FALLBACKS (bazaarlink + orcarouter keyed rosters + OpenRouter tiebreak, 2026-09-16; 2-of-3 votes marked: glm-5.2 → 1,048,576, qwen3.6-plus → 1,000,000, glm-5.1 → 204,800), 4 fetchers rewired to getContextWindowFallback, closed-world coverage invariant pinned. Tokenrouter catalog 35 → 31: both free GLMs + mirothinker removed (keyed 503s), seedream removed (vendor image-only), **MiniMax-M3 kept** (keyed HTTP 200 despite roster absence — the MQ3 rule vindicated LIVE). TOKENROUTER_PROTOCOLS from vendor supported_endpoint_types + registry `multi` wiring (operator ruling): 6 Responses-only, 7 Anthropic-only, 1 Gemini-only ids were mis-dispatched as chat before (codex → HTTP 404 "Use the v1/responses endpoint instead"). Operator error reports adjudicated with production-shaped probes: tiny probes had masked the orcarouter free-tier prompt cap (measured ~12k–36k, misleading "add credits" text on FREE channels); the OpenRouter 401 was a replaced key needing a CLI restart (process-lifetime resolver cache) — both documented, no code change per public-release ruling. 39/39 tests across 3 suites (825 expects), typecheck ×4, probe gate verify-window-truth.ts PASS 17/17 vs LIVE rosters. **Closed 2026-09-16:** operator closure directive — gates re-run green (typecheck cli + common, suites 39/0 / 825 expects, receipt re-stamped 6/6 incl. the LIVE window-truth probe); archived. |
+| [FID-2026-0916-001](archive/FID-2026-0916-001-pipeline-integrity-hardening.md) | closed | Pipeline integrity hardening (medium): all four T52 deep-audit findings — (1) denylist accumulation bug (round-trip: mergeDenylist now normalizes both persisted shapes; lastSeen = last gate sight), (2) silent-class audit gap (five classes now render counted groups + summary row; legacy three byte-identical), (3) propose fail-closed tracking guard (exit 1 + remediation for untracked hosts), (4) probe trust boundary (https-only + private-range/loopback/integer-host static checks + resolving DNS check via injectable lookupImpl; allowPrivate for the operator-stamped Stage-E path only). **Implemented 2026-09-16:** RED-first 16 pins (module missing → 2 drafts corrected by their own pins); suite 85 → 101 / 411 expects 0 fail; LIVE ×3 harvests — denylist 118 → 163, all 118 pre-FID rows keeping original firstSeen, flagged rows persisted for the first time; 41 silent-class rows render. Receipt 5/5 LIVE-stamped (probe gate = real harvest). **Closed 2026-09-16:** operator closure directive — gates re-run green (typecheck cli + common, suites 28/0, receipt re-stamped 5/5 incl. the LIVE harvest probe); archived. |
+| [FID-2026-0915-006](archive/FID-2026-0915-006-bazaarlink-gateway-provider.md) | closed | Bazaarlink gateway provider (low): integrate `https://api.bazaarlink.ai/v1` with a STATIC one-model catalog — `qwen/qwen3.7-flash:free` (1M ctx, vendor-published) — per the operator's "Qwen free only" ruling. Grounded in the Task 51 keyed identity-audit gauntlet (15 cells): qwen channel genuine (consistent EN/ZH self-ID, cleanest fingerprint of any audited gateway, zero injection class); deepseek free channels DISQUALIFIED (EN self-IDs claimed GPT-4 and Claude Opus 4.1; ~60–70 hidden injected tokens); `auto:free` excluded (429 storm, 120–265s, routes into the disqualified channel). **Implemented 2026-09-15:** RED-first widened closed-world pins (19 providers / 17 setup); registry entry + `bazaarlinkModels` map + `MODEL_CATALOGS` ref + shim + fallback-table entry + cli fetcher + gateway merge; MQ3 amended to `strip` with evidence; all 8 docs surfaces synced (docs-check 0); Step-5 LIVE keyed round-trip through the production chain PASS (exact echo, 26 in / 9 out tokens, no injection class); 5-gate receipt stamped. **Closed 2026-09-16:** amended per the operator's
+second ruling (top-15 coding ∩ LIVE roster → 12-id catalog; the wrong
+14-paid draft was corrected from the dated BenchLM leaderboard — 4 of the
+top 15 are not gateway-served) and archived per explicit operator closure
+(push `2af96f90`; amendment + closure receipts stamped 5/5). Archived
+(operator directive). |
+| [FID-2026-0915-005](archive/FID-2026-0915-005-seed-url-corrections.md) | closed | Seed URL corrections (low): deep API-surface discovery on the 6 boundary-unverifiable seed hosts found 2 real API bases (api.tokenrouter.com, api.freetheai.xyz — both pipeline-probed boundary-ok 401) and 4 dead ends (Cloudflare 530, 502, no surface). **Closed 2026-09-15:** 2 seed URLs corrected + all 6 findings in probeNote fields; LIVE harvest re-probed both corrected hosts to boundary-ok (1039ms / 559ms — seed-unverifiable 6 → 4, zero diff churn); 3-gate receipt; archived. |
+| [FID-2026-0915-004](archive/FID-2026-0915-004-vocabulary-modernization.md) | closed | Vocabulary modernization (low): operator ruling — `converged` = Perfection-Loop-complete is an admissible ACTIVE-queue status; `fixed` deprecated (still accepted). **Closed 2026-09-15:** `ALLOWED_ACTIVE_STATUSES` admits `converged` (set size 5, nothing removed); receipts stay `fixed/verified` (MQ3); LEARNINGS lesson rewritten to the superseded rule (validator caught 2 amendment defects — fixed); 4-pin vocabulary test; 4-gate receipt; a self-recursive gate declaration (probe validate-repository) was caught as an infinite-recursion hang and recorded as a Lesson; archived. |
+| [FID-2026-0915-003](archive/FID-2026-0915-003-operator-seed-intake.md) | closed | Operator seed intake (small): the operator's 24-URL free-provider expansion list (21 unique hosts) enters the discovery pipeline as operator-owned seed cards merged into the stage-0 stream (FID-2026-0914-003 mechanisms reused — stage-0/typosquat/diff/LIVE probe all apply, no bypass). Rulings recorded: probe from site root, default category commercial-aggregator, skip chatanywhere.tech (respected free-relay exclusion) and the three integrated providers (orcarouter/infron/unorouter) → 16 seeds. LIVE probe evidence pre-recorded in the FID (boundary 401/403 ×7, open-200 ×4, redirect/POST-only hosts flagged). **Closed 2026-09-15:** implemented + gate-verified (5-gate receipt: typecheck cli/common, discovery-seams + harvest-core suites, LIVE probe) — 16/16 seeds tracked (8 boundary-ok, 6 unverifiable, 2 open-relay-rejected by the LIVE gate: b.ai, platform.experientiallabs.ai); operator-precedence merge corrected LIVE after the first run exposed feed-precedence silently defeating 2 rulings; 6 new pins (suite 82/342). Commit `bebc6c1a`. Archived (operator automation directive). |
+| [FID-2026-0915-002](archive/FID-2026-0915-002-file-cap-split-program.md) | closed | File-cap split program (medium): 12 project-owned files exceeded the `max_file_lines: 300` absolute ceiling per `bun run quality:report` (six authored over cap by FID-2026-0915-001 — audit finding M2; four grown by the FID-2026-0914-002 compaction program; one pre-existing; one 12th-row addendum pushed over by the C1 prettier reformat). All 12 split along existing seams per the FID-2026-0913-002 discipline (move-only + re-export facades; test splits keep assertion counts ≥ pre-split); the context-pruner trio uses the established embeddedHelpers batch pattern (modules are `.toString()`-embedded — plain imports don't exist in the eval scope). Closed 2026-09-15: quality:report PASS (1498 files), root typecheck exit 0, root test gate 421/5737, pipeline parity 76/216, agents parity 901 expect(), LIVE harvest rerun shape-identical (all report sections + candidates.json v2). Commit series `67e77d37` → `9fbe5364`. **Archived 2026-09-15** (operator automation directive). |
+| [FID-2026-0915-001](archive/FID-2026-0915-001-free-compute-intelligence-layer.md) | closed | Free-compute intelligence layer (medium): six workstreams over data the discovery pipeline already collects — W1 14-day stability ring buffer + uptime column, W2 model-first index with family normalization (state layer moved to `common/src/providers/discovery-state.ts`, one truth for report + CLI), W3 churn analytics + machine-readable `denylist.json`, W4 better-default nudges in the agent context block (threshold-gated, suggest-only), W5 429 fallback hints (fail-silent, once-per-model-per-session, never auto-switch), W6 operator-run quality gauntlet (`bun run providers:quality -- <host>`, operator key via env at invocation, never stored/scheduled). Hard invariants carried unchanged: zero auto-merge/switch, zero key storage, agent has no destructive tool, artifacts gitignored. MQ1–MQ4 ruled (operator accepted all four recommendations: 14d ring, <½-latency nudge, 8-prompt rubric, gitignored denylist). **Closed 2026-09-15:** implemented + gate-verified (typecheck ×4, 34 new pins / 131 suite tests 0 fail, eslint/lint:md/prettier, LIVE harvest run: v2 migration zero-blip — 55/55 unchanged, Uptime ring + model index (deepseek ×23) + churn rendered, `chutes.ai` still `RELAY ✗`); archived. |
+| [FID-2026-0914-003](archive/FID-2026-0914-003-free-compute-discovery-pipeline.md) | closed | Free-compute discovery + lifecycle pipeline (medium): daily harvest of the freeairouter `data/sites.json` open feed → stage-0 filter (55/214 viable, executed prototype) → two-tier typosquat screen (caught `api.celebras.ai`; Loop-2 false positive on `api.z.ai` corrected the gate design) → our own read-only `/v1/models` + 401-boundary probes (positive controls validated on Groq/Cerebras/Mistral) → FID-001-shaped proposal scaffold. Loop-5 amendment (operator "defaults"): daily boot-check automation (24h cache, background, fail-silent), sanitized bounded agent-context block so the main agent mentions new candidates (host/count/status facts only — no untrusted prose), wizard-driven one-step add for probe-passed candidates as provenance-stamped custom providers, daily health tracking with 401-drift compromise signal, and agent-surfaced `/provider remove` (shipped command reused; agent has no destructive tool). Full lifecycle: discover → verify → propose → accept → track → remove. MQ1–MQ8 all ruled (MQ8: stable-path daily-replaced data-backed report with full gate audit trail at `dev/provider-candidates/report.md`); 6 loops executed with tool evidence. **Closed 2026-09-14:** implemented + gate-verified (typecheck ×4, 54 pin tests, eslint/lint:md/prettier, LIVE harvest run: 214→55 candidates, real open-relay `chutes.ai` auto-rejected, full audit-trail report written); archived. |
+| [FID-2026-0914-002](archive/FID-2026-0914-002-context-compaction-rebuild.md) | closed | Context-compaction rebuild (critical): root cause of the operator's broken compaction artifact — the summary is a deterministic TypeScript transcriber (`agents/context-pruner/*`), not an LLM-authored handoff; every reference implementation (openclaw, kimi, hermes, codex, cline) uses a model call. Shipped: LLM semantic writer (session model, kimi-pattern prompt, 800–6000 band, leak/redaction validation, deterministic fallback) wired at the spawn boundary; deterministic writer hardened (fragment coalescing, `(×N)` resume coalescing, placeholder-aware digests, error-section removal, repo-relative recency-capped paths, protocol-dump pin guard); context-window truth (vendor-published fallback table + provenance, substring heuristics retired) + sidebar provenance badge. Typecheck ×4, suites, eslint 0, prettier, lint:md, and the LIVE forced-compaction gate (7/7) all green. |
+
+**2026-09-16 closure — FID-2026-0916-001 + FID-2026-0916-002 closed + archived (2 FIDs):**
+Operator directive ("Close and archive the two fixed FIDs (001 + 002) with
+CHANGELOG entries"). Both records ground-truth re-verified in the working
+tree at closure (all GREEN surfaces at file:line), declared gates re-run
+green (typecheck cli + common; FID-001 suites 28/0; FID-002 suites 39/0 /
+825 expects), repo-wide `fid:verify --check` PASS, receipts re-stamped via
+`fid:verify --write` on the closed content (001: 5/5 incl. the LIVE harvest
+probe; 002: 6/6 incl. the LIVE window-truth probe), then `git mv` to
+`dev/fids/archive/` + CHANGELOG entries. One ground-truth correction
+recorded on 002: the "display-name map pruned" claim was partially
+inaccurate — `tokenrouter/z-ai/glm-5.3-free` survives in two inert cli maps
+(`static-catalogs.ts:59/:124`); routed as a follow-up work item (SCOPE Task 55).
+**The active FID queue is empty.**
+
+**2026-09-14 closure — FID-2026-0914-001 implemented + closed + archived:**
+Infron + UnoRouter gateway providers — operator approved implement, close,
+and CHANGELOG update in the same session (T46-D ruling). RED-first across
+4 test suites,
+GREEN with one recorded refinement (picker split landed as a NEW module
+`static-catalogs-gateways.ts` — zero churn to the 283-line parent), and a
+harness root-cause fix: the one-shot `.env.local` bootstrap re-injects keys
+after `beforeEach` deletions, so harnesses must warm the module graph first
+(also cured a pre-existing sdk order flake, proven by stash A/B). Gates:
+typecheck ×4 exit 0; suites 61/0 + 30/0 + 16/0; eslint 0; prettier +
+lint:md clean; docs drift guard green. Step-5 live: catalog 26/26 through
+the production chain; UnoRouter 5 free channels HTTP-200 (rest busy-class,
+zero model_not_found); Infron integration verified end-to-end but the LIVE
+200 stays NEEDS-REVIEW until the account is funded (free tier requires
+team balance ≥ $5 — OrcaRouter precedent). Receipt stamped via
+`fid:verify --write` at the archived path (8/8 gates). Commit SHAs pending
+operator git execution (G1/G2). **The active FID queue is empty again.**
+
+**2026-09-13 closure — FID-2026-0913-004 reconciled + closed + archived:**
+release pre-audit — the record's own hold ("kept active until a release
+completes green through the new sweep") is discharged by the shipped
+v0.0.31 tag: `runPreAudit` runs unconditionally before the lock in the
+release transaction, so the green cut is itself the sweep's runtime
+proof. G2 `dd40f9c7` (implementation) + `799dcf0` (closure — receipt,
+ledger, CHANGELOG; the exact commit the v0.0.31 tag points to).
+Post-shipment `release:preaudit --check` [BLOCK]s on the shipped tag by
+design; canary + pollution checks re-verified green in the same pass.
+Receipt re-stamped live at the archived path (3/3 gates). **The active
+FID queue is now empty.**
+
+**2026-09-13 closure — FID-2026-0913-003 reconciled + closed + archived:**
+release-gate test isolation — git ground truth showed the closure had
+executed the same evening (`112f0cf`: receipt, ledger, CHANGELOG) and the
+release completed green through the fixed chain (**v0.0.31 tagged +
+pushed**, tag → `799dcf0`); the Resolution prose was stale, the work was
+not. G2 `1cc4185a` + Erratum-1 `c803926` stamped in the Resolution;
+placeholder Lessons Learned replaced; receipt re-stamped live at the
+archived path (4/4 gates). Active queue: FID-2026-0913-004 only (held for
+its own standing directive — kept active until a release completes green
+through the new sweep, which v0.0.31 satisfied; closure pending its own
+reconciliation pass).
+
+**2026-09-13 closure — FID-2026-0911-002 closed + archived:** OrcaRouter
+gateway provider — keyed live acceptance PASSED on a fresh post-linkage
+key (catalog 195/195 via the production chain, keyed chat HTTP 200
+`"OK"` on `orcarouter/free`, no-key 401 fail-closed). The 429
+`err_free_access_denied` era was an account-entitlement state, never an
+integration defect; the discriminator proved the free-tier grant binds
+at KEY-MINT time (a stale pre-linkage key kept producing false
+negatives after the dashboard showed linked). Receipt stamped live at
+the archived path (8/8 gates). Active queue: FID-2026-0913-003 +
+FID-2026-0913-004 (both held for the green v0.0.31 release run).
+
+**2026-09-13 erratum — local history rewrite:** to unblock the v0.0.31
+pre-push credential scan (the unpushed range carried a >2MB blob,
+`docs/lastsession.md`, which the scan refuses to scan fail-closed), the
+101 unpushed commits were rewritten with `filter-branch --index-filter`
+to drop the blob. Content-identical worktree; fast-forward push preserved
+(origin/main remains an ancestor — no force-push; the blob never left
+this machine). All commit SHAs cited in FID records for work authored
+2026-09-13 or earlier that day are stale by this rewrite; the messages
+and diffs are unchanged. Pre-rewrite branch retained as
+`backup-pre-rewrite-20260913`.
+
+**2026-09-13 closure — FID-2026-0913-002 closed + archived:** the
+hard-cap file-split program (all 9 over-cap files under the ceiling; 16
+new modules; zero consumer churn; exact test-count parity). Implementation
+chain `39d00fbf`→`3325feee` + evidence `954bd6b`; `closed`, moved to
+`dev/fids/archive/`, indexed in `archive/README.md`, CHANGELOG 0.0.31
+updated. Active queue: FID-2026-0911-002 only (vendor-held).
+
+**2026-09-13 closure — FID-2026-0913-001 + FID-2026-0912-005 closed +
+archived:** hcnsec + TokenBom gateway providers (implementation commit
+`5e8cd5c8`, keyed live round-trip PASS on both gateways) and the
+vendor-path native-incomplete classification fix (implementation commit
+`a6853358`). Both `closed`, moved to `dev/fids/archive/`, indexed in
+`archive/README.md`, CHANGELOG `Unreleased` updated. Active queue:
+FID-2026-0911-002 only (vendor-held).
+
+**2026-09-12 skill-evolution suite CLOSED + ARCHIVED (operator directive:
+"complete ALL open fids in logical order w/ automation level 3").**
+All four suite FIDs (-001..-004) implemented RED-first, gate-verified
+(typecheck ×6, common 721/0, agents 109/0, cli + evals suites green,
+eslint 0, lint:md, prettier), flipped `closed`, and moved to
+`dev/fids/archive/` (see `archive/README.md`). The active queue is the
+single vendor-held OrcaRouter record above.
+
+**2026-09-12 closure — FID-2026-0911-003 (custom-provider hardening)
+closed + archived:**
+[`FID-2026-0911-003`](archive/FID-2026-0911-003-custom-provider-live-test-and-protocol.md)
+— ground-truthed against the codebase at closure (helper callers
+Law 4-proven, `resolveProtocol` fix / protocol field / lift /
+reservation / live line all verified at file:line; G2 commit
+`8984711`). Step 4 live wizard test WAIVED, never passed — first
+natural anthropic-protocol entry confirms forward. Active queue:
+FID-2026-0911-002 only (vendor-held).
+
+**2026-09-12 closure — FID-2026-0911-004 (B.AI) closed + archived:**
+[`FID-2026-0911-004`](archive/FID-2026-0911-004-bai-gateway-provider.md)
+— 14th registry entry (`api.b.ai/v1`, `BAI_API_KEY`, authenticated live
+catalog, uniform prefixing). Keyed acceptance PASSED: catalog 47/47 via
+the production chain, chat **200 `pong`** on `bai/qwen3.8-flash`,
+fail-closed 401. Model-family entitlement map recorded in the FID
+(premium 403 deposit-gated; mid-tier 400 on zero balance; `qwen3.8-flash`
+callable — account state, not integration state).
+
+**2026-09-11 closure — FID-2026-0910-004 (custom providers via /provider)
+closed + archived:**
+[`FID-2026-0910-004`](archive/FID-2026-0910-004-custom-providers-slash-command.md)
+— the full feature: common data layer + merged effective registry (D1-D4),
+SDK/CLI seams (Steps 4-6), add/edit wizard (Step 7), grammar/picker/docs
+(Step 8), union widening (Step 9), Loop 9 replay-guard secret-hygiene fix
+(live-smoke discovery), catalog fetcher + D10 ladder + D9 merge (Step 9
+remainder), health edge sweep + full Law 4 grep proof (Step 10). Closed by
+operator directive (final certification, Loop 12); CHANGELOG `Unreleased`
+carries the feature-scale entry. See `archive/README.md` (2026-09-11
+section).
+
+**2026-09-10 implementation (FID-2026-0910-004, Steps 1–3):** operator
+directive to implement the common layer only. RED investigation falsified
+the Step 3 premise (no template-time model validation ever existed;
+`filteredModels` was dead code) — implemented as dead-code removal per the
+step's own fork clause; Loop 5 recorded in the FID. Status `converged` →
+`fixed` (Steps 1–3); implementation commit pending operator authorization.
+
+**2026-09-10 implementation (FID-2026-0910-001):** operator directive to
+implement the three converged surfaces; Loop 3 recorded in the FID (RED
+legs first, all four failing pre-fix; gates stamped; Law 4 greps pasted).
+Status `fixed`; closure requires the commit (G2). Ledger table refreshed to
+disk ground truth (the three rows above had not been re-added after the
+2026-09-09 drain).
+
+**2026-09-10 closure ceremony (FID-2026-0910-003 → archive):** the record
+sat `closed` in `dev/fids/` with its CHANGELOG entry already written and
+commits `377e0494` + `17b08fd5` on main — only the archive move + index
+had never executed. Completed 2026-09-10 after Ground-Truth re-verification
+(suite 38/0, typecheck/eslint/prettier clean on the touched files); see
+`archive/README.md` header "str_replace indent rescue".
+
+**2026-09-10 closure (FID-2026-0910-001):** implemented, committed
+`b7a4e437`, closed + archived same session. See `archive/README.md` header
+"skill lifecycle live notification"; CHANGELOG `Unreleased` carries the
+full entry (plus the previously-uncommitted 0909-006/007 closure entries).
+Active queue: FID-2026-0911-002 (OrcaRouter — vendor free-tier unlock
+still not effective post-linkage; probe re-runs on vendor fix).
+FID-2026-0911-003 implemented + audited (Loop 3; commit `8984711`).
+FID-2026-0911-004 CLOSED (keyed acceptance 200 `pong`).
+
+**2026-09-12 closures (automation level 3):**
+[`FID-2026-0909-008`](archive/FID-2026-0909-008-tool-call-argument-truncation-root-cause.md)
+closed — Steps 1-5 shipped; the live finish-reason proof is wired as an
+instrument (experience capture) and cannot be summoned on demand;
+closed-with-instrument per the operator's complete-all directive.
+[`FID-2026-0911-001`](archive/FID-2026-0911-001-provider-picker-add-new-entry.md)
+closed — add-new picker entry converged Loop 3, shipped, and its
+operator due-diligence findings routed to FID-2026-0911-003.
+
+**2026-09-10 closure (FID-2026-0910-002 — ECHO.md Author-field residue):**
+exposed live by the FID-2026-0910-001 Verifier audit (a correct FAIL on a
+compliant FID), root-caused to the 2026-08-09 signature scrub missing the
+rule text itself — ECHO.md still required `**Author**`, mirrored into the
+protocol-copies generator source and the single-agent protocol doc, then
+embedded in both generated protocol constants. Fixed at all three source
+sites + bundle regen (commit `7031d6b9`); parity suite 15/0 (the pre-regen
+14/1 was the drift guard firing by design); Verifier PASS 0 FAIL / 4
+NEEDS-REVIEW (all discharged with fresh tool output); Adversary
+SHIPPABLE-for-closure (all discharges CONFIRMED by direct read;
+`fid-ledger.ts:32` FORBIDDEN_ATTRIBUTION corroboration — rule text and
+enforcement were in direct conflict pre-fix). Closed + archived 2026-09-10;
+receipt re-stamped at the archived path. Two non-blocking out-of-scope flags
+ride with the Adversary verdict: `docs/echo-protocol.md` public laws-table
+drift, and vendored ripgrep ENOENT in the SDK dist.
+
+**2026-09-09 closure (FID-2026-0909-005):** implemented on the operator
+approval left standing by the dead session (directive: "Approve: implement
+FID-2026-0909-005 now"). Full Loop 2: RED-leg suite-first run (10/1, the
+failing pin the exact generic-line defect), GREEN wiring with two
+audited deltas (the `toolResultErrorLine` fallback centralizer + the
+300-line-ceiling suite split), Verifier 8 PASS / 1 NEEDS-REVIEW → SHIP
+(the NEEDS-REVIEW was this closure edit itself, discharged by
+documenting the deltas in the FID). Commit `abe4d6a`; receipt 4/4 PASS
+stamped at the archived path. Live boundary open: the next natural
+handler soft-failure appends the first real-line ledger record.
+
+**2026-09-09 Perfection Loop pass (all three records → `analyzed`):** each
+FID's Loop 1 ran codebase-grounded (single-agent ECHO v0.1.2). Ground-truth
+corrections recorded: FID-001's root-cause hypothesis was refuted by the code
+(the gate failures DO reach the `finally`; the real gaps are silent removal
+failure, no pre-create self-healing, and no filesystem fallback — three-piece
+fix now specified); FID-003's gate chain was located in the shared
+`assertCleanCheckoutCompiles` (not `verify-clean.ts`), so the design is a
+parameterized gate list and its RED pin is sequenced after FID-001; FID-002's
+Step-1 inventory ran with one residual reasoned exemption found
+(`public-release-pinned-bun.test.ts:54`, the pinned-runtime contract probe)
+and class-3 (`process.env` shape dependence) ruled non-greppable. Coordination
+master: [`dev/build-orders/archive/BO-2026-09-09-gate-chain-hardening.md`](../build-orders/archive/BO-2026-09-09-gate-chain-hardening.md)
+— implementation order 001 → 003 → 002, awaiting operator approval (Law 2).
+**2026-09-09 closure (operator directive: "Approve the full 001→003→002 program
+and implement all three sequentially"):** all three FIDs implemented in the
+mandatory order, closed + archived, CHANGELOG `Unreleased` entries added, and
+receipts re-stamped at the archived paths. Highlights: FID-001's self-healing
+lifecycle (`scripts/public-release/clean-checkout.ts`) + FID-003's
+declaration-surface gate (`extraGates` on `assertCleanCheckoutCompiles`,
+`verify:clean` opts into `build:sdk`) landed in commit `086565b` — with the
+FID-003 live drill proving both FIDs (planted TS2339 → FAIL with no checkout
+debris; clean tree → PASS 146.0s). FID-002's guard (`audit.gate-env-parity`
+in `validate:repository`) caught TWO real class-1 defects on its first live
+run (`scripts/bump-version.ts` bracket-shape `'bun'` spawns, fixed to
+`process.execPath`) and passed the prove-the-guard drill both legs. Program
+gates: scripts surface 326/0 across 45 files; typecheck ×4 exit 0; eslint
+`--max-warnings 0`; lint:md; prettier; `validate:repository` PASS. The
+active queue is empty. See `archive/README.md` (2026-09-09 closure section)
+and the CHANGELOG `Unreleased` entries.
+**2026-09-08 closure (operator directive: "review the fids, if they are done, add
+them to changelog and properly close them out") — FID-2026-0907-007 +
+FID-2026-0908-003 closed + archived:** both records reviewed complete (full
+Perfection Loops, receipts stamped), statuses flipped to `closed`, moved to
+`dev/fids/archive/`, and receipts re-stamped live at the archived paths with
+all declared gates re-run (FID-007: typecheck cli + both matrix suites;
+FID-003: typecheck sdk/common + the caps-markers suite); repo-wide
+`fid:verify --check` PASS. The active queue is now empty. FID-007's
+cross-repo smoke (real Savant parent → built CLI) carries OPEN as the
+operator-assisted boundary — never claimed. See `archive/README.md` (2026-09-08
+closure section) and the CHANGELOG 0.0.30 entries.
+
+**2026-09-29 closure — four FIDs closed + archived (queue emptied same day):**
+[`FID-2026-0929-001`](archive/FID-2026-0929-001-provider-identity-leak-brand-guard.md),
+[`FID-2026-0929-002`](archive/FID-2026-0929-002-direct-provider-402-out-of-credits-misfire.md),
+[`FID-2026-0929-003`](archive/FID-2026-0929-003-boot-mode-precedence-token-vs-selection.md),
+and
+[`FID-2026-0929-004`](archive/FID-2026-0929-004-delete-dead-login-surface.md)
+**closed + archived 2026-09-29** — provider identity brand guard, direct-mode
+402 honesty, boot-mode precedence per the gut-the-backend ruling, and the
+dead login surface deletion (stage 1). Receipts at their archived paths;
+commits `bc3b31d8`/`c49d3887`/`742f3612`/`4b54e804`; CHANGELOG under
+`Unreleased — 2026-09-29`.
+
+**2026-09-08 (later) — FID-2026-0908-001 closed + archived; the active queue was
+empty until FID-2026-0908-003 opened the same day** (see `archive/README.md`
+and the CHANGELOG 0.0.30 entry).
+
+**2026-09-08 closure — seven FIDs closed + archived (queue emptied same day):**
+[`FID-2026-0907-003`](archive/FID-2026-0907-003-ndjson-frame-module.md),
+[`FID-2026-0907-004`](archive/FID-2026-0907-004-ndjson-handleevent-tap.md),
+[`FID-2026-0907-005`](archive/FID-2026-0907-005-ndjson-artifact-error-stdout-purity.md),
+[`FID-2026-0907-006`](archive/FID-2026-0907-006-ndjson-stdin-control-reader.md),
+[`FID-2026-0907-008`](archive/FID-2026-0907-008-apinex-gateway-provider.md),
+[`FID-2026-0907-009`](archive/FID-2026-0907-009-provider-key-update.md), and
+[`FID-2026-0907-010`](archive/FID-2026-0907-010-fid-fingerprint-off-by-one.md)
+**closed + archived 2026-09-08** — receipts re-stamped live at their archived
+paths with all declared gates re-run (18:18–18:20Z; FID-006 later the same
+day). The NDJSON trio's recorded "archive after FID-007" sequencing pointed
+at a FID that was never authored; Phase 2 (FID-006, stdin control reader)
+was then implemented + closed the same day under the T17-C standing
+directive (scope-complete, green receipt; the live-matrix dependency
+carries as a never-claimed boundary — defects fix forward), leaving only
+Phase 3 (the FID-007 handoff matrix, SCOPE T21-E) open. Later the same day,
+FID-2026-0908-001 (`skill_manage` output-template parity, the last active
+record) also closed + archived — the active queue is now empty. FID-008's keyed
+live acceptance PASSED (catalog 200/22 models, missing-key 401 fail-closed,
+chat round-trip 200 on `free/glm-5.3-flash`); FID-009's dev-build smoke
+carries as a never-claimed-passed operator boundary per the 2026-09-06
+ground-truth ruling. CHANGELOG entries under Unreleased. See
+`archive/README.md` (2026-09-08 section).
+
+**2026-09-07 closure — FID-2026-0907-002 (harness-honesty gates) closed +
+archived:** [`FID-2026-0907-002`](archive/FID-2026-0907-002-harness-honesty-gates.md)
+— four mechanized honesty gates: ripgrep boot probe + honest resolver
+error, edit-size guidance on over-threshold str_replace failures (shared
+`READ_FILES_MAX_CHARS` constant canonical in `common`), the
+exit-code-masking audit wired into `validate:repository`, and the
+standalone `verify:clean` clean-room proof. Receipt 5/5 PASS; live
+acceptance: `verify:clean PASS — ff1ea8f61 (v0.0.30) compiles from a
+clean checkout (133.9s)`. The colliding parallel draft was quarantined
+to `dev/scratchpad/active/` by operator ruling (three unwired check
+families preserved as future-FID material). The active-FID table was
+empty again until FID-2026-0907-003 opened (BO Phase B, below).
+
+**2026-09-07 closure — FID-2026-0907-001 (picker focus loss) closed +
+archived:** [`FID-2026-0907-001`](archive/FID-2026-0907-001-picker-close-focus-loss.md)
+— dismissing any picker overlay (model / provider / rewind) with Escape or
+a backdrop click left the chat input permanently blurred (only select
+paths restored focus; the input could not self-recover). Fixed with a
+single-seam symmetric open/restore focus effect in `use-chat-pickers.ts`
+plus the pure predicate `picker-focus-transition.ts` plus a regression
+suite (6/0, RED-first). Receipt 2/2 PASS; live acceptance 2026-09-07
+(operator:
+Escape and backdrop dismissal both restore the input).
+
+**2026-09-07 closure — FID-2026-0906-008 (gateway providers) closed +
+archived:** [`FID-2026-0906-008`](archive/FID-2026-0906-008-three-gateway-providers.md)
+was implemented with all static gates green, then **withdrawn by operator
+direction after live keyed testing** showed none of the three gateways can
+serve chat (VyceAI disabled by directive; GoRouter dead; TabiToken auth +
+catalog + billing healthy but its chat path is Cloudflare-WAF-blocked in
+every client variant probed). All three registry entries, fetchers, tests,
+and docs removed; registry back to 11 providers / 9 setup providers.
+Evidence and lessons in the archived FID's Resolution + Lessons Learned.
+(The table above is empty: `-0903-001` and `-0905-009` were closed +
+archived in the 2026-09-06 T17-C ceremony and their rows are removed here
+as stale.)
+
+**2026-09-05 closure — quality campaign to zero (6 FIDs archived):**
+[`FID-2026-0905-001`](archive/FID-2026-0905-001-native-tool-executor-decomposition.md)
+(native.ts 894 → 249, `24fae6f0`),
+[`FID-2026-0905-004`](archive/FID-2026-0905-004-gateway-decomposition.md)
+(gateway.ts 1,327 → 236, `7e4be78`),
+[`FID-2026-0905-005`](archive/FID-2026-0905-005-office-scene-decomposition.md)
+(office-scene.tsx 2,126 → 179, `3c737fb`),
+[`FID-2026-0905-006`](archive/FID-2026-0905-006-provider-drift-baseline-resolution.md)
+(provider-drift baselines + derived env-sanitize lists, `98129016`),
+[`FID-2026-0905-007`](archive/FID-2026-0905-007-public-release-decomposition.md)
+(public-release.ts 3,065 → 178 over 23 modules, `32255bb`), and
+[`FID-2026-0905-008`](archive/FID-2026-0905-008-git-bundle-backup.md)
+(git-bundle-backup G5 durability layer, `32255bb`) **closed + archived
+2026-09-05**. G2 commit hashes stamped in every FID (resolved by the
+2026-09-05 G1 amendment permitting agent commits + push). All five residue
+monoliths of closed -0819-005 are now decomposed; `quality:report` at
+**0 violations**; receipts re-verified via `fid:verify --check`. Active
+queue is now `-0903-001` only.
+
+**2026-09-05 closure — provider integrations:**
+[`FID-2026-0905-002`](archive/FID-2026-0905-002-kiosapi-provider.md) (KiosAPI)
+and [`FID-2026-0905-003`](archive/FID-2026-0905-003-opencode-zen-provider.md)
+(OpenCode Zen) **closed + archived 2026-09-05** — the operator's live tests
+("kiosapi works", "zen works") discharged the key-gated boundaries; fresh
+gate re-runs green (common 24/0, gateway 16/0, sdk 10/0 + 4/0). Active
+queue is now `-0903-001` + `-0905-001`.
+
+**2026-09-05 closure (quality-ratchet program complete):**
+[`FID-2026-0819-005`](archive/FID-2026-0819-005-quality-ratchet-file-remediation.md)
+closed after Loops 348–358 drove the live inventory from 16 to 5 violations —
+every test file and every type file in the repo is now under the 300-line
+ceiling. Remaining 5 are source monoliths (public-release, office-scene,
+gateway, native, `__nt-before-snapshot`) recorded in the Resolution as
+follow-on backlog. Template type files split into re-export hubs with zero
+import-surface change; `init-type-files.ts` now owns the 8-file `.agents/types`
+raw-text scaffold. Final gates: typecheck × 4 clean, all four workspace suites
+0 fail, eslint `--max-warnings 0`, lint:md, Prettier. Active queue is now
+-0903-001 only.
+
+**2026-09-05 monolith-FID opening (residue backlog, item 2 of 5):**
+[`FID-2026-0905-004`](archive/FID-2026-0905-004-gateway-decomposition.md)
+opened scoping the architectural decomposition of
+`cli/src/server/gateway.ts` (the desktop session gateway), measured
+1,327 lines — the 4th of the 5 residue monoliths. Sequenced ahead of
+`public-release.ts` because -0903-001 lands in that file at the next
+release cut. Loop-1 RED recorded: 9 existing test files form the
+characterization base (per-method coverage map verified), with one gap —
+`injectTriggerRun` has no direct pins — to be closed RED-first before any
+extraction. **Superseded same day:** the Perfection Loop ran to convergence
+(Loop 2 + 3) and the operator approved implementation; see the table row
+and the FID's own Loop sections for the full record, including the
+`request()` harness-race fix (RED finding 5) and the 1,327 → 236 facade
+result. (The item-1 note below predates the -0905-001 implementation.)
+
+**2026-09-05 monolith-FID opening (residue backlog, item 3 of 5):**
+[`FID-2026-0905-005`](archive/FID-2026-0905-005-office-scene-decomposition.md)
+opened scoping the architectural decomposition of
+`desktop/src/floor/office/office-scene.tsx` (the R3F office deck scene),
+measured 2,126 lines. Sequenced ahead of `public-release.ts` (-0903-001
+landing zone). Loop-1 RED recorded: the scene's pure logic (labelFor,
+makeThinkingPredicate) is module-private with ZERO test coverage — RED
+step 1 is the minimal verbatim logic extraction + pins before any
+component move. Live gate validation at authoring: desktop typecheck 0,
+4 sibling office suites green. **Implemented 2026-09-05** (operator
+approved the full loop): Loop 2 settled the bus single-ownership
+(`scene-focus-bus.ts`), targetFor cohesion, and the environment promotion;
+RED extracted the pure logic first (13/0 pins), then 14 `scene-*` stage
+modules behind a 179-line facade (2,126 → 179; four modules ceiling-split
+at audit: desk-props, identity, agent-fx); suite parity 413/0 / 5,718
+expects; receipt 6/6 PASS; quality-report unlisted. Status `fixed`;
+closure awaits the G2 commit hash.
+
+**2026-09-03 Maus-suite dissolution (operator decision):** -003, -004,
+-006, -007 closed out-of-scope and master -008 closed (suite dissolved) —
+all archived with the decision recorded in each Resolution. The Maus-parity
+roadmap program is removed from the project; -009 and -005 had already
+closed shipped. Active queue is now -0903-001 (next release cut) — the
+operator-held ratchet (-0819-005) closed 2026-09-05; see below.
+
+**2026-09-03 closure (ground-truth audit):** four `fixed` FIDs closed +
+archived — FID-2026-0824-012 (self-improving harness master; live boundaries
+fully discharged: both lesson-derived drafts operator-trusted, 19 production
+capture records), FID-2026-0824-028/-030 (robot-cast recovery pair; re-smoke
+discharged by the T16-F CDP smoke + the 0824-032 root-cause fix),
+FID-2026-0828-001 (compaction summary; G2 hash resolved to `51fa261`, v0.0.28).
+All receipts re-stamped PASS at the archived paths; fresh closure battery
+101 tests / 0 fail across 11 gate files. See `archive/README.md` and CHANGELOG.
+
+**2026-09-03 closure ceremony (release-time remainder + re-homing):** three
+`analyzed` FIDs closed + archived after the desktop packaging release-time
+ceremony — [`FID-2026-0820-011`](archive/FID-2026-0820-011-packaging-distribution.md)
+(signed-bundle E2E, Windows installer smoke both flavors, blank-console fix,
+CI prebuild fix + dispatch scaffold), [`FID-2026-0820-007`](archive/FID-2026-0820-007-savant-desktop-app-tauri-master.md)
+(desktop master; all children closed), [`FID-2026-0823-003`](archive/FID-2026-0823-003-overnight-queue-to-zero-master.md)
+(coordination master; U1–U11 resolved). Operator directive: the standing
+release-time process is **re-homed into the automatic release system** —
+successor [`FID-2026-0903-001`](FID-2026-0903-001-desktop-packaging-auto-release-integration.md)
+tracks the pipeline integration for the next cut. Receipts stamped PASS at
+all archived paths.
+
+**2026-09-02 audit sweep:** seven deck/desktop session FIDs closed + archived
+(-0828-002, -0829-001, -0831-001, -0831-002, -0901-001, -0901-003, -0901-006)
+— statuses corrected to the honest implemented state, gate receipts
+re-stamped PASS, changelog entries added. See `archive/README.md`
+(2026-09-02 closure) and CHANGELOG.
+
+**2026-08-25 closures:** `FID-2026-0824-009` Workspace Regions and `FID-2026-0820-010` Chat UI are
+closed and archived after their documented implementation and verification gates. See
+`archive/README.md` and the changelog closure entries.
+
+**2026-08-24 suite addition:** agents-as-contacts command surface —
+master [`FID-2026-0824-008`](FID-2026-0824-008-agents-as-contacts-command-surface-master.md)
+and children `-009` (workspace regions), `-003` (computer use / cua daemon /
+MJPEG), `-004` (voice pipeline), `-005` (triggers → goal injection), `-006`
+(mobile companion), `-007` (security: keychain upgrade + consent UX) — authored
+from the Gemini Deep Research report
+(`docs/design/Agents-as-Contacts Architecture Research.md`) under BINDING
+amendments C1–C7 recorded on the master (keyring-rs→Tauri host; cua-daemon
+adoption over Rust port; local-default webhook ingress; MJPEG-only transport;
+existing compactor reused; db-storage extension + Amendment Gate G1–G4;
+single-model rule retained; voice free-mode deferred). Placement decision:
+MERGED into the chat workspace (no separate screen); Deck = WATCH, workspace =
+ACT. Sequencing guard: `-009` was gated on -010 Steps 4–7 and is now closed;
+remaining children are tracked at their own active statuses; batched suite AUDIT
+pending.
+
+**2026-08-24 suite addition:** eval system rebuild v3 — master
+[`FID-2026-0824-013`](FID-2026-0824-013-eval-system-rebuild-v3-master.md)
+and children `-014`..`-019` authored from
+`docs/design/Savant Eval System Rebuild.md` under binding amendments A1–A8:
+stale Phase-1 sandbox premise corrected (TempDirSandbox already default);
+single-model rule retained; Tier 1 into `.githooks/pre-push` (operator decision);
+regression guard retargeted to the `/skills trust` boundary per FID-2026-0824-012;
+autorater strictly out-of-process; license audit as a RED hard gate; FSM scorer
+already substantive — increment 0 is adversarial-phase alignment + trajectory
+assertions. Strict sequence `-014`→`-019` (operator directive: blueprint order).
+Batched Verifier + Adversary audits complete: six mechanical FAILs found and
+discharged, citations 5 CONFIRMED / 1 ADJUSTED on disk, no omissions. All records
+at `analyzed`. Master closes when the last child closes.
+
+**2026-08-25 reconciliation:** root-cause records `FID-2026-0824-020` and
+`FID-2026-0824-021` were closed and archived after resolution by the completed
+`-022` through `-027` rebuild suite. Their carried live-smoke boundaries remain
+explicitly recorded as waived, never passed; the implementation is not duplicated.
+
+**2026-08-24 suite addition:** compaction integrity rebuild — master
+[`FID-2026-0824-022`](FID-2026-0824-022-compaction-integrity-rebuild-master.md)
+with children `-023` (visibility/transparency layer), `-024` (preservation
+contract + digest schema), `-025` (minimal-surgery algorithm), `-026`
+(evidence spill + requiresRawEvidence splice), `-027` (removed-content ledger,
+metrics, model notice) — grown out of the operator-reported 'data passed but
+compacted' symptom: `-020` (subagents inherit compacted history) + `-021`
+(drop-list digest discards read/search/web results; micro-compact invisible;
+pruner output unsurfaced); `resources/hermes-agent/trajectory_compressor.py`
+reviewed 0-EOF as the preservation baseline. Binding amendments V1/V2
+(traffic-light visibility for ALL layers, HIGHLY visible firing, expandable
+summary viewer) + P1–P4/M1/Q1. Sequence `-023` first → `-024` → `-025` →
+`-026` ∥ `-027`. Batched Verifier + Adversary complete: 1 FAIL (master Impact
+Assessment) discharged; 1 convention-based NEEDS-REVIEW refuted against disk.
+All five children IMPLEMENTED, receipt-stamped (`--check` green each), and
+CLOSED 2026-08-24 via operator live-smoke WAIVER directive; master `-022`
+closed per policy. All six records archived to
+[`archive/`](archive/README.md).
+
+**2026-08-24 renumbering (operator directive):** the suite's planning records
+shared date-numbers with same-day harness fixes (concurrent overnight streams
+allocated independently); chronological renumber — master `-001`→`-008`,
+workspace regions `-002`→`-009`, design-contract scanner `-002`→`-010`
+(the law4/law3 credit fix keeps `-001`). Cite by full filename.
+
+**Carried live-observation items (no FID yet — tracked so they cannot silently
+drop):** CompactionSignal parity + `/compact` live re-test (carried from
+FID-2026-0822-001/006; needs a natural compaction event observed live) ·
+anti-runaway guard + turn-terminator live confirmation (carried from
+FID-2026-0822-002/003; next natural runaway-pattern turn is the evidence) ·
+reasoning-panel 90-col scroll repro (carried from FID-2026-0822-010) ·
+expanded-state read_files/add_message confirmation (carried from
+FID-2026-0822-011) · sidebar Context/Model overlap (routed to a future
+sidebar FID) · `sixteen.` tail-loss repro (owned in the FID-2026-0822-009
+closure) · `reminder.` border-row (mid-stream transient; monitor next live
+pass).
+
+`FID-2026-0819-002` (research tools non-functional in direct-provider mode) is
+**closed and archived 2026-08-19** — see
+[`archive/FID-2026-0819-002-research-tools-nonfunctional-in-direct-provider-mode.md`](archive/FID-2026-0819-002-research-tools-nonfunctional-in-direct-provider-mode.md)
+and the closure entry in `archive/README.md`.
+
+Historical: the cumulative verification tracking
+FID (`FID-2026-0819-001`) is **closed and archived 2026-08-19**, and the
+complete Auto Drive + Discord Rich Presence program
+(`FID-2026-0818-001` master + children `002`–`008` + Discord `009` +
+docs/FAQ `010`) is **closed and archived 2026-08-18**:
+
+- Children `002`–`008` and `010` were operator-directed batch-archived
+  2026-08-18 (all Step Status inventories fully `[x]`).
+- Master `001` and Discord `009` closed 2026-08-18 after the operator
+  confirmed the two live smokes: the live `/auto` run (TUI + headless +
+  crash resume) and the live Discord presence under
+  `1539431002089328710` (client id rotated from `1478095645662380042`
+  2026-08-18).
+
+See `archive/README.md` for the full closure index.
+
+The five most recent records —
+`FID-2026-0817-001` (TerminalCommandDisplay copy button + traffic-light
+redesign), `FID-2026-0817-002` (v0.0.25 harness report remediation),
+`FID-2026-0817-003` (linux-arm64 release binary missing — OpenTUI
+native-bundle variant), `FID-2026-0817-004` (unauthorized coding-agent
+contributor credit purge + permanent watermark guard), and
+`FID-2026-0817-005` (Anti-Deferral Gate: FID step-status enforcement) —
+were closed and archived on 2026-08-17; see `archive/README.md` for the
+closure entries.
+
+The complete Savant UI-overhaul program (master `FID-2026-0816-002` +
+children `003`–`012`) is **closed and archived**: Phase 0 OpenTUI 0.5.3
+upgrade (`003`), Phase 1 design tokens (`004`), Phase 2 animation engine
+(`005`), Phase 3 native code/diff components (`006` — custom renderer
+re-verified), Phase 4 layout/responsiveness (`007`), logo easter egg
+(`008`), diff + transition redesign (`009`), post-FID-009 polish backfill
+(`010`), rich terminal output (`011`), and the two `012` records
+(native tool-call recovery hardening + trust-matrix stuck-awaiting-audit).
+Every child closed with implementation evidence + the operator's
+live-test confirmation (2026-08-16); the master closed once all children
+closed. See `archive/README.md` for the closure entries.
+
+**Status vocabulary (2026-08-16):** `created | analyzed | fixed | verified | converged | closed`
+
+- `created` = findings noted; document not yet loop-passed
+- `analyzed` = issues cataloged + document loop-passed; implementation not started
+- `fixed` = implementation exists and gates pass, but a review/closure gate
+  remains (e.g., an operator visual pass)
+- `verified` = reviewed pass recorded (rarely left open; usually folds into `closed`)
+- `converged` = document is complete and loop-passed, but implementation hasn't started
+- `closed` = implementation exists in codebase AND gates pass (requires evidence)
+
+Ledger admission note (**corrected 2026-10-06**): the validator
+(`scripts/fid-ledger.ts` → `ALLOWED_ACTIVE_STATUSES`) admits
+`created | analyzed | converged | fixed | verified` for files living in
+`dev/fids/`, and `closed` is not active-queue legal. **`converged` IS an
+admissible active-queue status** — the Perfection Loop has completed and
+implementation approval is pending — per the operator vocabulary ruling in
+`FID-2026-0915-004` (archived), which superseded the 2026-08-18 ruling that
+had forced loop-converged records to carry the legacy `analyzed` label. The
+earlier note here said the opposite and would have sent a reader to relabel a
+converged record; it was corrected while authoring `FID-2026-1006-002`.
+(`fixed` remains deprecated-but-accepted legacy language.)
+
+### Closed records (historical)
+
+`FID-2026-1007-004` (lossless tool-output retention and verified locators — every
+path that discards model-facing bytes must have stored them first, and every marker
+must name a location it can compute, high) — **closed + archived 2026-10-07** after
+all seven steps landed (`e9322b38` for the seam, `eb2ee0f3` for steps 3-7,
+`49c7bab4` for the ceiling splits the quality gate required) and all eleven declared
+gates stamped exit 0; the register item is T159. See
+[`archive/README.md`](archive/README.md) for the closure entry.
+
+`FID-2026-1007-003` (gate declarability and the probe runner — every repository
+gate paired with the allowlisted declaration that proves it, medium) —
+**closed + archived 2026-10-07** in local commit `0620e143` after 5/5 declared
+gates stamped; see [`archive/README.md`](archive/README.md) for the closure
+entry.
+
+`FID-2026-1007-002` (module-scope state is shared by every Bun test file — 144
+bindings across 98 files with no reset, medium) — **closed + archived
+2026-10-07** in local commit `5299af25`; see
+[`archive/README.md`](archive/README.md) for the closure entry.
+
+`FID-2026-1007-001` (agent-runtime suite breaker leak and three behaviour
+corrections — 76 failures, one cause, medium) — **closed + archived 2026-10-07**
+in local commit `228156da`; see [`archive/README.md`](archive/README.md) for the
+closure entry.
+
+`FID-2026-0827-001` (sidebar context readout stall near zero — `dampTokenCount`
+small-count floor `CONTEXT_TOKEN_SMALL_COUNT_FLOOR = 10_000`, medium) —
+**closed + archived 2026-08-27** by operator directive after the gate surface
+(12/0 suite, cli typecheck, Verifier PASS) proved the formula change and the
+live visual meter was recorded as the operator's boundary; see
+[`archive/README.md`](archive/README.md) for the closure entry.
+
+`FID-2026-0825-001` (/compact "No response from agent" — compact-and-stop
+zero-assistant-history false error, high) — **closed + archived 2026-08-25**
+after the operator confirmed the live fix; see
+[`archive/README.md`](archive/README.md) for the closure entry.
+
+`FID-2026-0823-005` (unified edit line-count format `+N -N` via shared
+utility + `DiffViewer` onto `TrafficLightPanel`) — **closed + archived
+2026-08-23**; see `archive/README.md` for the closure entry.
+
+`FID-2026-0816-001` (v0.0.24 phantom-dependency incident — the release
+shipped without binaries; `@noble/hashes` declared + main-package-only
+publish default + cli-bundle-resolution gate) — **closed** and archived
+2026-08-16; indexed in `archive/README.md`.
+
+`FID-2026-0816-002` (Savant UI overhaul — master organizing FID, high) —
+**closed** and archived 2026-08-16 after every child closed with
+implementation evidence + the operator's live-test confirmation; the work
+queue is empty. Governance-only (planning, no code of its own).
+
+`FID-2026-0816-005` (Phase 2 — animation engine adoption, medium) —
+**closed** and archived 2026-08-16 after the operator confirmed the
+blur → 15fps check (A) in the live closure test. All 7 steps: timeline
+engine (`use-animation-timeline`), animation budget + blur suspension
+(`use-animation-budget`), smooth scroll, fold/collapse tween,
+streaming typewriter, `opentui-spinner` rejected (raw `setInterval`, YAGNI),
+setInterval grep gate (only the two allowlisted 1 Hz wall-clock timers).
+Regression fix: the 1 s loop-halt (loop/duration options added to
+`useAnimationTimeline`).
+
+`FID-2026-0816-009` (diff viewer + phase-transition notification visual
+redesign — medium) — **closed** and archived 2026-08-16 after the
+operator's visual pass PASS: the diff viewer (bordered frame, header strip,
+old/new gutter, sign column, hunk bars, EDIT fallback) renders correctly,
+and the phase-transition bar renders **identically in Cursor and classic
+PowerShell console** — the Loop-6 filled-chip redesign (solid phase-color
+fill, black text / white-on-red, `relativeLuminance`-driven) eliminated the
+ANSI-16 tint collapse that made the bar drift between terminals. See
+`archive/README.md` for the closure entry.
+
+`FID-2026-0816-010` (post-FID-009 UI polish backfill — mode-selector cyan
+strokes + reactive trust matrix, medium) — **closed** and archived
+2026-08-16 after the operator confirmed checks E/F in the live closure
+test: cyan hover strokes project-wide, and the trust matrix now mounts only
+while receipts are pending, resolves signed rows, carries no title icon,
+and disappears on completion.
+
+`FID-2026-0816-011` (rich terminal command output redesign, medium) —
+**closed** and archived 2026-08-16 after the operator confirmed check G in
+the live closure test: traffic-light title bar, green `$` command row +
+✓/✗/⏳ status badge, cwd/timeout pills, line-number gutter (hidden <50
+cols), clean expand/collapse, and `exitCode` plumbing through
+`parseTerminalOutput`.
+
+`FID-2026-0816-012` (`-trust-matrix-stuck-awaiting-audit`, medium) —
+**closed** and archived 2026-08-16 (operator live-test confirmation):
+Trust Matrix label "awaiting audit"→"signed", tone-glyph icon removed,
+title → "Trust Matrix". **Number note:** collides with the archived
+`FID-2026-0816-012-native-tool-call-recovery-hardening` (closed same day);
+both preserved per the Historical duplicate IDs convention — reference by
+full filename.
+
+`FID-2026-0816-012` (native tool-call recovery hardening — high) — **closed**
+and archived 2026-08-16 after operator approval + full gate sweep. Fixes the
+flash-model truncated-tool-call failure that killed a Forge subagent run
+(FID-011's implementation): tool-aware split steering, a 3-strike cap, an
+actionable exhausted failure naming the tool, and drift warn for unknown
+incomplete tools. See `archive/README.md` for the closure entry.
+
+`FID-2026-0816-008` (Savant logo easter egg) — **closed** and archived
+2026-08-16 after the operator's visual pass PASS (click-per-message flow,
+centered bubbles, cyan-on-near-black viewport-height 5 s flood, 5 s moral
+bubble). Canonical design doc: `docs/design/easter-eggs.md`.
+
+The 2026-08-14 remediation program — master
+`FID-2026-0814-007` and children `FID-2026-0814-002` through `-006` — was
+implemented under the operator's automation level 3 grant (Nova planning PASS
+recorded for each child), fully verified (typecheck ×4, full root suites,
+ESLint, lint:md, Prettier, `validate:repository`), documented (README,
+`docs/features.md`, CHANGELOG), and closed + archived on 2026-08-14:
+
+| FID | Status | Purpose |
+|---|---|---|
+| [`FID-2026-0814-002`](archive/FID-2026-0814-002-durable-budgeted-goal-mode.md) | `closed` | Durable budgeted goal mode — event-sourced goal state machine, token/turn/wall-clock budgets, continuation driver, `update-goal`/`get-goal` tools, `<untrusted_objective>` injection |
+| [`FID-2026-0814-003`](archive/FID-2026-0814-003-extensible-hook-system.md) | `closed` | Extensible hook system at the EHEL enforcement points — `hooks` config block, fail-open bounded runner, `PreToolUse`/`PostToolUse`/`PostToolUseFailure` + session/subagent events |
+| [`FID-2026-0814-004`](archive/FID-2026-0814-004-verification-harness-agent-frictions.md) | `closed` | Verification-harness frictions (H-01..H-07) + project-wide model unification (H-08..H-12, P0 — one model, no paid hardcode) |
+| [`FID-2026-0814-005`](archive/FID-2026-0814-005-trust-matrix-auto-resolution.md) | `closed` | Trust Matrix auto-resolution — `finalize()` resolves open `pending` receipts to honest `no_verdict` terminal via a signed system-role annotation |
+| [`FID-2026-0814-006`](archive/FID-2026-0814-006-compaction-status-freshness-and-visual-feedback.md) | `closed` | Compaction freshness + visible feedback — SDK boundary `contextWindow` threading fix, snapshot emit on status/context change, in-stream `CompactionSignal` block |
+| [`FID-2026-0814-007`](archive/FID-2026-0814-007-master-implementation-plan.md) | `closed` | Coordination master — sequenced the five children into one implementation pass |
+
+Three follow-on records closed and archived on 2026-08-14 after Perfection-Loop
+convergence and the full gate sweep:
+
+| FID | Status | Purpose |
+|---|---|---|
+| [`FID-2026-0814-008`](archive/FID-2026-0814-008-az-v024-live-test-002-007-coverage.md) | `closed` | Extends `az-v0.0.24-harness-live-test.md` (→ v1.2.0) with deterministic `5e` rows (V024-150…167) for FID-2026-0814-002..007 |
+| [`FID-2026-0814-009`](archive/FID-2026-0814-009-inter-agent-prompt-coherence-audit.md) | `closed` | Project-wide inter-agent prompt coherence audit (B-01…B-08): basher two-phase contract, Forge=GREEN attribution, Recorder status vocab, Scout stale instruction, `thinker-gpt` fold into `@thinker`, `withParentModel` privacy-flag preservation, and project-wide paid-model reconciliation (`openrouter/free`) |
+| [`FID-2026-0814-010`](archive/FID-2026-0814-010-paid-build-model-conflation-remediation.md) | `closed` | Paid-build model conflation fix (B-09/B-10): the paid CLI never reads the savant-free preference or catalog — boot model resolves only from the operator's `/model` selection (`openrouter/free` fallback); `switchModel` persists build-aware; remaining `librarian`/`tmux-cli` `minimax-m3` hardcodes reconciled. Operator-authorized closure without Nova sign-off |
+
+`FID-2026-0814-013` (force-compact trigger re-expressed as a fixed window
+offset — low) was implemented and archived on 2026-08-14. It re-types the
+`compression.forceCompactRatio` config key to `forceCompactOffset` (default
+`15_000` tokens) across all five layers and switches the serialized trigger from
+`maxContextLength × 0.9` to `maxContextLength - forceCompactOffset`, so the
+force tier keeps a constant 15k margin below the hard limit regardless of window
+size. The active queue was empty after this closure.
+
+`FID-2026-0814-012` (force threshold anchored to the resolved window — low)
+was implemented and archived on 2026-08-14. It anchors the 0.9 force threshold
+and the sidebar percent denominator to the compactor's `reactiveCompact` (=
+`contextWindow`) instead of the reconstructed `autoCompact + 30_000` — a
+single-source-of-truth (Law 13) reconciliation, not a live defect. The active
+queue was empty after this closure.
+
+`FID-2026-0814-011` (auto-compaction trigger never fires — critical) was
+implemented under operator approval, Nova-audited **PASS** on implementation,
+operator-approved for closure, and archived on 2026-08-14. It collapses the two
+competing compaction trigger systems into a single authority (`autoCompactDue`
+set every step by `prepareStepContext`, consumed by the serialized savant
+`handleSteps`), removes the silent baked-fallback trigger divergence, and adds
+trigger-input debug observability. The active queue was empty after this closure.
+
+`FID-2026-0814-001` (live sidebar surfaces remediation — compaction status
+lifecycle, Trust Matrix live signal, teacher panel terminal state) was
+implemented under automation level 3, Nova-audited **PASS** on both planning
+and implementation
+(`dev/nova/inbox/2026-08-14-fid-2026-0814-001-live-sidebar-surfaces-planning-response.md`
+and
+`dev/nova/inbox/2026-08-14-fid-2026-0814-001-live-sidebar-surfaces-implementation-response.md`),
+operator-approved for closure, and archived on 2026-08-14. See
+[`archive/README.md`](archive/README.md) for the closure index. Implementation
+status alone is not closure evidence.
+
+`FID-2026-0813-023` (harness observability + integrity remediation) was
+implemented under automation level 3, Nova-audited **PASS** on both planning
+and implementation
+(`dev/nova/inbox/2026-08-13-fid-2026-0813-023-harness-observability-integrity-planning-response.md`
+and
+`dev/nova/inbox/2026-08-13-fid-2026-0813-023-harness-observability-integrity-implementation-response.md`),
+operator-approved for closure, and archived on 2026-08-13.
+
+`FID-2026-0813-022` (teacher live sidebar surface) was implemented, Nova-audited
+(planning + implementation both **PASS**), operator-approved for closure, and
+archived on 2026-08-13. The complete 2026-08-13 program set — the homegrown
+Agent-Steering Teacher (master `FID-2026-0813-011`, children `-012` through
+`-020`, plus the sidebar surface `-022`) and the standalone canonical
+version-bump tool (`FID-2026-0813-021`) — is closed and archived. See
+[`archive/README.md`](archive/README.md) for the closure index. Implementation
+status alone is not closure evidence.
+
+## Planning-only work (no FID yet — operator decision required)
+
+The following build-order phases are **planning-only**: they have no FID, no
+implementation, and no Nova sign-off. They are surfaced here so they do not
+hide inside build-order files. An operator decision is required before any FID
+is authored for them.
+
+| Scope | Source | Status |
+|---|---|---|
+| ZTAP **P2** — Retention (ECHO Compliance Scorecard + FSRS-6 Scribe memory) | `dev/build-orders/2026-08-13-ztap-build-order.md` | planning-only |
+| ZTAP **P3** — Deep architecture (Multiverse Counterfactual Debugging + Semantic Vulnerability Topography) | `dev/build-orders/2026-08-13-ztap-build-order.md` | planning-only |
+| ZTAP **P4** — Economic horizon (x402 agent bounties) | `dev/build-orders/2026-08-13-ztap-build-order.md` | **deferred** (regulatory + custody) |
+
+Only ZTAP **P1** (FIDs `001`–`010`) was implemented and closed. P2–P4 were
+never implemented. See the build order for phase scope, trigger gates, and the
+open design questions (Q1–Q5) that gate any P2+ work.
+
+| Coordination master | Current status | Purpose |
+|---|---|---|
+| [`FID-2026-0813-011`](archive/FID-2026-0813-011-agent-steering-teacher-master.md) | `closed` | Homegrown teacher master; Nova PASS + operator closure 2026-08-13 | Archived |
+
+| Closed child set | Status | Scope |
+|---|---|---|
+| `FID-2026-0813-012`…`020` | `closed` | Contracts, sandbox, vertical slice, corpus, graders, overlay, progression, integration audit |
+
+| Standalone closed FID | Status | Scope |
+|---|---|---|
+| [`FID-2026-0813-021`](archive/FID-2026-0813-021-canonical-version-bump-tool.md) | `closed` | Canonical version-bump tool (internal) |
+
+The older 0812 coordination master and FID-0812-007 remain historical closed records
+in the archive. Their external-environment-dependent resolution is preserved below.
+
+| Coordination master | Current status | Purpose |
+|---|---|---|
+| [`FID-2026-0812-006`](archive/FID-2026-0812-006-v0-0-23-active-queue-implementation-closure-master.md) | `closed` | Final child reconciliation; no release authorization | Archived |
+
+| FID | Current status | Closure classification | Disposition |
+|---|---|---|---|
+| [`FID-2026-0812-007`](archive/FID-2026-0812-007-top-row-click-selection.md) | `closed` | Operator-confirmed external-environment resolution; application fix and root cause unverified | Archived |
+
+FIDs 0812-002/003/004/005/006/007 are closed and archived with their implementation,
+operator-confirmed evidence where applicable, lifecycle closure loops, and changelog
+coverage recorded in the archive. FID-0812-007's original selection owner remains
+unverified, but the operator-confirmed external-environment resolution closes its active
+work queue. Reopen it only if the behavior recurs in a supported harness.
+
+Do not archive a FID solely because code is implemented, operator-tested, or a planning
+loop converged. Archive only after all stated review boundaries are resolved, the FID
+status is `closed`, the `CHANGELOG.md` contains a closure entry, and the file is moved to
+[`archive/`](archive/).
+
+The most recently closed 0812 records include 002–007 and the earlier
+`FID-2026-0812-001-v0-0-23-live-test-remediation-master.md`. They were archived after
+implementation evidence, operator confirmation, lifecycle closure, and release-readiness
+review; they are not part of the active queue. Earlier closed packages and operator-accepted historical
+records remain documented below and in [`archive/README.md`](archive/README.md).
+
+The 015–021 remediation package and the 022–029 LEARNINGS feedback-system package are
+not active FIDs. Their working-tree/archive and Nova sign-off boundaries remain documented
+as historical or pending evidence in the sections below; they are not silently re-opened by
+this audit.
+
+The 2026-08-09 optimization program (master FID-2026-0809-012 + children 013–018) was
+implemented under the operator's automation level 3 grant, independently signed off by Nova
+(implementation audit **PASS**,
+`dev/nova/inbox/2026-08-09-fid-2026-0809-003-010-optimization-automation-implementation-sign-off-response.md`),
+and closed/archived 2026-08-09. All seven records now live in [`archive/`](archive/) with
+`closed` status.
+
+The FID-2026-0811 deep-audit master program and children 005–014 remain untracked
+working-tree artifacts whose historical closure claims are explicitly untrusted; they
+were not rewritten, deleted, or silently dispositioned. The separate remediation package
+015–021 is the tracked-scope implementation under current Nova review.
+
+The complete ZTAP P1 wedge (`FID-2026-0813-001` through `-010`) was implemented and
+closed under automation level 3 on 2026-08-13, then moved to [`archive/`](archive/).
+Closure evidence includes full typecheck/test gates, ESLint with zero warnings,
+Prettier, focused crypto/provenance/export/clean-process/Trust Matrix suites, and the
+implementation sign-off request at
+`dev/nova/outbox/2026-08-13-fid-2026-0813-001-ztap-implementation-signoff-request.md`.
+Nova sign-off and release authorization remain separate boundaries; these are working-tree
+records, not clean-release certification.
+
+### 2026-08-09 ledger reconciliation (operator-accepted)
+
+The FIDs previously listed here as active — `0806-017`, `0806-018`, `0807-001`
+through `0807-006`, and `0808-001` — had all been moved to the archive while
+retaining non-closed status metadata (`implemented`, `fixed`, `analyzed`, or
+`verified`) with unresolved review boundaries. Per operator decision on
+2026-08-09, those remaining review boundaries are **waived** and the records are
+accepted as **historical**, matching their physical archive placement. They are not an
+active work queue. `FID-2026-0808-001` is genuinely closed (operator-directed close with
+Nova sign-off); `0806-017`/`0806-018` and `0807-001`…`006` are operator-accepted historical
+records. See [`archive/README.md`](archive/README.md) for the corrective index entry.
+
+The 2026-08-09 optimization and automation batch (`FID-2026-0809-003` through
+`FID-2026-0809-010`) is closed and archived; its independent PASS response is recorded in
+`dev/nova/inbox/2026-08-09-fid-2026-0809-003-010-optimization-automation-implementation-sign-off-response.md`.
+
+The FID-2026-0811-022–029 LEARNINGS feedback-system remediation package is implemented,
+locally verified, transitioned to `closed`, and physically moved to [`archive/`](archive/)
+in this working tree. The archive files are not yet tracked by a commit, so this is
+working-tree closure evidence rather than durable repository certification. Nova's
+implementation sign-off request is recorded in the audit channel; release certification
+remains a separate operator decision.
+
+The batch is included in pending unreleased `0.0.23`; the release gate was re-run under the
+pinned Bun `1.3.14` toolchain (2026-08-09) and passes, and publication remains a separate
+operator action.
+
+`FID-2026-0809-011` (graph-export file decomposition — `template.ts` + `export-serializer.ts`)
+is closed and archived 2026-08-09 after the Nova implementation sign-off **PASS**
+(`dev/nova/inbox/2026-08-09-fid-2026-0809-011-graph-export-file-decomposition-nova-audit-response.md`);
+byte-identical artifact proven pre/post decomposition. Archived at
+`dev/fids/archive/FID-2026-0809-011-graph-export-file-decomposition.md`.
+
+`FID-2026-0810-002` (universal session-init grounding) and `FID-2026-0810-003`
+(generated condensed protocol copies — the follow-up converting
+`ECHO_PROTOCOL_INSTRUCTIONS` + the 15-turn refresh into generated output from `ECHO.md` +
+generator framing) are closed and archived 2026-08-10 after Perfection-Loop convergence
+(operator-approved) and implementation under automation level 3. Archived at
+`dev/fids/archive/FID-2026-0810-002-universal-session-init-grounding.md` and
+`dev/fids/archive/FID-2026-0810-003-generated-condensed-protocol-copies.md`.
+The separate 2026-08-10 records remain archived; the 015–021 remediation package is now
+closed and archived after Nova's PASS.
+
+Do not archive a FID solely because its code is implemented. Archive only after all stated
+review boundaries are resolved, the FID status is `closed`, the CHANGELOG contains a closure
+entry, and the file is moved to `dev/fids/archive/`.
+
+The 015–021 package and FID-2026-0811-030 satisfy those conditions after independent
+implementation review. The design-system feature guide is maintained at
+[`docs/design/design-system-library.md`](../../docs/design/design-system-library.md).
+The current documentation-and-implementation sign-off request remains an explicit
+independent review boundary. This remains working-tree evidence until committed.
+
+See [`archive/README.md`](archive/README.md) for historical records and
+[`FID-2026-0807-016-dev-folder-and-fid-hygiene.md`](archive/FID-2026-0807-016-dev-folder-and-fid-hygiene.md)
+for the current `/dev` cleanup audit.
+
+## Historical duplicate IDs
+
+`FID-2026-0805-006` and `FID-2026-0805-007` were each used for two historical
+records. Their filenames and contents are intentionally preserved. Do not rename them
+retroactively; use the full filename when linking to either record.

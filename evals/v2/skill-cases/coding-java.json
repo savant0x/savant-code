@@ -1,0 +1,38 @@
+{
+  "skillName": "coding-java",
+  "descriptionSha256": "7bd4bd3885a9eee154a2644561bd5ba50f0b2c40da6a55eb74a384274227afad",
+  "trigger": {
+    "positive": [
+      {
+        "prompt": "where does this custom exception fit in the Java exception hierarchy?",
+        "topK": 1
+      },
+      {
+        "prompt": "import ordering and naming conventions for this Java module"
+      },
+      {
+        "prompt": "java patterns for this builder — checked or unchecked throws?"
+      }
+    ],
+    "negative": [
+      {
+        "prompt": "typescript anti-patterns in this react hook",
+        "owner": "coding-typescript"
+      },
+      { "prompt": "go error wrapping with percent w", "owner": "coding-go" }
+    ]
+  },
+  "behavioral": [
+    {
+      "id": "resource-exception-review",
+      "taskId": "skill-dialogue",
+      "kind": "dialogue",
+      "prompt": "Review this Java parser: InputStream in = Files.newInputStream(path); try { return parse(in); } catch (Exception e) { throw new RuntimeException(e); }. Give a safer outline consistent with our conventions.",
+      "expectedOutput": "A Java-specific resource and exception correction.",
+      "expectations": [
+        "Uses try-with-resources so the stream closes on success and failure.",
+        "Catches a specific exception and chooses a meaningful exception type rather than generic Exception/RuntimeException."
+      ]
+    }
+  ]
+}

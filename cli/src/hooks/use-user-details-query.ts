@@ -1,0 +1,104 @@
+import { useQuery } from '@tanstack/react-query'
+
+import { getAuthToken } from '../utils/auth'
+import { isDirectProviderMode } from '../utils/env'
+import { logger as defaultLogger } from '../utils/logger'
+import { getApiClient, setApiClientAuthToken } from '../utils/savant-code-api'
+
+import type {
+  SavantCodeApiClient,
+  UserField,
+  UserDetails,
+} from '../utils/savant-code-api'
+import type { Logger } from '@savant-code/common/types/contracts/logger'
+
+// Re-export types for backwards compatibility
+export type { UserField, UserDetails }
+
+// Query keys for type-safe cache management
+export const userDetailsQueryKeys = {
+  all: ['userDetails'] as const,
+  fields: (fields: readonly UserField[]) =>
+    [...userDetailsQueryKeys.all, ...fields] as const,
+}
+
+interface FetchUserDetailsParams<T extends UserField> {
+  authToken: string
+  fields: readonly T[]
+  logger?: Logger
+  apiClient?: SavantCodeApiClient
+}
+
+/**
+ * Fetches specific user details from the /api/v1/me endpoint
+ */
+export async function fetchUserDetails<T extends UserField>({
+  authToken,
+  fields,
+  logger = defaultLogger,
+  apiClient: providedApiClient,
+}: FetchUserDetailsParams<T>): Promise<UserDetails<T> | null> {
+  if (isDirectProviderMode()) {
+    const stub: Record<string, string> = {
+      id: 'direct-provider',
+      email: 'direct-provider@savant-code.local',
+    }
+    return Object.fromEntries(
+      fields.map((field) => [field, stub[field] ?? '']),
+    ) as UserDetails<T>
+  }
+
+  let apiClient: SavantCodeApiClient
+  if (providedApiClient) {
+    apiClient = providedApiClient
+  } else {
+    setApiClientAuthToken(authToken)
+    apiClient = getApiClient()
+  }
+
+  const response = await apiClient.me(fields)
+
+  if (!response.ok) {
+    logger.error(
+      { status: response.status, fields },
+      'Failed to fetch user details from /api/v1/me',
+    )
+    throw new Error(`Failed to fetch user details (HTTP ${response.status})`)
+  }
+
+  return response.data ?? null
+}
+
+export interface UseUserDetailsQueryDeps<T extends UserField> {
+  fields: readonly T[]
+  logger?: Logger
+  enabled?: boolean
+}
+
+/**
+ * Hook to fetch specific user details
+ */
+export function useUserDetailsQuery<T extends UserField>({
+  fields,
+  logger = defaultLogger,
+  enabled = true,
+}: UseUserDetailsQueryDeps<T>) {
+  const authToken = getAuthToken()
+
+  return useQuery({
+    queryKey: userDetailsQueryKeys.fields(fields),
+    queryFn: async () => {
+      if (!authToken) {
+        throw new Error('No auth token available')
+      }
+      return fetchUserDetails({ authToken, fields, logger })
+    },
+    enabled: enabled && !!authToken && !isDirectProviderMode(),
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 30 * 60 * 1000, // 30 minutes
+    retry: false,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+  })
+}

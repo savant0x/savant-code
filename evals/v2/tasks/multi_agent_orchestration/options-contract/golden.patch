@@ -1,0 +1,19 @@
+--- greet.js
++++ greet.js
+@@ -1,3 +1,5 @@
+-module.exports = function greet(name) {
+-  return 'Hello, ' + name
++module.exports = function greet(options) {
++  const { name, uppercase } = options
++  const message = 'Hello, ' + name
++  return uppercase ? message.toUpperCase() : message
+ }
+--- app.js
++++ app.js
+@@ -1,5 +1,5 @@
+ const greet = require('./greet')
+ 
+ module.exports = function run() {
+-  return greet('Alice')
++  return greet({ name: 'Alice', uppercase: true })
+ }

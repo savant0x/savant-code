@@ -1,0 +1,295 @@
+import { isAbortError } from '@savant-code/common/util/error'
+import { userMessage } from '@savant-code/common/util/messages'
+
+import { createLoopContext } from './loop-context'
+import {
+  createLoopGuardState,
+  evaluateLoopGuard,
+  recordLoopEvent,
+} from './loop-guard-wiring'
+import {
+  runLoopIteration,
+  type LoopIterationContext,
+  type LoopIterationState,
+} from './loop-iteration'
+import { getOrCreateEnforcement } from '../echo/enforcement'
+import { appendGroundingRefresh } from '../echo/grounding'
+import { expireMessages, withSystemTags } from '../util/messages'
+import { finishCompletedTurn } from './loop/completed-turn'
+import {
+  handleLoopAbort,
+  handleLoopError,
+  runLoopCleanup,
+} from './loop/exit-paths'
+import { recordRuntimeEvent } from './loop/runtime-events'
+import { handleSetupCancelled } from './loop/setup-cancelled'
+import { isAutonomousContinuation } from './post-terminal-breaker'
+
+import type { LoopAgentStepsParams, LoopAgentStepsResult } from './types'
+
+/**
+ * Runs the agent loop.
+ *
+ * IMPORTANT: This function mutates `params.agentState` in place throughout the
+ * run (not just at return time). Fields like `messageHistory`, `systemPrompt`,
+ * `toolDefinitions`, `creditsUsed`, and `output` are updated as work progresses
+ * so that callers holding a reference to the same object (e.g. the SDK's
+ * `sessionState.mainAgentState`) see in-progress work immediately — which
+ * matters when an error is thrown mid-run and the normal return path is
+ * skipped.
+ */
+export async function loopAgentSteps(
+  params: LoopAgentStepsParams,
+): Promise<LoopAgentStepsResult> {
+  const {
+    agentState: initialAgentState,
+    agentType,
+    clearUserPromptMessagesAfterResponse = true,
+    localAgentTemplates,
+    logger,
+    parentSystemPrompt,
+    parentTools,
+    prompt,
+    signal,
+    spawnParams,
+  } = params
+
+  const setupResult = await createLoopContext({
+    params,
+    agentState: initialAgentState,
+    agentType,
+    parentTools,
+    parentSystemPrompt,
+  })
+  if (!setupResult.ok) {
+    // FID-2026-0919-031: a setup-phase cancellation IS a cancellation, so the
+    // extracted path reports `Interrupt` — never `Stop` (nobody finished a
+    // turn).
+    return handleSetupCancelled({ setupResult, params })
+  }
+  const {
+    agentTemplate,
+    runId,
+    system,
+    tools,
+    toolsForTokenCount,
+    additionalToolDefinitionsWithCache,
+    getCachedAdditionalToolDefinitions,
+    contextCompactor,
+  } = setupResult.ctx
+
+  // FID-2026-0825-001: the compactAndStop stamp is single-run coordination
+  // between the serialized savant handleSteps interceptor and the output
+  // assembly at the end of this loop. Wipe any stale value inherited through
+  // a persisted snapshot so it can never mask a genuine error on this run;
+  // the interceptor re-stamps it fresh when /compact actually fires.
+  initialAgentState.compactAndStop = undefined
+
+  recordRuntimeEvent(
+    {
+      event: 'run_started',
+      runId,
+      agentId: initialAgentState.agentId,
+      agentType,
+      phase: 'setup',
+      messageCount: initialAgentState.messageHistory.length,
+    },
+    params.traceWriter,
+  )
+
+  // FID-2026-0810-002 Change 4: create the enforcement instance EAGERLY at
+  // loop start (main agent) so `protocolRead` state exists before the first
+  // step — a text-only first turn can no longer bypass the session-init gate
+  // by never triggering lazy construction. Subagents are pre-seeded via the
+  // factory (parentId) and skip eager creation here.
+  if (!initialAgentState.parentId) {
+    getOrCreateEnforcement(initialAgentState)
+  }
+
+  const state: LoopIterationState = {
+    agentState: initialAgentState,
+    shouldEndTurn: false,
+    totalSteps: 0,
+    nResponses: undefined,
+    consecutiveNativeIncompleteSteps: 0,
+    hasRetriedOutputSchema: false,
+    currentPrompt: prompt,
+    currentParams: spawnParams,
+  }
+
+  // FID-2026-0819-005 Loop 271: the per-iteration context is immutable
+  // across iterations (verified: no consumer mutates ctx fields), so it is
+  // built once and shared by the step loop and the exit-path handlers.
+  const iterationCtx: LoopIterationContext = {
+    agentTemplate,
+    system,
+    tools,
+    runId,
+    toolsForTokenCount,
+    contextCompactor,
+    additionalToolDefinitionsWithCache,
+    getCachedAdditionalToolDefinitions,
+    localAgentTemplates,
+    logger,
+    signal,
+    initialAgentState,
+  }
+
+  // Everything the extracted exit paths (loop/exit-paths.ts) need. `state`
+  // is passed by reference so cleanup observes the post-run totalSteps.
+  const exitDeps = { params, state, ctx: iterationCtx, initialAgentState }
+
+  // FID-2026-1006-003 WP3: the per-run guard state. The iteration budget is
+  // this run's initial `stepsRemaining` — the same cap the step layer already
+  // enforces — so the guard rails own the decision the loop used to make
+  // implicitly, and can NAME the reason they stopped.
+  const guardState = createLoopGuardState({
+    role: String(agentType),
+    iterationCap: initialAgentState.stepsRemaining,
+  })
+
+  try {
+    while (true) {
+      // FID-2026-1006-003 WP3: gate this iteration. A named stop ends the
+      // turn here and records WHY on agentState, so an auto-stopped turn is
+      // distinguishable from a completed one by the caller that holds the
+      // shared state reference.
+      const guardAction = evaluateLoopGuard({
+        state: guardState,
+        iteration: state.totalSteps,
+        now: Date.now(),
+        messages: initialAgentState.messageHistory,
+        // FID-2026-0822-003 AUTONOMY CARVE-OUT (operator-mandated): an Auto
+        // Drive / active-goal run is never auto-ended by the stale-cycle
+        // diagnosis; the iteration cap below remains its backstop.
+        autonomous: isAutonomousContinuation(initialAgentState),
+      })
+      if (guardAction.kind === 'stop') {
+        initialAgentState.loopStopReason = guardAction.reason
+        logger.warn(
+          { reason: guardAction.reason, iteration: state.totalSteps },
+          `loop guard rails: ending the turn (${guardAction.reason})`,
+        )
+        break
+      }
+      // A checklist is handed over ONE unchecked task at a time, and only
+      // when the task changed — so a model that has not yet checked it off is
+      // not told the same thing twice.
+      if (
+        guardAction.kind === 'inject-task' &&
+        guardState.lastInjectedTask !== guardAction.task
+      ) {
+        guardState.lastInjectedTask = guardAction.task
+        initialAgentState.messageHistory = [
+          ...initialAgentState.messageHistory,
+          userMessage(
+            withSystemTags(
+              `Next unchecked task from the plan checklist: ${guardAction.task}`,
+            ),
+          ),
+        ]
+      }
+      const stepStartedAt = Date.now()
+      recordRuntimeEvent(
+        {
+          event: 'step_started',
+          runId,
+          agentId: initialAgentState.agentId,
+          agentType,
+          phase: 'step',
+          step: state.totalSteps + 1,
+        },
+        params.traceWriter,
+      )
+      let iteration: Awaited<ReturnType<typeof runLoopIteration>>
+      try {
+        iteration = await runLoopIteration({
+          loopParams: params,
+          state,
+          ctx: iterationCtx,
+        })
+      } catch (error) {
+        recordRuntimeEvent(
+          {
+            event: 'step_finished',
+            runId,
+            agentId: initialAgentState.agentId,
+            agentType,
+            phase: 'step',
+            step: state.totalSteps,
+            status: 'failed',
+            durationMs: Date.now() - stepStartedAt,
+            reason: error instanceof Error ? error.name : 'unknown_error',
+          },
+          params.traceWriter,
+        )
+        throw error
+      }
+      recordRuntimeEvent(
+        {
+          event: 'step_finished',
+          runId,
+          agentId: initialAgentState.agentId,
+          agentType,
+          phase: 'step',
+          step: state.totalSteps,
+          status: 'completed',
+          durationMs: Date.now() - stepStartedAt,
+        },
+        params.traceWriter,
+      )
+      // FID-2026-1006-003 WP3: one `role:event` entry per completed LLM
+      // step, so a repeating cycle is visible to the next decision.
+      if (iteration.stepEvent !== undefined) {
+        recordLoopEvent(guardState, iteration.stepEvent)
+      }
+      if (!iteration.shouldContinue) {
+        break
+      }
+    }
+
+    if (clearUserPromptMessagesAfterResponse) {
+      initialAgentState.messageHistory = expireMessages(
+        initialAgentState.messageHistory,
+        'userPrompt',
+      )
+    }
+
+    if (!initialAgentState.parentId) {
+      const completionRefresh =
+        getOrCreateEnforcement(initialAgentState).recordLogicalUserTurn()
+      appendGroundingRefresh(initialAgentState, completionRefresh.refreshText)
+    }
+    recordRuntimeEvent(
+      {
+        event: 'terminal',
+        runId,
+        agentId: initialAgentState.agentId,
+        agentType,
+        status: 'completed',
+        phase: 'step',
+        step: state.totalSteps,
+      },
+      params.traceWriter,
+    )
+
+    // FID-2026-0825-001 / FID-2026-0919-031: the completed-turn exit resolves
+    // the output (including the compact-and-stop stamp) and reports `Stop`
+    // together, in `loop/completed-turn.ts`.
+    const finalOutput = finishCompletedTurn({
+      agentState: initialAgentState,
+      agentTemplate,
+      fileContext: params.fileContext,
+    })
+
+    return { agentState: initialAgentState, output: finalOutput }
+  } catch (error) {
+    // Handle user-initiated aborts separately - don't log as errors
+    if (isAbortError(error)) {
+      return await handleLoopAbort(exitDeps, error)
+    }
+    return await handleLoopError(exitDeps, error)
+  } finally {
+    await runLoopCleanup(exitDeps)
+  }
+}

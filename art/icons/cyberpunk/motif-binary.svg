@@ -1,0 +1,37 @@
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  viewBox="0 0 64 64"
+  fill="none"
+  role="img"
+  aria-label="Binary motif — bit cells"
+>
+  <!-- SAVANT // CYBERDECK — hand-authored vector geometry, no external assets -->
+  <defs>
+    <filter id="glow" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="2.5" result="blur" />
+      <feMerge>
+        <feMergeNode in="blur" />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
+    </filter>
+  </defs>
+  <!-- row one -->
+  <rect x="14" y="16" width="8" height="10" fill="#18faf9" />
+  <rect x="26" y="16" width="8" height="10" fill="#4fa8ff" opacity="0.5" />
+  <rect x="38" y="16" width="8" height="10" fill="#18faf9" />
+  <!-- row two -->
+  <rect x="14" y="32" width="8" height="10" fill="#4fa8ff" opacity="0.5" />
+  <rect
+    x="26"
+    y="32"
+    width="8"
+    height="10"
+    fill="#ff2bd6"
+    filter="url(#glow)"
+  />
+  <rect x="38" y="32" width="8" height="10" fill="#4fa8ff" opacity="0.5" />
+  <!-- row three -->
+  <rect x="14" y="48" width="8" height="10" fill="#18faf9" />
+  <rect x="26" y="48" width="8" height="10" fill="#4fa8ff" opacity="0.5" />
+  <rect x="38" y="48" width="8" height="10" fill="#18faf9" />
+</svg>

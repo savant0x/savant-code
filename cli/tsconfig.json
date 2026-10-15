@@ -1,0 +1,30 @@
+{
+  "extends": "../tsconfig.base.json",
+  "ts-node": {
+    "esm": true
+  },
+  "compilerOptions": {
+    "jsx": "react-jsx",
+    "jsxImportSource": "@opentui/react",
+    "outDir": "./dist",
+    // Disabling declaration emit avoids TS6059 rootDir conflicts when
+    // cross-workspace path mappings (e.g. @savant-code/sdk) pull source
+    // files outside the cli/ directory into the compilation unit.
+    "declaration": false,
+    "declarationMap": false,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "types": ["bun", "node"],
+    "preserveSymlinks": false,
+    "paths": {
+      "@savant-code/sdk": ["../sdk/src/index.ts"],
+      "@savant-code/common/*": ["../common/src/*"],
+      "@savant-code/design-systems": [
+        "../packages/design-systems/src/index.ts"
+      ],
+      "@savant-code/design-systems/*": ["../packages/design-systems/src/*"]
+    }
+  },
+  "include": ["src/**/*", "scripts/**/*"],
+  "exclude": ["node_modules", "dist"]
+}

@@ -1,0 +1,48 @@
+{
+  "name": "@savant-code/llm-providers",
+  "version": "0.0.36",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./openai-compatible": {
+      "bun": "./src/openai-compatible/index.ts",
+      "import": "./src/openai-compatible/index.ts",
+      "types": "./src/openai-compatible/index.ts",
+      "default": "./src/openai-compatible/index.ts"
+    },
+    "./ollama": {
+      "bun": "./src/ollama/index.ts",
+      "import": "./src/ollama/index.ts",
+      "types": "./src/ollama/index.ts",
+      "default": "./src/ollama/index.ts"
+    },
+    "./schema-sanitize": {
+      "bun": "./src/schema-sanitize.ts",
+      "import": "./src/schema-sanitize.ts",
+      "types": "./src/schema-sanitize.ts",
+      "default": "./src/schema-sanitize.ts"
+    },
+    "./*": {
+      "bun": "./src/*.ts",
+      "import": "./src/*.ts",
+      "types": "./src/*.ts",
+      "default": "./src/*.ts"
+    }
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit -p .",
+    "test": "bun test"
+  },
+  "sideEffects": false,
+  "engines": {
+    "bun": "1.3.11"
+  },
+  "dependencies": {
+    "@ai-sdk/provider": "2.0.1",
+    "@ai-sdk/provider-utils": "^3.0.17",
+    "@savant-code/common": "workspace:*",
+    "ai": "^5.0.52",
+    "zod": "^4.2.1"
+  },
+  "devDependencies": {}
+}

@@ -1,0 +1,54 @@
+import * as path from 'path'
+
+import { filesystemErrorCode } from './patch-diagnostics'
+
+import type { SavantCodeToolOutput } from '@savant-code/common/tools/list'
+import type { SavantCodeFileSystem } from '@savant-code/common/types/filesystem'
+
+export async function listDirectory(params: {
+  directoryPath: string
+  projectPath: string
+  fs: SavantCodeFileSystem
+}): Promise<SavantCodeToolOutput<'list_directory'>> {
+  const { directoryPath, projectPath, fs } = params
+
+  try {
+    const resolvedPath = path.resolve(projectPath, directoryPath)
+
+    const entries = await fs.readdir(resolvedPath, {
+      withFileTypes: true,
+    })
+
+    const files: string[] = []
+    const directories: string[] = []
+
+    for (const entry of entries) {
+      if (entry.isDirectory()) {
+        directories.push(entry.name)
+      } else if (entry.isFile()) {
+        files.push(entry.name)
+      }
+    }
+
+    return [
+      {
+        type: 'json',
+        value: {
+          files,
+          directories,
+          path: directoryPath,
+        },
+      },
+    ]
+  } catch (error) {
+    const code = filesystemErrorCode(error)
+    return [
+      {
+        type: 'json',
+        value: {
+          errorMessage: `Failed to list directory: ${code}. Check the parent directory with list_directory, then use an existing directory path.`,
+        },
+      },
+    ]
+  }
+}

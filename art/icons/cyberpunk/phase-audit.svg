@@ -1,0 +1,42 @@
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  viewBox="0 0 64 64"
+  fill="none"
+  role="img"
+  aria-label="Phase: audit — verification in progress"
+>
+  <defs>
+    <filter id="glow" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="2.5" result="blur" />
+      <feMerge>
+        <feMergeNode in="blur" />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
+    </filter>
+  </defs>
+  <!-- audit: the scanner examining the core -->
+  <circle cx="28" cy="30" r="12" stroke="#18faf9" stroke-width="3" />
+  <!-- scanline through the lens -->
+  <path
+    d="M18 30 L38 30"
+    stroke="#ff2bd6"
+    stroke-width="2"
+    stroke-linecap="round"
+    filter="url(#glow)"
+  />
+  <!-- handle: circuit trace with elbow -->
+  <path
+    d="M37 40 L46 50"
+    stroke="#18faf9"
+    stroke-width="3"
+    stroke-linecap="round"
+  />
+  <circle cx="47" cy="51" r="2.5" fill="#ff2bd6" />
+  <!-- HUD frame tick -->
+  <path
+    d="M50 12 L54 12 L54 16"
+    stroke="#4fa8ff"
+    stroke-width="1.5"
+    opacity="0.6"
+  />
+</svg>

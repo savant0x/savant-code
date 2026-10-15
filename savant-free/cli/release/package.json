@@ -1,0 +1,44 @@
+{
+  "name": "savant-free",
+  "version": "0.0.36",
+  "description": "The world's strongest free coding agent",
+  "license": "MIT",
+  "bin": {
+    "savant-free": "index.js"
+  },
+  "scripts": {
+    "prepack": "node ../../../cli/release-core/prepare-package.js",
+    "postpack": "node ../../../cli/release-core/prepare-package.js --clean"
+  },
+  "files": [
+    "index.js",
+    "launcher.js",
+    "http.js",
+    "README.md",
+    "savant-design-systems"
+  ],
+  "os": [
+    "darwin",
+    "linux",
+    "win32"
+  ],
+  "cpu": [
+    "x64",
+    "arm64"
+  ],
+  "engines": {
+    "node": ">=16"
+  },
+  "dependencies": {
+    "tar": "^7.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/savant0x/savant-code.git"
+  },
+  "homepage": "https://github.com/savant0x/savant-code",
+  "publishConfig": {
+    "access": "public",
+    "provenance": false
+  }
+}

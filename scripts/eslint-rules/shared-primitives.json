@@ -1,0 +1,82 @@
+{
+  "$comment": "Canonical homes for shared utility primitives (FID-2026-0928-009 Part 2). The no-duplicate-shared-primitive ESLint rule reads this file: a top-level function/const declaration whose name is a key here is an ERROR unless the file is the symbol's declared owner (or listed in allowedFiles). Adding a canonical export = add one registry entry in the same PR. Paths are forward-slash relative to the repo root.",
+  "sleep": {
+    "owner": "common/src/util/promise.ts",
+    "note": "Typed Promise<void>; satisfies PollLoginStatusDeps-style dependency slots."
+  },
+  "withTimeout": {
+    "owner": "common/src/util/promise.ts",
+    "note": "Rejecting timeout. The OSC resolve-value variant is deliberately named withTimeoutValue and lives in cli/src/utils/terminal-color-detection/osc-query.ts."
+  },
+  "sha256": {
+    "owner": "common/src/util/hash.ts",
+    "note": "Hex SHA-256 over UTF-8. sha256Hex in agent-runtime is a re-export of this body."
+  },
+  "sha256Hex": {
+    "owner": "common/src/util/hash.ts",
+    "note": "Call-site-name alias of sha256."
+  },
+  "isRecord": {
+    "owner": "common/src/util/object.ts",
+    "note": "Plain-object guard excluding arrays. JSON/narrower variants must use a distinct descriptive name (isJSONObjectRecord, isPrimitiveRecord, isJSONRecord)."
+  },
+  "asOptionalString": {
+    "owner": "cli/src/utils/openrouter-models/wire-guards.ts",
+    "note": "Non-empty string or undefined, for untyped vendor payloads."
+  },
+  "asOptionalNumber": {
+    "owner": "cli/src/utils/openrouter-models/wire-guards.ts",
+    "note": "Finite number or undefined; wire null coerces to undefined at the parser boundary."
+  },
+  "toolDisplayName": {
+    "owner": "common/src/util/tool-display.ts",
+    "note": "Title-Case tool label (list_directory override + MCP server__tool stripping). The CLI sidebar's sentence-case variant is deliberately named sidebarToolDisplayName in cli/src/components/right-sidebar-format.ts (FID-2026-1010-005)."
+  },
+  "truncateSingleLine": {
+    "owner": "common/src/util/tool-display.ts",
+    "note": "Whitespace-collapsing one-line cap, maxLength defaulting to 160; callers pass their own ceiling (120 for the desktop collapse header, SUMMARY_MAX_LENGTH for the CLI cards)."
+  },
+  "renderToolInput": {
+    "owner": "common/src/util/tool-display.ts",
+    "note": "Pretty-prints a tool input for a transcript; '' for absent/empty input."
+  },
+  "renderToolOutput": {
+    "owner": "common/src/util/tool-display.ts",
+    "note": "Pretty-prints a JSON tool result and reports its fence language."
+  },
+  "asPositiveInt": {
+    "owner": "common/src/util/tool-display.ts",
+    "note": "Coerces a block-level input to an integer >= 1, stringified values included; undefined when the value carries no positive integer."
+  },
+  "asBoolean": {
+    "owner": "common/src/util/tool-display.ts",
+    "note": "Coerces a block-level input boolean, stringified 'true'/'false' included; undefined when the value carries no boolean meaning."
+  },
+  "traceRoundedRect": {
+    "owner": "desktop/src/floor/office/nameplate-draw.ts",
+    "note": "2D canvas rounded-rect path helper shared by the office and billboard nameplates."
+  },
+  "getRuntimeRequire": {
+    "owner": "common/src/util/bun-sqlite.ts",
+    "note": "Module-scope require when the runtime provides one; undefined under Node ESM. packages/database keeps its own copy by design (zero-dependency package) and is listed in allowedFiles."
+  },
+  "allowedFiles": [
+    "cli/src/utils/openrouter-models/wire-guards.ts",
+    "common/src/util/promise.ts",
+    "common/src/util/hash.ts",
+    "common/src/util/object.ts",
+    "packages/agent-runtime/src/evidence/spill.ts",
+    "packages/agent-runtime/src/teacher/sandbox/subprocess.ts",
+    "packages/design-systems/src/parse-helpers.ts",
+    "common/src/reddit-capi.ts",
+    "cli/src/commands/attest/clean-process/primitives.ts",
+    "common/src/testing/setup.ts",
+    "scripts/evolve-skills.ts",
+    "packages/llm-providers/src/schema-sanitize.ts",
+    "cli/src/utils/message-block-helpers/spawn-result.ts",
+    "common/src/util/axiom-only-log.ts",
+    "sdk/src/run-state/serialization.ts",
+    "packages/database/src/index.ts"
+  ],
+  "allowedTests": true
+}

@@ -1,0 +1,105 @@
+import { TextAttributes } from '@opentui/core'
+
+import { defineToolComponent, isJSONObject } from './types'
+import { useTheme } from '../../hooks/use-theme'
+
+import type { ToolRenderConfig } from './types'
+import type { JSONValue } from '@savant-code/common/types/json'
+
+interface TodoItem extends Record<string, JSONValue> {
+  task: string
+  completed: boolean
+}
+
+interface WriteTodosItemProps {
+  todos: TodoItem[]
+}
+
+function isTodoItem(value: JSONValue): value is TodoItem {
+  if (!isJSONObject(value)) return false
+  const record = value
+  return (
+    typeof record.task === 'string' && typeof record.completed === 'boolean'
+  )
+}
+
+const WriteTodosItem = ({ todos }: WriteTodosItemProps) => {
+  const theme = useTheme()
+  const bulletChar = '• '
+
+  return (
+    <box style={{ flexDirection: 'column', gap: 0, width: '100%' }}>
+      {/* Header line */}
+      <box
+        style={{ flexDirection: 'row', alignItems: 'center', width: '100%' }}
+      >
+        <text style={{ wrapMode: 'word' }}>
+          <span fg={theme.foreground}>{bulletChar}</span>
+          <span fg={theme.foreground} attributes={TextAttributes.BOLD}>
+            TODOs
+          </span>
+        </text>
+      </box>
+
+      {/* Todo items */}
+      {todos.map((todo, index) => (
+        <box
+          key={`todo-${index}`}
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            width: '100%',
+            paddingLeft: 2,
+          }}
+        >
+          <text style={{ wrapMode: 'word' }}>
+            {todo.completed ? (
+              <>
+                <span fg={theme.success}>✓ </span>
+                <span
+                  fg={theme.muted}
+                  attributes={TextAttributes.STRIKETHROUGH}
+                >
+                  {todo.task}
+                </span>
+              </>
+            ) : (
+              <>
+                <span fg={theme.foreground}>☐ </span>
+                <span fg={theme.foreground}>{todo.task}</span>
+              </>
+            )}
+          </text>
+        </box>
+      ))}
+    </box>
+  )
+}
+
+/**
+ * UI component for write_todos tool.
+ * Displays todos with checkboxes for incomplete items and checkmarks for completed items.
+ */
+export const WriteTodosComponent = defineToolComponent({
+  toolName: 'write_todos',
+
+  render(toolBlock): ToolRenderConfig {
+    const { input } = toolBlock
+
+    // Extract todos from input
+    let todos: TodoItem[] = []
+
+    const rawTodos = input?.todos
+    if (Array.isArray(rawTodos)) {
+      todos = rawTodos.filter((todo): todo is TodoItem => isTodoItem(todo))
+    }
+
+    if (todos.length === 0) {
+      return { content: null }
+    }
+
+    return {
+      content: <WriteTodosItem todos={todos} />,
+    }
+  },
+})

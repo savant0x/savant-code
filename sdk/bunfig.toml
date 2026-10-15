@@ -1,0 +1,9 @@
+[install]
+linker = "hoisted"
+linkWorkspacePackages = true
+
+[test]
+preload = [
+  "./test/setup-env.ts",
+  "./test/setup-test-isolation.ts",
+]

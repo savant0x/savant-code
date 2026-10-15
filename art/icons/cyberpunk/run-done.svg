@@ -1,0 +1,40 @@
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  viewBox="0 0 64 64"
+  fill="none"
+  role="img"
+  aria-label="Run: done — shipped, verified, archived"
+>
+  <defs>
+    <filter id="glow" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="2.5" result="blur" />
+      <feMerge>
+        <feMergeNode in="blur" />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
+    </filter>
+  </defs>
+  <!-- done: the sealed diamond — complete and archived -->
+  <polygon
+    points="32,12 50,32 32,52 14,32"
+    stroke="#3dff9a"
+    stroke-width="3"
+    stroke-linejoin="round"
+  />
+  <!-- inner seal -->
+  <polygon
+    points="32,22 42,32 32,42 22,32"
+    stroke="#18faf9"
+    stroke-width="2"
+    opacity="0.7"
+  />
+  <!-- the shipped core -->
+  <circle cx="32" cy="32" r="3" fill="#3dff9a" filter="url(#glow)" />
+  <!-- archive ticks: the four corners of the done state -->
+  <g stroke="#4fa8ff" stroke-width="1.5" opacity="0.5">
+    <path d="M12 12 L16 12 M12 12 L12 16" />
+    <path d="M52 12 L48 12 M52 12 L52 16" />
+    <path d="M52 52 L48 52 M52 52 L52 48" />
+    <path d="M12 52 L16 52 M12 52 L12 48" />
+  </g>
+</svg>

@@ -1,0 +1,12 @@
+[install]
+linker = "hoisted"
+linkWorkspacePackages = true
+
+[test]
+exclude = [
+  "**/*.integration.test.*",
+  "savant-free/e2e/**",
+  "resources/freebuff-main/**",
+  "**/resources/freebuff-main/**",
+]
+preload = ["./sdk/test/setup-env.ts"]

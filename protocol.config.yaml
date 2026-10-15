@@ -1,0 +1,344 @@
+# Protocol Config — Project-specific configuration for ECHO Protocol
+#
+# QUICK START: Change these 3 lines for your project:
+#   1. language:       "rust" | "typescript" | "python" | "go" | "java" | "csharp"
+#   2. commands.build: your compile/build command
+#   3. commands.test:  your test runner command
+
+project:
+  name: 'savant-code'
+  description: 'Multi-Agent AI Coding Assistant with ECHO Protocol governance. TypeScript monorepo, Bun runtime.'
+  version: '0.0.36'
+
+protocol:
+  version: '0.2.0'
+  strict_mode: true # true = all 15 laws active (default), false = core 4 laws only
+
+language: 'typescript' # rust | typescript | python | go | java | csharp
+
+commands:
+  build: 'bun run ci' # NOTE: release-artifact build (SDK + Savant-Free binaries only, per package.json `ci`). Full 9-workspace compile verification is the `type_check` gate below.
+  test: 'bun run test' # Root `test` script — chains all workspace unit suites, including design-systems and connectors. Matches the `type_check` gate coverage.
+  # Mirrors the root `typecheck` script — all workspaces including the
+  # design-systems package and packages/database + packages/knowledge-graph.
+  # The trailing `typecheck:scripts` leg is the release-engine surface
+  # (scripts/tsconfig.json) added by SCOPE T84-B: that tree is not a workspace,
+  # so it needs its own standing entry rather than a `--cwd` leg.
+  type_check: 'bun run --cwd=common typecheck && bun run --cwd=agents typecheck && bun run --cwd=sdk typecheck && bun run --cwd=cli typecheck && bun run --cwd=evals typecheck && bun run --cwd=packages/agent-runtime typecheck && bun run --cwd=packages/design-systems typecheck && bun run --cwd=packages/code-map typecheck && bun run --cwd=packages/database typecheck && bun run --cwd=packages/knowledge-graph typecheck && bun run --cwd=packages/llm-providers typecheck && bun run --cwd=packages/connectors typecheck && bun run --cwd=desktop typecheck && bun run typecheck:scripts'
+  lint: 'bun x eslint . --max-warnings 0' # zero-tolerance gate (matches .githooks/pre-push)
+  lint_md: 'bun run lint:md'
+  # Full-repo prettier check — LIVE gate since the 0.0.21 hardening session; active target 0.0.23
+  # (was a documented deferred boundary per FID-001 / FID-2026-0803-001 ECHO-8;
+  # now enforced with the generators emitting prettier-formatted output so
+  # regenerated files stay compliant).
+  format: 'bunx prettier --check .'
+  clean: 'bun run --cwd=sdk clean'
+
+paths:
+  # Monorepo: no root src/ — each workspace owns its own src/ dir (common/,
+  # agents/, sdk/, cli/, evals/, packages/*).
+  src: null
+  # NOTE: workspace tests live in per-package `src/__tests__` (Bun convention);
+  # there is no top-level `tests/` dir (FID-2026-0803-001 ECHO-8).
+  tests: null
+  docs: 'docs/'
+  dev: 'dev/'
+  fids: 'dev/fids/'
+  fids_archive: 'dev/fids/archive/'
+  session_summaries: 'dev/session-summaries/'
+  learnings: 'dev/LEARNINGS.md'
+
+# LIVE quality policy — the quality report enforces the 300-line absolute ceiling
+# for all project-owned TypeScript/TSX files, including tests and core modules.
+quality:
+  max_file_lines: 300
+  max_function_lines: 50
+  max_line_length: 100
+  max_complexity: 10
+  max_params: 4
+  max_comment_density: 0.33
+  max_nesting_depth: 3
+
+# Naming rules: see coding-standards/{language}.md
+
+# ADVISORY — aspirational testing policy; the real gates are per-workspace
+# `bun test` suites and the pre-push hook. FID-2026-0803-001 ECHO-3.
+testing:
+  fuzz_enabled: false
+  mutation_enabled: false
+  coverage_threshold: 80
+  test_timeout: 30
+  parallel_tests: true
+
+# ADVISORY — documentation of the FID policy. The runtime open-FID check is
+# presence-based (scanOpenFids) and `max_open_fids` is not enforced.
+# FID-2026-0803-001 ECHO-3/ECHO-7.
+fid:
+  auto_create: true
+  severity_levels: ['critical', 'high', 'medium', 'low']
+  max_open_fids: 20
+
+# Savant protocol contract — single-agent ECHO adaptation (v0.1.2-savant),
+# machine-readable alongside the harness `protocol:` block (v0.2.0).
+savant:
+  protocol:
+    version: '0.1.2-savant'
+    strict_mode: true
+  # ADVISORY — documents the canonical sandbox default. Actual behavior is
+  # controlled by --permission-mode and /permissions in CLI state.
+  # FID-2026-0803-001 ECHO-3.
+  sandbox:
+    permissionMode: 'prompt' # safe | prompt | unsafe
+
+# Single-agent protocol contract (renamed from the legacy product namespace,
+# FID-2026-0807-011). The runtime resolves this namespace explicitly for
+# single-agent sessions; it must not fall through to the harness protocol.
+single_agent:
+  protocol:
+    version: '0.1.2-single-agent'
+    strict_mode: true
+
+# max_iterations is LIVE: parsed by common/src/util/protocol-config.ts and
+# drives the FSM circuit breaker in transition-phase.ts (FID-2026-0803-001
+# ECHO-3). The remaining fields are advisory/convergence documentation.
+perfection_loop:
+  max_iterations: 10
+  change_threshold: 0.10
+  convergence_threshold: 0.02
+  convergence_passes: 2
+  oscillation_limit: 3
+
+# ADVISORY — session policy documentation; not consumed by the runtime.
+# FID-2026-0803-001 ECHO-3.
+#
+# `autonomy_level` is the session's AUTOMATION LEVEL — how much authority the
+# agent has to act without asking. Canonical definition (with the Law 2
+# semantics and the invariants no level lifts): dev/echo-v0.1.2-single-agent.md
+# § Automation Levels, mirrored for harness sessions in ECHO.md.
+#   1 = Guided     — extremely limited; approval required for everything.
+#   2 = Supervised — the approved work plus reversible in-scope fixes; stops
+#                    and presents before anything irreversible.
+#   3 = Autonomous — complete agent automation; in-project findings are fixed
+#                    in the same pass (default).
+# This is the CEILING: each work item carries its own level on the SCOPE
+# register / FID, and an item is actioned without approval only when its level
+# is <= this value. No level lifts G1-G9, credential handling, Law 3, or the
+# project-directory boundary.
+session:
+  auto_summary: true
+  summary_interval: 30
+  max_session_hours: 4
+  autonomy_level: 3 # 1=Guided, 2=Supervised, 3=Autonomous (default)
+
+# Token optimization & context engineering (FID-2026-0806-003).
+# All keys are optional — missing keys fall back to the defaults in
+# common/src/util/protocol-config.ts. See docs/design/Token Optimization &
+# Context Engineering Redesign.md §5 for the full spec.
+compression:
+  enabled: true
+  microCompact: false # P3a — off by default (cache tradeoff)
+  keepRecentTokens: 16384 # P2a — fixed verbatim recent-tail token budget
+  autoCompactRatio: 0.8 # P3d — auto-compact trigger ratio
+  forceCompactOffset: 15000 # P3d — force-compact trigger offset (tokens below window)
+  # FID-2026-0814-004 H-06: recent tool results micro-compact preserves
+  # (default 6 in the compactor).
+  microCompactMaxKeepRecent: 6
+  # FID-2026-0814-004 H-06: optional token floor for the micro-compact
+  # pressure gate (null = no floor; never micro-compact below it).
+  microCompactFloorTokens: null
+  idleCompaction: # P3c — off by default
+    enabled: false
+    idleAfterSeconds: 1800
+    floorTokens: 40000
+  model: null # dedicated summarization model override (OpenClaw); null = parent model
+  summary:
+    requiredSections: true # P1a — structured summary contract
+    exactIdentifiers: strict # P1a — exact-identifier rule
+
+yagni:
+  enforced: true # P5b — Forge yagni_check gate active
+  ledger: dev/YAGNI-LEDGER.md # P5c — ponytail-debt ledger path
+
+caveman: # P5f — telegraphic output rules (opt-in)
+  enabled: false
+  autoClarity: true # code blocks/paths/errors/security stay byte-exact
+
+telemetry: # P4 — token usage + cache-hit monitoring
+  enabled: true
+  cacheHitAlertDrop: 0.3 # alert when cached-token ratio drops 30+ points
+
+# Model-compliance telemetry (FID-2026-1007-012 FID 2): law-violation event
+# sink. Local-only, zero inference, metadata only. Default-on per the build
+# order; set enabled: false to stop all capture. (The `telemetry:` key above
+# is P4 token telemetry — a different surface.)
+complianceTelemetry:
+  enabled: true
+
+# ZTAP provenance (FID-2026-0813-004): mode is LIVE — parsed by
+# common/src/util/protocol-config.ts and wired into every CLI run by
+# cli/src/hooks/helpers/send-message-run-config.ts.
+#   off     — no ledger, no signing (zero overhead)
+#   record  — receipts signed + appended to .savant/provenance/ (default)
+#   enforce — same as record, plus fail-closed pre-write gates in native.ts
+provenance:
+  mode: 'record' # off | record | enforce
+
+# Extensible lifecycle hooks (FID-2026-0814-003): project-scoped external
+# commands fired at the tool-executor lifecycle. Hooks are fail-open by default
+# — only exit code 2 or a JSON `"permissionDecision": "deny"` blocks a tool.
+# Events: PreToolUse | PostToolUse | PostToolUseFailure | SessionStart |
+# SessionEnd | SubagentStart | SubagentStop | PreCompact | PostCompact | Stop |
+# Interrupt | Notification. `matcher` (optional) is a RegExp on the tool name.
+# Either `command` (external, spawned per event) or `action` (builtin
+# in-process sink — FID-2026-0824-012). Example:
+#   hooks:
+#     - event: PreToolUse
+#       command: node ./hooks/audit-write.js
+#       matcher: write_file|str_replace
+#       timeout: 10
+# ProjectTrust (FID-2026-1006-002 WP9) — veto-only: a hook for this event
+# (fired before workspace skills/config load) may DENY trust for the
+# directory by answering the block protocol (exit 2 or a deny decision);
+# it can never GRANT it (a repo must not be able to trust itself — the
+# grant side belongs to the operator: the store or --approve). Fail-open:
+# a hook that allows simply defers to the store and the default.
+#   hooks:
+#     - event: ProjectTrust
+#       command: node ./hooks/deny-untrusted-repo.js
+# Deterministic before-tool steering rules (FID-2026-1006-002 WP1, adopted
+# from the pi harness `pi-steering-hooks` design). Regex rules over the tool
+# name and the call's text surface block a violation with zero token cost,
+# instead of relying on a prompt the model may drift from.
+#   id          stable identity, quoted in the blocking error
+#   tool        RegExp over the tool name
+#   match       RegExp over the call's text surface (command / path+content)
+#   requires    optional, repeatable: fire only when ALL of these also match
+#   unless      optional, repeatable: exempt when ANY of these match
+#   noOverride  true = unconditional; no override marker can pass
+#   reason      operator-facing text surfaced in the block
+# A blocked call may be retried with `# steering-override: <id> — <reason>`
+# inside the command unless `noOverride` is set. Rules are fail-safe: a
+# malformed entry is dropped and a malformed regex is reported, never fatal.
+steering:
+  # AGENTS.md: "Do not force-push `main`" — prompt-enforced until now.
+  - id: no-force-push-main
+    tool: '^run_terminal_command$'
+    match: 'git\s+push\b.*(\s--force\b|\s-f\b).*\bmain\b|git\s+push\b.*\bmain\b.*(\s--force\b|\s-f\b)'
+    reason: 'Force-pushing main is forbidden (AGENTS.md); use a normal push or --force-with-lease on a branch.'
+  # Credential surfaces are never written by an agent (G-law: credential
+  # handling). Protected-path writes only; reading a template is fine.
+  - id: no-write-dotenv
+    tool: '^(write_file|str_replace|apply_patch)$'
+    match: '\.env(\.[a-zA-Z]+)?("|\x27|$|\s|,)'
+    reason: 'Writing .env credential files is forbidden; the operator owns credential placement.'
+  # `rm -rf /` is never recoverable — unconditional, override cannot pass.
+  - id: no-recursive-root-delete
+    tool: '^run_terminal_command$'
+    match: 'rm\s+-[a-zA-Z]*r[a-zA-Z]*f\s+(/|~|/\*|\$HOME)\s*$'
+    noOverride: true
+    reason: 'Recursive delete of a root/home path is unrecoverable and can never be overridden.'
+
+hooks:
+  # FID-2026-0824-012 S1-B: deterministic tool-failure capture into
+  # dev/experiences/raw-traces.jsonl. In-process (no spawn per event),
+  # fail-open — a capture failure can never affect execution.
+  - event: PostToolUseFailure
+    action: experience-capture
+  # FID-2026-1012-024: production exposure receipts. A failure class can only stop
+  # being unresolved when something proves the fixed path was exercised AFTER the
+  # fix and did not reproduce it, and the failure capture above cannot show that —
+  # in its records, silence is indistinguishable from a tool that never ran (that
+  # is how `skill_manage`'s class was mistaken for an invisible capture shape when
+  # it was simply unexercised). This sink fires on SUCCESS and stamps one receipt
+  # per (class, session) for each declared fix boundary the executed tool owns.
+  # Fast path: with no boundary declared it returns before writing or spawning.
+  - event: PostToolUse
+    action: exposure-capture
+  # FID-2026-1001-003 step 1 defence-in-depth (operator-approved 2026-10-02):
+  # categorically deny worktree-mutating terminal commands BEFORE dispatch.
+  # Decided by the SAME effect classifier as the pre-write gates (Law 13);
+  # fail-open — a sink error allows execution, and the classifier-gated EHEL
+  # pre-write chain remains the enforcement layer this hook composes with.
+  - event: PreToolUse
+    matcher: 'run_terminal_command'
+    action: deny-mutating-terminal
+  # FID-2026-0824-012 S3-A: mechanical session-end review — refresh
+  # dev/agenda.md (≤50 lines, 1-3 items) from the experience ledger and
+  # print FID-routing candidates. Deterministic (no LLM); the full-fidelity
+  # Scribe synthesis runs on an explicit Orchestrator end-of-turn spawn.
+  - event: SessionEnd
+    command: bun scripts/session-end-review.ts
+    timeout: 60
+
+# ADVISORY — FID-2026-0824-018 erosion-guard documentation-of-defaults.
+# The evals erosion gate (evals/v2/src/erosion/gate.ts) owns these defaults;
+# keys are not parsed by the runtime config loader. Metrics are directional
+# vectors only (amendment A4): /skills trust stays the operator-only decision
+# point, and nothing here auto-blocks writes.
+erosion:
+  enabled: true
+  structural_threshold_pct: 5
+  verbosity_threshold_pct: 25
+
+# FID-2026-1006-003 WP4 — the declared orchestration preset. Savant's canonical
+# ECHO roles wired by events, validated statically while `protocol.config.yaml`
+# is parsed (`common/src/util/orchestration-preset.ts`). This is a DECLARATION
+# ONLY: no preset runner is introduced, the roles are checked against the
+# contract but never executed from here.
+#   ERROR-severity findings (an inert role, an unreachable start event) throw
+#   from `readProtocolConfig` and so fail the repo gate.
+#   WARNING-severity findings (an unconsumed hand-off, no completion promise,
+#   no loop-back path) are reported on `config.orchestration.warnings`.
+orchestration:
+  # The event a user turn arrives as; every role below is reachable from it.
+  startEvent: 'user-request'
+  # Events that mean the declared work is done.
+  completionEvents: ['task-complete']
+  # One entry per role: `triggers` activates it, `publishes` hands work on, and
+  # `transitions` records which roles it may hand off to (loop-back evidence).
+  roles:
+    - role: 'orchestrator'
+      instructions: 'Route the request, enforce the protocol, and hand one slice at a time to the role that owns it.'
+      triggers:
+        [
+          'user-request',
+          'verification-failed',
+          'review-failed',
+          'documentation-required',
+        ]
+      publishes:
+        [
+          'analysis-requested',
+          'implementation-requested',
+          'verification-requested',
+          'documentation-requested',
+          'task-complete',
+        ]
+      transitions: ['detective']
+    - role: 'detective'
+      instructions: 'Map the call graph for the named slice and cite file-and-line evidence before any edit.'
+      triggers: ['analysis-requested']
+      publishes: ['implementation-requested']
+      transitions: ['forge']
+    - role: 'forge'
+      instructions: 'Implement the converged change in the named files, and only those files.'
+      triggers: ['implementation-requested', 'fix-required']
+      publishes: ['verification-requested']
+      transitions: ['verifier']
+    - role: 'verifier'
+      instructions: 'Re-run the declared gates and report pass or fail with pasted tool output.'
+      triggers: ['verification-requested']
+      publishes:
+        [
+          'verification-failed',
+          'fix-required',
+          'review-failed',
+          'documentation-requested',
+          'task-complete',
+        ]
+      transitions: ['orchestrator']
+    - role: 'scribe'
+      instructions: 'Record the session summary and route durable lessons to the knowledge files.'
+      triggers: ['documentation-requested', 'documentation-required']
+      publishes: ['task-complete']
+      transitions: ['orchestrator']

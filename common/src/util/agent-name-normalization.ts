@@ -1,0 +1,42 @@
+export const DEFAULT_ORG_PREFIX = 'savant-code/'
+
+/**
+ * Resolves an agent ID by trying multiple strategies:
+ * 1. Direct lookup in registry
+ * 2. Try with DEFAULT_ORG_PREFIX for spawnable agents
+ * 3. Return null if not found
+ *
+ * This provides a more robust alternative to string concatenation
+ * and handles the common case where users reference spawnable agents
+ * without the org prefix.
+ *
+ * FID-2026-1013-012 W3-3: the registry is only probed with `in`, never read
+ * through, so its values are `unknown` — the `any` (and the file-top
+ * `no-explicit-any` suppression) said nothing the lookup needs.
+ */
+export function resolveAgentId(
+  agentId: string,
+  agentRegistry: Readonly<Record<string, unknown>>,
+): string | null {
+  // Handle empty or invalid input
+  if (!agentId || typeof agentId !== 'string') {
+    return null
+  }
+
+  // Try direct lookup first
+  if (agentId in agentRegistry) {
+    return agentId
+  }
+
+  // Try with DEFAULT_ORG_PREFIX for spawnable agents
+  // Only add prefix if the agent ID doesn't already contain a slash
+  // (to avoid double-prefixing or interfering with other org prefixes)
+  if (!agentId.includes('/')) {
+    const prefixedAgentId = `${DEFAULT_ORG_PREFIX}${agentId}`
+    if (prefixedAgentId in agentRegistry) {
+      return prefixedAgentId
+    }
+  }
+
+  return null
+}

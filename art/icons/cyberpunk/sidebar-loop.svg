@@ -1,0 +1,40 @@
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  viewBox="0 0 64 64"
+  fill="none"
+  role="img"
+  aria-label="Loop — the ECHO Perfection Loop FSM"
+>
+  <defs>
+    <filter id="glow" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="2.5" result="blur" />
+      <feMerge>
+        <feMergeNode in="blur" />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
+    </filter>
+  </defs>
+  <!-- the loop: cycle that loops back on itself -->
+  <path
+    d="M32 12 A20 20 0 1 1 14 26"
+    stroke="#18faf9"
+    stroke-width="3"
+    stroke-linecap="round"
+  />
+  <!-- the return: arrow head closing the loop -->
+  <path
+    d="M14 26 L10 18 M14 26 L22 22"
+    stroke="#ff2bd6"
+    stroke-width="3"
+    stroke-linecap="round"
+    filter="url(#glow)"
+  />
+  <!-- iterations: nodes along the cycle -->
+  <g fill="#ff2bd6">
+    <circle cx="52" cy="32" r="2" />
+    <circle cx="44" cy="48" r="2" />
+    <circle cx="20" cy="48" r="2" />
+  </g>
+  <!-- core: the improved engine -->
+  <circle cx="32" cy="32" r="4" fill="#4fa8ff" opacity="0.85" />
+</svg>

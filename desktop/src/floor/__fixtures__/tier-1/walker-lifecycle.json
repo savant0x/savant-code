@@ -1,0 +1,50 @@
+[
+  { "type": "start", "messageHistoryLength": 9 },
+  {
+    "type": "subagent_start",
+    "agentId": "agent-detective-7",
+    "agentType": "detective",
+    "displayName": "Detective",
+    "onlyChild": false,
+    "parentAgentId": "orchestrator-1",
+    "prompt": "Catalog the fallback-path defects."
+  },
+  {
+    "type": "activity",
+    "activity": {
+      "kind": "subagent",
+      "agentType": "detective",
+      "startedAt": 2000,
+      "prompt": "Catalog the fallback-path defects."
+    },
+    "parentAgentId": "orchestrator-1"
+  },
+  {
+    "type": "tool_call",
+    "toolCallId": "tc-002",
+    "toolName": "code_search",
+    "input": { "pattern": "toYaml" },
+    "agentId": "agent-detective-7",
+    "parentAgentId": "orchestrator-1"
+  },
+  {
+    "type": "tool_result",
+    "toolCallId": "tc-002",
+    "toolName": "code_search",
+    "output": [{ "type": "json", "value": { "matches": 3 } }],
+    "parentAgentId": "orchestrator-1"
+  },
+  {
+    "type": "text",
+    "text": "Three YAML emission sites cataloged with file:line evidence.",
+    "agentId": "agent-detective-7"
+  },
+  {
+    "type": "subagent_finish",
+    "agentId": "agent-detective-7",
+    "agentType": "detective",
+    "displayName": "Detective",
+    "onlyChild": false,
+    "parentAgentId": "orchestrator-1"
+  }
+]

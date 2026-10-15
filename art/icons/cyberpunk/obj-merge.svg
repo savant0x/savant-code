@@ -1,0 +1,44 @@
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  viewBox="0 0 64 64"
+  fill="none"
+  role="img"
+  aria-label="Merge object — converging paths"
+>
+  <!-- SAVANT // CYBERDECK — hand-authored vector geometry, no external assets -->
+  <defs>
+    <filter id="glow" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="2.5" result="blur" />
+      <feMerge>
+        <feMergeNode in="blur" />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
+    </filter>
+  </defs>
+  <!-- path one -->
+  <path
+    d="M16 14 L16 34 L32 44"
+    stroke="#18faf9"
+    stroke-width="2.5"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  />
+  <!-- path two -->
+  <path
+    d="M48 14 L48 34 L32 44"
+    stroke="#4fa8ff"
+    stroke-width="2.5"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  />
+  <!-- join node -->
+  <circle cx="32" cy="44" r="4" fill="#ff2bd6" filter="url(#glow)" />
+  <!-- tail -->
+  <path
+    d="M32 44 L32 51"
+    stroke="#18faf9"
+    stroke-width="2"
+    stroke-linecap="round"
+  />
+  <circle cx="32" cy="53" r="1.8" fill="#18faf9" />
+</svg>

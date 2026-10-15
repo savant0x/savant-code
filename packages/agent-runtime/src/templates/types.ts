@@ -1,0 +1,63 @@
+import { AgentTemplateTypes } from '@savant-code/common/types/session-state'
+
+import type { ToolName } from '@savant-code/common/tools/constants'
+import type {
+  AgentTemplate,
+  StepGenerator,
+  StepHandler,
+} from '@savant-code/common/types/agent-template'
+import type { AgentTemplateType } from '@savant-code/common/types/session-state'
+
+// Re-export for backward compatibility
+export type { AgentTemplate, StepGenerator, StepHandler }
+
+const placeholderNames = [
+  'AGENT_NAME',
+  'CURRENT_DATE',
+  'FILE_TREE_PROMPT_SMALL',
+  'FILE_TREE_PROMPT',
+  'FILE_TREE_PROMPT_LARGE',
+  'GIT_CHANGES_PROMPT',
+  'INITIAL_AGENT_PROMPT',
+  'KNOWLEDGE_FILES_CONTENTS',
+  'MODEL_INFO',
+  'PROTOCOL_FILE',
+  'PROJECT_ROOT',
+  'REMAINING_STEPS',
+  'SYSTEM_INFO_PROMPT',
+  'USER_CWD',
+  'USER_INPUT_PROMPT',
+  'DESIGN_SYSTEM_CONTEXT',
+] as const
+
+type PlaceholderType<T extends typeof placeholderNames> = {
+  [K in T[number]]: `{SAVANT_CODE_${K}}`
+}
+
+export const PLACEHOLDER = Object.fromEntries(
+  placeholderNames.map((name) => [name, `{SAVANT_CODE_${name}}` as const]),
+) as PlaceholderType<typeof placeholderNames>
+export type PlaceholderValue = (typeof PLACEHOLDER)[keyof typeof PLACEHOLDER]
+
+export const placeholderValues = Object.values(PLACEHOLDER)
+
+export const baseAgentToolNames: ToolName[] = [
+  'create_plan',
+  'run_terminal_command',
+  'str_replace',
+  'write_file',
+  'spawn_agents',
+  'add_subgoal',
+  'browser_logs',
+  'code_search',
+  'end_turn',
+  'read_files',
+  'think_deeply',
+  'update_subgoal',
+] as const
+
+export const baseAgentSubagents: AgentTemplateType[] = [
+  AgentTemplateTypes.scout,
+  AgentTemplateTypes.thinker,
+  AgentTemplateTypes.verifier,
+] as const
