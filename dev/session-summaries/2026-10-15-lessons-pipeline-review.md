@@ -1,8 +1,8 @@
 # Session Summary: 2026-10-15 17:17
 
 **Session ID:** 2026-10-15-lessons-pipeline-review
-**Duration:** 2026-10-15 17:17 — active
-**Status:** active
+**Duration:** 2026-10-15 17:17 — closure on 2026-10-15
+**Status:** completed
 
 ---
 
@@ -13,8 +13,8 @@
 - **OS:** Windows host; analysis targets the repository's lessons and experience
   pipeline
 - **Language/Runtime:** TypeScript monorepo; Bun `1.3.14`
-- **Branch:** `main`, five clean-Linux commits ahead of `origin/main`
-- **Last Commit:** `6304695e` — `docs(build): record clean Linux verification (FID-2026-1015-003)`
+- **Branch:** `main`, six local commits ahead of `origin/main`
+- **Last Commit:** `628375ff` — `feat(persistence): harden nested session save and resume (FID-2026-1015-004)`
 
 ### Known Issues
 
@@ -63,8 +63,8 @@
 ### Task 2: LF-003 FID convergence
 
 - **Status:** completed
-- **FID:** `FID-2026-1015-004`, status `verified`; closure still requires its
-  local implementation commit and archive.
+- **FID:** `FID-2026-1015-004`, status `closed`; archived with local commit
+  evidence.
 - **Intent:** Introduce one cycle-safe JSON mechanism for SDK and database
   persistence, keep omission policy at each caller, and prove nested state plus
   user-message preservation through production save paths.
@@ -98,10 +98,14 @@ source evidence and does not duplicate those owners.
   database, and CLI regression coverage.
 - **Verification:** Four workspace typechecks, four declared targeted suites,
   `quality:report`, targeted ESLint, targeted Prettier, root typecheck,
-  Markdown lint, and full repository ESLint passed. All workspace tests passed
-  except the database suite's first order-dependent fixture, which was repaired
-  by isolating the new LF-003 test database; the repaired database suite passed
-  54/0.
+  Markdown lint, and full repository ESLint passed. The first database suite
+  attempt exposed an order-dependent fixture, which was repaired by isolating
+  the new LF-003 test database; the repaired database suite passed 54/0.
+  The root test wrapper remains tool-blocked by `Unknown: ChildProcess.kill`,
+  and repository validation reports the locked clean-Linux scratch artifact plus
+  eleven ENOENT findings from Savant-Free test paths deleted by the concurrent
+  FID-2026-1015-002 removal work but not yet staged. Neither finding is caused
+  by LF-003.
 
 ## Perfection Loop Summary
 
@@ -121,7 +125,9 @@ source evidence and does not duplicate those owners.
 - [x] `bun run learnings:check`: 37 structured entries; PASS.
 - [x] `bun run lessons:features --check`: 74 lessons / 9 candidates; PASS
   after LF-003 routing.
-- [ ] `bun run validate:repository`: blocked by the locked clean-Linux scratch artifact
+- [ ] `bun run validate:repository`: reports the locked clean-Linux scratch
+  artifact plus eleven ENOENT findings from the concurrent FID-2026-1015-002
+  removal work; those deleted paths remain unstaged.
 - [x] LF-003 feature gates: FID receipt stamped; all declared gates passed.
 - [x] Root typecheck, Markdown lint, and repository ESLint passed.
 - [ ] Root `bun run test`: the wrapper returned `Unknown: ChildProcess.kill`; all
@@ -134,18 +140,20 @@ source evidence and does not duplicate those owners.
 
 ### Code Changes
 
-- **Files Modified:** scope register, this session record, LF-003 candidate and
-  report metadata, FID-2026-1015-004, shared serializer wiring, and four tests
-- **Lines Added:** pending commit diff
-- **Lines Removed:** pending commit diff
-- **Net Change:** pending commit diff
+- **Files Modified:** LF-003 candidate and report metadata, archived
+  FID-2026-1015-004, this session record, shared serializer wiring, and four
+  tests
+- **Lines Added:** 708 in implementation commit `628375ff`
+- **Lines Removed:** 21 in implementation commit `628375ff`
+- **Net Change:** 687 lines in implementation commit `628375ff`
 
 ### Git Status
 
 - **Branch:** `main`
-- **Uncommitted Changes:** yes; existing clean-Linux work plus this review record
-- **New Commits:** none for this review; implementation, FID, routing records,
-  and the approved clean-Linux work remain uncommitted or local as applicable.
+- **Uncommitted Changes:** yes; unrelated operator work remains in the working
+  tree and was not included in the LF-003 commit.
+- **New Commits:** `628375ff` contains the implementation, FID, routing records,
+  and this session record; the commit is local and has not been pushed.
 
 ---
 
@@ -167,11 +175,11 @@ source evidence and does not duplicate those owners.
 
 ### Priority Tasks
 
-1. [ ] Create the local implementation commit with explicit path-scoped staging.
-2. [ ] Re-run the repository validator; preserve the locked scratch-artifact
-   blocker if it remains held.
-3. [ ] Archive FID-2026-1015-004 only after recording the commit hash and
-   changelog entry.
+1. [ ] Continue FID-2026-1015-002 and its registered operator-answer work.
+2. [ ] Reconcile FID-2026-1012-022 after the remaining active child and
+   operator/external-input records are resolved.
+3. [ ] Push the local main fast-forward through the mandatory pre-push gates;
+   do not publish the local v0.0.36 development line.
 
 ### Blockers
 
@@ -184,4 +192,4 @@ source evidence and does not duplicate those owners.
   commits.
 - Do not promote a lesson or author a skill solely because a string appears once;
   use recurrence, expectedness, and current-source verification.
-- LF-003 is implemented and verified; local commit and FID archival remain.
+- LF-003 is implemented, verified, committed as `628375ff`, and archived.

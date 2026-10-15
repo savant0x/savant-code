@@ -10,6 +10,30 @@
 > the v0.0.36 cut. Release notes are written here at cut time; nothing in this
 > section ships until then.
 
+## 2026-10-15 — Durable session save and resume with nested runtime state (FID-2026-1015-004, high)
+
+### Fixed
+
+- Added one shared ancestor-aware, cycle-safe JSON serializer for SDK RunState
+  transport and database session persistence.
+- Preserved each caller's omission policy while replacing unexpected cyclic
+  back-references with a bounded, non-sensitive marker.
+- Added common, SDK, database, and CLI regression coverage for nested state,
+  repeated references, reopen-compatible reads, and user-message preservation.
+
+### Verification and archival
+
+- Four workspace typechecks, four declared targeted suites, quality, targeted
+  Prettier and ESLint, root typecheck, Markdown lint, and repository ESLint pass.
+  The repaired full database suite passes 54/0.
+- Implementation commit: `628375ff`.
+- The root test wrapper remains blocked by `Unknown: ChildProcess.kill`, and
+  repository validation reports the locked clean-Linux scratch artifact plus
+  eleven ENOENT findings from Savant-Free test paths deleted by the concurrent
+  FID-2026-1015-002 removal work but not yet staged; neither finding is caused
+  by the declared LF-003 gates.
+- FID closed and archived on 2026-10-15.
+
 ## 2026-10-15 — clean Linux rebuild (FID-2026-1015-003, high)
 
 ### Fixed

@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-1015-004-durable-session-save-resume-state.md`
 **ID:** FID-2026-1015-004
 **Severity:** high
-**Status:** verified
+**Status:** closed
 **Created:** 2026-10-15 17:30
 **Automation level:** 3
 **YAGNI-Compliance:** Verified
@@ -26,8 +26,8 @@ load, and resume behavior without introducing a second persistence store.
 - **OS:** Windows host; portable TypeScript/Bun implementation
 - **Language/Runtime:** TypeScript; Bun 1.3.14
 - **Tool Versions:** TypeScript workspace gates; Bun test
-- **Commit/State:** `6304695e` plus the approved local clean-Linux work and
-  uncommitted lessons-pipeline documentation
+- **Commit/State:** `628375ff` — the local implementation commit, on top of the
+  approved clean-Linux work; the unrelated operator work remains separate
 
 ## Detailed Description
 
@@ -224,7 +224,9 @@ this record:
 
 - **RED:** No actionable implementation defect remains in the declared LF-003
   surfaces. Repository-wide validation remains independently blocked by the
-  already-recorded locked clean-Linux scratch artifact, not by this FID's
+  already-recorded locked clean-Linux scratch artifact and by eleven ENOENT
+  findings from Savant-Free test paths deleted by the concurrent FID-2026-1015-002
+  removal work but not yet staged. Neither finding is caused by this FID's
   declared gates.
 - **GREEN:** No further code changes were required after the focused audit.
 - **AUDIT:** The changed production files and tests were re-read 0-to-EOF.
@@ -255,8 +257,9 @@ this record:
 
 ### Implementation Evidence (REQUIRED for `closed`)
 
-- [ ] **Commit SHA:** Pending the local implementation commit; closure is not
-  claimed until the hash is recorded.
+- [x] **Commit SHA:** `628375ff` —
+  `feat(persistence): harden nested session save and resume
+  (FID-2026-1015-004)`.
 - [x] **File:line ranges:** `common/src/util/safe-json.ts:1-34`,
   `sdk/src/run-state/serialization.ts:177-187,232-244`,
   `packages/database/src/sessions.ts:40-47`, and
@@ -278,7 +281,7 @@ this record:
 
 ## Resolution
 
-- **Closed Date:** Not closed; local commit required for closure
+- **Closed Date:** 2026-10-15
 - **Fix Description:** Added shared ancestor-aware cycle-safe JSON encoding and
   wired it into SDK RunState transport and database session persistence while
   preserving caller-specific omission policies.
@@ -286,7 +289,7 @@ this record:
   nested-session, and CLI save-path recovery coverage.
 - **Verification Evidence:** Four workspace typechecks, four targeted test
   suites, quality, ESLint, Prettier, and `git diff --check` passed.
-- **Archived:** Not yet
+- **Archived:** 2026-10-15
 
 ## Lessons Learned
 
