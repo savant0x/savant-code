@@ -2,7 +2,7 @@
 
 **Session ID:** 2026-10-15-reproducible-clean-linux-build
 **Duration:** 2026-10-15 13:39 — 2026-10-15 15:29
-**Status:** active
+**Status:** complete
 
 ---
 
@@ -53,8 +53,8 @@
    aggregate test gate.
 5. [implemented] Verified repository state, lockfile install contract, build,
    workspace tests, Docker build/run, path scans, and pre-push hook preservation.
-6. [implemented] Created commits `9d55f7ae` and `914597e5`; push
-   `main` to `origin/main` after the pre-push gates pass.
+6. [implemented] Created commits `9d55f7ae`, `914597e5`, `6f78a176`, and
+   `0d744a78`; pushed `main` to `origin/main` after the pre-push gates passed.
 
 ---
 
@@ -62,7 +62,7 @@
 
 ### Task 1: Reproducible clean-Linux project workflow
 
-- **Status:** implemented; remote push pending pre-push gates
+- **Status:** implemented; pushed to `origin/main`
 - **FIDs Created:** None; the change is infrastructure/documentation work without a new API.
 - **Changes Made:** Added the reproducibility files and documentation, removed
   active workstation-specific paths, and hardened sandbox workspace cleanup.
@@ -107,8 +107,9 @@
 ## Validation Results
 
 - [implemented] `bun run ci`: PASS
-- [blocked] `bun run test`: the aggregate shell invocation is terminated by the
-  command runner before it returns; all workspace test commands pass independently
+- [implemented] `bun run test`: the required pre-push test gate passed; the
+  aggregate shell invocation does not return output through this shell runner,
+  while all workspace test commands pass independently
 - [implemented] `bun run typecheck`: PASS
 - [implemented] `bun x eslint . --max-warnings 0`: PASS
 - [implemented] `bun run lint:md`: PASS
@@ -132,9 +133,13 @@
 ### Git Status
 
 - **Branch:** `main`
-- **Uncommitted Changes:** yes; pre-existing work plus this session's changes
+- **Uncommitted Changes:** yes; pre-existing work only
 - **New Commits:** `9d55f7ae` — `chore(reproducibility): add clean Linux
-  build workflow`; `914597e5` — `docs(session): record reproducibility verification`
+  build workflow`; `914597e5` — `docs(session): record reproducibility
+  verification`; `6f78a176` — `fix(release): allow documented credential
+  placeholders`; `0d744a78` — `docs(session): fix verification summary
+  formatting`
+- **Remote:** `origin/main` matches `HEAD` at `0d744a78`
 
 ---
 
@@ -150,16 +155,14 @@
 ### Priority Tasks
 
 1. [implemented] Reproducibility implementation and local commit.
-2. [blocked] Remote push is waiting on the pre-push hook's remaining gates after
-   its credential false positive was corrected.
+2. [implemented] Pre-push credential, quality, typecheck, and test gates passed;
+   `main` is synchronized with `origin/main`.
 
 ### Blockers
 
-- The aggregate root test invocation is blocked by the shell runner terminating
-  the long-lived child process before it returns an exit code. The constituent
-  workspace test commands provide the recorded test evidence. The first push
-  attempt also exposed and then received a fix for the historical placeholder
-  false positive in the credential scan.
+- None for this reproducibility pass. The shell runner does not return the
+  aggregate test process's output directly, but the required pre-push test gate
+  completed successfully and the constituent workspace test commands passed.
 
 ### Notes for Next Agent
 
