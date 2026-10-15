@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-1014-002-closed-fid-declared-artifacts-absent-from-tree.md`
 **ID:** FID-2026-1014-002
 **Severity:** medium
-**Status:** fixed
+**Status:** closed
 **Created:** 2026-10-14
 **Automation level:** 2
 **Yagni-Compliance:** Verified
@@ -23,7 +23,7 @@ paths) — a lead, not a verdict, because a rename looks like an absence.
 
 - **OS:** Windows (bash/Git Bash shell)
 - **Language/Runtime:** TypeScript 5.5.4, Bun 1.3.14
-- **Commit/State:** `33f5c2f2`, active census and read-only archive audit implemented
+- **Commit/State:** `ad5c18d7`, implementation and Q24 audit committed; closure recorded
 
 ## Detailed Description
 
@@ -102,7 +102,8 @@ without a history check, and no archived record is rewritten.
 ### Risk Level
 
 - [x] Medium: a closed security fix was absent for a month while the record
-  asserted otherwise; the class may extend to 33 records, triage unstarted.
+  asserted otherwise; the active contract and read-only historical audit now
+  make the evidence boundary explicit.
 
 ## Proposed Solution
 
@@ -198,8 +199,9 @@ read-only findings are recorded in
 
 ### Missed Questions
 
-1. **Do the other 32 rows share the cause?** Not established — no row was
-   history-checked. Registered as triage (Q24) rather than assumed.
+1. **Do the other historical rows share the cause?** Not established as one
+   cause. The Q24 audit history-checks every currently missing path and records
+   path-history evidence without rewriting archived records.
 2. **Was this record's own claim ever verified by a second agent?** The archived
    receipt shows gate executions, not an independent audit of the *steps*. The
    step-prose gap is the actionable part.
@@ -208,24 +210,30 @@ read-only findings are recorded in
 
 - [x] Files referenced in Affected Components exist (`dev/fids/**`, this record)
 - [x] Implementation matches the Proposed Solution (step 1 landed in
-  `FID-2026-1014-001`; steps 2-3 are registered decisions, not silent work)
+  `FID-2026-1014-001`; steps 2-3 are implemented and evidenced)
 - [x] Implementation commit `1d60b9a8` contains the active-record census and
   focused test named by this record.
 - [x] Typecheck/tests/lint pass with pasted tool output (the affected suites are
   pasted in `FID-2026-1014-001`; this record's own evidence is the history dump
   and the census count in Evidence)
 - [ ] Production call-graph evidence: not applicable — no production code path
-- [x] FID status reflects the actual implementation state (`fixed`: the active
+- [x] FID status reflects the actual implementation state (`closed`: the active
   contract and Q24 audit are implemented; no historical FID was rewritten)
 
 ## Resolution
 
-- **Closed Date:** —
-- **Fix Description:** the specific break is repaired under `FID-2026-1014-001`;
-  the contract gap and the census triage remain open.
-- **Tests Added:** No (this is a governance record; its evidence is the census)
-- **Verification Evidence:** history + census output above
-- **Archived:** —
+- **Closed Date:** 2026-10-14
+- **Fix Description:** Added the active-record declared-artifact census with
+  explicit absence markers, corrected its informational archive mode, and
+  completed the Q24 read-only Git-history audit without rewriting archived FIDs.
+- **Tests Added:** `scripts/__tests__/fid-artifact-census.test.ts` — 3 tests,
+  including active-gate versus archived-information behavior.
+- **Verification Evidence:** implementation commits `1d60b9a8` and `33f5c2f2`;
+  evidence/decision commit `ad5c18d7`; focused test, active probe, informational
+  archive probe, scripts typecheck, quality, scope checks and repository gates
+  passed. Audit report:
+  `dev/session-summaries/2026-10-14-fid-1014-002-q24-history-audit.md`.
+- **Archived:** `dev/fids/archive/FID-2026-1014-002-closed-fid-declared-artifacts-absent-from-tree.md`
 
 ## Lessons Learned
 

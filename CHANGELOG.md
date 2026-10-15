@@ -77,10 +77,14 @@
   exit 0; hook fail-closed on an unreadable message (exit 2). The 2026-10-02
   session summary that invited footer removal "per the operator's own co-author
   policy" carries a dated amendment; branch protection remains operator-owned.
-- **FID-2026-1014-002 (medium, active):** registered that a closed FID
-  (`FID-2026-0919-010`) asserted an implementation and a test file that no commit
-  ever contained, with a 569-record census finding 33 records naming a test path
-  that does not resolve (triage lead, `NEEDS-REVIEW`).
+- **FID-2026-1014-002 (medium, closed + archived 2026-10-14):** registered that
+  a closed FID (`FID-2026-0919-010`) asserted an implementation and a test file
+  that no commit ever contained. Added the active-record declared-artifact census,
+  explicit absence-marker contract, and informational archive audit mode. The
+  active gate passes with `7` records, `34` named paths and `0` missing paths;
+  the Q24 read-only Git-history audit classified `44` historical missing paths
+  without rewriting archived FIDs. Implementation commits: `1d60b9a8`,
+  `33f5c2f2`; evidence and closure record: `ad5c18d7`.
 
 ## 2026-10-14 — three failure-class lanes archived under Q25
 
