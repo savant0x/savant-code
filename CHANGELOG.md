@@ -10,6 +10,26 @@
 > the v0.0.36 cut. Release notes are written here at cut time; nothing in this
 > section ships until then.
 
+## 2026-10-15 — clean Linux rebuild (FID-2026-1015-003, high)
+
+### Fixed
+
+- Clean Linux tests load the shared environment defaults before workspace
+  isolation and use real search directories and local environment fixtures.
+- CLI release tests declare their tar dependency. Desktop tests compile their
+  native sidecar before exercising the live gateway contract.
+- Shared path containment rejects sibling-prefix escapes, dangling symlinks
+  and symlink loops. Windows path spellings normalize before Linux resolution.
+
+### Changed
+
+- Docker pins Bun and Node images by digest, includes npm for packaging tests,
+  reaps child processes through tini, and provides non-secret CLI boot defaults.
+- Docker contexts exclude nested environment files, local credentials and backup
+  bundles. Runtime display paths are repository-relative.
+- README documents native Linux prerequisites and exact build, test and run
+  commands. Bun remains pinned to 1.3.14 and installs use the committed lockfile.
+
 ## 2026-10-15 — failure-class implementation completion
 
 ### Fixed
