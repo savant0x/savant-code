@@ -560,7 +560,11 @@ path a record names must exist" a repo gate for active records only, leaving his
 `FID-2026-1014-002`); (d) rebuild the census as a standing `probe` so the count is visible
 each session without a decision.
 
-**Answer:**
+**Answer (2026-10-14):** Preserve archived FID documents and historical receipts as
+immutable. The active-record artifact census is the enforcement gate. Historical rows
+may be investigated read-only in a separate audit record using Git history; archived
+FIDs must not be rewritten merely to satisfy the census. An unverifiable historical
+claim remains blocked pending an operator ruling rather than being marked absent.
 
 ### Q25 — Should a lane be closable before its classes are proved? (the archival blocker)
 
@@ -608,7 +612,35 @@ pending), `-022` (master, closes last), `-1013-005` (your Cloudflare credentials
   removing the check. Not recommended: it retires the only mechanism that notices an
   unproved class, which is the mechanism that just caught me.
 
-**Answer:**
+**Answer:** Use a named closure waiver. Preserve the recurrence probe; add dated,
+per-lane waivers naming every unproved class and the observation limitation, while
+continuing to reject silent closure and any recurrent class.
+
+### Q26 — Expectedness for timeout and cancellation outcomes
+
+**State.** The refusal channel now has a producer-authoritative `expected` classification.
+Timeouts and cancellations otherwise remain `undetermined`, so a legitimate outcome
+cannot be confused with a defect, but a defect cannot disappear through message heuristics.
+
+**Answer (2026-10-14):** Expectedness must be assigned only by an authoritative producer.
+Harness-declared refusals and explicit user-originated cancellations with a typed reason
+may be `expected`. Provider schema rejections, malformed arguments, tool failures,
+nonzero exits, fetch failures, and timeouts are never automatically `expected`.
+Timeouts and cancellations without an authoritative origin remain `undetermined`.
+Expectedness never creates a repair boundary or proves recurrence stopped, and historical
+records are never rewritten when a new producer classification is introduced.
+
+### Q27 — Cloudflare account configuration is not a completion requirement
+
+**State.** The public Cloudflare Workers AI catalog and official REST documentation are
+available without credentials. The account-scoped live roster requires an Account ID and
+API token, neither of which is configured.
+
+**Answer (2026-10-14):** No Cloudflare Account ID or API token is required for completion
+of the provider catalog code when the curated static catalog and public vendor evidence
+are complete. Account-scoped live-roster verification is not a completion gate. The
+repository must not claim that roster was queried, and no credential may be requested,
+printed, stored, or transmitted for this FID.
 
 ## Z. Anything else
 

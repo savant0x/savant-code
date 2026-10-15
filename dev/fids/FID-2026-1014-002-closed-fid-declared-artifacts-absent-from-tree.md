@@ -23,7 +23,7 @@ paths) — a lead, not a verdict, because a rename looks like an absence.
 
 - **OS:** Windows (bash/Git Bash shell)
 - **Language/Runtime:** TypeScript 5.5.4, Bun 1.3.14
-- **Commit/State:** `1d60b9a8`, implementation committed; historical triage remains active
+- **Commit/State:** `33f5c2f2`, active census and read-only archive audit implemented
 
 ## Detailed Description
 
@@ -115,18 +115,17 @@ without a history check, and no archived record is rewritten.
    anywhere in an active record must exist, or the record must carry an explicit
    `artifact::absent <path>` marker. Fenced examples are ignored, and archived
    records are available through the probe's informational `--all` mode.
-3. `blocked` — triaging the 33 historical rows requires rewriting archived
-   records or asserting their history, which is reserved to an explicit operator
-   ruling by the archive-history invariant. The active-record gate is complete
-   without rewriting those records.
+3. `implemented` — Q24 authorizes a read-only Git-history audit in a separate
+   session record while archived FIDs and receipts remain immutable. The active
+   gate remains the only fail-closed enforcement surface.
 
 ### Steps
 
 1. `implemented` — see `FID-2026-1014-001`.
 2. `implemented` — `scripts/fid-artifact-census.ts` and its test provide the
    active-record gate and explicit absence marker contract.
-3. `blocked` — historical archive triage remains blocked by the archive-history
-   invariant described above.
+3. `implemented` — the Q24 history audit is recorded in
+   `dev/session-summaries/2026-10-14-fid-1014-002-q24-history-audit.md`.
 
 ### Verification
 
@@ -142,6 +141,10 @@ turning archived history into a live closure claim.
 Implementation commit: `1d60b9a8` (`scripts/fid-artifact-census.ts` and
 `scripts/__tests__/fid-artifact-census.test.ts`).
 
+The informational archive audit correction is committed as `33f5c2f2`. Its
+read-only findings are recorded in
+`dev/session-summaries/2026-10-14-fid-1014-002-q24-history-audit.md`.
+
 ## Verification Gates
 
 - gate: test scripts/__tests__/fid-artifact-census.test.ts
@@ -151,8 +154,8 @@ Implementation commit: `1d60b9a8` (`scripts/fid-artifact-census.ts` and
 
 ### Verification Receipt
 
-- fingerprint: sha256:3fd0a6de940fd874b9dc3fe378cc0f5323fca90d79c0b696ed1bd28e7d62a8fe
-- verified: 2026-10-14T23:35:39.700Z
+- fingerprint: sha256:cb812ffda702f3c8778de293f6efb869061d6d2cc70c5e117122391f1e53c8a4
+- verified: 2026-10-15T00:11:04.908Z
 - test scripts/__tests__/fid-artifact-census.test.ts: exit 0
 - probe scripts/fid-artifact-census.ts: exit 0
 - probe scripts/scripts-typecheck-check.ts: exit 0
@@ -174,6 +177,25 @@ Implementation commit: `1d60b9a8` (`scripts/fid-artifact-census.ts` and
   record that mattered confirmed it by history, independently of the census.
 - **CHANGE DELTA:** first pass.
 
+### Loop 2 — Q24 audit and informational archive mode (2026-10-14)
+
+- **RED:** the record documented `--all` as informational, but the probe failed
+  whenever archived records named missing paths, making the accepted read-only
+  historical audit unusable.
+- **GREEN:** active-record misses remain fail-closed; archive findings are
+  printed for audit and do not fail the active gate. A focused test proves an
+  archived finding is ignored while an active finding fails.
+- **AUDIT:** active census `7` records / `34` named paths / `0` missing; archive
+  census `572` records / `1,392` named paths / `44` missing paths / `28`
+  records affected; Git history found `29` paths and no history for `15`.
+  Focused tests, default probe, informational probe, scripts typecheck, ESLint
+  and Prettier all pass.
+- **ADVERSARIAL:** the informational branch filters only by the active-record
+  set, so `--all` cannot hide a current missing artifact. Archived documents,
+  receipts and historical capture remain unchanged.
+- **CHANGE DELTA:** one probe helper, one CLI branch and one focused test;
+  no archived FID or historical receipt was rewritten.
+
 ### Missed Questions
 
 1. **Do the other 32 rows share the cause?** Not established — no row was
@@ -193,8 +215,8 @@ Implementation commit: `1d60b9a8` (`scripts/fid-artifact-census.ts` and
   pasted in `FID-2026-1014-001`; this record's own evidence is the history dump
   and the census count in Evidence)
 - [ ] Production call-graph evidence: not applicable — no production code path
-- [x] FID status reflects the actual implementation state (`analyzed`: the class
-  is registered and untriaged; nothing is claimed as repaired)
+- [x] FID status reflects the actual implementation state (`fixed`: the active
+  contract and Q24 audit are implemented; no historical FID was rewritten)
 
 ## Resolution
 
