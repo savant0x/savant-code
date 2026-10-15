@@ -25,6 +25,14 @@ export type ArtifactCensus = {
   recordsWithMissingPaths: ArtifactRecord[]
 }
 
+export function findActiveArtifactFailures(
+  census: ArtifactCensus,
+  activeRecords: readonly string[],
+): ArtifactRecord[] {
+  const active = new Set(activeRecords)
+  return census.recordsWithMissingPaths.filter((row) => active.has(row.record))
+}
+
 const TEST_ARTIFACT_PATH =
   /(?<![\w@-])((?:agents|cli|common|desktop|evals|packages|scripts|sdk|savant-free)\/[A-Za-z0-9_@.+~/-]+\.test\.(?:ts|tsx))(?![\w-])/g
 const ABSENT_ARTIFACT = /artifact::absent\s+([^\s`]+)/g
@@ -122,18 +130,35 @@ function printCensus(census: ArtifactCensus): void {
   }
 }
 
+function hasMissingArtifacts(census: ArtifactCensus): boolean {
+  return census.recordsWithMissingPaths.length > 0
+}
+
 export function main(): number {
   const root = path.resolve(import.meta.dir, '..')
-  const census = scanFidArtifacts(
-    root,
-    collectFidRecords(root, process.argv.includes('--all')),
-  )
+  const includeArchive = process.argv.includes('--all')
+  const activeRecords = collectFidRecords(root)
+  const records = includeArchive
+    ? [
+        ...activeRecords,
+        ...collectFidRecords(root, true).filter(
+          (record) => !activeRecords.includes(record),
+        ),
+      ]
+    : activeRecords
+  const census = scanFidArtifacts(root, records)
   printCensus(census)
-  if (census.recordsWithMissingPaths.length > 0) {
+  const activeFailures = findActiveArtifactFailures(census, activeRecords)
+  if (activeFailures.length > 0) {
     console.error(
-      'fid-artifact-census FAILED — every missing path needs an artifact::absent marker',
+      'fid-artifact-census FAILED — every missing active path needs an artifact::absent marker',
     )
     return 1
+  }
+  if (includeArchive && hasMissingArtifacts(census)) {
+    console.log(
+      'fid-artifact-census INFO — archived missing paths are reported for read-only audit and do not fail the active gate',
+    )
   }
   console.log(
     'fid-artifact-census PASS — all declared active artifacts exist or are explicitly marked absent',

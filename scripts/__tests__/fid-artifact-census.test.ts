@@ -4,7 +4,11 @@ import path from 'node:path'
 
 import { describe, expect, it } from 'bun:test'
 
-import { findDeclaredTestPaths, scanFidArtifacts } from '../fid-artifact-census'
+import {
+  findActiveArtifactFailures,
+  findDeclaredTestPaths,
+  scanFidArtifacts,
+} from '../fid-artifact-census'
 
 function withTempTree(run: (root: string) => void): void {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'savant-fid-artifacts-'))
@@ -50,5 +54,36 @@ describe('FID declared-artifact census', () => {
         recordsWithMissingPaths: [],
       })
     })
+  })
+
+  it('does not turn archived findings into active gate failures', () => {
+    const archivedFailure = {
+      record: 'dev/fids/archive/FID-1.md',
+      paths: ['scripts/__tests__/historical.test.ts'],
+      missing: ['scripts/__tests__/historical.test.ts'],
+      markedAbsent: [],
+    }
+    const activeFailure = {
+      record: 'dev/fids/FID-2.md',
+      paths: ['scripts/__tests__/active.test.ts'],
+      missing: ['scripts/__tests__/active.test.ts'],
+      markedAbsent: [],
+    }
+    const census = {
+      recordsScanned: 2,
+      namedPaths: 2,
+      distinctMissingPaths: [
+        'scripts/__tests__/active.test.ts',
+        'scripts/__tests__/historical.test.ts',
+      ],
+      recordsWithMissingPaths: [archivedFailure, activeFailure],
+    }
+
+    expect(findActiveArtifactFailures(census, ['dev/fids/FID-2.md'])).toEqual([
+      activeFailure,
+    ])
+    expect(findActiveArtifactFailures(census, ['dev/fids/FID-3.md'])).toEqual(
+      [],
+    )
   })
 })
