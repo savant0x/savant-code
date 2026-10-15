@@ -137,8 +137,17 @@ historical row was rewritten.
 
 ## Worktree note
 
-Committed in this session: the cancellation brand fix and its new gate, the strengthened traversal-budget
-regression, the paused session's pending inspector correction and Q26 producer changes, the two FID
-records, `SCOPE.md`'s write-target line, and this summary. Unrelated idea-shelf, wiki and operator
-artifacts remain untouched and uncommitted. No processes were left running; the SDK build and both
-verification runs completed.
+Landed as two local commits, each staged with explicit paths (no push, no release):
+
+- `decacf5e` — `fix(commands): keep an explicit user stop typed across the SDK bundle boundary
+  (FID-2026-1012-023)` (27 files): the cancellation brand and its new gate, the producer-authoritative
+  refusal identity, the CLI interrupt wiring, the SDK/agent-runtime transport, FID-2026-1012-022/-023,
+  `SCOPE.md`'s write-target line, the capture rows this session's failures appended, and both session
+  records.
+- `891a8c1e` — `fix(agent-runtime): stop result inspection at the node budget and measure it honestly
+  (FID-2026-1012-024)` (3 files): the bounded sequential traversal, its strengthened regression, and the
+  FID-024 record with Loop 15/16 and the re-stamped receipt.
+
+Unrelated idea-shelf, wiki and operator artifacts, plus three older untracked session summaries, remain
+untouched and uncommitted. No processes were left running; the SDK builds and all verification runs
+completed.
