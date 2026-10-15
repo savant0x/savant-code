@@ -42,3 +42,26 @@ The root changelog is 1,001,053 bytes (250,264 tokens). Its current section is
 read, but the complete read was truncated by the tool. A top-entry-only Law 1
 exception has been requested before any changelog edit; historical text must
 remain byte-identical. Closure notes can be prepared while that answer is pending.
+
+## Final verification and archival preparation
+
+- Implementation commit: `f622481661615b8bd544fbda1cdd67340e275b51`.
+- The sequential root test chain exits 0: 9,206 PASS / 23 SKIP / 0 FAIL across
+  all thirteen configured workspace suites. Agent-runtime: 2,174 PASS / 0 FAIL.
+- Full root typecheck, ESLint with zero warnings, Markdown lint, full Prettier
+  check and the SDK build exit 0. Production caller grep confirms the rejection
+  flag reaches both retry and exhaustion consumers.
+- Repository validation exits 0 after moving both logs into the scratchpad's
+  active directory. The finished first root-test runner held the original log
+  open; only that exact runner was stopped, its session result collected and
+  its handle released before moving the log. No unrelated process was stopped.
+- The archive-closure guard and scope-register check both PASS, with zero issues.
+- The proposed closure entry is reviewable at
+  `dev/scratchpad/active/active-fid-closure-entry.md`. No root changelog text,
+  active FID status, archive path, owner or waiver has been changed for closure.
+
+**Specific archival blocker:** ECHO Law 1 requires a full read before editing
+the root changelog. The complete tool read is truncated at 250,264 tokens;
+the requested top-entry-only exception has no operator answer yet. All five
+records remain active while that ruling is pending; no archival is claimed.
+The master additionally retains its registered operator/external-input holds.

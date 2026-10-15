@@ -39,6 +39,15 @@ the observed rejection cause through stream settlement and loop escalation, with
 production-loop regression coverage. Observation requirements remain in force
 unless the operator explicitly grants a waiver.
 
+**2026-10-15 implementation evidence:** FID-017's remaining retry correction is
+committed at `f6224816`; all four implementation FIDs' declared gate sets pass.
+Root tests pass (9,206 PASS / 23 SKIP / zero FAIL), as do root typecheck, lint,
+formatting, SDK build and repository validation. Q25 already permits named
+implementation-only closure waivers. Final archival is blocked pending the
+operator's requested Law 1 exception for adding the prepared entry to the
+1 MB root changelog after its complete read was truncated by the tool. No
+active FID has been marked closed or moved while that ruling is pending.
+
 - [ ] **Local v0.0.36 development line.** `v0.0.35` shipped on 2026-10-11 (GitHub
       release published, npm `latest` = 0.0.35), which made this item's previous
       text — publish 189 local commits for v0.0.35 — stale; it is replaced here.
