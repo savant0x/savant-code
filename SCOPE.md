@@ -17,7 +17,10 @@ recorded decision or external dependency requires it.
       Operator ruling 2026-10-15: "yes" to selected-provider transport,
       formatting the two SDK fixtures, preserving exports in an ignored directory,
       independent notice cursors, and a permanent issued-task-ID ledger.
-      This ruling lifts the corresponding recorded holds below.
+      Steps 1–5 are implemented and verified in `83f1712d` and `ca94b6f1`.
+      **Blocker:** final CHANGELOG insertion and FID archival await the operator's
+      answer to the narrow Law 1 read exception; the exact proposed entry is in
+      `dev/scratchpad/active/approved-resume-changelog-entry.md`.
       **Automation level: 3.**
 
 - [x] **Documentation lifecycle reconciliation (2026-10-14).** Audited every

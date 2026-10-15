@@ -40,7 +40,9 @@ The protocol, workspace gates, and existing credential boundary remain binding.
   23 skipped, zero failures. The initial aggregate root command failed before the
   stale fixture corrections; no zero exit is claimed for that initial invocation.
 - All fourteen final declared FID gates pass, and the verified receipt is stamped.
-- Final repository validation follows receipt stamping and scratch-log relocation.
+- Final `bun run validate:repository`: `validation: PASS`, exit 0, after receipt
+  stamping and scratch-log relocation. Final full ESLint, Markdown lint and
+  Prettier checks also exit 0. No code changes followed those checks.
 
 | Workspace | Pass | Skip | Fail |
 | --- | ---: | ---: | ---: |
@@ -101,6 +103,7 @@ Until answered, editing CHANGELOG.md and final FID archival remain blocked on th
 
 Implementation is committed as `83f1712d`. Its staging deliberately excluded the
 pre-existing Q26 scope-target extension and all earlier production edits.
+Fixture alignment and final receipt evidence are committed as `ca94b6f1`.
 The exact proposed changelog entry is ready at
 `dev/scratchpad/active/approved-resume-changelog-entry.md`.
 
