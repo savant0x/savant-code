@@ -68,7 +68,8 @@
       "id": "LF-003",
       "title": "Prove durable save and resume with nested runtime state",
       "priority": "P1",
-      "state": "draft",
+      "state": "routed",
+      "fid": "FID-2026-1015-004",
       "basis": "investigation",
       "lessons": [
         "A retry that re-emits the same oversized tool call is not recovery",

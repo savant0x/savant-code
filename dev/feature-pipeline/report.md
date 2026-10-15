@@ -1,6 +1,6 @@
 # Lesson feature pipeline
 
-Source fingerprint: 50c75ce69db7717262ee0c43e9e42ab184a60594516664fbda8c18cf825cc1b3.
+Source fingerprint: 441bd16b9ecfc74340de279f1e0630defc90b6bbc0595524af04d2499a236e08.
 
 Readiness is a reviewed proposal. Implementation status records closed-FID
 evidence; it does not claim that historical tests were rerun today.
@@ -43,7 +43,7 @@ Owning FID: FID-2026-1012-008.
 
 ### LF-003: Prove durable save and resume with nested runtime state
 
-P1; draft; investigation.
+P1; routed; investigation.
 
 Six database snapshot saves failed with cyclic serialization in the surrounding acceptance session. Diagnose the exact
   field and compare filesystem and database persistence before choosing a repair; database failures alone do not prove
@@ -55,7 +55,7 @@ Acceptance:
 - A cyclic transient field produces a bounded diagnostic and preserves durable user content.
 - Fault injection proves what survives a failed write and whether retry recovers.
 
-Owning FID: not routed.
+Owning FID: FID-2026-1015-004.
 
 ### LF-004: Recover retained research evidence on demand
 

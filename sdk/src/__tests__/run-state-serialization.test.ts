@@ -1,5 +1,6 @@
 import { getInitialSessionState } from '@savant-code/common/types/session-state'
 import { getStubProjectFileContext } from '@savant-code/common/util/file'
+import { CIRCULAR_REFERENCE_MARKER } from '@savant-code/common/util/safe-json'
 import { describe, expect, it } from 'bun:test'
 
 import {
@@ -174,6 +175,29 @@ describe('RunState transport serialization', () => {
     expect(encoded).not.toContain('runtimeOnlyHandler')
     expect(agentState.runtimeOnlyHandler).toBeDefined()
     clearTimeout(agentState.activityIdleTimer as ReturnType<typeof setTimeout>)
+  })
+
+  it('preserves nested durable state while marking an unexpected cycle', () => {
+    const state = makeRunState()
+    const mainAgentState = state.sessionState!.mainAgentState as Record<
+      string,
+      unknown
+    >
+    const childState = { conversation: ['child message'] }
+    const nested: Record<string, unknown> = { childState }
+    nested.self = nested
+    mainAgentState.nested = nested
+
+    const restored = deserializeRunState(serializeRunState(state))
+    const restoredNested = (
+      restored.sessionState!.mainAgentState as Record<string, unknown>
+    ).nested as Record<string, unknown>
+
+    expect(restoredNested.childState).toEqual(childState)
+    expect(restoredNested.self).toBe(CIRCULAR_REFERENCE_MARKER)
+    clearTimeout(
+      mainAgentState.activityIdleTimer as ReturnType<typeof setTimeout>,
+    )
   })
 
   it('FID-2026-0815-015: omits the provenance session instance from the transport', () => {

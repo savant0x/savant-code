@@ -1,5 +1,7 @@
 import crypto from 'crypto'
 
+import { safeJsonStringify } from '@savant-code/common/util/safe-json'
+
 import { runCommit } from './commit-journal'
 import { parseStoredJson, prepare, requireRow } from './sqlite'
 
@@ -36,11 +38,13 @@ const EPHEMERAL_SESSION_KEYS = new Set([
 ])
 
 function stringifySessionState(sessionState: Record<string, unknown>): string {
-  return JSON.stringify(sessionState, (key: string, value: unknown) =>
-    EPHEMERAL_SESSION_KEYS.has(key) || typeof value === 'function'
-      ? undefined
-      : value,
-  )
+  const serialized = safeJsonStringify(sessionState, {
+    omitKeys: EPHEMERAL_SESSION_KEYS,
+  })
+  if (serialized === undefined) {
+    throw new TypeError('Session state could not be serialized')
+  }
+  return serialized
 }
 
 // Session operations

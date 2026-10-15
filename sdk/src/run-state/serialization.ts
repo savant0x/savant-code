@@ -1,5 +1,6 @@
 import { AgentOutputSchema } from '@savant-code/common/types/session-state'
 import { isRecord } from '@savant-code/common/util/object'
+import { safeJsonStringify } from '@savant-code/common/util/safe-json'
 
 import type { RunState } from './types'
 import type { SessionState } from '@savant-code/common/types/session-state'
@@ -16,13 +17,6 @@ const EPHEMERAL_KEYS = new Set([
 ])
 
 type UnknownRecord = Record<string, unknown>
-
-function omitEphemeralAndFunctions(_key: string, value: unknown): unknown {
-  if (EPHEMERAL_KEYS.has(_key) || typeof value === 'function') {
-    return undefined
-  }
-  return value
-}
 
 function isFiniteNonNegativeNumber(value: unknown): value is number {
   return typeof value === 'number' && Number.isFinite(value) && value >= 0
@@ -180,12 +174,12 @@ export function serializeRunState(state: RunState): string {
   if (!isRecord(state)) {
     throw new TypeError('RunState must be an object')
   }
-  const serialized = JSON.stringify(
+  const serialized = safeJsonStringify(
     {
       ...state,
       schemaVersion: RUN_STATE_SCHEMA_VERSION,
     },
-    omitEphemeralAndFunctions,
+    { omitKeys: EPHEMERAL_KEYS },
   )
   if (serialized === undefined) {
     throw new TypeError('RunState could not be serialized')
@@ -235,9 +229,13 @@ export function deserializeRunState(input: string | unknown): RunState {
     )
   }
 
-  const durablePayload = JSON.parse(
-    JSON.stringify(value, omitEphemeralAndFunctions),
-  ) as UnknownRecord
+  const durableJson = safeJsonStringify(value, {
+    omitKeys: EPHEMERAL_KEYS,
+  })
+  if (durableJson === undefined) {
+    throw new TypeError('RunState could not be serialized')
+  }
+  const durablePayload = JSON.parse(durableJson) as UnknownRecord
   return {
     schemaVersion: RUN_STATE_SCHEMA_VERSION,
     traceSessionId: durablePayload.traceSessionId as string,

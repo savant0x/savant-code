@@ -15,6 +15,7 @@ process.env.SAVANT_DB_PATH = path.join(tempDir, 'echo.db')
 const {
   createLabelEntry,
   createSession,
+  getSession,
   getEntriesByKind,
   getInContextMessages,
 } = await import('@savant-code/database/service')
@@ -191,5 +192,35 @@ describe('FID-2026-1011-006 R16 compaction boundary bookmarks', () => {
     save(makeRunState({ compactionMetrics: { events: 3 }, runId: 'run-b' }))
     expect(compactionLabels()).toHaveLength(6)
     expect(getInContextMessages(sessionId)).toHaveLength(0)
+  })
+})
+
+describe('LF-003 durable session recovery', () => {
+  test('persists conversation messages when runtime state contains a cycle', () => {
+    const mainAgentState: Record<string, unknown> = {
+      messageHistory: [],
+    }
+    mainAgentState.runtime = { parent: mainAgentState }
+    const runState = makeRunState(mainAgentState)
+
+    const saved = saveChatStateToDb(chatId, 'agent', runState, [
+      {
+        id: 'cycle-recovery-message',
+        variant: 'user',
+        content: 'durable user content',
+        timestamp: new Date(0).toISOString(),
+      },
+    ])
+
+    expect(saved.sessionId).toBe(sessionId)
+    expect(getSession(sessionId)?.session_state).toMatchObject({
+      mainAgentState: { messageHistory: [] },
+    })
+    expect(getInContextMessages(sessionId)).toEqual([
+      expect.objectContaining({
+        id: 'cycle-recovery-message',
+        content: 'durable user content',
+      }),
+    ])
   })
 })
