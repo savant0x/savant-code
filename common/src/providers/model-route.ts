@@ -122,31 +122,19 @@ export function resolveModelRoute(
       : captureModelRoute(route.providerId, route.authMode)
   }
   const registry = getEffectiveProviderRegistry()
-  const prefix = Object.values(registry).find((entry) =>
-    model.startsWith(`${entry.id}/`),
-  )
-  if (
-    prefix &&
-    activeProviderId &&
-    Object.hasOwn(registry, activeProviderId) &&
-    prefix.id !== activeProviderId
-  ) {
-    throw new Error(
-      'Model serving provider is ambiguous. Select an explicit provider and model.',
-    )
+  // Selection owns serving identity. Vendor model segments cannot change it.
+  const selected =
+    activeProviderId && Object.hasOwn(registry, activeProviderId)
+      ? registry[activeProviderId]
+      : undefined
+  if (selected) {
+    return routeMatchesEnvironmentEndpoint(selected)
+      ? captureModelRoute(selected.id)
+      : undefined
   }
-  const id = prefix?.id ?? activeProviderId
-  if (!id || !Object.hasOwn(registry, id)) return undefined
-  // FID-2026-1003-006 D1 compatibility resolver: a bare-slug model names no
-  // registry provider, so its serving identity is the environment endpoint.
-  // When INFERENCE_BASE_URL is a custom endpoint (direct mode,
-  // FID-2026-0929-005), synthesizing a registry route from active intent would
-  // silently replace that endpoint and send the request — with that provider's
-  // credential — elsewhere. Unregistered environment endpoints remain
-  // supported: the request keeps the legacy custom-endpoint adapter.
-  if (!prefix && !routeMatchesEnvironmentEndpoint(registry[id]))
-    return undefined
-  return captureModelRoute(id)
+  // A custom endpoint owns its own key, including prefixed model ids.
+  if (process.env.INFERENCE_BASE_URL?.trim()) return undefined
+  return routeForModelReplacement(model)
 }
 
 /**
@@ -185,7 +173,12 @@ function normalizeEndpoint(raw: string): string {
 export function routeForModelReplacement(
   model: string,
 ): ModelRoute | undefined {
-  return resolveModelRoute(model, undefined, '')
+  // A deliberate model replacement captures its own prefix independently of
+  // ambient endpoint state; ordinary inference above preserves selection.
+  const provider = Object.values(getEffectiveProviderRegistry()).find((entry) =>
+    model.startsWith(`${entry.id}/`),
+  )
+  return provider ? captureModelRoute(provider.id) : undefined
 }
 
 export function modelRouteKey(model: string, route?: ModelRoute): string {

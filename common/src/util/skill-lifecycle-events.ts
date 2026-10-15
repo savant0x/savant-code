@@ -159,7 +159,7 @@ export function readSkillLifecycleEvents(
  * replays the event (at-least-once); within a healthy session a claimed
  * batch is never shown twice because the ack advances the cursor.
  */
-export type SkillSurfaceId = 'cli' | 'desktop'
+export type SkillSurfaceId = 'cli' | 'desktop' | 'session-end'
 
 const CURSORS_RELATIVE = path.join('.savant', 'skill-lifecycle-cursors.json')
 

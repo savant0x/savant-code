@@ -86,11 +86,14 @@ async function collectChunks(parts: Part[]): Promise<{
 }
 
 describe('FID-2026-0912-005: invalid vendor tool-call classification', () => {
+  let originalInferenceKey: string | undefined
   const getValidChatGptOAuthCredentialsMock = mock<
     () => Promise<{ accessToken: string } | null>
   >(() => Promise.resolve(null))
 
   beforeEach(async () => {
+    originalInferenceKey = process.env.INFERENCE_API_KEY
+    process.env.INFERENCE_API_KEY = 'tool-classification-endpoint-test-key'
     // FID-2026-0929-005: no backend fallback exists, so the direct lane must
     // fully resolve — give the test an inference base URL.
     process.env.INFERENCE_BASE_URL = 'https://inference.test/v1'
@@ -109,6 +112,8 @@ describe('FID-2026-0912-005: invalid vendor tool-call classification', () => {
     globalThis.fetch = REAL_FETCH
     clearMockedModules()
     delete process.env.INFERENCE_BASE_URL
+    if (originalInferenceKey === undefined) delete process.env.INFERENCE_API_KEY
+    else process.env.INFERENCE_API_KEY = originalInferenceKey
   })
 
   test('classifies an invalid (truncated-args) tool-call as native-incomplete', async () => {

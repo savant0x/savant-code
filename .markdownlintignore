@@ -120,3 +120,7 @@ docs/design/Savant_ECHO Cache Optimization Research.md
 # withdrawal note above requires its own entry for; same exemption precedent as
 # the pasted session-transcript artifacts.
 docs/trash/**
+
+# Operator-approved raw session archive (2026-10-15): byte-preserved local
+# conversation exports, already gitignored; never repository documentation.
+dev/exports/**

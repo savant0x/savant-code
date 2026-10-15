@@ -15,8 +15,17 @@
 
 import { collectRegisterCompletenessIssues } from '@savant-code/agent-runtime/echo/scope-register-completeness'
 
+import { collectTaskIdLedgerIssues } from './task-id-ledger'
+
 export function scopeRegisterMain(root: string = process.cwd()): number {
-  const issues = collectRegisterCompletenessIssues(root)
+  const issues = [
+    ...collectRegisterCompletenessIssues(root),
+    ...collectTaskIdLedgerIssues(root).map((entry) => ({
+      file: 'dev/task-id-ledger.json',
+      line: 1,
+      message: entry.message,
+    })),
+  ]
   if (issues.length === 0) {
     console.log('scope-register PASS (0 issues)')
     return 0

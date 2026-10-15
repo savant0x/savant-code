@@ -141,13 +141,15 @@ describe('settings telemetry defaults', () => {
     ).toThrow()
     expect(loadModelSelection()?.model).toBe('openai/gpt-5')
   })
-  test('picker defaults alone cannot reinterpret conflicting legacy active intent', async () => {
+  test('legacy active selection owns transport despite conflicting picker defaults', async () => {
     const { loadModelSelection, saveSettings } = await import('../settings')
     saveSettings({
       savantCodeModelPreference: 'openai/gpt-5',
       activeProvider: 'openrouter',
       savantCodeModelProviderPreference: 'openai',
     })
-    expect(loadModelSelection()).toBeUndefined()
+    const selected = loadModelSelection()
+    expect(selected?.model).toBe('openai/gpt-5')
+    expect(selected?.route.providerId).toBe('openrouter')
   })
 })

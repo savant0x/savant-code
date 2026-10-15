@@ -48,7 +48,9 @@ describe('openrouter-models', () => {
       // (sidebar badge), and the live catalog corrects the value as soon as
       // it loads (the bootstrap effect re-runs on catalog load).
       expect(resolveContextWindowForModel('google/gemini-flash')).toBe(200000)
-      expect(resolveContextWindowForModel('deepseek/deepseek-v3')).toBe(200000)
+      expect(
+        resolveContextWindowForModel('deepseek/unlisted-fixture-model'),
+      ).toBe(200000)
       expect(resolveContextWindowForModel('anthropic/claude-opus-4')).toBe(
         200000,
       )

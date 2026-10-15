@@ -1,7 +1,9 @@
 import { createHash } from 'node:crypto'
 
-import { getEffectiveProviderRegistry } from '@savant-code/common/providers/custom-providers'
-import { getModelRouteConfig } from '@savant-code/common/providers/model-route'
+import {
+  getModelRouteConfig,
+  resolveModelRoute,
+} from '@savant-code/common/providers/model-route'
 
 import { withRequestTokenBudget } from './request-budget'
 
@@ -13,23 +15,17 @@ export function applyModelRequestBudget(
 ): ModelResult {
   if (typeof result.model === 'string')
     throw new Error('Request budgeting requires a resolved provider model')
-  const registry = getEffectiveProviderRegistry()
-  const explicit = params.modelRoute
-    ? getModelRouteConfig(params.modelRoute)
-    : Object.values(registry).find(
-        (config) =>
-          config.kind !== 'local' && params.model.startsWith(`${config.id}/`),
-      )
+  const route = resolveModelRoute(params.model, params.modelRoute)
+  const explicit = route ? getModelRouteConfig(route) : undefined
   const active = process.env.DIRECT_PROVIDER?.trim().toLowerCase()
+  const servingId = route?.providerId ?? active
   const catalogId = result.isChatGptOAuth
     ? `chatgpt-oauth/${params.model}`
-    : params.modelRoute
-      ? params.model.startsWith(`${params.modelRoute.providerId}/`)
+    : servingId
+      ? params.model.startsWith(`${servingId}/`)
         ? params.model
-        : `${params.modelRoute.providerId}/${params.model}`
-      : !explicit && active
-        ? `${active}/${params.model}`
-        : params.model
+        : `${servingId}/${params.model}`
+      : params.model
   // Separate OAuth, explicit gateway endpoints, and custom bare-slug endpoints.
   // Hash endpoint identity so credentials in custom URLs never become log data.
   const endpointTemplate = result.isChatGptOAuth

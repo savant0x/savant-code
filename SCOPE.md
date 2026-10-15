@@ -13,6 +13,13 @@ recorded decision or external dependency requires it.
 
 ## Open items
 
+- [ ] **FID-2026-1015-001. Implement the five approved resume decisions.**
+      Operator ruling 2026-10-15: "yes" to selected-provider transport,
+      formatting the two SDK fixtures, preserving exports in an ignored directory,
+      independent notice cursors, and a permanent issued-task-ID ledger.
+      This ruling lifts the corresponding recorded holds below.
+      **Automation level: 3.**
+
 - [x] **Documentation lifecycle reconciliation (2026-10-14).** Audited every
       active FID against implementation and gate evidence; `CHANGELOG.md` coverage
       and the archived-FID closure guard both pass. No active record satisfied
@@ -24,9 +31,9 @@ recorded decision or external dependency requires it.
 ## Full active-FID completion directive (2026-10-14)
 
 The operator directed completion of all actual pending work in every active FID and
-granted automation level 3. The active register is seven records: `FID-2026-1012-017`,
-`-021`, `-022`, `-023`, `-024`, `FID-2026-1013-005`, and
-`FID-2026-1014-002`. Execute them in dependency order, implement every automatable
+granted automation level 3. The five continuing class-program records are
+`FID-2026-1012-017`, `-021`, `-022`, `-023`, and `-024`;
+the approved-resume record is listed above. Execute them in dependency order, implement every automatable
 step, run each declared gate, close and archive every record whose ground truth and
 gates support closure, and leave only specifically evidenced operator or external
 constraints active. **Automation level: 3.**
@@ -43,24 +50,6 @@ constraints active. **Automation level: 3.**
       surfaces, the CHANGELOG heading with its callout, and the documented
       version surfaces; `version:check` PASS).
       **Automation level: 3.**
-
-- [ ] **Session-end review replays the skill-lifecycle log forever.** Measured
-      2026-10-13 while routing the review's patterns: `.savant/skill-lifecycle-events.jsonl`
-      holds 18 events, all stamped 2026-10-12T21:42:19 (one `draft_created` then 17
-      `draft_failed` inside 105 ms, every one for the same skill
-      `library-complete-needs-a-named-consumer`), and
-      `scripts/session-end-notices.ts` → `skillLifecycleReportLines` claims the
-      `'cli'` surface cursor and **never acknowledges** it, so every session-end
-      review re-prints the same lines (plus `… 8 more`). `bun run lessons:to-skills`
-      today reports 0 candidates and appends 0 events, so the burst is historical,
-      not live.
-      **Blocker:** which surface owns the acknowledgement decides where the
-      operator first sees a skill draft on the trust surface — the headless review
-      (whose stdout is a transcript, so it would ack) or the interactive notice at
-      `cli/src/components/skill-lifecycle-notice.tsx`, which acks today. Acking in
-      the review suppresses the TUI's display; not acking keeps the replay. That is
-      an operator-facing visibility decision on the self-improving harness's trust
-      contract, so it is presented rather than chosen. **Automation level: 1.**
 
 - [ ] **T186. Two registered workspaces sit outside every typecheck and test
       chain.** `package.json` registers 15 workspaces, but the root `typecheck`
@@ -167,30 +156,6 @@ audit report. The completed probe item grants no continuing write authority.
       active FID gates run synchronously without an internal timeout, so no
       repository defect is established by this observation. **Blocker:** the
       external command runner did not complete the hard gate. **Automation level: 2.**
-
-- [ ] **Task-id reuse hazard (found 2026-10-13).** The register evicts an item on closure and the
-      repository keeps no record of the numbers it has issued, so a retired id can be reallocated to
-      unrelated work with nothing left to notice it. Measured: `T188` names the 2026-10-11
-      install-independent undeclared-import guard in
-      `dev/fids/archive/FID-2026-1011-004-install-independent-undeclared-import-guard.md:1` and in
-      `dev/session-summaries/2026-10-11-undeclared-import-guard-t188.md:1`, while the register no
-      longer holds that item — this pass allocated `T188`–`T190` from the register's visible maximum
-      and had to evict all three on closure so that one id would not carry two meanings.
-      **Blocker:** the disposition is a design decision the register cannot make for itself — either
-      the register keeps a retired-id ledger, or task ids gain a date epoch so reuse is impossible.
-      Both change a governance surface the operator owns (`SCOPE.md` plus the `scope.*` validators),
-      and the second would renumber live items. Presented, not decided unilaterally.
-      **Automation level: 1.**
-
-- [ ] **Repository formatting drift on operator-owned files (found 2026-10-14).**
-      `bunx prettier --check .` reports formatting differences in
-      `sdk/src/__tests__/fixtures/windows-stubborn-grandchild.ts` and
-      `sdk/src/__tests__/run-terminal-command.test.ts`; ESLint also reports an
-      import-order warning in `scripts/__tests__/fid-artifact-census.test.ts`.
-      The Q25 paths pass their scoped formatting check. **Blocker:** these files
-      were already modified before this pass, so formatting them requires an
-      explicit operator ruling before those changes may be edited.
-      **Automation level: 1.**
 
 - [x] **FID-2026-1014-001. The read-only guard refused legitimate reads and
       still carried a closed security FID's unfixed waiver.** Operator direction 2026-10-14
@@ -334,6 +299,25 @@ closure evidence is the next lifecycle work, not re-implementing the waves.
 
 ## Machine-readable scope targets
 
+- FID-2026-1015-001: `common/src/providers/model-route.ts`,
+  `common/src/providers/__tests__/model-route-selection.test.ts`,
+  `sdk/src/impl/model-provider.ts`,
+  `sdk/src/impl/model-provider/apply-request-budget.ts`,
+  `sdk/src/impl/__tests__/model-provider-selected-transport.test.ts`,
+  `sdk/src/impl/__tests__/model-provider-free-mode.test.ts`,
+  `sdk/src/impl/__tests__/llm-invalid-vendor-tool-call.test.ts`,
+  `cli/src/utils/__tests__/settings-provider.test.ts`,
+  `cli/src/utils/__tests__/openrouter-models-context-window.test.ts`,
+  `sdk/src/__tests__/fixtures/windows-stubborn-grandchild.ts`,
+  `sdk/src/__tests__/run-terminal-command.test.ts`,
+  `common/src/util/skill-lifecycle-events.ts`, `scripts/session-end-notices.ts`,
+  `scripts/session-end-review.ts`, `scripts/__tests__/session-end-lifecycle-delivery.test.ts`,
+  `scripts/task-id-ledger.ts`, `scripts/__tests__/task-id-ledger.test.ts`,
+  `scripts/scope-register-check.ts`, `scripts/validate-repository.ts`,
+  `dev/task-id-ledger.json`, `dev/task-id-ledger.md`, `dev/exports/session-archives/**`,
+  `dev/experiences/class-owners.json`,
+  `.markdownlintignore`, `SCOPE.md`, `dev/fids/**`, `dev/session-summaries/**`, `CHANGELOG.md`
+
 Operator authorization: complete the master program at automation level 3 (2026-10-12).
 The planning review is complete; implementation, verification and local commits are authorized.
 Evidence and per-record Loop 2 corrections are in
@@ -425,4 +409,3 @@ and its remaining operator/external-input holds stay active.
   `dev/session-summaries/2026-10-02-0223-fid-003-batch1-implementation.md`
 - T186: (no write surface — blocked on the T122 savant-free removal)
 - T187: (no write surface — operator-owned skills surface)
-- Repository formatting drift: (no write surface — operator-owned)

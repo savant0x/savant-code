@@ -33,6 +33,7 @@ import { collectHygieneIssues } from './hygiene.js'
 import { validateLearningArtifacts } from './learnings-artifact-check.js'
 import { collectFeaturePipelineIssues } from './lesson-feature-check.js'
 import { collectQualityIssues, readQualityBaseline } from './quality-report.js'
+import { collectTaskIdLedgerIssues } from './task-id-ledger'
 import {
   formatValidationIssues,
   repositoryValidationGates,
@@ -210,11 +211,9 @@ function validateScopeDispositions(): { code: string; message: string }[] {
 }
 
 /**
- * FID-2026-0919-025: a register line for every tracked item. Fails the
- * repository gate on an active FID `SCOPE.md` never names, or on a task cited
- * by an active FID or a current session summary that has no `## Task NN`
- * heading or `TNN-X` item in the register — the quiet half of the scope trim.
- */
+ * FID-2026-0919-025: fail on an active FID `SCOPE.md` never names, or a task cited
+ * by an active FID or agenda without a `## Task NN`
+ * heading or `TNN-X` item in the register. */
 function validateRegisterCompleteness(): { code: string; message: string }[] {
   return collectRegisterCompletenessIssues(root).map((issue) => ({
     code: 'scope.unregistered-item',
@@ -277,6 +276,7 @@ const issues: FidLedgerIssue[] = [
   ...validateScopeDispositions(),
   ...collectRecordCoverageIssues(root), // FID-2026-1012-027: gate/surface coverage
   ...validateRegisterCompleteness(),
+  ...collectTaskIdLedgerIssues(root),
   ...changelogCoverageIssues,
   ...vendoredTreeIssues,
   ...bunfigTimeoutIssues,

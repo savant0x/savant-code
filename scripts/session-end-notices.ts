@@ -7,6 +7,7 @@ import {
 } from '@savant-code/common/types/telemetry'
 import { readProtocolConfig } from '@savant-code/common/util/protocol-config'
 import {
+  acknowledgeSkillLifecycleEvents,
   claimSkillLifecycleEvents,
   formatSkillLifecycleNoticeLine,
 } from '@savant-code/common/util/skill-lifecycle-events'
@@ -14,6 +15,8 @@ import { countQuarantinedDrafts } from '@savant-code/common/util/skill-managemen
 
 import { syncProposals } from './telemetry-feedback'
 import { runSentinel } from './telemetry-sentinel'
+
+import type { SessionEndReview } from './session-end-review'
 
 /** Mechanical drafts remain visible even when no chat created them. */
 export function quarantineAlertNote(rootDir: string): string | null {
@@ -25,14 +28,40 @@ export function quarantineAlertNote(rootDir: string): string | null {
   )
 }
 
-/** Metadata-only report; acknowledgement stays with the rendering surface. */
-export function skillLifecycleReportLines(rootDir: string): string[] {
-  const { events, remaining } = claimSkillLifecycleEvents(rootDir, 'cli')
-  if (events.length === 0) return []
+/** Claim the headless surface independently of interactive CLI delivery. */
+export function skillLifecycleReport(rootDir: string) {
+  const { events, remaining } = claimSkillLifecycleEvents(
+    rootDir,
+    'session-end',
+  )
   const lines = events.map(formatSkillLifecycleNoticeLine)
   if (remaining > 0)
     lines.push(`… ${remaining} more — run \`/skills activity\``)
-  return lines
+  return { events, lines }
+}
+
+/** Report construction is read-only; output owns acknowledgement. */
+export function skillLifecycleReportLines(rootDir: string): string[] {
+  return skillLifecycleReport(rootDir).lines
+}
+
+/** A failed display leaves the batch unread for the next review. */
+export function printSessionEndReview(
+  rootDir: string,
+  review: SessionEndReview,
+  write: (line: string) => void = (line) => {
+    fs.writeSync(process.stdout.fd, `${line}\n`)
+  },
+): void {
+  write(
+    `session-end:review: ${review.items.length} agenda item(s) written to dev/agenda.md`,
+  )
+  for (const note of review.routing) write(`- ${note}`)
+  acknowledgeSkillLifecycleEvents(
+    rootDir,
+    'session-end',
+    review.lifecycleEvents,
+  )
 }
 
 /** Run local insights at SessionEnd without consuming the agenda's item cap. */

@@ -78,12 +78,14 @@ async function resolveModelForRequest(
   void params
   const { model, skipChatGptOAuth } = params
   if (params.modelRoute) return resolveExplicitModelRoute(params)
-  resolveModelRoute(model)
+  const route = resolveModelRoute(model)
 
   // Check if we should use ChatGPT OAuth direct
   // Only attempt for allowlisted models; non-allowlisted models silently fall through.
   if (
     CHATGPT_OAUTH_ENABLED &&
+    !getActiveProviderId() &&
+    !process.env.INFERENCE_BASE_URL?.trim() &&
     !skipChatGptOAuth &&
     isOpenAIProviderModel(model) &&
     isChatGptOAuthModelAllowed(model)
@@ -113,6 +115,7 @@ async function resolveModelForRequest(
   // (ollama-onboarding.ts).
   for (const config of Object.values(getEffectiveProviderRegistry())) {
     if (config.kind === 'local') continue
+    if (config.id !== route?.providerId) continue
     if (!model.startsWith(`${config.id}/`)) continue
 
     const key = await resolveProviderKey(config)

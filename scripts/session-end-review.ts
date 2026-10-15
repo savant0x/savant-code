@@ -35,8 +35,9 @@ import {
 import { repairDraftRoutingNotes } from './experiences-repair-drafts'
 import { featureRoutingNotes } from './lesson-feature-pipeline'
 import {
+  printSessionEndReview,
   quarantineAlertNote,
-  skillLifecycleReportLines,
+  skillLifecycleReport,
   telemetryReportLines,
 } from './session-end-notices'
 
@@ -44,6 +45,8 @@ export {
   quarantineAlertNote,
   skillLifecycleReportLines,
 } from './session-end-notices'
+
+import type { SkillLifecycleEvent } from '@savant-code/common/util/skill-lifecycle-events'
 
 export const AGENDA_MAX_LINES = 50
 export const AGENDA_MAX_ITEMS = 3
@@ -69,6 +72,8 @@ export type PendingDecision = {
 }
 
 export type SessionEndReview = {
+  /** Exact claimed batch; acknowledge only after the report is displayed. */
+  lifecycleEvents: SkillLifecycleEvent[]
   items: AgendaItem[]
   agenda: string
   /** Candidate FID-routing notes (line-bounded). */
@@ -256,8 +261,8 @@ export function runSessionEndReview(
   // FID-2026-0910-001 P3: the deterministic net for non-chat draft sources.
   const quarantineNote = quarantineAlertNote(rootDir)
   // FID-2026-1005-003 Step 4: durable lifecycle-event notices in the same
-  // report (metadata-only lines; the cursor is NOT advanced by this report).
-  const lifecycleLines = skillLifecycleReportLines(rootDir)
+  // report; construction never advances the session-end cursor.
+  const lifecycle = skillLifecycleReport(rootDir)
   const routing = [
     ...built.routing,
     ...classes.map(
@@ -267,7 +272,7 @@ export function runSessionEndReview(
     ...featureRoutingNotes(rootDir),
     ...repairDraftRoutingNotes(rootDir, opts.now),
     ...(quarantineNote !== null ? [quarantineNote] : []),
-    ...lifecycleLines,
+    ...lifecycle.lines,
     ...telemetryReportLines(rootDir, opts),
   ]
   // FID-2026-0912-004: the proposer may draft only once per session — read
@@ -276,6 +281,7 @@ export function runSessionEndReview(
     opts.sessionId === undefined ||
     proposalsForSession(rootDir, opts.sessionId).length === 0
   return {
+    lifecycleEvents: lifecycle.events,
     items: built.items,
     agenda: built.agenda,
     routing,
@@ -287,9 +293,5 @@ export function runSessionEndReview(
 
 if (import.meta.main) {
   const rootDir = path.resolve(import.meta.dir, '..')
-  const review = runSessionEndReview(rootDir)
-  console.log(
-    `session-end:review: ${review.items.length} agenda item(s) written to ${AGENDA_PATH}`,
-  )
-  for (const note of review.routing) console.log(`- ${note}`)
+  printSessionEndReview(rootDir, runSessionEndReview(rootDir))
 }
