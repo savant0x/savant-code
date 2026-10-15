@@ -196,6 +196,7 @@ export function finalizeStep(deps: {
     shouldEndTurn,
     hasNativeIncompleteToolCall: stream.hasNativeIncompleteToolCall,
     lastIncompleteToolName: stream.lastIncompleteToolName,
+    lastIncompleteToolRejected: stream.lastIncompleteToolRejected,
     messageId: stream.messageId,
     nResponses: undefined,
   }

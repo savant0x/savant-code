@@ -353,6 +353,16 @@ activation), and the child's id is recorded in this table when it exists.
 
 ### Status board (the agent updates this; it is what an operator reads)
 
+**Continuation 2026-10-15:** Five records remain active: `-017`, `-021`, this
+master, `-023` and `-024`. The live recurrence census reports 591 records / 59
+stable classes / zero issues; no repair boundaries or qualified observations
+exist. FID-017 Loop 9 resolves the table's earlier cause-propagation limitation:
+the rejection decision now survives stream settlement, LLM step results, later
+retry guidance and exhaustion. Production-loop controls failed before repair
+and pass afterwards (29 focused tests). Root typecheck passes; FID-021's 13 and
+FID-023's 16 declared gates pass live. Their production observation requirements
+remain active pending real evidence or an explicit operator waiver.
+
 | Item | Chain · wave | Record | Status (2026-10-14 audit) |
 |---|---|---|---|
 | FID-2026-1012-022 — this master (the index) | — | `-022` | open — closes last, when every child is closed and the allocation re-runs clean |

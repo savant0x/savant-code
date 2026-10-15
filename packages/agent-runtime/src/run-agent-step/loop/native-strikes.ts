@@ -6,6 +6,7 @@ import {
   buildToolUnavailableExhaustedMessage,
   getSteeringMessage,
   NATIVE_TOOL_CALL_RECOVERY_MAX_STRIKES,
+  NATIVE_TOOL_CALL_REJECTION_STEERING,
   NATIVE_TOOL_CALL_TERMINAL_RECOVERY_MAX_STRIKES,
   TOOL_UNAVAILABLE_RECOVERY_MAX_STRIKES,
 } from '../constants'
@@ -25,6 +26,7 @@ export function applyNativeStrikeHandling(params: {
   /** Strike count including the current native-incomplete step. */
   consecutiveNativeIncompleteSteps: number
   lastIncompleteToolName: string | undefined
+  lastIncompleteToolRejected?: boolean
   /** The agent's own allowlist — decides the failure class (FID-2026-1012-002). */
   availableToolNames: readonly string[]
 }): { exhausted: boolean } {
@@ -33,6 +35,7 @@ export function applyNativeStrikeHandling(params: {
     consecutiveNativeIncompleteSteps,
     lastIncompleteToolName,
     availableToolNames,
+    lastIncompleteToolRejected,
   } = params
 
   // FID-2026-1012-002: a name this agent does not have is not a payload-size
@@ -57,10 +60,12 @@ export function applyNativeStrikeHandling(params: {
     // FID-2026-0819-004: append escalating steering on retry. The first
     // error (strike 1) already has a hint from stream-parser.ts. Strikes
     // 2+ get increasingly specific guidance via getSteeringMessage.
-    const escalatingHint = getSteeringMessage(
-      lastIncompleteToolName,
-      consecutiveNativeIncompleteSteps,
-    )
+    const escalatingHint = lastIncompleteToolRejected
+      ? NATIVE_TOOL_CALL_REJECTION_STEERING
+      : getSteeringMessage(
+          lastIncompleteToolName,
+          consecutiveNativeIncompleteSteps,
+        )
     if (escalatingHint) {
       currentAgentState.messageHistory = [
         ...currentAgentState.messageHistory,
@@ -87,6 +92,7 @@ export function applyNativeStrikeHandling(params: {
 export function buildStepExhaustedError(
   lastIncompleteToolName: string | undefined,
   availableToolNames: readonly string[] = [],
+  lastIncompleteToolRejected = false,
 ): string {
   const isUnavailableToolCall =
     lastIncompleteToolName !== undefined &&
@@ -96,5 +102,7 @@ export function buildStepExhaustedError(
         lastIncompleteToolName,
         availableToolNames,
       )
-    : buildNativeToolCallExhaustedMessage(lastIncompleteToolName)
+    : lastIncompleteToolRejected
+      ? `Native tool-call recovery failed repeatedly because the arguments were rejected (tool: ${lastIncompleteToolName ?? 'unknown'}). Correct the argument values to satisfy the offered tool schema before trying again.${NATIVE_TOOL_CALL_REJECTION_STEERING}`
+      : buildNativeToolCallExhaustedMessage(lastIncompleteToolName)
 }

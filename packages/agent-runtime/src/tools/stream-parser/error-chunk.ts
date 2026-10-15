@@ -68,6 +68,7 @@ export function handleStreamErrorChunk(params: {
 }): {
   hasNativeIncompleteToolCall: boolean
   lastIncompleteToolName: string | undefined
+  lastIncompleteToolRejected: boolean
   captureChunk?: StreamErrorChunk
 } {
   const { chunk, errorMessages, loggerWarn, agentTemplate, runId } = params
@@ -189,5 +190,13 @@ export function handleStreamErrorChunk(params: {
           message: body,
         }
       : chunk
-  return { hasNativeIncompleteToolCall, lastIncompleteToolName, captureChunk }
+  return {
+    hasNativeIncompleteToolCall,
+    lastIncompleteToolName,
+    lastIncompleteToolRejected:
+      errorClass === 'native-incomplete' &&
+      !isUnavailableToolCall &&
+      rejectionObserved,
+    captureChunk,
+  }
 }

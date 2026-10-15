@@ -32,6 +32,13 @@ step, run each declared gate, close and archive every record whose ground truth 
 gates support closure, and leave only specifically evidenced operator or external
 constraints active. **Automation level: 3.**
 
+**Renewed completion authorization (2026-10-15):** "granting automation level 3,
+complete the work and archive the complted fids". Finish the five active records
+and archive only with their actual acceptance evidence. FID-017 includes carrying
+the observed rejection cause through stream settlement and loop escalation, with
+production-loop regression coverage. Observation requirements remain in force
+unless the operator explicitly grants a waiver.
+
 - [ ] **Local v0.0.36 development line.** `v0.0.35` shipped on 2026-10-11 (GitHub
       release published, npm `latest` = 0.0.35), which made this item's previous
       text — publish 189 local commits for v0.0.35 — stale; it is replaced here.
@@ -329,6 +336,8 @@ and its remaining operator/external-input holds stay active.
   `common/src/util/__tests__/experience-classes.test.ts`,
   `packages/agent-runtime/src/run-agent-step/**`,
   `packages/agent-runtime/src/tools/stream-parser/**`,
+  `packages/agent-runtime/src/tools/stream-parser.ts`,
+  `packages/agent-runtime/src/__tests__/loop-agent-steps-native-rejection.test.ts`,
   `packages/agent-runtime/src/tools/handlers/tool/**`, `common/src/tools/params/tool/**`
 - FID-2026-1012-021: `scripts/experiences-dedup.ts`, `scripts/experiences-recurrence*.ts`,
   `scripts/experiences-learning-order.ts`, `scripts/experiences-repair-drafts.ts`,

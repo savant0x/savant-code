@@ -186,6 +186,7 @@ export async function runLoopIteration(params: {
     llmShouldEndTurn,
     hasNativeIncompleteToolCall,
     lastIncompleteToolName,
+    lastIncompleteToolRejected,
   } = llm
   nResponses = llm.nResponses
 
@@ -203,6 +204,7 @@ export async function runLoopIteration(params: {
       currentAgentState,
       consecutiveNativeIncompleteSteps,
       lastIncompleteToolName,
+      lastIncompleteToolRejected,
       // FID-2026-1012-002: the failure class is decided against THIS agent's
       // allowlist. A name the agent does not have is an unsatisfiable retry, so
       // it must not consume the truncation ladder's three strikes.
@@ -212,6 +214,7 @@ export async function runLoopIteration(params: {
       stepErrorMessage = buildStepExhaustedError(
         lastIncompleteToolName,
         Object.keys(ctx.tools),
+        lastIncompleteToolRejected,
       )
     }
     shouldEndTurn = false

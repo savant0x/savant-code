@@ -110,6 +110,8 @@ export type RunAgentStepResult = {
    *  `native-incomplete`, so the exhausted-failure message can name it and
    *  the parent can re-spawn with a split-task prompt. */
   lastIncompleteToolName?: string
+  /** Observed rejection, rather than truncation; retained through recovery. */
+  lastIncompleteToolRejected?: boolean
   messageId: string | null
   nResponses?: string[]
 }

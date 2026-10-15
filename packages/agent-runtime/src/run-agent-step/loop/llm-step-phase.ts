@@ -27,6 +27,7 @@ export async function runLlmStepPhase(params: {
   llmShouldEndTurn: boolean
   hasNativeIncompleteToolCall: boolean
   lastIncompleteToolName: string | undefined
+  lastIncompleteToolRejected: boolean | undefined
   messageId: string | null
   nResponses: string[] | undefined
 }> {
@@ -54,6 +55,7 @@ export async function runLlmStepPhase(params: {
     shouldEndTurn: llmShouldEndTurn,
     hasNativeIncompleteToolCall,
     lastIncompleteToolName,
+    lastIncompleteToolRejected,
     messageId,
     nResponses: generatedResponses,
   } = await runAgentStep({
@@ -81,6 +83,7 @@ export async function runLlmStepPhase(params: {
     llmShouldEndTurn,
     hasNativeIncompleteToolCall,
     lastIncompleteToolName,
+    lastIncompleteToolRejected,
     messageId,
     nResponses: generatedResponses,
   }

@@ -180,6 +180,7 @@ repository gate).
 - gate: test packages/agent-runtime/src/tools/stream-parser/__tests__/error-chunk-steering.test.ts
 - gate: test packages/agent-runtime/src/tools/stream-parser/__tests__/error-chunk-rejection-steering.test.ts
 - gate: test packages/agent-runtime/src/tools/stream-parser/__tests__/native-failure-deduper.test.ts
+- gate: test packages/agent-runtime/src/__tests__/loop-agent-steps-native-rejection.test.ts
 - gate: test common/src/util/__tests__/experience-classes.test.ts
 - gate: typecheck common
 - gate: typecheck sdk
@@ -188,8 +189,8 @@ repository gate).
 
 ### Verification Receipt
 
-- fingerprint: sha256:1ee67e94e065146d40e71364ca57dad06469dde42ee89e6e99e0f5e1be8fe0b8
-- verified: 2026-10-15T06:10:14.143Z
+- fingerprint: sha256:9a84b3bab1ba159fca8d64b0f5daad1c1e8398fcc607df7ec5bb0050fbc494a5
+- verified: 2026-10-15T14:34:08.548Z
 - test sdk/src/__tests__/tool-argument-budget.test.ts: exit 0
 - test sdk/src/impl/__tests__/llm-native-tool-call.test.ts: exit 0
 - test sdk/src/impl/__tests__/llm-native-tool-call-schema-issue.test.ts: exit 0
@@ -197,6 +198,7 @@ repository gate).
 - test packages/agent-runtime/src/tools/stream-parser/__tests__/error-chunk-steering.test.ts: exit 0
 - test packages/agent-runtime/src/tools/stream-parser/__tests__/error-chunk-rejection-steering.test.ts: exit 0
 - test packages/agent-runtime/src/tools/stream-parser/__tests__/native-failure-deduper.test.ts: exit 0
+- test packages/agent-runtime/src/__tests__/loop-agent-steps-native-rejection.test.ts: exit 0
 - test common/src/util/__tests__/experience-classes.test.ts: exit 0
 - typecheck common: exit 0
 - typecheck sdk: exit 0
@@ -570,6 +572,40 @@ repository gate).
   a register target covering that file or the cause carried in the step result.
 - **CHANGE DELTA:** 4 source files (1 common contract, 1 sdk, 2 agent-runtime), 1 suite added, 2 suites
   extended, 0 ledger rows rewritten, 0 classes closed; `fix-boundaries.json` stays empty.
+
+### Loop 9 — Preserve the rejection cause through exhaustion (2026-10-15)
+
+- **RED:** Loop 8 fixes the initial message, but `processStream` returns only the
+  last tool name. `finalizeStep` and `runLlmStepPhase` therefore cannot supply the
+  cause to `applyNativeStrikeHandling`; its later retry and exhaustion still
+  prescribe splitting even for an observed schema rejection.
+- **GREEN:** Carry the existing rejection decision as optional boolean step
+  metadata through stream settlement and the LLM phase. Reuse the canonical
+  rejection guidance for escalation and report schema rejection at exhaustion.
+  Unavailable tools retain precedence; truncation and unknown causes retain the
+  current ladder. Retry budgets, capture and historical rows remain unchanged.
+- **AUDIT plan:** Drive the real agent loop with completed/schema-rejected calls,
+  truncated calls, unavailable names and multiple errors in one stream. Assert
+  escalation wording, exhaustion wording, unchanged budgets and current-cause
+  selection. Re-run every declared gate, root typecheck and repository validation.
+- **ADVERSARIAL:** Derive the boolean once in the existing handler rather than
+  inspecting message text downstream. Update it on every native failure so a
+  later truncation cannot inherit an earlier rejection. Existing callers may
+  omit it; they preserve today's behavior. The scope register now explicitly
+  covers the stream orchestrator and the new production-loop suite.
+- **CONVERGENCE:** This repairs the remaining local recovery path under the
+  renewed completion directive. Production observation remains independently
+  required; a green replay cannot substitute for it.
+- **IMPLEMENTATION AUDIT:** The production loop suite reproduced three failures
+  before the correction (rejection exhaustion still prescribed splitting). All
+  six controls now pass; the unchanged strike and stream-parser controls bring
+  the focused run to 29 PASS / 0 FAIL, 128 expectations. The rejection decision
+  reaches `applyNativeStrikeHandling` and `buildStepExhaustedError` through
+  `processStream` → `finalizeStep` → `runLlmStepPhase` → `runLoopIteration`.
+  The root typecheck passes across all 13 checked workspaces and scripts.
+  The Loop 8 write-target limitation is resolved by the renewed authorization
+  recorded before source edits. Later retries and exhaustion now retain cause;
+  the historical Loop 8 boundary below records the earlier state only.
 
 ## Boundaries
 

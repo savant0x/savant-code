@@ -52,6 +52,7 @@ export async function processStream(params: ProcessStreamParams) {
   let hadToolCallError = false
   let hasNativeIncompleteToolCall = false
   let lastIncompleteToolName: string | undefined
+  let lastIncompleteToolRejected = false
   const errorMessages: Message[] = []
   // FID-2026-1012-017 Loop 6: one native-failure steering message per (tool,
   // class) per stream. A response that repeats the same rejected call-out a
@@ -197,6 +198,7 @@ export async function processStream(params: ProcessStreamParams) {
         // FID-2026-0909-008 / 024: native errors never execute a tool; route
         // their cause metadata to the same fail-open capture sink, without inputs.
         if (errorOutcome.hasNativeIncompleteToolCall) {
+          lastIncompleteToolRejected = errorOutcome.lastIncompleteToolRejected
           captureNativeFailure(
             errorOutcome.captureChunk,
             agentState.runId ?? agentState.agentId,
@@ -277,6 +279,7 @@ export async function processStream(params: ProcessStreamParams) {
     hadToolCallError,
     hasNativeIncompleteToolCall,
     lastIncompleteToolName,
+    lastIncompleteToolRejected,
     messageId,
     toolCalls,
     toolResults,
