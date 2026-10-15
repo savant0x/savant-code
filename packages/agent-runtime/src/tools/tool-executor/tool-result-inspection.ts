@@ -7,13 +7,6 @@ import { commandExecutionMetadata } from '@savant-code/common/util/command-execu
 import type { ExperienceExpectedness } from '@savant-code/common/types/experience'
 import type { CommandExecutionMetadata } from '@savant-code/common/util/command-execution'
 
-/**
- * A validation refusal reported through the command envelope. The prefix is
- * required and anchored, so a real exit whose stderr merely quotes the phrase is
- * still rendered as an exit (FID-2026-1012-024).
- */
-const REFUSAL_SIGNATURE = /^run_readonly_command rejected: /
-
 const MAX_INSPECTION_DEPTH = 32
 const MAX_INSPECTION_NODES = 4096
 const INSPECTION_FAILURE = 'Tool result failure inspection could not complete'
@@ -29,17 +22,17 @@ interface InspectionState {
  * them in one walk is what keeps an abort attributed to the tool that was
  * executed rather than to the message that happens to name it.
  */
-export interface ToolOutputInspection {
+export interface ToolOutputFailure {
   /** First failure in producer result order; '' when every value is clean. */
   error: string
   /** Identity of the failing value, when it declares one. */
   commandExecution?: CommandExecutionMetadata
-  /**
-   * FID-2026-1012-024 Loop 12: the classification the harness itself
-   * established for the failing value — present only where the failure IS a
-   * validation decision (a guard refusal), never inferred from the message.
-   */
   expectedness?: ExperienceExpectedness
+}
+
+export interface ToolOutputInspection extends ToolOutputFailure {
+  /** Every producer failure, retained so a refusal cannot hide a later failure. */
+  failures: readonly ToolOutputFailure[]
 }
 
 /** Inspect producer-owned result containers; arbitrary data is never scanned. */
@@ -50,58 +43,100 @@ export function inspectToolOutputFailure<T>(content: T): string {
 /** The same traversal, keeping the identity of the value that failed. */
 export function inspectToolOutput<T>(content: T): ToolOutputInspection {
   try {
-    if (!Array.isArray(content)) return { error: '' }
+    if (!Array.isArray(content)) return { error: '', failures: [] }
     const state: InspectionState = { nodes: 0, active: new WeakSet() }
+    const failures: ToolOutputFailure[] = []
     for (const part of content) {
       state.nodes += 1
-      if (state.nodes > MAX_INSPECTION_NODES)
-        return { error: INSPECTION_FAILURE }
+      if (state.nodes > MAX_INSPECTION_NODES) {
+        failures.push({ error: INSPECTION_FAILURE })
+        break
+      }
       if (!part || typeof part !== 'object' || !('value' in part)) continue
-      const inspection = inspectValue(part.value, state, 0)
-      if (inspection.error) return inspection
+      failures.push(...inspectValue(part.value, state, 0))
     }
-    return { error: '' }
+    return inspectionFromFailures(failures)
   } catch {
     // A hostile accessor/proxy cannot abort the result lifecycle or turn an
     // uninspectable outcome into successful verification credit.
-    return { error: INSPECTION_FAILURE }
+    return inspectionFromFailures([{ error: INSPECTION_FAILURE }])
   }
+}
+
+/** Read every failure while preserving the existing first-failure projection. */
+export function inspectToolOutputFailures<T>(
+  content: T,
+): readonly ToolOutputFailure[] {
+  return inspectToolOutput(content).failures
 }
 
 function inspectValue<T>(
   value: T,
   state: InspectionState,
   depth: number,
-): ToolOutputInspection {
+): ToolOutputFailure[] {
   state.nodes += 1
   if (depth > MAX_INSPECTION_DEPTH || state.nodes > MAX_INSPECTION_NODES) {
-    return { error: INSPECTION_FAILURE }
+    return [{ error: INSPECTION_FAILURE }]
   }
-  if (!value || typeof value !== 'object') return { error: '' }
-  if (state.active.has(value)) return { error: INSPECTION_FAILURE }
+  if (!value || typeof value !== 'object') return []
+  if (state.active.has(value)) return [{ error: INSPECTION_FAILURE }]
   state.active.add(value)
   try {
     if (Array.isArray(value)) {
-      for (const item of value) {
-        const inspection = inspectValue(item, state, depth + 1)
-        if (inspection.error) return inspection
-      }
-      return { error: '' }
+      return inspectArray(value, state, depth + 1)
     }
-    const scalar = scalarFailure(value)
-    if (scalar)
-      return {
+    const execution = executionIdentityOf(value)
+    const scalar = scalarFailure(value, execution.commandExecution)
+    const failures: ToolOutputFailure[] = []
+    if (scalar) {
+      const expectedness = harnessExpectednessOf(execution.commandExecution)
+      failures.push({
         error: scalar.line,
-        ...executionIdentityOf(value),
-        ...(scalar.expectedness ? { expectedness: scalar.expectedness } : {}),
-      }
-    if ('results' in value && Array.isArray(value.results)) {
-      return inspectValue(value.results, state, depth + 1)
+        ...execution,
+        ...(expectedness ? { expectedness } : {}),
+      })
     }
-    return { error: '' }
+    if ('results' in value && Array.isArray(value.results)) {
+      failures.push(...inspectValue(value.results, state, depth + 1))
+    }
+    return failures
   } finally {
     state.active.delete(value)
   }
+}
+
+/** Stop before reading the next array value once the global budget is spent. */
+function inspectArray<T>(
+  values: readonly T[],
+  state: InspectionState,
+  depth: number,
+): ToolOutputFailure[] {
+  const failures: ToolOutputFailure[] = []
+  for (let index = 0; index < values.length; index += 1) {
+    if (state.nodes >= MAX_INSPECTION_NODES) {
+      failures.push({ error: INSPECTION_FAILURE })
+      break
+    }
+    failures.push(...inspectValue(values[index], state, depth))
+  }
+  return failures
+}
+
+function inspectionFromFailures(
+  failures: readonly ToolOutputFailure[],
+): ToolOutputInspection {
+  const first = failures[0]
+  return first ? { ...first, failures } : { error: '', failures }
+}
+
+function harnessExpectednessOf(
+  metadata: CommandExecutionMetadata | undefined,
+): ExperienceExpectedness | undefined {
+  return metadata?.executionOutcome === 'rejected' &&
+    metadata.rejectionReason === 'readonly-guard'
+    ? 'expected'
+    : undefined
 }
 
 /** Narrowed identity only — never a raw result, exception or payload. */
@@ -115,10 +150,12 @@ function executionIdentityOf(value: object): {
 /** A failure line plus the classification its own branch establishes. */
 interface ScalarFailure {
   line: string
-  expectedness?: ExperienceExpectedness
 }
 
-function scalarFailure<T extends object>(value: T): ScalarFailure | undefined {
+function scalarFailure<T extends object>(
+  value: T,
+  commandExecution?: CommandExecutionMetadata,
+): ScalarFailure | undefined {
   if (
     'errorMessage' in value &&
     typeof value.errorMessage === 'string' &&
@@ -142,15 +179,12 @@ function scalarFailure<T extends object>(value: T): ScalarFailure | undefined {
   ) {
     const detail =
       'stderr' in value && typeof value.stderr === 'string' ? value.stderr : ''
-    // FID-2026-1012-024: a guard refusal never executed anything, so it is not
-    // an execution outcome. The producer declares it on its own channel; a
-    // refusal is the declaration itself, never "Command exited with code 1".
-    // FID-2026-1012-024 Loop 12: the same declaration is the one place the
-    // harness states that this outcome is a deliberate decision rather than a
-    // defect, so it is also where `expected` is assigned. Nothing else in this
-    // walker classifies an outcome, and no message text is matched for it.
-    if (REFUSAL_SIGNATURE.test(detail))
-      return { line: detail, expectedness: 'expected' }
+    if (
+      commandExecution?.executionOutcome === 'rejected' &&
+      commandExecution.rejectionReason === 'readonly-guard' &&
+      detail
+    )
+      return { line: detail }
     return {
       line: `Command exited with code ${value.exitCode}${detail ? `: ${detail}` : ''}`,
     }

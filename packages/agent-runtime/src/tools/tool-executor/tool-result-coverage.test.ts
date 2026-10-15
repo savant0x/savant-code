@@ -4,13 +4,29 @@ import {
   extractToolResultError,
   hasCommandFailure,
   hasToolResultError,
+  inspectToolResultFailure,
   TOOL_RESULT_ERROR_FALLBACK,
 } from './tool-result-errors'
+import { inspectToolOutputFailures } from './tool-result-inspection'
 
+import type { ExperienceExpectedness } from '@savant-code/common/types/experience'
 import type { JSONValue } from '@savant-code/common/types/json'
 
 describe('FID-2026-1012-024 producer-shaped failure coverage', () => {
-  const failures: Array<{ name: string; value: JSONValue; error: string }> = [
+  // Restated independently of the walker: the declared shared node budget is
+  // part of FID-2026-1012-024's contract, so the control asserts the number and
+  // does not borrow the implementation's own constant.
+  const DECLARED_NODE_BUDGET = 4_096
+  // `expectedness` is granted ONLY by the harness's own refusal channel; every
+  // fixture below that lacks producer metadata must stay unclassified, which is
+  // the corpus-wide invariant Loop 12 pinned and Loop 13 re-established on
+  // producer authority rather than on stderr text.
+  const failures: Array<{
+    name: string
+    value: JSONValue
+    error: string
+    expectedness?: ExperienceExpectedness
+  }> = [
     {
       name: 'terminal command exit',
       value: {
@@ -93,6 +109,7 @@ describe('FID-2026-1012-024 producer-shaped failure coverage', () => {
       },
       error:
         'run_readonly_command rejected: Command contains forbidden shell metacharacters',
+      expectedness: 'expected',
     },
     {
       name: 'real non-zero exit is still reported as an exit',
@@ -117,6 +134,11 @@ describe('FID-2026-1012-024 producer-shaped failure coverage', () => {
       // render as 'tool result contains an error'.
       expect(extractToolResultError(output)).not.toBe(
         TOOL_RESULT_ERROR_FALLBACK,
+      )
+      // Nothing is expected by default: only the harness refusal channel earns a
+      // classification, and no result value can set one for itself.
+      expect(inspectToolResultFailure(output).expectedness).toBe(
+        fixture.expectedness,
       )
     })
   }
@@ -175,10 +197,71 @@ describe('FID-2026-1012-024 producer-shaped failure coverage', () => {
     ).toContain('inspection')
   })
   test('the budget applies to the whole result envelope', () => {
-    expect(
-      extractToolResultError(
-        Array.from({ length: 5000 }, () => ({ value: { exitCode: 0 } })),
-      ),
-    ).toContain('inspection')
+    // Every inspected part costs at least one node of the shared budget, so an
+    // envelope wider than the budget cannot be walked to the end.
+    let inspectedParts = 0
+    const parts = Array.from({ length: 5_000 }, () => ({
+      get value() {
+        inspectedParts += 1
+        return { exitCode: 0 }
+      },
+    }))
+    expect(extractToolResultError(parts)).toContain('inspection')
+    expect(inspectedParts).toBeGreaterThan(0)
+    expect(inspectedParts).toBeLessThanOrEqual(DECLARED_NODE_BUDGET)
+  })
+
+  test('nested inspection stops visiting values when the shared budget ends', () => {
+    // Count distinct values, never property reads: scalarFailure reads a numeric
+    // `exitCode` twice per value (`typeof` then the comparison), so a raw read
+    // counter reports roughly twice the traversal and cannot be compared with a
+    // node budget.
+    const visited = new Set<number>()
+    const values = Array.from({ length: 10_000 }, (_value, index) => ({
+      get exitCode() {
+        visited.add(index)
+        return 0
+      },
+    }))
+    // The visited-count assertion alone cannot see a boundary error that reads
+    // one element too many, so every index at or beyond the budget is a trap: a
+    // traversal that reads past its cap is recorded instead of passing silently.
+    const readPastBudget: number[] = []
+    for (const index of [
+      DECLARED_NODE_BUDGET,
+      DECLARED_NODE_BUDGET + 1,
+      5_000,
+      9_999,
+    ]) {
+      Object.defineProperty(values, index, {
+        get() {
+          readPastBudget.push(index)
+          return 0
+        },
+      })
+    }
+    const failures = inspectToolOutputFailures([{ value: { results: values } }])
+    expect(readPastBudget).toEqual([])
+    expect(visited.size).toBeGreaterThan(0)
+    expect(visited.size).toBeLessThanOrEqual(DECLARED_NODE_BUDGET)
+    expect(failures).toHaveLength(1)
+    expect(failures[0]?.error).toContain('inspection')
+  })
+
+  test('an outer refusal cannot hide a nested executed failure', () => {
+    const failures = inspectToolOutputFailures([
+      {
+        value: {
+          executionOutcome: 'rejected',
+          rejectionReason: 'readonly-guard',
+          errorMessage: 'outer refusal',
+          results: [{ exitCode: 2, stderr: 'nested host failure' }],
+        },
+      },
+    ])
+    expect(failures).toHaveLength(2)
+    expect(failures[0]?.expectedness).toBe('expected')
+    expect(failures[1]?.error).toContain('nested host failure')
+    expect(failures[1]?.expectedness).toBeUndefined()
   })
 })

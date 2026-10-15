@@ -171,6 +171,8 @@ receipt here cannot establish either or close this lane.
 
 - gate: test common/src/util/__tests__/experience-classes.test.ts
 - gate: test packages/agent-runtime/src/tools/tool-executor/tool-result-errors.test.ts
+- gate: test packages/agent-runtime/src/tools/tool-executor/tool-result-coverage.test.ts
+- gate: test packages/agent-runtime/src/tools/tool-executor/expectedness.test.ts
 - gate: test packages/agent-runtime/src/tools/tool-executor/result-lifecycle.test.ts
 - gate: test packages/agent-runtime/src/hooks/__tests__/experience-capture.test.ts
 - gate: test packages/agent-runtime/src/hooks/__tests__/exposure-capture.test.ts
@@ -187,10 +189,12 @@ receipt here cannot establish either or close this lane.
 
 ### Verification Receipt
 
-- fingerprint: sha256:c747d5321bb168c9b8d6f2ff3f3703dc138b65d87d781ab36c8117d240c9d216
-- verified: 2026-10-14T15:42:21.389Z
+- fingerprint: sha256:c8540bc80fa56ec94ace2d6eee7d6ef22588e855846ae4b55eb7330042f7bf8c
+- verified: 2026-10-15T05:39:21.300Z
 - test common/src/util/__tests__/experience-classes.test.ts: exit 0
 - test packages/agent-runtime/src/tools/tool-executor/tool-result-errors.test.ts: exit 0
+- test packages/agent-runtime/src/tools/tool-executor/tool-result-coverage.test.ts: exit 0
+- test packages/agent-runtime/src/tools/tool-executor/expectedness.test.ts: exit 0
 - test packages/agent-runtime/src/tools/tool-executor/result-lifecycle.test.ts: exit 0
 - test packages/agent-runtime/src/hooks/__tests__/experience-capture.test.ts: exit 0
 - test packages/agent-runtime/src/hooks/__tests__/exposure-capture.test.ts: exit 0
@@ -664,6 +668,103 @@ audit trail of the mistaken premise, not as acceptance criteria or class disposi
 - **CHANGE DELTA:** 1 walker, 1 runtime transport, 1 shared classification module (rule +
   rendering + ownership issue), 3 script call sites (census, coverage, dedup delegation),
   1 extracted lifecycle fixture, 3 suites extended; 0 rows rewritten; 0 classes closed.
+
+### Loop 13 — Refusal provenance and complete nested-failure capture (2026-10-14)
+
+- **RED:** The Loop 12 implementation still matched the readonly refusal's stderr
+  prefix. A normal command could print the same text and exit nonzero, which would
+  make the generic walker label an executed failure `expected`. The walker also
+  returned only the first nested failure, so a refusal-first batch could hide a later
+  host failure from the ledger.
+- **GREEN:** The readonly producer now attaches a rejected execution identity with
+  `rejectionReason: readonly-guard`; expectedness is derived from that producer-owned
+  marker, never from message text. The inspection walk collects every nested failure
+  while preserving the old first-failure projection. The lifecycle selects the first
+  non-expected failure for capture, or the expected refusal when it is the only failure.
+  Historical rows remain unchanged, so old text-only refusal rows remain
+  `undetermined` until new producer evidence exists.
+- **AUDIT:** Add exact-prefix spoofing and refusal-first/real-failure-second pins,
+  update the real lifecycle refusal fixture to carry producer metadata, and rerun the
+  class, lifecycle, capture, typecheck and quality gates. The existing expectedness
+  and ownership rules remain unchanged for stored rows.
+- **ADVERSARIAL:** An ordinary command result cannot set the producer rejection
+  marker through stderr, and a contradictory cancellation/rejection metadata pair is
+  rejected by the shared schema. A later real failure cannot be swallowed by an
+  expected refusal. No historical record, owner, boundary or receipt is rewritten.
+- **CHANGE DELTA:** Additive producer metadata and bounded all-failure inspection;
+  no class closure or repair boundary is claimed.
+
+### Loop 14 — Bounded batch traversal and envelope completeness (2026-10-15)
+
+- **RED:** The pending Loop 13 walker uses array flatMap after a shared node cap.
+  Every excess item is still visited and produces another cap-failure object.
+  Its scalar-failure branch also returns before inspecting the envelope's results,
+  allowing an outer expected refusal to hide an inner host failure.
+- **GREEN:** Collect array failures sequentially and stop on the shared budget.
+  Emit one explicit incomplete-inspection failure when work remains. Retain an
+  envelope's scalar failure first, then inspect its declared results. Preserve
+  depth/cycle checks, existing first-failure projection and arbitrary-data exclusion.
+- **AUDIT:** Add controls that count visited array values, bound cap-failure output,
+  and retain a nested host failure after an outer expected refusal. Run the declared
+  coverage, lifecycle and expectedness suites, runtime typecheck and quality.
+- **ADVERSARIAL:** Slicing the output alone cannot bound work. An exhausted walk
+  must report incomplete inspection rather than a clean result. No raw capture,
+  owner, repair boundary or exposure receipt changes; no class closure is claimed.
+- **CHANGE DELTA:** Converged correction within the existing FID-024 inspection
+  surface; tests precede the direct source edit.
+
+### Loop 15 — The budget regression measures traversal, not property reads (2026-10-15, automation level 3)
+
+- **RED:** Loop 14's budget control asserted only `visited < 10_000`, which cannot see a
+  boundary error that reads one element too many. Strengthened first, as the handoff
+  required: an index trap on every index at or beyond the declared 4,096-node budget, plus
+  a bound on the traversal itself. The first formulation counted *property reads* and failed
+  against the shipped walker — `Expected: <= 4096, Received: 8186` — and the reading is the
+  finding: `scalarFailure` reads a numeric `exitCode` **twice** per value (`typeof` then the
+  comparison at `tool-result-inspection.ts:177,178`), so a raw read counter reports roughly
+  twice the traversal and can never be compared with a node budget. The walker was correct
+  (4,093 distinct values: the budget of 4,096 minus the outer result part, its envelope and
+  the `results` array); the instrument was wrong.
+- **GREEN:** the control counts DISTINCT visited values (`Set` keyed by index) and bounds them
+  by the declared budget, while every index at or beyond the budget is a trap accessor that
+  records a read instead of returning a value; the whole-envelope control counts inspected
+  parts the same way. No source change was needed or made — a boundary error would now be
+  caught by the trap even when the visited count stays inside the budget.
+- **AUDIT:** focused suites green: `tool-result-coverage.test.ts` 22 PASS / 0 FAIL (67
+  expectations), and the errors/expectedness/lifecycle suites 27 PASS / 0 FAIL (92
+  expectations); `bun run --cwd=packages/agent-runtime typecheck` exit 0; `quality:report`
+  PASS (1,502 baselined files).
+- **ADVERSARIAL:** (a) *Was the walker over-traversing?* No — measured: the read counter
+  double-counts by construction, and the distinct-value count sits exactly at the budget; the
+  trap indices 4,096 / 4,097 / 5,000 / 9,999 were never read. (b) *Is the trap assertion
+  brittle if the budget changes?* The control restates 4,096 independently of the walker's own
+  constant, so a change to the budget fails the control rather than silently re-baselining it.
+  (c) *Did this edit any capture row, owner, boundary or receipt?* No; one test file changed.
+- **CHANGE DELTA:** 1 test file (`tool-result-coverage.test.ts`), 0 source files, 0 historical
+  rows; the pending Loop 13/14 source correction is unchanged by this pass.
+
+### Loop 16 — The corpus-wide "nothing is expected by default" invariant (2026-10-15, automation level 3)
+
+- **RED:** Loop 13 replaced the stderr-text refusal heuristic with producer metadata and, in doing so,
+  deleted the three Loop 12 tests that pinned expectedness across the corpus
+  (`tool-result-errors.test.ts` −33 lines). Two were re-expressed in `expectedness.test.ts`; the third —
+  "assigns no classification to any other failure shape" — only partly, because its replacement asserts
+  one hand-written stderr shape instead of the whole corpus. The invariant had stopped being held while
+  the suite stayed green.
+- **GREEN:** the corpus loop in `tool-result-coverage.test.ts` now asserts
+  `inspectToolResultFailure(output).expectedness` equals the fixture's declared classification. Only the
+  harness-refusal fixture declares `expected` (it carries the producer marker); every other fixture
+  declares nothing. `expected` must therefore be earned by the producer's own metadata, and no shape may
+  be classified by default.
+- **AUDIT:** coverage suite **22 PASS / 0 FAIL, 79 expectations** (12 new, one per fixture, up from 67);
+  `typecheck packages/agent-runtime` exit 0; the declared gate set is re-stamped below.
+- **ADVERSARIAL:** (a) *Is an assertion moved to a weaker file?* No — it is stronger than the deleted
+  one: per-fixture and corpus-wide, and it fails if ANY shape gains a classification, whereas the
+  deleted version only asked whether the three superseded text cases were unclassified. (b) *Can a
+  fixture grant itself `expected`?* Only by declaring it in the test, which is the harness-side
+  declaration this record requires; no runtime result value can. (c) *Does this change the walker?* No —
+  a test file only.
+- **CHANGE DELTA:** 1 test file; 0 source files, 0 rows, 0 owners, 0 boundaries.
 
 1. **Should the class key be stored at capture time or derived at read time?** Stored, from the
    `FID-2026-1012-009` `errorClass` follow-up: deriving it at read time cannot recover the cause from a
