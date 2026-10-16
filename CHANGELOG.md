@@ -12,6 +12,29 @@
 > the v0.0.36 cut. Release notes are written here at cut time; nothing in this
 > section is a package-release claim until then.
 
+## 2026-10-16 — No coding-agent credit in the governed records (FID-2026-1016-008, high)
+
+### Changed
+
+- FID-2026-1016-008 (high): the 2026-10-14 attribution rule now covers the
+  records agents write, not only commit messages. Commit trailers were never the
+  only place a coding agent got credited — a sweep found attribution fields and
+  watermark lines inside session summaries, archived FIDs, a build order and the
+  third-party channel, invisible to every gate that existed, and the new scanner
+  reported ten further credits in the tracked, published changelog itself. The
+  naming families now live in `scripts/attribution-patterns.ts` so both judges
+  read one list; the record scanner is `scripts/attribution-document-guard.ts`;
+  `scripts/attribution-guard.ts` keeps the commit surface, the aggregate
+  collector and a `--documents` mode. Fenced blocks and inline code spans are
+  read as quotations, and Savant's own credit, a human credit, an ECHO role and
+  Savant's own provider id are never findings. Always on: `validate:repository`
+  aggregates both surfaces, `.githooks/pre-push` scans the working tree (the
+  records are gitignored, so no pushed range can contain them) and the
+  `attribution-guard` workflow gains a document step. Every credit the sweep and
+  the scanner found is stripped, keeping each verification claim intact.
+  Implementation: `302ffe69`, root-resolution fix `04b02c0b`, content strips
+  `579e781f`; four declared gates passed; closed and archived.
+
 ## 2026-10-16 — Batch pushed-range credential scan (FID-2026-1016-007, high)
 
 ### Changed

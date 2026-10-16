@@ -11,19 +11,6 @@ handling or repository boundaries.
 
 ## Open items
 
-- FID-2026-1016-008 — no coding-agent credit in the governed records. Operator
-  ruling (2026-10-16): *strip it, always* and *the guard needs to be there at all
-  times; agent attribution is strictly forbidden for coding agents that are not
-  savant directly.* Extends the FID-2026-1014-003 rule from commit messages to
-  the document content agents write (`**Author:**`/`**Verified By:**` fields and
-  watermarks in `dev/`, `docs/`, `.agents/skills/` and the root records), wired
-  into `validate:repository`, `.githooks/pre-push` and the `attribution-guard`
-  workflow. Stripped: every non-Savant credit the operator's first sweep and this
-  record's own scan found — 9 lines in `dev/` records (two archived FIDs, five
-  FID metadata fields, one build order, one Nova-channel prompt template), plus
-  the 10 third-party credits the new document scan reported in the tracked
-  `CHANGELOG.md` (8 verification lines) and two archived FIDs.
-
 ## Internal follow-ups and current operator authority (2026-10-16)
 
 Implementation-complete records FID-2026-1015-006 and FID-2026-1012-022
@@ -35,6 +22,12 @@ Push-path repair FID-2026-1016-007 (`6b2d9d91`, 7/7 gates) is closed and archive
 after the credential scan's Git reads were batched; the exact 38-commit push range
 was measured at 6,548 files / 26 s / exit 0, and the push retried through the
 unmodified hook chain. No scan bypass, cap change or history rewrite was used.
+Attribution-guard extension FID-2026-1016-008 (`302ffe69`, content strips
+`579e781f`, 4/4 gates) is closed and archived: the rule now covers the documents
+agents write as well as commit messages, always on through
+`validate:repository`, the pre-push working-tree scan and CI, and every
+non-Savant credit the operator's sweep and the new scanner found is stripped —
+the two tree scans report exit 0.
 
 - `OBS-001` in `dev/tracking/internal-followups.json`: production exposure and
   remaining sanitized replay evidence for eight classes. No class repair is claimed.
@@ -87,10 +80,6 @@ Operator authorization: completion at automation level 3, renewed 2026-10-15;
 specific removal and skill metadata approvals are in answers.md. Governance
 artifacts required by ECHO retain their gate-level exemptions.
 
-- FID-2026-1016-008: `scripts/attribution-guard.ts`,
-  `scripts/__tests__/attribution-guard-documents.test.ts`,
-  `scripts/validate-repository.ts`, `.githooks/pre-push`,
-  `.github/workflows/attribution-guard.yml`.
 - Release-0.0.36: `VERSION`, `package.json`, `agents/package.json`,
   `cli/package.json`, `cli/release/package.json`, `common/package.json`,
   `common/src/constants/protocol-bundle.generated.ts`, `desktop/package.json`,
