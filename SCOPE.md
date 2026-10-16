@@ -111,9 +111,15 @@ artifacts required by ECHO retain their gate-level exemptions.
   `dev/session-summaries/**`, `scripts/version-docs.ts`,
   `scripts/version-docs-drift.test.ts`, `.agents/skills/**/SKILL.md`
 - FID-2026-1016-011: `cli/src/utils/logger/file-sink.ts`,
-  `cli/src/utils/logger/sink.ts`, `cli/src/utils/trace-writer.ts`,
-  `cli/src/utils/chat-history.ts`, `cli/src/index.tsx`,
-  `cli/src/utils/logger/__tests__/file-sink.test.ts`,
+  `cli/src/utils/logger/sink.ts`, `cli/src/utils/logger.ts`,
+  `cli/src/utils/trace-writer.ts`, `cli/src/utils/chat-history.ts`,
+  `cli/src/index.tsx`, `cli/src/utils/logger/__tests__/file-sink.test.ts`,
   `cli/src/utils/__tests__/trace-writer.test.ts`, `scripts/hygiene.ts`,
-  `scripts/__tests__/hygiene.test.ts`, `docs/scratchpad.md`, `AGENTS.md`,
-  `.gitignore`, `dev/scratchpad/**`
+  `scripts/hygiene.test.ts`, `docs/scratchpad.md`, `AGENTS.md`, `.gitignore`,
+  `templates/FID-TEMPLATE.md`, `dev/scratchpad/**`,
+  `packages/agent-runtime/src/echo/fid-verification-gates.ts`,
+  `common/src/constants/protocol-bundle.generated.ts`
+- FID-2026-1016-012 (`created`, root cause NEEDS-REVIEW):
+  `sdk/src/__tests__/code-search-part-d.test.ts`,
+  `sdk/src/__tests__/code-search-part-c.test.ts`,
+  `sdk/src/native/ripgrep.ts`, `sdk/test/setup-test-isolation.ts`
