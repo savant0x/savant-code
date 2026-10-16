@@ -30,6 +30,7 @@ import { validateActiveFidLedger } from './fid-ledger.js'
 import { collectRecordCoverageIssues } from './fid-surface-coverage.js'
 import { collectGateDeclarabilityIssues } from './gate-declarability.js'
 import { collectHygieneIssues } from './hygiene.js'
+import { collectInternalFollowupIssues } from './internal-followup-check.js'
 import { validateLearningArtifacts } from './learnings-artifact-check.js'
 import { collectFeaturePipelineIssues } from './lesson-feature-check.js'
 import { collectQualityIssues, readQualityBaseline } from './quality-report.js'
@@ -249,15 +250,14 @@ const issues: FidLedgerIssue[] = [
   ...validateMetadata(collectMetadata()),
   ...validateCommandParity(collectParity()),
   ...validateGateContract(repositoryValidationGates(root), root),
-  // Every enforced gate must be expressible as an allowlisted `fid:verify`
-  // declaration, or a FID whose subject is that gate cannot record the check
-  // that proves it (see ./gate-declarability).
+  // Keep every enforced gate recordable by fid:verify (./gate-declarability).
   ...collectGateDeclarabilityIssues(root),
   ...validateActiveFidLedger(root),
   ...validateFidVerificationGates(root),
   ...validateArchivedFidClosures(root),
   ...validateLearningArtifacts(root).issues,
   ...collectFeaturePipelineIssues(root),
+  ...collectInternalFollowupIssues(root),
   // SAVANT_CODE_SKIP_QUALITY_RATCHET: temporarily exempt ratchet for releases
   // (operator-paused FID-2026-0819-005)
   ...(process.env.SAVANT_CODE_SKIP_QUALITY_RATCHET === '1'

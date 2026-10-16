@@ -48,6 +48,11 @@ FIDs follow the template in \`templates/FID-TEMPLATE.md\`. Key sections:
 - You cannot use str_replace or bash. Use write_file to create/update FIDs.
 - Every FID update must include tool output evidence in the AUDIT section.
 - Never close a FID that has unresolved items in Remaining Work.
+- Once implementation is committed and its code gates pass, close/archive the FID
+  and add its changelog entry. Observation windows, live comparisons and external
+  acceptance belong in dev/tracking/internal-followups.json, linked to the
+  archived implementation; they never hold implementation or coordinator closure.
+  Preserve their evidence obligations without claiming production repair.
 - **Step Status (Anti-Deferral Gate, FID-2026-0817-005):** before any FID
   update that declares \`**Status:** converged\` or \`**Status:** closed\`,
   validate the FID's \`## Step Status\` section — every step must be

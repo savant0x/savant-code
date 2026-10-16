@@ -54,6 +54,18 @@ filesystem entries in `agents/`.
 
 ## Conventions
 
+- Commit verified progress in logical, path-scoped slices and automatically
+  push normal fast-forward updates to `main`. Handoffs, internal follow-up and
+  release timing never hold progress pushes. The operator's 2026-10-16 ruling
+  supersedes earlier local-only/handoff holds; a new explicit stop still applies.
+  Mandatory validation and pre-push gates remain active. Progress pushes do not
+  tag or publish a release; this overrides the release-workflow skill's rule
+  requiring a release on every push.
+- Close implementation-complete FIDs once their code is committed and verified:
+  archive them and add a CHANGELOG entry. Track observation windows, live
+  comparisons and external acceptance separately in
+  `dev/tracking/internal-followups.json`; these do not hold FID/master closure.
+  Code closure never implies that an unobserved production claim passed.
 - Use `bun install` and `bun run`.
 - Prefer dependency injection over module mocking.
 - Run interactive CLI tests in tmux.

@@ -675,6 +675,19 @@ The code is the source of truth — the FID markdown is a record that can drift.
 
 ### FID Auto-Archive
 
+**Implementation closure and internal follow-up (operator ruling 2026-10-16).**
+Once the approved implementation is committed and its code verification gates
+pass, close the FID, archive it and add its changelog entry immediately.
+Elapsed observation windows, live provider comparisons, external availability
+checks and acceptance observations belong in the independent validated
+`dev/tracking/internal-followups.json` register, linked to the archived FID.
+They do not keep implementation-complete FIDs active or block coordinator
+closure. Moving an observation preserves its evidence requirements: code
+closure never certifies production repair, provider identity or live acceptance.
+A new demonstrated code defect receives a new implementation FID; waiting for
+time or an external observation does not. Pending internal tracking remains
+visible through the tracker and generated agenda.
+
 When a FID status is updated to **Closed**, the Recorder MUST:
 
 1. Move the FID file from `dev/fids/` to `dev/fids/archive/` *(the CLI/orchestrator executes the filesystem move —
@@ -774,6 +787,15 @@ active mode is set by the user via UI or `/mode`.
 | **ANALYZE** | Read-only. Search, inspect, and reason without writing files. | Codebase exploration, Q&A. |
 
 ### Automation Levels (Autonomy)
+
+**Automatic progress synchronization (operator ruling 2026-10-16).** Commit
+logical, verified progress to `main` and push each completed slice automatically
+through the mandatory gates. Handoffs, observation windows, internal tracking
+and release timing do not hold progress pushes. This standing instruction
+supersedes earlier handoff/local-only push holds; only a new explicit operator
+stop instruction can suspend it. Progress pushes do not create release tags,
+publish packages or authorize spending. Preserve path-scoped staging, one
+committer and normal fast-forward history.
 
 Autonomy levels govern **how far the agent proceeds before asking**. Once work is approved in
 scope, a local path-scoped commit and a normal fast-forward push to `main` need no separate

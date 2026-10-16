@@ -3,6 +3,11 @@ import * as path from 'node:path'
 
 import { z } from 'zod/v4'
 
+import {
+  observationFollowup,
+  readInternalFollowups,
+} from './internal-followups'
+
 import type { HorizonState } from './experiences-recurrence'
 
 const FID_PATTERN = /^FID-\d{4}-\d{4}-\d{3}$/
@@ -55,6 +60,11 @@ export function closedOwnerIssues(
   waivers: ClosureWaiverManifest = { version: 1, waivers: [] },
 ): string[] {
   const issues: string[] = []
+  const trackerFile = path.join(root, 'dev/tracking/internal-followups.json')
+  const tracking = fs.existsSync(trackerFile)
+    ? readInternalFollowups(root)
+    : { followups: [], issues: [] }
+  issues.push(...tracking.issues)
   const waiverMap = new Map<string, ClosureWaiverManifest['waivers'][number]>()
   const ownerStatus = new Map<string, string | undefined>()
   const hasActiveContinuation = (
@@ -120,6 +130,17 @@ export function closedOwnerIssues(
       const entry = classes.find((candidate) => candidate.key === classKey)
       if (!entry) {
         issues.push(`closure waiver has no recorded class: ${classKey}`)
+      } else if (
+        observationFollowup(
+          tracking.followups,
+          classKey,
+          entry.owner,
+          waiver.fid,
+        )
+      ) {
+        // Historical waiver is retained; independent tracking owns observation.
+        if (entry.state === 'recurred')
+          issues.push(`tracked observation has recurrent class: ${classKey}`)
       } else if (entry.owner !== waiver.fid) {
         if (!hasActiveContinuation(entry.owner, waiver.fid, classKey))
           issues.push(
@@ -172,6 +193,14 @@ export function closedOwnerIssues(
         (candidate) => candidate.owner === fid,
       )) {
         if (entry.state === 'observed') continue
+        const followup = observationFollowup(tracking.followups, entry.key, fid)
+        if (followup) {
+          if (entry.state === 'recurred')
+            issues.push(`tracked observation has recurrent class: ${entry.key}`)
+          if (followup.status === 'completed')
+            issues.push(`completed observation is unproved: ${entry.key}`)
+          continue
+        }
         if (entry.state === 'recurred') {
           issues.push(`closed owner has recurrent class: ${entry.key}`)
           continue

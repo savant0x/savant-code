@@ -2,22 +2,13 @@
 /**
  * FID-2026-0824-012 S3-A — session-end review (mechanical core).
  *
- * Runs at SessionEnd (wired as a hook command) to perform the deterministic
- * half of the Scribe review contract WITHOUT an LLM:
- *
- *   1. Reads dev/experiences/raw-traces.jsonl and computes cross-session
- *      recurrences (≥3 within the rolling 14-day window).
- *   2. Refreshes dev/agenda.md — hard-capped at 50 lines, 1-3 active
- *      high-leverage capabilities/anti-patterns (RangeKing-style learning
- *      agenda; the Orchestrator reads it at next-session intake).
- *   3. Prints FID-routing candidates for the Scribe/Orchestrator (recurrence
- *      items that meet the promotion bar route to FIDs per the hybrid
- *      routing rule).
+ * SessionEnd hook: computes recurrences (≥3 in 14 days), refreshes the
+ * boot-read dev/agenda.md (≤50 lines, ≤3 patterns), and prints FID routing.
+ * Independent internal follow-ups retain observation and comparison work.
  *
  * Bounds (operator decision: cost is not a constraint; determinism is):
  * idempotent (agenda is a pure function of the current ledger), single-writer
  * (rewrites the agenda file under one write), tail-bounded reads.
- *
  * CLI: `bun run session-end:review` (also invoked by the SessionEnd hook).
  */
 
@@ -33,6 +24,10 @@ import {
   readExperienceLedger,
 } from './experiences-dedup.js'
 import { repairDraftRoutingNotes } from './experiences-repair-drafts'
+import {
+  internalFollowupAgenda,
+  internalFollowupNotes,
+} from './internal-followups'
 import { featureRoutingNotes } from './lesson-feature-pipeline'
 import {
   printSessionEndReview,
@@ -152,6 +147,7 @@ export function buildAgenda(
     maxItems?: number
     decisions?: PendingDecision[]
     unresolvedClasses?: number
+    internalNotes?: string[]
   } = {},
 ): {
   items: AgendaItem[]
@@ -192,6 +188,9 @@ export function buildAgenda(
     }
   }
   const decisions = opts.decisions ?? []
+  lines.push(
+    ...internalFollowupAgenda(opts.internalNotes ?? [], AGENDA_MAX_LINE),
+  )
   if (decisions.length > 0) {
     lines.push('## Pending operator decisions (FID-2026-1003-007)', '')
     for (const decision of decisions.slice(0, 8)) {
@@ -241,9 +240,11 @@ export function runSessionEndReview(
     // No SCOPE.md in this root (tests, foreign repos) — no decisions to surface.
   }
   const classes = summarizeExperienceClasses(records)
+  const internalNotes = internalFollowupNotes(rootDir)
   const built = buildAgenda(recurrences, {
     decisions,
     unresolvedClasses: classes.length,
+    internalNotes,
   })
   const agendaFile = path.join(rootDir, AGENDA_PATH)
   fs.mkdirSync(path.dirname(agendaFile), { recursive: true })
@@ -265,6 +266,7 @@ export function runSessionEndReview(
   const lifecycle = skillLifecycleReport(rootDir)
   const routing = [
     ...built.routing,
+    ...internalNotes,
     ...classes.map(
       (entry) =>
         `UNRESOLVED: ${entry.key} — ${entry.count} all-time occurrences; last ${entry.lastSeen}. Age cannot establish repair.`,

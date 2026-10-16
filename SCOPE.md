@@ -11,63 +11,18 @@ handling or repository boundaries.
 
 ## Open items
 
-- [ ] **FID-2026-1015-006. Post-cutoff recurrence continuation.**
-      Operator renewed execution on 2026-10-16: recover incident evidence,
-      reproduce failures and complete causal repairs. The retained spills do
-      contain the URLs and command details previously called missing. Native
-      diagnostics, HTML selection, search parsing and cleanup proofs are now
-      converged for implementation under this owning FID.
-      Local repairs and all 19 declared gates pass. Eight classes have explicit
-      active ownership; the recurrence allocation probe reports zero issues.
-      **Blocker:** sanitized provider rejection/schema details and exact failing
-      URLs are absent from capture; class repair also requires real exposure
-      across the 14-day/three-session observation window. Input is pending.
-      Historical waivers and immutable failure rows remain unchanged.
+- [ ] **FID-2026-1016-005. Remove the MarsAI built-in provider.**
+      Operator-approved 2026-10-16: remove MarsAI from the current product,
+      catalogs, tests and documentation; preserve the historical audit trail.
       **Automation level: 3.**
 
-- [ ] **FID-2026-1012-022. Open-work master plan (build order + status board).**
-      Savant-Free retirement and four-pillar hardening are committed at
-      001e36c6 and d71b9065; both children are archived. Final root tests pass
-      9,203/23 skip/0 fail (9,226 ran). The census is 606 records / 59 stable
-      classes;
-      eight post-cutoff classes continue under active FID-2026-1015-006.
-      **Blocker:** the continuation's replay/exposure requirements and T175's
-      pending scope decision. No observation or production repair is fabricated.
-      **Automation level: 3.**
-
-- [ ] **T175. Sweep control-manifest authorship + control-armed re-run.**
-      The operator answered "agree" to a draft for review. Delivered:
-      `docs/design/provider-reference-review-2026-10-15.md`, with exact-model
-      reference candidates, separate no-reference/inconclusive labels, and an
-      operator-managed credential-epoch proposal. Zero live calls and no new
-      spending are authorized by this draft.
-      **Blocker:** the concrete review
-      asks whether live comparisons should remain separate from coordinator
-      closure; requiring a live run also needs selected references and a numeric
-      quota/spending cap. The question is pending, not inferred from silence.
-      **Automation level: 1.**
-
-- [ ] **Local v0.0.36 development line.**
-      Local commits and automatic normal fast-forward pushes to `main` are
-      permitted under the standing operator authority recorded below.
-      Publication remains release-only. The attribution pre-push hook and its
-      verification gates remain active. The operator answered "no need to gate"
-      on 2026-10-15: publication does not gate this coordinator's closure.
-      Normal push was attempted but blocked: earlier outgoing restoration
-      commit a707aa89 reintroduces five vendor binaries above the hook's
-      2 MB scan cap. The cap and history remain intact; no bypass was used.
-      Resolved mechanically under FID-2026-1016-002: identity-pinned
-      exemptions (path + git blob id) pass exactly the five required
-      vendored binaries; every unpinned or swapped-content over-cap blob
-      still fails closed. Push not yet re-attempted.
-      **Automation level: 3.**
-
-- [ ] **Lessons-pipeline recurrence review and feature routing.** Audit the raw
-      experience traces, recurrence/dedup outputs, learnings, agenda, and
-      lesson-to-skill routing for repeated actionable classes. Record evidence,
-      rank feature candidates, and implement the first approved candidate with
-      its declared verification gates. Preserve the locked clean-Linux scratch
-      artifact and do not alter that blocked work item.
+- [ ] **FID-2026-1016-006. Separate implementation closure from internal follow-up.**
+      Operator-approved 2026-10-16: archive implementation-complete FIDs and
+      record them in CHANGELOG; track exposure windows and live comparisons
+      independently under `dev/tracking/`. Verify selected lessons-pipeline
+      implementation and reconcile its state. Verified progress is committed
+      and normally pushed to `main` automatically, including during handoffs.
+      This instruction supersedes previous handoff push holds.
       **Automation level: 3.**
 
 - [ ] **T194. Linked-checkout retrofit reconnaissance before any FID.**
@@ -81,6 +36,25 @@ handling or repository boundaries.
       complete. Method is bounded per-repository probing: recursive sweeps of
       `resources/` exceed the search tool's execution cap (measured).
       **Automation level: 3.**
+
+## Internal follow-ups and current operator authority (2026-10-16)
+
+Implementation-complete records FID-2026-1015-006 and FID-2026-1012-022
+are closed and archived, with changelog entries. Observation and live comparison
+are separate work, per the operator's explicit ruling in this session.
+
+- `OBS-001` in `dev/tracking/internal-followups.json`: production exposure and
+  remaining sanitized replay evidence for eight classes. No class repair is claimed.
+- `LIVE-001` in the same store: the former T175 live-comparison work, independent
+  of coordinator closure. Selected references and numeric call/spending limits
+  remain prerequisites for a live run; this instruction authorizes no spending.
+- Selected lessons features are implemented: LF-003 at `628375ff`, LF-004 at
+  `d71b9065`, LF-007/008/009 at `6b847099`; fresh focused verification passes.
+  Candidate states/report are reconciled. Unselected drafts remain proposals.
+- Commit verified progress and automatically push normal fast-forward updates
+  to `main` through mandatory gates. Older handoff/local-only holds are
+  superseded. Handoffs, observation windows and release timing do not hold
+  progress pushes. Releases remain separate operator actions.
 
 ## Recorded operator dispositions (2026-10-15)
 
@@ -111,13 +85,19 @@ Operator authorization: completion at automation level 3, renewed 2026-10-15;
 specific removal and skill metadata approvals are in answers.md. Governance
 artifacts required by ECHO retain their gate-level exemptions.
 
-- FID-2026-1015-006: `sdk/**`, `packages/agent-runtime/**`,
-  `packages/llm-providers/**`, `common/**`,
-  `scripts/experiences-*.ts`, `dev/experiences/**`, `dev/fids/**`, `SCOPE.md`,
-  `dev/session-summaries/**`
+- FID-2026-1016-005: `common/**`, `cli/**`, `sdk/**`, `scripts/**`,
+  `docs/**`, `.env.example`, `README.md`, `README.zh-CN.md`, `dev/fids/**`,
+  `dev/session-summaries/**`, `SCOPE.md`, `CHANGELOG.md`
+- FID-2026-1016-006: `scripts/**`, `dev/tracking/**`, `dev/feature-pipeline/**`,
+  `docs/internal-followups.md`,
+  `dev/fids/**`, `dev/agenda.md`, `dev/operator-decisions.md`,
+  `dev/session-summaries/**`, `SCOPE.md`, `CHANGELOG.md`, `ECHO.md`,
+  `AGENTS.md`, `agents/recorder/recorder.ts`, `dev/echo-v0.1.2-single-agent.md`,
+  `.agents/skills/release-workflow/**`,
+  `common/src/constants/protocol-bundle.generated.ts`,
+  `common/src/constants/echo-protocol-instructions.generated.ts`,
+  `packages/agent-runtime/src/echo/protocol-refresh.generated.ts`
 
-- FID-2026-1012-022: `dev/fids/**`, `SCOPE.md`, `docs/design/**`,
-  `dev/experiences/**`, `dev/agenda.md`
 - Release-0.0.36: `VERSION`, `package.json`, `agents/package.json`,
   `cli/package.json`, `cli/release/package.json`, `common/package.json`,
   `common/src/constants/protocol-bundle.generated.ts`, `desktop/package.json`,
@@ -129,10 +109,5 @@ artifacts required by ECHO retain their gate-level exemptions.
   `dev/operator-decisions.md`, `dev/fids/**`, `dev/feature-pipeline/**`,
   `dev/session-summaries/**`, `scripts/version-docs.ts`,
   `scripts/version-docs-drift.test.ts`, `.agents/skills/**/SKILL.md`
-- T175: `docs/design/provider-reference-review-2026-10-15.md`
 - T194: `docs/design/**`, `dev/research/**`, `dev/scratchpad/**`, `dev/fids/**`,
   `dev/task-id-ledger.json`, `SCOPE.md`
-- Lessons-pipeline: `dev/experiences/**`, `dev/LEARNINGS.md`, `dev/agenda.md`,
-  `dev/idea-shelf/**`, `dev/wiki/**`, `scripts/experiences-*.ts`,
-  `scripts/lessons-*.ts`, `.agents/skills/.quarantine/**`, and
-  `dev/session-summaries/**`

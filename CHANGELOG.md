@@ -12,6 +12,29 @@
 > the v0.0.36 cut. Release notes are written here at cut time; nothing in this
 > section is a package-release claim until then.
 
+## 2026-10-16 — Implementation closure and internal follow-ups
+
+### Changed
+
+- FID-2026-1016-006 (medium): separate implementation closure from internal
+  observation and live comparisons. The validated local follow-up register
+  retains owners, provenance, next actions and evidence, appears in the agenda,
+  and keeps production-repair assertions strict. Repository and shipped agent
+  guidance close committed, code-verified FIDs immediately and automatically
+  push verified progress to `main`; handoffs and observation windows do not
+  hold progress pushes. Release publication remains separate.
+- FID-2026-1015-006 (high): closed and archived the committed recurrence
+  repairs after all 19 declared gates passed live. Windows descendant
+  containment, native argument diagnostics, primary-content extraction,
+  keyless search parsing and tool guidance are implemented. Qualified
+  production observation continues independently under `OBS-001`.
+- FID-2026-1012-022 (critical): closed and archived the coordination program
+  after all 37 children completed. Observation windows and the independent
+  live-comparison task (`LIVE-001`) no longer hold implementation closure.
+- Reconciled selected lessons-pipeline candidates against production code:
+  LF-003 (`628375ff`), LF-004 (`d71b9065`), and LF-007/008/009 (`6b847099`)
+  are implemented. Fresh focused audit: 64 tests passed, zero failed.
+
 ## 2026-10-16 — Remove MarsAI (FID-2026-1016-005)
 
 ### Removed
@@ -21,7 +44,8 @@
   current provider documentation. Generic custom-provider support remains
   available. Historical integration records and credentials are preserved.
   Registry/setup inventories now contain 47/46 providers. All 75 affected
-  provider tests pass; generated provider references are current.
+  provider tests and 11 declared gates pass; references are current.
+  Implementation: `87c2f87a`; closed and archived.
 
 ## 2026-10-16 — MarsAI gateway provider (FID-2026-1016-004)
 
