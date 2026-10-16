@@ -139,10 +139,13 @@ artifacts required by ECHO retain their gate-level exemptions.
   `packages/agent-runtime/src/find-files/**`, `scripts/eslint-rules/**`
   (this session, operator-ruled: the one tracked 400-line ceiling, the duplicate robot model,
   the orphan triage and the recurring sweep; write targets release at closure.)
-- FID-2026-1016-014: `cli/src/chat/panels.tsx`, `cli/src/components/skill-lifecycle-notice.tsx`,
+- FID-2026-1016-014 is **closed and archived** (2026-10-16, 7/7 gates, receipt stamped, four
+  commits `36c6855f`..`1502db60`). Its write targets are released: `cli/src/chat/panels.tsx`,
+  `cli/src/components/skill-lifecycle-notice.tsx`,
   `cli/src/components/__tests__/skill-lifecycle-notice.test.tsx`,
   `desktop/src/floor/office/robot-cast.ts`, `desktop/src/floor/office/scene-agent-ui.tsx`,
   `coding-standards/x402.md`, `scripts/probes/**`, `scripts/orphan-sweep.ts`,
   `scripts/orphan-sweep.test.ts`, `CHANGELOG.md`
-  (operator-ruled follow-ups to FID-2026-1016-013: mount the declared Step-4 surface, state one
-  robot design, execute the recorded x402 deletion, and give hand-run probes their documented home.)
+  (operator-ruled follow-ups to FID-2026-1016-013: the declared Step-4 surface is mounted and
+  pinned by test, the office cast states one design, the recorded x402 deletion is executed, and
+  hand-run probes have their documented home as a named sweep exclusion class.)
