@@ -114,16 +114,10 @@ export function commitChangedFiles(root: string, commitSha: string): string[] {
     '-r',
     '--no-commit-id',
     '--name-only',
+    '-z',
     commitSha,
   ])
-  return [
-    ...new Set(
-      output
-        .split(/\r?\n/)
-        .map((line) => line.trim())
-        .filter((line) => line.length > 0),
-    ),
-  ]
+  return [...new Set(output.split('\0').filter((file) => file.length > 0))]
 }
 
 // The attribution rule now lives in ONE place (`scripts/attribution-guard.ts`),
