@@ -124,3 +124,10 @@ docs/trash/**
 # Operator-approved raw session archive (2026-10-15): byte-preserved local
 # conversation exports, already gitignored; never repository documentation.
 dev/exports/**
+
+# Operator-drafted outbound email (2026-10-16): moved out of docs/ because
+# docs/ is the shipped documentation tree, and a provider-outreach draft is not
+# shipped documentation. Paste-ready prose, long lines by design; MD013 on it is
+# meaningless. Same exemption precedent as dev/test-prompts/*-deep-research-prompt.md
+# and docs/trash/**. The draft lives at dev/operator/ (untracked, never shipped).
+dev/operator/**
