@@ -86,14 +86,39 @@
 - `eslint.config.js` ignores `dev/research/**` alongside `dev/scratchpad/**` — the promoted one-off
   probes and session analyses are the same class of local, untracked ad-hoc tooling.
 
-### Known issues
+### Push sequence
 
-- The sdk suite is red on `main`: `codeSearch > should handle -g flag with glob patterns like *.ts`
-  fails when `code-search-part-d.test.ts` runs in the same process as
-  `code-search-part-c.test.ts` and passes alone (`part-a`/`part-b` combinations are green). Because
-  the pre-push hook runs the full suite, this blocked the push of this change; it is recorded as
-  FID-2026-1016-012 with a two-file reproduction and the resolver evidence. `--no-verify` was not
-  used.
+This change and its governance commits were held briefly by the pre-push test gate, then pushed
+once the cause was fixed — see the FID-2026-1016-012 entry above, which is the resolution of the
+blocker described here as it stood at the time. `--no-verify` was not used at any point: the
+credential scan, agent-attribution scan, ESLint, markdownlint, typecheck, the full test chain and
+prettier all ran on the pushed range and passed.
+
+### Known issues (audit findings, deliberately unresolved)
+
+`dev/` is untracked by design (operator ruling 2026-10-16), so the audit's FID record is local-only
+and the unresolved findings are restated here for anyone reading only the repository:
+
+- **`desktop/public/floor-assets/robots/RobotExpressive.glb` is byte-identical to `robot.glb`** in
+  the same directory (463,988 B, verified by `md5sum`), while `ASSET-MANIFEST.md` attributes them to
+  different upstreams — Quaternius and the Khronos glTF sample models. Both are referenced
+  (`desktop/src/floor/office/robot-cast.ts:39-40`) and both are CC0, so there is no licence exposure;
+  the manifest attribution is what is wrong. Either correct the attribution or drop the duplicate
+  from the cast. No file was changed.
+- **`coding-standards/*.md` and `.agents/skills/coding-*/SKILL.md` have diverged into two sources of
+  truth for the same standards.** After normalising line endings the bodies differ by 18 substantive
+  lines (TypeScript), and the difference is not cosmetic: `coding-standards/typescript.md` declares
+  a `max_file_lines` 400 / `max_function_lines` 60 TypeScript **override**, while
+  `protocol.config.yaml:51-55` sets 300/50 and calls that the "LIVE quality policy — the quality
+  report enforces the 300-line absolute ceiling". `ECHO.md:156` says a language override *wins*, so
+  one of the two documents would relax a live gate. `ECHO.md` still points at
+  `coding-standards/{language}.md` in 8 places, and `coding-standards/x402.md` exists although the
+  changelog records its deletion (FID-2026-0717-003). Choosing the canonical copy is a governance
+  decision, so nothing was edited.
+- **`WINDOWS.md` has zero inbound references** outside this changelog. It reads as real product
+  documentation, so deleting it needs an operator decision rather than a hygiene pass.
+- The orphan sweep reports **46 candidate files** among 4,940 tracked. Six were spot-checked against
+  `git grep`; the remainder are unverified by design, which is why the sweep is advisory and exits 0.
 
 ## 2026-10-16 — Advertised offer deadlines are read from the feed, and the offer dump is bounded (FID-2026-1016-010, medium)
 
