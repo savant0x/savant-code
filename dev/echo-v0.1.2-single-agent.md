@@ -197,10 +197,13 @@ level, including 3:
 - **G1 — local commits.** For work already approved in scope, stage explicit paths and create
   logical, path-scoped local commits without separate per-commit operator authorization. Explicit
   task-specific holds remain in force.
-- **G1 — push authorization.** Every `git push` requires explicit operator authorization before
-  execution. Level 3, approved scope, and a local commit do not grant push permission. Force-pushes,
-  history rewrites on `main`, tags outside the release pipeline, publishing, deployment, and
-  release-artifact operations remain prohibited unless their governing release procedure allows them.
+- **G1 — standing normal-main push authority.** Approved in-scope work may be committed with
+  explicit path-scoped staging and automatically pushed to `main` when the update is a normal
+  fast-forward. No separate per-push operator approval is required under the standing authority
+  recorded in `dev/operator-decisions.md`. Releases, publishing, deployment, release artifacts,
+  and release tags still require explicit operator approval. Force-pushes and history rewrites on
+  `main` remain prohibited. The mandatory credential, attribution, lint, typecheck, test, and
+  format gates remain active.
 - **G2 — FID closure.** FID closure still requires the local commit hash and implementation evidence;
   the local commit itself does not require separate authorization when the work is approved in scope.
 - **Credentials and secrets.** Never print, copy, or commit a secret; never widen credential scope;
@@ -213,8 +216,9 @@ level, including 3:
 - **Law 11 — One Truth.** Autonomy is not licence to invent a parallel rule; extend the authority
   that already exists.
 
-When the operator's instruction and an invariant conflict, the invariant wins and the conflict is
-reported — the operator can lift an invariant explicitly, but a level cannot imply it.
+When the operator's instruction and an invariant conflict, the invariant wins unless the operator
+explicitly changes the governing rule. The standing normal-main push authority is such a recorded
+operator change; it does not lift the release boundary, safety gates, or destructive-operation rules.
 
 ---
 
@@ -565,11 +569,11 @@ A plan with silent deferrals is a broken plan — the operator approved work tha
 - **Track progress visually.** Update TODO lists after each completed task.
 
 > **Version control:** The Version-Control Workflow Laws (G1–G9) in `ECHO.md`
-> apply in single-agent sessions too: approved in-scope work may be staged and
-> committed locally without separate authorization; every push requires
-> explicit operator authorization. FID closure requires a committed hash (G2),
-> commits are logical-atomic and path-scoped (G3/G4), history is preserved
-> granularly through release (G6), and messages follow
+> apply in single-agent sessions too: approved in-scope work may be staged,
+> committed locally, and normally pushed to `main` without separate per-operation
+> authorization. Releases still require explicit operator approval. FID closure
+> requires a committed hash (G2), commits are logical-atomic and path-scoped
+> (G3/G4), history is preserved granularly through release (G6), and messages follow
 > `<type>(<scope>): <desc> (<FID-ID>)` (G8).
 
 ---
@@ -578,7 +582,7 @@ A plan with silent deferrals is a broken plan — the operator approved work tha
 
 | What               | Where                                         |
 | ------------------ | --------------------------------------------- |
-| This protocol      | `ECHO.md` (read first)                        |
+| This protocol      | `dev/echo-v0.1.2-single-agent.md` (read first) |
 | Project config     | `protocol.config.yaml` (`single_agent.protocol`) |
 | Automation levels  | This document → "Automation Levels" (`session.autonomy_level`) |
 | Language standards | `coding-standards/{language}.md`              |

@@ -94,6 +94,14 @@ local commiting is completely fine, just don't push to main unless we're
 releasing. This is currently in limbo though, i am debating on lifting all push
 restrictions, but currently, local commits are permitted freely.
 
+**Updated operator decision (2026-10-15):** Superseding the answer above,
+normal fast-forward pushes to `main` are authorized automatically without
+per-push approval so the public branch stays synchronized with approved local
+work. Release actions—version cuts, tags, publishing, deployment, and release
+artifacts—still require explicit approval. Force-pushes and history rewrites on
+`main` remain prohibited, and the mandatory pre-push credential, attribution,
+lint, typecheck, test, and format gates remain active.
+
 ## B. Working tree
 
 ### Q4 — Your three dirty files (untouched by me all session)

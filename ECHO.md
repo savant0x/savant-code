@@ -458,18 +458,19 @@ Self-reporting is prohibited. The Orchestrator that writes code must not be the 
 > (Gemini Deep Research v2, operator-approved) + the Nova amendment draft
 > (`dev/nova/outbox/2026-08-23-git-workflow-echo-amendment-draft.md`). These
 > rules govern version control in the single-committer, agent-coordinated
-> operation. **Amended 2026-10-11 (operator):** local, path-scoped commits
-> within approved work require no separate operator authorization. Every push
-> requires explicit operator authorization before execution.
+> operation. **Amended 2026-10-15 (operator):** local, path-scoped commits
+> within approved work and normal fast-forward pushes to `main` require no
+> separate per-operation authorization. Release actions remain explicitly
+> approval-gated.
 
 | Rule | Directive |
 | ---- | --------- |
-| **G1** | **Local Commit Authority; Push Requires Authorization** — For work already approved in scope, agents may stage explicit paths and create logical, path-scoped local commits without separate per-commit operator authorization. A local commit does not authorize publication. Every `git push` requires explicit operator authorization before execution; autonomy level and approved work do not imply push permission. Exactly one committer at a time. Force-pushes, history rewrites on `main`, tag creation or mutation outside the release pipeline, and operations on published releases or npm packages remain prohibited. The operator retains sole authority over releases. |
+| **G1** | **Local Commit Authority; Normal Main Pushes Under Standing Authority** — For work already approved in scope, agents may stage explicit paths, create logical path-scoped local commits, and automatically push normal fast-forward updates to `main` without separate per-commit or per-push operator authorization. The standing authority does not authorize releases: version cuts, annotated tags, publishing, deployment, release artifacts, and other publication mutations still require explicit operator approval. Exactly one committer at a time. Force-pushes and history rewrites on `main` remain prohibited. The mandatory pre-push credential, attribution, lint, typecheck, test, and format gates remain in force. |
 | **G2** | **FID Closure Requires a Local Commit** — An FID is closed only when its changes are committed locally. The local commit requires no separate operator authorization when the work is approved in scope and no narrower explicit hold applies. Working-tree closure is deprecated. Record the commit hash in the FID's Resolution section alongside existing evidence. |
 | **G3** | **Logical Atomic Commits** — One commit per coherent change (normally one FID or a self-contained sub-change). No numeric size cap: a coherent 3,000-line FID diff is one commit; unrelated fixes never share a commit. Preserves independent revertibility. |
 | **G4** | **Path-Scoped Staging During Active Sessions** — Global staging (`git add .`, `git commit -a`) is prohibited while sessions are active. The committer stages explicit paths per completed area, reviews the scoped diff, and commits per area — sequentially. |
-| **G5** | **Offline Durability: Incremental Bundles** — Between releases, back up via incremental git bundles to the OneDrive sync folder (baseline full bundle once, then `last-backup..main` incrementals, `git bundle verify` before advancing the `last-backup` marker). Restore-from-zero: clone full bundle → fetch incrementals → re-link origin. Origin pushes require explicit operator authorization under G1; the bundle layer remains the recovery point of record (a bad push, forced reset, or account compromise is recovered from bundles, not origin). Implemented: `scripts/git-bundle-backup.ts` (FID-2026-0905-008). |
-| **G6** | **Granular History Preserved Through Release** — With explicit operator authorization for the push under G1, the release pipeline pushes the week's local commits granularly to public main — no squash into a monolithic release commit. Public history retains per-FID attribution for bisect and audit; the annotated tag marks the release point. |
+| **G5** | **Offline Durability: Incremental Bundles** — Between releases, back up via incremental git bundles to the OneDrive sync folder (baseline full bundle once, then `last-backup..main` incrementals, `git bundle verify` before advancing the `last-backup` marker). Restore-from-zero: clone full bundle → fetch incrementals → re-link origin. Automatic normal pushes keep `origin/main` synchronized, while the bundle layer remains the recovery point of record (a bad push, forced reset, or account compromise is recovered from bundles, not origin). Implemented: `scripts/git-bundle-backup.ts` (FID-2026-0905-008). |
+| **G6** | **Granular History Preserved Through Release** — Automatic normal pushes preserve the week's local commits granularly on public `main` — no squash into a monolithic release commit. Release tags, publishing, deployment, and other release mutations still require explicit operator approval. Public history retains per-FID attribution for bisect and audit; the annotated tag marks the release point. |
 | **G7** | **Local Git Hygiene Automation** — `git maintenance start` once per clone (commit-graph updates + incremental repack; default strategy does not run disruptive gc while agents operate). |
 | **G8** | **Commit Message Convention** — `<type>(<scope>): <description> (<FID-ID>)`; types `feat | fix | refactor | test | docs | chore | perf`; imperative lowercase ≤72 chars; FID reference mandatory when an FID drove the change. Enforced friction-free via `.gitmessage` (`git config commit.template .gitmessage`). |
 | **G9** | **Worktree Escape Hatch (deferred infrastructure)** — `git worktree` is not standing infrastructure. Provision only when two concurrent sessions must mutate the same cross-cutting directory simultaneously and cannot be sequenced. Provision → complete → merge → remove immediately. |
@@ -775,9 +776,9 @@ active mode is set by the user via UI or `/mode`.
 ### Automation Levels (Autonomy)
 
 Autonomy levels govern **how far the agent proceeds before asking**. Once work is approved in
-scope, a local path-scoped commit needs no separate per-commit authorization under G1. A push
-still requires explicit operator authorization; no autonomy level, scope grant, or local commit
-implies that permission. Execution Modes govern workflow rigor; levels govern work authorization.
+scope, a local path-scoped commit and a normal fast-forward push to `main` need no separate
+per-operation authorization under the standing G1 authority. Release actions remain explicitly
+approval-gated. Execution Modes govern workflow rigor; levels govern work authorization.
 
 | Level | Name           | Authority                                                                                                                                    |
 | ----- | -------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -787,8 +788,8 @@ implies that permission. Execution Modes govern workflow rigor; levels govern wo
 
 Declared at `protocol.config.yaml` → `session.autonomy_level` (default `3`). Each work item also
 carries its own level on the FID / SCOPE register, and **an item is actioned without approval only
-when its level is ≤ the session level**. No level lifts the version-control laws (G1–G9), credential
-handling, Law 3, or the project-directory boundary. Full elaboration — including what a *recorded*
+when its level is ≤ the session level**. No level lifts the release boundary, credential handling,
+Law 3, or the project-directory boundary. Full elaboration — including what a *recorded*
 Law 2 presentation means at Level 3 — is in `dev/echo-v0.1.2-single-agent.md` →
 "Automation Levels".
 
