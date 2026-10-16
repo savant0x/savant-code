@@ -26,7 +26,12 @@ import { existsSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 
 export interface ScopeTargetsByItem {
-  /** Item id (FID id, or a register label such as `Release-0.0.36`) → globs. */
+  /**
+   * Item id → its globs. The id must match `[A-Za-z0-9-]+` (the ITEM_HEAD
+   * token): a FID id, a `Tnnn` id, or a hyphenated label. A label containing
+   * spaces or dots (`Release-0.0.36`) is not a machine key — its globs grant
+   * nothing, so an item that needs targets must carry a parseable id.
+   */
   targets: Map<string, string[]>
   exists: boolean
   /**
