@@ -5,6 +5,11 @@
 > The active source gate is now green: no deprecated legacy-brand identifiers remain in `cli/src`, `common/src`,
 > `sdk/src`, `packages`, `agents`, or `savant-free/cli`. Historical protocol documents, legal notices, migration records,
 > and the legacy `.savant/` state-directory ignore rule are explicitly retained and are not active runtime branding.
+>
+> **TARGET RETIRED (2026-10-15):** the `savant-free/` workspace and the ad-supported product surface this
+> kit instruments were retired under FID-2026-1015-002 (T122 "-remove savant-free"). Every `savant-free`
+> reference below is a dead target, not a workspace to create. Re-scope this kit with the operator before
+> acting on any step.
 
 ---
 
@@ -51,14 +56,12 @@ your publisher surface ID, then align the string.
 
 ---
 
-## Step 1 — Install SDK (in `savant-free/` workspace only)
+## Step 1 — Install SDK (BLOCKED: the target workspace is retired)
 
-```bash
-cd savant-free
-npm install @gravity-ai/api @gravity-ai/react
-```
-
-Do NOT install in `savant-code` or any shared workspace.
+There is no lawful destination for this install. `savant-free/` was retired on 2026-10-15
+(FID-2026-1015-002), and the original instruction forbade installing Gravity into `savant-code`
+or any shared workspace — a boundary the retirement did not change. Do not recreate the workspace
+to satisfy this step; re-scope the kit with the operator first.
 
 ---
 

@@ -73,8 +73,6 @@ cli/release/launcher.js
 cli/release/http.js
 cli/release-staging/launcher.js
 cli/release-staging/http.js
-savant-free/cli/release/launcher.js
-savant-free/cli/release/http.js
 
 # Local resource/resorucs directories — user-added content, not source controlled
 /resources/
