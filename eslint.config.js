@@ -23,6 +23,7 @@ export default tseslint.config(
       'devvy-main/**', // Vendored reference codebase (Discord Rich Presence design source) - not part of the monorepo
       'master-fetch-master/**', // Vendored reference codebase (Hound keyless-search design source) - not part of the monorepo
       'dev/scratchpad/**', // Ephemeral working area (gitignored, see .gitignore) — ad-hoc tools may use console freely
+      'dev/research/**', // Local analysis store (untracked via /dev, operator ruling 2026-10-16) — one-off probes and session analyses relocated there instead of expiring in the scratchpad (FID-2026-1016-011); same class as the scratchpad entry above
       'desktop/src-tauri/target/**', // Rust/tauri build output (FID-2026-0820-011 Loop 5 local bundling smoke) — machine artifacts, never source
       '.qoder/**', // Better-harness run artifacts (renderer-generated reports) — machine output, not source
       'cli/src/agents/bundled-agents.generated.ts', // Auto-generated agent code with embedded console strings
