@@ -63,6 +63,26 @@ export function isCompleteKnownToolCallArguments(
   return isCompleteToolCallArguments(args, requiredToolKeys.get(toolName))
 }
 
+/** Describe structure only; model-supplied values never enter recovery text. */
+export function summarizeIncompleteToolArguments(
+  args: string,
+  toolName: string,
+  requiredToolKeys: ReadonlyMap<string, readonly string[]>,
+): string {
+  const parsed = parseToolCallArguments(args)
+  if (!parsed.ok) {
+    return parsed.reason === 'invalid-json'
+      ? '<root> — invalid_json (expected a complete JSON object)'
+      : '<root> — invalid_type (expected object)'
+  }
+  const missing = requiredToolKeys
+    .get(toolName)
+    ?.find((key) => !Object.prototype.hasOwnProperty.call(parsed.value, key))
+  return missing === undefined
+    ? '<root> — incomplete_arguments'
+    : `${missing.replace(/[\r\n\t]/g, ' ').slice(0, 80)} — missing_required_property`
+}
+
 export function isStaleToolArgumentFragment(
   args: string,
   toolName: string,

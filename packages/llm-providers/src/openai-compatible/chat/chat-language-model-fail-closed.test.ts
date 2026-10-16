@@ -107,6 +107,7 @@ describe('doStream tool-call accumulation', () => {
       type: 'native-incomplete',
       toolName: 'sequentialthinking',
       finishReason: 'tool-calls',
+      schemaIssue: 'thought — missing_required_property',
     })
     expect(JSON.stringify(errors[0])).not.toContain('{}')
   })
@@ -127,6 +128,7 @@ describe('doStream tool-call accumulation', () => {
       type: 'native-incomplete',
       toolName: 'sequentialthinking',
       finishReason: 'length',
+      schemaIssue: '<root> — invalid_json (expected a complete JSON object)',
     })
     // The finish part keeps the provider's original reason — not masked.
     expect(finishes).toHaveLength(1)
@@ -149,6 +151,7 @@ describe('doStream tool-call accumulation', () => {
     expect(errors[0]?.error).toEqual({
       type: 'native-incomplete',
       toolName: 'sequentialthinking',
+      schemaIssue: '<root> — invalid_json (expected a complete JSON object)',
     })
   })
 

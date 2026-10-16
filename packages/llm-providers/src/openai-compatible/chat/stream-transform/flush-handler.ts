@@ -1,6 +1,7 @@
 import {
   isCompleteKnownToolCallArguments,
   isDeclaredToolName,
+  summarizeIncompleteToolArguments,
 } from './tool-arguments'
 
 import type { ChatStreamTransformerState } from './state'
@@ -83,6 +84,11 @@ export function flushStream(params: {
         error: {
           type: 'native-incomplete',
           toolName: toolCall.function.name,
+          schemaIssue: summarizeIncompleteToolArguments(
+            toolCall.function.arguments,
+            toolCall.function.name,
+            requiredToolKeys,
+          ),
           ...(state.finishReason !== 'unknown' && {
             finishReason: state.finishReason,
           }),
