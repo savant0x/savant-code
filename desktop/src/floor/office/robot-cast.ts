@@ -38,20 +38,20 @@ export interface RobotTemplate {
   readonly animations: readonly AnimationClip[]
 }
 
-/** The vendored free robot design (CC0): the Khronos expressive bot, whose
- *  file name matches its actual content. Add a second URL only for a model
- *  that is genuinely a different design. */
-export const CAST_MODEL_URLS = [
-  '/floor-assets/robots/RobotExpressive.glb',
-] as const
-
-/** Deterministic design rotation across the pad ring (one design today, so
- *  every pad resolves to it; the rotation resumes if a second is added). */
-export function castModelUrlForPad(padIndex: number): string {
-  return (
-    CAST_MODEL_URLS[padIndex % CAST_MODEL_URLS.length] ?? CAST_MODEL_URLS[0]
-  )
-}
+/**
+ * The one vendored free robot design (CC0): the Khronos expressive bot, under
+ * the file name its bytes earn.
+ *
+ * FID-2026-1016-013: this was a two-entry list promising "two distinct robot
+ * designs" alternating across the pad ring, with the orchestrator assigned the
+ * other entry from its specialists. The second entry (`robot.glb`) was a
+ * byte-identical copy of this file, so the alternation never produced a second
+ * look and the rotation function was pure indirection. Operator ruling:
+ * one design, stated plainly — the cast reads this constant, and a genuinely
+ * different CC0 model is a content decision for a new FID (it would need its
+ * own licence row in ASSET-MANIFEST.md), not a second array entry.
+ */
+export const CAST_MODEL_URL = '/floor-assets/robots/RobotExpressive.glb'
 
 const templateCache = new Map<string, Promise<RobotTemplate | null>>()
 const TEMPLATE_LOAD_TIMEOUT_MS = 8000

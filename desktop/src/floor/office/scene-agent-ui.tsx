@@ -10,7 +10,7 @@ import * as THREE from 'three'
 
 import { roleAccent } from '../roles'
 import { OfficeNameplate } from './office-nameplate'
-import { castModelUrlForPad } from './robot-cast'
+import { CAST_MODEL_URL } from './robot-cast'
 import { ThinkingIndicator } from './scene-agent-fx'
 import { labelFor } from './scene-agent-logic'
 import { NAMEPLATE_Y } from './scene-constants'
@@ -140,17 +140,10 @@ export function AgentCharacter({
       ) : null}
       <RobotBody
         accent={accent}
-        modelUrl={
-          // Savant is the orchestrator — the pad-ring cast takes the model at
-          // its own index while Savant takes the next one in the rotation.
-          // Only one robot design is vendored today (FID-2026-1016-013), so
-          // both calls resolve to the same asset and Savant reads as distinct
-          // through its height and role accent; the offset resumes the moment
-          // a second model is added to CAST_MODEL_URLS.
-          walker.roleId === 'savant'
-            ? castModelUrlForPad(1)
-            : castModelUrlForPad(walker.padIndex)
-        }
+        // One robot design is vendored (FID-2026-1016-013), so every cast
+        // member reads the same asset; Savant is distinguished by its height
+        // (1.55×) and role accent rather than by a second model.
+        modelUrl={CAST_MODEL_URL}
         walking={walking}
         agentId={walker.agentId}
         movingMap={movingMap}
