@@ -6,7 +6,10 @@
  * an automated change. Shape evidence: LIVE probes 2026-09-28
  * (dev/scratchpad/active/custats-offers-probe.ts) — items carry no
  * <category> element; category and expiry ride the description tail
- * (`… — API providers · ongoing.` / `… · expires Oct 4, 2026.`).
+ * (`… — API providers · ongoing.` / `… · expires Oct 4, 2026.`). The tail's
+ * PROSE can itself contain em-dashes, so the category is the FINAL segment
+ * (FID-2026-1016-010): `… — it is not an ongoing free tier — Coding · ongoing.`
+ * lifts `Coding`, not the whole run-on.
  */
 
 /** One offer from the freetokens RSS feed. */
@@ -16,9 +19,21 @@ export type CustatsOffer = {
   description: string
   /** Lifted from the description tail (`API providers`, `Coding`, …). */
   category: string | null
+  /**
+   * The TAIL's own statement — `expires` whenever the tail text annexes an
+   * expiry to the offer, even if its date does not resolve (FID-2026-1016-010).
+   * Prose elsewhere in the description that merely mentions expiry terms
+   * (`credits expire 12 months after grant`) does not change it.
+   */
   expiryKind: 'ongoing' | 'expires'
-  /** ISO date (yyyy-mm-dd) when `expiryKind === 'expires'`, else null. */
+  /**
+   * ISO date (yyyy-mm-dd) when the tail's human date parses, else null —
+   * `expiryKind === 'expires'` with a null date is an expiry we hold but
+   * cannot read. Read it through `resolveOfferDeadlineMs`, which prefers
+   * `expiryTimestamp` (the live feed emits this shape, not the ISO one).
+   */
   expiryDate: string | null
+  /** ISO instant, when the feed states one; absent on the live feed. */
   expiryTimestamp?: string
   /** Free-form credit/token/amount hint, when one parses out. */
   amountHint: string | null
@@ -55,13 +70,23 @@ function splitTail(
   description: string,
 ): Pick<CustatsOffer, 'category' | 'expiryKind' | 'expiryDate' | 'amountHint'> {
   // LIVE shape: `… — <Category> · ongoing.` / `… — <Category> · expires Mon d, yyyy.`
+  // `[^—·]` (not `[^·]`) keeps the capture inside the last dash segment, so an
+  // offer whose prose carries a second em-dash still lifts a clean category
+  // (FID-2026-1016-010). A match that cannot reach `· <kind>.` from the only
+  // dash present still fails closed to `category: null`.
   const tailMatch = description.match(
-    /—\s*([^·]+?)\s*·\s*(ongoing|expires[^.]*)\.?\s*$/i,
+    /—\s*([^—·]+?)\s*·\s*(ongoing|expires[^.]*)\.?\s*$/i,
   )
   const category = tailMatch?.[1]?.trim() ?? null
   const tail = tailMatch?.[2]?.trim() ?? ''
 
-  let expiryKind: CustatsOffer['expiryKind'] = 'ongoing'
+  // The kind is the tail's statement, NOT the date parse's outcome: a tail
+  // reading `expires soon` still annexes an expiry to the offer, and a
+  // consumer that cannot read the date must say "unverified", never "no
+  // deadline" (FID-2026-1016-010).
+  const expiryKind: CustatsOffer['expiryKind'] = /^expires/i.test(tail)
+    ? 'expires'
+    : 'ongoing'
   let expiryDate: string | null = null
   const expiryMatch = tail.match(
     /expires?\s+([A-Za-z]{3})\s+(\d{1,2}),?\s+(\d{4})/i,
@@ -69,7 +94,6 @@ function splitTail(
   if (expiryMatch) {
     const month = MONTHS[expiryMatch[1]?.toLowerCase() ?? '']
     if (month !== undefined) {
-      expiryKind = 'expires'
       expiryDate = `${expiryMatch[3]}-${String(month).padStart(2, '0')}-${String(
         Number(expiryMatch[2]),
       ).padStart(2, '0')}`

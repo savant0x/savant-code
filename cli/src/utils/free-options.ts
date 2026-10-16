@@ -145,6 +145,8 @@ export function buildFreeOptionsReport(
     notWired,
     localFree: context.localProviders.map((p) => ({ ...p })),
     discoveryOnly,
+    // The envelope's own delta; surfaced in both headers (FID-2026-1016-010).
+    newModelIds: catalog?.newModelIds ?? [],
   }
 }
 

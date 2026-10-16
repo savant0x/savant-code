@@ -16,11 +16,21 @@ import {
   renderFreeOptionsDigest,
 } from '../free-options'
 
+import type { FreeOfferRow } from '../free-options-types'
+
 describe('FID-2026-1004-007: launch digest (rewired announce + offers + delta)', () => {
   test('composes the free-lane announce, the offers, and the discovery delta', () => {
+    // Rows since FID-2026-1016-010: the digest previews offer titles.
+    const offer: FreeOfferRow = {
+      title: 'Vercel',
+      category: 'API providers',
+      deadlineLabel: 'advertised deadline 2026-10-17',
+      providerLabels: ['Vercel AI Gateway'],
+      url: 'https://freetokens.custats.info/offers/ling.html',
+    }
     const report = {
       ...buildFreeOptionsReport(CATALOG, CTX),
-      discoveryOffers: ['Vercel: an advertised offer ends within 24h'],
+      discoveryOffers: [offer],
     }
     const joined = renderFreeOptionsDigest(report, {
       newCount: 1,

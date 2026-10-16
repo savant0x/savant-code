@@ -3,6 +3,7 @@
 // wired/not-wired provider context used by every suite.
 
 import type { FreeCatalogEnvelope, FreeOptionsContext } from '../free-options'
+import type { FreeOfferRow } from '../free-options-types'
 
 export const CATALOG: FreeCatalogEnvelope = {
   fetchedAt: '2026-09-28T01:00:13.744Z',
@@ -19,6 +20,22 @@ export const CATALOG: FreeCatalogEnvelope = {
   ],
   newModelIds: ['qwen-3-coder'],
   archivedModels: [],
+}
+
+/**
+ * A discovery row with the defaults a given pin does not care about
+ * (FID-2026-1016-010). Shared by the announce pins and the offer-display pins.
+ */
+export function offerRow(
+  over: Partial<FreeOfferRow> & { title: string },
+): FreeOfferRow {
+  return {
+    category: 'API providers',
+    deadlineLabel: 'no advertised deadline',
+    providerLabels: [],
+    url: 'https://freetokens.custats.info/offers/x.html',
+    ...over,
+  }
 }
 
 export const CTX: FreeOptionsContext = {

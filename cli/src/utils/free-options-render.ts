@@ -4,6 +4,12 @@
  * for the 300-line ceiling. The markdown file is the agent-answerable
  * reference: a stable path the user and the agent both read (one truth).
  */
+import {
+  catalogDeltaLine,
+  renderOffersCommandBlock,
+  renderOffersMarkdownSection,
+} from './free-options-offers'
+
 import type { FreeOptionsReport } from './free-options-types'
 
 function freeClaimCaveat(report: FreeOptionsReport): string {
@@ -38,6 +44,8 @@ export function renderFreeOptionsMarkdown(report: FreeOptionsReport): string {
   lines.push(
     `fetchedAt: ${report.fetchedAt ?? 'n/a'}${report.stale ? ' (**STALE** — older than 24h; run `/provider free` to refresh)' : ''}`,
   )
+  const delta = catalogDeltaLine(report.newModelIds)
+  if (delta) lines.push(delta)
   lines.push('')
   lines.push(`## Wired — ${freeClaimCaveat(report)}; account access unverified`)
   lines.push('')
@@ -78,8 +86,7 @@ export function renderFreeOptionsMarkdown(report: FreeOptionsReport): string {
       `- ${lane.label}: ${lane.models.length} advertised free model(s); discovery only, integration unavailable`,
     )
   }
-  for (const offer of report.discoveryOffers ?? [])
-    lines.push(`- Discovery: ${offer} (source: custats free-token feed)`)
+  lines.push(...renderOffersMarkdownSection(report.discoveryOffers ?? []))
   lines.push(
     `${quotaFootnote(report)}. Local registration does not verify a running server.`,
   )
@@ -100,6 +107,8 @@ export function renderCommandOutput(report: FreeOptionsReport): string[] {
   } else {
     const age = report.stale ? ' (cached, older than 24h)' : ''
     lines.push(`Free-model catalog${age} — fetchedAt ${report.fetchedAt}:`)
+    const delta = catalogDeltaLine(report.newModelIds)
+    if (delta) lines.push(delta)
   }
   if (report.wiredFree.length > 0) {
     lines.push('')
@@ -126,8 +135,7 @@ export function renderCommandOutput(report: FreeOptionsReport): string[] {
   )
   for (const lane of report.discoveryOnly ?? [])
     lines.push(`- ${lane.label}: discovery only; integration unavailable`)
-  for (const offer of report.discoveryOffers ?? [])
-    lines.push(`- Discovery: ${offer} (source: custats free-token feed)`)
+  lines.push(...renderOffersCommandBlock(report.discoveryOffers ?? []))
   lines.push(`${quotaFootnote(report)}; local servers must be running.`)
   return lines
 }
@@ -189,8 +197,13 @@ export function renderFreeOptionsAnnounce(
     // unverified either way (FID-2026-1008-004).
     const ending = report.discoveryOffersEndingSoon ?? 0
     const endingNote = ending > 0 ? `${ending} end within 72h; ` : ''
+    // Titles only: the announce stays a bounded preview (FID-2026-1016-010).
+    const titles = offers
+      .slice(0, 2)
+      .map((offer) => offer.title)
+      .join('; ')
     lines.push(
-      `- Offers: ${offers.length} advertised free-token offer(s) in the custats feed; ${endingNote}eligibility unverified — ${offers.slice(0, 2).join('; ')}`,
+      `- Offers: ${offers.length} advertised free-token offer(s) in the custats feed; ${endingNote}eligibility unverified — ${titles}`,
     )
   }
   if (discovery && (discovery.newCount > 0 || discovery.changedCount > 0)) {

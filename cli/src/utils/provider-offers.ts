@@ -6,7 +6,10 @@ import {
   feedFreshness,
   type CustatsOffer,
 } from '@savant-code/common/providers/custats-feed'
-import { matchOfferHosts } from '@savant-code/common/providers/custats-models'
+import {
+  matchOfferHosts,
+  type MatchableOffer,
+} from '@savant-code/common/providers/custats-models'
 import { getEffectiveProviderRegistry } from '@savant-code/common/providers/custom-providers'
 import { hasProviderCredentials } from '@savant-code/common/providers/readiness'
 import { z } from 'zod/v4'
@@ -17,6 +20,7 @@ import { providerNotifications } from './provider-notifications'
 import { loadModelSelection, loadSettings } from './settings'
 import { writeFileAtomic } from './write-file-atomic'
 
+import type { FreeOfferRow } from './free-options-types'
 import type { ProviderFact } from '@savant-code/common/providers/provider-notifications'
 
 const URL = 'https://freetokens.custats.info/feed'
@@ -28,6 +32,85 @@ const cacheSchema = z.object({
 let running: Promise<void> | undefined
 const recentAttempts = new Map<string, number>()
 const memoryCaches = new Map<string, z.infer<typeof cacheSchema>>()
+
+/**
+ * The advertised deadline the feed states for one offer, in epoch ms, or null
+ * when it states none we can resolve (FID-2026-1016-010).
+ *
+ * The feed lifts two shapes and the CLI was keyed to the wrong one: every
+ * consumer read `expiryTimestamp` (the vestigial ISO branch) while the live
+ * feed emits a human date into `expiryDate`, so the whole deadline surface was
+ * structurally inert. ISO wins when present; otherwise a date-only deadline
+ * resolves to END OF DAY UTC, so an offer is never called expired early.
+ */
+export function resolveOfferDeadlineMs(offer: CustatsOffer): number | null {
+  if (offer.expiryTimestamp) {
+    const iso = Date.parse(offer.expiryTimestamp)
+    if (Number.isFinite(iso)) return iso
+  }
+  if (offer.expiryKind === 'expires' && offer.expiryDate) {
+    const day = Date.parse(`${offer.expiryDate}T23:59:59Z`)
+    if (Number.isFinite(day)) return day
+  }
+  return null
+}
+
+/** The deadline day, UTC. */
+function isoDay(ms: number): string {
+  return new Date(ms).toISOString().slice(0, 10)
+}
+
+/**
+ * What the display may say about one offer's deadline (FID-2026-1016-010).
+ *
+ * Three honest cases, never conflated: a resolved deadline is advertised; a
+ * parsed `· ongoing.` tail is the feed stating there is none; a tail that
+ * annexes an expiry we cannot read, or no tail at all, is data we hold and
+ * cannot resolve — which stays `unverified`. The signal is the TAIL's
+ * statement, deliberately not the description's prose: an offer whose terms
+ * say `credits expire 12 months after grant` (or `never expire`) while its
+ * tail says `ongoing` advertises no deadline, and calling that unverified
+ * would be the same dishonesty in the other direction.
+ */
+function offerDeadlineLabel(offer: CustatsOffer): string {
+  const deadline = resolveOfferDeadlineMs(offer)
+  if (deadline !== null) return `advertised deadline ${isoDay(deadline)}`
+  if (offer.category === null || offer.expiryKind === 'expires')
+    return 'deadline unverified'
+  return 'no advertised deadline'
+}
+
+/**
+ * The cached feed's on-disk path — ONE home for it, so the refresh writer and
+ * the reader below cannot drift apart on the file name (a caller that guesses
+ * it silently reads an empty feed).
+ */
+export function providerOffersCachePath(): string {
+  return join(getConfigDir(), 'provider-offers.json')
+}
+
+/**
+ * The registry's host→provider-id map plus the registry it came from — ONE
+ * walk, shared by the expiry-fact loop and the discovery rows (Law 13), so
+ * attribution cannot drift between what we notify and what we display.
+ */
+function providerHostAttribution(): {
+  registry: ReturnType<typeof getEffectiveProviderRegistry>
+  hostToIds: Map<string, string[]>
+} {
+  const registry = getEffectiveProviderRegistry()
+  const hostToIds = new Map<string, string[]>()
+  for (const c of Object.values(registry)) {
+    try {
+      const host = new globalThis.URL(c.baseUrl).hostname
+      hostToIds.set(host, [...(hostToIds.get(host) ?? []), c.id])
+    } catch {
+      /* Endpoint placeholders need configured metadata. */
+    }
+  }
+  return { registry, hostToIds }
+}
+
 export function refreshProviderOffers(signal?: AbortSignal): Promise<void> {
   if (running) return running
   running = refresh(signal).finally(() => {
@@ -37,7 +120,7 @@ export function refreshProviderOffers(signal?: AbortSignal): Promise<void> {
 }
 async function refresh(signal?: AbortSignal): Promise<void> {
   const now = Date.now()
-  const file = join(getConfigDir(), 'provider-offers.json')
+  const file = providerOffersCachePath()
   let cache = memoryCaches.get(file)
   try {
     if (existsSync(file))
@@ -80,16 +163,7 @@ async function refresh(signal?: AbortSignal): Promise<void> {
   const parsed = parseCustatsFeed(cache.xml)
   if (!feedFreshness(parsed.lastBuildDate, now, 72 * 3600_000)) return
   const registry = getEffectiveProviderRegistry()
-  const configs = Object.values(registry)
-  const hostToIds = new Map<string, string[]>()
-  for (const c of configs) {
-    try {
-      const host = new globalThis.URL(c.baseUrl).hostname
-      hostToIds.set(host, [...(hostToIds.get(host) ?? []), c.id])
-    } catch {
-      /* Endpoint placeholders need configured metadata. */
-    }
-  }
+  const { hostToIds } = providerHostAttribution()
   const matches = matchOfferHosts(parsed.offers, new Set(hostToIds.keys()))
   const facts: ProviderFact[] = []
   const values = { ...readStoredProviderKeys(), ...process.env }
@@ -100,10 +174,8 @@ async function refresh(signal?: AbortSignal): Promise<void> {
     if (ids.length !== 1) continue
     const id = ids[0]
     const original = parsed.offers.find((o) => o.url === offer.url)
-    const deadline = original?.expiryTimestamp
-      ? Date.parse(original.expiryTimestamp)
-      : NaN
-    if (!Number.isFinite(deadline)) continue
+    const deadline = original ? resolveOfferDeadlineMs(original) : null
+    if (deadline === null) continue
     const left = deadline - now
     const window =
       left <= 0
@@ -143,7 +215,7 @@ function persistOffers(file: string, cache: z.infer<typeof cacheSchema>): void {
 }
 /** Fresh feed offers, or [] when the cache is missing, stale, or unreadable. */
 function readFreshFeedOffers(now: number): CustatsOffer[] {
-  const file = join(getConfigDir(), 'provider-offers.json')
+  const file = providerOffersCachePath()
   try {
     const cache =
       memoryCaches.get(file) ??
@@ -161,22 +233,49 @@ function readFreshFeedOffers(now: number): CustatsOffer[] {
   }
 }
 
-/** Unattributed offers remain visible as discovery; they never create setup actions. */
-export function readProviderOfferDiscovery(now = Date.now()): string[] {
-  return readFreshFeedOffers(now).map(
-    (offer) =>
-      `${offer.title}: advertised offer; account eligibility unverified${offer.expiryTimestamp ? `; advertised deadline ${offer.expiryTimestamp}` : '; deadline unverified'}`,
-  )
+/**
+ * Fresh offers as display rows: what the feed advertises, whose lanes the
+ * prose names, and the detail page (FID-2026-1016-010). Unattributed offers
+ * remain visible as discovery with an empty `providerLabels`; they never
+ * create setup actions (FID-2026-0928-012).
+ */
+export function readProviderOfferDiscovery(now = Date.now()): FreeOfferRow[] {
+  const offers = readFreshFeedOffers(now)
+  if (offers.length === 0) return []
+  const { registry, hostToIds } = providerHostAttribution()
+  const labels = new Map<MatchableOffer, string[]>()
+  for (const { offer, hosts } of matchOfferHosts(
+    offers,
+    new Set(hostToIds.keys()),
+  ).attributed) {
+    const ids = [...new Set(hosts.flatMap((h) => hostToIds.get(h) ?? []))]
+    labels.set(
+      offer,
+      ids
+        .map((id) => registry[id]?.label ?? id)
+        .sort((a, b) => a.localeCompare(b)),
+    )
+  }
+  return offers.map((offer) => ({
+    title: offer.title,
+    category: offer.category,
+    deadlineLabel: offerDeadlineLabel(offer),
+    providerLabels: labels.get(offer) ?? [],
+    url: offer.url,
+  }))
 }
 
 /**
  * Offers whose advertised deadline falls within the next 72 hours of `now`
- * (FID-2026-1008-004). Offers without a parsed deadline are never counted.
+ * (FID-2026-1008-004). Offers without a RESOLVABLE deadline are never counted
+ * — the resolver reads both feed shapes, so a date-only `expires <Mon> <d>,
+ * <yyyy>` deadline counts too (FID-2026-1016-010).
  */
 export function countOffersEndingSoon(now = Date.now()): number {
   return readFreshFeedOffers(now).filter((offer) => {
-    if (!offer.expiryTimestamp) return false
-    const left = Date.parse(offer.expiryTimestamp) - now
+    const deadline = resolveOfferDeadlineMs(offer)
+    if (deadline === null) return false
+    const left = deadline - now
     return left > 0 && left <= 72 * 3600_000
   }).length
 }

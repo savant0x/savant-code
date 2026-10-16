@@ -28,7 +28,9 @@ import {
   renderFreeOptionsMarkdown,
   renderCommandOutput,
 } from '../free-options'
-import { CATALOG, CTX } from './free-options-test-fixtures'
+import { CATALOG, CTX, offerRow } from './free-options-test-fixtures'
+
+import type { FreeOfferRow } from '../free-options-types'
 
 describe('FID-2026-0928-012: cache TTL', () => {
   test('fresh cache (written 1h ago) passes the 24h TTL', () => {
@@ -226,7 +228,11 @@ describe('FID-2026-1001-002: boot announce (cached reader + renderer)', () => {
 
   test('announce offers line: window count only when positive (FID-2026-1008-004)', () => {
     const base = buildFreeOptionsReport(CATALOG, CTX)
-    const offers = ['Viktor: advertised offer', 'Valyu: advertised offer']
+    // Rows since FID-2026-1016-010; the announce previews titles only.
+    const offers: FreeOfferRow[] = [
+      offerRow({ title: 'Viktor' }),
+      offerRow({ title: 'Valyu' }),
+    ]
     const withWindow = renderFreeOptionsAnnounce({
       ...base,
       discoveryOffers: offers,
@@ -234,6 +240,7 @@ describe('FID-2026-1001-002: boot announce (cached reader + renderer)', () => {
     }).join('\n')
     expect(withWindow).toContain('Offers: 2 advertised')
     expect(withWindow).toContain('1 end within 72h;')
+    expect(withWindow).toContain('Viktor; Valyu')
     const noWindow = renderFreeOptionsAnnounce({
       ...base,
       discoveryOffers: offers,

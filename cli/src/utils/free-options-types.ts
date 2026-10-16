@@ -53,6 +53,27 @@ export type FreeLane = {
   models: string[]
 }
 
+/**
+ * One advertised feed offer as the display needs it (FID-2026-1016-010).
+ * Structured rather than a pre-rendered string so the renderers can bound,
+ * group and attribute the same rows; `providerLabels` empty means the offer's
+ * prose names no provider in the registry — still discovery, never an action.
+ */
+export type FreeOfferRow = {
+  title: string
+  /** Category lifted from the description tail; null when no tail parsed. */
+  category: string | null
+  /**
+   * What the feed actually states: `advertised deadline <yyyy-mm-dd>`,
+   * `no advertised deadline` (the offer is ongoing), or `deadline unverified`
+   * (a claim we hold but could not resolve).
+   */
+  deadlineLabel: string
+  /** Registry labels the offer's prose attributes to; [] when unattributed. */
+  providerLabels: string[]
+  url: string
+}
+
 export type FreeOptionsReport = {
   fetchedAt: string | null
   stale: boolean
@@ -67,7 +88,12 @@ export type FreeOptionsReport = {
   notWired: Array<FreeLane & { setupCommand: string }>
   localFree: Array<{ id: string; label: string; setupCommand: string }>
   discoveryOnly?: FreeLane[]
-  discoveryOffers?: string[]
+  discoveryOffers?: FreeOfferRow[]
   /** Offers ending within 72h (FID-2026-1008-004). Absent means 0. */
   discoveryOffersEndingSoon?: number
+  /**
+   * Catalog delta: model ids newly advertised since the previous catalog
+   * (FID-2026-1016-010). Absent or empty means the envelope carried none.
+   */
+  newModelIds?: string[]
 }

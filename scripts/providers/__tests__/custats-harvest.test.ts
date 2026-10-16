@@ -11,15 +11,14 @@
  * The feed is untrusted input: malformed entries are skipped, optional
  * fields lift to safe defaults, and nothing here ever mutates provider
  * config — the gauntlet decides promotion, not the feed.
+ *
+ * `matchOfferHosts` moved to custats-attribution.test.ts (300-line ceiling,
+ * FID-2026-1016-010); the category/expiry lift pins stay here.
  */
 import { describe, expect, test } from 'bun:test'
 
-import {
-  feedFreshness,
-  parseCustatsFeed,
-  type CustatsOffer,
-} from '../lib/custats-feed'
-import { matchOfferHosts, parseCustatsModels } from '../lib/custats-models'
+import { feedFreshness, parseCustatsFeed } from '../lib/custats-feed'
+import { parseCustatsModels } from '../lib/custats-models'
 
 const FEED_XML = `<?xml version="1.0" encoding="UTF-8"?>
 <rss version="2.0"><channel>
@@ -167,76 +166,70 @@ describe('FID-2026-0928-011: freshness gates (soft-skip, not crash)', () => {
   })
 })
 
-describe('FID-2026-0928-011: matchOfferHosts (attribution, never auto-queue)', () => {
-  const KNOWN_HOSTS = new Set([
-    'api.z.ai',
-    'vercel.com',
-    'ai-gateway.vercel.sh',
-    'platform.kimi.com',
-  ])
+describe('FID-2026-1016-010: the category is the FINAL dash segment', () => {
+  /** One item, so a description can be probed in isolation. */
+  function categoryOf(description: string): {
+    category: string | null
+    expiryKind: string
+    expiryDate: string | null
+  } {
+    const parsed = parseCustatsFeed(
+      `<rss><channel><lastBuildDate>Mon, 28 Sep 2026 10:10:55 +0000</lastBuildDate><item><title>T</title><link>https://freetokens.custats.info/offers/t.html</link><description>${description}</description></item></channel></rss>`,
+    )
+    return parsed.offers[0]!
+  }
 
-  const offers: CustatsOffer[] = [
-    {
-      title: 'Z AI Free Model APIs',
-      url: 'https://freetokens.custats.info/offers/z-ai.html',
-      description: 'Free GLM-4.7-Flash — API providers · ongoing.',
-      category: 'API providers',
-      expiryKind: 'ongoing',
-      expiryDate: null,
-      amountHint: null,
-    },
-    {
-      title: 'Ling 3.0 Flash Sante Free (Vercel AI Gateway)',
-      url: 'https://freetokens.custats.info/offers/ling.html',
-      description:
-        'Ling 3.0 Flash Sante at $0 on AI Gateway — API providers · expires Oct 4, 2026.',
-      category: 'API providers',
-      expiryKind: 'expires',
-      expiryDate: '2026-10-04',
-      amountHint: null,
-    },
-  ]
-
-  test('host literals and brand-label prose both attribute; short brands do not', () => {
-    const { attributed, unattributed } = matchOfferHosts(offers, KNOWN_HOSTS)
-    // "Vercel AI Gateway" prose → brand-label token `vercel` matches both
-    // vercel lanes; "Z AI" has no ≥3-char label (`z` is not one) and no host
-    // literal, so it lands in unattributed BY DESIGN (operator review).
-    const ling = attributed.find((a) => a.offer.title.includes('Vercel'))
-    expect(ling?.hosts).toContain('vercel.com')
-    expect(ling?.hosts).toContain('ai-gateway.vercel.sh')
+  test('multi-dash prose lifts the last segment, not the whole run-on', () => {
     expect(
-      attributed.find((a) => a.offer.title.startsWith('Z AI')),
-    ).toBeUndefined()
-    expect(unattributed.map((u) => u.offer.title)).toEqual([
-      'Z AI Free Model APIs',
-    ])
+      categoryOf(
+        'A free trial — it is not an ongoing free tier — Coding · ongoing.',
+      ).category,
+    ).toBe('Coding')
   })
 
-  test('host literal in prose attributes even without a brand token', () => {
-    const hostLiteralOffer: CustatsOffer = {
-      ...offers[0],
-      title: 'Z AI Free Model APIs',
-      description:
-        'Free GLM-4.7-Flash at https://api.z.ai — API providers · ongoing.',
-    }
-    const { attributed } = matchOfferHosts([hostLiteralOffer], KNOWN_HOSTS)
-    expect(attributed[0]?.hosts).toContain('api.z.ai')
+  test('a single-dash tail is unchanged', () => {
+    expect(
+      categoryOf('Free GLM-4.7-Flash — API providers & tools · ongoing.')
+        .category,
+    ).toBe('API providers & tools')
   })
 
-  test('the custats host itself never counts as attribution', () => {
-    const { attributed } = matchOfferHosts(
-      offers,
-      new Set(['freetokens.custats.info']),
+  test('a multi-dash expire tail keeps its expiry and its class outcome', () => {
+    const lifted = categoryOf(
+      'Trial — no longer gated — API providers · expires Oct 4, 2026.',
     )
-    expect(attributed).toEqual([])
+    expect(lifted.category).toBe('API providers')
+    expect(lifted.expiryKind).toBe('expires')
+    expect(lifted.expiryDate).toBe('2026-10-04')
+    // The harvest leg's filter reads this same lifted category, so the class
+    // outcome is unchanged for every measured item: API-provider prose stays
+    // in the class, and a non-API category stays out of it instead of
+    // entering on the strength of polluted text.
+    const inClass = (category: string | null): boolean =>
+      category !== null && /api provider/i.test(category)
+    expect(inClass(lifted.category)).toBe(true)
+    expect(
+      inClass(categoryOf('Trial — not ongoing — Coding · ongoing.').category),
+    ).toBe(false)
   })
 
-  test('offers matching nothing land in unattributed (operator review, not the queue)', () => {
-    const { unattributed } = matchOfferHosts(
-      offers,
-      new Set(['api.example-no-match.com']),
+  test('a description with no tail still fails closed to no category', () => {
+    expect(
+      categoryOf('Prose with no tail, nothing to lift.').category,
+    ).toBeNull()
+  })
+
+  test('the kind is the TAIL statement, not the prose (FID-2026-1016-010)', () => {
+    // A tail that annexes an unreadable expiry still declares one; the
+    // leftover month-parse failure must not silently relabel it `ongoing`.
+    const vague = categoryOf('Limited time — API providers · expires soon.')
+    expect(vague.expiryKind).toBe('expires')
+    expect(vague.expiryDate).toBeNull()
+    // Prose that merely describes expiry TERMS is not an advertised deadline.
+    const terms = categoryOf(
+      'Credits that never expire, for students — Student · ongoing.',
     )
-    expect(unattributed.length).toBe(2)
+    expect(terms.expiryKind).toBe('ongoing')
+    expect(terms.expiryDate).toBeNull()
   })
 })

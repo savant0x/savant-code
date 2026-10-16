@@ -99,3 +99,14 @@ artifacts required by ECHO retain their gate-level exemptions.
   `dev/operator-decisions.md`, `dev/fids/**`, `dev/feature-pipeline/**`,
   `dev/session-summaries/**`, `scripts/version-docs.ts`,
   `scripts/version-docs-drift.test.ts`, `.agents/skills/**/SKILL.md`
+- FID-2026-1016-010: `cli/src/utils/provider-offers.ts`,
+  `cli/src/utils/free-options-offers.ts`, `cli/src/utils/free-options-render.ts`,
+  `cli/src/utils/free-options-types.ts`, `cli/src/utils/free-options.ts`,
+  `cli/src/utils/__tests__/free-options.test.ts`,
+  `cli/src/utils/__tests__/free-options-offers.test.ts`,
+  `cli/src/utils/__tests__/free-options-digest.test.ts`,
+  `cli/src/utils/__tests__/free-options-test-fixtures.ts`,
+  `cli/src/utils/__tests__/provider-offers.test.ts`,
+  `common/src/providers/custats-feed.ts`,
+  `scripts/providers/__tests__/custats-harvest.test.ts`,
+  `scripts/providers/__tests__/custats-attribution.test.ts`
