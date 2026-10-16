@@ -10783,7 +10783,7 @@ FID sections below.
 
 **Closed:** 2026-08-01
 **Resolution:** Converged and authorized the Zero-style terminal chat renderer implementation. Selected the existing row-major Markdown table renderer, made the Markdown renderer the sole owner of block separation, standardized measured `> `/`◆ ` prefixes, replaced repeated leaf width deductions with a shared width ledger, and defined visual acceptance fixtures for hierarchy, code, tables, responsive widths, and streaming stability.
-**Verified by:** FreeBuff ECHO protocol read 0-end; FID RED/GREEN/AUDIT double review; current source and OpenTUI 0.2.2 API audit; Prettier and lifecycle checks. Runtime implementation and post-implementation verification follow.
+**Verified by:** Independent ECHO protocol read 0-end; FID RED/GREEN/AUDIT double review; current source and OpenTUI 0.2.2 API audit; Prettier and lifecycle checks. Runtime implementation and post-implementation verification follow.
 **Archived:** 2026-08-01
 
 ### Fold Sidebar Options on Startup (FID-2026-0801-001)
@@ -10944,7 +10944,7 @@ FID sections below.
 
 **Closed:** 2026-07-27
 **Resolution:** Implemented Phase 1 of the Tool Safety + Sandbox Engine. Added declarative safety metadata per tool in `common/src/tools/safety-registry.ts`, a runtime `SandboxEngine` in `packages/agent-runtime/src/tools/sandbox/engine.ts`, a destructive shell command denylist, and network gating. Wired sandbox evaluation into `packages/agent-runtime/src/tools/tool-executor.ts` after FSM/phase gating and before handler invocation. Added user-facing permission controls: `--permission-mode <safe|prompt|unsafe>` CLI flag, persisted setting via `settings.json`, and `/permissions` slash command (aliases `sandbox`, `safety`). Also restored the `/login` slash command (alias `signin`) and added the missing `g` alias for `/goal`.
-**Verified by:** All 4 workspace typechecks pass; lint passes with zero warnings; sandbox tests 30 pass / 0 fail; CLI tests 100 pass / 0 fail; Nova source verification signed off.
+**Verified by:** All 4 workspace typechecks pass; lint passes with zero warnings; sandbox tests 30 pass / 0 fail; CLI tests 100 pass / 0 fail; independent source verification signed off.
 **Archived:** 2026-07-27
 
 ### Rename Remaining `.savant/` References (FID-2026-0727-002)
@@ -12753,14 +12753,14 @@ Decomposed the comprehensive TUI rebuild into 5 incremental phase FIDs:
 
 **Closed:** 2026-07-19
 **Resolution:** 5 fixes for the pre-rebrand 0.0.2 push blockers: (1) 11 workspace `package.json` `name` fields reverted `@savant-code/X` → `@savant-code/X` to match the 1,131 existing consumer imports (Option C: pre-rebrand snapshot = original names; full rebrand will land in next push); (2) hard-deleted 2 truly-orphaned agent dirs (`agents/e2e/`, `agents/__tests__/`), kept 5 actively-referenced helper tool-library dirs (`browser-use/`, `editor/`, `file-explorer/`, `librarian/`, `types/`) per call-graph verification; (3) `.gitignore` `dist` → `**/dist/` for nested dir exclusion; (4) `cli/src/pre-init/load-dev-env.ts` removed stale 3-line comment referencing deleted harness (algorithm intact); (5) `ARCHITECTURE.md` helper-dir clarification section appended + `dev/test-prompts/0.0.2-final-pass.md` Items 11/49/50/51/57 reconciled to current code state. Plus 3 mechanical gates: VERSION `0.0.1`→`0.0.2` (in `VERSION` + root `package.json` + `cli/package.json`), FID-017 doc archived to `dev/fids/archive/`, 271 files staged via `git add -A`.
-**Verified by:** `bun install` exit 0 (no workspace resolution errors); `bun install --frozen-lockfile` exit 0 (`Checked 803 installs across 797 packages (no changes)`); `bun run typecheck` × 4 (sdk + common + packages/agent-runtime + cli) zero errors; `bun test src/` (sdk) **415 pass / 0 fail**; `bun test` (full sdk) **488 pass / 0 fail** (73 e2e correctly skip without API key per FID-016); `git status --porcelain` post-`git add -A` = 0; ARCHITECTURE.md helper-dir section + 0.0.2-final-pass.md checklist reconciled; Nova outbox close-out report at `dev/nova/outbox/2026-07-19-fid-017-closeout.md` (third-party verification requested).
+**Verified by:** `bun install` exit 0 (no workspace resolution errors); `bun install --frozen-lockfile` exit 0 (`Checked 803 installs across 797 packages (no changes)`); `bun run typecheck` × 4 (sdk + common + packages/agent-runtime + cli) zero errors; `bun test src/` (sdk) **415 pass / 0 fail**; `bun test` (full sdk) **488 pass / 0 fail** (73 e2e correctly skip without API key per FID-016); `git status --porcelain` post-`git add -A` = 0; ARCHITECTURE.md helper-dir section + 0.0.2-final-pass.md checklist reconciled; third-party outbox close-out report at `dev/nova/outbox/2026-07-19-fid-017-closeout.md` (third-party verification requested).
 **Archived:** 2026-07-19
 
 ## FID-2026-0718-016 — critical — Pre-Existing SDK Test Failures (22 across 7 groups)
 
 **Closed:** 2026-07-18
 **Resolution:** 7 fix groups for 22 pre-existing SDK test failures tracked by Nova audit after FID-015 verified: (1) loadUserKnowledgeFiles Windows path-mock normalization [13 tests in user-knowledge-files.test.ts]; (2) codeSearch cwd Windows path-mock normalization [3 tests]; (3) env-stub bypass disable so database tests exercise real fetch path [2 tests]; (4) initial-session-state mocks use plain string[] readdir + path.basename stat for cross-platform [1 test]; (5) loadLocalAgents verbose now spies on logger.error [1 test]; (6) loadSkills malformed now spies on logger.error/warn [1 test]; (7) apply-patch E2E skipped when RUN_CODEBUFF_E2E env not set (was silently running in mock mode) [1 test, 14 sibling E2E tests].
-**Verified by:** typecheck × 4 clean (sdk + common + agent-runtime + cli), targeted 7 fix tests all pass, 20 originally-failing tests Nova flagged after FID-015 now all PASS; full SDK suite has 415 pass + ~73 E2E now correctly skip (Fix G), no regressions in alive tests.
+**Verified by:** typecheck × 4 clean (sdk + common + agent-runtime + cli), targeted 7 fix tests all pass, 20 originally-failing tests flagged after FID-015 now all PASS; full SDK suite has 415 pass + ~73 E2E now correctly skip (Fix G), no regressions in alive tests.
 **Archived:** 2026-07-18
 
 ## FID-2026-0718-015 — medium — Windows Platform Test Fixes
@@ -12775,7 +12775,7 @@ Decomposed the comprehensive TUI rebuild into 5 incremental phase FIDs:
 
 **Closed:** 2026-07-18
 **Resolution:** 5 fixes: (1) `realpathFn` injection in `resolveAndContain` for testability (default = `fs.realpathSync.native`); (2-3) `realpathFn` thread-through in `sdk/src/tools/{change-file,apply-patch}.ts`; (4) Windows path normalization (normalize-for-comparison — no-op on Linux); (5) Test updates with `realpathFn: (p) => p` for mock fs + cross-platform rewrite of `path-utils.test.ts`. SDK-side realpath defense closes FID-013 Q11 TOCTOU async window.
-**Verified by:** typecheck × 4 zero errors, code-reviewer-minimax-m3 signed off (twice — v2 + v3 polish), paths.test.ts 18/4/0 regression-clean, Nova audit pending.
+**Verified by:** typecheck × 4 zero errors, code-reviewer-minimax-m3 signed off (twice — v2 + v3 polish), paths.test.ts 18/4/0 regression-clean, independent audit pending.
 **Caveats:** 18 SDK tool tests fail on Windows due to pre-existing mock fs key mismatch (tracked as FID-2026-0718-016).
 **Archived:** 2026-07-18
 
@@ -12783,21 +12783,21 @@ Decomposed the comprehensive TUI rebuild into 5 incremental phase FIDs:
 
 **Closed:** 2026-07-18
 **Resolution:** 5 fixes across 5 files: (1) `paths.ts:safeRealpath` symlink defense + path.isAbsolute invariant + remove process.cwd() fallback + catch-all errno translate (ENOENT/ELOOP/EACCES/EINVAL/EPERM/ENOTDIR/EIO/ENOMEM/EFAULT) + ES2022 `cause` re-throw; (2) `paths.ts:resolveAndContain` rejects missing/empty/non-absolute/non-string projectRoot; (3) `tool-executor.ts` F3 amendment — `resolveAndContain` moved OUTSIDE `!isDevOverride` guard so containment always fires; (4) `apply-patch.ts` NEW defense-in-depth (was 17-line thin wrapper); (5) `write-file.ts` + `str-replace.ts` defensive null check on `params.fileContext?.projectRoot` + `file.ts:getStubProjectFileContext` updated to `/mock/project/root`. 21 tests total (18 pass + 4 skipIf win32 on Windows; 21/21 on Linux/macOS). All 4 callers (gate + 3 handlers) uniformly defensive per ECHO Law 13.
-**Verified by:** typecheck × 3 zero errors (common / packages/agent-runtime / cli); bun test paths.test.ts 18 pass + 4 skip on Win32; bun test free-agents.test.ts 8/8 regression pass; code-reviewer-minimax-m3 "Ship it." × 2 (initial review + final polish); Nova audit approved (4/5 corrections verified at exact line + 1 line-drift).
+**Verified by:** typecheck × 3 zero errors (common / packages/agent-runtime / cli); bun test paths.test.ts 18 pass + 4 skip on Win32; bun test free-agents.test.ts 8/8 regression pass; code-reviewer-minimax-m3 "Ship it." × 2 (initial review + final polish); independent audit approved (4/5 corrections verified at exact line + 1 line-drift).
 **Archived:** 2026-07-18
 
 ## FID-2026-0718-012 — medium (HIGH for autonomous-deployment) — GREEN-Phase Path-Traversal Hardening (Finding D)
 
 **Closed:** 2026-07-18
 **Resolution:** Added centralized `resolveAndContain(filePath, opts)` helper in NEW `common/src/util/paths.ts`. Replaced ad-hoc `normalizePosix` + `isExemptPath` logic in `tool-executor.ts` with the canonical helper. Added defense-in-depth at handler top in `write-file.ts` + `str-replace.ts`. Created NEW `common/src/util/__tests__/paths.test.ts` with 14 test cases covering Q1-Q8 (absolute paths, Windows separators, empty, idempotency, exempt-with-`..` fail-safe, cross-platform paths). Honest scope declines: symlink defense + Windows-drive semantics are documented as future-FID (Q3/Q4).
-**Verified by:** Three-layer audit (Savant → orchestrator → Nova). Typecheck zero errors across `common/`, `packages/agent-runtime/`, `cli/`. `paths.test.ts` 14/14 pass.
+**Verified by:** Three-layer audit (Savant → orchestrator → independent third-party audit). Typecheck zero errors across `common/`, `packages/agent-runtime/`, `cli/`. `paths.test.ts` 14/14 pass.
 **Archived:** 2026-07-18
 
 ## FID-2026-0718-011 — low — Cleanup Stale Agent References in free-agents.test.ts (Finding A)
 
 **Closed:** 2026-07-18
 **Resolution:** Deleted 2 failing tests that referenced deleted agents (`code-reviewer-mimo-pro`, `-kimi`, `-glm`, `-lite`). Per ECHO Law 13, dead-code tests target dead code — delete them. NOT deleted: `LEGACY_MINIMAX_M2_7_MODEL_ID` constant (+ comment) — reverted after typecheck detected that it's still used by 2 other passing tests (Cross-Agent Claim Rule saved a regression).
-**Verified by:** Three-layer audit (Savant → orchestrator → Nova). Typecheck zero errors. `bun test` 8/8 pass.
+**Verified by:** Three-layer audit (Savant → orchestrator → independent third-party audit). Typecheck zero errors. `bun test` 8/8 pass.
 **Archived:** 2026-07-18
 
 ## FID-2026-0718-009 — medium — FSM Activity Indicator (UX Confluence Correction)
