@@ -463,7 +463,7 @@ Two claims that are routinely overstated, both with a lesson behind them:
 
 Three small additive files, following existing patterns:
 
-- `common/src/providers/__tests__/provider-registry.test.ts` — the
+- `common/src/providers/__tests__/validate-provider-registry.test.ts` — the
   fixture entry is the `fixture` / `FIXTURE_API_KEY` base provider defined in
   that file's `base()` helper. Extend it to assert that your entry's
   derivation (routing, setup, picker grouping, guidance) follows from the
