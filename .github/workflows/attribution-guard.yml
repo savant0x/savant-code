@@ -7,13 +7,16 @@
 # one the operator should mark REQUIRED in branch protection: a red check only
 # blocks a merge when the repository requires it.
 #
-# It scans EVERY reachable commit message with the same single-source rule the
-# hooks use (scripts/attribution-guard.ts), so a watermarked commit that arrived
-# without a hook — or was force-pushed into a branch — fails here.
+# It scans EVERY reachable commit message AND the governed documents in the
+# checkout with the same single-source rule the hooks use
+# (scripts/attribution-guard.ts), so a watermarked commit that arrived without a
+# hook — or was force-pushed into a branch — fails here, and so does agent
+# credit inside the records themselves (FID-2026-1016-008).
 #
-# Scope note: this job reads commit messages only. It never mutates history, and
-# it deliberately does not decide renames or authorship — any commit created by
-# a human, a script or a CI bot is judged solely on whether an AGENT is credited.
+# Scope note: this job reads commit messages and document text. It never mutates
+# history, and it deliberately does not decide renames or authorship — any
+# commit or record created by a human, a script or a CI bot is judged solely on
+# whether a FOREIGN AGENT is credited (Savant's own credit is lawful).
 
 name: attribution-guard
 
@@ -39,3 +42,9 @@ jobs:
 
       - name: Scan commit history for agent attribution
         run: bun scripts/attribution-guard.ts --all
+
+      # `dev/` is gitignored and absent from a clone, so this step covers the
+      # tracked trees (docs/, CHANGELOG.md and the other root records); the
+      # local gate covers the whole governed set, dev/ included.
+      - name: Scan governed documents for agent attribution
+        run: bun scripts/attribution-guard.ts --documents

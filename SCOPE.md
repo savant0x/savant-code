@@ -11,6 +11,19 @@ handling or repository boundaries.
 
 ## Open items
 
+- FID-2026-1016-008 — no coding-agent credit in the governed records. Operator
+  ruling (2026-10-16): *strip it, always* and *the guard needs to be there at all
+  times; agent attribution is strictly forbidden for coding agents that are not
+  savant directly.* Extends the FID-2026-1014-003 rule from commit messages to
+  the document content agents write (`**Author:**`/`**Verified By:**` fields and
+  watermarks in `dev/`, `docs/`, `.agents/skills/` and the root records), wired
+  into `validate:repository`, `.githooks/pre-push` and the `attribution-guard`
+  workflow. Stripped: every non-Savant credit the operator's first sweep and this
+  record's own scan found — 9 lines in `dev/` records (two archived FIDs, five
+  FID metadata fields, one build order, one Nova-channel prompt template), plus
+  the 10 third-party credits the new document scan reported in the tracked
+  `CHANGELOG.md` (8 verification lines) and two archived FIDs.
+
 ## Internal follow-ups and current operator authority (2026-10-16)
 
 Implementation-complete records FID-2026-1015-006 and FID-2026-1012-022
@@ -74,6 +87,10 @@ Operator authorization: completion at automation level 3, renewed 2026-10-15;
 specific removal and skill metadata approvals are in answers.md. Governance
 artifacts required by ECHO retain their gate-level exemptions.
 
+- FID-2026-1016-008: `scripts/attribution-guard.ts`,
+  `scripts/__tests__/attribution-guard-documents.test.ts`,
+  `scripts/validate-repository.ts`, `.githooks/pre-push`,
+  `.github/workflows/attribution-guard.yml`.
 - Release-0.0.36: `VERSION`, `package.json`, `agents/package.json`,
   `cli/package.json`, `cli/release/package.json`, `common/package.json`,
   `common/src/constants/protocol-bundle.generated.ts`, `desktop/package.json`,

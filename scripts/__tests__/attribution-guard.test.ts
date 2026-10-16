@@ -106,8 +106,14 @@ describe('collectAttributionIssues — the repository gate', () => {
     try {
       process.chdir(notARepo)
       const issues = collectAttributionIssues()
-      expect(issues).toHaveLength(1)
-      expect(issues[0]?.code).toBe('attribution.scan-failed')
+      // Two surfaces, two fail-closed findings (FID-2026-1016-008): the commit
+      // history cannot be read AND there is no governed document tree to scan.
+      // Both codes are pinned, because a clean result under either failure is
+      // exactly what this gate must never produce.
+      expect(issues.map((issue) => issue.code).sort()).toEqual([
+        'attribution.document-scan-failed',
+        'attribution.scan-failed',
+      ])
     } finally {
       process.chdir(previous)
       rmSync(notARepo, { recursive: true, force: true })

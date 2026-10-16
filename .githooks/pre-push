@@ -8,6 +8,9 @@
 # clean) require every change to be verified with the build and test commands
 # before delivery, so the typecheck and test gates are enforced here too:
 #   - bun run scripts/pre-push-scan.ts   (pushed-range credential scan, F-A)
+#   - bun run scripts/attribution-guard.ts --documents
+#                                        (no coding-agent credit in the governed
+#                                         records; FID-2026-1016-008)
 #   - bun x eslint . --max-warnings 0   (zero-tolerance ESLint, FID-069)
 #   - bun run lint:md                   (markdownlint on governed docs)
 #   - bun run typecheck                 (protocol.config.yaml `type_check` gate)
@@ -45,6 +48,18 @@ scan_status=$?
 if [ "$scan_status" -ne 0 ]; then
   echo "❌ pre-push: credential scan refused the push — fix before pushing (or use --no-verify)" >&2
   exit "$scan_status"
+fi
+
+# The document layer runs on the WORKING TREE, not the pushed range: the
+# records that carried agent credit (`dev/` session summaries, FIDs, the
+# third-party channel) are gitignored and therefore absent from every pushed
+# range — a range-only scan cannot see the class that recurred.
+echo "🔍 pre-push: scanning governed documents for agent attribution..."
+bun run "$HOOK_DIR/../scripts/attribution-guard.ts" --documents
+attribution_status=$?
+if [ "$attribution_status" -ne 0 ]; then
+  echo "❌ pre-push: a coding agent is credited in a governed record — remove the credit before pushing (or use --no-verify)" >&2
+  exit "$attribution_status"
 fi
 
 echo "🔍 pre-push: running hard lint gates (eslint --max-warnings 0 + markdownlint + prettier --check)..."
@@ -114,5 +129,5 @@ if [ "$prettier_status" -ne 0 ]; then
   exit "$prettier_status"
 fi
 
-echo "✅ pre-push: all gates passed (credential scan + ESLint + markdownlint + typecheck + tests + prettier)"
+echo "✅ pre-push: all gates passed (credential scan + agent-attribution scan + ESLint + markdownlint + typecheck + tests + prettier)"
 exit 0
