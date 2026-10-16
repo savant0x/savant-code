@@ -19,6 +19,11 @@ describe('orphan-sweep exclusion rules', () => {
       'cli/src/utils/index.ts',
       'package.json',
       'tsconfig.base.json',
+      // FID-2026-1016-013 E: the durable probes home. A probe is invoked by
+      // hand and cited from the untracked dev/ records this scan cannot read,
+      // so "no mentioner" says nothing about it.
+      'scripts/probes/learnings-prefix-probe.ts',
+      'scripts/probes/release-gate-isolation-probe.ts',
     ]) {
       expect(isExcluded(excluded)).toBe(true)
     }

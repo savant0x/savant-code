@@ -12,7 +12,15 @@
 import { spawnSync } from 'node:child_process'
 import path from 'node:path'
 
-const crateDir = path.resolve(import.meta.dir, '..', 'desktop', 'src-tauri')
+// Moved into `scripts/probes/` (FID-2026-1016-013): one more level to climb,
+// and the directory is the durable probes home the FID template points at.
+const crateDir = path.resolve(
+  import.meta.dir,
+  '..',
+  '..',
+  'desktop',
+  'src-tauri',
+)
 const result = spawnSync('cargo', ['test'], {
   cwd: crateDir,
   encoding: 'utf8',

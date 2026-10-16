@@ -12,6 +12,52 @@
 > the v0.0.36 cut. Release notes are written here at cut time; nothing in this
 > section is a package-release claim until then.
 
+## 2026-10-16 — Operator-ruled follow-ups: the Step-4 surface mounted, one robot design stated (FID-2026-1016-014, low)
+
+Operator rulings on all nine open questions from the entry below, and their implementation.
+
+### Changed
+
+- **The skill-lifecycle traffic-light notice is mounted.** FID-2026-1005-003 Step 4 wrote
+  `cli/src/components/skill-lifecycle-notice.tsx` and listed it as a CLI consumer, but nothing
+  rendered it — a mechanically created draft appeared only in `session-end:review` and
+  `/skills activity`, so the declared surface and the mounted surface disagreed. It now renders in
+  `cli/src/chat/panels.tsx`, in the ghost-message slot whose contract it shares: an empty row when
+  this surface has no unseen event, acknowledgement only after the render commits (at-least-once
+  replay on a crash), no raw tool or model prose (validated metadata fields only). The new suite
+  proves the render **and** pins the mount site, because the defect was an unwired component that
+  every unit test passed on.
+- The office cast states **one design**: `CAST_MODEL_URLS` plus `castModelUrlForPad` (a rotation
+  over a single model after the duplicate was removed) is now the `CAST_MODEL_URL` constant, and
+  the orchestrator's "other model" offset is gone — Savant reads as distinct through its 1.55×
+  height and role accent. A genuinely different CC0 model would come with its own licence row in
+  `ASSET-MANIFEST.md`, as a new record.
+- Three hand-run probes moved to the documented durable probes home, `scripts/probes/`:
+  `desktop-cargo-test-probe.ts`, `learnings-prefix-probe.ts`, `learnings-truncation-probe.ts`
+  (the cargo probe's crate resolution climbed one directory; the `dev/LEARNINGS.md` citations were
+  updated with it). `scripts/orphan-sweep.ts` now names `scripts/probes/**` as an exclusion class
+  with its reason in the header — a probe is invoked by hand and cited from the untracked `dev/`
+  records, so "no mentioner" is not evidence there — and its advisory report drops from **17
+  candidates to 6**, all of which are convention-loaded fixtures, examples or smoke assets that are
+  deliberately retained.
+
+### Removed
+
+- `coding-standards/x402.md` — the changelog already recorded its deletion (FID-2026-0717-003,
+  "agent payment standard, belongs in Savant core"); the file was still present. Removing it executes
+  that record rather than re-litigating it.
+
+### Deliberately unchanged (operator rulings, recorded so they are not re-opened)
+
+- The other `quality:` keys (`max_function_lines`, `max_complexity`, `max_line_length`, `max_params`,
+  `max_comment_density`, `max_nesting_depth`) stay **advisory**; only `max_file_lines` is gated.
+- Both copies of the language standards stay (`coding-standards/*.md` and
+  `.agents/skills/coding-*/SKILL.md`); they agree on the enforced ceiling, which is single-sourced
+  from `protocol.config.yaml`.
+- `WINDOWS.md`'s `Issue #NNN` links stay marked **unverified** rather than presented as checked.
+- `website/index.html` and the two untracked operator files stay where they are — the operator:
+  "they are the official website design files being kept in the repo".
+
 ## 2026-10-16 — One tracked file-length ceiling, the duplicate robot model removed, 19 dead files triaged out (FID-2026-1016-013, medium)
 
 ### Changed

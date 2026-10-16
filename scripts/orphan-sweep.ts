@@ -100,6 +100,13 @@ const CANDIDATE_EXTENSIONS = new Set([
  * - vendored third-party trees and lockfiles are not ours to prune;
  * - `*.generated.*` is derived from tracked inputs;
  * - `*.test.*` files are runner entry points, referenced by glob;
+ * - `scripts/probes/**` is the durable probes home the FID template points at
+ *   (`templates/FID-TEMPLATE.md`). A probe is invoked BY HAND and cited from
+ *   `dev/` records — the untracked FID/governance tree this tracked-file scan
+ *   cannot read — so its absence from this corpus proves nothing. Excluding the
+ *   class is what stopped the report from re-listing the same probes every run
+ *   (FID-2026-1016-013 E); the two probes that used to dodge the list only did
+ *   so because each one's comment named the other;
  * - barrel `index.ts` and `package.json` are resolved by convention;
  * - top-level docs/configs are referenced by tooling and humans, not by name.
  */
@@ -109,6 +116,7 @@ const EXCLUDED_PATTERNS: readonly RegExp[] = [
   /\.generated\./,
   /(^|\/)dist\//,
   /^sdk\/test\//,
+  /(^|\/)scripts\/probes\//,
   /\.test\.(ts|tsx|js)$/,
   /\.spec\.(ts|tsx|js)$/,
   /^bun\.lock$/,
