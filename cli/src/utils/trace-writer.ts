@@ -3,8 +3,9 @@ import path, { dirname } from 'path'
 
 import { IS_DEV } from '@savant-code/common/env'
 
-import { getCliEnv } from './env'
 import { getCurrentChatDir, getProjectRoot } from '../project-files'
+import { getCliEnv } from './env'
+import { rotateIfOversized } from './logger/file-sink'
 
 import type {
   RuntimeTraceEvent,
@@ -104,6 +105,10 @@ export function createTraceWriter(
           await mkdir(dir, { recursive: true })
           ensuredDir = dir
         }
+        // Bounded: a long session rotates the trace at the shared cap instead
+        // of growing without limit (FID-2026-1016-011). Same policy module as
+        // the dev log sink, so the two files cannot drift.
+        rotateIfOversized(filePath)
         await appendFile(filePath, text, 'utf8')
       })
       .catch(() => {

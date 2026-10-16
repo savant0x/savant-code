@@ -5,7 +5,6 @@
 // - logAsErrorIfNeeded.toTrack.data       → `unknown` → `LogValue`; inline safeToJSONValue conversion for logError
 // - logger wrappers (data: unknown, msg?: string, ...args: unknown[]) → `LogValue`
 // - pino call site                        → typed with `LogValue` and final `as unknown as Record<LogLevel, pino.LogFn>` cast
-import { appendFileSync } from 'fs'
 import path from 'path'
 import { format as stringFormat } from 'util'
 
@@ -36,6 +35,7 @@ import {
   type LoggerContext,
 } from './context'
 import {
+  appendBoundedSync,
   CHAT_LOG_FILENAME,
   getLogPath,
   getPinoLogger,
@@ -43,7 +43,11 @@ import {
 } from './file-sink'
 import { sanitizeSecrets, safeStringify } from './sanitize'
 
-export { CHAT_LOG_FILENAME, clearLogFile } from './file-sink'
+export {
+  CHAT_LOG_FILENAME,
+  clearLogFile,
+  trimOversizedDebugLogs,
+} from './file-sink'
 
 import type { LogRecordInput } from '@savant-code/common/schemas/logs'
 import type { LogValue } from '@savant-code/common/types/contracts/logger'
@@ -228,7 +232,9 @@ export function sendAnalyticsAndLog(
       msg: stringFormat(normalizedMsg ?? '', ...args),
     })
     try {
-      appendFileSync(currentLogPath, logEntry + '\n')
+      // Bounded: the dev log rotates at the shared cap instead of growing for
+      // the life of the project (FID-2026-1016-011).
+      appendBoundedSync(currentLogPath, logEntry + '\n')
     } catch {
       // Ignore write errors
     }

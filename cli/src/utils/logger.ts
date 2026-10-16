@@ -20,7 +20,7 @@ export { CHAT_LOG_FILENAME }
 export { sanitizeSecrets }
 export { safeStringify }
 export * from './logger/context'
-export { clearLogFile } from './logger/sink'
+export { clearLogFile, trimOversizedDebugLogs } from './logger/sink'
 
 type LogLevel = (typeof loggingLevels)[number]
 

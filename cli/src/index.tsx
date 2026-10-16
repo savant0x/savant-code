@@ -41,7 +41,7 @@ import { getAuthToken } from './utils/auth'
 import { trimOversizedChatLogs } from './utils/chat-history'
 import { shouldSuppressExplicitWidthQuery } from './utils/env'
 import { initializeAgentRegistry } from './utils/local-agent-registry'
-import { clearLogFile, logger } from './utils/logger'
+import { clearLogFile, logger, trimOversizedDebugLogs } from './utils/logger'
 import {
   applyPersistedDirectProviderSettings,
   detectOllamaAndConfigureDirectProvider,
@@ -217,6 +217,10 @@ async function main(): Promise<void> {
   // the full conversation to log.jsonl. Deferred to keep the stat sweep over
   // chat directories off the startup path.
   setTimeout(trimOversizedChatLogs, 0)
+  // Same reclaim for the dev diagnostic pair (`debug/cli.jsonl`,
+  // `debug/trace.jsonl`): the chat sweep above never reached them, so they grew
+  // unbounded across sessions (FID-2026-1016-011). Deferred identically.
+  setTimeout(trimOversizedDebugLogs, 0)
 
   const queryClient = createQueryClient()
 

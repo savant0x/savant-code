@@ -1,13 +1,14 @@
 import * as fs from 'fs'
 import path from 'path'
 
+import { getProjectDataDir } from '../project-files'
 import {
   CHAT_MESSAGES_FILENAME,
   getFirstUserPrompt,
   readChatMeta,
 } from './chat-meta'
 import { CHAT_LOG_FILENAME, logger } from './logger'
-import { getProjectDataDir } from '../project-files'
+import { MAX_LOG_FILE_BYTES, MIN_LOG_AGE_MS } from './logger/file-sink'
 
 import type { ChatMessage } from '../types/chat'
 
@@ -153,14 +154,10 @@ export function getAllChats(
   }
 }
 
-// Older CLI versions logged the full conversation (including attachments) to
-// log.jsonl on every step, leaving multi-GB files in chat directories. Delete
-// any log file over this cap; with summary-only logging, healthy logs stay
-// far below it.
-const MAX_LOG_FILE_BYTES = 10 * 1024 * 1024
-// Only delete logs from chats untouched for this long, so debug logs for
-// recent chats stay available.
-const MIN_LOG_AGE_MS = 14 * 24 * 60 * 60 * 1000
+// The cap and the idle window live in the sink module that owns every log
+// file path, so the chat sweep and the debug sweep cannot drift
+// (FID-2026-1016-011, Law 13): `MAX_LOG_FILE_BYTES` (10 MiB) and
+// `MIN_LOG_AGE_MS` (14 days) are imported from `./logger/file-sink`.
 
 /**
  * Delete oversized log.jsonl files from chat directories that haven't been
