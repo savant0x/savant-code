@@ -88,6 +88,34 @@ describe('parseDdgHtml', () => {
     ])
     expect(parseDdgHtml('<html>no results</html>')).toEqual([])
   })
+
+  test('accepts reordered single-quoted attributes and a result without a snippet', () => {
+    expect(
+      parseDdgHtml(
+        "<a href='https://example.com/docs' rel='nofollow' class='result__a'>Docs</a>",
+      ),
+    ).toEqual([
+      { title: 'Docs', link: 'https://example.com/docs', snippet: undefined },
+    ])
+  })
+
+  test('does not decode a destination path twice or admit executable links', () => {
+    const href =
+      '//duckduckgo.com/l/?uddg=' +
+      encodeURIComponent('https://example.com/a%2Fb')
+    const html =
+      `<a data-href="https://wrong.example" href="${href}" class="result__a">Encoded path</a>` +
+      '<a href="javascript:alert(1)" class="result__a">Unsafe</a>' +
+      '<a class="result__snippet">A rejected result must not contaminate its predecessor.</a>' +
+      '<a href="https://wrong.example" data-class="result__a">Not a result</a>'
+    expect(parseDdgHtml(html)).toEqual([
+      {
+        title: 'Encoded path',
+        link: 'https://example.com/a%2Fb',
+        snippet: undefined,
+      },
+    ])
+  })
 })
 
 describe('keylessSearch', () => {
@@ -173,5 +201,28 @@ describe('keylessSearch', () => {
       fetch: fetchImpl,
     })
     expect(result).toBeNull()
+  })
+
+  test('a usable DDG hit survives Qwant refusal and a missing snippet', async () => {
+    const result = await keylessSearch({
+      query: 'git worktrees',
+      logger: TEST_AGENT_RUNTIME_IMPL.logger,
+      fetch: (async (input: RequestInfo | URL) =>
+        String(input).includes('api.qwant.com')
+          ? new Response('', { status: 403 })
+          : new Response(
+              "<a href='https://example.com/worktrees' class='result__a'>Worktrees</a>",
+            )) as typeof fetch,
+    })
+    expect(result).not.toBeNull()
+    expect(JSON.parse(result ?? '{}')).toMatchObject({
+      organic: [
+        {
+          title: 'Worktrees',
+          link: 'https://example.com/worktrees',
+          position: 1,
+        },
+      ],
+    })
   })
 })

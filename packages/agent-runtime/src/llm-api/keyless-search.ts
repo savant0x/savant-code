@@ -45,7 +45,7 @@ const unwrapDdgUrl = (href: string): string => {
   try {
     const parsed = new URL(raw.startsWith('//') ? `https:${raw}` : raw)
     const uddg = parsed.searchParams.get('uddg')
-    if (uddg) return decodeURIComponent(uddg)
+    if (uddg) return uddg
     return parsed.href
   } catch {
     return raw.startsWith('//') ? `https:${raw}` : raw
@@ -107,18 +107,25 @@ export function parseQwantJson(text: string): OrganicResult[] {
  * snippet anchor in each result block.
  */
 export function parseDdgHtml(html: string): OrganicResult[] {
-  const pattern =
-    /<a[^>]*class="[^"]*result__a[^"]*"[^>]*href="([^"]+)"[^>]*>([\s\S]*?)<\/a>[\s\S]*?<a[^>]*class="[^"]*result__snippet[^"]*"[^>]*>([\s\S]*?)<\/a>/g
-
   const results: OrganicResult[] = []
-  let match: RegExpExecArray | null
-  while ((match = pattern.exec(html)) !== null) {
-    const href = match[1] ?? ''
-    const title = stripTags(match[2] ?? '')
-    const snippet = stripTags(match[3] ?? '')
-    const link = unwrapDdgUrl(href)
-    if (!title || !link) continue
-    results.push({ title, link, snippet: snippet || undefined })
+  let current: OrganicResult | undefined
+  for (const match of html.matchAll(/<a\b([^>]*)>([\s\S]*?)<\/a>/gi)) {
+    const attribute = (name: string) =>
+      match[1].match(
+        new RegExp(`(?:^|\\s)${name}\\s*=\\s*(["'])(.*?)\\1`, 'i'),
+      )?.[2]
+    const classes = attribute('class')?.split(/\s+/) ?? []
+    const text = stripTags(match[2])
+    if (classes.includes('result__a')) {
+      current = undefined
+      const link = unwrapDdgUrl(decodeHtmlEntities(attribute('href') ?? ''))
+      if (text && /^https?:\/\//i.test(link)) {
+        current = { title: text, link, snippet: undefined }
+        results.push(current)
+      }
+    } else if (classes.includes('result__snippet') && current) {
+      current.snippet = text || undefined
+    }
   }
   return results
 }
