@@ -86,6 +86,19 @@
 - `eslint.config.js` ignores `dev/research/**` alongside `dev/scratchpad/**` — the promoted one-off
   probes and session analyses are the same class of local, untracked ad-hoc tooling.
 
+### Reclaimed
+
+- **302,209,052 B of stale dev debug output removed** — root `debug/` (86,609,790 B), `cli/debug/`
+  (212,636,135 B) and `desktop/debug/` (2,799,127 B), the three directories left by running the CLI
+  from three different project roots. All gitignored runtime state, so nothing tracked was touched.
+  This was step 5 of the audit and it was **not** executed when the record was first closed: the
+  closure gate verified the nine declared gates (all green) but never checked step statuses against
+  the filesystem, so the record claimed "all nine steps implemented" with step 5 unrun. A
+  post-closure check found the directories still present, the step was performed, and the premature
+  closure is recorded in the FID rather than quietly corrected. The `.1` generations found in
+  `cli/debug/` are live evidence that the new rotation fired inside a real CLI run, independent of
+  the unit tests.
+
 ### Push sequence
 
 This change and its governance commits were held briefly by the pre-push test gate, then pushed
