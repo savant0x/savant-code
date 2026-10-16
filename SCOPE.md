@@ -118,7 +118,9 @@ artifacts required by ECHO retain their gate-level exemptions.
   `dev/research/**`, `packages/agent-runtime/src/echo/fid-verification-gates.ts`,
   `common/src/constants/protocol-bundle.generated.ts`. **The six commits are not yet pushed:**
   the pre-push suite is red for the unrelated reason registered below.
-- FID-2026-1016-012 (`created`, root cause NEEDS-REVIEW):
-  `sdk/src/__tests__/code-search-part-d.test.ts`,
-  `sdk/src/__tests__/code-search-part-c.test.ts`,
-  `sdk/src/native/ripgrep.ts`, `sdk/test/setup-test-isolation.ts`
+- FID-2026-1016-012 is **closed and archived** (2026-10-16, 4/4 gates, receipt stamped). Root cause
+  confirmed rather than assumed: the production call site passed the wrong base URL into the
+  ripgrep resolver, so the pinned vendored binary never won and every cold resolution ran a
+  1-second `spawnSync` PATH probe. Fix applied test-first (red → green), full sdk suite 717 pass /
+  0 fail. Write targets released: `sdk/src/tools/code-search/executor.ts`,
+  `sdk/src/__tests__/ripgrep.test.ts`. The sdk suite is no longer a push blocker.

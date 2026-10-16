@@ -12,6 +12,35 @@
 > the v0.0.36 cut. Release notes are written here at cut time; nothing in this
 > section is a package-release claim until then.
 
+## 2026-10-16 — Code search resolves the pinned vendored ripgrep again (FID-2026-1016-012, high)
+
+### Fixed
+
+- FID-2026-1016-012 (high): `resolveCodeSearchRipgrep` handed `getBundledRgPath` **its own**
+  `import.meta.url` (`sdk/src/tools/code-search/executor.ts`), but every vendored candidate in the
+  resolver is expressed relative to `native/ripgrep.ts`'s directory (`esm-dev` =
+  `<moduleDir>/../../vendor/ripgrep/…`). From the wrong base all of them pointed at `<sdk>/src/vendor/…`
+  and missed, so code search fell through to a cwd fallback and a `spawnSync` PATH probe instead of
+  using the pinned binary the same module documents as "the supported configuration" with priority.
+  Measured in one process with the resolver's debug sink: the correct base resolves `esm-dev` →
+  `sdk/vendor/ripgrep/x64-win32/rg.exe`; the production call site resolved `path-probe` →
+  `C:\ProgramData\chocolatey\bin\rg.exe`, this machine's own install. On a machine without `rg` on
+  PATH, from-source code search failed outright; with one, it silently ran an unpinned ripgrep.
+  The call site now passes no URL, so the resolver uses the base its candidates were written for and
+  the vendored binary wins on the first candidate. Rejected the alternative of also trying the
+  module's own URL — a candidate list correct for two different bases keeps the trap.
+- The sdk suite failure that blocked every push is resolved as a consequence, not by touching the
+  test: the failing case was a *symptom*. With the vendored candidates skipped, each cold resolution
+  ran `spawnSync('where rg')` under a 1000 ms timeout, and `sdk/test/setup-test-isolation.ts` clears
+  that probe's memo in a `beforeEach`, so every test re-probed; under multi-file load the probe
+  exceeded its timeout (observed at 1016.81 ms) and resolution threw. Suite: 714 pass / 1 fail →
+  **717 pass / 0 fail**, and the new regression test dropped from 144.90 ms to 0.66 ms because the
+  subprocess probe no longer runs.
+- The regression test was written first and observed red (`Expected: true, Received: false`) so it is
+  known to catch the defect rather than merely agree with the fix. Three competing explanations were
+  tested and refuted before the fix: a multi-file `import.meta.url` difference, `part-c`'s
+  `child_process` mock leaking into the PATH probe, and "any second test file".
+
 ## 2026-10-16 — Diagnostic logs are bounded, FID evidence stays durable, and the disk audit becomes repeatable (FID-2026-1016-011, medium)
 
 ### Changed

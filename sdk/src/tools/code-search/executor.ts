@@ -14,9 +14,20 @@ import { getBundledRgPath } from '../../native/ripgrep'
 import type { SavantCodeToolOutput } from '../../../../common/src/tools/list'
 import type { Logger } from '@savant-code/common/types/contracts/logger'
 
-/** Both preflight and execution must resolve the same bundling context. */
-export const resolveCodeSearchRipgrep = (): string =>
-  getBundledRgPath(import.meta.url)
+/**
+ * Both preflight and execution must resolve the same bundling context.
+ *
+ * FID-2026-1016-012: no caller URL is passed. `getBundledRgPath`'s vendored
+ * candidates are written for `native/ripgrep.ts`'s own directory (see its
+ * `esm-dev`/`esm-dist` doc comment), so handing it THIS module's URL pointed every
+ * vendored candidate at `<sdk>/src/vendor/…` and made all of them miss. Resolution
+ * then fell through to a cwd fallback and a `spawnSync` PATH probe, which meant the
+ * pinned vendored binary — the supported configuration — was never chosen, and a
+ * machine without `rg` on PATH had no code search at all. Calling with no argument
+ * uses the resolver's own `import.meta.url`, which is the base those candidates
+ * were written for.
+ */
+export const resolveCodeSearchRipgrep = (): string => getBundledRgPath()
 
 /**
  * True when `p` exists and is a directory.

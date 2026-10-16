@@ -25,6 +25,7 @@ import {
   PLATFORM_TARGETS,
   resolvePlatformTarget,
 } from '../native/ripgrep'
+import { resolveCodeSearchRipgrep } from '../tools/code-search/executor'
 
 describe('PLATFORM_TARGETS single source (FID-2026-0821-005 B3)', () => {
   test('re-exports the leaf table binding (one source, no copies)', () => {
@@ -172,6 +173,40 @@ describe('vendored manifest + checksum pins (FID-2026-0821-005 B2/B6)', () => {
     }
     expect(findMissingVendorBinaries(vendorSrc)).toEqual([])
     expect(findChecksumMismatches(vendorSrc)).toEqual([])
+  })
+})
+
+describe('code search resolves the vendored binary (FID-2026-1016-012)', () => {
+  /**
+   * The production call site passes a caller URL; the resolver's module-relative
+   * candidates only work from `native/ripgrep.ts`'s own directory. Regressing this
+   * is silent: resolution still succeeds from a `rg` on PATH, so nothing fails
+   * until a machine without ripgrep installed loses code search entirely.
+   */
+  const vendorRoot = join(
+    import.meta.dir,
+    '..',
+    '..',
+    '..',
+    'sdk',
+    'vendor',
+    'ripgrep',
+  )
+
+  test('the production call site resolves the pinned vendored rg', () => {
+    if (!existsSync(vendorRoot)) {
+      return // hermetic guard: full-checkout assertion only
+    }
+
+    expect(resolveCodeSearchRipgrep().startsWith(vendorRoot)).toBe(true)
+  })
+
+  test('the default resolver base resolves the vendored rg, not a PATH rg', () => {
+    if (!existsSync(vendorRoot)) {
+      return // hermetic guard: full-checkout assertion only
+    }
+
+    expect(getBundledRgPath().startsWith(vendorRoot)).toBe(true)
   })
 })
 
