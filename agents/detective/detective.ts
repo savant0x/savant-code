@@ -66,6 +66,7 @@ const detective: SecretAgentDefinition = {
     'glob',
     'read_files',
     'read_subtree',
+    'recover_evidence',
   ],
   spawnableAgents: [],
   inputSchema: {

@@ -84,6 +84,7 @@ export class EchoEnforcement {
     this.gateArmed = options.gateArmed ?? true
     this.designContract = options.designContract
     this.agentState = options.agentState
+    this.state.allowedWriteGlobs = options.agentState?.allowedWriteGlobs
     if (this.agentState) {
       const checkpoint = this.agentState.groundingCheckpoint
       if (checkpoint && isAgentGrounded(this.agentState)) {

@@ -12,6 +12,7 @@ import { canonicalizePath } from '../path-canonicalization'
 import { runPreWriteGates } from '../pre-write-gates'
 import { noteCompliantIntervening } from './escalation'
 import { mirrorReadIntoLedger } from './read-ledger'
+import { evaluateSettledStateCheck } from './vacuous-verifier'
 import {
   creditCallGraphSearch,
   creditVerificationRun,
@@ -93,6 +94,24 @@ export function beforeToolCallImpl(
       // enforcement still fails closed if the read later errors.
       self.groundingReadPending = false
     }
+  }
+
+  // Track reads for Law 1
+  const settled = evaluateSettledStateCheck({
+    state: self.state,
+    toolName,
+    input,
+  })
+  if (settled.reason) {
+    const warning = {
+      law: 3,
+      severity: 'warning' as const,
+      message: settled.reason,
+    }
+    self.pendingSteering.push(warning)
+    self.state.advisoryWarnings.push(warning)
+    if (settled.status === 'block')
+      return { blocked: true, reason: settled.reason, warnings: [warning] }
   }
 
   // Track reads for Law 1
@@ -230,6 +249,8 @@ export function afterToolCallImpl(
     commandSucceeded,
     verificationFailurePaths,
     warnings,
+    commandOutputText: result.text,
+    agentId: self.agentState?.agentId,
   })
 
   // Track grep/search for Law 4 (call-graph verification); extracted to

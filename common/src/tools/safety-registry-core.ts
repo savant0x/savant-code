@@ -27,6 +27,12 @@ export const coreToolSafetyEntries: Partial<Record<ToolName, ToolSafety>> = {
     permission: allow,
     reason: 'Inspects directory subtrees.',
   },
+  recover_evidence: {
+    effect: read,
+    permission: allow,
+    reason:
+      'Recovers hash-verified retained output from the current run chain.',
+  },
   list_directory: {
     effect: read,
     permission: allow,

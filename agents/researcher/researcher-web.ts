@@ -19,7 +19,7 @@ const definition: SecretAgentDefinition = {
   },
   outputMode: 'last_message',
   includeMessageHistory: false,
-  toolNames: ['web_search', 'read_url', 'deep_research'],
+  toolNames: ['web_search', 'read_url', 'deep_research', 'recover_evidence'],
   spawnableAgents: [],
 
   // FID-2026-1012-001: public Scholars Reading List search (read-only, no

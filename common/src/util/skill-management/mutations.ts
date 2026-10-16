@@ -8,7 +8,7 @@ import * as path from 'node:path'
 
 import matter from 'gray-matter'
 
-import { pinDraft } from './baseline-sha'
+import { pinDraft, withBaselineSha } from './baseline-sha'
 import {
   appendLedgerEntry,
   buildAgentSkillDocument,
@@ -65,12 +65,13 @@ export function createSkill(params: {
   })
   if (!built.ok) return built
 
+  const content = withBaselineSha(built.content, 'none')
   const draftDir = skillQuarantineDir(rootDir, name)
   fs.mkdirSync(draftDir, { recursive: true })
-  fs.writeFileSync(path.join(draftDir, SKILL_FILE_NAME), built.content, 'utf8')
+  fs.writeFileSync(path.join(draftDir, SKILL_FILE_NAME), content, 'utf8')
   // Snapshot the initial state so rollback to 0.1.0 is always possible.
-  writeSnapshot(rootDir, name, 1, built.content)
-  const nextSha = hashChange(built.content)
+  writeSnapshot(rootDir, name, 1, content)
+  const nextSha = hashChange(content)
   appendLedgerEntry(rootDir, name, {
     seq: 1,
     version: SKILL_INITIAL_VERSION,

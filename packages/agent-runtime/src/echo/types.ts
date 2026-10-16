@@ -63,6 +63,9 @@ export interface EnforcementState {
    */
   failureAttributedFiles: Set<string>
   writeCount: number
+  settledChecks: Map<string, { writeCount: number; repeatCount: number }>
+  /** Each layer narrows the previous layer; an empty layer denies every write. */
+  allowedWriteGlobs?: readonly (readonly string[])[]
 
   // FID-2026-1001-003 step 4: repeat-block escalation (N=3). Keyed
   // `law|tool|canonicalTarget`, tracked SEPARATELY from the steering budget

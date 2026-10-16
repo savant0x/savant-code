@@ -139,6 +139,7 @@ export function createSavant(
       'spawn_agents',
       'read_files',
       'read_subtree',
+      'recover_evidence',
       'run_readonly_command',
       !isFast && 'write_todos',
       !noAskUser && 'suggest_followups',

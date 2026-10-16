@@ -24,6 +24,7 @@ import { formatProposalLabel } from '@savant-code/common/util/skill-proposal-gat
 // FID-2026-1005-003: the draft's source evidence comes from the proposal store.
 import { readProposalStore } from '@savant-code/common/util/skill-proposals'
 
+import { computeUnifiedSkillDiff } from './skills-diff'
 import { readProposalGate } from './skills-proof-gate'
 
 // FID-2026-0819-005 Loop 143: skill discovery + rendering cluster,
@@ -138,6 +139,11 @@ export function showMessage(projectRoot: string, name: string): string {
   const draft = readSkillRow(skillQuarantineDir(projectRoot, name), true)
   if (!live && !draft) return `Skill '${name}' not found.`
   const ledger = readLedgerEntries(projectRoot, name)
+  const current = live && draft ? readCurrentSkill(projectRoot, name) : null
+  const pendingNotice =
+    current?.live && current.draft
+      ? `⚠ Pending quarantined draft: v${draft?.version} (${computeUnifiedSkillDiff(current.live.content, current.draft.content).split('\n')[0]} vs live) — run /skills show ${name} --review`
+      : ''
   const ledgerTail = ledger
     .slice(-8)
     .map(
@@ -157,6 +163,7 @@ export function showMessage(projectRoot: string, name: string): string {
     : '—'
   return [
     `**${name}** — ${live ? 'trusted' : 'quarantined draft'}`,
+    pendingNotice,
     live
       ? `  version ${live.version} · ${live.description}`
       : draft
@@ -216,7 +223,7 @@ export function showDraftReviewMessage(
         '',
         '**Diff vs live trusted version:**',
         '```',
-        diffLines(current.live.content, current.draft.content),
+        computeUnifiedSkillDiff(current.live.content, current.draft.content),
         '```',
       )
     }
@@ -244,22 +251,6 @@ export function showDraftReviewMessage(
     `Trust with: \`/skills trust ${name}\` — targets the exact draft${draftSha ? ` sha \`${draftSha.slice(0, 16)}…\`` : ''}.`,
   )
   return sections.join('\n')
-}
-
-/** Minimal line diff (added/removed prefix), sufficient for review context. */
-function diffLines(live: string, draft: string): string {
-  const liveLines = live.split(/\r?\n/)
-  const draftLines = draft.split(/\r?\n/)
-  const out: string[] = []
-  const max = Math.max(liveLines.length, draftLines.length)
-  for (let i = 0; i < max && out.length < 60; i++) {
-    const a = liveLines[i]
-    const b = draftLines[i]
-    if (a === b) continue
-    if (a !== undefined) out.push(`- ${a}`)
-    if (b !== undefined) out.push(`+ ${b}`)
-  }
-  return out.length > 0 ? out.join('\n') : '(identical)'
 }
 
 /**

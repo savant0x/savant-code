@@ -169,6 +169,7 @@ export function runPreWriteGates(params: {
   const law2Result = runLaw2Gate({
     targets: [targetPath, ...mutationTargets],
     scopePath: params.scopePath,
+    allowedWriteGlobs: params.state.allowedWriteGlobs,
   })
   if (law2Result.blocked) {
     return finish({ blocked: true, reason: law2Result.reason, warnings }, 2)

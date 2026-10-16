@@ -128,8 +128,8 @@ export function trustSkill(
 
   // FID-2026-0912-001 drift gate: a baseline-pinned draft is refused when
   // the live bytes changed after the draft was authored — operator edits
-  // always win over harness drafts. Unpinned drafts (legacy, or created
-  // with no live baseline) trust with a warning instead (fail-open).
+  // always win over harness drafts. The 'none' pin refuses a concurrent
+  // creation too. Only legacy unpinned drafts retain warning-only trust.
   const baselineSha = readBaselineSha(draft.content)
   const currentLiveSha = liveBefore ? hashChange(liveBefore.content) : null
   if (baselineSha !== null && currentLiveSha !== null) {

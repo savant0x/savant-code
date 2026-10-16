@@ -29,6 +29,12 @@ export interface ToolParamsMap {
   read_files: Discovery.ReadFilesParams
   read_subtree: Discovery.ReadSubtreeParams
   read_url: Discovery.ReadUrlParams
+  recover_evidence: {
+    toolCallId: string
+    query?: string
+    offset?: number
+    limit?: number
+  }
   render_ui: Discovery.RenderUiParams
   run_file_change_hooks: Discovery.RunFileChangeHooksParams
   run_terminal_command: Discovery.RunTerminalCommandParams

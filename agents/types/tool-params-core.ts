@@ -66,6 +66,7 @@ export interface SpawnAgentsParams {
   agents: {
     agent_type: string
     prompt?: string
+    writeScope?: string[]
     params?: Record<string, unknown>
   }[]
 }

@@ -17,6 +17,7 @@ import { runComplianceCapture } from '../../hooks/compliance-capture'
 import { detectsVerificationCommand } from '../../util/echo-compliance'
 import { canonicalizePath } from '../path-canonicalization'
 import { terminalCommandCandidates } from './helpers'
+import { detectVacuousVerification } from './vacuous-verifier'
 
 import type { AdvisoryWarning, EnforcementState } from '../types'
 
@@ -31,6 +32,7 @@ export function creditVerificationRun(params: {
   state: EnforcementState
   /** FID-2026-0919-015: command outcome when determinable; undefined = unknown. */
   commandSucceeded?: boolean
+  commandOutputText?: string
   /** FID-2026-0927-003 F2: repo-relative source paths a FAILED verification
    *  run named (Law 3 repair-path attribution). */
   verificationFailurePaths?: string[]
@@ -56,6 +58,29 @@ export function creditVerificationRun(params: {
     detectsVerificationCommand,
   )
   if (!verified) return
+  const vacuous = terminalCommandCandidates(input)
+    .map((command) =>
+      detectVacuousVerification(command, params.commandOutputText ?? ''),
+    )
+    .find((outcome) => outcome.vacuous)
+  if (commandSucceeded === true && vacuous) {
+    warnings.push({
+      law: 3,
+      severity: 'warning',
+      message: `Vacuous verification: ${vacuous.reason}. Law 3 credit not granted; select and execute real tests.`,
+    })
+    runComplianceCapture(
+      state.telemetryRootDir,
+      {
+        lawId: 3,
+        violationClass: 'flagged',
+        gateLayer: 'receipt',
+        agentId: params.agentId ?? '',
+      },
+      state.telemetryIdentity,
+    )
+    return
+  }
   if (commandSucceeded === true) {
     for (const f of state.dirtyFiles) {
       state.verifiedFiles.add(f)

@@ -5,6 +5,7 @@ import {
 import { generateCompactId } from '@savant-code/common/util/string'
 
 import { inheritFromParent } from './spawn-child-fields'
+import { clampWriteScope } from './spawn-write-scope'
 import {
   buildRestoredEvidenceNote,
   spliceRawEvidence,
@@ -65,6 +66,7 @@ export function createAgentState(
   agentContext: Record<string, Subgoal>,
   graphInjectionProjectRoot?: string,
   rawEvidenceRecords?: EvidenceSpillRecord[],
+  writeScope?: readonly string[],
 ): AgentState {
   if (parentAgentState.ancestorRunIds.length >= MAX_SUBAGENT_DEPTH) {
     throw new Error(
@@ -149,5 +151,9 @@ export function createAgentState(
     // classification list IS the behavior: nothing can be documented as
     // inherited and then forgotten here.
     ...inheritFromParent(parentAgentState),
+    allowedWriteGlobs: clampWriteScope(
+      parentAgentState.allowedWriteGlobs,
+      writeScope,
+    ),
   }
 }

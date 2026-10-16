@@ -19,6 +19,7 @@ import {
   withParentModel,
 } from './spawn-agent-utils'
 import { buildInlineSpawnRelay } from './spawn-inline-only'
+import { sanitizeSubagentReport } from './subagent-report-sanitizer'
 import { loadRawEvidenceForSpawn } from '../../../evidence/spawn-evidence'
 import { filterToolSet } from '../../../tools/filter-tool-set'
 import { countTokensMessagesCached } from '../../../util/token-counter'
@@ -259,15 +260,26 @@ export const handleSpawnAgentInline = (async (
 
   // FID-2026-0919-027: relay the child's real output (the historical constant
   // dropped a structured_output child's artifact — see buildInlineSpawnRelay).
+  const relay = buildInlineSpawnRelay({
+    agentType,
+    outputMode: inlineTemplate.outputMode,
+    output: result.output,
+  })
+  const sanitized = sanitizeSubagentReport(relay.output ?? null)
+  const value = {
+    ...relay,
+    ...(relay.output === undefined ? {} : { output: sanitized.output }),
+    reportSanitization: {
+      sanitized: sanitized.sanitized,
+      detectedTags: sanitized.detectedTags,
+      detectedCategories: sanitized.detectedCategories,
+    },
+  }
   return {
     output: [
       {
         type: 'json',
-        value: buildInlineSpawnRelay({
-          agentType,
-          outputMode: inlineTemplate.outputMode,
-          output: result.output,
-        }),
+        value,
       },
     ],
   }

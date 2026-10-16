@@ -116,15 +116,28 @@ function isGovernanceExempt(rel: string): boolean {
 export function runLaw2Gate(params: {
   targets: (string | undefined)[]
   scopePath?: string
+  allowedWriteGlobs?: readonly (readonly string[])[]
 }): { blocked: boolean; reason?: string } {
   const artifact = loadScopeArtifact(params.scopePath)
-  if (!artifact.exists) return { blocked: false }
   for (const raw of params.targets) {
     if (!raw) continue
     const rel = toRepoRelative(raw)
+    if (
+      params.allowedWriteGlobs?.some(
+        (layer) =>
+          rel === undefined ||
+          !layer.some((pattern) => globToRegExp(pattern).test(rel)),
+      )
+    ) {
+      return {
+        blocked: true,
+        reason: `Law 2 (writeScope clamp): target "${raw}" is outside this subagent's assigned writeScope.`,
+      }
+    }
     // Jurisdiction boundary: a target outside cwd is not resolvable
     // against the register's repo-relative patterns (see module contract).
     if (rel === undefined) continue
+    if (!artifact.exists) continue
     if (isGovernanceExempt(rel)) continue
     if (!artifact.patterns.some((p) => globToRegExp(p).test(rel))) {
       return {

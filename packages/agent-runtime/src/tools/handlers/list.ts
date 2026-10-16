@@ -37,6 +37,7 @@ import { handleReadDocs } from './tool/read-docs'
 import { handleReadFiles } from './tool/read-files'
 import { handleReadSubtree } from './tool/read-subtree'
 import { handleReadUrl } from './tool/read-url'
+import { handleRecoverEvidence } from './tool/recover-evidence'
 import { handleRenderUI } from './tool/render-ui'
 import { handleRunFileChangeHooks } from './tool/run-file-change-hooks'
 import { handleRunReadonlyCommand } from './tool/run-readonly-command'
@@ -112,6 +113,7 @@ export const savantCodeToolHandlers: {
   read_files: handleReadFiles,
   read_subtree: handleReadSubtree,
   read_url: handleReadUrl,
+  recover_evidence: handleRecoverEvidence,
   render_ui: handleRenderUI,
   run_file_change_hooks: handleRunFileChangeHooks,
   run_readonly_command: handleRunReadonlyCommand,

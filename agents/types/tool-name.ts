@@ -24,6 +24,7 @@ export type ToolName =
   | 'read_files'
   | 'read_subtree'
   | 'read_url'
+  | 'recover_evidence'
   | 'render_ui'
   | 'run_file_change_hooks'
   | 'run_terminal_command'

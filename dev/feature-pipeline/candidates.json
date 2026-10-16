@@ -96,7 +96,8 @@
       "id": "LF-004",
       "title": "Recover retained research evidence on demand",
       "priority": "P1",
-      "state": "draft",
+      "state": "routed",
+      "fid": "FID-2026-1015-005",
       "basis": "investigation",
       "lessons": [
         "A marker that names a possibility is not a locator",

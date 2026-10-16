@@ -26,6 +26,13 @@ const inputSchema = z
       z
         .object({
           agent_type: z.string().describe('Agent to spawn'),
+          writeScope: z
+            .array(z.string().min(1))
+            .max(64)
+            .optional()
+            .describe(
+              'Optional project-relative write globs. Narrows every inherited scope; [] denies writes.',
+            ),
           prompt: z.string().optional().describe('Prompt to send to the agent'),
           params: z
             .preprocess(

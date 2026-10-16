@@ -45,6 +45,7 @@ export async function runSingleSubagent({
   writeToClient,
   isOnlyChild,
   agentTypeStr,
+  writeScope,
   prompt,
   spawnParams,
 }: RunSingleSubagentDeps): Promise<
@@ -107,6 +108,7 @@ export async function runSingleSubagent({
     {},
     params.fileContext?.projectRoot,
     rawEvidenceRecords,
+    writeScope,
   )
 
   // FID-2026-0718-009 M3: surface sub-agent activity on parent.
@@ -120,10 +122,6 @@ export async function runSingleSubagent({
     },
     writeToClient,
   )
-
-  // Sub-agent work begins alongside parent work. Parent's activity may
-  // still be 'thinking' so we keep it; the M3 line above ensures the
-  // parent UI starts showing 'subagent' once the agent hits tool calls.
 
   // Extract common context params to avoid bugs from spreading all params
   const contextParams = extractSubagentContextParams({
@@ -255,6 +253,8 @@ export async function runSingleSubagent({
         parentAgentState,
         {},
         params.fileContext?.projectRoot,
+        undefined,
+        writeScope,
       )
       result = await runChild(
         retryState,

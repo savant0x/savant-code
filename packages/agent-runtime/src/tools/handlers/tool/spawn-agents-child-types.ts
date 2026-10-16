@@ -76,6 +76,7 @@ export type RunSingleSubagentDeps = {
   writeToClient: (chunk: string | PrintModeEvent) => void
   isOnlyChild: boolean
   agentTypeStr: string
+  writeScope?: string[]
   prompt: string | undefined
   spawnParams: Record<string, JSONValue> | undefined
 }

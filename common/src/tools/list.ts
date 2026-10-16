@@ -36,6 +36,7 @@ import { readDocsParams } from './params/tool/read-docs'
 import { readFilesParams } from './params/tool/read-files'
 import { readSubtreeParams } from './params/tool/read-subtree'
 import { readUrlParams } from './params/tool/read-url'
+import { recoverEvidenceParams } from './params/tool/recover-evidence'
 import { renderUIParams } from './params/tool/render-ui'
 import { runFileChangeHooksParams } from './params/tool/run-file-change-hooks'
 import { runReadonlyCommandParams } from './params/tool/run-readonly-command'
@@ -91,6 +92,7 @@ export const toolParams = {
   read_files: readFilesParams,
   read_subtree: readSubtreeParams,
   read_url: readUrlParams,
+  recover_evidence: recoverEvidenceParams,
   render_ui: renderUIParams,
   run_file_change_hooks: runFileChangeHooksParams,
   run_readonly_command: runReadonlyCommandParams,

@@ -190,7 +190,9 @@ export async function runSuccessLifecycle<T extends ToolName>(
     input: toolCall.input as Record<string, unknown>,
     result: {
       text:
-        typeof toolResult.content === 'string' ? toolResult.content : undefined,
+        typeof toolResult.content === 'string'
+          ? toolResult.content
+          : JSON.stringify(toolResult.content),
     },
     writtenContent,
     // A successful handler with an unavailable snapshot must remain in

@@ -65,6 +65,7 @@ export const CHILD_OWN = [
   'messageHistory',
   'output',
   'parentId',
+  'allowedWriteGlobs',
   'stepsRemaining',
   'subagents',
   'systemPrompt',

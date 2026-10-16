@@ -18,17 +18,17 @@
  *
  * Pure: a preset in, issues out. No I/O, no clock, no module state.
  *
- * `resolveStartEvent` is the explicit→legacy→inferred→default ladder: an
- * operator's explicit event wins, then the legacy field, then whatever was
- * inferred from the role graph, and only then the caller's fallback.
- *
  * FID-2026-1006-003 WP4: this module also owns the `orchestration:` block
  * parser, so `readProtocolConfig` gives `validatePreset` its production
  * caller — the declared preset is parsed and validated during config parse,
  * an ERROR-severity issue throwing (the repo gate) and WARNING-severity
- * issues reported on `config.orchestration.warnings`. There is deliberately
- * no preset runner: the declaration is validated, never executed.
+ * issues reported on `config.orchestration.warnings`. The pure stepper also
+ * validates start dispatch; config parsing does not execute any role.
  */
+
+import { advancePresetStep } from './orchestration-stepper'
+export { advancePresetStep } from './orchestration-stepper'
+export type { PresetStepDecision } from './orchestration-stepper'
 
 export type RolePreset = {
   role: string
@@ -63,7 +63,6 @@ export type PresetValidationIssue = {
   event?: string
 }
 
-/** A preset needs at least this many roles before loop-back is expected. */
 export const LOOP_BACK_ROLE_THRESHOLD = 3
 
 function isPresent(value: string | undefined): boolean {
@@ -74,7 +73,6 @@ function hasAny(value: readonly string[] | undefined): boolean {
   return Array.isArray(value) && value.length > 0
 }
 
-/** Whether the role graph can return to an already-visited role. */
 function hasLoopBack(roles: readonly RolePreset[]): boolean {
   const known = new Set(roles.map((role) => role.role))
   const edges = new Map<string, string[]>()
@@ -126,9 +124,13 @@ export function validatePreset(preset: PresetShape): PresetValidationIssue[] {
   }
 
   if (
-    !preset.roles.some((role) =>
-      (role.triggers ?? []).includes(preset.startEvent),
-    )
+    advancePresetStep({
+      preset,
+      currentRole: null,
+      event: preset.startEvent,
+      stepCount: 0,
+      now: 0,
+    }).action === 'halt'
   ) {
     errors.push({
       severity: 'error',

@@ -34,6 +34,7 @@ export function createEnforcementState(): EnforcementState {
     verifiedFiles: new Set(),
     failureAttributedFiles: new Set(),
     writeCount: 0,
+    settledChecks: new Map(),
     // FID-2026-1001-003 step 4: repeat-block escalation ladder (N=3) and its
     // turn-termination arm (see ./types.ts and ./enforcement/escalation.ts).
     blockStrikes: new Map(),
@@ -64,6 +65,7 @@ export function createEnforcementState(): EnforcementState {
  * Preserves cross-turn state (filesRead, filesWritten, etc.).
  */
 export function resetForNewTurn(state: EnforcementState): void {
+  state.settledChecks.clear()
   state.turnStartWriteCount = state.writeCount
   state.dirtyFiles.clear()
   state.writtenFileContent.clear()

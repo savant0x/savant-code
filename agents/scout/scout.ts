@@ -59,6 +59,7 @@ export const createFilePicker = (
       'query_node_edges',
       'read_files',
       'read_subtree',
+      'recover_evidence',
       'set_output',
     ],
     // Scout no longer delegates file-finding to any subagent.

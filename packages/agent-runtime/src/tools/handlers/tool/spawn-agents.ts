@@ -5,6 +5,7 @@ import { safeToJSONValue } from '@savant-code/common/util/type-narrowing'
 import { checkRecorderOutcome } from './recorder-stall-check'
 import { runSingleSubagent } from './spawn-agents-child-run'
 import { batchSpawnRejectionMessage } from './spawn-inline-only'
+import { sanitizeSubagentReport } from './subagent-report-sanitizer'
 import { setActivity } from '../../../util/activity-tracking'
 
 import type { SavantCodeToolHandlerFunction } from '../handler-function-type'
@@ -73,22 +74,24 @@ export const handleSpawnAgents = (async (
   // Sub-agent work begins; parent UI shows 'subagent' state.
 
   const results = await Promise.allSettled(
-    agents.map(({ agent_type: agentTypeStr, prompt, params: spawnParams }) =>
-      runSingleSubagent({
-        params,
-        parentAgentState,
-        parentAgentTemplate,
-        fingerprintId,
-        parentSystemPrompt,
-        parentTools,
-        userInputId,
-        sendSubagentChunk,
-        writeToClient,
-        isOnlyChild: agents.length === 1,
-        agentTypeStr,
-        prompt,
-        spawnParams,
-      }),
+    agents.map(
+      ({ agent_type: agentTypeStr, prompt, params: spawnParams, writeScope }) =>
+        runSingleSubagent({
+          params,
+          parentAgentState,
+          parentAgentTemplate,
+          fingerprintId,
+          parentSystemPrompt,
+          parentTools,
+          userInputId,
+          sendSubagentChunk,
+          writeToClient,
+          isOnlyChild: agents.length === 1,
+          agentTypeStr,
+          writeScope,
+          prompt,
+          spawnParams,
+        }),
     ),
   )
 
@@ -170,5 +173,20 @@ export const handleSpawnAgents = (async (
     }
   })
 
-  return { output: jsonToolResult(reports) }
+  return {
+    output: jsonToolResult(
+      reports.map((report) => {
+        const sanitized = sanitizeSubagentReport(safeToJSONValue(report.value))
+        return {
+          ...report,
+          value: sanitized.output,
+          reportSanitization: {
+            sanitized: sanitized.sanitized,
+            detectedTags: sanitized.detectedTags,
+            detectedCategories: sanitized.detectedCategories,
+          },
+        }
+      }),
+    ),
+  }
 }) satisfies SavantCodeToolHandlerFunction<SpawnAgentsToolName>

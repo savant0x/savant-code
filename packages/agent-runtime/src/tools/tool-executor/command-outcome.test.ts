@@ -152,7 +152,7 @@ describe('FID-2026-0927-003 F1 — end-to-end Law 3 credit through the enforceme
       input: { command: 'bun test src/tick.test.ts' },
       // The executor derives this from the tool result content; the red-run
       // shape resolves to `false` under the new predicate.
-      result: { text: ' 1 fail\n 0 pass' },
+      result: { text: JSON.stringify(content) },
       commandSucceeded,
     })
     return enforcement.getState().verifiedFiles.has(path)

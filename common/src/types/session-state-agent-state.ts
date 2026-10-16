@@ -1,7 +1,4 @@
-// FID-2026-0819-005 Loop 242: the AgentState durable record, extracted
-// verbatim from session-state.ts. Type-only module — no runtime cycle (the
-// parent re-exports it and imports it type-only).
-
+// AgentState durable record; re-exported by session-state.ts (FID-2026-0819-005).
 import type { DriveStatusRecord } from './auto-drive'
 import type { DesignContract } from './design-system'
 import type { EchoComplianceTrackerLike } from './echo-compliance'
@@ -64,6 +61,8 @@ export type AgentState = {
   directCreditsUsed: number
   output?: Record<string, JSONValue>
   parentId?: string
+  /** Conjunctive ancestor scope layers; an empty layer denies all writes. */
+  allowedWriteGlobs?: readonly (readonly string[])[]
   systemPrompt: string
   toolDefinitions: Record<
     string,

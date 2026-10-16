@@ -51,6 +51,8 @@ export function pinDraft(params: {
   mode: 'patch' | 'edit'
 }): string {
   const live = readCurrentSkill(params.rootDir, params.name)
+  if (!live.live)
+    return withBaselineSha(params.next, readBaselineSha(params.base))
   if (params.mode === 'edit') {
     return withBaselineSha(
       params.next,
