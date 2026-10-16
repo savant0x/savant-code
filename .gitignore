@@ -11,9 +11,9 @@
 tags
 
 node_modules
-dev/debug/
-dev/context/
-dev/.context/
+# Local-only tree (operator ruling 2026-10-16) — untracked, kept on disk:
+# the governance workspace (dev/). Product docs (docs/) remain tracked.
+/dev
 **/dist/
 dist-env
 tsconfig.tsbuildinfo
