@@ -62,6 +62,8 @@ Read one or more files and return their full contents. For very large files, use
 
 This tool is available in every ECHO phase, including \`idle\` and \`red\`.
 
+Resolve unfamiliar paths with glob or code_search before reading. A \`[FILE_DOES_NOT_EXIST]\` result is a failed read and earns no read coverage. Inspect imports or discover the actual filename before another attempt; repeating an unchanged missing path cannot recover its content.
+
 Example:
 ${$getNativeToolCallExampleString({
   toolName,
