@@ -110,15 +110,14 @@ artifacts required by ECHO retain their gate-level exemptions.
   `dev/operator-decisions.md`, `dev/fids/**`, `dev/feature-pipeline/**`,
   `dev/session-summaries/**`, `scripts/version-docs.ts`,
   `scripts/version-docs-drift.test.ts`, `.agents/skills/**/SKILL.md`
-- FID-2026-1016-011: `cli/src/utils/logger/file-sink.ts`,
-  `cli/src/utils/logger/sink.ts`, `cli/src/utils/logger.ts`,
-  `cli/src/utils/trace-writer.ts`, `cli/src/utils/chat-history.ts`,
-  `cli/src/index.tsx`, `cli/src/utils/logger/__tests__/file-sink.test.ts`,
-  `cli/src/utils/__tests__/trace-writer.test.ts`, `scripts/hygiene.ts`,
-  `scripts/hygiene.test.ts`, `docs/scratchpad.md`, `AGENTS.md`, `.gitignore`,
-  `templates/FID-TEMPLATE.md`, `dev/scratchpad/**`,
-  `packages/agent-runtime/src/echo/fid-verification-gates.ts`,
-  `common/src/constants/protocol-bundle.generated.ts`
+- FID-2026-1016-011 is **closed and archived** (2026-10-16, 9/9 gates, receipt stamped, six
+  commits `88e2578a`..`c44431ad`). Its write targets are released: `cli/src/utils/logger/*`,
+  `cli/src/utils/trace-writer.ts`, `cli/src/utils/chat-history.ts`, `cli/src/index.tsx`,
+  `scripts/hygiene.ts`, `scripts/orphan-sweep.ts`, `docs/scratchpad.md`, `AGENTS.md`,
+  `.gitignore`, `eslint.config.js`, `templates/FID-TEMPLATE.md`, `dev/scratchpad/**`,
+  `dev/research/**`, `packages/agent-runtime/src/echo/fid-verification-gates.ts`,
+  `common/src/constants/protocol-bundle.generated.ts`. **The six commits are not yet pushed:**
+  the pre-push suite is red for the unrelated reason registered below.
 - FID-2026-1016-012 (`created`, root cause NEEDS-REVIEW):
   `sdk/src/__tests__/code-search-part-d.test.ts`,
   `sdk/src/__tests__/code-search-part-c.test.ts`,

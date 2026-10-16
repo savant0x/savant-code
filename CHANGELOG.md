@@ -12,6 +12,60 @@
 > the v0.0.36 cut. Release notes are written here at cut time; nothing in this
 > section is a package-release claim until then.
 
+## 2026-10-16 — Diagnostic logs are bounded, FID evidence stays durable, and the disk audit becomes repeatable (FID-2026-1016-011, medium)
+
+### Changed
+
+- FID-2026-1016-011 (medium): a full disk audit measured ~15.5 GiB of reclaimable artifacts against
+  ~30 MB of tracked content, and found one genuinely unmanaged sink. `trimOversizedChatLogs` covered
+  only the production per-chat `log.jsonl`, while the dev sinks wrote `debug/cli.jsonl` (45 MB) and
+  `debug/trace.jsonl` (166 MB) with **no size cap, no rotation and no production reader** — 287 MB
+  across three project roots. One cap constant now lives beside the paths it governs
+  (`cli/src/utils/logger/file-sink.ts`), dev writes go through a bounded append that rotates into a
+  single `.1` generation, and startup reclaims oversized idle debug files beside the existing
+  chat-log sweep, so each root is bounded at ~40 MiB. `chat-history.ts` imports the shared cap
+  instead of holding a second copy (Law 13).
+- The FID template and the verification-gates module taught a scratchpad evidence path
+  (`- gate: probe dev/scratchpad/…`) — a tree that expires 24 h after its last change and is
+  untracked. Measured: **18 archived records declared scratchpad gates and 3 of 4 sampled probe
+  files were already deleted by expiry**, so those gates outlived their own evidence. The examples
+  now point at the tracked probes home (`scripts/probes/`), the protocol bundle is regenerated, and
+  `scripts/hygiene.ts` reports the shape as `ephemeral-evidence` for **active** records — scoped to
+  active because a `closed` record is outside the gate contract and re-reporting history would make
+  the rule permanently red.
+- The scratchpad's own rules were made true: the `README.md` that `docs/scratchpad.md`,
+  `common/src/util/scratchpad/scan.ts` and the hygiene rule all named but that did not exist was
+  created; `docs/scratchpad.md` and `AGENTS.md` now state the root shape, the 24 h expiry, the
+  `<session|fid-id>-<what>.<ext>` naming rule and that scratch storage is never evidence; and the
+  two inert `.gitignore` lines (`dev/scratchpad/*`, `!dev/scratchpad/.gitkeep`) were removed — git
+  cannot re-include a path below an excluded parent, verified with `git check-ignore -v`.
+- `scripts/orphan-sweep.ts` makes the hand-run orphan analysis repeatable: 46 candidate files among
+  4,940 tracked, reported advisory-only because a name index cannot see runtime-built references.
+  Both defects found in it before it was trusted are covered by regression tests —
+  extension-sensitive matching missed every extension-less import (1,339 false candidates), and
+  removing a candidate's path from a shared corpus erased the references proving it was used.
+
+### Fixed
+
+- The scratchpad's content was pruned and its durable artifacts promoted: 71 uncited build/runner
+  logs (5,529,850 B) and a stray console-output file removed, the duplicated teacher-sandbox tree
+  and the 4.9 MB of session transcripts relocated to `dev/research/` — after checking every
+  promotion for citations, so nothing referenced was destroyed. Measured 10,544,830 B → 1,923 B.
+- `sdk/examples/readme-example-2.ts` failed `eslint --max-warnings 0` on `main` (two `import/order`
+  warnings), which rejected every push through the fail-closed pre-push hook; import order fixed,
+  behaviour unchanged.
+- `eslint.config.js` ignores `dev/research/**` alongside `dev/scratchpad/**` — the promoted one-off
+  probes and session analyses are the same class of local, untracked ad-hoc tooling.
+
+### Known issues
+
+- The sdk suite is red on `main`: `codeSearch > should handle -g flag with glob patterns like *.ts`
+  fails when `code-search-part-d.test.ts` runs in the same process as
+  `code-search-part-c.test.ts` and passes alone (`part-a`/`part-b` combinations are green). Because
+  the pre-push hook runs the full suite, this blocked the push of this change; it is recorded as
+  FID-2026-1016-012 with a two-file reproduction and the resolver evidence. `--no-verify` was not
+  used.
+
 ## 2026-10-16 — Advertised offer deadlines are read from the feed, and the offer dump is bounded (FID-2026-1016-010, medium)
 
 ### Changed
