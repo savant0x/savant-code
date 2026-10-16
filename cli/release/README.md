@@ -75,6 +75,7 @@ Or select one of the supported gateway providers directly:
 | Infron | `/provider infron` or `DIRECT_PROVIDER=infron` | `INFRON_API_KEY` | Hosted gateway |
 | Intern InkStone | `/provider intern` or `DIRECT_PROVIDER=intern` | `INTERN_API_KEY` | Hosted gateway |
 | KiosAPI | `/provider kiosapi` or `DIRECT_PROVIDER=kiosapi` | `KIOSAPI_API_KEY` | OpenAI-compatible gateway (live catalog) |
+| MarsAI | `/provider marsai` or `DIRECT_PROVIDER=marsai` | `MARSAI_API_KEY` | Hosted gateway |
 | Meta Llama API | `/provider meta` or `DIRECT_PROVIDER=meta` | `META_MODEL_API_KEY` | Hosted gateway |
 | MiniMax | `/provider minimax` or `DIRECT_PROVIDER=minimax` | `MINIMAX_API_KEY` | Hosted gateway |
 | Mistral AI | `/provider mistral` or `DIRECT_PROVIDER=mistral` | `MISTRAL_API_KEY` | Hosted gateway |
@@ -215,6 +216,7 @@ CODECRAFT_API_KEY=dummy-codecraft-api-key-replace-me
 XKIRO_API_KEY=dummy-xkiro-api-key-replace-me
 MISTRAL_API_KEY=dummy-mistral-api-key-replace-me
 APIXOAI_API_KEY=dummy-apixoai-api-key-replace-me
+MARSAI_API_KEY=dummy-marsai-api-key-replace-me
 AIHUBMIX_API_KEY=dummy-aihubmix-key-replace-me
 CHATANYWHERE_API_KEY=dummy-chatanywhere-api-key-replace-me
 TIARINA_API_KEY=dummy-tiarina-api-key-replace-me

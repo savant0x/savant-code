@@ -263,3 +263,33 @@ export const tiarinaModels = {
   tiarina_gpt_oss_120b: 'tiarina/gpt-oss-120b',
 } as const
 export type TiarinaModel = (typeof tiarinaModels)[keyof typeof tiarinaModels]
+
+/**
+ * MarsAI free-tier catalog (FID-2026-1016-004) — the 14 ids from the
+ * operator dashboard census 2026-10-16 (console-verified; see the registry
+ * entry). STATIC by design: the vendor's /v1/models could not be probed
+ * from this network (DNS hijack + TLS reset; DoH records 104.21.63.63 /
+ * 172.67.143.237). `marsai/` is part of the real vendor slug — every
+ * Model ID on the dashboard carries it — so dispatch keeps the full id
+ * (`idTransform: 'keep'`, the openrouter shape). Windows live in
+ * context-window-table-marsai.ts (10 sourced rows, 4 documented no-row).
+ */
+export const marsaiModels = {
+  marsai_auto_free: 'marsai/auto-free',
+  marsai_cat_jam_free: 'marsai/cat-jam-free',
+  marsai_deepseek_v4_1_flash_free: 'marsai/deepseek-v4.1-flash-free',
+  marsai_laguna_xs_2_1_free: 'marsai/laguna-xs-2.1-free',
+  marsai_meta_llama_3_3_70b_instruct_free:
+    'marsai/Meta-Llama-3_3-70B-Instruct-free',
+  marsai_mimo_v2_6_flash_free: 'marsai/mimo-v2.6-flash-free',
+  marsai_minimax_m2_7_free: 'marsai/MiniMax-M2.7-free',
+  marsai_muse_spark_1_3_free: 'marsai/muse-spark-1.3-free',
+  marsai_nemotron_3_super_120b_a12b_free:
+    'marsai/nemotron-3-super-120b-a12b:free',
+  marsai_nemotron_3_ultra_free: 'marsai/nemotron-3-ultra-free',
+  marsai_north_mini_code_free: 'marsai/north-mini-code:free',
+  marsai_qwen3_6_27b_free: 'marsai/Qwen3.6-27B-free',
+  marsai_qwen3_8_27b_free: 'marsai/Qwen3.8-27B-free',
+  marsai_step_5_preview_free: 'marsai/step-5-preview-free',
+} as const
+export type MarsaiModel = (typeof marsaiModels)[keyof typeof marsaiModels]

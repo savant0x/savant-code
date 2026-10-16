@@ -23,6 +23,7 @@ import {
   fetchBazaarlinkModels,
   fetchInfronModels,
   fetchInternModels,
+  fetchMarsaiModels,
   fetchUnorouterModels,
 } from './static-catalogs-gateways'
 import { fetchTiarinaModels } from './tiarina'
@@ -77,6 +78,10 @@ export function assembleGatewayCatalog(
     // FID-2026-1012-026: measured first-party static catalogs share one
     // common row source so the registry and picker cannot drift.
     ...fetchTier1StaticModels(),
+    // FID-2026-1016-004: the static builder ships in the same change that
+    // registers the provider — the chatanywhere/tiarina lesson; the sole
+    // checked-in row reaches /model.
+    ...fetchMarsaiModels(),
     ...live.customModels,
   ]
   combined.sort((a, b) => a.id.localeCompare(b.id))

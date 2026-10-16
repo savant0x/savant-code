@@ -194,6 +194,9 @@ describe('provider setup', () => {
     expect(getConfiguredProviderNames()).toContain('apixo')
   })
 
+  // MarsAI save coverage moved to provider-setup-marsai.test.ts
+  // (300-line file cap — the FID-2026-0914-001 split precedent).
+
   test('saves OpenRouter credentials for direct-provider mode', () => {
     saveProviderApiKey('openrouter', '  test-openrouter-key  ')
 

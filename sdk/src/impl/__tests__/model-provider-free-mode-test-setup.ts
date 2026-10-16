@@ -47,6 +47,7 @@ export function setupModelProviderTestHarness() {
   let originalVercelApiKey: string | undefined
   let originalMistralApiKey: string | undefined
   let originalApixoApiKey: string | undefined
+  let originalMarsaiApiKey: string | undefined
   let originalAihubmixApiKey: string | undefined
   let originalOpenRouterApiKey: string | undefined
   let originalOrMasterKey: string | undefined
@@ -92,6 +93,10 @@ export function setupModelProviderTestHarness() {
     // so the key-missing leg only resolves when it is deleted here.
     originalApixoApiKey = process.env.APIXOAI_API_KEY
     delete process.env.APIXOAI_API_KEY
+    // FID-2026-1016-004: the repo-root .env.local carries a live MarsAI key,
+    // so the key-missing leg only resolves when it is deleted here.
+    originalMarsaiApiKey = process.env.MARSAI_API_KEY
+    delete process.env.MARSAI_API_KEY
     originalAihubmixApiKey = process.env.AIHUBMIX_API_KEY
     delete process.env.AIHUBMIX_API_KEY
     originalOpenRouterApiKey = process.env.OPENROUTER_API_KEY
@@ -190,6 +195,11 @@ export function setupModelProviderTestHarness() {
       delete process.env.APIXOAI_API_KEY
     } else {
       process.env.APIXOAI_API_KEY = originalApixoApiKey
+    }
+    if (originalMarsaiApiKey === undefined) {
+      delete process.env.MARSAI_API_KEY
+    } else {
+      process.env.MARSAI_API_KEY = originalMarsaiApiKey
     }
     if (originalAihubmixApiKey === undefined) {
       delete process.env.AIHUBMIX_API_KEY

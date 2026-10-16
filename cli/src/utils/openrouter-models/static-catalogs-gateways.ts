@@ -14,6 +14,7 @@ import {
   bazaarlinkModels,
   infronModels,
   internModels,
+  marsaiModels,
   unorouterModels,
 } from '@savant-code/common/constants/model-config'
 
@@ -216,6 +217,41 @@ export function fetchInternModels(): OpenRouterModel[] {
     id,
     name: INTERN_NAMES[id] ?? id.slice('intern/'.length),
     provider: 'intern' as const,
+    contextLength: getContextWindowFallback(id).contextWindow,
+  }))
+}
+
+/** Display names for MarsAI model ids (FID-2026-1016-004). */
+const MARSAI_NAMES: Record<string, string> = {
+  'marsai/auto-free': 'Auto (Free)',
+  'marsai/cat-jam-free': 'Cat Jam (Free)',
+  'marsai/deepseek-v4.1-flash-free': 'DeepSeek V4.1 Flash (Free)',
+  'marsai/laguna-xs-2.1-free': 'Laguna XS 2.1 (Free)',
+  'marsai/Meta-Llama-3_3-70B-Instruct-free': 'Llama 3.3 70B Instruct (Free)',
+  'marsai/mimo-v2.6-flash-free': 'MiMo V2.6 Flash (Free)',
+  'marsai/MiniMax-M2.7-free': 'MiniMax M2.7 (Free)',
+  'marsai/muse-spark-1.3-free': 'Muse Spark 1.3 (Free)',
+  'marsai/nemotron-3-super-120b-a12b:free': 'Nemotron 3 Super 120B A12B (Free)',
+  'marsai/nemotron-3-ultra-free': 'Nemotron 3 Ultra (Free)',
+  'marsai/north-mini-code:free': 'North Mini Code (Free)',
+  'marsai/Qwen3.6-27B-free': 'Qwen 3.6 27B (Free)',
+  'marsai/Qwen3.8-27B-free': 'Qwen 3.8 27B (Free)',
+  'marsai/step-5-preview-free': 'Step 5 Preview (Free)',
+}
+
+/**
+ * Return the MarsAI catalog (FID-2026-1016-004) — the 14 free-tier ids from
+ * the operator dashboard census 2026-10-16 (console-verified). Static by
+ * design: the vendor's /v1/models is unreachable from this network (DNS
+ * hijack + TLS reset; DoH records 104.21.63.63 / 172.67.143.237), so the
+ * checked-in set is the source of truth. Windows resolve through the
+ * context-window-table-marsai seam. Synchronous.
+ */
+export function fetchMarsaiModels(): OpenRouterModel[] {
+  return Object.values(marsaiModels).map((id) => ({
+    id,
+    name: MARSAI_NAMES[id] ?? id.slice('marsai/'.length),
+    provider: 'marsai' as const,
     contextLength: getContextWindowFallback(id).contextWindow,
   }))
 }

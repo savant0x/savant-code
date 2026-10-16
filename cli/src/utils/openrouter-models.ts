@@ -61,6 +61,7 @@ export {
   fetchBazaarlinkModels,
   fetchInfronModels,
   fetchInternModels,
+  fetchMarsaiModels,
   fetchUnorouterModels,
 } from './openrouter-models/static-catalogs-gateways'
 export { fetchChatanywhereModels } from './openrouter-models/chatanywhere'
