@@ -1,5 +1,5 @@
 /**
- * FID-2026-1016-013 — the mount that makes `SkillLifecycleNotice` a live
+ * FID-2026-1016-014 — the mount that makes `SkillLifecycleNotice` a live
  * surface. FID-2026-1005-003 Step 4 wrote this component for the CLI and
  * never wired it: it was rendered by nothing, so a mechanically created skill
  * draft appeared only in `session-end:review` and `/skills activity`. The
@@ -60,7 +60,7 @@ afterEach(() => {
   }
 })
 
-describe('SkillLifecycleNotice (FID-2026-1016-013: the Step-4 surface, mounted)', () => {
+describe('SkillLifecycleNotice (FID-2026-1016-014: the Step-4 surface, mounted)', () => {
   test('renders an unseen draft as a traffic-light row with the trust boundary', () => {
     const root = fixtureRoot()
     const appended = appendSkillLifecycleEvent(root, draftEvent())
