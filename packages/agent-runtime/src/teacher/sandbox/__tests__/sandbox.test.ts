@@ -46,6 +46,11 @@ function tempSandboxDirs(): string[] {
     .filter((name) => name.startsWith('teacher-sandbox-'))
 }
 
+// Workspaces that already existed when this file loaded are residue from
+// processes killed externally — not leaks of the runs below. Captured once at
+// module load so the cleanup test still covers every exit path in this file.
+const PREEXISTING_SANDBOX_DIRS = new Set(tempSandboxDirs())
+
 describe('subprocess sandbox backend', () => {
   test('known-good solution passes deterministically', async () => {
     const first = await run(KNOWN_GOOD)
@@ -174,6 +179,9 @@ function solution(a, b) { while (true) { /* spin */ } }
 function solution(a, b) { while (true) {} }
 `)
 
-    expect(tempSandboxDirs()).toEqual([])
+    const leaked = tempSandboxDirs().filter(
+      (name) => !PREEXISTING_SANDBOX_DIRS.has(name),
+    )
+    expect(leaked).toEqual([])
   })
 })

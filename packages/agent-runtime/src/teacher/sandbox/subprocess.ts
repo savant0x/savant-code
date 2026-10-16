@@ -27,6 +27,9 @@ import type { Readable } from 'node:stream'
 
 export const RUNNER_VERSION = 'teacher-sandbox-v1'
 const KILL_MARGIN_MS = 2_000
+// Bounded wait for a killed child to actually exit before its workspace is
+// removed (a live child holds its cwd open on Windows).
+const EXIT_CLEANUP_GRACE_MS = 2_000
 const MAX_STDERR_BYTES = 2_000
 const MAX_CHILD_RESULT_BYTES = 64 * 1024
 
@@ -128,6 +131,7 @@ export class SubprocessSandboxBackend implements SandboxBackend {
     let stderr = ''
     let exitCode: number | null = null
     let child: ChildProcessByStdio<null, Readable, Readable> | null = null
+    let childExit: Promise<number | null> | null = null
     let timedOut = false
 
     try {
@@ -156,10 +160,11 @@ export class SubprocessSandboxBackend implements SandboxBackend {
       const onAbort = (): void => kill()
       signal?.addEventListener('abort', onAbort, { once: true })
 
-      const exitPromise = new Promise<number | null>((resolve) => {
+      childExit = new Promise<number | null>((resolve) => {
         child?.once('exit', (code) => resolve(code))
         child?.once('error', () => resolve(null))
       })
+      const exitPromise = childExit
 
       const timeoutMs = policy.limits.timeLimitMs + KILL_MARGIN_MS
       let timer: ReturnType<typeof setTimeout> | null = setTimeout(() => {
@@ -209,6 +214,18 @@ export class SubprocessSandboxBackend implements SandboxBackend {
       }
     } finally {
       if (child && child.exitCode === null && !child.killed) child.kill()
+      // A killed child may still hold its cwd (this workspace) open while the
+      // kill propagates; wait for its exit, bounded, before removal.
+      if (childExit) {
+        let graceTimer: ReturnType<typeof setTimeout> | null = null
+        await Promise.race([
+          childExit,
+          new Promise<void>((resolve) => {
+            graceTimer = setTimeout(resolve, EXIT_CLEANUP_GRACE_MS)
+          }),
+        ])
+        if (graceTimer) clearTimeout(graceTimer)
+      }
       fs.rmSync(workspace, {
         recursive: true,
         force: true,
