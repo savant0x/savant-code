@@ -82,18 +82,6 @@ handling or repository boundaries.
       `resources/` exceed the search tool's execution cap (measured).
       **Automation level: 3.**
 
-- [ ] **MarsAI provider (FID-2026-1016-004).** Operator request: add MarsAI as
-      a built-in gateway provider — `https://marsai.click/v1`,
-      OpenAI-compatible, credential `MARSAI_API_KEY`. The operator dashboard
-      census (2026-10-16, console-verified) supplies the 14-id free-tier
-      roster — every Model ID carries the `marsai/` slug, so dispatch keeps
-      the full id (`idTransform: 'keep'`, the openrouter shape). The live
-      /v1/models probe remains blocked from this network (DNS hijack + TLS
-      reset; true records via DoH 104.21.63.63 / 172.67.143.237): 10 ids get
-      cross-gateway-sourced window rows; 4 stay documented no-row (auto-free,
-      cat-jam-free, and the two tier1-only ids — flagged for a ruling).
-      **Automation level: 3.**
-
 ## Recorded operator dispositions (2026-10-15)
 
 The verbatim source is `dev/fids/answers.md`; the durable decision record is
@@ -130,9 +118,6 @@ artifacts required by ECHO retain their gate-level exemptions.
 
 - FID-2026-1012-022: `dev/fids/**`, `SCOPE.md`, `docs/design/**`,
   `dev/experiences/**`, `dev/agenda.md`
-- FID-2026-1016-004: `common/**`, `cli/**`, `sdk/**`, `docs/**`,
-  `README.md`, `README.zh-CN.md`, `.env.example`, `CHANGELOG.md`, `SCOPE.md`,
-  `dev/fids/**`, `dev/session-summaries/**`
 - Release-0.0.36: `VERSION`, `package.json`, `agents/package.json`,
   `cli/package.json`, `cli/release/package.json`, `common/package.json`,
   `common/src/constants/protocol-bundle.generated.ts`, `desktop/package.json`,

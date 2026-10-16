@@ -10,6 +10,17 @@
 > the v0.0.36 cut. Release notes are written here at cut time; nothing in this
 > section ships until then.
 
+## 2026-10-16 — MarsAI gateway provider (FID-2026-1016-004)
+
+- FID-2026-1016-004 (medium): added MarsAI as a built-in gateway provider —
+  `https://marsai.click/v1`, `openai` protocol, `keep` dispatch, credential
+  `MARSAI_API_KEY`. Static 14-id free-tier catalog from the operator's
+  dashboard census (console-verified; the live `/v1/models` probe is blocked
+  from this network — DNS hijack + TLS reset, recorded in the FID). The
+  window seam carries 10 cross-gateway-sourced rows and 4 documented no-row
+  ids; generated and hand-maintained provider docs synced. Implementation:
+  `62a72076`; 14 declared gates passed; closed and archived.
+
 ## 2026-10-16 — Reconciliation closeout and repository untrack
 
 - FID-2026-1016-001 (low): hardened the sandbox temp-workspace cleanup — the
