@@ -11,18 +11,6 @@ handling or repository boundaries.
 
 ## Open items
 
-- [ ] **T194. Linked-checkout retrofit reconnaissance before any FID.**
-      Retrofitting the git-worktree idea against Savant rather than adopting the intake
-      report: all 192 `resources/` repositories classified, mechanics extracted with
-      file:line from real implementations, each mechanic checked against what Savant
-      already has (Law 7/13), a state-surface map (per-checkout versus shared, including
-      the governance ledgers `dev/experiences/**`, `dev/LEARNINGS.md`, `dev/agenda.md`,
-      `.agents/skills/.quarantine/**` and `SCOPE.md` itself), a failure catalog, and a
-      measurement plan for the G9 trigger. No FID is authored until the record is
-      complete. Method is bounded per-repository probing: recursive sweeps of
-      `resources/` exceed the search tool's execution cap (measured).
-      **Automation level: 3.**
-
 ## Internal follow-ups and current operator authority (2026-10-16)
 
 Implementation-complete records FID-2026-1015-006 and FID-2026-1012-022
@@ -47,6 +35,15 @@ unmodified hook chain. No scan bypass, cap change or history rewrite was used.
   to `main` through mandatory gates. Older handoff/local-only holds are
   superseded. Handoffs, observation windows and release timing do not hold
   progress pushes. Releases remain separate operator actions.
+- T194 reconnaissance is **complete**:
+  `dev/research/linked-checkout-reconnaissance-2026-10-16.md` classifies all 192
+  farm entries (12 read-level, 46 machinery-dense, 62 mentions, 69 no surface),
+  extracts nine checkout mechanics with file:line, reconciles each against
+  Savant's existing surfaces, maps per-checkout versus shared state, catalogs
+  eleven failure classes and states the G9 trigger measurement plan. Answer: no
+  retrofit now, with the trigger thresholds and the minimal lawful shape if one
+  fires recorded in the study. Authoring a FID for a dependency-sharing lane is
+  a pending operator decision, not an agent disposition.
 
 ## Recorded operator dispositions (2026-10-15)
 
@@ -88,5 +85,3 @@ artifacts required by ECHO retain their gate-level exemptions.
   `dev/operator-decisions.md`, `dev/fids/**`, `dev/feature-pipeline/**`,
   `dev/session-summaries/**`, `scripts/version-docs.ts`,
   `scripts/version-docs-drift.test.ts`, `.agents/skills/**/SKILL.md`
-- T194: `docs/design/**`, `dev/research/**`, `dev/scratchpad/**`, `dev/fids/**`,
-  `dev/task-id-ledger.json`, `SCOPE.md`
