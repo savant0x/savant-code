@@ -1,6 +1,5 @@
 /**
- * Tier 1 first-party provider entries (FID-2026-1012-026), partition five,
- * plus later standalone additions (the marsai entry, FID-2026-1016-004).
+ * Tier 1 first-party provider entries (FID-2026-1012-026), partition five.
  */
 import type { ProviderConfig } from './types'
 
@@ -120,43 +119,6 @@ export const PROVIDER_REGISTRY_PARTITION_5 = {
     catalog: { source: 'live', url: 'https://api.venice.ai/api/v1/models' },
     setupAvailable: true,
     domain: 'venice.ai',
-    order: 4,
-  },
-  // Operator-supplied provider (FID-2026-1016-004): the endpoint is given
-  // in session; the model roster is the 14-id free tier from the operator
-  // dashboard census 2026-10-16 (console-verified — the figure is only
-  // visible behind the operator's account). The live /v1/models probe is
-  // blocked from this network (DNS hijack + TLS reset — DoH records
-  // 104.21.63.63 / 172.67.143.237), so the checked-in set is the source of
-  // truth. `idTransform: 'keep'` — `marsai/` is part of the real vendor
-  // slug (the openrouter precedent; every dashboard Model ID is shown
-  // pre-prefixed), so the full routing id goes to the vendor unchanged.
-  marsai: {
-    id: 'marsai',
-    label: 'MarsAI',
-    kind: 'gateway',
-    credentials: {
-      envVar: 'MARSAI_API_KEY',
-      // /provider hint is part of the canonical message.
-      missingKeyMessage:
-        'MarsAI API key not set. Set MARSAI_API_KEY environment variable or run /provider marsai.',
-    },
-    baseUrl: 'https://marsai.click/v1',
-    protocol: 'openai',
-    idTransform: 'keep',
-    catalog: {
-      source: 'static',
-      modelsRef: 'marsai',
-      evidence: {
-        class: 'console-verified',
-        source:
-          'Operator dashboard Models page census — 14 free-tier ids, every Model ID showing the marsai/ slug; 24/29 models operational. Pasted in session 2026-10-16.',
-        verified: '2026-10-16',
-        witness: 'operator dashboard paste, session 2026-10-16',
-      },
-    },
-    setupAvailable: true,
-    domain: 'marsai.click',
     order: 4,
   },
 } as const satisfies Record<string, ProviderConfig>

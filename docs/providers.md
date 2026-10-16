@@ -60,7 +60,6 @@ closed if this section drifts from the registry.
 | Infron | `infron` | gateway | `INFRON_API_KEY` | `https://llm.onerouter.pro/v1` | openai | static (9 models) |
 | Intern InkStone | `intern` | gateway | `INTERN_API_KEY` | `https://discovery-api.intern-ai.org.cn/v1` | openai | static (10 models) |
 | KiosAPI | `kiosapi` | gateway | `KIOSAPI_API_KEY` | `https://kiosapi.com/v1` | openai | live |
-| MarsAI | `marsai` | gateway | `MARSAI_API_KEY` | `https://marsai.click/v1` | openai | static (14 models; evidence: console-verified 2026-10-16) |
 | Meta Llama API | `meta` | gateway | `META_MODEL_API_KEY` | `https://api.llama.com/llama` | openai | static (6 models) |
 | MiniMax | `minimax` | gateway | `MINIMAX_API_KEY` | `https://api.minimax.io/anthropic` | anthropic | static (7 models) |
 | Mistral AI | `mistral` | gateway | `MISTRAL_API_KEY` | `https://api.mistral.ai/v1` | openai | live |

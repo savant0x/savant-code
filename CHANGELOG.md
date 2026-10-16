@@ -2,13 +2,26 @@
 
 ## 0.0.36 — 2026-10-12
 
-> **v0.0.36** — **local development line, not yet published** (npm `latest` is
-> still v0.0.35). This bump opens the dated heading so post-release work
+> **v0.0.36** — **development line, package release not yet published**.
+> Verified source progress is committed and pushed to `main` automatically;
+> package publication and release tags remain separate operator actions.
+> This bump opens the dated heading so post-release work
 > accumulates in one place, per the no-unreleased-accumulators ruling: the
 > researcher-acceptance and lesson-feature-pipeline closures, the managed
 > scratchpad and provider-inventory passes, and everything else that lands before
 > the v0.0.36 cut. Release notes are written here at cut time; nothing in this
-> section ships until then.
+> section is a package-release claim until then.
+
+## 2026-10-16 — Remove MarsAI (FID-2026-1016-005)
+
+### Removed
+
+- FID-2026-1016-005 (medium): removed the MarsAI built-in provider,
+  14-model catalog, context-window coverage, CLI setup/picker wiring and
+  current provider documentation. Generic custom-provider support remains
+  available. Historical integration records and credentials are preserved.
+  Registry/setup inventories now contain 47/46 providers. All 75 affected
+  provider tests pass; generated provider references are current.
 
 ## 2026-10-16 — MarsAI gateway provider (FID-2026-1016-004)
 

@@ -96,7 +96,6 @@ history. The supported hosted providers are:
 | Infron | `/provider infron` or `DIRECT_PROVIDER=infron` | `INFRON_API_KEY` | Hosted gateway |
 | Intern InkStone | `/provider intern` or `DIRECT_PROVIDER=intern` | `INTERN_API_KEY` | Hosted gateway |
 | KiosAPI | `/provider kiosapi` or `DIRECT_PROVIDER=kiosapi` | `KIOSAPI_API_KEY` | OpenAI-compatible gateway (live catalog) |
-| MarsAI | `/provider marsai` or `DIRECT_PROVIDER=marsai` | `MARSAI_API_KEY` | Hosted gateway |
 | Meta Llama API | `/provider meta` or `DIRECT_PROVIDER=meta` | `META_MODEL_API_KEY` | Hosted gateway |
 | MiniMax | `/provider minimax` or `DIRECT_PROVIDER=minimax` | `MINIMAX_API_KEY` | Hosted gateway |
 | Mistral AI | `/provider mistral` or `DIRECT_PROVIDER=mistral` | `MISTRAL_API_KEY` | Hosted gateway |
@@ -462,7 +461,7 @@ code 2 blocks a tool.
   Tiarina Cloud,
   UnoRouter,
   BazaarLink, Atria AI,
-  OpenAI, Vercel AI Gateway, Clean APIs, CodeCraft API, Mistral AI, Apixo, MarsAI,
+  OpenAI, Vercel AI Gateway, Clean APIs, CodeCraft API, Mistral AI, Apixo,
   AIHubMix, xKiro, and Cloudflare Workers AI via
   `@savant-code/llm-providers`. First-party routes include Alibaba Cloud, Anthropic, Baseten,
   Cerebras, Cohere, DeepInfra, DeepSeek, Fireworks AI, Google AI, Groq, Meta Llama API,
@@ -978,7 +977,6 @@ picker or choose one directly:
 /provider xkiro
 /provider mistral
 /provider apixo
-/provider marsai
 /provider aihubmix
 /provider alibaba
 /provider anthropic
@@ -1017,7 +1015,6 @@ The supported environment variables are `OPENAI_API_KEY`, `OPENROUTER_API_KEY`,
 `AI_GATEWAY_API_KEY`, `CLEANAPIS_API_KEY`, `CODECRAFT_API_KEY`, `XKIRO_API_KEY`,
 `MISTRAL_API_KEY`,
 `APIXOAI_API_KEY`,
-`MARSAI_API_KEY`,
 `AIHUBMIX_API_KEY`,
 `CHATANYWHERE_API_KEY`,
 `TIARINA_API_KEY`,

@@ -113,23 +113,6 @@ describe('validateProviderRegistry (FID-2026-0809-001 Phase 5)', () => {
     expect(setup.aihubmix?.label).toBe('AIHubMix')
   })
 
-  test('the marsai entry derives its routing/setup/picker surfaces (FID-2026-1016-004)', () => {
-    expect(PROVIDER_REGISTRY.marsai.id).toBe('marsai')
-    expect(ALLOWED_MODEL_PREFIXES).toContain('marsai')
-    expect(deriveValidProviderIds(PROVIDER_REGISTRY)).toContain('marsai')
-    expect(deriveProviderDomains(PROVIDER_REGISTRY, ORG_DOMAINS).marsai).toBe(
-      'marsai.click',
-    )
-    expect(deriveProviderOrder(PROVIDER_REGISTRY, 'marsai')).toBe(4)
-    const setup = deriveSetupConfig(PROVIDER_REGISTRY) as Record<
-      string,
-      { label: string; envVar: string; baseUrl: string } | undefined
-    >
-    expect(setup.marsai?.envVar).toBe('MARSAI_API_KEY')
-    expect(setup.marsai?.baseUrl).toBe('https://marsai.click/v1')
-    expect(setup.marsai?.label).toBe('MarsAI')
-  })
-
   test('static catalogs agree with the registry prefix (catalog agreement)', () => {
     // Pin the contract explicitly: every model id in every static catalog
     // carries the provider's routing prefix, so the picker and the router can

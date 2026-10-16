@@ -18,7 +18,6 @@ import { APINEX_CONTEXT_WINDOW_FALLBACKS } from './context-window-table-apinex'
 import { BAI_CONTEXT_WINDOW_FALLBACKS } from './context-window-table-bai'
 import { CHATANYWHERE_CONTEXT_WINDOW_FALLBACKS } from './context-window-table-chatanywhere'
 import { KIOSAPI_CONTEXT_WINDOW_FALLBACKS } from './context-window-table-kiosapi'
-import { MARSAI_CONTEXT_WINDOW_FALLBACKS } from './context-window-table-marsai'
 import { TIARINA_CONTEXT_WINDOW_FALLBACKS } from './context-window-table-tiarina'
 import { TOKENHARBOR_CONTEXT_WINDOW_FALLBACKS } from './context-window-table-tokenharbor'
 import { TIER1_CONTEXT_WINDOWS } from './model-config/tier1'
@@ -276,10 +275,5 @@ export const CONTEXT_WINDOW_FALLBACKS: ReadonlyMap<string, number> = new Map([
   // conservative minimum of two disagreeing >=2-row groups; the one no-row id
   // (glm-4.7-flash) is documented in the section file) ---
   ...TIARINA_CONTEXT_WINDOW_FALLBACKS,
-  // --- marsai: seam-split (FID-2026-1016-004; static 14-id free-tier
-  // catalog from the operator dashboard census 2026-10-16 — 10 rows read
-  // from cross-gateway consensus, 4 ids documented no-row in the section
-  // file; the vendor /v1/models probe is blocked from this network) ---
-  ...MARSAI_CONTEXT_WINDOW_FALLBACKS,
   ...TIER1_CONTEXT_WINDOWS,
 ])

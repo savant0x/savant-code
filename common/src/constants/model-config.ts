@@ -55,8 +55,7 @@ export {
 // Audited gateway catalogs (FID-2026-0913-001) + curated gateway catalogs
 // (FID-2026-0914-001) + bazaarlink (FID-2026-0915-006) + atria
 // (FID-2026-0916-005) + intern (FID-2026-1004-008) + chatanywhere
-// (FID-2026-1005-010) + tiarina (FID-2026-1012-005) + marsai
-// (FID-2026-1016-004).
+// (FID-2026-1005-010) + tiarina (FID-2026-1012-005).
 export {
   atriaModels,
   bazaarlinkModels,
@@ -64,7 +63,6 @@ export {
   hcnsecModels,
   infronModels,
   internModels,
-  marsaiModels,
   tiarinaModels,
   tokenbomModels,
   unorouterModels,
@@ -93,7 +91,6 @@ export type {
   HcnsecModel,
   InfronModel,
   InternModel,
-  MarsaiModel,
   TiarinaModel,
   TokenbomModel,
   UnorouterModel,

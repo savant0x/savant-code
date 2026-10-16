@@ -4,7 +4,7 @@ import { deriveSetupConfig } from '../derive'
 import { PROVIDER_REGISTRY } from '../registry'
 
 describe('provider setup derivation', () => {
-  test('setup config derives exactly the forty-seven current setup providers', () => {
+  test('setup config derives exactly the forty-six current setup providers', () => {
     const setup = deriveSetupConfig(PROVIDER_REGISTRY)
     expect(Object.keys(setup).sort()).toEqual([
       'aihubmix',
@@ -32,7 +32,6 @@ describe('provider setup derivation', () => {
       'infron',
       'intern',
       'kiosapi',
-      'marsai',
       'meta',
       'minimax',
       'mistral',

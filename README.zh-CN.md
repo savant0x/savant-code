@@ -178,7 +178,6 @@ ollama serve
 | Clean APIs | `/provider cleanapis` | `CLEANAPIS_API_KEY` | 托管网关（密钥认证的实时模型目录） |
 | CodeCraft API | `/provider codecraft` | `CODECRAFT_API_KEY` | OpenAI 兼容网关（密钥认证的实时模型目录） |
 | Apixo | `/provider apixo` | `APIXOAI_API_KEY` | [OI] 兼容网关（免密钥的实时模型目录；供应商在每一行发布上下文窗口） |
-| MarsAI | `/provider marsai` | `MARSAI_API_KEY` | OpenAI 兼容网关（静态 14 模型免费层白名单；`https://marsai.click/v1`） |
 | AIHubMix | `/provider aihubmix` | `AIHUBMIX_API_KEY` | OpenAI 兼容网关（免密钥的实时模型目录；目录提供模型类型与部分上下文/输出限制） |
 | Mistral AI | `/provider mistral` | `MISTRAL_API_KEY` | OpenAI 兼容网关（密钥认证的实时模型目录） |
 | xKiro | `/provider xkiro` | `XKIRO_API_KEY` | 实时聊天模型目录；Anthropic 模型使用 Messages，其余模型使用 OpenAI 聊天 |
@@ -387,7 +386,7 @@ MCP 工具发现、模式切换（`HYBRID` / `SCAFFOLD` / `STRICT` / `ANALYZE`�
 - **网关提供商** —— 通过 `@savant-code/llm-providers` 支持 OpenRouter、TokenRouter、TokenHarbor、NVIDIA NIM、
   CommandCode、Nous Research、KiosAPI、APInex、OrcaRouter、B.AI、HCNSec、
  TokenBom、Infron、Intern InkStone、ChatAnywhere、Tiarina Cloud、
- UnoRouter、BazaarLink、Atria AI、OpenAI、Vercel AI Gateway、Clean APIs、CodeCraft API、Mistral AI、Apixo、MarsAI、AIHubMix、xKiro、
+ UnoRouter、BazaarLink、Atria AI、OpenAI、Vercel AI Gateway、Clean APIs、CodeCraft API、Mistral AI、Apixo、AIHubMix、xKiro、
   Alibaba Cloud、Anthropic、Baseten、Cerebras、Cohere、DeepInfra、DeepSeek、Fireworks AI、Google AI、Groq、Meta Llama API、
   MiniMax、Moonshot AI、Perplexity、Together AI、Venice AI、xAI、Z.AI 与
   Cloudflare Workers AI。Nous Research 使用 OpenAI 兼容直连
@@ -734,7 +733,6 @@ savant-code
 /provider xkiro
 /provider mistral
 /provider apixo
-/provider marsai
 /provider aihubmix
 /provider alibaba
 /provider anthropic
@@ -767,7 +765,7 @@ savant-code
 `MINIMAX_API_KEY`、`MOONSHOT_API_KEY`、`PERPLEXITY_API_KEY`、`TOGETHER_API_KEY`、
 `VENICE_API_KEY`、`XAI_API_KEY`、`ZHIPU_API_KEY`、`CHATANYWHERE_API_KEY`、`TIARINA_API_KEY`、`AI_GATEWAY_API_KEY`、
 `CLEANAPIS_API_KEY`、`CODECRAFT_API_KEY`、`XKIRO_API_KEY`、`MISTRAL_API_KEY`、`APIXOAI_API_KEY`、
-`MARSAI_API_KEY`、`AIHUBMIX_API_KEY` 与
+`AIHUBMIX_API_KEY` 与
 `CLOUDFLARE_API_TOKEN`。密钥提示为遮罩输入，并将密钥全局存储在
 Savant-Code 配置的 `credentials.json` 中；不会加入
 聊天记录。shell 环境变量优先于已存储的密钥，因此 CI 与托管环境可以不使用本地持久化来配置提供商。高级直接提供商

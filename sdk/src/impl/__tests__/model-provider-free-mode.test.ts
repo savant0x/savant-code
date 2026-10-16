@@ -251,45 +251,4 @@ describe('getModelForRequest ChatGPT OAuth fallback behavior', () => {
     // vendor-namespaced remainder goes verbatim (openrouter/apinex shape).
     expect(JSON.parse(String(init?.body)).model).toBe('alibaba/qwen-3-14b')
   })
-
-  test('requires the MarsAI API key (FID-2026-1016-004)', async () => {
-    const { getModelForRequest } = await importFresh()
-
-    await expect(
-      getModelForRequest({ model: 'marsai/auto-free' }),
-    ).rejects.toThrow(
-      'MarsAI API key not set. Set MARSAI_API_KEY environment variable or run /provider marsai.',
-    )
-  })
-
-  test('routes MarsAI models with the full id unchanged (FID-2026-1016-004)', async () => {
-    process.env.MARSAI_API_KEY = 'marsai-test-key'
-    const fetchMock = mock(() =>
-      Promise.resolve(
-        new Response('data: [DONE]\n\n', {
-          status: 200,
-          headers: { 'content-type': 'text/event-stream' },
-        }),
-      ),
-    )
-    // @ts-expect-error - test fetch has the same runtime contract
-    globalThis.fetch = fetchMock
-
-    const { getModelForRequest } = await importFresh()
-    const result = await getModelForRequest({ model: 'marsai/auto-free' })
-    await (result.model as LanguageModelV2).doStream({
-      prompt: COMMAND_CODE_PROMPT,
-    })
-
-    const [input, init] = fetchMock.mock.calls[0] as unknown as [
-      RequestInfo | URL,
-      RequestInit | undefined,
-    ]
-    expect(String(input)).toBe('https://marsai.click/v1/chat/completions')
-    expect(new Headers(init?.headers).get('authorization')).toBe(
-      'Bearer marsai-test-key',
-    )
-    // keep: `marsai/` is part of the real vendor slug — sent unchanged.
-    expect(JSON.parse(String(init?.body)).model).toBe('marsai/auto-free')
-  })
 })
