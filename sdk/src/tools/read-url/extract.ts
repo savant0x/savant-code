@@ -71,13 +71,21 @@ function extractElementContents(html: string, tagName: string): string[] {
 
 function selectReadableHtml(html: string): string {
   const articleCandidates = extractElementContents(html, 'article')
-  if (articleCandidates.length > 0) {
-    return articleCandidates.reduce((best, candidate) =>
+  const mainCandidates = extractElementContents(html, 'main')
+  const headedArticles = articleCandidates.filter((article) =>
+    /<h1\b/i.test(article),
+  )
+  const primaryMain = mainCandidates.find((main) => /<h1\b/i.test(main))
+  // Recommendation cards often use article, while the real heading and body
+  // are siblings outside them. Never replace that main content with a card.
+  const articles =
+    headedArticles.length > 0 ? headedArticles : articleCandidates
+  if (articles.length > 0 && !(primaryMain && headedArticles.length === 0)) {
+    return articles.reduce((best, candidate) =>
       stripTags(candidate).length > stripTags(best).length ? candidate : best,
     )
   }
 
-  const mainCandidates = extractElementContents(html, 'main')
   if (mainCandidates.length > 0) {
     return mainCandidates.reduce((best, candidate) =>
       stripTags(candidate).length > stripTags(best).length ? candidate : best,
