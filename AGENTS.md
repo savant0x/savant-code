@@ -87,7 +87,12 @@ filesystem entries in `agents/`.
 - [**dev/session-summaries/**](dev/session-summaries/) — Session audit trail
 - [**dev/test-prompts/**](dev/test-prompts/) — A-Z test prompts and reports
 - [**dev/nova/inbox/**](dev/nova/inbox/) + [**outbox/**](dev/nova/outbox/) — Third-party audit channel
-- [**dev/scratchpad/**](dev/scratchpad/) — Ephemeral working area (Orchestrator writes via `/dev override`)
+- [**dev/scratchpad/**](dev/scratchpad/) — Ephemeral working area (Orchestrator writes via `/dev override`).
+  Temporary storage only: root stays `README.md` + `active/` + `archive/`, files expire 24 h after
+  their last change, and the tree is untracked. Name scratch files
+  `<session|fid-id>-<what>.<ext>` so they can be promoted, and **never** cite scratch as FID
+  evidence — a declared gate (and any report or reusable probe) belongs in a durable path such as
+  `scripts/probes/`, because it must outlive the session. See [docs/scratchpad.md](docs/scratchpad.md).
 - [**`.agents/skills/`**](.agents/skills/) — operator-trusted skills: coding standards, release workflow, design suite (auto-loaded)
 - [**`docs/self-improving-harness.md`**](docs/self-improving-harness.md) —
   Self-improving harness + agent-created skills (full guide)
