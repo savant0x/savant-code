@@ -182,7 +182,7 @@ export function buildAgenda(
     for (const item of items) {
       lines.push(
         `- [ ] **${item.toolName}** — ${item.errorFirstLine.slice(0, 100)}`,
-        `      recurrences: ${item.count} (total ${item.totalCount}) — promote via FID when resolved+verified`,
+        `      recurrences: ${item.count} (total ${item.totalCount}) — check existing ownership and internal follow-ups`,
         '',
       )
     }
@@ -210,7 +210,7 @@ export function buildAgenda(
   for (const item of items) {
     routing.push(
       `FID-route: ${item.toolName} · ${item.errorFirstLine.slice(0, 80)} — ` +
-        `recurred ${item.count}× in 14d (≥3 bar). Draft a RED-phase FID; ` +
+        `recurred ${item.count}× in 14d (≥3 bar). Check ownership/internal tracking; new FID only for a demonstrated code defect. ` +
         `Orchestrator direct write when <100 lines (hybrid routing rule).`,
     )
   }

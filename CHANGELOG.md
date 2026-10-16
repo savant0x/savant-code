@@ -22,7 +22,8 @@
   and keeps production-repair assertions strict. Repository and shipped agent
   guidance close committed, code-verified FIDs immediately and automatically
   push verified progress to `main`; handoffs and observation windows do not
-  hold progress pushes. Release publication remains separate.
+  hold progress pushes. Release publication remains separate. Implementation:
+  `dbb8de12`; 10 declared gates passed; closed and archived.
 - FID-2026-1015-006 (high): closed and archived the committed recurrence
   repairs after all 19 declared gates passed live. Windows descendant
   containment, native argument diagnostics, primary-content extraction,

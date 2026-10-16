@@ -11,18 +11,13 @@ handling or repository boundaries.
 
 ## Open items
 
-- [ ] **FID-2026-1016-005. Remove the MarsAI built-in provider.**
-      Operator-approved 2026-10-16: remove MarsAI from the current product,
-      catalogs, tests and documentation; preserve the historical audit trail.
-      **Automation level: 3.**
-
-- [ ] **FID-2026-1016-006. Separate implementation closure from internal follow-up.**
-      Operator-approved 2026-10-16: archive implementation-complete FIDs and
-      record them in CHANGELOG; track exposure windows and live comparisons
-      independently under `dev/tracking/`. Verify selected lessons-pipeline
-      implementation and reconcile its state. Verified progress is committed
-      and normally pushed to `main` automatically, including during handoffs.
-      This instruction supersedes previous handoff push holds.
+- [ ] **FID-2026-1016-007. Batch pushed-range credential-scan Git reads.**
+      Automatic progress push encountered a historical 6,207-file deletion
+      and restoration. Per-path size, absence and content subprocesses make
+      that scan require roughly 25,000 Git launches. Batch exact-commit tree
+      metadata and bounded binary blob reads without weakening range coverage,
+      credential checks, deletion confirmation, size caps or identity pins.
+      Complete and verify this necessary push-path repair, then retry the push.
       **Automation level: 3.**
 
 - [ ] **T194. Linked-checkout retrofit reconnaissance before any FID.**
@@ -42,6 +37,8 @@ handling or repository boundaries.
 Implementation-complete records FID-2026-1015-006 and FID-2026-1012-022
 are closed and archived, with changelog entries. Observation and live comparison
 are separate work, per the operator's explicit ruling in this session.
+MarsAI removal FID-2026-1016-005 (`87c2f87a`, 11/11 gates) and internal
+tracking FID-2026-1016-006 (`dbb8de12`, 10/10 gates) are also closed and archived.
 
 - `OBS-001` in `dev/tracking/internal-followups.json`: production exposure and
   remaining sanitized replay evidence for eight classes. No class repair is claimed.
@@ -85,18 +82,11 @@ Operator authorization: completion at automation level 3, renewed 2026-10-15;
 specific removal and skill metadata approvals are in answers.md. Governance
 artifacts required by ECHO retain their gate-level exemptions.
 
-- FID-2026-1016-005: `common/**`, `cli/**`, `sdk/**`, `scripts/**`,
-  `docs/**`, `.env.example`, `README.md`, `README.zh-CN.md`, `dev/fids/**`,
-  `dev/session-summaries/**`, `SCOPE.md`, `CHANGELOG.md`
-- FID-2026-1016-006: `scripts/**`, `dev/tracking/**`, `dev/feature-pipeline/**`,
-  `docs/internal-followups.md`,
-  `dev/fids/**`, `dev/agenda.md`, `dev/operator-decisions.md`,
-  `dev/session-summaries/**`, `SCOPE.md`, `CHANGELOG.md`, `ECHO.md`,
-  `AGENTS.md`, `agents/recorder/recorder.ts`, `dev/echo-v0.1.2-single-agent.md`,
-  `.agents/skills/release-workflow/**`,
-  `common/src/constants/protocol-bundle.generated.ts`,
-  `common/src/constants/echo-protocol-instructions.generated.ts`,
-  `packages/agent-runtime/src/echo/protocol-refresh.generated.ts`
+- FID-2026-1016-007: `scripts/push-content*.ts`,
+  `scripts/*push*.test.ts`,
+  `scripts/__tests__/*push*.test.ts`, `scripts/__tests__/*pin*.test.ts`,
+  `scripts/pre-push-scan.ts`, `SCOPE.md`, `CHANGELOG.md`, `dev/fids/**`,
+  `dev/session-summaries/**`
 
 - Release-0.0.36: `VERSION`, `package.json`, `agents/package.json`,
   `cli/package.json`, `cli/release/package.json`, `common/package.json`,
