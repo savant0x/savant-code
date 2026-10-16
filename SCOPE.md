@@ -28,6 +28,14 @@ agents write as well as commit messages, always on through
 `validate:repository`, the pre-push working-tree scan and CI, and every
 non-Savant credit the operator's sweep and the new scanner found is stripped —
 the two tree scans report exit 0.
+Learning-pipeline register repair FID-2026-1016-009 (`dc7362b4`, 6/6 gates) is closed
+and archived: the active candidate store holds open work only, implemented candidates
+retire verbatim to `dev/feature-pipeline/implemented.json`, and four repair boundaries
+are declared in `dev/experiences/fix-boundaries.json` against verified fix commits, so
+the exposure sink is armed for the first time. `OBS-001` stays open — three classes now
+report `incomplete-observation` while four classes with no provable repair commit,
+including both truthful-upstream `read_url` refusals, remain `unresolved`. No class
+repair and no production observation is claimed.
 
 - `OBS-001` in `dev/tracking/internal-followups.json`: production exposure and
   remaining sanitized replay evidence for eight classes. No class repair is claimed.

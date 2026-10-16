@@ -12,6 +12,42 @@
 > the v0.0.36 cut. Release notes are written here at cut time; nothing in this
 > section is a package-release claim until then.
 
+## 2026-10-16 — Implemented candidates retire, and the exposure instrument is armed (FID-2026-1016-009, medium)
+
+### Changed
+
+- FID-2026-1016-009 (medium): a learning-pipeline review found the lesson-feature register
+  had no terminal state, so seven implemented candidates — every one carrying a closed FID
+  and a recorded commit — sat in the active queue while the only two open drafts were buried
+  among them. `bun run validate:repository` was green throughout: admission validates a
+  candidate's *evidence*, and for `implemented` its rules require exactly the closed FID and
+  commit a finished record already has, so nothing ever asked whether the work was still
+  open. Implemented candidates now retire verbatim to `dev/feature-pipeline/implemented.json`;
+  admission fails an active entry whose state is `implemented` (naming the archive), an
+  archived entry that is not implemented, and an identity collision between the two files.
+  The archive is read for the lesson-to-feature mapping and is part of the report
+  fingerprint, so retirement still suppresses a duplicate proposal rather than re-opening
+  the class LF-006 exists to prevent. The admissions pass moved to
+  `scripts/lesson-feature-admission.ts` and the archive to `scripts/lesson-feature-archive.ts`
+  after the repository's own 300-line ceiling refused the first attempt — the validator
+  caught two files at 338 and 350 lines and both were repaired by decomposition, not
+  exemption. New suite `scripts/__tests__/lesson-feature-archive.test.ts` (6 cases).
+- The same review found `dev/experiences/fix-boundaries.json` empty, which was not a cosmetic
+  gap: the declared `exposure-capture` hook has a documented fast path — with the manifest
+  empty it returns "without a write and without spawning anything" — so the sink had never
+  stamped a receipt and `OBS-001` had no instrument for the production observation it owes.
+  Four boundaries are now declared, each pinned to a repair commit verified to exist, to be
+  an ancestor of HEAD, and to contain that class's fix: `run_terminal_command:timeout`
+  (`63d08c34`), `read_files:read-incomplete` and `run_readonly_command:command-exit`
+  (`5b994ca0`), and `web_search:research-unavailable` (`f591e40f`). The other four OBS-001
+  classes stay unarmed with the reason recorded — `read_url:http-404` and `read_url:http-403`
+  are truthful upstream outcomes that the incident review forbids relabeling or bypassing,
+  and `read_url:fetch-unextractable` and `spawn_agents:incomplete-arguments` have no commit
+  that can be pinned to their repair. The census reads the armed classes as
+  `incomplete-observation` and `--assert-repaired=FID-2026-1015-006` still exits 1: the
+  14-day, three-session window has not elapsed, and **no class repair and no production
+  observation is claimed**.
+
 ## 2026-10-16 — No coding-agent credit in the governed records (FID-2026-1016-008, high)
 
 ### Changed
