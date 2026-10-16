@@ -12,6 +12,49 @@
 > the v0.0.36 cut. Release notes are written here at cut time; nothing in this
 > section is a package-release claim until then.
 
+## 2026-10-16 — Advertised offer deadlines are read from the feed, and the offer dump is bounded (FID-2026-1016-010, medium)
+
+### Changed
+
+- FID-2026-1016-010 (medium): the free-options discovery surface reported a deadline it had
+  already parsed as unknown. Every CLI consumer of an offer deadline — the display label, the
+  72 h "ending soon" window and the offer-expiry inbox facts — read `expiryTimestamp`, a
+  vestigial ISO branch written against an earlier feed shape, while the live feed emits a human
+  date into `expiryDate`. Measured read-only against the machine's own cached feed (219 offers,
+  no fetch): 0 offers carry an ISO timestamp, 12 carry a parsed date, all 219 display lines
+  read "deadline unverified", and the window count was structurally 0 — so no expiry fact could
+  ever be created and the list was uncountable for the operator. One shared
+  `resolveOfferDeadlineMs` now prefers the ISO instant and otherwise resolves a date-only
+  deadline to END OF DAY UTC, so an offer is never called expired on its own advertised day;
+  the label, the window and the inbox facts all consume it, and the registry-host map the
+  refresh loop built inline (and the display discarded) is now one shared helper. After the
+  repair the same feed reports 12 resolved deadlines, 1 inside the 72 h window, and a label
+  histogram of 207 "no advertised deadline" / 12 "advertised deadline" / 0 "deadline
+  unverified".
+- The offer category lifted from the FIRST em-dash in the description, so multi-dash prose
+  filed run-ons such as `not an ongoing free tier — Coding` as the category — which the harvest
+  leg's `/api provider/i` class filter then read. The tail now lifts its final dash segment, and
+  the parser keeps the tail's own `expires` statement even when its date does not resolve, so a
+  consumer that cannot read a deadline says "unverified" instead of "no deadline". Review
+  against live data caught the inverse defect in the first draft of that label: keying on the
+  word "expire" anywhere in the prose relabelled 18 offers whose tail says `ongoing` — several
+  reading "credits never expire" — as unknown, and the shipped rule reads the tail's statement
+  instead. Both corrections came from measuring the real feed, not the plan's census.
+- The display printed every offer as one flat, unattributed line — 219 of `free-options.md`'s
+  339 lines — with no bound, grouping or attribution even though `matchOfferHosts` attribution
+  was already computed for the facts and thrown away. Offer rows are now structured (title,
+  category, deadline label, registry labels, url) and attributed through that same matcher: the
+  `/provider free` output lists the attributed offers bounded to 10 with a remainder count and
+  one per-category count line, `free-options.md` keeps every offer grouped by category with
+  counts and known-provider marks, and the boot announce previews titles. The catalog delta the
+  envelope already lifted (`newModelIds`) now reaches both headers, omitted when empty. The
+  presentation lives in a new `cli/src/utils/free-options-offers.ts` because the renderer was
+  already against the repository's 300-line ceiling — and the gate refused the work twice more
+  before it passed: `quality` failed two suites at 367 and 309 lines, and both were repaired by
+  decomposition (the display pins moved to `free-options-offers.test.ts`, the pre-existing
+  attribution pins to `custats-attribution.test.ts`) rather than by exemption. New suite
+  `cli/src/utils/__tests__/provider-offers.test.ts` (10 cases); 10/10 declared gates stamped.
+
 ## 2026-10-16 — Implemented candidates retire, and the exposure instrument is armed (FID-2026-1016-009, medium)
 
 ### Changed

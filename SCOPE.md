@@ -59,6 +59,17 @@ repair and no production observation is claimed.
   fires recorded in the study. Authoring a FID for a dependency-sharing lane is
   a pending operator decision, not an agent disposition.
 
+Free-offers discovery fidelity FID-2026-1016-010 (`560b04ae`, 10/10 gates) is closed and
+archived: the free-options surface now reads advertised deadlines from the shapes the feed
+actually emits (ISO first, else the tail's human date at end-of-day UTC), so 12 of the 219
+cached offers report a real deadline instead of all 219 reporting "deadline unverified" while
+a 72 h window that could never fire; the offer category lifts the tail's final dash segment, so
+multi-dash prose no longer pollutes the harvest leg's class filter; the `/provider free` output
+is bounded and attributed while `free-options.md` keeps every offer grouped by category; and
+the catalog delta reaches both headers. Live label histogram after the repair: 207
+no-deadline / 12 advertised / 0 unverified. No release and no notification traffic beyond the
+repaired window logic is claimed.
+
 ## Recorded operator dispositions (2026-10-15)
 
 The verbatim source is `dev/fids/answers.md`; the durable decision record is
@@ -99,14 +110,3 @@ artifacts required by ECHO retain their gate-level exemptions.
   `dev/operator-decisions.md`, `dev/fids/**`, `dev/feature-pipeline/**`,
   `dev/session-summaries/**`, `scripts/version-docs.ts`,
   `scripts/version-docs-drift.test.ts`, `.agents/skills/**/SKILL.md`
-- FID-2026-1016-010: `cli/src/utils/provider-offers.ts`,
-  `cli/src/utils/free-options-offers.ts`, `cli/src/utils/free-options-render.ts`,
-  `cli/src/utils/free-options-types.ts`, `cli/src/utils/free-options.ts`,
-  `cli/src/utils/__tests__/free-options.test.ts`,
-  `cli/src/utils/__tests__/free-options-offers.test.ts`,
-  `cli/src/utils/__tests__/free-options-digest.test.ts`,
-  `cli/src/utils/__tests__/free-options-test-fixtures.ts`,
-  `cli/src/utils/__tests__/provider-offers.test.ts`,
-  `common/src/providers/custats-feed.ts`,
-  `scripts/providers/__tests__/custats-harvest.test.ts`,
-  `scripts/providers/__tests__/custats-attribution.test.ts`
