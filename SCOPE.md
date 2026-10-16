@@ -23,7 +23,7 @@ handling or repository boundaries.
 - [ ] **FID-2026-1012-022. Open-work master plan (build order + status board).**
       Savant-Free retirement and four-pillar hardening are committed at
       001e36c6 and d71b9065; both children are archived. Final root tests pass
-      9,187/23 skip/0 fail. The census is 606 records / 59 stable classes;
+      9,191/23 skip/0 fail. The census is 606 records / 59 stable classes;
       eight post-cutoff classes continue under active FID-2026-1015-006.
       **Blocker:** the continuation's replay/exposure requirements and T175's
       pending scope decision. No observation or production repair is fabricated.
@@ -47,6 +47,9 @@ handling or repository boundaries.
       Publication remains release-only. The attribution pre-push hook and its
       verification gates remain active. The operator answered "no need to gate"
       on 2026-10-15: publication does not gate this coordinator's closure.
+      Normal push attempted but blocked: earlier outgoing restoration commit
+      a707aa89 reintroduces five vendor binaries above the hook's 2 MB scan cap.
+      The cap and history remain intact; no bypass was used.
       **Automation level: 3.**
 
 - [ ] **Lessons-pipeline recurrence review and feature routing.** Audit the raw

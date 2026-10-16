@@ -16,7 +16,7 @@
 at automation level 3. FID-2026-1015-002 removal implementation is committed
 at `001e36c6`; four-pillar implementation is committed at `d71b9065`.
 Both children are closed and archived with their declared gates passing;
-the final root suite exits 0 (9,187 / 23 skipped / zero fail).
+the final root suite exits 0 (9,191 / 23 skipped / zero fail).
 Live re-measure: 606 records, 59 stable classes, 25 current
 recurrences above the threshold. Eight post-cutoff classes invalidate archived
 waivers and now route to active child FID-2026-1015-006. Archived documents and
@@ -31,7 +31,7 @@ branch protection are dropped in the operator's own words, preserved in the
 new child and SCOPE.md. T175's concrete reference draft is delivered at
 `docs/design/provider-reference-review-2026-10-15.md`; the only remaining
 operator question is whether live comparisons should remain a separate task.
-The final root test chain passed 9,187 / 23 skip / zero fail across all
+The final root test chain passed 9,191 / 23 skip / zero fail across all
 14 registered workspaces; typecheck and SDK build passed. Both implementation
 children are committed and archived. FID-006 remains active for replay and
 production observation; its local gates pass without claiming class repair.

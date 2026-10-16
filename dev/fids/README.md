@@ -8,7 +8,7 @@ operator decision, implementation, runtime review, or closure evidence.
 The current session leaves two active records: the master and the explicit
 post-cutoff continuation. FID-2026-1015-002 and FID-2026-1015-005 are committed
 and archived at `001e36c6` and `d71b9065`, with 11 and 10 declared gates passing.
-The full root chain exits 0 (9,187 PASS / 23 SKIP / zero FAIL).
+The final root chain exits 0 (9,191 PASS / 23 SKIP / zero FAIL).
 The current census is 606 records / 59 stable classes. Eight post-cutoff
 classes are explicitly owned by FID-2026-1015-006; no historical waiver follows
 them, and no production class repair is claimed.

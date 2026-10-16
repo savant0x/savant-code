@@ -78,3 +78,22 @@ diagnosis is blocked on sanitized replay/schema evidence absent from the
 immutable capture; class-repair certification also needs qualified real exposure.
 The missing evidence and T175 reference/budget decision were asked through
 pending input requests. Silence is not approval, and neither FID is closed.
+
+## Synchronization boundary
+
+The normal-main push was attempted through the mandatory hook and exited 1.
+Earlier outgoing commits a1b5e7d2/a707aa89 delete and restore 6,207 files;
+the restored ripgrep binaries include five blobs above the 2 MB scan cap.
+A focused invocation of the existing materializer confirms oversized=1 and
+materialized=0 for a707aa89:sdk/vendor/ripgrep/arm64-darwin/rg (4,375,216 bytes).
+The full scanner was stopped after that deterministic blocker was established;
+the hook refused the push. No bypass, history rewrite or cap change occurred.
+The local commits remain ahead of origin. Push synchronization is blocked by
+this existing policy/history interaction, separately from master class repair.
+
+Repository validation, archive closure guard, Markdown lint, governance smoke,
+protocol-bundle check and active-FID receipt check pass. The final root suite
+exits 0: 9,191 PASS / 23 SKIP / zero FAIL across all 14 workspace receipts.
+The full format check also exits 0. These ran directly because the push stopped
+before those gates. The session-end review refreshed the agenda and local wiki
+index; unrelated operator artifacts and pre-existing untracked pages stay local.
