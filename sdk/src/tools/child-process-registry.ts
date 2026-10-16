@@ -1,13 +1,17 @@
 import { spawnSync } from 'child_process'
 import * as os from 'os'
 
+import type { WindowsCommandJob } from './windows-command-job'
 import type { ChildProcess } from 'child_process'
+
+const commandJobs = new WeakMap<ChildProcess, WindowsCommandJob>()
 
 // Grace period between SIGTERM and SIGKILL for commands that trap or ignore
 // SIGTERM.
 export const KILL_ESCALATION_MS = 1500
 
 export function killProcessGroup(child: ChildProcess, signal: NodeJS.Signals) {
+  if (commandJobs.get(child)?.terminate()) return
   if (os.platform() === 'win32' && child.pid) {
     // Node's child.kill() only terminates the direct process on Windows. Since
     // the direct process is Git Bash, killing it first can orphan Bun/Node
@@ -84,13 +88,19 @@ export function getActiveTerminalCommandProcesses(): ActiveTerminalCommandProces
   })
 }
 
-export function registerLiveChild(child: ChildProcess): void {
+export function registerLiveChild(
+  child: ChildProcess,
+  job?: WindowsCommandJob,
+): void {
+  if (job) commandJobs.set(child, job)
   liveChildren.add(child)
   installExitSweep()
 }
 
 export function unregisterLiveChild(child: ChildProcess): void {
   liveChildren.delete(child)
+  commandJobs.get(child)?.close()
+  commandJobs.delete(child)
 }
 
 function installExitSweep() {

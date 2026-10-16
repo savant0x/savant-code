@@ -1,4 +1,3 @@
-import { spawn } from 'child_process'
 import * as os from 'os'
 import * as path from 'path'
 
@@ -13,9 +12,9 @@ import {
   KILL_ESCALATION_MS,
   isProcessGroupAlive,
   killProcessGroup,
-  registerLiveChild,
   unregisterLiveChild,
 } from './child-process-registry'
+import { spawnTerminalProcess } from './spawn-terminal-process'
 import { terminalFailureHint } from './terminal-failure-hints'
 import { createWindowsBashNotFoundError, findWindowsBash } from './windows-bash'
 import { buildChildEnv } from '../env'
@@ -100,24 +99,13 @@ export function runTerminalCommand({
     // Resolve cwd to absolute path
     const resolvedCwd = path.resolve(cwd)
 
-    const childProcess = spawn(shell, [...shellArgs, command], {
+    const childProcess = spawnTerminalProcess({
+      shell,
+      shellArgs,
+      command,
       cwd: resolvedCwd,
       env: processEnv,
-      stdio: 'pipe',
-      // Give the command its own process group so that killing it (timeout or
-      // user abort) also kills any grandchild processes. On POSIX this uses a
-      // negative pid kill against the process group. On Windows `detached: true`
-      // maps to DETACHED_PROCESS, which combined with CREATE_NO_WINDOW (from
-      // windowsHide) fully detaches the child from the parent's console.
-      // Without DETACHED_PROCESS, console-attached descendants can open
-      // CONIN$/CONOUT$ directly even when stdio is piped, stealing the VT input
-      // that ConPTY generates for the TUI's mouse/focus tracking and echoing it
-      // as gibberish like `^[[I^[[<35;12;7M` painted over the UI.
-      detached: true,
-      windowsHide: true,
     })
-
-    registerLiveChild(childProcess)
 
     const stdout = new BoundedOutputBuffer(COMMAND_OUTPUT_LIMIT)
     const stderr = new BoundedOutputBuffer(COMMAND_OUTPUT_LIMIT)
