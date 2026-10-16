@@ -3,7 +3,7 @@
   "owners": [
     {
       "classKey": "v1:read_files:read-incomplete:undetermined",
-      "fid": "FID-2026-1012-024"
+      "fid": "FID-2026-1015-006"
     },
     {
       "classKey": "v1:read_files:incomplete-arguments:unexpected",
@@ -23,7 +23,7 @@
     },
     {
       "classKey": "v1:spawn_agents:incomplete-arguments:unexpected",
-      "fid": "FID-2026-1012-017"
+      "fid": "FID-2026-1015-006"
     },
     {
       "classKey": "v1:run_readonly_command:incomplete-arguments:unexpected",
@@ -79,15 +79,15 @@
     },
     {
       "classKey": "v1:read_url:http-404:undetermined",
-      "fid": "FID-2026-1012-018"
+      "fid": "FID-2026-1015-006"
     },
     {
       "classKey": "v1:read_url:fetch-unextractable:undetermined",
-      "fid": "FID-2026-1012-018"
+      "fid": "FID-2026-1015-006"
     },
     {
       "classKey": "v1:read_url:http-403:undetermined",
-      "fid": "FID-2026-1012-018"
+      "fid": "FID-2026-1015-006"
     },
     {
       "classKey": "v1:read_url:http-401:undetermined",
@@ -123,7 +123,7 @@
     },
     {
       "classKey": "v1:web_search:research-unavailable:undetermined",
-      "fid": "FID-2026-1012-019"
+      "fid": "FID-2026-1015-006"
     },
     {
       "classKey": "v1:code_search:search-executable-missing:undetermined",
@@ -183,7 +183,7 @@
     },
     {
       "classKey": "v1:run_terminal_command:timeout:undetermined",
-      "fid": "FID-2026-1012-023"
+      "fid": "FID-2026-1015-006"
     },
     {
       "classKey": "v1:run_readonly_command:cancelled:undetermined",
@@ -199,7 +199,7 @@
     },
     {
       "classKey": "v1:run_readonly_command:command-exit:undetermined",
-      "fid": "FID-2026-1012-024"
+      "fid": "FID-2026-1015-006"
     },
     {
       "classKey": "v1:run_readonly_command:refused:undetermined",

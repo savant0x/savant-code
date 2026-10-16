@@ -46,6 +46,38 @@ function waiver(classes: string[] = [CLASS_KEY]): ClosureWaiverManifest {
 }
 
 describe('closure waivers preserve recurrence protection', () => {
+  test('only an explicit active continuation can take ownership; it inherits no waiver', () => {
+    const root = closedOwnerRoot()
+    const successor = 'FID-2026-1015-006'
+    const file = path.join(root, `dev/fids/${successor}-fixture.md`)
+    const classes = [
+      {
+        key: CLASS_KEY,
+        owner: successor,
+        state: 'unresolved' as const,
+        lastSeen: '2026-10-15T00:00:00Z',
+      },
+    ]
+    const inspect = () =>
+      closedOwnerIssues(root, [successor], classes, waiver())
+    fs.writeFileSync(file, `**Status:** analyzed\n- ${CLASS_KEY}\n`)
+    expect(inspect()).toContain(
+      `closure waiver names class owned by another FID: ${CLASS_KEY}`,
+    )
+    fs.writeFileSync(
+      file,
+      `**Status:** analyzed\n**Continues Classes From:** ${FID}\n- ${CLASS_KEY}\n`,
+    )
+    expect(inspect()).toEqual([])
+    fs.writeFileSync(
+      file,
+      `**Status:** closed\n**Continues Classes From:** ${FID}\n- ${CLASS_KEY}\n`,
+    )
+    expect(inspect()).toContain(
+      `closure waiver names class owned by another FID: ${CLASS_KEY}`,
+    )
+    expect(inspect()).toContain(`closed owner has unproved class: ${CLASS_KEY}`)
+  })
   test('accepts an explicitly named unresolved class for a closed owner', () => {
     expect(
       closedOwnerIssues(

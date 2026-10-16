@@ -57,6 +57,37 @@ export function closedOwnerIssues(
   const issues: string[] = []
   const waiverMap = new Map<string, ClosureWaiverManifest['waivers'][number]>()
   const ownerStatus = new Map<string, string | undefined>()
+  const hasActiveContinuation = (
+    fid: string | undefined,
+    previous: string,
+    classKey: string,
+  ): boolean => {
+    if (!fid || !FID_PATTERN.test(fid)) return false
+    const directory = path.join(root, 'dev/fids')
+    if (!fs.existsSync(directory)) return false
+    const matches = fs
+      .readdirSync(directory)
+      .filter((name) => name.startsWith(`${fid}-`) && name.endsWith('.md'))
+    if (matches.length !== 1) return false
+    const content = fs.readFileSync(path.join(directory, matches[0]), 'utf8')
+    const status = content.match(/^\*\*Status:\*\*\s*([^\r\n]*)/m)?.[1]?.trim()
+    const predecessors =
+      content
+        .match(/^\*\*Continues Classes From:\*\*\s*([^\r\n]*)/m)?.[1]
+        ?.split(/[,\s]+/) ?? []
+    return (
+      ['created', 'analyzed', 'converged', 'fixed', 'verified'].includes(
+        status ?? '',
+      ) &&
+      predecessors.includes(previous) &&
+      content
+        .split(/\r?\n/)
+        .some(
+          (line) =>
+            line.startsWith(`- ${classKey} `) || line === `- ${classKey}`,
+        )
+    )
+  }
   const getOwnerStatus = (fid: string): string | undefined => {
     if (ownerStatus.has(fid)) return ownerStatus.get(fid)
     const matches = ['dev/fids', 'dev/fids/archive'].flatMap((directory) => {
@@ -90,9 +121,10 @@ export function closedOwnerIssues(
       if (!entry) {
         issues.push(`closure waiver has no recorded class: ${classKey}`)
       } else if (entry.owner !== waiver.fid) {
-        issues.push(
-          `closure waiver names class owned by another FID: ${classKey}`,
-        )
+        if (!hasActiveContinuation(entry.owner, waiver.fid, classKey))
+          issues.push(
+            `closure waiver names class owned by another FID: ${classKey}`,
+          )
       } else if (entry.state === 'observed') {
         issues.push(`closure waiver names observed class: ${classKey}`)
       } else if (entry.state === 'recurred') {

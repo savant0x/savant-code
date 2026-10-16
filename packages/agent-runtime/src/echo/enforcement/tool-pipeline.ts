@@ -1,3 +1,5 @@
+import { safeToJSONValue } from '@savant-code/common/util/type-narrowing'
+
 import {
   classifyMutation,
   extractPaths,
@@ -100,7 +102,7 @@ export function beforeToolCallImpl(
   const settled = evaluateSettledStateCheck({
     state: self.state,
     toolName,
-    input,
+    input: safeToJSONValue(input),
   })
   if (settled.reason) {
     const warning = {

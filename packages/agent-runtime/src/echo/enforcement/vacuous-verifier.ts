@@ -1,7 +1,7 @@
 import { jcsCanonicalize } from '@savant-code/common/crypto/jcs'
-import { safeToJSONValue } from '@savant-code/common/util/type-narrowing'
 
 import type { EnforcementState } from '../types'
+import type { JSONValue } from '@savant-code/common/types/json'
 
 const TEST_COMMAND =
   /\b(?:bun|npm|pnpm|yarn|cargo|go)\s+(?:(?:run|--cwd(?:=|\s+)\S+)\s+)*test\b|\b(?:vitest|jest|mocha|pytest)\b/i
@@ -28,14 +28,14 @@ export function detectVacuousVerification(
 export function evaluateSettledStateCheck(params: {
   state: EnforcementState
   toolName: string
-  input: Record<string, unknown>
+  input: JSONValue
 }): { status: 'fresh' | 'warn' | 'block'; reason?: string } {
   const { state, toolName, input } = params
   if (!['run_readonly_command', 'code_search', 'glob'].includes(toolName)) {
     state.settledChecks.clear()
     return { status: 'fresh' }
   }
-  const key = `${toolName}|${jcsCanonicalize(safeToJSONValue(input))}`
+  const key = `${toolName}|${jcsCanonicalize(input)}`
   const previous = state.settledChecks.get(key)
   const repeatCount =
     previous?.writeCount === state.writeCount ? previous.repeatCount + 1 : 1

@@ -16,6 +16,7 @@ import {
   registerLiveChild,
   unregisterLiveChild,
 } from './child-process-registry'
+import { terminalFailureHint } from './terminal-failure-hints'
 import { createWindowsBashNotFoundError, findWindowsBash } from './windows-bash'
 import { buildChildEnv } from '../env'
 
@@ -229,11 +230,18 @@ export function runTerminalCommand({
       const truncatedStderr = stderr.format()
 
       // Include stderr in stdout for compatibility with existing behavior
+      const failureMessage = terminalFailureHint({
+        exitCode,
+        stdout: truncatedStdout,
+        stderr: truncatedStderr,
+        windows: isWindows,
+      })
       const combinedOutput = {
         command,
         stdout: truncatedStdout,
         ...(truncatedStderr ? { stderr: truncatedStderr } : {}),
         ...(exitCode !== null ? { exitCode } : {}),
+        ...(failureMessage ? { message: failureMessage } : {}),
       }
 
       resolve([{ type: 'json', value: combinedOutput }])
