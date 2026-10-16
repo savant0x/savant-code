@@ -17,6 +17,7 @@ import { PendingBashMessage } from '../components/pending-bash-message'
 import { ProviderInbox } from '../components/provider-inbox'
 import { ProviderPicker } from '../components/provider-picker'
 import { RewindPicker } from '../components/rewind-picker'
+import { SkillLifecycleNoticeAuto } from '../components/skill-lifecycle-notice'
 import { TopBanner } from '../components/top-banner'
 import { getProjectRoot } from '../project-files'
 
@@ -137,6 +138,18 @@ export function ChatLayout(props: ChatLayoutProps) {
                 message={msg}
               />
             ))}
+          {/* FID-2026-1016-013: the skill lifecycle traffic-light notice — the
+              CLI consumer FID-2026-1005-003 Step 4 wrote
+              `components/skill-lifecycle-notice.tsx` for and never mounted, so
+              a mechanically created draft was visible only in the session-end
+              report and `/skills activity`. It renders in the ghost-message
+              slot beside pending bash messages because that is the slot whose
+              contract it shares: a synthetic, non-transcript row that
+              acknowledges its batch only AFTER the render commits
+              (at-least-once replay on a crash) and paints nothing at all when
+              this surface has no unseen event — so it cannot become the stale
+              fake last message the CompactionSignal note below warns about. */}
+          <SkillLifecycleNoticeAuto projectRoot={getProjectRoot()} />
           {/* FID-2026-0814-006: in-stream compaction lifecycle signal (kimi
               pattern). Render-only — never enters messageHistory, so the ECHO
               compliance accounting is untouched.
