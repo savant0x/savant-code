@@ -1,4 +1,4 @@
-# SavantCode for Windows dev setup
+# Savant-Code for Windows dev setup
 
 Welcome!
 
@@ -20,10 +20,23 @@ You can access the machine either from the browser or with the desktop app:
 Supposedly you can also use Window's Remote Desktop to access the machine instead, but I've not tried it.
 Shadow.tech claims their protocol is better optimized for lower bandwidth use & hence smoother performance.
 
+## Verified behaviour
+
+Every command and message in this file was checked against the source, not
+recalled (2026-10-16): the bash requirement and
+`SAVANT_CODE_GIT_BASH_PATH` (`sdk/src/tools/windows-bash.ts:18`, `:30`, `:89`),
+the release-metadata failure (`cli/release-core/launcher.js:1150`), the update
+message (`:1236`, `:1278`), and proxied release downloads
+(`HTTPS_PROXY`, exercised by `cli/src/__tests__/release/proxy-http-get-https.test.ts`).
+
+The `Issue #NNN` links below point at the canonical repository
+(`github.com/savant0x/savant-code`) and were **not** re-checked in this pass —
+treat the issue numbers as unverified.
+
 ## Set-up guide:
 
 You shouldn't need this - but just in case you stop using Shadow.tech, or make a new account, here's a guide on how
-to get from a blank Windows install to a SavantCode install.
+to get from a blank Windows install to a Savant-Code install.
 
 Surprisingly: most guides in fact recommend running everything in an Admin PowerShell, contra to advice to not use
 sudo on eg: Linux/macOS.
@@ -31,7 +44,7 @@ sudo on eg: Linux/macOS.
 - Install Choco: Open PowerShell as Admin, and run the command from https://chocolatey.org/install
 - Install NVM: Restart PowerShell (still as Admin) and run `choco install nvm -y`
 - Install Node: Restart PowerShell (still as Admin) and run `nvm install node`
-- Install SavantCode: Run `npm i -g savant-code`
+- Install Savant-Code: Run `npm i -g savant-code`
 
 ---
 
@@ -60,7 +73,7 @@ Some release wrappers or older installations may check public release metadata d
 
 1. **Set the `HTTPS_PROXY` environment variable** (if behind corporate proxy or a restricted network):
 
-   SavantCode natively supports proxy environment variables. This is the recommended fix:
+   Savant-Code natively supports proxy environment variables. This is the recommended fix:
 
    **PowerShell:**
    ```powershell
@@ -88,7 +101,7 @@ Some release wrappers or older installations may check public release metadata d
    npm config set proxy http://your-proxy-server:port
    npm config set https-proxy http://your-proxy-server:port
    ```
-   Note: This only helps with `npm install`. SavantCode's own downloads use `HTTPS_PROXY` instead.
+   Note: This only helps with `npm install`. Savant-Code's own downloads use `HTTPS_PROXY` instead.
 
 4. **Disable VPN temporarily** or whitelist `registry.npmjs.org` and `savant-code.com` in your firewall
 
@@ -111,7 +124,7 @@ Bash is required but was not found on this Windows system.
 ```
 
 **Cause**:
-SavantCode requires bash for command execution. This error appears when:
+Savant-Code requires bash for command execution. This error appears when:
 
 - Git for Windows is not installed
 - You're not running inside WSL
@@ -121,7 +134,7 @@ SavantCode requires bash for command execution. This error appears when:
 
 1. **Install Git for Windows** (recommended):
    - Download from https://git-scm.com/download/win
-   - This installs `bash.exe` which SavantCode will automatically detect
+   - This installs `bash.exe` which Savant-Code will automatically detect
    - Works in PowerShell, CMD, or Git Bash terminals
 
 2. **Use WSL (Windows Subsystem for Linux)**:
@@ -151,7 +164,7 @@ Complex git commands may have issues with Windows path handling or shell escapin
 
 1. **Ensure Git for Windows is installed**:
    - Download from https://git-scm.com/download/win
-   - SavantCode uses bash.exe from Git for Windows for command execution
+   - Savant-Code uses bash.exe from Git for Windows for command execution
 
 2. **Use WSL for complex operations**:
    - Provides full Linux environment with native bash
@@ -162,22 +175,26 @@ Complex git commands may have issues with Windows path handling or shell escapin
 
 ---
 
-### Message: "Update available: error → [version]"
+### Message: "Update available: unknown → [version]"
 
 **What it means**:
 This is **not an error** - it's an informational message indicating:
 
 - Your local binary needs to be downloaded/updated
-- "error" is a placeholder version (not a real error state)
-- SavantCode will automatically download the correct version
+- `unknown` is the placeholder the launcher prints when it cannot read the
+  installed version (`cli/release-core/launcher.js` — the same message prints
+  your real version when it can), not an error state
+- Savant-Code will automatically download the correct version
 
 **What to do**:
 
-- Wait for the download to complete: "Download complete! Starting SavantCode..."
+- Wait for the download to complete: "Download complete! Starting Savant-Code..."
 - If download fails, check your internet connection
 - If it persists, try the solutions in "Failed to determine latest version" above
 
-**Reference**: Issue [#299](https://github.com/savant0x/savant-code/issues/299)
+This section previously said the placeholder reads `error`, which the launcher
+never prints (verified 2026-10-16 against `cli/release-core/launcher.js:1236`,
+`:1278`).
 
 ---
 

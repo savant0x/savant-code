@@ -49,6 +49,10 @@ ollama serve
 # Windows: https://ollama.com/download/windows
 ```
 
+On Windows, see [`WINDOWS.md`](WINDOWS.md) for the bash requirement
+(Git for Windows / `SAVANT_CODE_GIT_BASH_PATH`), proxy configuration, and the
+launcher's version messages.
+
 Then run `savant-code` again, or type `/health` inside the chat to verify the
 connection.
 

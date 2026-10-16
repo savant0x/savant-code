@@ -72,8 +72,9 @@ repaired window logic is claimed.
 
 ## Recorded operator dispositions (2026-10-15)
 
-The verbatim source is `dev/fids/answers.md`; the durable decision record is
-FID-2026-1015-002. These dispositions supersede the previous register holds.
+The verbatim source is `dev/fids/answers.md` (op: i deleted that answers.md file
+during cleanup.); the durable decision record is FID-2026-1015-002. These
+dispositions supersede the previous register holds.
 
 - T171: dropped::operator-approved 2026-10-15 — "keep as is".
 - T173: current conservative KiosAPI defaults accepted — "its fine, close it as done".
@@ -124,3 +125,17 @@ artifacts required by ECHO retain their gate-level exemptions.
   1-second `spawnSync` PATH probe. Fix applied test-first (red → green), full sdk suite 717 pass /
   0 fail. Write targets released: `sdk/src/tools/code-search/executor.ts`,
   `sdk/src/__tests__/ripgrep.test.ts`. The sdk suite is no longer a push blocker.
+- FID-2026-1016-013: `scripts/quality-report.ts`,
+  `scripts/quality-report.test.ts`, `protocol.config.yaml`,
+  `common/src/constants/protocol-bundle.generated.ts`, `common/src/constants/skills.ts`,
+  `scripts/skills-check.ts`, `scripts/skills-check-content.ts`,
+  `scripts/__tests__/skills-check-*.test.ts`, `coding-standards/**`,
+  `.agents/skills/coding-*/SKILL.md`, `docs/adding-a-provider.md`,
+  `docs/design/Savant Self-Improving Architecture Plan.md`,
+  `desktop/public/floor-assets/robots/**`, `desktop/src/floor/**`,
+  `scripts/orphan-sweep.ts`, `scripts/orphan-sweep.test.ts`,
+  `scripts/session-end-review.ts`, `AGENTS.md`, `WINDOWS.md`, `README.md`,
+  `CHANGELOG.md`, `cli/src/**`, `common/src/constants/**`, `common/src/util/**`,
+  `packages/agent-runtime/src/find-files/**`, `scripts/eslint-rules/**`
+  (this session, operator-ruled: the one tracked 400-line ceiling, the duplicate robot model,
+  the orphan triage and the recurring sweep; write targets release at closure.)

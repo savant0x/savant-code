@@ -12,6 +12,99 @@
 > the v0.0.36 cut. Release notes are written here at cut time; nothing in this
 > section is a package-release claim until then.
 
+## 2026-10-16 — One tracked file-length ceiling, the duplicate robot model removed, 19 dead files triaged out (FID-2026-1016-013, medium)
+
+### Changed
+
+- **The file-length ceiling is one tracked number (operator ruling: 400 for every language).** It was
+  read from the **untracked** `dev/quality-baseline.json` (300) while `protocol.config.yaml`'s comment
+  merely claimed to own it, so the most consequential quality number in the repository was
+  machine-local and unreviewable. `scripts/quality-report.ts` now resolves `quality.max_file_lines`
+  from the tracked config and fails closed — a missing block, a missing value or a non-positive
+  integer throws, because a ceiling nobody can see is worse than no ceiling — and the local baseline
+  no longer carries the key at all, so exactly one file states the number. **Measured honestly: no
+  source file exceeded 300, so the old value was enforced and never bit; this change is about where the
+  policy lives, not about relaxing a violated gate.**
+- **The per-language override tables were fiction and are now removed.** Six `coding-standards/*.md` and
+  six `.agents/skills/coding-*/SKILL.md` files documented overrides (csharp/go/java 350, python 400,
+  rust 300, typescript 400) for a mechanism the report has never had; the TypeScript skill was the only
+  one telling the truth ("no file-length exemptions"). Each now shows one honest limits table: the
+  single 400 ceiling, enforced by `bun run quality:report`, every other setting marked advisory. The
+  same correction landed in `docs/adding-a-provider.md` and the self-improving-architecture plan.
+- **`SKILL_MAX_FILE_LINES` was a third real ceiling** (`common/src/constants/skills.ts`, 300, enforced
+  by `skills:check` on every `SKILL.md`). Now 400, mirrored from the config because `common` cannot read
+  YAML at runtime, and pinned by a test (`SKILL_MAX_FILE_LINES === readQualityCeiling()`) so the two
+  values cannot drift apart silently.
+- **The duplicate robot model is gone and its attribution corrected.**
+  `desktop/public/floor-assets/robots/robot.glb` was **byte-identical** to `RobotExpressive.glb`
+  (SHA-256 `047f5e5f…`, 463,988 B) while `ASSET-MANIFEST.md` credited it to the Quaternius pack — and
+  both files' glTF JSON names the Khronos sample model's own meshes and clips (`Foot.L`, `Torso`,
+  `Idle`/`Dance`/`Wave`…), so the false row was the Quaternius one. `robot-cast.ts` presented the pair
+  as "two distinct designs" alternating across the pad ring, with Savant getting the other model from
+  its specialists — a distinction that never existed visually, because the bytes were one model. The
+  duplicate is deleted, `ROBOT_MODEL_URL`, the cast comment, the loader comment and the asset test
+  follow the kept name, and the manifest now records the removal and why.
+- `scripts/orphan-sweep.ts` resolves two more reference spellings: the **emitted-JS extension** (this
+  tree imports its own TypeScript as `'./audit-rebrand-corruption.js'`, so seven live modules were
+  reported as orphans) and **directory-relative mentions** (`cli/bunfig.toml` → `./src/polyfills/x.ts`).
+  Both deliberately trade false positives for false negatives: a human deletes files from this report,
+  so a missed candidate costs one stale file while a wrong one costs a deleted module.
+- The sweep now **recurs**: `bun run session-end:review` prints one advisory line (count + the command to
+  run, never an exit code) and `AGENTS.md` documents the sweep. Measured cost 3.1 s, inside the
+  SessionEnd hook's 60 s timeout. It runs from the CLI entry point, not from `runSessionEndReview`, so
+  tests against temp roots never walk the real repository.
+- `WINDOWS.md` verified line by line against the source and linked from the README (it previously had
+  zero inbound references outside this changelog): the bash requirement and `SAVANT_CODE_GIT_BASH_PATH`,
+  the release-metadata failure, proxied release downloads and the update message all check out, and the
+  document now says which `file:line` each was verified against. One claim was false — see below.
+
+### Fixed
+
+- **`WINDOWS.md` documented a launcher message that does not exist.** The troubleshooting section
+  described `Update available: error → [version]` and explained `error` as a placeholder version; the
+  launcher prints `Update available: ${currentVersion || 'unknown'} → ${latestVersion}`
+  (`cli/release-core/launcher.js:1236`, `:1278`), so the placeholder is `unknown`, printed when the
+  installed version cannot be read. The section now says that, and the document records the correction
+  rather than quietly rewriting itself. Its `Issue #NNN` links were **not** re-checked and are marked
+  unverified in the document instead of being presented as accurate.
+- **19 dead files deleted, after fixing the report that was supposed to find them.** Every deletion was
+  checked twice: statically against a whole-working-tree corpus scan (git-tracked files plus untracked
+  `dev/`) using the sweep's own tokenizer, where the only mentioners were historical records
+  (archived FIDs, session transcripts, baseline line-count history) or the triage probe; and
+  dynamically, by typechecking and running the full suites of all four workspaces that contained them
+  (cli 4140 pass, common 911, desktop 473, packages/agent-runtime 2198 — 0 failures). Deleted:
+  `cli/src/components/referral-quiet-line.tsx` + `referral-copy-button.tsx` (the referral surface has
+  no other mention in `cli/src`), `cli/src/hooks/use-fingerprint.ts`,
+  `cli/src/hooks/use-sheen-animation.tsx`, `cli/src/polyfills/bun-strip-ansi.ts`,
+  `cli/src/utils/{error-messages,format-session-units,format-validation-errors-for-message}.ts`,
+  `cli/src/utils/syntax-highlighter.tsx`, `common/src/constants/{grant-priorities,subscription-plans}.ts`,
+  `common/src/util/{agent-file-utils,agent-name-normalization}.ts`,
+  `desktop/src/components/diff/parse-diff.ts`,
+  `packages/agent-runtime/src/find-files/custom-file-picker-config.ts` (imports a module literally
+  named `old-constants`), and four superseded ESLint fixtures (`probe2.mjs`, `rule-test2.mjs`,
+  `debug-ast.mjs`, `unknown-good.ts` — the live rule tests spawn their own probe since
+  FID-2026-1013-012 W3-5).
+- The local `dev/quality-baseline.json` had its `maxFileLines` key removed and 13 entries pruned for
+  deleted files, so the history ledger no longer names files that do not exist.
+- `README.md`'s Windows note now points at `WINDOWS.md`.
+
+### Retained on purpose (17 orphan candidates, each with a reason)
+
+Kept because a name index cannot see the reference, and deleting them would remove a capability rather
+than a liability: hand-run smoke tools and probes whose invocation is manual and/or cited as evidence
+by archived FID gates and `dev/LEARNINGS.md` (`cli/scripts/graph-smoke.ts`,
+`cli/scripts/hud-preview-browser-check.ts`, `scripts/desktop-cargo-test-probe.ts`,
+`scripts/learnings-{prefix,truncation}-probe.ts`,
+`scripts/providers/audit-probes/t62f1-commandcode-probe.ts`,
+`scripts/__tests__/validation-manifest.parity-probe.ts`); files loaded by convention
+(`evals/playwright.config.ts`, `evals/graph-export-e2e/playwright.config.ts`, the two desktop
+browser-smoke fixtures, `common/src/templates/initial-agents-dir/examples/*`); documentation examples
+shipped to be read rather than imported (`sdk/examples/readme-example-1.ts`); and
+`cli/src/components/skill-lifecycle-notice.tsx`, which is a **declared-but-unmounted** surface from
+FID-2026-1005-003 Step 4 — the CLI renders skill-lifecycle events as plain text lines, so the traffic-light
+component is dead code today, but deleting it would erase the evidence that the step was declared and
+never wired. That gap needs an operator decision (wire it or drop it), not a hygiene pass.
+
 ## 2026-10-16 — Code search resolves the pinned vendored ripgrep again (FID-2026-1016-012, high)
 
 ### Fixed
@@ -112,12 +205,16 @@ prettier all ran on the pushed range and passed.
 `dev/` is untracked by design (operator ruling 2026-10-16), so the audit's FID record is local-only
 and the unresolved findings are restated here for anyone reading only the repository:
 
+> **Superseded by FID-2026-1016-013 (2026-10-16)** — the operator ruled on each item in this list;
+> the resolutions are recorded above. Kept here as the audit's own record of what it found.
+
 - **`desktop/public/floor-assets/robots/RobotExpressive.glb` is byte-identical to `robot.glb`** in
   the same directory (463,988 B, verified by `md5sum`), while `ASSET-MANIFEST.md` attributes them to
   different upstreams — Quaternius and the Khronos glTF sample models. Both are referenced
   (`desktop/src/floor/office/robot-cast.ts:39-40`) and both are CC0, so there is no licence exposure;
   the manifest attribution is what is wrong. Either correct the attribution or drop the duplicate
-  from the cast. No file was changed.
+  from the cast. No file was changed. **→ resolved: the duplicate was dropped and the false
+  Quaternius attribution removed; `robot.glb` was the copy.**
 - **`coding-standards/*.md` and `.agents/skills/coding-*/SKILL.md` have diverged into two sources of
   truth for the same standards.** After normalising line endings the bodies differ by 18 substantive
   lines (TypeScript), and the difference is not cosmetic: `coding-standards/typescript.md` declares
@@ -127,11 +224,15 @@ and the unresolved findings are restated here for anyone reading only the reposi
   one of the two documents would relax a live gate. `ECHO.md` still points at
   `coding-standards/{language}.md` in 8 places, and `coding-standards/x402.md` exists although the
   changelog records its deletion (FID-2026-0717-003). Choosing the canonical copy is a governance
-  decision, so nothing was edited.
+  decision, so nothing was edited. **→ resolved: one tracked ceiling of 400, no override mechanism
+  claimed anywhere, both enforcement sites aligned and pinned by test.**
 - **`WINDOWS.md` has zero inbound references** outside this changelog. It reads as real product
-  documentation, so deleting it needs an operator decision rather than a hygiene pass.
+  documentation, so deleting it needs an operator decision rather than a hygiene pass. **→ resolved:
+  verified against the source, one stale message fixed, linked from the README.**
 - The orphan sweep reports **46 candidate files** among 4,940 tracked. Six were spot-checked against
   `git grep`; the remainder are unverified by design, which is why the sweep is advisory and exits 0.
+  **→ resolved: two more reference-spelling defects fixed, every candidate triaged, 19 deleted and 17
+  retained with a stated reason; the sweep now recurs at session end.**
 
 ## 2026-10-16 — Advertised offer deadlines are read from the feed, and the offer dump is bounded (FID-2026-1016-010, medium)
 
