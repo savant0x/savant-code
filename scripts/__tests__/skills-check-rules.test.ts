@@ -4,6 +4,8 @@ import path from 'node:path'
 
 import { afterEach, describe, expect, test } from 'bun:test'
 
+import { SKILL_MAX_FILE_LINES } from '@savant-code/common/constants/skills'
+
 import { checkSkillContent } from '../skills-check'
 
 // FID-2026-0819-005 Loop 187: the command blocklist/allowlist + line-ceiling
@@ -118,7 +120,12 @@ describe('checkSkillContent rule specifics', () => {
 
   test('flags the line ceiling', () => {
     const root = fixtureRoot()
-    const body = Array.from({ length: 320 }, (_, i) => `line ${i}`).join('\n')
+    // FID-2026-1016-013: derived, not hard-coded — the policy number lives in
+    // protocol.config.yaml and is pinned by quality-report.test.ts.
+    const body = Array.from(
+      { length: SKILL_MAX_FILE_LINES + 20 },
+      (_, i) => `line ${i}`,
+    ).join('\n')
     const file = writeSkill(root, 'demo', body)
     const findings = checkSkillContent({
       entry: 'demo',

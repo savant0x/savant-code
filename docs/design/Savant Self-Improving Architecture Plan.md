@@ -155,7 +155,7 @@ The architectural verdicts resolve into a deterministic, four-phase rollout plan
 | **Agent Hallucinated Lessons** | Medium | High | Structural prohibition of self-reporting. The Verifier agent must execute terminal commands and paste exact output into the FID AUDIT phase2. FIDs lacking stdout evidence are mechanically rejected by fid:verify. |
 | **Prompt-Injection via Authored Skills** | Medium | Critical | All agent-authored skills land in .quarantine/. ZTAP provenance tracks the origin node. The EHEL skill\_manage gate blocks writes containing restricted CLI commands or undefined execution environments8. |
 | **Multi-Agent Race Conditions** | Low | Medium | Strict separation of duties2. Only the Scribe holds the skill\_manage tool. Only the Recorder holds FID creation tools. The EHEL synchronizes file locks across subagent processes. |
-| **Quality Ceilings Breached** | Low | Medium | Agent-authored files are subjected to the same protocol.config.yaml limits (e.g., 300 lines/file, max complexity 10\)1. The skills:check utility enforces this synchronously during the write\_file operation. |
+| **Quality Ceilings Breached** | Low | Medium | Agent-authored files are subjected to the same protocol.config.yaml limits (e.g., 400 lines/file, max complexity 10\)1. The skills:check utility enforces this synchronously during the write\_file operation. |
 
 ## **6-Month Horizon Note**
 

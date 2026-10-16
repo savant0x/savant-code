@@ -66,12 +66,15 @@ internal/
 - [ ] Circular imports
 - [ ] Naked returns in long functions
 
-## Quality Overrides
+## Quality Limits
 
-These override the defaults in `protocol.config.yaml` when Go is the configured language.
+`protocol.config.yaml` owns the file-length ceiling, and `scripts/quality-report.ts`
+enforces it against every project-owned source file: `max_file_lines` (400 today).
+There is no per-language override mechanism — no Go-specific ceiling is enforced
+anywhere — so the rows below are style guidance, not gates.
 
-| Setting | Default | Go Override | Reason |
-|---------|---------|-------------|--------|
-| `max_file_lines` | 300 | 350 | Go files with interfaces and tests can be slightly longer |
-| `max_function_lines` | 50 | 50 | — |
-| `max_line_length` | 100 | 120 | Go convention allows longer lines for readability |
+| Setting | Limit | Reason |
+|---------|-------|--------|
+| `max_file_lines` | 400 | One ceiling for every language; enforced by `bun run quality:report` |
+| `max_function_lines` | 50 | — (advisory) |
+| `max_line_length` | 120 | Go convention allows longer lines for readability — advisory |

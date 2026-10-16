@@ -1,6 +1,15 @@
+import fs from 'node:fs'
+import path from 'node:path'
+
 import { describe, expect, it } from 'bun:test'
 
-import { collectQualityIssues, type QualityBaseline } from './quality-report'
+import { SKILL_MAX_FILE_LINES } from '@savant-code/common/constants/skills'
+
+import {
+  collectQualityIssues,
+  readQualityCeiling,
+  type QualityBaseline,
+} from './quality-report'
 
 // FID-2026-1010-004: every case below calls `collectQualityIssues`, which walks
 // the whole repository (every source root) on each invocation — measured at
@@ -16,13 +25,61 @@ function scanTest(name: string, body: () => void): void {
 }
 
 describe('quality ratchet', () => {
+  // FID-2026-1016-013: the ceiling is tracked policy, not a baseline field.
+  // The default second argument resolves it from protocol.config.yaml; every
+  // case below passes it explicitly so the assertions stay hermetic instead
+  // of depending on whatever value the tracked config carries today.
+  scanTest(
+    'resolves the default ceiling from tracked protocol.config.yaml',
+    () => {
+      const configPath = path.resolve(
+        import.meta.dir,
+        '..',
+        'protocol.config.yaml',
+      )
+      const configured = fs
+        .readFileSync(configPath, 'utf8')
+        .replace(/\r\n/g, '\n')
+        .split('\n')
+        .map((line) => line.match(/^\s+max_file_lines:\s*(\S+)\s*$/)?.[1])
+        .find((value): value is string => value !== undefined)
+
+      expect(configured).toBeDefined()
+      expect(readQualityCeiling()).toBe(Number(configured))
+
+      // The local baseline no longer carries a ceiling of its own, so an
+      // empty baseline against the real tree passes only if the configured
+      // ceiling is the one being enforced.
+      const baseline = JSON.parse(
+        fs.readFileSync(
+          path.resolve(import.meta.dir, '..', 'dev', 'quality-baseline.json'),
+          'utf8',
+        ),
+      ) as QualityBaseline
+      expect(baseline).not.toHaveProperty('maxFileLines')
+      expect(
+        collectQualityIssues(
+          { ...baseline, trackedFiles: {} },
+          readQualityCeiling(),
+        ),
+      ).toEqual([])
+    },
+  )
+
+  // FID-2026-1016-013: skills:check holds a second copy of the ceiling because
+  // `common` cannot read YAML at runtime. One policy number, two readers — so
+  // the copy is pinned here instead of being trusted.
+  it('the skill-document ceiling mirrors the tracked policy value', () => {
+    expect(SKILL_MAX_FILE_LINES).toBe(readQualityCeiling())
+  })
+
   scanTest(
     'enforces the absolute ceiling even when the historical baseline is higher',
     () => {
-      const issues = collectQualityIssues({
-        maxFileLines: 10,
-        trackedFiles: { 'scripts/quality-report.ts': 10_000 },
-      })
+      const issues = collectQualityIssues(
+        { trackedFiles: { 'scripts/quality-report.ts': 10_000 } },
+        10,
+      )
 
       expect(
         issues.some(
@@ -37,10 +94,10 @@ describe('quality ratchet', () => {
   scanTest(
     'includes project-owned hidden source roots in the absolute check',
     () => {
-      const issues = collectQualityIssues({
-        maxFileLines: 10,
-        trackedFiles: { '.agents/types/tools.ts': 10_000 },
-      })
+      const issues = collectQualityIssues(
+        { trackedFiles: { '.agents/types/tools.ts': 10_000 } },
+        10,
+      )
 
       expect(
         issues.some(
@@ -57,10 +114,10 @@ describe('quality ratchet', () => {
     () => {
       // FID-2026-0819-005 Loop 145: sdk/dist/*.d.ts is generated output, not
       // project-owned source; the walk must not count it.
-      const issues = collectQualityIssues({
-        maxFileLines: 10,
-        trackedFiles: { 'sdk/dist/index.d.ts': 10_000 },
-      })
+      const issues = collectQualityIssues(
+        { trackedFiles: { 'sdk/dist/index.d.ts': 10_000 } },
+        10,
+      )
 
       expect(issues.some((issue) => issue.file === 'sdk/dist/index.d.ts')).toBe(
         false,
@@ -73,10 +130,10 @@ describe('quality ratchet', () => {
   scanTest(
     'does NOT report growth of an under-cap file past its historical baseline',
     () => {
-      const issues = collectQualityIssues({
-        maxFileLines: 10_000,
-        trackedFiles: { 'scripts/quality-report.ts': 1 },
-      })
+      const issues = collectQualityIssues(
+        { trackedFiles: { 'scripts/quality-report.ts': 1 } },
+        10_000,
+      )
 
       expect(issues).toEqual([])
     },
@@ -85,10 +142,10 @@ describe('quality ratchet', () => {
   scanTest(
     'reports an over-cap file at the absolute maximum even with a stale low baseline',
     () => {
-      const issues = collectQualityIssues({
-        maxFileLines: 10,
-        trackedFiles: { 'scripts/quality-report.ts': 1 },
-      })
+      const issues = collectQualityIssues(
+        { trackedFiles: { 'scripts/quality-report.ts': 1 } },
+        10,
+      )
 
       expect(
         issues.some(
@@ -102,9 +159,9 @@ describe('quality ratchet', () => {
 
   scanTest('rejects the unsupported approvedGrowth field', () => {
     const legacyBaseline = JSON.parse(
-      '{"maxFileLines":300,"trackedFiles":{},"approvedGrowth":{}}',
+      '{"trackedFiles":{},"approvedGrowth":{}}',
     ) as QualityBaseline
-    const issues = collectQualityIssues(legacyBaseline)
+    const issues = collectQualityIssues(legacyBaseline, 400)
 
     expect(issues).toContainEqual({
       file: 'dev/quality-baseline.json',
@@ -118,13 +175,15 @@ describe('quality ratchet', () => {
     () => {
       // scripts/quality-report.ts really exists (~175 lines) and is scanned;
       // the pin below its actual size proves growth-freezing still fires.
-      const issues = collectQualityIssues({
-        maxFileLines: 10,
-        trackedFiles: { 'scripts/quality-report.ts': 10 },
-        dataConstantExemptions: {
-          'scripts/quality-report.ts': 'generated data payload',
+      const issues = collectQualityIssues(
+        {
+          trackedFiles: { 'scripts/quality-report.ts': 10 },
+          dataConstantExemptions: {
+            'scripts/quality-report.ts': 'generated data payload',
+          },
         },
-      })
+        10,
+      )
 
       // No absolute-ceiling violation for the exempt file.
       expect(
@@ -148,13 +207,15 @@ describe('quality ratchet', () => {
   scanTest(
     'fails a data-constant exemption whose file no longer exists',
     () => {
-      const issues = collectQualityIssues({
-        maxFileLines: 300,
-        trackedFiles: {},
-        dataConstantExemptions: {
-          'common/src/constants/deleted.ts': 'gone',
+      const issues = collectQualityIssues(
+        {
+          trackedFiles: {},
+          dataConstantExemptions: {
+            'common/src/constants/deleted.ts': 'gone',
+          },
         },
-      })
+        400,
+      )
 
       expect(issues).toContainEqual({
         file: 'common/src/constants/deleted.ts',
@@ -165,13 +226,15 @@ describe('quality ratchet', () => {
   )
 
   scanTest('fails a data-constant exemption that is no longer needed', () => {
-    const issues = collectQualityIssues({
-      maxFileLines: 300,
-      trackedFiles: {},
-      dataConstantExemptions: {
-        'scripts/quality-report.ts': 'under ceiling now',
+    const issues = collectQualityIssues(
+      {
+        trackedFiles: {},
+        dataConstantExemptions: {
+          'scripts/quality-report.ts': 'under ceiling now',
+        },
       },
-    })
+      400,
+    )
 
     expect(
       issues.some(
@@ -183,13 +246,15 @@ describe('quality ratchet', () => {
   })
 
   scanTest('fails a data-constant exemption with an empty rationale', () => {
-    const issues = collectQualityIssues({
-      maxFileLines: 300,
-      trackedFiles: {},
-      dataConstantExemptions: {
-        'scripts/quality-report.ts': '   ',
+    const issues = collectQualityIssues(
+      {
+        trackedFiles: {},
+        dataConstantExemptions: {
+          'scripts/quality-report.ts': '   ',
+        },
       },
-    })
+      400,
+    )
 
     expect(issues).toContainEqual({
       file: 'scripts/quality-report.ts',

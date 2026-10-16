@@ -74,12 +74,15 @@ src/
 - [ ] Component files over 200 lines
 - [ ] Inline styles (use CSS modules or Tailwind)
 
-## Quality Overrides
+## Quality Limits
 
-These override the defaults in `protocol.config.yaml` when TypeScript is the configured language.
+`protocol.config.yaml` owns the file-length ceiling, and `scripts/quality-report.ts`
+enforces it against every project-owned source file: `max_file_lines` (400 today).
+There is no per-language override mechanism — no TypeScript-specific ceiling is
+enforced anywhere — so the rows below are style guidance, not gates.
 
-| Setting | Default | TS Override | Reason |
-|---------|---------|-------------|--------|
-| `max_file_lines` | 300 | 400 | React components and service files tend to be longer |
-| `max_function_lines` | 50 | 60 | Component render logic can be slightly longer |
-| `max_line_length` | 100 | 100 | — |
+| Setting | Limit | Reason |
+|---------|-------|--------|
+| `max_file_lines` | 400 | One ceiling for every language; enforced by `bun run quality:report` |
+| `max_function_lines` | 60 | Component render logic can be slightly longer — advisory |
+| `max_line_length` | 100 | Standard line width — advisory |

@@ -14,7 +14,8 @@
  *     inline-code command words must resolve against the allowlist
  *     (mirrors the FID-2026-0823-009 argv-allowlist precedent — unknown
  *     commands fail validation, never execute)
- *  5. 300-line file ceiling (repo quality policy)
+ *  5. file-line ceiling (the repo's single `quality.max_file_lines` value,
+ *     mirrored as `SKILL_MAX_FILE_LINES` — FID-2026-1016-013)
  *  6. `version` presence (error for agent-authored, warning for hand-written
  *     legacy skills — the loader defaults them to 0.1.0)
  *

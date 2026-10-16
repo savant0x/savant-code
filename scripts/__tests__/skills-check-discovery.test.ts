@@ -13,8 +13,8 @@ import { checkSkillsRoot, discoverSkillDirs } from '../skills-check'
 // such a skill was reported `SKILL.md not found` while simultaneously being
 // validated as its quarantined twin. The two facts are the same skill.
 //
-// Split into its own file because skills-check.test.ts is at 286 of the
-// 300-line quality ceiling.
+// Split into its own file because skills-check.test.ts was at 286 lines — too
+// close to the file-length ceiling in protocol.config.yaml to keep growing.
 
 const tempDirectories: string[] = []
 

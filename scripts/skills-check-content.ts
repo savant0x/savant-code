@@ -118,6 +118,9 @@ export function checkSkillContent(params: {
   const findings: SkillCheckFinding[] = []
 
   const lines = content.split(/\r?\n/)
+  // FID-2026-1016-013: this is the repository's one file-length ceiling,
+  // mirrored from `protocol.config.yaml` `quality.max_file_lines` — pinned by
+  // the mirror test in `quality-report.test.ts`.
   if (lines.length > SKILL_MAX_FILE_LINES) {
     findings.push({
       severity: 'error',

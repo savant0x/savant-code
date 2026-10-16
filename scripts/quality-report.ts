@@ -4,7 +4,6 @@ import fs from 'node:fs'
 import path from 'node:path'
 
 export type QualityBaseline = {
-  maxFileLines: number
   /** Historical line counts. Since the 2026-09-13 operator ruling the ONLY
    *  load-bearing use is the growth-freeze of dataConstantExemptions
    *  entries; values for regular under-cap files are informational history
@@ -24,6 +23,7 @@ type QualityIssue = {
 
 const root = path.resolve(import.meta.dir, '..')
 const baselinePath = path.join(root, 'dev', 'quality-baseline.json')
+const protocolConfigPath = path.join(root, 'protocol.config.yaml')
 const sourceRoots = [
   '.agents',
   'agents',
@@ -46,6 +46,52 @@ export function readQualityBaseline(): QualityBaseline {
   return JSON.parse(fs.readFileSync(baselinePath, 'utf8')) as QualityBaseline
 }
 
+/**
+ * The enforced file-length ceiling, read from TRACKED `protocol.config.yaml`.
+ *
+ * FID-2026-1016-013: this number used to live in `dev/quality-baseline.json`,
+ * which is untracked — `/dev` is local-only by the 2026-10-16 operator ruling —
+ * so the single most consequential quality number in the repository was
+ * machine-local, unreviewable and unshareable, and the tracked
+ * `protocol.config.yaml` merely *claimed* to be its home in a comment. The
+ * ceiling is policy, so it is read from the tracked file and a missing or
+ * unparsable value is a hard failure rather than a silent fallback to some
+ * built-in default (fail-closed: a ceiling nobody can see is worse than no
+ * ceiling).
+ *
+ * The scan mirrors the block-reader precedent in `generate-protocol-bundle.ts`
+ * (`readHarnessContract`) rather than adding a YAML dependency to the scripts
+ * tree: first `max_file_lines` scalar after the top-level `quality:` line.
+ */
+export function readQualityCeiling(): number {
+  const lines = fs
+    .readFileSync(protocolConfigPath, 'utf8')
+    .replace(/\r\n/g, '\n')
+    .split('\n')
+  const qualityIdx = lines.findIndex((line) => line.trim() === 'quality:')
+  if (qualityIdx === -1) {
+    throw new Error(
+      'protocol.config.yaml has no top-level `quality:` block — the file-length ceiling cannot be resolved.',
+    )
+  }
+  const raw = lines
+    .slice(qualityIdx + 1)
+    .map((line) => line.match(/^\s+max_file_lines:\s*(\S+)\s*$/)?.[1])
+    .find((value): value is string => value !== undefined)
+  if (raw === undefined) {
+    throw new Error(
+      'protocol.config.yaml `quality:` block has no `max_file_lines` value — the file-length ceiling cannot be resolved.',
+    )
+  }
+  const ceiling = Number(raw)
+  if (!Number.isInteger(ceiling) || ceiling <= 0) {
+    throw new Error(
+      `protocol.config.yaml quality.max_file_lines is not a positive integer: ${raw}`,
+    )
+  }
+  return ceiling
+}
+
 function hasUnsupportedApprovedGrowth(baseline: QualityBaseline): boolean {
   return Object.prototype.hasOwnProperty.call(baseline, 'approvedGrowth')
 }
@@ -57,6 +103,7 @@ function hasUnsupportedApprovedGrowth(baseline: QualityBaseline): boolean {
 function dataConstantIssues(
   baseline: QualityBaseline,
   lineCountByFile: Map<string, number>,
+  ceiling: number,
 ): QualityIssue[] {
   const issues: QualityIssue[] = []
   const exemptions = baseline.dataConstantExemptions ?? {}
@@ -77,10 +124,10 @@ function dataConstantIssues(
       })
       continue
     }
-    if (lineCount <= baseline.maxFileLines) {
+    if (lineCount <= ceiling) {
       issues.push({
         file,
-        message: `unnecessary dataConstantExemptions entry: file is ${lineCount} lines, at or below the ${baseline.maxFileLines}-line ceiling — remove the exemption`,
+        message: `unnecessary dataConstantExemptions entry: file is ${lineCount} lines, at or below the ${ceiling}-line ceiling — remove the exemption`,
       })
     }
   }
@@ -104,6 +151,7 @@ function sourceFiles(): string[] {
 
 export function collectQualityIssues(
   baseline: QualityBaseline,
+  ceiling: number = readQualityCeiling(),
 ): QualityIssue[] {
   const issues: QualityIssue[] = []
   if (hasUnsupportedApprovedGrowth(baseline)) {
@@ -138,24 +186,25 @@ export function collectQualityIssues(
     // historical per-file ratchet (failing any growth below the ceiling)
     // is removed. trackedFiles values below the ceiling are history, not
     // limits.
-    if (lineCount > baseline.maxFileLines) {
+    if (lineCount > ceiling) {
       issues.push({
         file: relative,
-        message: `${lineCount} lines exceeds absolute maximum ${baseline.maxFileLines}`,
+        message: `${lineCount} lines exceeds absolute maximum ${ceiling}`,
       })
     }
   }
 
-  issues.push(...dataConstantIssues(baseline, lineCountByFile))
+  issues.push(...dataConstantIssues(baseline, lineCountByFile, ceiling))
   return issues
 }
 
 if (import.meta.main) {
   const baseline = readQualityBaseline()
-  const issues = collectQualityIssues(baseline)
+  const ceiling = readQualityCeiling()
+  const issues = collectQualityIssues(baseline, ceiling)
   if (issues.length === 0) {
     console.log(
-      `quality: PASS (${Object.keys(baseline.trackedFiles).length} baselined files)`,
+      `quality: PASS (${ceiling}-line ceiling, ${Object.keys(baseline.trackedFiles).length} baselined files)`,
     )
   } else {
     console.error(`quality: FAIL (${issues.length} quality violation(s))`)

@@ -48,10 +48,24 @@ paths:
   session_summaries: 'dev/session-summaries/'
   learnings: 'dev/LEARNINGS.md'
 
-# LIVE quality policy — the quality report enforces the 300-line absolute ceiling
-# for all project-owned TypeScript/TSX files, including tests and core modules.
+# LIVE quality policy — `max_file_lines` is THE enforced file-length ceiling for
+# every project-owned TypeScript/TSX file under the quality report's scan scope
+# (`.agents`, `agents`, `cli`, `common`, `desktop`, `evals`, `packages`,
+# `scripts`, `sdk`, `templates`, `test`), including tests and core modules.
+#
+# It is read from THIS tracked file by `scripts/quality-report.ts`
+# (`readQualityCeiling`, FID-2026-1016-013). It used to live in the untracked
+# `dev/quality-baseline.json`, which made the repository's most consequential
+# quality number machine-local and unreviewable while this comment merely
+# claimed to be its home. Editing this value now changes the enforced gate.
+#
+# Operator ruling 2026-10-16: ONE ceiling of 400 for every language. There is no
+# per-language override mechanism in the report, so the per-language override
+# tables this config used to imply (and that six coding standards and six skills
+# documented) were describing something that never existed; those tables now
+# state this single ceiling and mark the non-enforced settings advisory.
 quality:
-  max_file_lines: 300
+  max_file_lines: 400
   max_function_lines: 50
   max_line_length: 100
   max_complexity: 10

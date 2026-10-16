@@ -68,15 +68,18 @@ src/
 - [ ] Global mutable state
 - [ ] `print()` in production code (use `logging`)
 - [ ] Magic numbers (extract to constants)
-- [ ] God classes (>300 lines)
+- [ ] God classes (one class dominating a file near the 400-line ceiling)
 - [ ] Circular imports
 
-## Quality Overrides
+## Quality Limits
 
-These override the defaults in `protocol.config.yaml` when Python is the configured language.
+`protocol.config.yaml` owns the file-length ceiling, and `scripts/quality-report.ts`
+enforces it against every project-owned source file: `max_file_lines` (400 today).
+There is no per-language override mechanism — no Python-specific ceiling is enforced
+anywhere — so the rows below are style guidance, not gates.
 
-| Setting | Default | Python Override | Reason |
-|---------|---------|-----------------|--------|
-| `max_file_lines` | 300 | 400 | Python modules with dataclasses and type hints tend to be longer |
-| `max_function_lines` | 50 | 50 | — |
-| `max_line_length` | 100 | 120 | PEP 8 allows 120 for pragmatic readability |
+| Setting | Limit | Reason |
+|---------|-------|--------|
+| `max_file_lines` | 400 | One ceiling for every language; enforced by `bun run quality:report` |
+| `max_function_lines` | 50 | — (advisory) |
+| `max_line_length` | 120 | PEP 8 allows 120 for pragmatic readability — advisory |

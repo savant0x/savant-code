@@ -9,9 +9,9 @@ import { checkSkillContent } from '../skills-check'
 // FID-2026-0928-001: `skills:check` reported backticked English prose and fence
 // info strings as non-allowlisted shell commands. These legs are split into
 // their own file for the same reason skills-check-rules.test.ts was split from
-// skills-check.test.ts (FID-2026-0819-005): the quality ceiling is 300 lines and
-// the rule file had no room left. Fixture helpers are copied verbatim so the
-// file is self-contained.
+// skills-check.test.ts (FID-2026-0819-005): the file-length ceiling in
+// protocol.config.yaml left the rule file no room to grow. Fixture helpers are
+// copied verbatim so the file is self-contained.
 
 const tempDirectories: string[] = []
 

@@ -73,12 +73,15 @@ src/
 - [ ] Dead code (unused functions/imports)
 - [ ] `todo!()` or `unimplemented!()` without FID reference
 
-## Quality Overrides
+## Quality Limits
 
-These override the defaults in `protocol.config.yaml` when Rust is the configured language.
+`protocol.config.yaml` owns the file-length ceiling, and `scripts/quality-report.ts`
+enforces it against every project-owned source file: `max_file_lines` (400 today).
+There is no per-language override mechanism — no Rust-specific ceiling is enforced
+anywhere — so the rows below are style guidance, not gates.
 
-| Setting | Default | Rust Override | Reason |
-|---------|---------|---------------|--------|
-| `max_file_lines` | 300 | 300 | — |
-| `max_function_lines` | 50 | 50 | — |
-| `max_line_length` | 100 | 100 | — |
+| Setting | Limit | Reason |
+|---------|-------|--------|
+| `max_file_lines` | 400 | One ceiling for every language; enforced by `bun run quality:report` |
+| `max_function_lines` | 50 | — (advisory) |
+| `max_line_length` | 100 | — (advisory) |

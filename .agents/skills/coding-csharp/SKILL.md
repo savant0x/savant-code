@@ -68,16 +68,19 @@ tests/
 - [ ] `async void` methods
 - [ ] `.Result` or `.Wait()` on tasks
 - [ ] Mutable static state
-- [ ] God classes (>300 lines)
+- [ ] God classes (one class dominating a file near the 400-line ceiling)
 - [ ] Magic numbers (extract to constants)
 - [ ] `var` when type is not obvious from context
 
-## Quality Overrides
+## Quality Limits
 
-These override the defaults in `protocol.config.yaml` when C# is the configured language.
+`protocol.config.yaml` owns the file-length ceiling, and `scripts/quality-report.ts`
+enforces it against every project-owned source file: `max_file_lines` (400 today).
+There is no per-language override mechanism — no C#-specific ceiling is enforced
+anywhere — so the rows below are style guidance, not gates.
 
-| Setting | Default | C# Override | Reason |
-|---------|---------|-------------|--------|
-| `max_file_lines` | 300 | 350 | C# properties and attributes add lines |
-| `max_function_lines` | 50 | 50 | — |
-| `max_line_length` | 100 | 120 | Standard C# convention |
+| Setting | Limit | Reason |
+|---------|-------|--------|
+| `max_file_lines` | 400 | One ceiling for every language; enforced by `bun run quality:report` |
+| `max_function_lines` | 50 | — (advisory) |
+| `max_line_length` | 120 | Standard C# convention — advisory |

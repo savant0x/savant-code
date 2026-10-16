@@ -82,13 +82,14 @@ src/
 
 ## Quality Limits
 
-These limits align with `protocol.config.yaml` and apply to every project-owned
-TypeScript/TSX file, including tests, fixtures, generated output, and core modules.
+`protocol.config.yaml` owns the file-length ceiling, and `scripts/quality-report.ts`
+enforces it against every project-owned TypeScript/TSX file, including tests,
+fixtures, generated output, and core modules: `max_file_lines` (400 today). There is
+no per-language override mechanism and no file-length exemption for TypeScript, so
+the rows below are style guidance, not gates.
 
 | Setting | Limit | Reason |
 |---------|-------|--------|
-| `max_file_lines` | 300 | No file-length exemptions |
-
-There is no TypeScript-specific file-length override.
-| `max_function_lines` | 50 | Component render logic must remain decomposed |
-| `max_line_length` | 100 | Standard line width |
+| `max_file_lines` | 400 | One ceiling for every language; enforced by `bun run quality:report` |
+| `max_function_lines` | 50 | Component render logic must remain decomposed — advisory |
+| `max_line_length` | 100 | Standard line width — advisory |

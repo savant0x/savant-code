@@ -64,17 +64,20 @@ src/test/java/
 
 - [ ] Bare `catch (Exception e)`
 - [ ] Mutable static fields
-- [ ] God classes (>300 lines)
+- [ ] God classes (one class dominating a file near the 400-line ceiling)
 - [ ] Deep inheritance hierarchies (>3 levels)
 - [ ] `null` returns instead of Optional
 - [ ] Magic numbers (extract to constants)
 
-## Quality Overrides
+## Quality Limits
 
-These override the defaults in `protocol.config.yaml` when Java is the configured language.
+`protocol.config.yaml` owns the file-length ceiling, and `scripts/quality-report.ts`
+enforces it against every project-owned source file: `max_file_lines` (400 today).
+There is no per-language override mechanism — no Java-specific ceiling is enforced
+anywhere — so the rows below are style guidance, not gates.
 
-| Setting | Default | Java Override | Reason |
-|---------|---------|---------------|--------|
-| `max_file_lines` | 300 | 350 | Java boilerplate (imports, generics) adds lines |
-| `max_function_lines` | 50 | 40 | Java methods should be shorter due to verbosity |
-| `max_line_length` | 100 | 120 | Standard Java convention |
+| Setting | Limit | Reason |
+|---------|-------|--------|
+| `max_file_lines` | 400 | One ceiling for every language; enforced by `bun run quality:report` |
+| `max_function_lines` | 40 | Java methods should be shorter due to verbosity — advisory |
+| `max_line_length` | 120 | Standard Java convention — advisory |

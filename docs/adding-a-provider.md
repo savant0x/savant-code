@@ -68,12 +68,14 @@ without global mutation. Keep any new derivation shaped this way.
 
 `PROVIDER_REGISTRY` is composed in `common/src/providers/registry.ts` from an
 inline object plus spreads of the numbered `registry-partitioned*.ts` files
-(the 300-line file cap forced those splits). Each partition is
+(the file-length ceiling in `protocol.config.yaml` — 400 today — forced those
+splits). Each partition is
 `as const satisfies Record<string, ProviderConfig>`, so a missing field or a
 typo is a **compile error**, not a runtime surprise.
 
 **Where to put a new entry:** inspect the highest numbered partition first. If
-it has room under 300 lines, put the entry there; otherwise create the next
+it has room under the ceiling (400 lines today, from `protocol.config.yaml`), put
+the entry there; otherwise create the next
 partition and spread it in `registry.ts`. Do not grow a partition past the cap
 — the quality gate is zero-tolerance.
 

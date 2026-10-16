@@ -58,10 +58,17 @@ export const SKILL_VERSION_REGEX = /^\d+\.\d+\.\d+$/
 export const SKILL_VERSION_MAX_LENGTH = 32
 
 /**
- * Absolute file-line ceiling for skill documents (matches the repo quality
- * policy; enforced by skills:check).
+ * Absolute file-line ceiling for skill documents, enforced by skills:check.
+ *
+ * FID-2026-1016-013: this mirrors the repository's single file-length ceiling,
+ * `quality.max_file_lines` in `protocol.config.yaml` (read by
+ * `scripts/quality-report.ts`). There are no per-language, per-file-type or
+ * per-directory overrides — one number governs every authored file. This
+ * constant exists because `common` cannot read a YAML config at runtime; the
+ * mirror is pinned by a test in `scripts/quality-report.test.ts` so the two
+ * values cannot drift apart silently.
  */
-export const SKILL_MAX_FILE_LINES = 300
+export const SKILL_MAX_FILE_LINES = 400
 
 /**
  * Validates a skill name according to the naming rules.
