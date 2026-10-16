@@ -16,6 +16,9 @@ import { readFileSync, rmSync } from 'fs'
 import { commitWatermarkLines } from './attribution-guard'
 import { scanStagedCredentials } from './public-release'
 import { materializePushedContent } from './push-content-mirror'
+import { VENDOR_BINARY_PINS } from './vendor-binary-pins'
+
+import type { VendorBinaryPin } from './vendor-binary-pins'
 
 // Re-exported for the hook contract and public-release reuse (FID-2026-0819-005 Loop 234).
 export { materializePushedContent } from './push-content-mirror'
@@ -136,16 +139,25 @@ export {
  * Runs the fail-closed credential scan over every ref on the hook stdin.
  * Returns the flagged descriptions; an empty array means the push is clean.
  * Any malformed ref line (or an unexpected hook format) throws so a git
- * version change or tampering can never silently disable the scan.
+ * version change or tampering can never silently disable the scan. Pinned
+ * vendored binaries over the scan cap (vendor-binary-pins.ts) are exempt from
+ * the oversized refusal and counted in `pinnedExcluded`.
  */
 export function runPrePushSecretScan(
   root: string,
   stdin: string,
-): { flagged: string[]; scanned: number; oversized: number } {
+  pins: readonly VendorBinaryPin[] = VENDOR_BINARY_PINS,
+): {
+  flagged: string[]
+  scanned: number
+  oversized: number
+  pinnedExcluded: number
+} {
   const refs = parsePrePushRefs(stdin)
   const flagged: string[] = []
   let scanned = 0
   let oversized = 0
+  let pinnedExcluded = 0
   for (const ref of refs) {
     // A deletion ref (local sha all zeros) pushes no content — nothing to scan.
     // Accept 40- or 64-zero shas to stay consistent with SHA_HEX (SHA-256 repos).
@@ -168,9 +180,11 @@ export function runPrePushSecretScan(
         materialized,
         oversized: batchOversized,
         oversizedFiles: batchOversizedFiles,
-      } = materializePushedContent(root, commitSha, files)
+        pinnedExcluded: batchPinnedExcluded,
+      } = materializePushedContent(root, commitSha, files, pins)
       try {
         oversized += batchOversized
+        pinnedExcluded += batchPinnedExcluded.length
         scanned += materialized.length
         if (batchOversized > 0) {
           const shownPaths = batchOversizedFiles.slice(0, 20).join(', ')
@@ -188,7 +202,7 @@ export function runPrePushSecretScan(
       }
     }
   }
-  return { flagged, scanned, oversized }
+  return { flagged, scanned, oversized, pinnedExcluded }
 }
 function main(): void {
   const root = process.cwd()
@@ -208,7 +222,8 @@ function main(): void {
     return
   }
   try {
-    const { flagged, scanned, oversized } = runPrePushSecretScan(root, stdin)
+    const { flagged, scanned, oversized, pinnedExcluded } =
+      runPrePushSecretScan(root, stdin)
     if (flagged.length > 0) {
       console.error(
         `pre-push: ${flagged.length} credential-shaped file(s) in the pushed range:`,
@@ -221,6 +236,9 @@ function main(): void {
     } else {
       console.log(
         `pre-push: credential scan passed (${scanned} file(s) scanned).` +
+          (pinnedExcluded > 0
+            ? ` ${pinnedExcluded} pinned vendored binary file(s) excluded from the size-cap refusal (scripts/vendor-binary-pins.ts).`
+            : '') +
           (oversized > 0
             ? ` ${oversized} file(s) over the 2MB scan cap were not content-scanned.`
             : ''),

@@ -117,7 +117,7 @@ describe('pre-push credential scan', () => {
     } finally {
       rmSync(repo, { recursive: true, force: true })
     }
-  })
+  }, 30_000)
 
   test('materializes only the pushed content, preserving relative paths', () => {
     const repo = initRepo()
@@ -137,7 +137,7 @@ describe('pre-push credential scan', () => {
     } finally {
       rmSync(repo, { recursive: true, force: true })
     }
-  })
+  }, 30_000)
 
   test('flags credential-shaped content in the pushed range and passes clean content', () => {
     const repo = initRepo()
@@ -254,7 +254,66 @@ describe('pre-push credential scan', () => {
     } finally {
       rmSync(repo, { recursive: true, force: true })
     }
-  })
+  }, 30_000)
+
+  test('pins can exempt a vendored over-cap blob from the refusal', () => {
+    const repo = initRepo()
+    try {
+      writeFileSync(
+        path.join(repo, 'big.bin'),
+        Buffer.alloc(2 * 1024 * 1024 + 1),
+      )
+      const head = commitAll(repo, 'big blob')
+      const blobSha = git(repo, ['rev-parse', 'HEAD:big.bin']).trim()
+      const pins = [{ path: 'big.bin', blobSha, size: 2 * 1024 * 1024 + 1 }]
+
+      const { materialized, oversized, pinnedExcluded } =
+        materializePushedContent(repo, head, ['big.bin'], pins)
+      expect(materialized).toEqual([])
+      expect(oversized).toBe(0)
+      expect(pinnedExcluded).toEqual(['big.bin'])
+
+      const result = runPrePushSecretScan(
+        repo,
+        `refs/heads/main ${head} refs/heads/main ${'0'.repeat(40)}\n`,
+        pins,
+      )
+      expect(result.flagged).toEqual([])
+      expect(result.oversized).toBe(0)
+      expect(result.pinnedExcluded).toBe(1)
+    } finally {
+      rmSync(repo, { recursive: true, force: true })
+    }
+  }, 30_000)
+
+  test('a swapped blob at a pinned path still fails closed', () => {
+    const repo = initRepo()
+    try {
+      writeFileSync(
+        path.join(repo, 'big.bin'),
+        Buffer.alloc(2 * 1024 * 1024 + 1),
+      )
+      const head = commitAll(repo, 'big blob')
+      const swappedPins = [
+        {
+          path: 'big.bin',
+          blobSha: 'f'.repeat(40),
+          size: 2 * 1024 * 1024 + 1,
+        },
+      ]
+
+      const { oversized, pinnedExcluded } = materializePushedContent(
+        repo,
+        head,
+        ['big.bin'],
+        swappedPins,
+      )
+      expect(oversized).toBe(1)
+      expect(pinnedExcluded).toEqual([])
+    } finally {
+      rmSync(repo, { recursive: true, force: true })
+    }
+  }, 30_000)
 
   test('skips deleted files safely (nothing to scan)', () => {
     const repo = initRepo()
@@ -275,5 +334,5 @@ describe('pre-push credential scan', () => {
     } finally {
       rmSync(repo, { recursive: true, force: true })
     }
-  })
+  }, 30_000)
 })

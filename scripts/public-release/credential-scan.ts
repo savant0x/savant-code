@@ -8,7 +8,10 @@
 import { closeSync, existsSync, lstatSync, openSync, readSync } from 'fs'
 import path from 'path'
 
+import { findVendorBinaryPin, VENDOR_BINARY_PINS } from '../vendor-binary-pins'
 import { run } from './command-runner'
+
+import type { VendorBinaryPin } from '../vendor-binary-pins'
 
 const CREDENTIAL_FILE_PATTERNS = [
   /(?:^|\/)\.env(?:$|\.(?!example(?:\.[^.]+)?$))/i,
@@ -33,6 +36,18 @@ function isCredentialNamedSourceFile(file: string): boolean {
     CREDENTIAL_SOURCE_NAME_PATTERN.test(file) &&
     SOURCE_CODE_EXTENSION_PATTERN.test(file)
   )
+}
+
+/** Index blob id of a staged file, or null when git cannot resolve it. */
+function stagedBlobSha(root: string, file: string): string | null {
+  const result = run('git', ['ls-files', '-s', '-z', '--', file], root, true)
+  if (result.status !== 0) return null
+  const entry = result.stdout.split('\0').find((line) => line.length > 0)
+  if (!entry) return null
+  // Format: `<mode> <blob-sha> <stage>` — with or without a `\t<path>` tail.
+  const [meta] = entry.split('\t')
+  const sha = meta.trim().split(/\s+/)[1]
+  return sha && /^[0-9a-f]{40,64}$/i.test(sha) ? sha : null
 }
 
 // Shannon entropy floor (bits/char) applied to captured token bodies, plus a
@@ -138,11 +153,14 @@ function characterClasses(value: string): number {
  * Fail-closed scan of the staged file list + contents for credential shapes
  * before an automation-mode release commit is created and pushed to the
  * public repository. Protects the daily-push flow from publishing an
- * untracked secret (FID-2026-0808-003 audit finding F-A).
+ * untracked secret (FID-2026-0808-003 audit finding F-A). Files pinned in
+ * vendor-binary-pins.ts are exempt from the size-cap refusal (identity-checked
+ * against the staged blob id); every other over-cap file still refuses.
  */
 export function scanStagedCredentials(
   files: readonly string[],
   root: string,
+  pins: readonly VendorBinaryPin[] = VENDOR_BINARY_PINS,
 ): string[] {
   const flagged: string[] = []
   for (const file of files) {
@@ -181,6 +199,13 @@ export function scanStagedCredentials(
     try {
       const byteSize = lstatSync(absolute).size
       if (byteSize > 2 * 1024 * 1024) {
+        // Operator-pinned vendored binaries are exempt from the cap refusal;
+        // identity is the staged blob id, so a swapped file still fails closed
+        // (vendor-binary-pins.ts).
+        const blobSha = stagedBlobSha(root, file)
+        if (blobSha && findVendorBinaryPin(file, blobSha, pins)) {
+          continue
+        }
         flagged.push(
           `${file} (content exceeds the 2MB credential-scan cap; refusing to scan)`,
         )

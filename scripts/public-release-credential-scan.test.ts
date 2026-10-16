@@ -165,4 +165,44 @@ describe('public release contract — credential scan', () => {
       rmSync(repo, { recursive: true, force: true })
     }
   })
+
+  test('pinned vendored over-cap files are exempt from the size-cap refusal', () => {
+    const repo = mkdtempSync(path.join(os.tmpdir(), 'savant-release-pin-'))
+    try {
+      const runGit = (args: string[]) => {
+        const result = Bun.spawnSync({
+          cmd: ['git', ...args],
+          cwd: repo,
+          stdout: 'pipe',
+          stderr: 'pipe',
+        })
+        if (result.exitCode !== 0) {
+          throw new Error(new TextDecoder().decode(result.stderr))
+        }
+        return new TextDecoder().decode(result.stdout)
+      }
+      runGit(['init', '-q'])
+      runGit(['config', 'user.email', 'release-test@example.invalid'])
+      runGit(['config', 'user.name', 'Release Test'])
+      writeFileSync(
+        path.join(repo, 'big-vendor.bin'),
+        Buffer.alloc(2 * 1024 * 1024 + 1),
+      )
+      runGit(['add', '--all'])
+      const blobSha = runGit(['rev-parse', ':big-vendor.bin']).trim()
+      const pins = [
+        { path: 'big-vendor.bin', blobSha, size: 2 * 1024 * 1024 + 1 },
+      ]
+
+      // Unpinned control: over-cap content keeps refusing fail-closed.
+      const unpinned = scanStagedCredentials(['big-vendor.bin'], repo)
+      expect(unpinned).toHaveLength(1)
+      expect(unpinned[0]).toContain('refusing to scan')
+
+      // Pinned: the exact staged blob is exempt and not flagged.
+      expect(scanStagedCredentials(['big-vendor.bin'], repo, pins)).toEqual([])
+    } finally {
+      rmSync(repo, { recursive: true, force: true })
+    }
+  })
 })

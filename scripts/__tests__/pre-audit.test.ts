@@ -216,6 +216,29 @@ describe('oversizedPushedBlobs', () => {
     expect(oversized[0]?.path).toBe('big.bin')
     expect(oversized[0]?.size).toBeGreaterThan(2 * 1024 * 1024)
   })
+
+  test('pinned vendored blobs are excluded from the sweep; a swap still blocks', () => {
+    const repo = initRepo()
+    wireOrigin(repo)
+    writeFileSync(
+      path.join(repo, 'big.bin'),
+      Buffer.alloc(2 * 1024 * 1024 + 1, 66),
+    )
+    git(repo, ['add', '-A'])
+    git(repo, ['commit', '-q', '-m', 'big blob'])
+    const blobSha = git(repo, ['rev-parse', 'HEAD:big.bin']).trim()
+
+    const excluded = oversizedPushedBlobs(repo, [
+      { path: 'big.bin', blobSha, size: 2 * 1024 * 1024 + 1 },
+    ])
+    expect(excluded).toEqual([])
+
+    const swapped = oversizedPushedBlobs(repo, [
+      { path: 'big.bin', blobSha: 'f'.repeat(40), size: 2 * 1024 * 1024 + 1 },
+    ])
+    expect(swapped).toHaveLength(1)
+    expect(swapped[0]?.path).toBe('big.bin')
+  })
 })
 
 describe('config-dir fake detection', () => {

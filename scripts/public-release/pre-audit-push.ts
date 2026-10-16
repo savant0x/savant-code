@@ -7,7 +7,9 @@
 import { spawnSync } from 'child_process'
 
 import { runPrePushSecretScan } from '../pre-push-scan'
+import { findVendorBinaryPin, VENDOR_BINARY_PINS } from '../vendor-binary-pins'
 
+import type { VendorBinaryPin } from '../vendor-binary-pins'
 import type { AuditFinding, CheckResult } from './audit-types'
 
 /** 2MB — must stay in lockstep with pre-push-scan.ts's credential-scan cap. */
@@ -28,9 +30,14 @@ export function runGit(root: string, args: string[]): string {
   return String(result.stdout ?? '')
 }
 
-/** Blobs in `origin/main..main` over the scan cap, with their paths. */
+/**
+ * Blobs in `origin/main..main` over the scan cap, with their paths. Pinned
+ * vendored binaries (vendor-binary-pins.ts) are excluded: they are required
+ * for clean-clone builds and exempt from the cap refusal.
+ */
 export function oversizedPushedBlobs(
   root: string,
+  pins: readonly VendorBinaryPin[] = VENDOR_BINARY_PINS,
 ): { sha: string; size: number; path: string }[] {
   try {
     runGit(root, ['fetch', 'origin', 'main'])
@@ -60,10 +67,12 @@ export function oversizedPushedBlobs(
     if (type !== 'blob') continue
     const bytes = Number(size)
     if (bytes > PUSH_BLOB_SCAN_CAP) {
+      const filePath = shaToPath.get(sha) ?? '(unknown)'
+      if (findVendorBinaryPin(filePath, sha, pins)) continue
       oversized.push({
         sha,
         size: bytes,
-        path: shaToPath.get(sha) ?? '(unknown)',
+        path: filePath,
       })
     }
   }
