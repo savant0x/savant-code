@@ -4,6 +4,7 @@ import path from 'node:path'
 
 import { afterEach, describe, expect, test } from 'bun:test'
 
+import { FEATURE_ARCHIVE } from '../lesson-feature-archive'
 import {
   FEATURE_STORE,
   featureRoutingNotes,
@@ -188,7 +189,13 @@ describe('lesson feature admission', () => {
     )
     fs.mkdirSync(archive)
     fs.renameSync(fidFile, path.join(archive, path.basename(fidFile)))
+    // FID-2026-1016-009: implemented work retires out of the active store.
+    manifest.features = []
     save()
+    fs.writeFileSync(
+      path.join(root, FEATURE_ARCHIVE),
+      JSON.stringify({ version: 1, features: [feature] }),
+    )
     expect(reviewFeaturePipeline(root, () => false).issues.join('')).toContain(
       'real recorded commit',
     )
@@ -204,6 +211,9 @@ describe('lesson feature admission', () => {
     // invalidate a separately recorded implementation proof.
     fs.appendFileSync(path.join(root, 'src', 'fixture.ts'), '// fixed\n')
     expect(reviewFeaturePipeline(root, () => true).issues).toEqual([])
+    const retired = renderFeatureReport(reviewFeaturePipeline(root, () => true))
+    expect(retired).toContain('## Implemented (archived)')
+    expect(retired).toContain('LF-001 P1')
   })
 
   test('existing evidence reached through a junction outside the repo is rejected', () => {
@@ -258,5 +268,14 @@ describe('lesson feature admission', () => {
     )) {
       expect(line.length).toBeLessThanOrEqual(120)
     }
+  })
+
+  test('an empty active queue renders explicitly instead of reading as a backlog', () => {
+    const { root, manifest, save } = fixture()
+    manifest.features = []
+    save()
+    const report = renderFeatureReport(reviewFeaturePipeline(root))
+    expect(report).toContain('_No open candidates._')
+    expect(report).not.toContain('## Implemented (archived)')
   })
 })

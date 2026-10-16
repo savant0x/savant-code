@@ -2,20 +2,24 @@ import crypto from 'node:crypto'
 import fs from 'node:fs'
 import path from 'node:path'
 
-import { parseFidStatus } from '@savant-code/agent-runtime/echo/fid-verification-enforcement'
-
-import {
-  readLessonLocator,
-  resolveLesson,
-  RETIRED_LESSONS,
-} from './learnings-locator'
+import { readLessonLocator, RETIRED_LESSONS } from './learnings-locator'
 import { wrapLearningMarkdown } from './learnings-markdown'
+import { reviewCandidates } from './lesson-feature-admission'
+import {
+  FEATURE_ARCHIVE,
+  readFeatureArchive,
+  renderImplementedSection,
+} from './lesson-feature-archive'
 import {
   featureEvidencePath,
   featureManifestSchema,
-  inspectFeatureFid,
 } from './lesson-feature-schema'
 
+import type { CandidateReview } from './lesson-feature-admission'
+import type {
+  ArchivedCandidate,
+  CommitVerifier,
+} from './lesson-feature-archive'
 import type { FeatureCandidate } from './lesson-feature-schema'
 
 export const FEATURE_STORE = 'dev/feature-pipeline/candidates.json'
@@ -33,10 +37,10 @@ export type FeatureReview = {
     retired?: boolean
   }>
   features: Array<{ candidate: FeatureCandidate; issues: string[] }>
+  implemented: ArchivedCandidate[]
   issues: string[]
 }
 
-type CommitVerifier = (root: string, commit: string) => boolean
 const verifyGitCommit: CommitVerifier = (root, commit) =>
   Bun.spawnSync(['git', 'cat-file', '-e', `${commit}^{commit}`], {
     cwd: root,
@@ -54,6 +58,7 @@ export function reviewFeaturePipeline(
     sourceFingerprint: '',
     lessons: [],
     features: [],
+    implemented: [],
     issues: [],
   }
   if (!fs.existsSync(path.join(root, FEATURE_STORE))) return empty
@@ -67,6 +72,7 @@ export function reviewFeaturePipeline(
       'utf8',
     )
     const manifest = featureManifestSchema.parse(JSON.parse(manifestContent))
+    const archive = readFeatureArchive(root, verifyCommit)
     const retired = fs.existsSync(path.join(root, RETIRED_LESSONS))
       ? fs.readFileSync(featureEvidencePath(root, RETIRED_LESSONS), 'utf8')
       : undefined
@@ -74,76 +80,35 @@ export function reviewFeaturePipeline(
       retired === undefined ? catalog : `${catalog}\0${retired}`,
     )
     const locator = readLessonLocator(root)
-    const ids = new Set<string>()
-    const owners = new Set<string>()
-    const features = manifest.features.map((candidate) => {
-      const issues: string[] = []
-      if (ids.has(candidate.id)) issues.push('Duplicate feature identity')
-      ids.add(candidate.id)
-      if (new Set(candidate.lessons).size !== candidate.lessons.length) {
-        issues.push('Duplicate lesson links')
-      }
-      for (const title of candidate.lessons) {
-        const resolved = resolveLesson(locator, title)
-        if (!resolved.ok) issues.push(resolved.issue)
-        else if (resolved.replacements.length)
-          issues.push(
-            `Superseded lesson: ${title}; replacement: ${resolved.replacements.join(' → ')}`,
-          )
-      }
-      if (candidate.state === 'ready') {
-        if (manifest.catalogHash !== catalogHash)
-          issues.push('Lesson review is stale')
-        if (candidate.basis !== 'observed-gap')
-          issues.push('Readiness needs an observed gap')
-      }
-      for (const evidence of candidate.evidence) {
-        try {
-          const file = featureEvidencePath(root, evidence.path)
-          if (candidate.state === 'ready' && !evidence.sha256) {
-            issues.push(`Missing evidence snapshot: ${evidence.path}`)
-          } else if (
-            candidate.state === 'ready' &&
-            evidence.sha256 &&
-            sha256(fs.readFileSync(file)) !== evidence.sha256
-          ) {
-            issues.push(`Evidence changed: ${evidence.path}`)
-          }
-        } catch {
-          issues.push(`Missing or unsafe evidence: ${evidence.path}`)
-        }
-      }
-      if (candidate.fid) {
-        if (owners.has(candidate.fid))
-          issues.push('FID already owns another candidate')
-        owners.add(candidate.fid)
-        try {
-          const record = inspectFeatureFid(root, candidate.fid)
-          if (
-            candidate.state === 'implemented' &&
-            (parseFidStatus(record) !== 'closed' ||
-              !record.includes('### Code Verification Evidence') ||
-              !candidate.commit ||
-              !record.includes(candidate.commit) ||
-              !verifyCommit(root, candidate.commit))
-          )
-            issues.push(
-              'Implementation needs a closed FID and a real recorded commit',
-            )
-        } catch {
-          issues.push('FID owner cannot be verified')
-        }
-      } else if (['routed', 'implemented'].includes(candidate.state)) {
-        issues.push('Routed work requires an owning FID')
-      }
-      if (['draft', 'ready'].includes(candidate.state) && candidate.fid) {
-        issues.push('An owned candidate must be routed or implemented')
-      }
-      return { candidate, issues }
+    const candidates: CandidateReview[] = [
+      ...manifest.features.map((candidate) => ({
+        candidate,
+        issues: [],
+        archived: false,
+      })),
+      ...archive.entries.map(({ candidate, issues }) => ({
+        candidate,
+        issues: [...issues],
+        archived: true,
+      })),
+    ]
+    const admission = reviewCandidates({
+      root,
+      catalogHash,
+      manifestCatalogHash: manifest.catalogHash,
+      locator,
+      candidates,
+      archiveIssues: archive.issues,
+      verifyCommit,
     })
+    const allFeatures = candidates.map((entry) => entry.candidate)
     return {
       catalogHash,
-      sourceFingerprint: sha256(`${catalogHash}\0${manifestContent}`),
+      // The archive is part of the evidence the report describes, so editing it
+      // invalidates the generated report exactly as the store does.
+      sourceFingerprint: sha256(
+        `${catalogHash}\0${manifestContent}\0${archive.content ?? ''}`,
+      ),
       lessons: [...locator].map(([title, locations]) => ({
         title,
         governed: locations.some(
@@ -152,14 +117,13 @@ export function reviewFeaturePipeline(
         ...(locations.every((location) => location.retired)
           ? { retired: true }
           : {}),
-        linked: manifest.features
+        linked: allFeatures
           .filter((feature) => feature.lessons.includes(title))
           .map((feature) => feature.id),
       })),
-      features,
-      issues: features.flatMap((feature) =>
-        feature.issues.map((issue) => `${feature.candidate.id}: ${issue}`),
-      ),
+      features: admission.features,
+      implemented: admission.implemented,
+      issues: admission.issues,
     }
   } catch {
     return {
@@ -200,8 +164,10 @@ export function renderFeatureReport(review: FeatureReview): string {
     '',
     `Source fingerprint: ${review.sourceFingerprint || 'unavailable'}.`,
     '',
-    'Readiness is a reviewed proposal. Implementation status records closed-FID',
-    'evidence; it does not claim that historical tests were rerun today.',
+    'Readiness is a reviewed proposal. The candidates section holds open work only;',
+    'implemented records retire to the archive and its section is evidence, not a',
+    'queue. Implementation status does not claim that historical tests were rerun',
+    'today.',
     '',
     `Inventory: ${review.lessons.length} headed lessons; ` +
       `${review.lessons.filter((lesson) => lesson.governed).length} schema-governed.`,
@@ -209,6 +175,7 @@ export function renderFeatureReport(review: FeatureReview): string {
     '## Feature candidates',
     '',
   ]
+  if (review.features.length === 0) lines.push('_No open candidates._', '')
   for (const { candidate, issues } of review.features) {
     lines.push(
       `### ${candidate.id}: ${markdown(candidate.title)}`,
@@ -227,6 +194,9 @@ export function renderFeatureReport(review: FeatureReview): string {
       lines.push(`- Admission issue: ${markdown(issue)}`)
     if (issues.length) lines.push('')
   }
+  lines.push(
+    ...renderImplementedSection(review.implemented, markdown, FEATURE_ARCHIVE),
+  )
   lines.push(
     '## Complete lesson inventory',
     '',
