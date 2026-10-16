@@ -10,6 +10,28 @@
 > the v0.0.36 cut. Release notes are written here at cut time; nothing in this
 > section ships until then.
 
+## 2026-10-16 — Reconciliation closeout and repository untrack
+
+- FID-2026-1016-001 (low): hardened the sandbox temp-workspace cleanup — the
+  kill path awaits a bounded child exit before removing the workspace and the
+  cleanup assertion compares against a run-scoped baseline. Implementation:
+  `403262ee`; 3 declared gates passed; closed and archived.
+- FID-2026-1016-002 (medium): identity-pinned exemptions (path + git blob id)
+  for the five required ripgrep binaries at all three fail-closed refusal
+  points; unpinned or swapped-content over-cap blobs still refuse.
+  Implementation: `61e27b34`, coverage split `2e889b75`; 7 declared gates
+  passed; closed and archived.
+- FID-2026-1016-003 (low): `dev/` untracked from the index (1,241 paths;
+  files remain on disk; anchored `/dev` ignore); `docs/` retained per the
+  same-day operator ruling. Implementation: `aaa83b96`; 2 declared gates
+  passed; closed and archived.
+- FID-2026-1015-006 (high): re-stamped — all 19 declared gates pass live; the
+  record remains verified and open for the observation window (no class is
+  declared repaired). Repair package committed: `63d08c34`, `0a516b26`,
+  `aa8c6a2f`, `f591e40f`, `5b994ca0`; parity probe `2f2d4e31`; scope-targets
+  comment `4e6247e6`; runbook pointer `3df0606c`.
+- Final root test chain: 9,203 PASS / 23 SKIP / zero FAIL (9,226 ran), exit 0.
+
 ## 2026-10-15 — Runtime boundaries and product retirement
 
 - FID-2026-1015-002 (medium): retired Savant-Free product paths and build

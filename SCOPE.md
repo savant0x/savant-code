@@ -12,7 +12,12 @@ handling or repository boundaries.
 ## Open items
 
 - [ ] **FID-2026-1015-006. Post-cutoff recurrence continuation.**
-      Local repairs and all 11 declared gates pass. Eight classes have explicit
+      Operator renewed execution on 2026-10-16: recover incident evidence,
+      reproduce failures and complete causal repairs. The retained spills do
+      contain the URLs and command details previously called missing. Native
+      diagnostics, HTML selection, search parsing and cleanup proofs are now
+      converged for implementation under this owning FID.
+      Local repairs and all 19 declared gates pass. Eight classes have explicit
       active ownership; the recurrence allocation probe reports zero issues.
       **Blocker:** sanitized provider rejection/schema details and exact failing
       URLs are absent from capture; class repair also requires real exposure
@@ -23,7 +28,8 @@ handling or repository boundaries.
 - [ ] **FID-2026-1012-022. Open-work master plan (build order + status board).**
       Savant-Free retirement and four-pillar hardening are committed at
       001e36c6 and d71b9065; both children are archived. Final root tests pass
-      9,191/23 skip/0 fail. The census is 606 records / 59 stable classes;
+      9,203/23 skip/0 fail (9,226 ran). The census is 606 records / 59 stable
+      classes;
       eight post-cutoff classes continue under active FID-2026-1015-006.
       **Blocker:** the continuation's replay/exposure requirements and T175's
       pending scope decision. No observation or production repair is fabricated.
@@ -47,9 +53,13 @@ handling or repository boundaries.
       Publication remains release-only. The attribution pre-push hook and its
       verification gates remain active. The operator answered "no need to gate"
       on 2026-10-15: publication does not gate this coordinator's closure.
-      Normal push attempted but blocked: earlier outgoing restoration commit
-      a707aa89 reintroduces five vendor binaries above the hook's 2 MB scan cap.
-      The cap and history remain intact; no bypass was used.
+      Normal push was attempted but blocked: earlier outgoing restoration
+      commit a707aa89 reintroduces five vendor binaries above the hook's
+      2 MB scan cap. The cap and history remain intact; no bypass was used.
+      Resolved mechanically under FID-2026-1016-002: identity-pinned
+      exemptions (path + git blob id) pass exactly the five required
+      vendored binaries; every unpinned or swapped-content over-cap blob
+      still fails closed. Push not yet re-attempted.
       **Automation level: 3.**
 
 - [ ] **Lessons-pipeline recurrence review and feature routing.** Audit the raw
@@ -101,7 +111,8 @@ Operator authorization: completion at automation level 3, renewed 2026-10-15;
 specific removal and skill metadata approvals are in answers.md. Governance
 artifacts required by ECHO retain their gate-level exemptions.
 
-- FID-2026-1015-006: `sdk/**`, `packages/agent-runtime/**`, `common/**`,
+- FID-2026-1015-006: `sdk/**`, `packages/agent-runtime/**`,
+  `packages/llm-providers/**`, `common/**`,
   `scripts/experiences-*.ts`, `dev/experiences/**`, `dev/fids/**`, `SCOPE.md`,
   `dev/session-summaries/**`
 
@@ -121,7 +132,7 @@ artifacts required by ECHO retain their gate-level exemptions.
 - T175: `docs/design/provider-reference-review-2026-10-15.md`
 - T194: `docs/design/**`, `dev/research/**`, `dev/scratchpad/**`, `dev/fids/**`,
   `dev/task-id-ledger.json`, `SCOPE.md`
-- Lessons-pipeline recurrence review: `dev/experiences/**`, `dev/LEARNINGS.md`,
-  `dev/agenda.md`, `dev/idea-shelf/**`, `scripts/experiences-*.ts`,
+- Lessons-pipeline: `dev/experiences/**`, `dev/LEARNINGS.md`, `dev/agenda.md`,
+  `dev/idea-shelf/**`, `dev/wiki/**`, `scripts/experiences-*.ts`,
   `scripts/lessons-*.ts`, `.agents/skills/.quarantine/**`, and
   `dev/session-summaries/**`
