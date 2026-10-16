@@ -29,6 +29,7 @@ import {
   internalFollowupNotes,
 } from './internal-followups'
 import { featureRoutingNotes } from './lesson-feature-pipeline'
+import { orphanSweepLine } from './orphan-sweep'
 import {
   printSessionEndReview,
   quarantineAlertNote,
@@ -296,4 +297,13 @@ export function runSessionEndReview(
 if (import.meta.main) {
   const rootDir = path.resolve(import.meta.dir, '..')
   printSessionEndReview(rootDir, runSessionEndReview(rootDir))
+  // FID-2026-1016-013 E: the orphan sweep recurs here rather than relying on
+  // someone remembering it. Deliberately OUTSIDE runSessionEndReview: the
+  // sweep walks the repository, and the review function is called once per
+  // test against temp roots where such a walk would be both wrong and slow.
+  // Advisory by construction — it prints a count and never sets an exit code.
+  const orphans = orphanSweepLine()
+  if (orphans !== null) {
+    fs.writeSync(process.stdout.fd, `- ${orphans}\n`)
+  }
 }

@@ -1,8 +1,9 @@
-import { describe, expect, it } from 'bun:test'
+import { describe, expect, it, test } from 'bun:test'
 
 import {
   findOrphanCandidates,
   isExcluded,
+  orphanSweepLine,
   referenceNeedles,
   tokensIn,
 } from './orphan-sweep'
@@ -29,13 +30,23 @@ describe('orphan-sweep exclusion rules', () => {
 })
 
 describe('orphan-sweep reference forms', () => {
-  it('offers the path, its stem, the basename and its stem', () => {
-    expect(referenceNeedles('cli/src/hooks/use-now.ts')).toEqual([
-      'cli/src/hooks/use-now.ts',
-      'cli/src/hooks/use-now',
-      'use-now.ts',
-      'use-now',
-    ])
+  it('offers every trailing segment chain with and without the extension', () => {
+    expect(referenceNeedles('cli/src/hooks/use-now.ts').sort()).toEqual(
+      [
+        'cli/src/hooks/use-now.ts',
+        'cli/src/hooks/use-now',
+        'cli/src/hooks/use-now.js',
+        'src/hooks/use-now.ts',
+        'src/hooks/use-now',
+        'src/hooks/use-now.js',
+        'hooks/use-now.ts',
+        'hooks/use-now',
+        'hooks/use-now.js',
+        'use-now.ts',
+        'use-now',
+        'use-now.js',
+      ].sort(),
+    )
   })
 
   it('splits a scoped import into every trailing segment', () => {
@@ -54,6 +65,21 @@ describe('orphan-sweep reference forms', () => {
       'see https://bigquery.googleapis.com/v2 and google/cloud/bigquery-basics\n',
     )
     expect(tokens.has('bigquery')).toBe(false)
+  })
+})
+
+describe('orphan-sweep recurring line (session-end wiring)', () => {
+  test('reports counts and the command, never a verdict', () => {
+    // Runs the real sweep once against the real tree (FID-2026-1016-013 E).
+    // Asserted by SHAPE: a count that changes as the tree is cleaned must not
+    // turn this test red, and the line must stay advisory.
+    const line = orphanSweepLine()
+
+    expect(line).not.toBeNull()
+    expect(line).toMatch(
+      /^orphan-sweep: (no candidate among \d+ tracked file\(s\)|\d+ candidate\(s\) among \d+ tracked file\(s\) — ADVISORY)/,
+    )
+    expect(line).toContain('bun scripts/orphan-sweep.ts')
   })
 })
 
@@ -89,6 +115,43 @@ describe('orphan-sweep candidate detection', () => {
     // The provenance path is a real reference: the generator must not be
     // reported. `icons.ts` has no referencer here and is a true candidate.
     expect(reported).not.toContain('cli/scripts/generate-savant-icons.ts')
+  })
+
+  it('does not report a module imported with its emitted .js extension', () => {
+    // Defect 3 (FID-2026-1016-013): `scripts/audit-rebrand-corruption.ts` is
+    // imported as './audit-rebrand-corruption.js' by the repository gate, and
+    // the pre-fix needle set had no `.js` spelling for a `.ts` path.
+    const files = [
+      'scripts/audit-rebrand-corruption.ts',
+      'scripts/validate-repository.ts',
+    ]
+    const contents = new Map([
+      ['scripts/audit-rebrand-corruption.ts', 'export const audit = 1\n'],
+      [
+        'scripts/validate-repository.ts',
+        "import { audit } from './audit-rebrand-corruption.js'\n",
+      ],
+    ])
+
+    const reported = findOrphanCandidates(files, contents).map((c) => c.file)
+    expect(reported).not.toContain('scripts/audit-rebrand-corruption.ts')
+  })
+
+  it('does not report a file a config names relative to its own directory', () => {
+    // Defect 4: the mention is written from the config's directory
+    // (`./src/preload/x.ts`), never from the repository root.
+    // The fixture path must NOT exist in the tree: these fixtures are held in
+    // the corpus by this test, and `scripts/orphan-sweep.test.ts` is itself a
+    // tracked file the real sweep reads — naming a real module here would make
+    // the sweep report that module as referenced when nothing else names it.
+    const files = ['cli/src/preload/phantom-polyfill.ts', 'cli/bunfig.toml']
+    const contents = new Map([
+      ['cli/src/preload/phantom-polyfill.ts', 'export const polyfill = 1\n'],
+      ['cli/bunfig.toml', 'preload = ["./src/preload/phantom-polyfill.ts"]\n'],
+    ])
+
+    const reported = findOrphanCandidates(files, contents).map((c) => c.file)
+    expect(reported).not.toContain('cli/src/preload/phantom-polyfill.ts')
   })
 
   it('reports a file nothing but itself references', () => {

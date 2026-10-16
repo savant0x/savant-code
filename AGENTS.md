@@ -163,6 +163,14 @@ bun x prettier --write .
 > to the working tree. Run suites from their workspace root (the `cd` form
 > above), where the filter resolves to exactly one file.
 
+> **Advisory dead-code sweep** (never a gate — a name index cannot see a
+> runtime-built reference, so it reports and a human decides; it recurs
+> automatically at session end via `session-end:review`):
+>
+> ```bash
+> bun scripts/orphan-sweep.ts    # candidate files nothing references
+> ```
+>
 > **Pre-push gate:** a native git pre-push hook (`.githooks/pre-push`) runs the
 > fail-closed pushed-range credential scan
 > (`bun run scripts/pre-push-scan.ts`, which materializes the exact commit range
