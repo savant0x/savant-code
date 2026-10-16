@@ -9,7 +9,7 @@ import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
 
 import type { AnimationClip, Object3D } from 'three'
 
-export const ROBOT_MODEL_URL = '/floor-assets/robots/robot.glb'
+export const ROBOT_MODEL_URL = '/floor-assets/robots/RobotExpressive.glb'
 
 export interface RobotTemplate {
   readonly scene: Object3D

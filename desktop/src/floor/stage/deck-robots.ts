@@ -2,7 +2,8 @@
  * FID-2026-0822-012 asset pass — robot figure factory.
  *
  * Loads the vendored CC0 rigged robot (`public/floor-assets/robots/
- * robot.glb` — Quaternius' RobotExpressive, per ASSET-MANIFEST.md) once and
+ * RobotExpressive.glb` — the Khronos sample model, per ASSET-MANIFEST.md) once
+ * and
  * assembles per-role cast figures: SkeletonUtils clones (skinned meshes need
  * bone-deep copies, not Object3D.clone), height-normalized, skinned in a
  * per-role emissive hologram material — dark chassis + accent emissive under

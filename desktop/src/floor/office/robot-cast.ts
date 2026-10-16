@@ -1,12 +1,16 @@
 /**
  * FID-2026-0831-002 P6b — office cast robot loader.
  *
- * Loads the vendored CC0 robot models (public/floor-assets/robots/, per
+ * Loads the vendored CC0 robot model (public/floor-assets/robots/, per
  * ASSET-MANIFEST.md) once per URL and hands templates to the shared figure
  * factory in `stage/deck-robots.ts` (createRobotFigure clones the template,
- * so one load serves every cast member). Two distinct designs alternate
- * across the pad ring — the operator asked for multiple robot designs, not
- * one cloned figure.
+ * so one load serves every cast member). The operator asked for multiple
+ * robot designs, not one cloned figure — but only ONE design is vendored:
+ * the second file (`robot.glb`, credited to the Quaternius pack) was a
+ * byte-identical copy of `RobotExpressive.glb`, so the alternation below never
+ * produced a second look. FID-2026-1016-013 removed the copy and corrected
+ * the manifest; the array shape survives so a genuinely different CC0 model
+ * can be dropped in without touching callers.
  *
  * The loader never throws: a missing or corrupt asset resolves null and the
  * caller falls back to the solid minimal silhouette (never a wireframe).
@@ -34,13 +38,15 @@ export interface RobotTemplate {
   readonly animations: readonly AnimationClip[]
 }
 
-/** Two free robot designs (CC0): Quaternius pack + Khronos expressive bot. */
+/** The vendored free robot design (CC0): the Khronos expressive bot, whose
+ *  file name matches its actual content. Add a second URL only for a model
+ *  that is genuinely a different design. */
 export const CAST_MODEL_URLS = [
-  '/floor-assets/robots/robot.glb',
   '/floor-assets/robots/RobotExpressive.glb',
 ] as const
 
-/** Deterministic design rotation across the pad ring. */
+/** Deterministic design rotation across the pad ring (one design today, so
+ *  every pad resolves to it; the rotation resumes if a second is added). */
 export function castModelUrlForPad(padIndex: number): string {
   return (
     CAST_MODEL_URLS[padIndex % CAST_MODEL_URLS.length] ?? CAST_MODEL_URLS[0]

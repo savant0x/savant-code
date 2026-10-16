@@ -136,7 +136,7 @@ describe('robot figure factory (visibility hotfix)', () => {
     // Resolved from THIS file's location so the gate passes from any CWD
     // (fid:verify runs tests from the repo root, not desktop/).
     const bytes = await Bun.file(
-      `${import.meta.dir}/../../../public/floor-assets/robots/robot.glb`,
+      `${import.meta.dir}/../../../public/floor-assets/robots/RobotExpressive.glb`,
     ).arrayBuffer()
     const view = new DataView(bytes)
     expect(view.getUint32(0, true)).toBe(0x46546c67) // 'glTF' magic
