@@ -121,12 +121,21 @@ How will we confirm the fix works?
 > `fid:verify --check` names every active record outside the contract instead
 > of skipping it silently.
 
+> **Gate paths must be durable, never scratch** (FID-2026-1016-011). A declared
+> gate is re-run from the working tree, so its artifact has to outlive the
+> session: put probes in `scripts/probes/` (or beside the code they probe) and
+> tests in a real `*.test.ts` path. **Never** declare a gate under
+> `dev/scratchpad/` — that tree expires after 24 h idle (and `/dev` is
+> untracked), so the gate would outlive its own evidence. 18 archived records
+> did exactly that; `scripts/hygiene.ts` now reports the shape for active
+> records.
+
 ```markdown
 ## Verification Gates
 
 - gate: typecheck sdk
 - gate: test sdk/src/__tests__/process-definitions.test.ts
-- gate: probe dev/scratchpad/process-defs-probe.ts
+- gate: probe scripts/probes/process-defs-probe.ts
 - gate: quality
 
 ### Verification Receipt
@@ -135,7 +144,7 @@ How will we confirm the fix works?
 - verified: YYYY-MM-DDTHH:MM:SSZ
 - typecheck sdk: exit 0
 - test sdk/src/__tests__/process-definitions.test.ts: exit 0
-- probe dev/scratchpad/process-defs-probe.ts: exit 0
+- probe scripts/probes/process-defs-probe.ts: exit 0
 - quality: exit 0
 ```
 

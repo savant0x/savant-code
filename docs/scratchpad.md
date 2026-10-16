@@ -30,6 +30,25 @@ Virtual/injected SDK filesystems receive no native housekeeping. This manager
 does not run a daemon while Savant is closed. Resume must tolerate expired
 temporary files; durable conversation history lives elsewhere.
 
+## Scratch storage is never evidence (FID-2026-1016-011)
+
+An artifact that must outlive the session does not belong here — this tree is
+untracked (`/dev`) and expires after 24 h idle, so a file used as proof is proof
+nobody else can inspect and that the janitor deletes:
+
+- **FID verification gates** must name a durable path. `- gate: probe <path>`
+  belongs in `scripts/probes/` (or beside the code it probes); `- gate: test`
+  must name a real `*.test.ts`. A gate declared under `dev/scratchpad/`
+  outlives its own evidence. 18 archived records did exactly that: 18 declared
+  scratchpad probes, and 3 of 4 sampled files were already deleted by expiry.
+  `scripts/hygiene.ts` reports the shape (`ephemeral-evidence`) for active
+  records, and `templates/FID-TEMPLATE.md` shows the durable example.
+- **Reports** go to their project's documentation or report location.
+- **Reusable probes** go to `scripts/`.
+- Name a file so it can be promoted (`<session|fid-id>-<what>.<ext>`): an
+  anonymous name is indistinguishable from a build log, so expiry is the only
+  option left.
+
 ## Inspect and clean
 
 Use `/scratchpad status` to see the file/byte inventory, live protection,

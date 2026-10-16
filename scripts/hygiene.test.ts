@@ -94,3 +94,67 @@ describe('scratchpad root hygiene (P36)', () => {
     ).toEqual([])
   })
 })
+
+describe('FID evidence must be durable (FID-2026-1016-011)', () => {
+  const writeFid = (root: string, relative: string, gate: string): void => {
+    const target = path.join(root, relative)
+    mkdirSync(path.dirname(target), { recursive: true })
+    writeFileSync(target, `## Verification Gates\n\n${gate}\n`)
+  }
+
+  it('flags an active FID whose gate points into the scratchpad', () => {
+    const root = mkdtempSync(path.join(os.tmpdir(), 'savant-hygiene-'))
+    tempRoots.push(root)
+    writeFid(
+      root,
+      'dev/fids/FID-2026-1016-999-scratch-evidence.md',
+      '- gate: probe dev/scratchpad/active/some-probe.ts',
+    )
+
+    expect(collectHygieneIssues(root)).toEqual([
+      expect.objectContaining({
+        code: 'ephemeral-evidence',
+        file: 'dev/fids/FID-2026-1016-999-scratch-evidence.md',
+      }),
+    ])
+  })
+
+  it('flags a scratchpad test gate as well as a probe gate', () => {
+    const root = mkdtempSync(path.join(os.tmpdir(), 'savant-hygiene-'))
+    tempRoots.push(root)
+    writeFid(
+      root,
+      'dev/fids/FID-2026-1016-998-scratch-test.md',
+      '- gate: test dev/scratchpad/active/foo.test.ts',
+    )
+
+    const issues = collectHygieneIssues(root).filter(
+      (issue) => issue.code === 'ephemeral-evidence',
+    )
+    expect(issues).toHaveLength(1)
+  })
+
+  it('stays silent for a durable probe path', () => {
+    const root = mkdtempSync(path.join(os.tmpdir(), 'savant-hygiene-'))
+    tempRoots.push(root)
+    writeFid(
+      root,
+      'dev/fids/FID-2026-1016-997-durable.md',
+      '- gate: probe scripts/probes/durable-probe.ts',
+    )
+
+    expect(collectHygieneIssues(root)).toEqual([])
+  })
+
+  it('does not re-report closed records in the archive', () => {
+    const root = mkdtempSync(path.join(os.tmpdir(), 'savant-hygiene-'))
+    tempRoots.push(root)
+    writeFid(
+      root,
+      'dev/fids/archive/FID-2026-0823-004-closed.md',
+      '- gate: probe dev/scratchpad/process-defs-probe.ts',
+    )
+
+    expect(collectHygieneIssues(root)).toEqual([])
+  })
+})

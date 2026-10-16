@@ -50,9 +50,12 @@ docs/idea-farm-*.md
 # worktrees, materialized built-in skills) — never source, always regenerated.
 .savant-free/
 
-# Scratchpad (ephemeral working area, .gitkeep preserves directory)
-dev/scratchpad/*
-!dev/scratchpad/.gitkeep
+# Scratchpad (ephemeral working area) — no ignore lines here: `.gitignore:16`
+# (`/dev`) already excludes the whole governance tree, and git cannot re-include
+# a path below an excluded parent, so the former `dev/scratchpad/*` +
+# `!dev/scratchpad/.gitkeep` pair was inert (FID-2026-1016-011). The scratchpad's
+# real guard is its 24 h lifecycle (common/src/util/scratchpad.ts) plus the
+# root-shape rule in scripts/hygiene.ts.
 
 # Free-compute discovery pipeline artifacts (FID-2026-0914-003): daily
 # harvest report + candidate state + agent-context sidecars — regenerated

@@ -15,7 +15,7 @@
  *
  * - gate: typecheck sdk
  * - gate: test sdk/src/__tests__/process-definitions.test.ts
- * - gate: probe dev/scratchpad/process-defs-probe.ts
+ * - gate: probe scripts/probes/process-defs-probe.ts
  *
  * ### Verification Receipt
  *
@@ -23,7 +23,7 @@
  * - verified: 2026-08-23T15:04:00Z
  * - typecheck sdk: exit 0
  * - test sdk/src/__tests__/process-definitions.test.ts: exit 0
- * - probe dev/scratchpad/process-defs-probe.ts: exit 0
+ * - probe scripts/probes/process-defs-probe.ts: exit 0
  * ```
  *
  * This module is PURE (no I/O, no execution): it parses and structurally

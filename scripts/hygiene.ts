@@ -14,6 +14,7 @@ export type HygieneIssue = {
     | 'production-placeholder'
     | 'scratchpad-clutter'
     | 'experience-coverage'
+    | 'ephemeral-evidence'
   file: string
   message: string
 }
@@ -180,6 +181,47 @@ export function collectScratchpadIssues(
   return issues
 }
 
+/**
+ * A declared FID gate whose artifact lives in ephemeral storage cannot outlive
+ * the session that earned it. The scratchpad expires files after 24 h idle, so
+ * `- gate: probe dev/scratchpad/...` is evidence the janitor deletes — and
+ * because `/dev` is untracked, nobody else can see it even before expiry.
+ *
+ * Measured 2026-10-16 (FID-2026-1016-011): 18 archived records declared probes
+ * under `dev/scratchpad/`, and 3 of 4 sampled probe files were already gone.
+ *
+ * Scope is deliberately ACTIVE records only (`dev/fids/*.md`). A `closed`
+ * record is outside the gate contract by design (FID-2026-0919-021), so
+ * re-reporting history would make this rule permanently red — a gate that can
+ * never pass is not a gate. The rule's job is to stop the 19th occurrence.
+ */
+export function collectFidEvidenceIssues(
+  scanRoot: string = root,
+): HygieneIssue[] {
+  const fidsDir = path.join(scanRoot, 'dev', 'fids')
+  const issues: HygieneIssue[] = []
+  if (!fs.existsSync(fidsDir)) return issues
+
+  for (const entry of fs.readdirSync(fidsDir)) {
+    if (!entry.endsWith('.md')) continue
+    const relative = `dev/fids/${entry}`
+    const content = fs.readFileSync(path.join(fidsDir, entry), 'utf8')
+    for (const line of content.split(/\r?\n/)) {
+      // Mirror the gate parser: only unfenced `- gate: <kind> <path>` lines.
+      const gate = /^-\s*gate:\s*(probe|test)\s+(\S+)/.exec(line.trim())
+      const target = gate?.[2]
+      if (target === undefined) continue
+      if (!target.includes('dev/scratchpad/')) continue
+      issues.push({
+        code: 'ephemeral-evidence',
+        file: relative,
+        message: `Gate artifact ${target} lives in ephemeral storage (24 h expiry, untracked). Declare a durable path such as scripts/probes/.`,
+      })
+    }
+  }
+  return issues
+}
+
 export function collectHygieneIssues(scanRoot: string = root): HygieneIssue[] {
   const issues: HygieneIssue[] = []
   const scanFiles = [
@@ -220,6 +262,9 @@ export function collectHygieneIssues(scanRoot: string = root): HygieneIssue[] {
   return [
     ...issues,
     ...collectScratchpadIssues(scanRoot),
+    // FID-2026-1016-011: a gate declared in scratch storage is evidence the
+    // lifecycle is designed to delete.
+    ...collectFidEvidenceIssues(scanRoot),
     // FID-2026-1012-021: a recurring failure class above the promotion bar with
     // no owning record is repository hygiene, not a backlog item.
     ...collectClassCoverageIssues(scanRoot).map((issue) => ({
