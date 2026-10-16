@@ -12,6 +12,22 @@
 > the v0.0.36 cut. Release notes are written here at cut time; nothing in this
 > section is a package-release claim until then.
 
+## 2026-10-16 — Batch pushed-range credential scan (FID-2026-1016-007, high)
+
+### Changed
+
+- FID-2026-1016-007 (high): exact pushed content is now acquired in bounded
+  batches instead of per-path Git subprocesses. Two historical 6,207-file
+  delete/restore commits made the fail-closed pre-push credential scan require
+  roughly 24,828 launches and stall past eleven minutes with the mirror still
+  empty; one `ls-tree -r -l -z` per commit plus SHA-only `cat-file --batch`
+  reads chunked to an 8 MiB bound replace them. Range coverage, deletion
+  confirmation, the 2 MiB size cap and path/blob identity pins are unchanged,
+  and malformed, truncated, oversized, wrong-type or SHA-mismatched framing
+  still fails closed before any byte reaches a writer. Measured on the exact
+  38-commit range the push carries: 6,548 files scanned in 26 s, exit 0.
+  Implementation: `6b2d9d91`; seven declared gates passed; closed and archived.
+
 ## 2026-10-16 — Implementation closure and internal follow-ups
 
 ### Changed

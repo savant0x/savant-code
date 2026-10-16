@@ -11,15 +11,6 @@ handling or repository boundaries.
 
 ## Open items
 
-- [ ] **FID-2026-1016-007. Batch pushed-range credential-scan Git reads.**
-      Automatic progress push encountered a historical 6,207-file deletion
-      and restoration. Per-path size, absence and content subprocesses make
-      that scan require roughly 25,000 Git launches. Batch exact-commit tree
-      metadata and bounded binary blob reads without weakening range coverage,
-      credential checks, deletion confirmation, size caps or identity pins.
-      Complete and verify this necessary push-path repair, then retry the push.
-      **Automation level: 3.**
-
 - [ ] **T194. Linked-checkout retrofit reconnaissance before any FID.**
       Retrofitting the git-worktree idea against Savant rather than adopting the intake
       report: all 192 `resources/` repositories classified, mechanics extracted with
@@ -39,6 +30,10 @@ are closed and archived, with changelog entries. Observation and live comparison
 are separate work, per the operator's explicit ruling in this session.
 MarsAI removal FID-2026-1016-005 (`87c2f87a`, 11/11 gates) and internal
 tracking FID-2026-1016-006 (`dbb8de12`, 10/10 gates) are also closed and archived.
+Push-path repair FID-2026-1016-007 (`6b2d9d91`, 7/7 gates) is closed and archived
+after the credential scan's Git reads were batched; the exact 38-commit push range
+was measured at 6,548 files / 26 s / exit 0, and the push retried through the
+unmodified hook chain. No scan bypass, cap change or history rewrite was used.
 
 - `OBS-001` in `dev/tracking/internal-followups.json`: production exposure and
   remaining sanitized replay evidence for eight classes. No class repair is claimed.
@@ -81,12 +76,6 @@ FID-2026-1015-002. These dispositions supersede the previous register holds.
 Operator authorization: completion at automation level 3, renewed 2026-10-15;
 specific removal and skill metadata approvals are in answers.md. Governance
 artifacts required by ECHO retain their gate-level exemptions.
-
-- FID-2026-1016-007: `scripts/push-content*.ts`,
-  `scripts/*push*.test.ts`,
-  `scripts/__tests__/*push*.test.ts`, `scripts/__tests__/*pin*.test.ts`,
-  `scripts/pre-push-scan.ts`, `SCOPE.md`, `CHANGELOG.md`, `dev/fids/**`,
-  `dev/session-summaries/**`
 
 - Release-0.0.36: `VERSION`, `package.json`, `agents/package.json`,
   `cli/package.json`, `cli/release/package.json`, `common/package.json`,
