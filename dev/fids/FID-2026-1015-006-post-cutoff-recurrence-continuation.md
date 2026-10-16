@@ -138,8 +138,8 @@ Source gates are declared after the repair contract converges.
 
 ### Verification Receipt
 
-- fingerprint: sha256:066c9ac013995c001d2f1109763a06ae34fbc9e1c022480863abab4332cbcaba
-- verified: 2026-10-16T03:37:58.958Z
+- fingerprint: sha256:113c80e8574a66173fa70b6b797e97384adc83d2ea74bf8af4871cec386e278a
+- verified: 2026-10-16T03:39:36.582Z
 - typecheck sdk: exit 0
 - typecheck common: exit 0
 - typecheck packages/agent-runtime: exit 0
@@ -210,7 +210,7 @@ Local implementation verified under the master; production investigation remains
 active with the specific replay/exposure blockers above. Ownership changes do
 not change class keys, repair cutoffs, historical waivers, failure counts or
 capture behavior. Status verified certifies deterministic local gates, not class
-repair or external availability. Commit is recorded after implementation lands.
+repair or external availability. Implementation commit: e2bf657b.
 
 ## Lessons Learned
 

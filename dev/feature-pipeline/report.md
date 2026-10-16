@@ -1,6 +1,6 @@
 # Lesson feature pipeline
 
-Source fingerprint: 441bd16b9ecfc74340de279f1e0630defc90b6bbc0595524af04d2499a236e08.
+Source fingerprint: aaffae15706188e4f4a3fbf2e5effe5e3724685181e056f85f99f20bf2a6a957.
 
 Readiness is a reviewed proposal. Implementation status records closed-FID
 evidence; it does not claim that historical tests were rerun today.
@@ -59,7 +59,7 @@ Owning FID: FID-2026-1015-004.
 
 ### LF-004: Recover retained research evidence on demand
 
-P1; draft; investigation.
+P1; routed; investigation.
 
 First repair policy propagation, then assess whether the existing evidence spill/inventory can restore fetched paper
   records after intentional compaction. Do not create a second evidence store or claim that retained bytes were
@@ -71,7 +71,7 @@ Acceptance:
 - An authorized researcher can retrieve the original fetched record without rerunning the service.
 - Missing or expired evidence is reported as a gap, never synthesized from memory.
 
-Owning FID: not routed.
+Owning FID: FID-2026-1015-005.
 
 ### LF-005: Record production acceptance separately from agent tool success
 

@@ -10,6 +10,21 @@
 > the v0.0.36 cut. Release notes are written here at cut time; nothing in this
 > section ships until then.
 
+## 2026-10-15 — Runtime boundaries and product retirement
+
+- FID-2026-1015-002 (medium): retired Savant-Free product paths and build
+  registrations; preserved ordinary model/provider routing; added scripts/tmux
+  to root gates, six approved skill versions and the provider reference draft.
+  Implementation: `001e36c6`; 11 declared gates passed; closed and archived.
+- FID-2026-1015-005 (high): reject vacuous verification, break repeated settled
+  checks, recover retained evidence, improve skill diffs and baseline pins,
+  clamp subagent writes, sanitize reports and expose pure preset stepping.
+  Implementation: `d71b9065`; 10 declared gates passed; closed and archived.
+- Final root test chain: 9,187 PASS / 23 SKIP / zero FAIL, exit 0. Root
+  typecheck, ESLint, Markdown lint, formatting, quality and SDK build passed.
+  Class repair remains unproved; post-cutoff findings continue under active
+  FID-2026-1015-006 and master FID-2026-1012-022.
+
 ## 2026-10-15 — Durable session save and resume with nested runtime state (FID-2026-1015-004, high)
 
 ### Fixed

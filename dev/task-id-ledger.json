@@ -21,6 +21,22 @@
       "id": "T187",
       "title": "Remaining skills carry no `version` frontmatter."
     },
-    { "id": "T188", "title": "Install-independent undeclared-import guard." }
+    { "id": "T188", "title": "Install-independent undeclared-import guard." },
+    {
+      "id": "T191",
+      "title": "Single-agent protocol Quick Reference points at the wrong governance file."
+    },
+    {
+      "id": "T192",
+      "title": "Two untracked dropped artifacts fail the repository markdown-lint gate."
+    },
+    {
+      "id": "T193",
+      "title": "Durable clean-Linux receipt log parked in the ephemeral scratchpad root."
+    },
+    {
+      "id": "T194",
+      "title": "Linked-checkout retrofit reconnaissance before any FID."
+    }
   ]
 }

@@ -5,11 +5,13 @@ operator decision, implementation, runtime review, or closure evidence.
 
 ## Current active FIDs
 
-The 2026-10-15 completion leaves one active record: the master plan. The four
-implementation records `FID-2026-1012-017`, `-021`, `-023` and `-024` are closed
-and archived with committed implementation and passing gates. Named Q25 waivers
-preserve the production observation limitation: 591 capture records / 59 stable
-classes / zero issues, all unresolved. No class repair is claimed.
+The current session leaves two active records: the master and the explicit
+post-cutoff continuation. FID-2026-1015-002 and FID-2026-1015-005 are committed
+and archived at `001e36c6` and `d71b9065`, with 11 and 10 declared gates passing.
+The full root chain exits 0 (9,187 PASS / 23 SKIP / zero FAIL).
+The current census is 606 records / 59 stable classes. Eight post-cutoff
+classes are explicitly owned by FID-2026-1015-006; no historical waiver follows
+them, and no production class repair is claimed.
 
 The master retains the operator/external-input work registered in `SCOPE.md`.
 Earlier provider and artifact-census records are also archived; no Cloudflare
@@ -18,7 +20,8 @@ account configuration is a completion requirement under Q27. Current evidence:
 
 | FID | Status | Current closure condition |
 |---|---|---|
-| `FID-2026-1012-022` | converged | Implementation children archived; remaining operator/external-input register items retain their specific blockers. |
+| `FID-2026-1012-022` | converged | Closes after the active continuation and operator-owned T175 boundary resolve. |
+| `FID-2026-1015-006` | verified | Local execution/ownership fixes pass declared gates; provider replay inputs and qualified production observation remain required. |
 
 The active queue is intentionally non-empty under the FID closure contract.
 Completed records are moved to [`archive/`](archive/) with a CHANGELOG entry and

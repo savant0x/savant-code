@@ -12,6 +12,61 @@
 
 ## Summary
 
+**Session continuation:** operator assigns this master as the session's work
+at automation level 3. FID-2026-1015-002 removal implementation is committed
+at `001e36c6`; four-pillar implementation is committed at `d71b9065`.
+Both children are closed and archived with their declared gates passing;
+the final root suite exits 0 (9,187 / 23 skipped / zero fail).
+Live re-measure: 606 records, 59 stable classes, 25 current
+recurrences above the threshold. Eight post-cutoff classes invalidate archived
+waivers and now route to active child FID-2026-1015-006. Archived documents and
+waivers remain unchanged; active ownership is not a claim of repair.
+
+**Current completion update — 2026-10-15 operator answers:**
+`dev/fids/answers.md` lifts T122 removal and T187 metadata holds; the removal
+and dependent T186 coverage execute under child FID-2026-1015-002. T171 stays
+as-is, T173's current defaults are accepted, and T62 follow-up probes are
+waived. Publication does not gate this master; Q23 routing and required CI
+branch protection are dropped in the operator's own words, preserved in the
+new child and SCOPE.md. T175's concrete reference draft is delivered at
+`docs/design/provider-reference-review-2026-10-15.md`; the only remaining
+operator question is whether live comparisons should remain a separate task.
+The final root test chain passed 9,187 / 23 skip / zero fail across all
+14 registered workspaces; typecheck and SDK build passed. Both implementation
+children are committed and archived. FID-006 remains active for replay and
+production observation; its local gates pass without claiming class repair.
+The dated original plan and census below remain the historical allocation.
+
+**Accuracy audit — 2026-10-15 late UTC (operator-directed, this session):** every
+number below has been re-measured against the live tree. The audit found no
+wrong commit receipt and no missing artifact, but two drifts against the
+ground truth and one falsified recurrence claim, recorded here before this
+board misleads a reader: (a) the active queue is **three** records, not one —
+this master plus `FID-2026-1015-002` (converged, execution in flight) and
+`FID-2026-1015-005` (converged, implementation not started), with `-1015-001`,
+`-1015-003` and `-1015-004` closed and archived since the completion paragraph
+above was written; (b) the census moved to **606 records / 59 unique
+patterns / 26 recurrences ≥3 inside the 14-day window** (`bun run
+experiences:dedup` at the audit tree), the window ending
+`2026-10-15T23:22:44Z` across 209 sessions — the "59 stable classes" figure
+still holds, the record count does not; and (c) **one incomplete-arguments row
+landed after `-017`'s final fix**: `2026-10-15T23:12:37Z`, `spawn_agents`,
+`classKey: v1:spawn_agents:incomplete-arguments:unexpected`, expectedness
+`unexpected` — it post-dates `f6224816` (2026-10-15T14:40Z) and the Loop 8
+zero-row re-measure, so per the convergence rule that recurrence assertion is
+falsified for one class and the observation routes through this master rather
+than an archived child. The 20-row 2026-10-13 burst is the same-day event Loop
+5 already accounts for; the 2026-10-15 row is new. Verified clean: `6e37aa15`,
+`6e6998b6`, `2a34e558`, `6b847099`, `b959019e`, `f6224816` all resolve in Git
+with the subjects the board cites; `docs/design/provider-reference-review-2026-10-15.md`
+exists; `dev/learnings-move-log.jsonl` is absent because no retirement has
+occurred since `-011` (consistent, not drift); the ledger graph check passes
+with no `fid.graph.*` issue. Two adjacent hygiene items made `validate:repository`
+red at audit time and were fixed in this pass — the deep-dive report moved to
+`dev/scratchpad/active/` and the 1.3 MB stray root transcript
+`session-ses_ebf6.md` moved to `dev/scratchpad/archive/`. Details and the
+status-board delta are under `### Status board` below.
+
 The ledger's purpose is real, but capture coverage must be repaired: `dev/experiences/raw-traces.jsonl` holds **559
 failures across 68 classes and 195 sessions** (2026-08-24 → 2026-10-12), recorded mechanically by the
 `PostToolUseFailure` → `experience-capture` hook. What failed is the **consumption** of that record.
@@ -141,6 +196,13 @@ of its own (`fid.graph.master-nested`).
 | FID-2026-1013-011 | Wave 2 — Law 13 shared-primitive consolidation & deduplication | wave | — |
 | FID-2026-1013-012 | Wave 3 — Law 6 type hardening, lint-suppression rationale gate & ceiling relief | wave | — |
 | FID-2026-1013-013 | Wave 4 — CLI and Desktop UI/UX parity, subagent attribution & 3D performance | wave | — |
+| FID-2026-1012-026 | Tier 1 provider parity wave (added post-planning) | provider program | — |
+| FID-2026-1015-001 | Chain C — approved resume decisions | register | — |
+| FID-2026-1015-002 | Chain C — the operator-answered register (T122/T186/T187/T175) | register | — |
+| FID-2026-1015-003 | Chain C — clean Linux test portability | harness | — |
+| FID-2026-1015-004 | Chain C — durable session save/resume | harness | — |
+| FID-2026-1015-005 | Four-pillar harness hardening (no declared parent) | harness | — |
+| FID-2026-1015-006 | Post-cutoff recurrence investigation and execution repair | class continuation | eight classes |
 
 **Instrument sensitivity, stated because it bounds every claim below** — the slice length changes the
 class count, so the number is only meaningful with its instrument:
@@ -353,6 +415,13 @@ activation), and the child's id is recorded in this table when it exists.
 
 ### Status board (the agent updates this; it is what an operator reads)
 
+**Current session:** FID-2026-1015-002 and FID-2026-1015-005 are implemented,
+committed (`001e36c6`, `d71b9065`) and archived with 11 and 10 declared gates
+passing. The final root chain exits 0: 9,187 PASS / 23 SKIP / zero FAIL.
+FID-2026-1015-006 actively investigates all eight post-cutoff classes. This
+master remains open for that work and T175's concrete external-input boundary.
+The dated boards below retain their historical measurements.
+
 **Completion 2026-10-15:** Four final implementation records are closed and
 archived: `-017`, `-021`, `-023` and `-024`. This master is the sole active FID.
 The current census remains 591 records / 59 stable classes / zero issues, with
@@ -369,6 +438,46 @@ constraints in `SCOPE.md`: release cut, Savant-Free removal and dependent gate
 coverage, provider verdict/consent decisions, control manifest and funding,
 vendor window evidence, provider credits and skill trust grants. No such
 constraint is resolved by archiving implementation-complete children.
+
+**Status-board delta — accuracy audit 2026-10-15 late UTC:**
+
+| Item | Chain · wave | Record | Status at the audit |
+|---|---|---|---|
+| FID-2026-1015-001 — approved resume decisions | C | `1015-001` | **closed + archived 2026-10-15** — commits `83f1712d`, `3bc238a6` |
+| FID-2026-1015-002 — the operator-answered register | C | `1015-002` | **active** — converged; execution in flight (Savant-Free fixture removal at `dea54d85`); T186 tmux leg and the remaining T122 surface still open |
+| FID-2026-1015-003 — clean Linux test portability | C/harness | `1015-003` | **closed + archived 2026-10-15** — commits `d94e30c7`, `a1b5e7d2`, `a707aa89`, `7c1af232`, `6304695e` |
+| FID-2026-1015-004 — durable session save/resume | C/harness | `1015-004` | **closed + archived 2026-10-15** — commits `628375ff`, `586581a4`, `bc074be4` |
+| FID-2026-1015-005 — four-pillar harness hardening | harness | `1015-005` | **active** — converged, implementation explicitly not started; declares no parent (see the linkage note in the audit paragraph) |
+
+Recurrence reality at the audit tree (the archived lanes are NOT class-stopped):
+`experiences:dedup` counts inside the 14-day window — `read_url` 404
+100×/15 sessions, `read_files` incomplete 30×/10, `read_url` incomplete 27×/3,
+`str_replace` old-string-not-found 25×/10, `web_search` no-results 24×/7,
+`suggest_followups` incomplete 20×/3, `run_readonly_command` 30-second timeout
+12×/7. One genuinely **new post-census class** also fired:
+`run_readonly_command — Command exited with code 127: /usr/bin/bash: line 1:
+head: command not found` (10×/7 sessions) — an environment/shell-compat class
+assigned here to the `-023` execution lane by mechanism; `-023` is archived, so
+it routes through this master's re-allocation, and it is operator-actionable
+(Windows Git Bash ships no GNU `head`, and repository scripts that pipe to it
+keep tripping). Full-suite numbers (9,206 / 23 SKIP) stand as their dated
+receipts and were not re-measured by this audit.
+
+**Ready-to-begin ruling — review pass, same session as the accuracy audit:** the record is
+READY for an automation run at ceiling 3, with three conditions met in this pass and one
+sequencing rule. Met: (1) the stale \"What stops for you\" list is reconciled with
+`answers.md` (an automation run consulting the old list would have halted on four items the
+operator already lifted); (2) `-1015-005` now carries the `**Master FID:**` line, so the
+master/child contract (\"every child names this record\") is finally uniform across all
+declared children; (3) the latest full-suite receipt on record is `-1015-002`'s (9,162 / 23
+SKIP / zero FAIL), which supersedes the older 9,155 and 9,206 figures as the freshest dated
+evidence. Sequencing rule: `-1015-002` is mid-execution (step 1 of 6 complete, first removal
+commit at `dea54d85`) — finish it before opening other Chain C waves that would edit the
+CLI's mode/model surfaces, and let `-1015-005` follow rather than run concurrently, since
+both pillars touch `cli/src/commands`. The falsified `spawn_agents` observation is the
+first Chain-A continuation item whenever class work resumes — one post-fix row, owner lane
+`-017`, expectedness `unexpected` — and the `head`-not-found class routes to the `-023` lane
+at the same pass.
 
 **Historical board (2026-10-14):** The dated table below records the earlier
 state; the completion paragraph above is the current state.
@@ -462,9 +571,15 @@ push and release remain operator-owned. Detailed
 logs and register measurements are indexed in
 `dev/session-summaries/2026-10-13-learning-remediation-continuation.md`.
 
-**What stops for you** (the automation halts here and does nothing else in that chain): the `0.0.36`
-release cut; T122's removal call; T186 until T122 lands; T175's six external inputs; T62's credit
-top-up; T171's ruling on the verdict gate and the consent shape; T187's `/skills trust` grant.
+**What stops for you** (the automation halts here and does nothing else in that chain),
+reconciled against `dev/fids/answers.md` so a run follows the operator's words, not the older
+list: still operator-owned — the `0.0.36` release cut and anything past the standing keep-local
+boundary (push/publication); T175's live-comparison decision and any control-armed re-run's
+external inputs (funding, ToS, budget, verdict naming, rotation source). Lifted by
+`answers.md` and no longer halting: T122's removal call (authorized now, executing under
+`-1015-002`), T186's removal-first order, T187's skill-version grant, T171 (dropped — kept as
+is), T173 (closed as done, conservative defaults accepted), T62 follow-ups (waived). The
+two in-flight convergences (`-1015-002`, `-1015-005`) are work, not holds.
 
 **Wave boundaries.** At the close of every wave, and in the master's own closing pass, re-run the census
 command in §Evidence and the allocation check: a class that appeared since the census must be owned

@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-1015-005-four-pillar-harness-hardening.md`
 **ID:** FID-2026-1015-005
 **Severity:** high
-**Status:** converged
+**Status:** closed
 **Created:** 2026-10-15 21:45
 **Automation level:** 3
 **Depends On:** none
@@ -625,7 +625,7 @@ completed gate is claimed before implementation and measured verification.
 
 ### Implementation Evidence (REQUIRED for `closed`)
 
-- **Commit SHA:** implementation is present; commit is the next lifecycle step.
+- **Commit SHA:** d71b9065.
 - **Production wiring:** creditVerificationRun calls detectVacuousVerification;
   beforeToolCallImpl calls evaluateSettledStateCheck; the native handler catalog
   registers handleRecoverEvidence; four role definitions expose recover_evidence.
@@ -638,8 +638,9 @@ completed gate is claimed before implementation and measured verification.
   suites 19 PASS / 0 FAIL. Full runtime initially exposed a stale green-run
   fixture with hardcoded red output; the fixture now serializes its actual
   result. Subsequent full runtime: 2,195 PASS / 0 FAIL.
-- **Step statuses:** Steps 1–4 implemented and tested. Step 5 final root tests,
-  lifecycle receipts and commit are in progress. No live UI result is claimed.
+- **Step statuses:** Steps 1–5 implemented. All 10 declared gates pass; full
+  root chain exits 0 with 9,187 PASS / 23 SKIP / zero FAIL. No live UI result
+  is claimed. Quality, root typecheck, ESLint and protocol-bundle checks pass.
 
 ### Code Verification Evidence
 
@@ -661,7 +662,9 @@ completed gate is claimed before implementation and measured verification.
 
 ## Resolution
 
-- **Closed Date:** Not closed; implementation present and final gates running.
+- **Closed Date:** 2026-10-15.
+- **Commit/State:** d71b9065 — all four pillars and declared boundary suites.
+- **Archived:** 2026-10-15.
 - **Fix Description:** All four pillars implemented with existing storage and governance seams.
 - **Tests Added:** Four declared boundary suites and corrected outcome fixture.
 - **Verification Evidence:** Measured focused and workspace outputs above; final receipt follows.
