@@ -171,7 +171,10 @@ describe('documentAttributionLines — what must never be judged', () => {
 
 describe('collectDocumentAttributionIssues — the repository gate', () => {
   it('reports nothing on this repository', () => {
-    expect(collectDocumentAttributionIssues(process.cwd())).toEqual([])
+    // No argument: the collector resolves the repository from the working
+    // directory, because a FID gate runs suites from `scripts/` while the
+    // pre-push hook runs from the pushed repo's top level.
+    expect(collectDocumentAttributionIssues()).toEqual([])
   })
 
   it('reports a credited agent with its repository-relative path', () => {

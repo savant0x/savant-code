@@ -119,9 +119,10 @@ export function scanRevisions(revArgs: string[]): AttributionViolation[] {
  * (`bun run validate:repository`), which the local hooks and every optional CI
  * check do not.
  */
-export function collectAttributionIssues(
-  root: string = process.cwd(),
-): { code: string; message: string }[] {
+export function collectAttributionIssues(): {
+  code: string
+  message: string
+}[] {
   const issues: { code: string; message: string }[] = []
   try {
     issues.push(
@@ -136,7 +137,7 @@ export function collectAttributionIssues(
       message: error instanceof Error ? error.message : String(error),
     })
   }
-  issues.push(...collectDocumentAttributionIssues(root))
+  issues.push(...collectDocumentAttributionIssues())
   return issues
 }
 
@@ -191,7 +192,11 @@ function main(argv: string[]): number {
     return 1
   }
   if (flag === '--documents') {
-    const issues = collectDocumentAttributionIssues(value ?? process.cwd())
+    // No argument means the repository the caller is standing in — the pushed
+    // repo for the pre-push hook, which need not be the hooks' own repo.
+    const issues = value
+      ? collectDocumentAttributionIssues(value)
+      : collectDocumentAttributionIssues()
     if (issues.length === 0) return 0
     // A scan failure is the guard's own fault, not a credit line: exit 2 so it
     // can never be mistaken for — or silenced as — a content finding.

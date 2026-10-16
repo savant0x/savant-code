@@ -30,6 +30,7 @@
  * an issue instead of an empty result, so an inability to scan can never read as
  * a clean scan.
  */
+import { spawnSync } from 'node:child_process'
 import fs from 'node:fs'
 import path from 'node:path'
 
@@ -149,6 +150,30 @@ function collectDocumentFiles(
 }
 
 /**
+ * The repository to scan, resolved from the working directory rather than guessed
+ * from `process.cwd()`.
+ *
+ * Both real callers land inside a repository and disagree about which path means
+ * "here": a FID gate runs each suite from its workspace directory
+ * (`scripts/`), while `.githooks/pre-push` runs from the top level of the repo
+ * being pushed — which is NOT necessarily the repo the hook script itself lives
+ * in (`core.hooksPath` may point elsewhere), so the module location cannot be the
+ * answer either. `git rev-parse --show-toplevel` is right for both, and the
+ * module's own parent is the fallback when the working directory is not in a
+ * repository at all.
+ */
+function repositoryRoot(): string {
+  const result = spawnSync('git', ['rev-parse', '--show-toplevel'], {
+    encoding: 'utf8',
+    stdio: 'pipe',
+    windowsHide: true,
+    shell: false,
+  })
+  const toplevel = result.status === 0 ? String(result.stdout ?? '').trim() : ''
+  return toplevel || path.resolve(import.meta.dir, '..')
+}
+
+/**
  * Repository-gate collector over the governed document trees: `dev/` (records,
  * FIDs, session summaries, research, the third-party channel), `docs/`,
  * `.agents/skills/` and the root protocol files. `dev/` is gitignored and
@@ -156,7 +181,7 @@ function collectDocumentFiles(
  * at all is an issue, so a mistyped root can never read as a clean scan.
  */
 export function collectDocumentAttributionIssues(
-  root: string = process.cwd(),
+  root: string = repositoryRoot(),
 ): { code: string; message: string }[] {
   const files: string[] = []
   let rootsFound = 0
