@@ -32,7 +32,6 @@ const sourceRoots = [
   'desktop',
   'evals',
   'packages',
-  'savant-free',
   'scripts',
   'sdk',
   'templates',

@@ -1,5 +1,6 @@
 ---
 name: coding-rust
+version: 0.1.0
 description: Rust naming conventions, ownership patterns, error handling, and quality overrides for ECHO Protocol.
 ---
 

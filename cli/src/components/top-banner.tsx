@@ -4,7 +4,6 @@ import { Button } from './button'
 import { TerminalLink } from './terminal-link'
 import { useTheme } from '../hooks/use-theme'
 import { useChatStore } from '../state/chat-store'
-import { IS_SAVANT_FREE } from '../utils/constants'
 import { formatCwd } from '../utils/path-helpers'
 import { BORDER_CHARS } from '../utils/ui-constants'
 
@@ -65,8 +64,7 @@ const TOP_BANNER_REGISTRY: Record<NonNullable<TopBannerType>, BannerConfig> = {
       return (
         <>
           <text style={{ wrapMode: 'word', fg: textColor }}>
-            You started {IS_SAVANT_FREE ? 'SavantFree' : 'SavantCode'} in a
-            subdirectory of a git repo.
+            You started SavantCode in a subdirectory of a git repo.
           </text>
           {gitRoot && onSwitchToGitRoot ? (
             <TerminalLink

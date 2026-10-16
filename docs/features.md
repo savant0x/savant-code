@@ -269,15 +269,13 @@ FID-2026-1001-002):
   (Ollama). Writes `free-options.md` in your config directory so you and the
   agent read one truth — ask "what free options do I have?" and it reads it.
 - **First-launch notice** — a one-time pre-TUI line points you at
-  `/provider free`, then retires (persisted flag). Non-free builds only:
-  `/provider` is not registered in SavantFree, so the notice is skipped
-  there rather than pointing at an unknown command.
+  `/provider free`, then retires (persisted flag).
 - **Boot summary** — on an empty chat, once per content-set, a system message
   announces your wired/not-wired free-lane counts from the local cache, so
   never typing the command is never the only way to find out. The catalog
   refresh is a fail-silent background task; boot never blocks on the network.
 
-The first-launch notice reaches every non-free-build invocation (interactive,
+The first-launch notice reaches every Savant-Code invocation (interactive,
 `--print`, `--auto`, piped, CI) because it is stderr-only and retires after
 one show. The boot summary is interactive-TUI-only (it needs a chat to post
 into), so headless runs get the notice and the `/provider free` command.
@@ -307,7 +305,7 @@ with severity and timestamps (FID-2026-1003-006):
 
 Notices surface as toasts — a retained warning for route-severity items and
 a grouped info toast for the rest — and `/notifications` opens the provider
-inbox to read and dismiss them (both builds). The desktop shell receives the
+inbox to read and dismiss them. The desktop shell receives the
 same notices over the gateway when it advertises the `provider_notices_v1`
 capability in its hello.
 
@@ -623,13 +621,13 @@ for the full design.
 | `/feedback`                                     | Share general feedback about SavantCode                                               |
 | `/publish`                                      | Publish an agent to the registry                                                      |
 | `/connect`                                      | Connect a ChatGPT account (OAuth)                                                     |
-| `/end-session`                                  | End a free session (lets you switch model)                                            |
 | `/exit`                                         | Quit the CLI                                                                          |
 
-**Availability:** SavantFree exposes `/connect`, `/plan`, and `/end-session`; the full build
-adds `/mode`, `/model`, `/provider`, `/publish`, `/release`, `/image`, and
-`/ads:enable` / `/ads:disable`; `/notifications` ships in both builds. Skill commands (`/skill:<name>`) appear once a skill is
-loaded. Each mode has its own `/mode:<name>` command (see
+**Availability:** Savant-Free and its `/end-session` command were retired on
+2026-10-15. Savant-Code provides `/mode`, `/model`, `/provider`, `/publish`,
+`/release`, `/image`, `/notifications`, and `/ads:enable` / `/ads:disable`,
+subject to each command's backend requirements. Skill commands (`/skill:<name>`)
+appear once a skill is loaded. Each mode has its own `/mode:<name>` command (see
 [Execution Modes](savant-code-modes.md)).
 
 ---

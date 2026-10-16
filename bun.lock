@@ -235,10 +235,6 @@
         "zod": "^4.2.1",
       },
     },
-    "savant-free": {
-      "name": "@savant-code/savant-free",
-      "version": "0.0.36",
-    },
     "scripts/tmux": {
       "name": "@savant-code/tmux-scripts",
       "version": "0.0.36",
@@ -749,8 +745,6 @@
     "@savant-code/knowledge-graph": ["@savant-code/knowledge-graph@workspace:packages/knowledge-graph"],
 
     "@savant-code/llm-providers": ["@savant-code/llm-providers@workspace:packages/llm-providers"],
-
-    "@savant-code/savant-free": ["@savant-code/savant-free@workspace:savant-free"],
 
     "@savant-code/sdk": ["@savant-code/sdk@workspace:sdk"],
 

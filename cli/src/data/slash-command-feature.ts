@@ -1,5 +1,3 @@
-import { IS_SAVANT_FREE } from '../utils/constants'
-
 import type { SlashCommand } from './slash-commands'
 
 /**
@@ -14,35 +12,24 @@ export const FEATURE_SLASH_COMMANDS: SlashCommand[] = [
     description: 'Toggle between light and dark mode',
   },
   {
-    id: 'end-session',
-    label: 'end-session',
-    description: 'End your free session (lets you switch model)',
-    aliases: ['model'],
+    id: 'model',
+    label: 'model',
+    description:
+      'Switch the active model (e.g. /model anthropic/claude-opus-4.6)',
+    aliases: ['switch-model'],
   },
-  ...(IS_SAVANT_FREE
-    ? []
-    : [
-        {
-          id: 'model',
-          label: 'model',
-          description:
-            'Switch the active model (e.g. /model anthropic/claude-opus-4.6)',
-          aliases: ['switch-model'],
-        },
-        {
-          id: 'provider',
-          label: 'provider',
-          description:
-            'Configure a provider API key (stored locally and masked)',
-        },
-        {
-          id: 'research-keys',
-          label: 'research-keys',
-          description:
-            'Configure research API keys (Serper/Context7/Parallel/Tavily/Exa/Firecrawl)',
-          aliases: ['research-key'],
-        },
-      ]),
+  {
+    id: 'provider',
+    label: 'provider',
+    description: 'Configure a provider API key (stored locally and masked)',
+  },
+  {
+    id: 'research-keys',
+    label: 'research-keys',
+    description:
+      'Configure research API keys (Serper/Context7/Parallel/Tavily/Exa/Firecrawl)',
+    aliases: ['research-key'],
+  },
   // FID-2026-0901-006 P21 command audit: auth is a backend surface — in
   // direct-provider mode /login dead-ends with an error, so it is hidden.
   {

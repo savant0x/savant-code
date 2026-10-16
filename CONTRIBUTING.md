@@ -1,7 +1,7 @@
 # Contributing
 
-This is the open-source monorepo for **Savant-Code** — the public TypeScript workspace that ships two products
-(Savant-Code + Savant-Free) from one source tree. The repository is the source of truth; patches go directly here.
+This is the open-source monorepo for **Savant-Code** — the public TypeScript workspace for its CLI, SDK and
+desktop shell. The repository is the source of truth; patches go directly here.
 
 All work in this repo is governed by **[ECHO Protocol v0.2.0](ECHO.md)** and the **FID-Bound Perfection Loop**. Please
 read ECHO.md end-to-end before contributing — it's a strict discipline, not a style preference.
@@ -60,23 +60,17 @@ attribution accidentally. It is a local defense-in-depth guard, not a substitute
 for CI or server-side enforcement, and can be bypassed only with an explicitly
 authorized `git commit --no-verify`.
 
-Run the CLI in dev mode (paid variant):
+Run the CLI in dev mode:
 
 ```bash
 bun run dev
 ```
 
-Run the CLI in dev mode (free variant):
-
-```bash
-bun run dev:savant-free
-```
-
 Verify your work before opening a PR:
 
 ```bash
-bun run typecheck      # All 13 typechecked workspaces must exit 0
-bun test               # All workspace test suites must pass
+bun run typecheck      # All 14 registered workspaces must exit 0
+bun run test           # All registered workspace test suites must pass
 bun x eslint . --max-warnings 0
 bun run lint:md        # Markdownlint must pass
 bunx prettier --check . # Prettier must pass

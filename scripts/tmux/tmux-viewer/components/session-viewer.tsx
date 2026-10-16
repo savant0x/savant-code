@@ -11,8 +11,6 @@
  * `session-viewer-panels.tsx`. This file orchestrates them.
  */
 
-import React from 'react'
-
 import { SessionHeader, CapturePanel, Footer } from './session-viewer-panels'
 import { TimelinePanel } from './session-viewer-timeline'
 import { getTheme } from './theme'
@@ -35,11 +33,11 @@ interface SessionViewerProps {
   startInReplayMode?: boolean
 }
 
-export const SessionViewer: React.FC<SessionViewerProps> = ({
+export const SessionViewer = ({
   data,
   onExit,
   startInReplayMode = false,
-}) => {
+}: SessionViewerProps) => {
   const theme = getTheme()
   const captures = data.captures
 

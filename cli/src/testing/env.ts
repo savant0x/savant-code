@@ -41,6 +41,5 @@ export const createTestCliEnv = (overrides: Partial<CliEnv> = {}): CliEnv => ({
   SAVANT_CODE_CLI_TARGET: undefined,
   SAVANT_CODE_RG_PATH: undefined,
   SAVANT_CODE_SCROLL_MULTIPLIER: undefined,
-  SAVANT_FREE_MODE: undefined,
   ...overrides,
 })

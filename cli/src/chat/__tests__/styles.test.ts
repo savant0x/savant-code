@@ -61,7 +61,6 @@ describe('chat surface styles', () => {
       '../../components/multiline-input/view.tsx',
       '../../components/model-picker.tsx',
       '../../components/provider-picker.tsx',
-      '../../components/savant-free-model-selector.tsx',
       '../../components/selectable-list.tsx',
       '../../components/publish-sections.tsx',
       '../../components/agent-checklist.tsx',

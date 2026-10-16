@@ -20,9 +20,10 @@ export const CANONICAL_RELEASE_RUNTIME_DEFAULTS: Record<string, string> = {
 export function getReleaseRuntimeDefaults(
   binaryName: string,
 ): Record<string, string> {
-  return binaryName === 'savant-free'
-    ? {}
-    : { ...CANONICAL_RELEASE_RUNTIME_DEFAULTS }
+  if (binaryName === 'savant-free') {
+    throw new Error('Savant-Free has been removed; build savant-code instead.')
+  }
+  return { ...CANONICAL_RELEASE_RUNTIME_DEFAULTS }
 }
 
 export interface BinaryEnvLeak {

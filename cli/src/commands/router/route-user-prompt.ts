@@ -13,7 +13,6 @@ import { handleChatGptAuthCode } from '../../components/chatgpt-connect-banner'
 import { useChatStore } from '../../state/chat-store'
 import { trackEvent } from '../../utils/analytics'
 import { showClipboardMessage } from '../../utils/clipboard'
-import { IS_SAVANT_FREE } from '../../utils/constants'
 import { getSystemMessage, getUserMessage } from '../../utils/message-history'
 import {
   capturePendingAttachments,
@@ -216,7 +215,7 @@ export async function routeUserPrompt(
   // not registered there, and free users can be authenticated without a
   // provider — gating prevents ever instructing a free user to run a command
   // that resolves to "Command not found".
-  if (!IS_SAVANT_FREE && !isSlashCommand(trimmed)) {
+  if (!isSlashCommand(trimmed)) {
     const missingProvider = getMissingProviderSetup()
     if (missingProvider) {
       setMessages((prev) => [

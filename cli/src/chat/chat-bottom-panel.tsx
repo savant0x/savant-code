@@ -2,15 +2,11 @@ import { BOTTOM_BOX_STYLE } from './styles'
 import { SingleAdBanner } from '../components/ad-banner'
 import { ChatInputBar } from '../components/chat-input-bar'
 import { ReviewScreen } from '../components/review-screen'
-import { SessionEndedBanner } from '../components/session-ended-banner'
 import { StatusBar } from '../components/status-bar'
 import { SuggestedPrompts } from '../components/suggested-prompts'
-import { returnToSavantFreeLanding } from '../hooks/use-savant-free-session'
 import { getProjectRoot } from '../project-files'
 import { useChatStore } from '../state/chat-store'
 import { showClipboardMessage } from '../utils/clipboard'
-import { END_SESSION_MESSAGE } from '../utils/constants'
-import { getSystemMessage } from '../utils/message-history'
 import { createPasteHandler } from '../utils/strings'
 
 import type { ChatLayoutProps } from './types'
@@ -18,13 +14,11 @@ import type { ChatLayoutProps } from './types'
 type ChatBottomPanelProps = Pick<
   ChatLayoutProps,
   | 'theme'
-  | 'savantFreeSession'
   | 'inputFocused'
   | 'isStreaming'
   | 'isWaitingForResponse'
   | 'showOnboardingPrompts'
   | 'reviewMode'
-  | 'isSavantFreeSessionOver'
   | 'onSelectSuggestedPrompt'
   | 'isCompactHeight'
   | 'shouldShowStatusLine'
@@ -37,7 +31,6 @@ type ChatBottomPanelProps = Pick<
   | 'showInlineAds'
   | 'onAdClick'
   | 'onAdImpression'
-  | 'askUserState'
   | 'onReviewOptionSelect'
   | 'onReviewCustom'
   | 'onCloseReviewScreen'
@@ -81,10 +74,8 @@ type ChatBottomPanelProps = Pick<
 export function ChatBottomPanel(props: ChatBottomPanelProps) {
   const {
     theme,
-    savantFreeSession,
     showOnboardingPrompts,
     reviewMode,
-    isSavantFreeSessionOver,
     onSelectSuggestedPrompt,
     isCompactHeight,
     shouldShowStatusLine,
@@ -97,7 +88,6 @@ export function ChatBottomPanel(props: ChatBottomPanelProps) {
     showInlineAds,
     onAdClick,
     onAdImpression,
-    askUserState,
     onReviewOptionSelect,
     onReviewCustom,
     onCloseReviewScreen,
@@ -140,7 +130,7 @@ export function ChatBottomPanel(props: ChatBottomPanelProps) {
 
   return (
     <box focusable={false} style={BOTTOM_BOX_STYLE}>
-      {showOnboardingPrompts && !reviewMode && !isSavantFreeSessionOver && (
+      {showOnboardingPrompts && !reviewMode && (
         <SuggestedPrompts
           onSelect={onSelectSuggestedPrompt}
           maxItems={isCompactHeight ? 2 : undefined}
@@ -154,16 +144,6 @@ export function ChatBottomPanel(props: ChatBottomPanelProps) {
           scrollToLatest={scrollToLatest}
           statusIndicatorState={statusIndicatorState}
           onStop={onInterruptStream}
-          onEndSession={() => {
-            useChatStore
-              .getState()
-              .setMessages((prev) => [
-                ...prev,
-                getSystemMessage(END_SESSION_MESSAGE),
-              ])
-            returnToSavantFreeLanding({ resetChat: true }).catch(() => {})
-          }}
-          savantFreeSession={savantFreeSession}
         />
       )}
 
@@ -180,10 +160,6 @@ export function ChatBottomPanel(props: ChatBottomPanelProps) {
           onSelectOption={onReviewOptionSelect}
           onCustom={onReviewCustom}
           onCancel={onCloseReviewScreen}
-        />
-      ) : isSavantFreeSessionOver && !askUserState ? (
-        <SessionEndedBanner
-          isStreaming={props.isStreaming || props.isWaitingForResponse}
         />
       ) : (
         <ChatInputBar

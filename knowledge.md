@@ -36,9 +36,8 @@ conventions, and gotchas.
 
 - Formatting/linting: Prettier + ESLint (`bun x eslint . --max-warnings 0`) +
   markdownlint (`bun run lint:md`). All three are hard pre-push gates.
-- Typecheck gate: `bun run typecheck` must pass before any merge (chains 13 of
-  the 15 registered workspaces + `typecheck:scripts`; `savant-free` and
-  `scripts/tmux` have no leg — T186); `/verify` covers the four core
+- Typecheck gate: `bun run typecheck` must pass before any merge (chains all
+  14 registered workspaces + `typecheck:scripts`); `/verify` covers the four core
   workspaces (`sdk`, `common`, `agent-runtime`, `cli`).
 - New FIDs follow `dev/fids/FID-YYYY-MMDD-NNN-{title}.md`; close only after
   review boundaries resolve, then move to `dev/fids/archive/` and update

@@ -1,6 +1,6 @@
 import { castDraft } from 'immer'
 
-import { AGENT_MODES, IS_SAVANT_FREE } from '../../utils/constants'
+import { AGENT_MODES } from '../../utils/constants'
 import { clamp } from '../../utils/math'
 import { saveModePreference } from '../../utils/settings'
 
@@ -82,14 +82,12 @@ export const createChatActions = (set: SetState): ChatCoreActions => ({
 
   setAgentMode: (mode) =>
     set((state) => {
-      if (IS_SAVANT_FREE) return
       state.agentMode = mode
       saveModePreference(mode)
     }),
 
   toggleAgentMode: () =>
     set((state) => {
-      if (IS_SAVANT_FREE) return
       const currentIndex = AGENT_MODES.indexOf(state.agentMode)
       const nextIndex = (currentIndex + 1) % AGENT_MODES.length
       state.agentMode = AGENT_MODES[nextIndex]

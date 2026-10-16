@@ -11,7 +11,6 @@ import type {
 } from '../state/chat-store'
 import type { RewindMode } from '../state/rewind-picker-store'
 import type { ChatMessage } from '../types/chat'
-import type { SavantFreeSession } from '../types/savant-free-session'
 import type {
   AskUserState,
   InputValue,
@@ -49,7 +48,6 @@ export type ChatProps = {
   initialPermissionMode?: PermissionMode
   gitRoot?: string | null
   onSwitchToGitRoot?: () => void
-  savantFreeSession: SavantFreeSession | null
 }
 
 /**
@@ -99,7 +97,6 @@ export type ChatLayoutProps = {
   hasOverflow: boolean
   gitRoot?: string | null
   onSwitchToGitRoot?: () => void
-  savantFreeSession: SavantFreeSession | null
   hiddenMessageCount: number
   onLoadPreviousMessages: () => void
   visibleTopLevelMessages: ChatMessage[]
@@ -109,7 +106,6 @@ export type ChatLayoutProps = {
   // Bottom section
   showOnboardingPrompts: boolean
   reviewMode: boolean
-  isSavantFreeSessionOver: boolean
   onSelectSuggestedPrompt: (
     prompt: string,
     selection: SuggestedPromptSelection,

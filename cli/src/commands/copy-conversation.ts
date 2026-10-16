@@ -24,7 +24,6 @@ import {
   isRemoteSession,
   showClipboardMessage,
 } from '../utils/clipboard'
-import { IS_SAVANT_FREE } from '../utils/constants'
 
 import type { RouterParams } from './command-registry'
 import type { ChatMessage } from '../types/chat'
@@ -63,7 +62,7 @@ export function serializeConversation(
     renderMessage(message, segments)
   }
 
-  const product = IS_SAVANT_FREE ? 'SavantFree' : 'SavantCode'
+  const product = 'SavantCode'
   const header = `# ${product} conversation\n_${messages.length} message${messages.length === 1 ? '' : 's'}_`
   const prefix = `${header}\n\n---\n\n`
 

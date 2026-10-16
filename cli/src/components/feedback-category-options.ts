@@ -1,5 +1,3 @@
-import { IS_SAVANT_FREE } from '../utils/constants'
-
 import type { FeedbackCategory } from '@savant-code/common/constants/feedback'
 
 export type CategoryHighlightKey = 'success' | 'error' | 'warning' | 'info'
@@ -34,9 +32,8 @@ export const CATEGORY_OPTIONS = [
     label: 'App bug',
     shortLabel: 'Bug',
     highlightKey: 'warning',
-    placeholder: IS_SAVANT_FREE
-      ? 'Report a problem with SavantFree (crashes, errors, UI issues, etc.)'
-      : 'Report a problem with SavantCode (crashes, errors, UI issues, etc.)',
+    placeholder:
+      'Report a problem with SavantCode (crashes, errors, UI issues, etc.)',
   },
   {
     id: 'other',

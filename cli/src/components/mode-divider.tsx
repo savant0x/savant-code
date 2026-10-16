@@ -3,7 +3,6 @@ import React from 'react'
 import stringWidth from 'string-width'
 
 import { useTheme } from '../hooks/use-theme'
-import { IS_SAVANT_FREE } from '../utils/constants'
 
 interface ModeDividerProps {
   mode: string
@@ -12,8 +11,6 @@ interface ModeDividerProps {
 
 export const ModeDivider = ({ mode, width }: ModeDividerProps) => {
   const theme = useTheme()
-
-  if (IS_SAVANT_FREE) return null
 
   const label = ` ${mode} `
   const labelWidth = stringWidth(label)

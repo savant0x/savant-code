@@ -1,6 +1,5 @@
 import { getActiveTerminalCommandProcesses } from '@savant-code/sdk'
 
-import { IS_SAVANT_FREE } from '../utils/constants'
 import { getCliEnv } from '../utils/env'
 import { getTerminalWatchdogDiagnostics } from '../utils/terminal-watchdog'
 
@@ -100,7 +99,7 @@ export function formatProcessDiagnostics(
 export function collectProcessDiagnostics(): ProcessDiagnosticsSnapshot {
   const cpuUsage = process.cpuUsage()
   return {
-    product: IS_SAVANT_FREE ? 'SavantFree' : 'SavantCode',
+    product: 'SavantCode',
     version: getCliEnv().SAVANT_CODE_CLI_VERSION ?? 'dev',
     runtime:
       typeof Bun !== 'undefined'

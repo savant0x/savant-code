@@ -2,20 +2,13 @@ import { getErrorObject } from '@savant-code/common/util/error'
 
 import { appendHint, quotaHint, rateLimitHint } from './fallback-hints'
 import { finalizeQueueState } from './queue-state'
-import { handleSavantFreeGateError, isRateLimited } from './run-result-gates'
-import { IS_SAVANT_FREE } from '../../../utils/constants'
+import { isRateLimited } from './run-result-gates'
 import {
-  getCountryBlockFromFreeModeError,
-  getFreeModeUnavailableErrorMessage,
-  getSavantFreeGateErrorKind,
-  getSavantFreeRateLimitErrorMessage,
   isOutOfCreditsError,
-  isFreeModeUnavailableError,
   providerOutOfCreditsError,
 } from '../../../utils/error-handling'
 import { formatElapsedTime } from '../../../utils/format-elapsed-time'
 import { logger } from '../../../utils/logger'
-import { markSavantFreeSessionCountryBlocked } from '../../use-savant-free-session'
 
 import type { AgentMode } from '../../../utils/constants'
 import type { BatchedMessageUpdater } from '../../../utils/message-updater'
@@ -114,34 +107,6 @@ export const handleRunCompletion = (params: {
       error: output,
       modelId: params.effectiveModelId,
     })
-    if (isFreeModeUnavailableError(output)) {
-      updater.setError(getFreeModeUnavailableErrorMessage(output))
-      if (IS_SAVANT_FREE) {
-        markSavantFreeSessionCountryBlocked(
-          getCountryBlockFromFreeModeError(output) ?? {
-            countryCode: 'UNKNOWN',
-          },
-        )
-      }
-      finalizeAfterError()
-      return
-    }
-    const gateKind = getSavantFreeGateErrorKind(output)
-    if (gateKind) {
-      handleSavantFreeGateError(gateKind, updater, {
-        messageWasDropped: params.hasReceivedContent === false,
-      })
-      finalizeAfterError()
-      return
-    }
-    const rateLimitMsg = IS_SAVANT_FREE
-      ? getSavantFreeRateLimitErrorMessage(output)
-      : null
-    if (rateLimitMsg) {
-      updater.setError(appendHint(rateLimitMsg, rateLimitHint429))
-      finalizeAfterError()
-      return
-    }
     // Pass the raw error message to setError (displayed in UserErrorBanner without additional wrapper formatting)
     const completionErrorMessage =
       output.message ?? DEFAULT_RUN_OUTPUT_ERROR_MESSAGE
@@ -211,7 +176,6 @@ export const handleRunError = (params: {
     updateChainInProgress,
     isProcessingQueueRef,
     isQueuePausedRef,
-    hasReceivedContent,
   } = params
   const errorInfo = getErrorObject(error, { includeRawError: true })
   logger.error({ error: errorInfo }, 'SDK client.run() failed')
@@ -239,37 +203,12 @@ export const handleRunError = (params: {
     )
     return
   }
-  if (isFreeModeUnavailableError(error)) {
-    updater.setError(getFreeModeUnavailableErrorMessage(error))
-    if (IS_SAVANT_FREE) {
-      markSavantFreeSessionCountryBlocked(
-        getCountryBlockFromFreeModeError(error) ?? {
-          countryCode: 'UNKNOWN',
-        },
-      )
-    }
-    return
-  }
-  const gateKind = getSavantFreeGateErrorKind(error)
-  if (gateKind) {
-    handleSavantFreeGateError(gateKind, updater, {
-      messageWasDropped: hasReceivedContent === false,
-    })
-    return
-  }
   // FID-2026-0915-001 (W5): a rate-limited run offers same-family free
   // alternatives (fail-silent; '' ⇒ banner unchanged).
   const w5Hint = rateLimitHint({
     error,
     modelId: params.effectiveModelId,
   })
-  const rateLimitMsg = IS_SAVANT_FREE
-    ? getSavantFreeRateLimitErrorMessage(error)
-    : null
-  if (rateLimitMsg) {
-    updater.setError(appendHint(rateLimitMsg, w5Hint))
-    return
-  }
   // Use setError for all errors so they display in UserErrorBanner consistently
   const errorMessage = errorInfo.message || 'An unexpected error occurred'
   // FID-2026-0919-026: gateway quota refusals are account state, not defects.

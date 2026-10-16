@@ -2,7 +2,6 @@ import { useState } from 'react'
 
 import { Button } from './button'
 import { useTerminalLayout } from '../hooks/use-terminal-layout'
-import { IS_SAVANT_FREE } from '../utils/constants'
 import { BORDER_CHARS } from '../utils/ui-constants'
 
 import type { ChatTheme } from '../types/theme-system'
@@ -22,8 +21,6 @@ export const BuildModeButtons = ({
     'fast' | 'max' | 'lite' | null
   >(null)
   const { width } = useTerminalLayout()
-
-  if (IS_SAVANT_FREE) return null
 
   const isNarrow = width.is('xs')
 

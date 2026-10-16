@@ -3,18 +3,6 @@ import { getContextWindowFallback } from '@savant-code/common/constants/context-
 import type { ContextWindowSource } from '@savant-code/common/constants/context-windows'
 import type { ToolName } from '@savant-code/sdk'
 
-/**
- * SavantFree build-time flag. When true, the CLI is built as SavantFree (free-only variant).
- *
- * The build pipeline injects SAVANT_FREE_MODE into the process environment for
- * both local development and compiled SavantFree binaries.
- */
-export const IS_SAVANT_FREE = process.env.SAVANT_FREE_MODE === 'true'
-
-/** Message shown when the user ends a savant-free session early. */
-export const END_SESSION_MESSAGE =
-  'Ending session and returning to the model picker…'
-
 // Agent IDs that should not be rendered in the CLI UI
 export const HIDDEN_AGENT_IDS = ['savant-code/context-pruner'] as const
 

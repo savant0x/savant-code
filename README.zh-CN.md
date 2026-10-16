@@ -619,7 +619,6 @@ STRICT 下也保持无仪式。
 | `cli/`                    | `@savant-code/cli`            | CLI 源码——UI、命令、状态、hooks、OpenTUI/React 组件             |
 | `common/`                 | `@savant-code/common`         | 共享类型、工具定义、工具函数                                    |
 | `evals/`                  | `@savant-code/evals`          | ECHO 原生 benchmark v2 运行器 + 遗留 eval fixtures              |
-| `savant-free/`            | `@savant-code/savant-free`    | 免费变体的 CLI 发布与其 e2e 测试                                 |
 | `packages/agent-runtime/` | `@savant-code/agent-runtime`  | agent 循环、工具执行器、LLM API 集成                            |
 | `packages/design-systems/`| `@savant-code/design-systems` | 离线设计系统预设与视觉契约                                       |
 | `packages/code-map/`      | `@savant-code/code-map`       | tree-sitter 代码索引、语言检测                                  |
@@ -784,7 +783,7 @@ OpenRouter 可使用 `OPENROUTER_API_KEY` 或 `SAVANT_CODE_BYOK_OPENROUTER`。
 | `bun run dev`                     | 以开发模式启动 CLI              |
 | `bun run build:sdk`               | 构建 SDK 用于 npm 发布          |
 | `bun run --cwd=cli build:binary`  | 从 `cli/` 构建 CLI 二进制       |
-| `bun run ci`                      | 构建 SDK 与发布产物             |
+| `bun run ci`                      | 构建 SDK 声明文件               |
 | `bun run test`                    | 运行测试套件                    |
 | `bun run typecheck`               | 类型检查（全部工作区）          |
 | `bun x eslint . --max-warnings 0` | Lint                            |
@@ -837,7 +836,6 @@ OpenRouter 可使用 `OPENROUTER_API_KEY` 或 `SAVANT_CODE_BYOK_OPENROUTER`。
 | `/image`（`/img`、`/attach`） | 为支持多模态的模型附加图片 |
 | `/init` | 创建入门智能体类型与 `knowledge.md` |
 | `/connect` | 连接 ChatGPT 账号（OAuth） |
-| `/end-session` | 结束免费会话（可切换模型） |
 | `/logout`（`/signout`） | 结束当前会话并登出 |
 | `/exit`（`/quit`、`/q`） | 退出 CLI |
 

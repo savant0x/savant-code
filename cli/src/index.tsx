@@ -39,8 +39,6 @@ import { createQueryClient } from './query-client-setup'
 import { trackEvent } from './utils/analytics'
 import { getAuthToken } from './utils/auth'
 import { trimOversizedChatLogs } from './utils/chat-history'
-import { IS_SAVANT_FREE } from './utils/constants'
-import { startEngagementTracking } from './utils/engagement'
 import { shouldSuppressExplicitWidthQuery } from './utils/env'
 import { initializeAgentRegistry } from './utils/local-agent-registry'
 import { clearLogFile, logger } from './utils/logger'
@@ -170,7 +168,6 @@ async function main(): Promise<void> {
     hasAgentOverride: hasAgentOverride,
     continueChat,
     initialMode: initialMode ?? 'HYBRID',
-    isSavantFree: IS_SAVANT_FREE,
   })
 
   // Initialize agent registry (loads user agents via SDK).
@@ -258,14 +255,6 @@ async function main(): Promise<void> {
   process.removeListener('uncaughtException', earlyFatalHandler)
   process.removeListener('unhandledRejection', earlyFatalHandler)
   installProcessCleanupHandlers(renderer)
-
-  // Start the engaged-time heartbeat only once the interactive TUI is actually
-  // live — reaching renderer creation means this is a real session (the
-  // login/publish/smoke-test commands all exit earlier). SavantFree-only, matching
-  // the MESSAGE_SENT DAU signal. Stopped in exitSavantFreeCleanly().
-  if (IS_SAVANT_FREE) {
-    startEngagementTracking()
-  }
 
   createRoot(renderer).render(
     <QueryClientProvider client={queryClient}>

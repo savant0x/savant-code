@@ -219,22 +219,21 @@ describe('CLI Argument Parsing', () => {
   })
 })
 
-describe('SavantFree CLI Argument Parsing', () => {
-  // FID-2026-0929-004: the `[command]` argument (choices: ['login']) was
-  // removed from the savant-free branch. A stray positional is now rejected
-  // by commander's DEFAULT excess-argument handling — a clean stderr error +
-  // exit 1 at process level — which cannot be asserted in-process without
-  // production behavior changes (exitOverride). Absence is pinned by grep in
-  // FID-2026-0929-004; this suite pins the still-valid no-positional path.
-  test('savant-free accepts no positional command (login removed)', () => {
-    const result = parseArgs({
-      argv: ['node', 'savant-free'],
-      isSavantFree: true,
-      version: '1.0.0',
-    })
-
-    expect(result.command).toBeUndefined()
-    expect(result.initialPrompt).toBeNull()
-    expect(result.initialMode).toBe('HYBRID')
+describe('Single-product CLI argument parsing', () => {
+  test('the retired environment flag cannot suppress normal options', () => {
+    const previous = process.env.SAVANT_FREE_MODE
+    process.env.SAVANT_FREE_MODE = 'true'
+    try {
+      const result = parseArgs({
+        argv: ['node', 'savant-code', '--strict', '--agent', 'scout', 'hello'],
+        version: '1.0.0',
+      })
+      expect(result.agent).toBe('scout')
+      expect(result.initialPrompt).toBe('hello')
+      expect(result.initialMode).toBe('STRICT')
+    } finally {
+      if (previous === undefined) delete process.env.SAVANT_FREE_MODE
+      else process.env.SAVANT_FREE_MODE = previous
+    }
   })
 })

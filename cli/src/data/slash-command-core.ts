@@ -1,7 +1,5 @@
 import { CHATGPT_OAUTH_ENABLED } from '@savant-code/common/constants/chatgpt-oauth'
 
-import { IS_SAVANT_FREE } from '../utils/constants'
-
 import type { SlashCommand } from './slash-commands'
 
 /**
@@ -178,9 +176,7 @@ export const CORE_SLASH_COMMANDS: SlashCommand[] = [
   {
     id: 'feedback',
     label: 'feedback',
-    description: IS_SAVANT_FREE
-      ? 'Share general feedback about SavantFree'
-      : 'Share general feedback about SavantCode',
+    description: 'Share general feedback about SavantCode',
   },
   {
     id: 'bash',

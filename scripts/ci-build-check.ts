@@ -3,10 +3,9 @@
  * ci-build-check — the release-artifact build chain as a runnable probe.
  *
  * `bun run ci` is `protocol.config.yaml` `commands.build` — the chain that
- * compiles the SDK declaration bundle and the Savant-Free binaries. It has NO
+ * compiles the SDK declaration bundle. It has NO
  * `fid:verify` declaration: the allowed shapes are `typecheck`, `test`,
- * `probe` and `quality` (FID-2026-0823-009). The chain is two builds plus a
- * binary build (root `ci` = `build:sdk` + `build:savant-free`), so it is
+ * `probe` and `quality` (FID-2026-0823-009). Root `ci` runs `build:sdk`, so it is
  * neither a workspace `typecheck` leg nor a `*.test.ts` path, and it is not
  * the repo-wide `quality` report. A FID whose subject is the artifact build
  * could therefore not declare it.

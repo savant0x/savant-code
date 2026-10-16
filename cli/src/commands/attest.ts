@@ -32,7 +32,6 @@ import {
 } from '@savant-code/common/provenance'
 
 import { getProjectRoot } from '../project-files'
-import { IS_SAVANT_FREE } from '../utils/constants'
 import { getSystemMessage } from '../utils/message-history'
 import { buildAttestBundle } from './attest/serializer'
 import { buildAttestHtml } from './attest/template'
@@ -171,7 +170,7 @@ export async function handleAttestCommand(
       s.manifest !== null,
   )
 
-  const product = IS_SAVANT_FREE ? 'SavantFree' : 'SavantCode'
+  const product = 'SavantCode'
   const bundle = buildAttestBundle(
     product,
     withManifest.map((s) => ({

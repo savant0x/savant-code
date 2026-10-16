@@ -1,14 +1,16 @@
 import { TextAttributes } from '@opentui/core'
-import React from 'react'
 
 import type { Capture, SessionData } from '../types'
 import type { ViewerTheme } from './theme'
 
 // Header component
-export const SessionHeader: React.FC<{
+export const SessionHeader = ({
+  data,
+  theme,
+}: {
   data: SessionData
   theme: ViewerTheme
-}> = ({ data, theme }) => {
+}) => {
   const { sessionInfo, commands, captures } = data
 
   return (
@@ -37,10 +39,13 @@ export const SessionHeader: React.FC<{
 }
 
 // Capture panel component (top)
-export const CapturePanel: React.FC<{
+export const CapturePanel = ({
+  capture,
+  theme,
+}: {
   capture: Capture | undefined
   theme: ViewerTheme
-}> = ({ capture, theme }) => {
+}) => {
   if (!capture) {
     return (
       <box
@@ -81,13 +86,19 @@ export const CapturePanel: React.FC<{
 }
 
 // Footer component with help text and replay controls
-export const Footer: React.FC<{
+export const Footer = ({
+  theme,
+  isPlaying,
+  playbackSpeed,
+  currentIndex,
+  totalCaptures,
+}: {
   theme: ViewerTheme
   isPlaying: boolean
   playbackSpeed: number
   currentIndex: number
   totalCaptures: number
-}> = ({ theme, isPlaying, playbackSpeed, currentIndex, totalCaptures }) => {
+}) => {
   const position =
     totalCaptures > 0 ? `${currentIndex + 1}/${totalCaptures}` : '0/0'
   const speedDisplay = `${playbackSpeed.toFixed(1)}s`

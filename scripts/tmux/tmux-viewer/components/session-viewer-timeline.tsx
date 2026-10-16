@@ -1,5 +1,5 @@
 import { TextAttributes } from '@opentui/core'
-import React, { useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 
 import type { Capture } from '../types'
 import type { ViewerTheme } from './theme'
@@ -13,12 +13,17 @@ function getTerminalWidth(): number {
   return process.stdout.columns || 120
 }
 
-export const TimelinePanel: React.FC<{
+export const TimelinePanel = ({
+  captures,
+  selectedIndex,
+  isPlaying,
+  theme,
+}: {
   captures: Capture[]
   selectedIndex: number
   isPlaying: boolean
   theme: ViewerTheme
-}> = ({ captures, selectedIndex, isPlaying, theme }) => {
+}) => {
   const scrollRef = useRef<ScrollBoxRenderable | null>(null)
   // Track terminal width for centering calculations
   const [terminalWidth, setTerminalWidth] = useState(getTerminalWidth)
@@ -131,14 +136,21 @@ export const TimelinePanel: React.FC<{
 }
 
 // Individual timeline card component
-const TimelineCard: React.FC<{
+const TimelineCard = ({
+  isSelected,
+  seq,
+  time,
+  label,
+  afterCommand,
+  theme,
+}: {
   isSelected: boolean
   seq: number
   time: string
   label: string
   afterCommand: string | null
   theme: ViewerTheme
-}> = ({ isSelected, seq, time, label, afterCommand, theme }) => {
+}) => {
   const indicator = isSelected ? '▶' : '○'
   const titleText = `${indicator} [${seq}] ${time}`
   const truncatedLabel = label.slice(0, TIMELINE_CARD_WIDTH - 4)

@@ -27,7 +27,7 @@ export function useChatLayout(
     ui,
     interactions,
   } = core
-  const { savantFreeSession, authStatus } = props
+  const { authStatus } = props
 
   const {
     terminalWidth,
@@ -123,7 +123,6 @@ export function useChatLayout(
     pausedQueueText,
     shouldShowQueuePreview,
     isAtBottom,
-    savantFreeSession,
     inputWidth,
     terminalHeight,
     terminalWidth,

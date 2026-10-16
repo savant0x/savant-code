@@ -8,9 +8,9 @@ of the Perfection Loop is handled by a specialized agent. Code is never
 written until a FID (Feature Implementation Document) has converged through
 the Perfection Loop.
 
-Two products ship from this monorepo: **Savant-Code** (paid CLI + SDK) and
-**Savant-Free** (ad-supported variant). Both share one runtime, one SDK,
-and one set of engineering laws (ECHO).
+This monorepo ships **Savant-Code** (CLI, SDK and desktop shell), sharing one
+runtime and one set of engineering laws (ECHO). The separate Savant-Free
+product was retired on 2026-10-15.
 
 **Hybrid Mode exception:** the overview rule below applies to complex tasks.
 For simple tasks the Orchestrator writes code directly without a FID (ECHO.md

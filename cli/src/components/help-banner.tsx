@@ -3,7 +3,6 @@ import React from 'react'
 import { BottomBanner } from './bottom-banner'
 import { useTheme } from '../hooks/use-theme'
 import { useChatStore } from '../state/chat-store'
-import { IS_SAVANT_FREE } from '../utils/constants'
 
 const HELP_TIMEOUT = 60 * 1000 // 60 seconds
 
@@ -80,11 +79,6 @@ export const HelpBanner = () => {
         <box style={{ flexDirection: 'column', gap: 0 }}>
           <SectionHeader>Tips</SectionHeader>
           <box style={{ flexDirection: 'column', paddingLeft: 2 }}>
-            {IS_SAVANT_FREE && (
-              <text style={{ fg: theme.muted }}>
-                Try workflow: /interview → /plan → implement → /review
-              </text>
-            )}
             <text style={{ fg: theme.muted }}>
               Use @ to reference agents to spawn or files to read
             </text>
@@ -130,23 +124,21 @@ export const HelpBanner = () => {
         {/* Session stats Section — hidden in SavantFree. FID-2026-0929-005:
             the /usage + /subscribe entries died with the backend billing
             surface; what remains is local session accounting. */}
-        {!IS_SAVANT_FREE && (
-          <box style={{ flexDirection: 'column', gap: 0 }}>
-            <SectionHeader>Session</SectionHeader>
-            <box style={{ flexDirection: 'column', paddingLeft: 2 }}>
-              <box
-                style={{ flexDirection: 'row', flexWrap: 'wrap', columnGap: 1 }}
-              >
-                <text style={{ fg: theme.foreground }}>/ads:enable</text>
-                <text style={{ fg: theme.muted }}>·</text>
-                <text style={{ fg: theme.foreground }}>/health</text>
-              </box>
-              <text style={{ fg: theme.muted }}>
-                Manage remote analytics — /telemetry status|enable|disable
-              </text>
+        <box style={{ flexDirection: 'column', gap: 0 }}>
+          <SectionHeader>Session</SectionHeader>
+          <box style={{ flexDirection: 'column', paddingLeft: 2 }}>
+            <box
+              style={{ flexDirection: 'row', flexWrap: 'wrap', columnGap: 1 }}
+            >
+              <text style={{ fg: theme.foreground }}>/ads:enable</text>
+              <text style={{ fg: theme.muted }}>·</text>
+              <text style={{ fg: theme.foreground }}>/health</text>
             </box>
+            <text style={{ fg: theme.muted }}>
+              Manage remote analytics — /telemetry status|enable|disable
+            </text>
           </box>
-        )}
+        </box>
       </box>
     </BottomBanner>
   )

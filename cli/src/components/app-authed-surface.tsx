@@ -1,9 +1,5 @@
 import { Chat } from '../chat'
 import { ChatHistoryScreen } from './chat-history-screen'
-import { SavantFreeLandingScreen } from './savant-free-landing-screen'
-import { SavantFreeSupersededScreen } from './savant-free-superseded-screen'
-import { useSavantFreeSession } from '../hooks/use-savant-free-session'
-import { IS_SAVANT_FREE } from '../utils/constants'
 
 import type { MultilineInputHandle } from './multiline-input'
 import type { useAuthState } from '../hooks/use-auth-state'
@@ -57,24 +53,6 @@ export const AuthedSurface = ({
   onCancelChatHistory,
   onNewChat,
 }: AuthedSurfaceProps) => {
-  const { session, error: sessionError } = useSavantFreeSession()
-
-  if (IS_SAVANT_FREE && session?.status === 'superseded') {
-    return <SavantFreeSupersededScreen />
-  }
-
-  if (
-    IS_SAVANT_FREE &&
-    (session === null ||
-      session.status === 'none' ||
-      session.status === 'country_blocked' ||
-      session.status === 'banned' ||
-      session.status === 'rate_limited' ||
-      session.status === 'takeover_prompt')
-  ) {
-    return <SavantFreeLandingScreen session={session} error={sessionError} />
-  }
-
   if (showChatHistory) {
     return (
       <ChatHistoryScreen
@@ -102,7 +80,6 @@ export const AuthedSurface = ({
       initialPermissionMode={initialPermissionMode}
       gitRoot={gitRoot}
       onSwitchToGitRoot={onSwitchToGitRoot}
-      savantFreeSession={session}
     />
   )
 }

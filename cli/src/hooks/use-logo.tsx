@@ -2,7 +2,6 @@ import React, { useMemo } from 'react'
 
 import { LOGO, LOGO_SMALL, SHADOW_CHARS } from '../branding/constants'
 import { parseLogoLines } from '../branding/utils'
-import { IS_SAVANT_FREE } from '../utils/constants'
 
 interface UseLogoOptions {
   /**
@@ -76,11 +75,11 @@ export const useLogo = ({
   const ASCII_LOGO_LINES = 3
   const rawLogoString = useMemo(() => {
     if (maxHeight != null && maxHeight < ASCII_LOGO_LINES) {
-      return IS_SAVANT_FREE ? 'SAVANT' : 'SAVANT_CODE'
+      return 'SAVANT_CODE'
     }
     if (availableWidth >= 70) return LOGO
     if (availableWidth >= 20) return LOGO_SMALL
-    return IS_SAVANT_FREE ? 'SAVANT' : 'SAVANT_CODE'
+    return 'SAVANT_CODE'
   }, [availableWidth, maxHeight])
 
   // Format text block for plain text contexts (chat messages, etc.)
@@ -98,7 +97,7 @@ export const useLogo = ({
   const component = useMemo(() => {
     // Text-only variant for very narrow widths
     if (rawLogoString === 'SAVANT_CODE' || rawLogoString === 'SAVANT') {
-      const brandName = IS_SAVANT_FREE ? 'Savant' : 'SavantCode'
+      const brandName = 'SavantCode'
       const forcedByHeight = maxHeight != null && maxHeight < ASCII_LOGO_LINES
       const displayText =
         availableWidth < 30 || forcedByHeight ? brandName : `${brandName} CLI`

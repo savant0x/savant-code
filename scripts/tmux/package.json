@@ -4,7 +4,9 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "view-session": "bun run tmux-viewer/index.tsx"
+    "view-session": "bun run tmux-viewer/index.tsx",
+    "typecheck": "tsc --noEmit -p tmux-viewer/tsconfig.json",
+    "test": "bun test tmux-viewer/__tests__/"
   },
   "dependencies": {
     "js-yaml": "^4.1.0",

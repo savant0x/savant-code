@@ -3,7 +3,6 @@ import { useEffect, useState } from 'react'
 import { useLogoutMutation } from './use-auth-query'
 import { identifyUser } from '../utils/analytics'
 import { getUserCredentials } from '../utils/auth'
-import { IS_SAVANT_FREE } from '../utils/constants'
 import { loggerContext } from '../utils/logger'
 
 import type { MultilineInputHandle } from '../components/multiline-input'
@@ -14,7 +13,6 @@ const setAuthLoggerContext = (params: { userId: string; email: string }) => {
   loggerContext.userEmail = params.email
   identifyUser(params.userId, {
     email: params.email,
-    'savant-free': IS_SAVANT_FREE,
   })
 }
 

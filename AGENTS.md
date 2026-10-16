@@ -41,7 +41,6 @@ filesystem entries in `agents/`.
 | `cli/` | `@savant-code/cli` | CLI source — UI, commands, state, hooks, OpenTUI/React components |
 | `common/` | `@savant-code/common` | Shared types, tool definitions, utilities |
 | `evals/` | `@savant-code/evals` | Eval benchmark runner + public eval fixtures |
-| `savant-free/` | `@savant-code/savant-free` | CLI release + e2e tests for the free variant |
 | `desktop/` | `@savant-code/desktop` | Tauri v2 desktop shell — Rust sidecar supervisor, React 19 renderer, 3D command deck |
 | `packages/database/` | `@savant-code/database` | Database abstraction layer |
 | `packages/agent-runtime/` | `@savant-code/agent-runtime` | Agent loop, tool executor, LLM API integration |
@@ -59,9 +58,8 @@ filesystem entries in `agents/`.
 - Prefer dependency injection over module mocking.
 - Run interactive CLI tests in tmux.
 - Do not force-push `main`.
-- The full typecheck gate must pass before any merge: `bun run typecheck` (chains the 13
-  typechecked workspaces plus the `scripts/` tree; `savant-free` and `scripts/tmux` are
-  registered workspaces with no leg — T186).
+- The full typecheck gate must pass before any merge: `bun run typecheck` (chains all 14
+  registered workspaces plus the `scripts/` tree).
 - New FIDs follow the format `dev/fids/FID-YYYY-MMDD-NNN-{title}.md`.
 
 ## Docs
@@ -122,7 +120,7 @@ key facts:
 ## Validation
 
 ```bash
-# Typecheck (HARD GATE) — chains 13 workspaces + the scripts tree
+# Typecheck (HARD GATE) — chains all 14 workspaces + the scripts tree
 bun run typecheck
 
 # SDK test suite (HARD GATE)

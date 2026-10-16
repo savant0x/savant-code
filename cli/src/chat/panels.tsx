@@ -17,10 +17,8 @@ import { PendingBashMessage } from '../components/pending-bash-message'
 import { ProviderInbox } from '../components/provider-inbox'
 import { ProviderPicker } from '../components/provider-picker'
 import { RewindPicker } from '../components/rewind-picker'
-import { SavantFreeActiveSessionSummary } from '../components/savant-free-active-session-summary'
 import { TopBanner } from '../components/top-banner'
 import { getProjectRoot } from '../project-files'
-import { IS_SAVANT_FREE } from '../utils/constants'
 
 import type { ChatLayoutProps } from './types'
 
@@ -43,7 +41,6 @@ export function ChatLayout(props: ChatLayoutProps) {
     hasOverflow,
     gitRoot,
     onSwitchToGitRoot,
-    savantFreeSession,
     hiddenMessageCount,
     onLoadPreviousMessages,
     visibleTopLevelMessages,
@@ -116,9 +113,6 @@ export function ChatLayout(props: ChatLayoutProps) {
         >
           <TopBanner gitRoot={gitRoot} onSwitchToGitRoot={onSwitchToGitRoot} />
 
-          {IS_SAVANT_FREE && (
-            <SavantFreeActiveSessionSummary session={savantFreeSession} />
-          )}
           {hiddenMessageCount > 0 && (
             <LoadPreviousButton
               hiddenCount={hiddenMessageCount}

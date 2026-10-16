@@ -29,8 +29,10 @@ describe('release runtime defaults', () => {
     })
   })
 
-  test('preserves Savant-Free backend/session routing', () => {
-    expect(getReleaseRuntimeDefaults('savant-free')).toEqual({})
+  test('rejects the retired Savant-Free binary target', () => {
+    expect(() => getReleaseRuntimeDefaults('savant-free')).toThrow(
+      'Savant-Free has been removed',
+    )
   })
 })
 

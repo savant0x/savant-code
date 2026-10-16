@@ -1,10 +1,6 @@
 import { CORE_SLASH_COMMANDS } from './slash-command-core'
 import { FEATURE_SLASH_COMMANDS } from './slash-command-feature'
-import {
-  AGENT_MODES,
-  IS_SAVANT_FREE,
-  MODE_DESCRIPTIONS,
-} from '../utils/constants'
+import { AGENT_MODES, MODE_DESCRIPTIONS } from '../utils/constants'
 import { isDirectProviderMode } from '../utils/env'
 
 import type { SkillsMap } from '@savant-code/common/types/skill'
@@ -40,26 +36,24 @@ export interface SlashCommand {
 // The descriptions are the MODE_DESCRIPTIONS one-line contracts (single source
 // of truth shared with the mode-toggle hovertip), so the STRICT ceremony
 // contract is visible in the slash menu, not just on hover.
-const MODE_COMMANDS: SlashCommand[] = IS_SAVANT_FREE
-  ? []
-  : [
-      {
-        id: 'mode',
-        label: 'mode',
-        description:
-          'List execution modes with their contracts, or switch: /mode <name>',
-      },
-      ...AGENT_MODES.map((mode) => ({
-        id: `mode:${mode.toLowerCase()}`,
-        label: `mode:${mode.toLowerCase()}`,
-        description: MODE_DESCRIPTIONS[mode],
-        aliases: [
-          `model:${mode.toLowerCase()}`,
-          // Legacy pre-rename spellings still resolve to HYBRID.
-          ...(mode === 'HYBRID' ? ['mode:edit', 'model:edit'] : []),
-        ],
-      })),
-    ]
+const MODE_COMMANDS: SlashCommand[] = [
+  {
+    id: 'mode',
+    label: 'mode',
+    description:
+      'List execution modes with their contracts, or switch: /mode <name>',
+  },
+  ...AGENT_MODES.map((mode) => ({
+    id: `mode:${mode.toLowerCase()}`,
+    label: `mode:${mode.toLowerCase()}`,
+    description: MODE_DESCRIPTIONS[mode],
+    aliases: [
+      `model:${mode.toLowerCase()}`,
+      // Legacy pre-rename spellings still resolve to HYBRID.
+      ...(mode === 'HYBRID' ? ['mode:edit', 'model:edit'] : []),
+    ],
+  })),
+]
 
 // FID-007 D1: `init` was listed here (menu-only removal) while the command
 // registry still registered it in free builds — free users could run an
@@ -68,19 +62,7 @@ const MODE_COMMANDS: SlashCommand[] = IS_SAVANT_FREE
 // FID-007 V4: exported for the gating-parity test.
 // FID-2026-0929-005: 'usage' and 'subscribe' are removed — the commands are
 // deleted with the backend, so there is nothing left to gate.
-export const SAVANT_FREE_REMOVED_COMMAND_IDS = new Set([
-  'ads:enable',
-  'ads:disable',
-  'image',
-  'publish',
-  'release',
-])
-
-export const SAVANT_FREE_ONLY_COMMAND_IDS = new Set([
-  'connect',
-  'plan',
-  'end-session',
-])
+const UNAVAILABLE_COMMANDS = new Set(['connect', 'plan'])
 
 // FID-2026-0821-001 P1-4: first-class manual compaction. Selecting the
 // entry dispatches the literal `/compact` prompt; the savant handleSteps
@@ -117,16 +99,11 @@ const ALL_SLASH_COMMANDS: SlashCommand[] = [
 /** Pure builder for the slash menu (FID-2026-0901-006 P21) — testable without
  * env coupling: the same free/paid gating plus the direct-provider filter. */
 export function buildSlashCommands(params: {
-  isFree: boolean
   directProvider: boolean
 }): SlashCommand[] {
-  const gated = params.isFree
-    ? ALL_SLASH_COMMANDS.filter(
-        (cmd) => !SAVANT_FREE_REMOVED_COMMAND_IDS.has(cmd.id),
-      )
-    : ALL_SLASH_COMMANDS.filter(
-        (cmd) => !SAVANT_FREE_ONLY_COMMAND_IDS.has(cmd.id),
-      )
+  const gated = ALL_SLASH_COMMANDS.filter(
+    (cmd) => !UNAVAILABLE_COMMANDS.has(cmd.id),
+  )
   return params.directProvider
     ? gated.filter((cmd) => !cmd.requiresBackend)
     : gated
@@ -140,7 +117,6 @@ export const BACKEND_ONLY_COMMAND_IDS = new Set(
 )
 
 export const SLASH_COMMANDS = buildSlashCommands({
-  isFree: IS_SAVANT_FREE,
   directProvider: isDirectProviderMode(),
 })
 

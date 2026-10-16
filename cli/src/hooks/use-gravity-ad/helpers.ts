@@ -2,7 +2,6 @@ import { AD_CONSTANTS } from './types'
 import { useChatStore } from '../../state/chat-store'
 import { AI_MESSAGE_ID_PREFIX } from '../../utils/ai-message-id'
 import { trackEvent } from '../../utils/analytics'
-import { IS_SAVANT_FREE } from '../../utils/constants'
 import { getCliEnv } from '../../utils/env'
 import { logger } from '../../utils/logger'
 
@@ -143,7 +142,7 @@ export function getAdUserAgent(): string {
 }
 
 export function getCliAdRequestUserAgent(): string {
-  const product = IS_SAVANT_FREE ? 'SavantFree-CLI' : 'SavantCode-CLI'
+  const product = 'SavantCode-CLI'
   const version = getCliEnv().SAVANT_CODE_CLI_VERSION ?? 'dev'
   return `${product}/${version}`
 }

@@ -9,7 +9,6 @@ import {
 import { yellow } from 'picocolors'
 
 import { tryGetProjectRoot } from './project-files'
-import { IS_SAVANT_FREE } from './utils/constants'
 import {
   hasAnalyticsNoticeBeenShown,
   hasFreeOptionsNoticeBeenShown,
@@ -70,7 +69,7 @@ export function discloseAnalyticsNoticeOnce(): void {
  * it never corrupts piped stdout; the notice retires after the first show.
  */
 export function discloseFreeOptionsNoticeOnce(): void {
-  if (IS_SAVANT_FREE || hasFreeOptionsNoticeBeenShown()) return
+  if (hasFreeOptionsNoticeBeenShown()) return
   // eslint-disable-next-line no-console -- first-run disclosure banner
   console.error(
     yellow(
@@ -105,7 +104,7 @@ export function spawnDiscoveryHarvestIfStale(
   repoRoot: string | null | undefined = tryGetProjectRoot(),
 ): void {
   try {
-    if (!repoRoot || IS_SAVANT_FREE) return
+    if (!repoRoot) return
     if (!isDiscoveryRepo(repoRoot)) return
 
     // Leg 1 (FID-2026-0914-003 MQ4): the freeairouter harvest.

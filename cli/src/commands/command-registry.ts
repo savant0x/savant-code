@@ -21,23 +21,12 @@ import { MODE_COMMANDS } from './defs/modes'
 import { NOTIFICATION_COMMANDS } from './defs/notifications'
 import { DESIGN_COMMANDS } from './design'
 import { useChatStore } from '../state/chat-store'
-import { IS_SAVANT_FREE } from '../utils/constants'
 import { getSystemMessage, getUserMessage } from '../utils/message-history'
 import { capturePendingAttachments } from '../utils/pending-attachments'
 import { getSkillByName } from '../utils/skill-registry'
 
-// FID-2026-0929-005: 'usage' and 'subscribe' are removed from this set —
-// the commands themselves are deleted with the backend, so there is nothing
-// left to gate.
-const SAVANT_FREE_REMOVED_COMMANDS = new Set([
-  'ads:enable',
-  'ads:disable',
-  'image',
-  'publish',
-  'release',
-])
-
-const SAVANT_FREE_ONLY_COMMANDS = new Set(['connect', 'plan', 'end-session'])
+// These legacy backend commands remain unavailable in Savant-Code.
+const UNAVAILABLE_COMMANDS = new Set(['connect', 'plan'])
 
 // Order is significant: findCommand resolves the first name/alias match (e.g.
 // `model` resolves to the /model picker in the paid build, but to /end-session
@@ -51,25 +40,8 @@ const ALL_COMMANDS: CommandDefinition[] = [
   ...NOTIFICATION_COMMANDS,
 ]
 
-// Export the removal sets for the gating-parity test (FID-007 V4).
-export const SAVANT_FREE_REMOVED_COMMAND_NAMES = SAVANT_FREE_REMOVED_COMMANDS
-export const SAVANT_FREE_ONLY_COMMAND_NAMES = SAVANT_FREE_ONLY_COMMANDS
-
-// FID-007 V4: pure gating filter (testable in either build flavor). The
-// free/paid split must stay in lockstep with data/slash-commands.ts — the
-// registry-gating test asserts parity between the two files.
-export function filterCommandsForBuild(
-  commands: CommandDefinition[],
-  isFree: boolean,
-): CommandDefinition[] {
-  return isFree
-    ? commands.filter((cmd) => !SAVANT_FREE_REMOVED_COMMANDS.has(cmd.name))
-    : commands.filter((cmd) => !SAVANT_FREE_ONLY_COMMANDS.has(cmd.name))
-}
-
-export const COMMAND_REGISTRY: CommandDefinition[] = filterCommandsForBuild(
-  ALL_COMMANDS,
-  IS_SAVANT_FREE,
+export const COMMAND_REGISTRY: CommandDefinition[] = ALL_COMMANDS.filter(
+  (cmd) => !UNAVAILABLE_COMMANDS.has(cmd.name),
 )
 
 // Exported for the gating-parity test (FID-007 V4).

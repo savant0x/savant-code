@@ -1,21 +1,12 @@
-import { TextAttributes } from '@opentui/core'
-import { getSavantFreeModel } from '@savant-code/common/constants/savant-free-models'
 import React, { useEffect, useMemo, useState } from 'react'
 
 import { Button } from './button'
 import { KeyHint } from './savant-ui/primitives/key-hint'
 import { ScrollToBottomButton } from './scroll-to-bottom-button'
-import { useSavantFreeSessionProgress } from '../hooks/use-savant-free-session-progress'
 import { useTheme } from '../hooks/use-theme'
 import { formatElapsedTime } from '../utils/format-elapsed-time'
 import { getRandomLoadingPhrase } from '../utils/loading-phrases'
-import {
-  SAVANT_FREE_COUNTDOWN_VISIBLE_MS,
-  formatSavantFreeSessionCountdown,
-  formatSavantFreeSessionRemaining,
-} from '../utils/savant-free-session-display'
 
-import type { SavantFreeSession } from '../types/savant-free-session'
 import type { StatusIndicatorState } from '../utils/status-indicator-state'
 
 // test comment: added for feature verification
@@ -54,8 +45,6 @@ interface StatusBarProps {
   scrollToLatest: () => void
   statusIndicatorState: StatusIndicatorState
   onStop?: () => void
-  onEndSession?: () => void
-  savantFreeSession: SavantFreeSession | null
 }
 
 export const StatusBar = ({
@@ -64,8 +53,6 @@ export const StatusBar = ({
   scrollToLatest,
   statusIndicatorState,
   onStop,
-  onEndSession,
-  savantFreeSession,
 }: StatusBarProps) => {
   const theme = useTheme()
   const [elapsedSeconds, setElapsedSeconds] = useState(0)
@@ -105,10 +92,6 @@ export const StatusBar = ({
 
     return () => clearInterval(interval)
   }, [timerStartTime, shouldShowTimer, statusIndicatorState?.kind])
-
-  const sessionProgress = useSavantFreeSessionProgress(savantFreeSession)
-  const isUnlimited =
-    savantFreeSession?.status === 'active' && !savantFreeSession.rateLimit
 
   // Pick a random loading phrase once per status transition, not on every render.
   // The 1s timer causes frequent re-renders; memoizing by kind prevents rapid cycling.
@@ -150,27 +133,7 @@ export const StatusBar = ({
         return null
 
       case 'idle':
-        if (sessionProgress === null) return null
-        {
-          const isUrgent =
-            sessionProgress.remainingMs < SAVANT_FREE_COUNTDOWN_VISIBLE_MS
-          const modelName =
-            savantFreeSession?.status === 'active'
-              ? getSavantFreeModel(savantFreeSession.model).displayName
-              : null
-          return {
-            text: `${modelName ? `${modelName} · ` : ''}${
-              isUnlimited
-                ? 'unlimited'
-                : formatSavantFreeSessionRemaining(sessionProgress.remainingMs)
-            }`,
-            color: isUnlimited
-              ? theme.secondary
-              : isUrgent
-                ? theme.warning
-                : theme.secondary,
-          }
-        }
+        return null
     }
   }
 
@@ -185,13 +148,9 @@ export const StatusBar = ({
   const statusIndicatorContent = renderStatusIndicator()
   const elapsedTimeContent = renderElapsedTime()
 
-  // Show gray background when there's status indicator, timer, or when the
-  // savant-free session fill is visible (otherwise the fill would float over
-  // transparent space).
+  // Show the status surface only while there is content.
   const hasContent =
-    statusIndicatorContent !== null ||
-    elapsedTimeContent !== null ||
-    sessionProgress !== null
+    statusIndicatorContent !== null || elapsedTimeContent !== null
 
   return (
     <box
@@ -205,20 +164,6 @@ export const StatusBar = ({
         backgroundColor: hasContent ? theme.surface : 'transparent',
       }}
     >
-      {sessionProgress !== null && (
-        <box
-          style={{
-            position: 'absolute',
-            left: 0,
-            top: 0,
-            bottom: 0,
-            // Fill anchors left and shrinks as time passes — the draining
-            // bar is the countdown; no separate numeric readout needed.
-            width: `${sessionProgress.fraction * 100}%`,
-            backgroundColor: theme.surfaceHover,
-          }}
-        />
-      )}
       <box
         style={{
           flexGrow: 1,
@@ -257,27 +202,6 @@ export const StatusBar = ({
           (statusIndicatorState.kind === 'waiting' ||
             statusIndicatorState.kind === 'streaming') && (
             <StatusActionButton onClick={onStop} shortcut="Esc" />
-          )}
-        {onEndSession &&
-          statusIndicatorState.kind === 'idle' &&
-          savantFreeSession?.status === 'active' && (
-            <StatusActionButton
-              onClick={onEndSession}
-              shortcut="End"
-              label="session"
-            />
-          )}
-        {sessionProgress !== null &&
-          sessionProgress.remainingMs < SAVANT_FREE_COUNTDOWN_VISIBLE_MS &&
-          statusIndicatorState.kind !== 'idle' &&
-          !isUnlimited && (
-            <text
-              fg={theme.warning}
-              style={{ wrapMode: 'none' }}
-              attributes={TextAttributes.BOLD}
-            >
-              {formatSavantFreeSessionCountdown(sessionProgress.remainingMs)}
-            </text>
           )}
       </box>
     </box>

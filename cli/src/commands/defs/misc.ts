@@ -1,9 +1,7 @@
 import { CHATGPT_OAUTH_ENABLED } from '@savant-code/common/constants/chatgpt-oauth'
 
-import { returnToSavantFreeLanding } from '../../hooks/use-savant-free-session'
 import { useThemeStore } from '../../hooks/use-theme'
 import { useChatStore } from '../../state/chat-store'
-import { END_SESSION_MESSAGE } from '../../utils/constants'
 import { getSystemMessage, getUserMessage } from '../../utils/message-history'
 import { handleAutoCommand } from '../auto-drive'
 import {
@@ -163,27 +161,6 @@ export const MISC_COMMANDS = [
       clearInput(params)
       // FID-2026-0718-010 D3: slash-command bridges resetUiToIdle when idle.
       resetUiToIdleAfterSlashCommand()
-    },
-  }),
-  // /end-session (savant-free-only) — end the active session early and drop back
-  // to the model picker. The hook flips status to 'none', which unmounts
-  // <Chat> and mounts <SavantFreeLandingScreen>, where the user picks a model
-  // and hits Enter to start a new session.
-  defineCommand({
-    name: 'end-session',
-    aliases: ['model'],
-    handler: (params) => {
-      params.setMessages((prev) => [
-        ...prev,
-        getUserMessage(params.inputValue.trim()),
-        getSystemMessage(END_SESSION_MESSAGE),
-      ])
-      params.saveToHistory(params.inputValue.trim())
-      clearInput(params)
-      returnToSavantFreeLanding({ resetChat: true }).catch(() => {
-        // The hook surfaces poll errors via the session store; nothing to do
-        // here beyond letting the chat history reflect the attempt.
-      })
     },
   }),
   // Release command flow — drives scripts/public-release.ts. Streaming output

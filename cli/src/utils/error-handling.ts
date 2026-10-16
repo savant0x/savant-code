@@ -2,8 +2,6 @@ import { getEffectiveProviderRegistry } from '@savant-code/common/providers/cust
 import { extractApiErrorDetails } from '@savant-code/common/util/error'
 import { formatSavantFreeHardBlockedPrivacySignals } from '@savant-code/common/util/savant-free-privacy'
 
-import { IS_SAVANT_FREE } from './constants'
-
 import type { ChatMessage } from '../types/chat'
 import type {
   SavantFreeBlockReason,
@@ -199,7 +197,7 @@ export const getFreeModeUnavailableErrorMessage = (error: unknown): string => {
   const details = getCliApiErrorDetails(error)
   const block = getCountryBlockFromFreeModeError(error)
   if (block?.countryBlockReason === 'anonymous_network') {
-    return `${IS_SAVANT_FREE ? 'SavantFree' : 'Free mode'} cannot be used from ${formatSavantFreeHardBlockedPrivacySignals(
+    return `Free mode cannot be used from ${formatSavantFreeHardBlockedPrivacySignals(
       block.ipPrivacySignals,
     )} traffic. Please disable it and try again.`
   }
@@ -251,9 +249,8 @@ export const getSavantFreeGateErrorKind = (
 export const SAVANT_FREE_RATE_LIMIT_MESSAGE =
   'SavantFree is temporarily busy. Please try again in a moment.'
 
-export const FREE_MODE_UNAVAILABLE_MESSAGE = IS_SAVANT_FREE
-  ? 'SavantFree is not available in your country.'
-  : 'Free mode is not available in your country. You can use another mode to continue.'
+export const FREE_MODE_UNAVAILABLE_MESSAGE =
+  'Free mode is not available in your country. You can use another mode to continue.'
 
 export const createErrorMessage = (
   error: unknown,

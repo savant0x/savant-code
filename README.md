@@ -897,9 +897,11 @@ unused dummy keys, especially `OR_MASTER_KEY`, which takes precedence over
 `OPENROUTER_API_KEY`. Environment files and local credential/backup state are
 excluded from the Docker context.
 
-Normal pushes to `main` are supported when explicitly requested. The repository
-`.githooks/pre-push` hook remains active, including its no-attribution scan and
-the configured verification gates.
+Normal fast-forward pushes to `main` happen automatically under the standing
+operator authority. Release actions—version cuts, tags, publishing, deployment,
+and release artifacts—still require explicit approval. The repository
+`.githooks/pre-push` hook remains active for every push, including its
+no-attribution scan and configured verification gates.
 
 ### 4. Use the SDK
 

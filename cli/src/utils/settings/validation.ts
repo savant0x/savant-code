@@ -1,4 +1,3 @@
-import { isSupportedSavantFreeModelId } from '@savant-code/common/constants/savant-free-models'
 import {
   getEffectiveProviderRegistry,
   parseCustomProviders,
@@ -7,7 +6,7 @@ import { deriveValidProviderIds } from '@savant-code/common/providers/derive'
 import { modelSelectionSchema } from '@savant-code/common/providers/model-route'
 import { PROVIDER_REGISTRY } from '@savant-code/common/providers/registry'
 
-import { AGENT_MODES, IS_SAVANT_FREE } from '../constants'
+import { AGENT_MODES } from '../constants'
 import { LEGACY_MODE_MIGRATION } from './constants'
 
 import type { AgentMode } from '../constants'
@@ -72,12 +71,7 @@ export const validateSettings = (parsed: JSONValue): Settings => {
   const savantFreeModelPreference =
     obj.savantFreeModelPreference ?? obj.savantFreeModelPreferenceLegacy
   if (typeof savantFreeModelPreference === 'string') {
-    if (
-      !IS_SAVANT_FREE ||
-      isSupportedSavantFreeModelId(savantFreeModelPreference)
-    ) {
-      settings.savantFreeModelPreference = savantFreeModelPreference
-    }
+    settings.savantFreeModelPreference = savantFreeModelPreference
   }
 
   // Validate alwaysUseALaCarte (legacy)

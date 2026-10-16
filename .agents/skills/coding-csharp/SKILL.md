@@ -1,5 +1,6 @@
 ---
 name: coding-csharp
+version: 0.1.0
 description: C# naming conventions, async/await patterns, interface conventions, and quality overrides for ECHO Protocol.
 ---
 

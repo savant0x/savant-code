@@ -5,10 +5,7 @@ import {
   type QueueResetDeps,
 } from './send-message-failure'
 import { createRunLifecycle } from './send-message-lifecycle'
-import {
-  enforceSavantFreeSession,
-  initSavantCodeClientForSend,
-} from './send-message-session'
+import { initSavantCodeClientForSend } from './send-message-session'
 import { useChatStore } from '../../state/chat-store'
 import { logger } from '../../utils/logger'
 import {
@@ -67,7 +64,6 @@ interface PrepareSendRunContext {
 export const prepareSendRun = async (ctx: PrepareSendRunContext) => {
   const {
     reportRunOutcome,
-    requeueMessageAtFront,
     queueReset,
     setHasReceivedPlanResponse,
     mainAgentTimer,
@@ -96,22 +92,6 @@ export const prepareSendRun = async (ctx: PrepareSendRunContext) => {
     postUserMessage,
     attachments,
   } = ctx
-
-  // SavantFree run-start guard: without a live session slot the server
-  // rejects the request outright, consuming the message. It is held at the
-  // head of the queue instead and resumes when the user rejoins from the
-  // session-ended banner (see enforceSavantFreeSession).
-  if (
-    !enforceSavantFreeSession({
-      reportRunOutcome,
-      requeueMessageAtFront,
-      content,
-      attachments,
-      queueReset,
-    })
-  ) {
-    return null
-  }
 
   setHasReceivedPlanResponse(false)
 

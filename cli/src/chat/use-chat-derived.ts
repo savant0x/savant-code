@@ -12,7 +12,6 @@ import { DEFAULT_SUGGESTED_PROMPTS } from '../components/suggested-prompts'
 import { getProjectRoot } from '../project-files'
 import { reportActivity } from '../utils/activity-tracker'
 import { trackEvent } from '../utils/analytics'
-import { IS_SAVANT_FREE } from '../utils/constants'
 import { getInputModeConfig } from '../utils/input-modes'
 import { formatCwd } from '../utils/path-helpers'
 import { getStatusIndicatorState } from '../utils/status-indicator-state'
@@ -22,7 +21,6 @@ import type { SuggestionItem } from '../components/suggestion-menu'
 import type { StreamStatus } from '../hooks/use-message-queue'
 import type { TriggerContext } from '../hooks/use-suggestion-engine'
 import type { ChatMessage } from '../types/chat'
-import type { SavantFreeSession } from '../types/savant-free-session'
 import type { AskUserState } from '../types/store'
 import type { InputMode } from '../utils/input-modes'
 import type {
@@ -58,7 +56,6 @@ export interface UseChatDerivedArgs {
   pausedQueueText: string | undefined
   shouldShowQueuePreview: boolean
   isAtBottom: boolean
-  savantFreeSession: SavantFreeSession | null
   inputWidth: number
   terminalHeight: number
   terminalWidth: number
@@ -74,7 +71,6 @@ export interface UseChatDerivedReturn {
   shouldCenterInputVertically: boolean
   statusIndicatorState: StatusIndicatorState
   inputBoxTitle: string | undefined
-  isSavantFreeSessionOver: boolean
   shouldShowStatusLine: boolean
   handleMouseActivity: () => void
   directoryDisplay: string
@@ -108,7 +104,6 @@ export function useChatDerived({
   pausedQueueText,
   shouldShowQueuePreview,
   isAtBottom,
-  savantFreeSession,
   inputWidth,
   terminalHeight,
   terminalWidth,
@@ -206,16 +201,9 @@ export function useChatDerived({
     return ` ${segments.join('   ')} `
   }, [queuePreviewTitle, pausedQueueText])
 
-  const hasActiveSavantFreeSession =
-    IS_SAVANT_FREE && savantFreeSession?.status === 'active'
-  const isSavantFreeSessionOver =
-    IS_SAVANT_FREE && savantFreeSession?.status === 'ended'
   const shouldShowStatusLine =
     !feedbackMode &&
-    (hasStatusIndicatorContent ||
-      shouldShowQueuePreview ||
-      !isAtBottom ||
-      hasActiveSavantFreeSession)
+    (hasStatusIndicatorContent || shouldShowQueuePreview || !isAtBottom)
 
   // Track mouse movement for ad activity (throttled)
   const lastMouseActivityRef = useRef<number>(0)
@@ -248,7 +236,6 @@ export function useChatDerived({
     shouldCenterInputVertically,
     statusIndicatorState,
     inputBoxTitle,
-    isSavantFreeSessionOver,
     shouldShowStatusLine,
     handleMouseActivity,
     directoryDisplay,

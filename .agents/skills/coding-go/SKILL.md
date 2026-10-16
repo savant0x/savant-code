@@ -1,5 +1,6 @@
 ---
 name: coding-go
+version: 0.1.0
 description: Go naming conventions, concurrency patterns, error handling, and quality overrides for ECHO Protocol.
 ---
 

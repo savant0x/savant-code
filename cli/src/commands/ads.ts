@@ -1,4 +1,3 @@
-import { IS_SAVANT_FREE } from '../utils/constants'
 import { logger } from '../utils/logger'
 import { getSystemMessage } from '../utils/message-history'
 import { saveSettings, loadSettings } from '../utils/settings'
@@ -37,8 +36,6 @@ export const handleAdsDisable = (): {
 }
 
 export const getAdsEnabled = (): boolean => {
-  if (IS_SAVANT_FREE) return true
-
   // SavantCode LITE is a paid mode now, so use the normal saved setting.
   const settings = loadSettings()
   return settings.adsEnabled ?? false

@@ -80,7 +80,6 @@ export type CliEnv = BaseEnv & {
   SAVANT_CODE_TRACE?: string
   // Toggle for mirroring CLI logs to the server's /api/logs sink (Axiom).
   SAVANT_CODE_SHIP_LOGS?: string
-  SAVANT_FREE_MODE?: string
   // Direct-provider mode: launch without the SavantCode backend, routing
   // inference straight to the provider named here (e.g. "openrouter").
   // When set, the CLI skips backend connection pings and agent/validate

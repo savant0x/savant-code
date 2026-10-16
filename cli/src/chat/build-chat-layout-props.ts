@@ -33,7 +33,7 @@ export function buildChatLayoutProps(
     interactions,
   } = core
 
-  const { gitRoot, onSwitchToGitRoot, savantFreeSession, agentId } = props
+  const { gitRoot, onSwitchToGitRoot, agentId } = props
 
   const {
     scrollRef,
@@ -128,7 +128,6 @@ export function buildChatLayoutProps(
     shouldCenterInputVertically,
     statusIndicatorState,
     inputBoxTitle,
-    isSavantFreeSessionOver,
     shouldShowStatusLine,
     handleMouseActivity,
     directoryDisplay,
@@ -147,7 +146,6 @@ export function buildChatLayoutProps(
     hasOverflow,
     gitRoot,
     onSwitchToGitRoot,
-    savantFreeSession,
     hiddenMessageCount,
     onLoadPreviousMessages: handleLoadPreviousMessages,
     visibleTopLevelMessages,
@@ -155,7 +153,6 @@ export function buildChatLayoutProps(
     pendingBashMessages,
     showOnboardingPrompts,
     reviewMode,
-    isSavantFreeSessionOver,
     onSelectSuggestedPrompt: handleSelectSuggestedPrompt,
     isCompactHeight,
     shouldShowStatusLine,

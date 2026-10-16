@@ -7,7 +7,6 @@ import {
 } from './send-message-agent'
 import { getProjectRoot } from '../../project-files'
 import { useChatStore } from '../../state/chat-store'
-import { IS_SAVANT_FREE } from '../../utils/constants'
 import { createEventHandlerState } from '../../utils/create-event-handler-state'
 import { createRunConfig } from '../../utils/create-run-config'
 import { getActiveDesignContract } from '../../utils/design-system-service'
@@ -17,7 +16,6 @@ import {
   formatModelInfo,
 } from '../../utils/openrouter-models'
 import { resolveServingLimits } from '../../utils/openrouter-models/serving-limits'
-import { getSavantFreeInstanceId } from '../use-savant-free-session'
 
 import type { AgentMode } from '../../utils/constants'
 import type { CreateEventHandlerStateParams } from '../../utils/create-event-handler-state'
@@ -134,7 +132,6 @@ export const buildSendRunConfig = (params: BuildSendRunConfigParams) => {
     ...sidebarCallbacks,
   })
 
-  const instanceId = getSavantFreeInstanceId()
   const effectiveModelId =
     typeof agentWithModelOverride === 'string'
       ? undefined
@@ -182,10 +179,6 @@ export const buildSendRunConfig = (params: BuildSendRunConfigParams) => {
     agentDefinitions,
     eventHandlerState,
     signal,
-    extraSavantCodeMetadata:
-      IS_SAVANT_FREE && instanceId
-        ? { savant_free_instance_id: instanceId }
-        : undefined,
     modelInfoText,
     contextWindow: resolvedContextWindow,
     maxOutputTokens: resolvedMaxOutputTokens,

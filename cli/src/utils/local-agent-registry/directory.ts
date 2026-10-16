@@ -2,8 +2,6 @@ import fs from 'fs'
 import path from 'path'
 
 import { getProjectRoot } from '../../project-files'
-import { getSelectedSavantFreeModel } from '../../state/savant-free-model-store'
-import { IS_SAVANT_FREE, type AgentMode } from '../constants'
 import { getAgentIdForMode } from '../savant-free-agent-selection'
 import {
   getBundledAgents,
@@ -12,6 +10,7 @@ import {
 } from './init'
 import { AGENTS_DIR_NAME, agentRegistryState } from './state'
 
+import type { AgentMode } from '../constants'
 import type { LocalAgentInfo } from './state'
 
 // ============================================================================
@@ -79,12 +78,7 @@ export const findAgentsDirectory = (): string | null => {
 export const loadLocalAgents = (
   currentAgentMode?: AgentMode,
 ): LocalAgentInfo[] => {
-  const selectedSavantFreeModel = IS_SAVANT_FREE
-    ? getSelectedSavantFreeModel()
-    : null
-  const cacheKey = selectedSavantFreeModel
-    ? `${currentAgentMode ?? 'all'}:${selectedSavantFreeModel}`
-    : (currentAgentMode ?? 'all')
+  const cacheKey = currentAgentMode ?? 'all'
   const cached = agentRegistryState.cachedAgentsByMode.get(cacheKey)
   if (cached) {
     return cached

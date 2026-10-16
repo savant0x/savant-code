@@ -20,8 +20,6 @@ import { useChatState } from '../hooks/use-chat-state'
 import { useChatUI } from '../hooks/use-chat-ui'
 import { useScaffoldRevertSubscriber } from '../hooks/use-scaffold-revert-subscriber'
 import { useChatStore } from '../state/chat-store'
-import { IS_SAVANT_FREE } from '../utils/constants'
-import { hasSubmittedFirstPrompt } from '../utils/settings'
 
 import type { ChatProps } from './types'
 import type { ChatControllerCore } from './use-chat-controller-types'
@@ -43,9 +41,7 @@ export function useChatController(props: ChatProps): ChatControllerCore {
     initialPermissionMode,
   } = props
 
-  const [showSuggestedPrompts, setShowSuggestedPrompts] = useState(
-    () => IS_SAVANT_FREE && !hasSubmittedFirstPrompt(),
-  )
+  const [showSuggestedPrompts, setShowSuggestedPrompts] = useState(false)
 
   const { validate: validateAgents } = useAgentValidation()
 

@@ -19,7 +19,6 @@ import fs from 'fs'
 import path from 'path'
 
 import { useChatStore } from '../state/chat-store'
-import { IS_SAVANT_FREE } from '../utils/constants'
 import { getSystemMessage } from '../utils/message-history'
 import { getVersion } from '../utils/version'
 import {
@@ -49,8 +48,8 @@ export async function handleExportConversationCommand(
     return
   }
 
-  const product = IS_SAVANT_FREE ? 'SavantFree' : 'SavantCode'
-  const brandName = IS_SAVANT_FREE ? 'Savant Free' : 'Savant Code'
+  const product = 'SavantCode'
+  const brandName = 'Savant Code'
 
   // Determine output path
   const argPath = args.trim()

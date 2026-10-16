@@ -25,13 +25,4 @@ export const wrappers = [
       tempDownloadDirName: '.download-temp-staging',
     },
   },
-  {
-    name: 'savant-free',
-    directory: 'savant-free/cli/release',
-    expectedConfig: {
-      packageName: 'savant-free',
-      displayName: 'SavantFree',
-      telemetryEvent: 'cli.update_savant_free_failed',
-    },
-  },
 ]

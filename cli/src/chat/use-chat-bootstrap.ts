@@ -4,7 +4,6 @@ import { useProviderNotifications } from './provider-notification-lifecycle'
 import { tryGetProjectRoot } from '../project-files'
 import { useChatStore } from '../state/chat-store'
 import { useGatewayCatalogStore } from '../state/gateway-catalog-store'
-import { IS_SAVANT_FREE } from '../utils/constants'
 import {
   buildDiscoveryAnnouncement,
   readAnnouncedKey,
@@ -48,7 +47,7 @@ export function useChatBootstrap(args: UseChatBootstrapArgs): void {
   useProviderNotifications()
   const shown = useRef(false)
   useEffect(() => {
-    if (IS_SAVANT_FREE || shown.current || args.messages.length !== 0) return
+    if (shown.current || args.messages.length !== 0) return
     const missing = getMissingProviderSetup()
     if (!missing) return
     shown.current = true
@@ -68,7 +67,7 @@ export function useChatBootstrap(args: UseChatBootstrapArgs): void {
     discoveryAnnouncedRef.current = true
     try {
       const repoRoot = tryGetProjectRoot()
-      if (!repoRoot || IS_SAVANT_FREE) return
+      if (!repoRoot) return
       const announcement = buildDiscoveryAnnouncement({
         repoRoot,
         lastAnnouncedKey: readAnnouncedKey(repoRoot),
@@ -97,7 +96,6 @@ export function useChatBootstrap(args: UseChatBootstrapArgs): void {
     if (digestShownRef.current) return
     digestShownRef.current = true
     try {
-      if (IS_SAVANT_FREE) return
       const repoRoot = tryGetProjectRoot()
       const discovery = repoRoot ? readDiscoveryCounts(repoRoot) : null
       // Inbox routing runs on EVERY boot — deliberately OUTSIDE the digest

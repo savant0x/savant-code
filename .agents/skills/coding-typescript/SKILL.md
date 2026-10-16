@@ -1,5 +1,6 @@
 ---
 name: coding-typescript
+version: 0.1.0
 description: TypeScript naming conventions, patterns, anti-patterns, and quality overrides for ECHO Protocol.
 ---
 

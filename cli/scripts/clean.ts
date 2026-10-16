@@ -3,7 +3,7 @@
 // FID-2026-0803-011 BH-3: purge cli/bin build artifacts. Everything in bin/
 // is generated (see scripts/build-binary.ts + src/pre-init/tree-sitter-wasm.ts)
 // and gitignored (root .gitignore + cli/.gitignore), so removal is safe and
-// self-healing via `bun run build:binary` / `bun savant-free/cli/build.ts`.
+// self-healing via `bun run build:binary`.
 
 import { rmSync } from 'fs'
 import { dirname, join } from 'path'

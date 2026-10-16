@@ -12,7 +12,6 @@ import {
   selectHasSubmittedFeedback,
   selectMessageFeedbackCategory,
 } from '../state/feedback-store'
-import { IS_SAVANT_FREE } from '../utils/constants'
 
 import type { ContentBlock, TextContentBlock } from '../types/chat'
 
@@ -153,7 +152,7 @@ export const MessageFooter: React.FC<MessageFooterProps> = ({
       ),
     })
   }
-  if (typeof credits === 'number' && credits > 0 && !IS_SAVANT_FREE) {
+  if (typeof credits === 'number' && credits > 0) {
     footerItems.push({
       key: 'credits',
       node: <CreditsOrSubscriptionIndicator credits={credits} />,

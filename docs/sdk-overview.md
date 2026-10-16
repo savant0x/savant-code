@@ -46,7 +46,8 @@ savant-code.exe  (shipped binary — bun --compile bundles everything below)
 The CLI declares `@savant-code/sdk` as a `workspace:*` runtime dependency
 (`cli/package.json`) and has **54+ import sites** across `cli/src`. The SDK is also consumed
 directly by `evals/` (the benchmark harness drives `SavantCodeClient.run()` itself), the `agents/`
-package tests, and `savant-free/` e2e suites.
+package tests. The separate Savant-Free product and its e2e suites were retired
+on 2026-10-15.
 
 ## Complete module inventory
 
@@ -349,7 +350,6 @@ subprojects (CJS/ESM load, ripgrep path, tree-sitter queries) — this is the ga
 | CLI (`cli/`) | 54+ import sites: `SavantCodeClient` (send-message lifecycle), `createRunConfig`, run-state storage, rewind (`listTurns`), provider setup (`resetOpenRouterApiKeyCache`), ripgrep (`getBundledRgPath`), skills (`loadSkills`), error utils, headless-run, MCP, agents validation, tool registry types |
 | Eval harness (`evals/`) | Drives `SavantCodeClient.run()` directly as the benchmark runner — proof the SDK is independently usable |
 | Agents tests (`agents/`) | `SavantCodeClient`, `loadLocalAgents` for definition tests |
-| Savant-Free e2e (`savant-free/`) | `SavantCodeClient` for tester agents |
 | **Future / intended** | The SDK's own comments name Convex Node actions and Next server routes as deployment targets (deploy-time URL override exists precisely for this) |
 
 ## Known asymmetries and technical debt

@@ -16,7 +16,6 @@ import { resetActivityQueryCache } from './hooks/activity-query/cache'
 import { resetRetryState } from './hooks/activity-query/retry-state'
 import { resetHintedErrors } from './hooks/helpers/send-message/fallback-hints'
 import { resetExitHandlerRegistered } from './hooks/use-exit-handler'
-import { resetPollController } from './hooks/use-savant-free-session/session-state'
 import { resetUseThemeState } from './hooks/use-theme'
 import { resetUseToastState } from './hooks/use-toast'
 import { resetRgPathCache } from './native/ripgrep'
@@ -58,7 +57,6 @@ import { resetRendererCleanupState } from './utils/renderer-cleanup'
 import { resetActiveResearchKeyService } from './utils/research-key-store'
 import { resetApiClient } from './utils/savant-code-api/singleton'
 import { resetSavantCodeClient } from './utils/savant-code-client'
-import { resetLastKnownReferral } from './utils/savant-free-referral-cache'
 import { resetRootStreamPublisherState } from './utils/sdk-event-handlers/root-stream-publisher'
 import { __resetSkillRegistryForTests } from './utils/skill-registry'
 import { resetEmptySyntaxStyleFallback } from './utils/syntax-theme'
@@ -124,7 +122,6 @@ beforeEach(() => {
   resetToolComponentRegistry()
   resetHintedErrors()
   resetExitHandlerRegistered()
-  resetPollController()
   resetRgPathCache()
   resetProjectFilesState()
   resetPresenceState()
@@ -165,7 +162,6 @@ beforeEach(() => {
   resetActiveResearchKeyService()
   resetApiClient()
   resetSavantCodeClient()
-  resetLastKnownReferral()
   __resetSkillRegistryForTests()
   resetEmptySyntaxStyleFallback()
   resetReturnKeySeenForTests()

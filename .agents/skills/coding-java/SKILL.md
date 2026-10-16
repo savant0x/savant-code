@@ -1,5 +1,6 @@
 ---
 name: coding-java
+version: 0.1.0
 description: Java naming conventions, exception hierarchy, import patterns, and quality overrides for ECHO Protocol.
 ---
 

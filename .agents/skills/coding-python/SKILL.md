@@ -1,5 +1,6 @@
 ---
 name: coding-python
+version: 0.1.0
 description: Python naming conventions, type hints, import patterns, and quality overrides for ECHO Protocol.
 ---
 

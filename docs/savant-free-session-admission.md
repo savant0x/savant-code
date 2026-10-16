@@ -2,6 +2,10 @@
 
 # SavantFree Session Admission
 
+> Historical contract: Savant-Free was retired on 2026-10-15. The CLI no longer
+> admits, polls or gates requests on these sessions. Legacy error decoders remain
+> for wire compatibility; this document is not a current product setup guide.
+
 This document describes the session-gate errors returned by
 `POST /api/v1/chat/completions` for the SavantFree (free) tier. The client maps
 these to the `SavantFreeGateErrorCode` union and the

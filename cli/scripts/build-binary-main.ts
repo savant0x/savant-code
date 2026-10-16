@@ -38,6 +38,7 @@ const repoRoot = dirname(cliRoot)
 export async function main(): Promise<void> {
   const [, , binaryNameArg, version] = process.argv
   const binaryName = binaryNameArg ?? 'savant-code'
+  const runtimeDefaults = getReleaseRuntimeDefaults(binaryName)
   if (!version) {
     throw new Error('Version argument is required when building a binary')
   }
@@ -74,8 +75,7 @@ export async function main(): Promise<void> {
     SAVANT_CODE_IS_BINARY: 'true',
     SAVANT_CODE_CLI_VERSION: version,
     SAVANT_CODE_CLI_TARGET: getCliTargetLabel(targetInfo),
-    SAVANT_FREE_MODE: process.env.SAVANT_FREE_MODE ?? 'false',
-    ...getReleaseRuntimeDefaults(binaryName),
+    ...runtimeDefaults,
     ...CANONICAL_NEXT_PUBLIC_DEFAULTS,
   }
 
@@ -117,10 +117,6 @@ export async function main(): Promise<void> {
     [
       'process.env.SAVANT_CODE_CLI_TARGET',
       `"${getCliTargetLabel(targetInfo)}"`,
-    ],
-    [
-      'process.env.SAVANT_FREE_MODE',
-      `"${process.env.SAVANT_FREE_MODE ?? 'false'}"`,
     ],
     ['__PACKAGE_VERSION__', `"${version}"`],
   ]

@@ -7,12 +7,11 @@ import { PRIMARY_KNOWLEDGE_FILE_NAME } from '@savant-code/common/constants/knowl
 import { COMMON_TYPE_FILES } from './init-type-files'
 import { getProjectRoot } from '../project-files'
 import { trackEvent } from '../utils/analytics'
-import { IS_SAVANT_FREE } from '../utils/constants'
 import { getSystemMessage } from '../utils/message-history'
 
 import type { PostUserMessageFn } from '../types/contracts/send-message'
 
-const brandName = IS_SAVANT_FREE ? 'SavantFree' : 'SavantCode'
+const brandName = 'SavantCode'
 const INITIAL_KNOWLEDGE_FILE = `# Project knowledge
 
 This file gives ${brandName} context about your project: goals, commands, conventions, and gotchas.

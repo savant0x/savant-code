@@ -11,7 +11,6 @@ import { useEvent } from '../hooks/use-event'
 import { useGravityAd } from '../hooks/use-gravity-ad'
 import { useChatStore } from '../state/chat-store'
 import { useSavantFreeModelStore } from '../state/savant-free-model-store'
-import { IS_SAVANT_FREE } from '../utils/constants'
 
 import type { AdResponse } from '../hooks/use-gravity-ad'
 import type {
@@ -83,7 +82,7 @@ export function useChatData(): UseChatDataReturn {
     // Keep the rotating above-input slot separate for reporting continuity.
     slotPlacementId: 'Single-Ad-Unit-1',
   })
-  const showInlineAds = IS_SAVANT_FREE || getAdsEnabled()
+  const showInlineAds = getAdsEnabled()
 
   // Stable identities so the message-block callbacks (set once) always call
   // the latest recorder from the hook.

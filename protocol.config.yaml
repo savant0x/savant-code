@@ -24,7 +24,7 @@ commands:
   # The trailing `typecheck:scripts` leg is the release-engine surface
   # (scripts/tsconfig.json) added by SCOPE T84-B: that tree is not a workspace,
   # so it needs its own standing entry rather than a `--cwd` leg.
-  type_check: 'bun run --cwd=common typecheck && bun run --cwd=agents typecheck && bun run --cwd=sdk typecheck && bun run --cwd=cli typecheck && bun run --cwd=evals typecheck && bun run --cwd=packages/agent-runtime typecheck && bun run --cwd=packages/design-systems typecheck && bun run --cwd=packages/code-map typecheck && bun run --cwd=packages/database typecheck && bun run --cwd=packages/knowledge-graph typecheck && bun run --cwd=packages/llm-providers typecheck && bun run --cwd=packages/connectors typecheck && bun run --cwd=desktop typecheck && bun run typecheck:scripts'
+  type_check: 'bun run --cwd=common typecheck && bun run --cwd=agents typecheck && bun run --cwd=sdk typecheck && bun run --cwd=cli typecheck && bun run --cwd=evals typecheck && bun run --cwd=packages/agent-runtime typecheck && bun run --cwd=packages/design-systems typecheck && bun run --cwd=packages/code-map typecheck && bun run --cwd=packages/database typecheck && bun run --cwd=packages/knowledge-graph typecheck && bun run --cwd=packages/llm-providers typecheck && bun run --cwd=packages/connectors typecheck && bun run --cwd=desktop typecheck && bun run --cwd=scripts/tmux typecheck && bun run typecheck:scripts'
   lint: 'bun x eslint . --max-warnings 0' # zero-tolerance gate (matches .githooks/pre-push)
   lint_md: 'bun run lint:md'
   # Full-repo prettier check — LIVE gate since the 0.0.21 hardening session; active target 0.0.23

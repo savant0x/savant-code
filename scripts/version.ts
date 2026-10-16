@@ -18,7 +18,6 @@ export const SYNCHRONIZED_PACKAGE_PATHS: readonly string[] = [
   'cli/package.json',
   'common/package.json',
   'evals/package.json',
-  'savant-free/package.json',
   'packages/agent-runtime/package.json',
   'packages/design-systems/package.json',
   'packages/code-map/package.json',
@@ -32,7 +31,6 @@ export const SYNCHRONIZED_PACKAGE_PATHS: readonly string[] = [
   'scripts/tmux/package.json',
   'sdk/package.json',
   'cli/release/package.json',
-  'savant-free/cli/release/package.json',
 ]
 
 const PROJECT_VERSION_PATTERN =

@@ -5,7 +5,6 @@ import { useTerminalLayout } from './use-terminal-layout'
 import { getAdsEnabled } from '../commands/ads'
 import { useChatStore } from '../state/chat-store'
 import { isUserActive, subscribeToActivity } from '../utils/activity-tracker'
-import { IS_SAVANT_FREE } from '../utils/constants'
 import { isDirectProviderMode } from '../utils/env'
 import {
   createLazyResponseAdQueue,
@@ -67,12 +66,7 @@ export const useGravityAd = (options?: GravityAdOptions): GravityAdState => {
   const { terminalHeight } = useTerminalLayout()
   const isVeryCompactHeight = terminalHeight <= 17
 
-  // SavantFree always shows ads even on compact screens (ads are mandatory there).
-  const isFreeMode = IS_SAVANT_FREE
-
-  // Skip ads on very compact screens unless we're in SavantFree (where ads are mandatory)
-  // Also skip if explicitly disabled (e.g. user has a subscription)
-  const shouldHideAds = !enabled || (isVeryCompactHeight && !isFreeMode)
+  const shouldHideAds = !enabled || isVeryCompactHeight
 
   // forceStart lets callers (e.g. the landing screen) opt out of the
   // "wait for the first user message" gate.
@@ -214,7 +208,6 @@ export const useGravityAd = (options?: GravityAdOptions): GravityAdState => {
         pool_size: MAX_RESPONSE_AD_POOL_SIZE,
         provider,
         placement_id: inlinePlacementId,
-        is_savant_free: IS_SAVANT_FREE,
         ...(surface ? { surface } : {}),
       }
       trackInlineAdEvent(

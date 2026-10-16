@@ -51,7 +51,7 @@ function resolveRepoProtocolConfig() {
 // constant, its import chain, and both usages were removed.
 
 export function createSavant(
-  mode: 'default' | 'free' | 'lite' | 'max' | 'fast',
+  mode: 'default' | 'lite' | 'max' | 'fast',
   options?: {
     hasNoValidation?: boolean
     planOnly?: boolean
@@ -82,16 +82,12 @@ export function createSavant(
   const isDefault = mode === 'default'
   const isFast = mode === 'fast'
   const isMax = mode === 'max'
-  const isFree = mode === 'free' || mode === 'lite'
+  const isFree = mode === 'lite'
 
-  // Lite and free modes run MiniMax M3 (routed through the Fireworks AI API).
-  // New SavantFree clients select explicit free variants from the model picker;
-  // the unqualified savant-free agent covers legacy callers.
+  // The legacy lite factory option retains its model default.
   const model =
     modelOverride ??
-    (mode === 'lite' || mode === 'free'
-      ? SAVANT_FREE_MINIMAX_M3_MODEL_ID
-      : 'openrouter/free')
+    (mode === 'lite' ? SAVANT_FREE_MINIMAX_M3_MODEL_ID : 'openrouter/free')
   // After FID-2026-0718-006: all reviewer variants consolidated into Verifier.
   // Verifier inherits parent model via withParentModel().
   const contextPrunerMaxContextLength =
@@ -250,7 +246,7 @@ export function createSavant(
     // variables like `isFree` are not in scope at runtime. Pick the right
     // literal-baked function here instead.
     handleSteps: getSavantHandleSteps({
-      isFree: mode === 'free',
+      isFree: false,
       maxContextLength: contextPrunerMaxContextLength,
       // FID-2026-0814-004 H-07: compression config threaded as literals.
       keepRecentTokens: protocolConfig.compression.keepRecentTokens,
