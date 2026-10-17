@@ -38,6 +38,43 @@ presented: retain echo.md:1-15 (frontmatter, directive, mandate, canonical-sourc
 and replace echo.md:19-409 with the current canonical body, read 0-EOF. This session is
 not affected — the canonical file was read in full and governs.
 
+### FID-2026-1017-005 — fresh, complete free-options boot panel (open, level 3)
+
+Authority: automation level 3 (session ceiling). The boot digest reads the free-options
+cache synchronously (`cli/src/chat/use-chat-bootstrap.ts:120-121`) before the provider
+refresh it depends on has run, then prints a two-title preview that never carries a model
+id. The complete payload exists only in `free-options.md`, which the UI addresses by bare
+filename while the writer resolves `freeOptionsPaths().markdown`, and whose write failure
+is swallowed on the false premise that the command output is already complete
+(`cli/src/utils/free-options.ts:202-205`). This FID replaces the digest with a
+`TrafficLightPanel` transcript block that resolves freshness before posting (operator
+ruling: refresh when the cache is older than 12 h), is collapsed by default, expands to
+every model id and every offer, derives the panel, markdown and command from one view,
+surfaces export failure, and verifies the artifact's path, `fetchedAt` and body hash.
+
+- FID-2026-1017-005: fresh, complete free-options boot panel
+    `cli/src/utils/free-options-boot.ts`
+    `cli/src/utils/free-options-view.ts`
+    `cli/src/utils/free-options-types.ts`
+    `cli/src/utils/free-options.ts`
+    `cli/src/utils/free-options-render.ts`
+    `cli/src/utils/free-options-offers.ts`
+    `cli/src/types/chat.ts`
+    `cli/src/components/free-options-panel.tsx`
+    `cli/src/components/blocks/single-block.tsx`
+    `cli/src/hooks/use-chat-messages.ts`
+    `cli/src/chat/use-chat-bootstrap.ts`
+    `cli/src/utils/launch-digest.ts`
+    `cli/src/utils/__tests__/free-options-boot.test.ts`
+    `cli/src/utils/__tests__/free-options-view.test.ts`
+    `cli/src/components/__tests__/free-options-panel.test.tsx`
+    `cli/src/hooks/__tests__/use-chat-messages-collapse.test.ts`
+    `cli/src/utils/__tests__/free-options.test.ts`
+    `cli/src/utils/__tests__/free-options-offers.test.ts`
+    `cli/src/utils/__tests__/launch-digest.test.ts`
+    `scripts/probes/free-options-boot-artifact.ts`
+    `CHANGELOG.md`
+
 ## Internal follow-ups and current operator authority (2026-10-16)
 
 Implementation-complete records FID-2026-1015-006 and FID-2026-1012-022

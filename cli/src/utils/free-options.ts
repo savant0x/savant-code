@@ -8,10 +8,11 @@ import path from 'node:path'
 import { advertisedModelVisible } from '@savant-code/common/providers/availability-state'
 import { canonicalProviderId } from '@savant-code/common/providers/readiness'
 
+import { renderFreeOptionsArtifact } from './free-options-artifact'
 import { liftCatalog } from './free-options-catalog'
 import { buildMachineContext } from './free-options-context'
 import { freeOptionsPaths } from './free-options-paths'
-import { renderFreeOptionsMarkdown } from './free-options-render'
+import { buildFreeOptionsView } from './free-options-view'
 import { providerNotifications } from './provider-notifications'
 import {
   countOffersEndingSoon,
@@ -23,6 +24,7 @@ import type {
   FreeCatalogEnvelope,
   FreeLane,
   FreeOptionsContext,
+  FreeOptionsExportStatus,
   FreeOptionsReport,
 } from './free-options-types'
 
@@ -31,11 +33,14 @@ import type {
 export { liftCatalog } from './free-options-catalog'
 export {
   renderCommandOutput,
-  renderFreeOptionsAnnounce,
-  renderFreeOptionsDigest,
   renderFreeOptionsMarkdown,
 } from './free-options-render'
-export type { DiscoveryDigestCounts } from './free-options-render'
+export {
+  renderFreeOptionsArtifact,
+  verifyFreeOptionsArtifact,
+} from './free-options-artifact'
+export { buildFreeOptionsView } from './free-options-view'
+export type { FreeOptionsView } from './free-options-view'
 export { freeOptionsPaths } from './free-options-paths'
 export type {
   FreeCatalogEnvelope,
@@ -151,6 +156,39 @@ export function buildFreeOptionsReport(
 }
 
 /**
+ * Render and write the markdown artifact, returning the outcome instead of
+ * swallowing it (FID-2026-1017-005). A failure leaves the in-memory report
+ * complete, so the panel and command stay truthful about the data and
+ * explicit about the missing file.
+ */
+export function persistFreeOptionsArtifact(
+  report: FreeOptionsReport,
+  markdownPath: string,
+  generatedAt: string,
+): FreeOptionsExportStatus {
+  const view = buildFreeOptionsView(report, { markdownPath, generatedAt })
+  const artifact = renderFreeOptionsArtifact(view)
+  try {
+    const written = writeFileAtomic(markdownPath, artifact.text)
+    return {
+      path: markdownPath,
+      ok: true,
+      generatedAt,
+      generationId: artifact.generationId,
+      durability: written.durability,
+    }
+  } catch (error) {
+    return {
+      path: markdownPath,
+      ok: false,
+      generatedAt,
+      generationId: artifact.generationId,
+      error: error instanceof Error ? error.message : String(error),
+    }
+  }
+}
+
+/**
  * Assemble the machine context (wired env vars ∪ persisted store) and run
  * one refresh cycle: fetch-if-stale, persist cache + markdown, return the
  * report. Used by the `/provider free` handler.
@@ -192,6 +230,7 @@ async function refreshFreeOptionsOnce(): Promise<FreeOptionsReport> {
 
   const report = buildFreeOptionsReport(catalog, buildMachineContext(nowMs))
   report.fetchedAt = fetchedAt
+  report.catalogSource = fetched ? 'network' : catalog ? 'cache' : 'none'
   report.discoveryOffers = readProviderOfferDiscovery(nowMs)
   report.discoveryOffersEndingSoon = countOffersEndingSoon(nowMs)
 
@@ -199,11 +238,15 @@ async function refreshFreeOptionsOnce(): Promise<FreeOptionsReport> {
     try {
       fs.mkdirSync(path.dirname(paths.cache), { recursive: true })
       writeFileAtomic(paths.cache, JSON.stringify(catalog, null, 2))
-      writeFileAtomic(paths.markdown, renderFreeOptionsMarkdown(report))
     } catch {
-      // Persistence is best-effort; the command output already carries the
-      // information.
+      // The cache is a fast-boot convenience; a failed cache write is visible
+      // on the next boot as a refetch, and the panel's data is unaffected.
     }
+    report.exportStatus = persistFreeOptionsArtifact(
+      report,
+      paths.markdown,
+      new Date(nowMs).toISOString(),
+    )
     if (fetched)
       try {
         providerNotifications.observeCatalog(catalog)
@@ -231,11 +274,14 @@ export function readCachedFreeOptionsReport(): FreeOptionsReport | null {
     catalog = null
   }
   if (!catalog) return null
-  return {
-    ...buildFreeOptionsReport(catalog, buildMachineContext(Date.now())),
-    discoveryOffers: readProviderOfferDiscovery(),
-    discoveryOffersEndingSoon: countOffersEndingSoon(),
-  }
+  const report = buildFreeOptionsReport(
+    catalog,
+    buildMachineContext(Date.now()),
+  )
+  report.catalogSource = 'cache'
+  report.discoveryOffers = readProviderOfferDiscovery()
+  report.discoveryOffersEndingSoon = countOffersEndingSoon()
+  return report
 }
 
 export function readCachedFreeCatalog(): FreeCatalogEnvelope | null {

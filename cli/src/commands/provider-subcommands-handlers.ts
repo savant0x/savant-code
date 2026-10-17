@@ -228,10 +228,13 @@ function handleRemove(params: ProviderParams, rest: string): void {
  * truth. Never mutates configuration.
  */
 export async function handleFree(params: ProviderParams): Promise<void> {
-  const { refreshFreeOptions, renderCommandOutput } =
+  const { refreshFreeOptions, renderCommandOutput, freeOptionsPaths } =
     await import('../utils/free-options')
   const report = await refreshFreeOptions()
-  replyAndClear(params, renderCommandOutput(report).join('\n'))
+  replyAndClear(
+    params,
+    renderCommandOutput(report, freeOptionsPaths().markdown).join('\n'),
+  )
 }
 
 /** Dispatch entry: called from the /provider command definition. */

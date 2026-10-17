@@ -1,5 +1,5 @@
 /**
- * FID-2026-0928-012 — free-options discovery pins (RED-first).
+ * FID-2026-0928-012 — free-options discovery pins.
  *
  * BYOK context: there is no Savant backend or credit balance. "Free" means
  * free tiers/models of gateways the user wires with their own keys; the
@@ -8,9 +8,10 @@
  * (keyless, agent-facing, LIVE-probed 2026-09-28) supplies which models are
  * free right now, partitioned by providerId.
  *
- * FID-2026-1001-002's boot-announce pins (cached reader + renderer) live here
- * too; the FID-2026-1004-007 launch-digest pins live in
- * free-options-digest.test.ts. Shared fixtures: free-options-test-fixtures.ts.
+ * FID-2026-1017-005 moved every surface onto `buildFreeOptionsView`; these
+ * pins assert the view, the artifact header and the resolved command path.
+ * The boot freshness matrix lives in free-options-boot.test.ts and the
+ * artifact identity in free-options-view.test.ts.
  */
 import fs from 'node:fs'
 import os from 'node:os'
@@ -20,17 +21,25 @@ import { afterEach, beforeEach, describe, expect, test } from 'bun:test'
 import './free-options-routing.test'
 
 import {
-  isCacheFresh,
   buildFreeOptionsReport,
+  buildFreeOptionsView,
   freeOptionsPaths,
+  isCacheFresh,
   readCachedFreeOptionsReport,
-  renderFreeOptionsAnnounce,
-  renderFreeOptionsMarkdown,
   renderCommandOutput,
+  renderFreeOptionsMarkdown,
 } from '../free-options'
-import { CATALOG, CTX, offerRow } from './free-options-test-fixtures'
+import { CATALOG, CTX } from './free-options-test-fixtures'
 
-import type { FreeOfferRow } from '../free-options-types'
+const MARKDOWN_PATH = '/tmp/savant-free-test/free-options.md'
+const GENERATED_AT = '2026-09-28T12:00:00.000Z'
+
+function viewOf(report: ReturnType<typeof buildFreeOptionsReport>) {
+  return buildFreeOptionsView(report, {
+    markdownPath: MARKDOWN_PATH,
+    generatedAt: GENERATED_AT,
+  })
+}
 
 describe('FID-2026-0928-012: cache TTL', () => {
   test('fresh cache (written 1h ago) passes the 24h TTL', () => {
@@ -92,11 +101,40 @@ describe('FID-2026-0928-012: report builder (the BYOK split)', () => {
   })
 })
 
-describe('FID-2026-0928-012: agent-answerable markdown', () => {
-  test('renders the reference with the canonical structure', () => {
-    const md = renderFreeOptionsMarkdown(buildFreeOptionsReport(CATALOG, CTX))
-    expect(md).toContain('# Free options right now')
+describe('FID-2026-1017-005: shared view and artifact', () => {
+  const report = buildFreeOptionsReport(CATALOG, CTX)
+  const view = viewOf(report)
+
+  test('counts come from the same lanes the sections carry', () => {
+    expect(view.header.counts.wiredProviders).toBe(view.wired.length)
+    expect(view.header.counts.wiredModels).toBe(
+      view.wired.reduce((n, lane) => n + lane.models.length, 0),
+    )
+    expect(view.header.counts.notWiredProviders).toBe(view.notWired.length)
+    expect(view.header.counts.notWiredModels).toBe(
+      view.notWired.reduce((n, lane) => n + lane.models.length, 0),
+    )
+  })
+
+  test('the markdown lists every not-wired model id, not just a count', () => {
+    const md = renderFreeOptionsMarkdown(view)
+    expect(md).toContain('`llama-4-scout`')
+    expect(md).toContain('`qwen-3-coder`')
+    expect(md).toContain('`gemma-3-it`')
+  })
+
+  test('the artifact header carries the resolved path, both timestamps and a hash', () => {
+    const md = renderFreeOptionsMarkdown(view)
+    expect(md).toContain('<!-- savant-free-options')
+    expect(md).toContain(`path: ${MARKDOWN_PATH}`)
+    expect(md).toContain(`generatedAt: ${GENERATED_AT}`)
     expect(md).toContain('fetchedAt: 2026-09-28T01:00:13.744Z')
+    expect(md).toMatch(/generationId: sha256:[0-9a-f]{64}/)
+  })
+
+  test('renders the reference with the canonical structure', () => {
+    const md = renderFreeOptionsMarkdown(view)
+    expect(md).toContain('# Free options right now')
     expect(md).toContain(
       '## Wired — advertised free models; account access unverified',
     )
@@ -108,62 +146,88 @@ describe('FID-2026-0928-012: agent-answerable markdown', () => {
   })
 
   test('stale data is labeled in the document, never silently served', () => {
-    const report = { ...buildFreeOptionsReport(CATALOG, CTX), stale: true }
-    const md = renderFreeOptionsMarkdown(report)
-    expect(md).toContain('STALE')
+    const stale = viewOf({ ...report, stale: true })
+    expect(renderFreeOptionsMarkdown(stale)).toContain('STALE')
   })
 
   test('free-listing caveat follows evidence class while account access stays unverified', () => {
-    const report = buildFreeOptionsReport(CATALOG, CTX)
     expect(report.catalogEvidence?.source).toContain('free_models.json')
-    const reported = {
+    const reported = viewOf({
       ...report,
       catalogEvidence: {
         class: 'reported-unverified' as const,
         source: 'operator report',
       },
-    }
+    })
     expect(renderFreeOptionsMarkdown(reported)).toContain(
       'reported free models; listing unverified; account access unverified',
     )
-    expect(renderFreeOptionsAnnounce(reported).join('\n')).toContain(
-      'listing unverified',
-    )
-    expect(report.quotaReading).toEqual({ state: 'unknown', source: 'none' })
-    const exhausted = {
+    expect(reported.quotaFootnote).toContain('do not verify your account quota')
+    const exhausted = viewOf({
       ...report,
       quotaReading: {
         state: 'exhausted' as const,
         source: 'authenticated-usage-api' as const,
       },
-    }
-    expect(renderFreeOptionsAnnounce(exhausted).join('\n')).toContain(
-      'quota observed exhausted',
-    )
+    })
+    expect(exhausted.quotaFootnote).toContain('quota observed exhausted')
   })
 })
 
 describe('FID-2026-0928-012: /provider free command output', () => {
-  test('output names wired lanes, onboarding commands, and the agent file path', () => {
-    const lines = renderCommandOutput(buildFreeOptionsReport(CATALOG, CTX))
-    const joined = lines.join('\n')
+  const report = buildFreeOptionsReport(CATALOG, CTX)
+
+  test('names wired lanes, onboarding commands and the resolved file path', () => {
+    const joined = renderCommandOutput(report, MARKDOWN_PATH).join('\n')
     expect(joined).toMatch(/free models/i)
     expect(joined).toContain('/provider groq')
-    expect(joined).toContain('free-options.md')
-    expect(joined).toMatch(/agent/i)
+    expect(joined).toContain(MARKDOWN_PATH)
+    // The unsupported read-outside-root claim is gone (FID-2026-1017-005).
+    expect(joined).not.toMatch(/ask the agent/i)
   })
 
   test('offline with no cache: plain statement, local lanes still listed', () => {
-    const lines = renderCommandOutput(buildFreeOptionsReport(null, CTX))
-    const joined = lines.join('\n')
+    const joined = renderCommandOutput(
+      buildFreeOptionsReport(null, CTX),
+      MARKDOWN_PATH,
+    ).join('\n')
     expect(joined).toMatch(/couldn't fetch|no cached/i)
     expect(joined).toContain('Ollama')
   })
+
+  test('a failed export is reported, not swallowed', () => {
+    const failed = {
+      ...report,
+      exportStatus: {
+        path: MARKDOWN_PATH,
+        ok: false,
+        generatedAt: GENERATED_AT,
+        generationId: 'sha256:deadbeef',
+        error: 'EACCES',
+      },
+    }
+    const joined = renderCommandOutput(failed, MARKDOWN_PATH).join('\n')
+    expect(joined).toContain('⚠ Export failed: EACCES')
+    expect(joined).toContain('the file may be missing')
+  })
+
+  test('a successful export prints its generation identity', () => {
+    const exported = {
+      ...report,
+      exportStatus: {
+        path: MARKDOWN_PATH,
+        ok: true,
+        generatedAt: GENERATED_AT,
+        generationId: 'sha256:abc',
+      },
+    }
+    const joined = renderCommandOutput(exported, MARKDOWN_PATH).join('\n')
+    expect(joined).toContain('Export ok')
+    expect(joined).toContain('sha256:abc')
+  })
 })
 
-describe('FID-2026-1001-002: boot announce (cached reader + renderer)', () => {
-  // The cached reader resolves the config dir via SAVANT_CODE_CONFIG_DIR —
-  // the same isolation the command-grammar harness uses.
+describe('FID-2026-1001-002: cached reader', () => {
   let tempDir = ''
   let originalConfigDir: string | undefined
 
@@ -189,9 +253,7 @@ describe('FID-2026-1001-002: boot announce (cached reader + renderer)', () => {
     fs.writeFileSync(freeOptionsPaths().cache, JSON.stringify(fresh))
     const report = readCachedFreeOptionsReport()
     expect(report?.stale).toBe(false)
-    // Local lanes are registry-deterministic; the wired/not-wired split
-    // reflects the LIVE machine context (host env), so only the shape and
-    // the local lane are pinned here.
+    expect(report?.catalogSource).toBe('cache')
     expect(report?.localFree.map((lane) => lane.id)).toContain('ollama')
     expect(report?.fetchedAt).toBe(fresh.fetchedAt)
   })
@@ -208,64 +270,5 @@ describe('FID-2026-1001-002: boot announce (cached reader + renderer)', () => {
   test('corrupt cache JSON is fail-silent (null)', () => {
     fs.writeFileSync(freeOptionsPaths().cache, '{not-json')
     expect(readCachedFreeOptionsReport()).toBeNull()
-  })
-
-  test('announce renderer: bounded message with the /provider free pointer', () => {
-    const lines = renderFreeOptionsAnnounce(
-      buildFreeOptionsReport(CATALOG, CTX),
-    )
-    const joined = lines.join('\n')
-    expect(joined).toContain('Free AI lanes available')
-    // FID-2026-1008-003: the wired line is the configured set; the overlap line
-    // is the free-catalog subset, relabelled so it cannot pass for the set.
-    expect(joined).toContain('Configured:')
-    expect(joined).toContain('Free catalog overlap')
-    expect(joined).not.toContain('Wired & free')
-    expect(joined).toContain('Not wired')
-    expect(joined).toContain('Local & free')
-    expect(joined).toContain('/provider free')
-  })
-
-  test('announce offers line: window count only when positive (FID-2026-1008-004)', () => {
-    const base = buildFreeOptionsReport(CATALOG, CTX)
-    // Rows since FID-2026-1016-010; the announce previews titles only.
-    const offers: FreeOfferRow[] = [
-      offerRow({ title: 'Viktor' }),
-      offerRow({ title: 'Valyu' }),
-    ]
-    const withWindow = renderFreeOptionsAnnounce({
-      ...base,
-      discoveryOffers: offers,
-      discoveryOffersEndingSoon: 1,
-    }).join('\n')
-    expect(withWindow).toContain('Offers: 2 advertised')
-    expect(withWindow).toContain('1 end within 72h;')
-    expect(withWindow).toContain('Viktor; Valyu')
-    const noWindow = renderFreeOptionsAnnounce({
-      ...base,
-      discoveryOffers: offers,
-      discoveryOffersEndingSoon: 0,
-    }).join('\n')
-    expect(noWindow).not.toContain('end within 72h')
-    expect(noWindow).toContain('eligibility unverified')
-  })
-
-  test('announce renderer: nothing to say renders no lines', () => {
-    // No catalog at all.
-    expect(
-      renderFreeOptionsAnnounce(buildFreeOptionsReport(null, CTX)),
-    ).toEqual([])
-    // Catalog with no actionable lanes (every list empty).
-    const empty = buildFreeOptionsReport(
-      {
-        fetchedAt: CATALOG.fetchedAt,
-        totalModels: 0,
-        models: [],
-        newModelIds: [],
-        archivedModels: [],
-      },
-      { ...CTX, localProviders: [] },
-    )
-    expect(renderFreeOptionsAnnounce(empty)).toEqual([])
   })
 })

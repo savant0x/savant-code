@@ -74,9 +74,42 @@ export type FreeOfferRow = {
   url: string
 }
 
+/** Where the catalog in this report came from, for boot freshness labels. */
+export type FreeOptionsCatalogSource = 'network' | 'cache' | 'none'
+
+/** Result of writing the markdown artifact during a refresh. */
+export type FreeOptionsExportStatus = {
+  path: string
+  ok: boolean
+  generatedAt: string
+  generationId: string
+  error?: string
+  durability?: 'verified' | 'unverified'
+}
+
+/** Read-back verification of the on-disk artifact against a report. */
+export type FreeOptionsArtifactFailure =
+  | 'missing'
+  | 'unreadable'
+  | 'path-mismatch'
+  | 'fetchedAt-mismatch'
+  | 'generation-mismatch'
+
+export type FreeOptionsArtifactCheck = {
+  ok: boolean
+  path: string
+  reason?: FreeOptionsArtifactFailure
+  generatedAt?: string
+  generationId?: string
+}
+
 export type FreeOptionsReport = {
   fetchedAt: string | null
   stale: boolean
+  /** Provenance added by the refresher/cache reader (FID-2026-1017-005). */
+  catalogSource?: FreeOptionsCatalogSource
+  /** Write outcome for the markdown export (FID-2026-1017-005). */
+  exportStatus?: FreeOptionsExportStatus
   /** Provenance of the free-model claims, separate from account eligibility. */
   catalogEvidence?: FactEvidence
   /** The best observed account quota state; absent data is unknown. */

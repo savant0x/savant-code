@@ -5,6 +5,7 @@ import { AgentBranchWrapper } from './agent-branch-wrapper'
 import { AgentListBranch } from './agent-list-branch'
 import { AskUserBranch } from './ask-user-branch'
 import { CompactionSummaryBlock } from '../compaction-summary-block'
+import { FreeOptionsPanel } from '../free-options-panel'
 import { trimNewlines, isReasoningTextBlock } from './block-helpers'
 import { renderContentWithMarkdown } from './content-with-markdown'
 import { CopyableBlock } from './copyable-block'
@@ -142,6 +143,15 @@ export const SingleBlock = memo(
         return (
           <CompactionSummaryBlock
             key={`${messageId}-compaction-summary-${block.id}`}
+            block={block}
+            onToggleCollapsed={onToggleCollapsed}
+          />
+        )
+
+      case 'free-options':
+        return (
+          <FreeOptionsPanel
+            key={`${messageId}-free-options-${block.id}`}
             block={block}
             onToggleCollapsed={onToggleCollapsed}
           />

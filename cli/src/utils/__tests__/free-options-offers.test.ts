@@ -8,6 +8,7 @@ import { describe, expect, test } from 'bun:test'
 
 import {
   buildFreeOptionsReport,
+  buildFreeOptionsView,
   renderCommandOutput,
   renderFreeOptionsMarkdown,
 } from '../free-options'
@@ -15,6 +16,16 @@ import { catalogDeltaLine } from '../free-options-offers'
 import { CATALOG, CTX, offerRow } from './free-options-test-fixtures'
 
 import type { FreeOfferRow } from '../free-options-types'
+
+const MARKDOWN_PATH = '/tmp/savant-free-test/free-options.md'
+function markdown(report: ReturnType<typeof buildFreeOptionsReport>): string {
+  return renderFreeOptionsMarkdown(
+    buildFreeOptionsView(report, {
+      markdownPath: MARKDOWN_PATH,
+      generatedAt: '2026-09-28T12:00:00.000Z',
+    }),
+  )
+}
 
 describe('FID-2026-1016-010: offer rows are bounded, grouped and attributed', () => {
   const known = (n: number, category: string): FreeOfferRow =>
@@ -39,7 +50,7 @@ describe('FID-2026-1016-010: offer rows are bounded, grouped and attributed', ()
   }
 
   test('the command view bounds the attributed list and counts the remainder', () => {
-    const joined = renderCommandOutput(report).join('\n')
+    const joined = renderCommandOutput(report, MARKDOWN_PATH).join('\n')
     expect(joined).toContain(
       'Advertised offers naming a provider in your registry (12 of 14):',
     )
@@ -49,7 +60,7 @@ describe('FID-2026-1016-010: offer rows are bounded, grouped and attributed', ()
     expect(joined).toContain('- Known 10 —')
     expect(joined).not.toContain('- Known 11 —')
     expect(joined).toContain(
-      '… and 2 more — the full list is in free-options.md',
+      `… and 2 more — the full list is in ${MARKDOWN_PATH}`,
     )
     expect(joined).toContain(
       'Categories: Coding 11 · Startup programs 2 · Student 1',
@@ -57,7 +68,7 @@ describe('FID-2026-1016-010: offer rows are bounded, grouped and attributed', ()
   })
 
   test('the markdown reference keeps every offer, grouped, with marks', () => {
-    const md = renderFreeOptionsMarkdown(report)
+    const md = markdown(report)
     expect(md).toContain('## Advertised offers')
     expect(md).toContain('### Coding (11)')
     expect(md).toContain('### Startup programs (2)')
@@ -70,10 +81,13 @@ describe('FID-2026-1016-010: offer rows are bounded, grouped and attributed', ()
   })
 
   test('an unattributed-only feed says so instead of printing a dump', () => {
-    const joined = renderCommandOutput({
-      ...report,
-      discoveryOffers: [offerRow({ title: 'Solo' })],
-    }).join('\n')
+    const joined = renderCommandOutput(
+      {
+        ...report,
+        discoveryOffers: [offerRow({ title: 'Solo' })],
+      },
+      MARKDOWN_PATH,
+    ).join('\n')
     expect(joined).toContain('(0 of 1):')
     expect(joined).toContain(
       'none — every advertised offer is unattributed review material',
@@ -84,13 +98,11 @@ describe('FID-2026-1016-010: offer rows are bounded, grouped and attributed', ()
   test('the catalog delta reaches both headers and vanishes when empty', () => {
     const base = buildFreeOptionsReport(CATALOG, CTX)
     const line = 'new since the previous catalog: 1 model(s) — qwen-3-coder'
-    expect(renderFreeOptionsMarkdown(base)).toContain(line)
-    expect(renderCommandOutput(base).join('\n')).toContain(line)
+    expect(markdown(base)).toContain(line)
+    expect(renderCommandOutput(base, MARKDOWN_PATH).join('\n')).toContain(line)
     const none = { ...base, newModelIds: [] }
-    expect(renderFreeOptionsMarkdown(none)).not.toContain(
-      'new since the previous catalog',
-    )
-    expect(renderCommandOutput(none).join('\n')).not.toContain(
+    expect(markdown(none)).not.toContain('new since the previous catalog')
+    expect(renderCommandOutput(none, MARKDOWN_PATH).join('\n')).not.toContain(
       'new since the previous catalog',
     )
   })

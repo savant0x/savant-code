@@ -79,11 +79,13 @@ export function renderOffersMarkdownSection(
 
 /**
  * The bounded command block: attributed offers (capped, remainder counted)
- * followed by the per-category counts. The full list stays in free-options.md,
- * which the output already points at.
+ * followed by the per-category counts. The full list is the boot panel and
+ * the artifact at `markdownPath` — resolved by the caller, never a bare name.
  */
 export function renderOffersCommandBlock(
   rows: readonly FreeOfferRow[],
+  markdownPath: string,
+  maxRows: number = MAX_COMMAND_OFFER_ROWS,
 ): string[] {
   if (rows.length === 0) return []
   const attributed = rows.filter((row) => row.providerLabels.length > 0)
@@ -96,11 +98,11 @@ export function renderOffersCommandBlock(
       '- none — every advertised offer is unattributed review material',
     )
   } else {
-    for (const row of attributed.slice(0, MAX_COMMAND_OFFER_ROWS))
+    for (const row of attributed.slice(0, maxRows))
       lines.push(`- ${offerRowLine(row)}`)
-    const hidden = attributed.length - MAX_COMMAND_OFFER_ROWS
+    const hidden = attributed.length - maxRows
     if (hidden > 0)
-      lines.push(`- … and ${hidden} more — the full list is in free-options.md`)
+      lines.push(`- … and ${hidden} more — the full list is in ${markdownPath}`)
   }
   lines.push('')
   lines.push(`Categories: ${offerCategorySummary(rows)}`)

@@ -12,8 +12,13 @@ import {
 } from '../utils/discovery-announce'
 import { startDiscoveryCompletionWatcher } from '../utils/discovery-completion-watcher'
 import { observeDiscoveryCandidates } from '../utils/discovery-inbox'
-import { readCachedFreeOptionsReport } from '../utils/free-options'
-import { runLaunchDigest } from '../utils/launch-digest'
+import {
+  freeOptionsPaths,
+  readCachedFreeOptionsReport,
+  refreshFreeOptions,
+  verifyFreeOptionsArtifact,
+} from '../utils/free-options'
+import { resolveBootFreeOptions } from '../utils/free-options-boot'
 import { getSystemMessage } from '../utils/message-history'
 import {
   resolveContextWindowForModel,
@@ -24,7 +29,7 @@ import {
   getProviderSetupGuidance,
 } from '../utils/provider-setup'
 
-import type { ChatMessage } from '../types/chat'
+import type { ChatMessage, FreeOptionsContentBlock } from '../types/chat'
 import type { AgentMode } from '../utils/constants'
 import type { PermissionMode } from '../utils/settings'
 
@@ -82,55 +87,73 @@ export function useChatBootstrap(args: UseChatBootstrapArgs): void {
       // Fail-silent (MQ5): announce failures never break the TUI.
     }
   }, [args.setMessages])
-  // Free-provider launch digest, shown every boot (FID-2026-1004-007; boot
-  // cadence per FID-2026-1008-002): rewires the
-  // orphaned renderFreeOptionsAnnounce and folds in the expiring offers plus
-  // the discovery delta. Repo-gated only for the discovery leg; free-build
-  // exempt; fail-silent. NEW discovery candidates are also routed into the
-  // notification inbox (durable review) — `changed` is excluded (probe jitter).
-  const digestShownRef = useRef(false)
+  // Free-options boot panel (FID-2026-1017-005): freshness is resolved BEFORE
+  // the panel posts. A cache no older than 12 h is shown with its exact age;
+  // an older or absent cache gets one bounded refresh through the existing
+  // single-flight (shared with provider notifications). The complete payload
+  // lives in the block, collapsed by default. Discovery inbox routing runs on
+  // every boot, outside the panel path (deduped by fact value).
+  const bootPanelShownRef = useRef(false)
   const discoveryCompletionWatcherRef = useRef<ReturnType<
     typeof startDiscoveryCompletionWatcher
   > | null>(null)
   useEffect(() => {
-    if (digestShownRef.current) return
-    digestShownRef.current = true
-    try {
-      const repoRoot = tryGetProjectRoot()
-      const discovery = repoRoot ? readDiscoveryCounts(repoRoot) : null
-      // Inbox routing runs on EVERY boot — deliberately OUTSIDE the digest
-      // render path, so a candidate discovered after the day's first boot
-      // still reaches /notifications. The coordinator dedupes by
-      // fact value, so repeat boots are idempotent.
-      if (discovery && discovery.newHosts.length > 0)
-        observeDiscoveryCandidates(discovery)
-      // Step 7 (FID-2026-1004-007): the boot harvest is DETACHED and can
-      // publish agent-context.txt after these mount effects ran. Watch the
-      // artifact for a set-key transition and route its NEW hosts then —
-      // event-driven (no polling), dedup by key at the watcher + by fact
-      // value at the coordinator. Fail-silent; free-build exempt.
-      if (repoRoot)
-        discoveryCompletionWatcherRef.current = startDiscoveryCompletionWatcher(
-          {
-            repoRoot,
-            initialSetKey: discovery?.setKey ?? null,
-            observe: observeDiscoveryCandidates,
-          },
-        )
-      runLaunchDigest({
-        readReport: readCachedFreeOptionsReport,
-        readDiscovery: () =>
-          discovery
+    if (bootPanelShownRef.current) return
+    bootPanelShownRef.current = true
+    const repoRoot = tryGetProjectRoot()
+    const discovery = repoRoot ? readDiscoveryCounts(repoRoot) : null
+    if (discovery && discovery.newHosts.length > 0)
+      observeDiscoveryCandidates(discovery)
+    // Step 7 (FID-2026-1004-007): the boot harvest is DETACHED and can
+    // publish agent-context.txt after these mount effects ran. Watch the
+    // artifact for a set-key transition and route its NEW hosts then —
+    // event-driven (no polling), dedup by key at the watcher + by fact
+    // value at the coordinator. Fail-silent; free-build exempt.
+    if (repoRoot)
+      discoveryCompletionWatcherRef.current = startDiscoveryCompletionWatcher({
+        repoRoot,
+        initialSetKey: discovery?.setKey ?? null,
+        observe: observeDiscoveryCandidates,
+      })
+    let cancelled = false
+    void resolveBootFreeOptions({
+      now: () => Date.now(),
+      readCached: readCachedFreeOptionsReport,
+      refresh: refreshFreeOptions,
+      verify: (report) =>
+        verifyFreeOptionsArtifact({
+          report,
+          path: freeOptionsPaths().markdown,
+        }),
+    })
+      .then((snapshot) => {
+        if (cancelled) return
+        const hasContent =
+          snapshot.report.fetchedAt !== null ||
+          snapshot.report.localFree.length > 0 ||
+          Boolean(
+            discovery && (discovery.newCount > 0 || discovery.changedCount > 0),
+          )
+        if (!hasContent) return
+        const block: FreeOptionsContentBlock = {
+          type: 'free-options',
+          id: `free-options-${Date.now()}`,
+          snapshot,
+          discovery: discovery
             ? {
                 newCount: discovery.newCount,
                 changedCount: discovery.changedCount,
               }
             : null,
-        post: (text) =>
-          args.setMessages((prev) => [...prev, getSystemMessage(text)]),
+          markdownPath: freeOptionsPaths().markdown,
+        }
+        args.setMessages((prev) => [...prev, getSystemMessage([block])])
       })
-    } catch {
-      // Fail-silent (FID-2026-1004-007): the digest never breaks the TUI.
+      .catch(() => {
+        // Fail-silent: a boot panel never breaks the TUI.
+      })
+    return () => {
+      cancelled = true
     }
   }, [args.setMessages])
   useEffect(

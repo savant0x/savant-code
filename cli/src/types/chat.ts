@@ -1,4 +1,5 @@
 import type { ChatTheme } from './theme-system'
+import type { FreeOptionsBootSnapshot } from '../utils/free-options-boot'
 import type { JSONValue } from '@savant-code/common/types/json'
 import type { ToolName } from '@savant-code/sdk'
 import type { ReactNode } from 'react'
@@ -141,6 +142,21 @@ export type CompactionSummaryContentBlock = {
   userOpened?: boolean
 }
 
+/**
+ * FID-2026-1017-005: the boot free-options panel. Carries the resolved
+ * freshness snapshot and the absolute artifact path; the panel derives its
+ * view from the same report the export used. UI-only, never model context.
+ */
+export type FreeOptionsContentBlock = {
+  type: 'free-options'
+  id: string
+  snapshot: FreeOptionsBootSnapshot
+  discovery: { newCount: number; changedCount: number } | null
+  markdownPath: string
+  isCollapsed?: boolean
+  userOpened?: boolean
+}
+
 export type ImageAttachment = {
   filename: string
   path: string
@@ -166,6 +182,7 @@ export type ContentBlock =
   | AgentListContentBlock
   | AskUserContentBlock
   | CompactionSummaryContentBlock
+  | FreeOptionsContentBlock
   | HtmlContentBlock
   | ImageContentBlock
   | ModeDividerContentBlock
@@ -266,4 +283,10 @@ export function isCompactionSummaryBlock(
   block: ContentBlock,
 ): block is CompactionSummaryContentBlock {
   return block.type === 'compaction-summary'
+}
+
+export function isFreeOptionsBlock(
+  block: ContentBlock,
+): block is FreeOptionsContentBlock {
+  return block.type === 'free-options'
 }

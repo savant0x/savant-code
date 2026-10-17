@@ -118,6 +118,52 @@ describe('updateMessageCollapse identity preservation (FID-007 P2)', () => {
     ).toBe(true)
   })
 
+  it('toggles the boot free-options block by its id (FID-2026-1017-005)', () => {
+    const messages: ChatMessage[] = [
+      {
+        ...makeMessage('boot', false),
+        blocks: [
+          {
+            type: 'free-options',
+            id: 'free-options-1',
+            snapshot: {
+              report: {
+                fetchedAt: '2026-10-17T09:00:00.000Z',
+                stale: false,
+                configuredProviders: [],
+                wiredFree: [],
+                notWired: [],
+                localFree: [],
+              },
+              source: 'cache',
+              ageMs: 3600_000,
+              artifact: { ok: true, path: '/tmp/free-options.md' },
+            },
+            discovery: null,
+            markdownPath: '/tmp/free-options.md',
+            isCollapsed: true,
+          },
+        ],
+      },
+      makeMessage('other', true),
+    ]
+
+    const expanded = updateMessageCollapse(messages, 'free-options-1')
+    const block = expanded[0].blocks?.[0]
+    expect(block && 'isCollapsed' in block ? block.isCollapsed : null).toBe(
+      false,
+    )
+    expect(block && 'userOpened' in block ? block.userOpened : null).toBe(true)
+    // The untouched message keeps its identity.
+    expect(expanded[1]).toBe(messages[1])
+
+    const reCollapsed = updateMessageCollapse(expanded, 'free-options-1')
+    const again = reCollapsed[0].blocks?.[0]
+    expect(again && 'isCollapsed' in again ? again.isCollapsed : null).toBe(
+      true,
+    )
+  })
+
   it('no-op for an unknown id: every message keeps its identity', () => {
     const messages = [
       makeMessage('m1', true),
