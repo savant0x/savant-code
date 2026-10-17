@@ -11,6 +11,17 @@ handling or repository boundaries.
 
 ## Open items
 
+- [ ] FID-2026-1017-001 — build and evaluate an isolated parallel-agent slice
+  using real repository evidence, the real SDK agent loop, actual read tools,
+  a real selected provider, and temporary SQLite state. Automation level: 3.
+  Operator approval: "alright, lets give it a shot"; correction:
+  "id flag using a dummy provider, if we're going to test it we need to do it
+  with real info flow". Provider ruling: "apixo, gpt6.1 sol, you judge the limits".
+  Bounds revised transparently after the baseline: 60 cumulative physical requests,
+  two concurrent requests, 20 minutes per run, 4,000 output
+  tokens per request. Product runtime migration and a
+  production architecture choice are not implied by this research experiment.
+
 ## Internal follow-ups and current operator authority (2026-10-16)
 
 Implementation-complete records FID-2026-1015-006 and FID-2026-1012-022
@@ -102,6 +113,12 @@ dispositions supersede the previous register holds.
   cleared; the intake report passes Markdown lint. No artifact was deleted.
 
 ## Machine-readable scope targets
+
+- FID-2026-1017-001: `scripts/probes/parallel-agent-slice.ts`,
+  `scripts/probes/parallel-agent-slice/**`,
+  `docs/design/parallel-agent-slice.md`, `dev/research/**`,
+  `dev/fids/**`, `dev/session-summaries/**`, `SCOPE.md`, `CHANGELOG.md`,
+  `.markdownlintignore`
 
 Operator authorization: completion at automation level 3, renewed 2026-10-15;
 specific removal and skill metadata approvals are in answers.md. Governance
