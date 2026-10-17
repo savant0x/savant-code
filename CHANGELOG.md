@@ -1,5 +1,30 @@
 # Changelog
 
+## 2026-10-17 — Boot free-options panel renders natively (FID-2026-1017-006, high)
+
+Every boot replaced the free-options panel with the transcript error fallback
+— "This content could not be displayed. Your session is still active." —
+followed by the block serialized as raw JSON. The panel opened
+`TrafficLightPanel` with a literal `{' '}` string child; OpenTUI's reconciler
+rejects text outside a `<text>` node, so `FreeOptionsPanel` threw
+`Text must be created inside of a text node` and the boundary printed
+`JSON.stringify(blocks)` as its preview. The spacer is gone; the panel mounts
+on the reconciler that actually renders it.
+
+The suite shipped with FID-2026-1017-005 could not see the defect because it
+renders through `react-dom/server`, where `box` and `text` are custom elements
+and host invariants are not enforced. A native-render suite now mounts the
+panel collapsed and expanded on `@opentui/core/testing` and rejects the
+fallback, the serialized block and a missing header — proven red with the
+child restored (2 fail) and green without it (2 pass). The operator's real
+cached report (146 models on 3 wired lanes, 2 not-wired tiers, 1 local lane,
+223 offers) was also mounted natively at 120 columns in both states: header,
+counts and every expanded section rendered with no fallback and no raw JSON.
+
+Implementation: `907e04f8`. Verification: `fid:verify` ran all 5 declared
+gates with exit 0 (`typecheck cli`, both panel suites, the collapse suite,
+`quality`); static panel and collapse suites 15 pass / 0 fail.
+
 ## 2026-10-17 — Fresh, complete free-options boot panel (FID-2026-1017-005, medium)
 
 The boot digest was reading the free-options cache synchronously before the

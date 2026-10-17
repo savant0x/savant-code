@@ -47,3 +47,24 @@ command output was already complete.
 No live TUI smoke: `tmux` is not installed here, so the repo's tmux suites skip.
 The boot path is verified at the resolver/handler boundary and the panel through
 a static render; a real terminal boot/expand remains an operator observation.
+
+## Follow-up 14:40 — FID-2026-1017-006 (native boot render)
+
+The operator reported that boot now showed the transcript fallback plus the
+serialized block. `debug/cli.jsonl` named the cause: `Text must be created
+inside of a text node` raised at `free-options-panel.tsx:25`, i.e. a bare
+`{' '}` string child inside `TrafficLightPanel`. The static-markup suite could
+not see it because `react-dom/server` does not enforce OpenTUI host rules.
+
+- Fix (`907e04f8`): the spacer is gone; the panel mounts on the reconciler that
+  ships.
+- New pin: `free-options-panel.render.test.tsx` mounts the panel via
+  `@opentui/core/testing` collapsed and expanded, rejects the fallback and the
+  raw block JSON. Negative control: 2 fail with `{' '}` restored.
+- Real payload exercised: the operator's cached report (146 models / 3 wired
+  lanes / 2 not-wired / 1 local / 223 offers, artifact ok) rendered natively at
+  120 columns in both states, header and expanded sections present.
+- Gates: `fid:verify` 5/5 exit 0; static panel + collapse suites 15 pass / 0
+  fail; `learnings:check` PASS; `validate:repository` PASS.
+- `LEARNINGS.md` gained one lesson (2 lines of headroom left; the next lesson
+  needs the operator-run `bun run learnings:retire`).

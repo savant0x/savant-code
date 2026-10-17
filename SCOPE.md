@@ -215,3 +215,13 @@ artifacts required by ECHO retain their gate-level exemptions.
   (operator-ruled follow-ups to FID-2026-1016-013: the declared Step-4 surface is mounted and
   pinned by test, the office cast states one design, the recorded x402 deletion is executed, and
   hand-run probes have their documented home as a named sweep exclusion class.)
+- FID-2026-1017-006 is **closed and archived** (2026-10-17, 5/5 gates, receipt
+  stamped, commit `907e04f8`). Its write targets are released:
+  `cli/src/components/free-options-panel.tsx`,
+  `cli/src/components/__tests__/free-options-panel.render.test.tsx`, `SCOPE.md`,
+  `CHANGELOG.md`, `dev/LEARNINGS.md`, `dev/session-summaries/**`.
+  Follow-up to FID-2026-1017-005: a bare `{' '}` string child inside
+  `TrafficLightPanel` is illegal for OpenTUI, so every boot showed the transcript
+  boundary fallback and the serialized block. The fix removes the child and adds
+  native-render pins; the operator's real 146-model / 223-offer report renders
+  natively in both states. No live TUI session was run here (`tmux` absent).
