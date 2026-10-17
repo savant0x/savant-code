@@ -12,6 +12,24 @@
 > the v0.0.36 cut. Release notes are written here at cut time; nothing in this
 > section is a package-release claim until then.
 
+## 2026-10-17 — Validated parallel handoffs (FID-2026-1017-002, low)
+
+The isolated research scheduler now validates a complete returned wave before
+publishing results or releasing dependencies. Host-issued source references bind
+exact citation locations/text; predecessor digests come from actual handoffs.
+Downstream reviewers receive predecessor source files. Raw drafts and rejected
+mode outcomes are retained. Implementation: `0292beba`; six FID gates pass,
+including 19 control tests / 87 assertions.
+
+A real Apixo `gpt-6.1-sol` pair completed with zero selected citation/handoff
+failures: batch 96.997 s, completion 89.762 s, four inference sends each. Exact
+predecessor artifacts reached the appropriate downstream histories. B finished
+before A in both modes, so there was no useful overlap or demonstrated speedup.
+An intermediate five-send pair rejected altered quotes before publication.
+Cumulative sends are 51/60; nine unused. Mechanical consistency does not establish
+semantic correctness or production async readiness. Details and next candidate:
+`docs/design/parallel-agent-slice.md`. No production migration or release.
+
 ## 2026-10-17 — Live parallel-agent research slice (FID-2026-1017-001, low)
 
 Added an isolated executable comparison using the actual SDK, spawn handler,
