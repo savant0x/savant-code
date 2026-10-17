@@ -7,6 +7,11 @@ import {
   validateStableReferences,
 } from './learnings-references.js'
 import { validateReproductionReferences } from './learnings-reproduction.js'
+// FID-2026-1016-016 (LF-006): the catalog's own references are checked for
+// decay, and its tiers must agree with the status of the lessons that link to
+// it — a rule may not cite a deleted artifact, nor present dated guidance as
+// current authority.
+import { readCanonicalRuleCatalog } from './learnings-rules.js'
 import {
   LEGACY_BOUNDARY,
   LEARNINGS_INSERTION_MARKER,
@@ -17,6 +22,10 @@ import {
 // FID-2026-1012-011: the ledger's own size is an invariant of the artifact, so
 // the validator enforces it rather than the tool that repairs it.
 import { learningsSizeIssues } from './learnings-size-policy.js'
+import {
+  ruleTierLessonIssues,
+  staleRuleReferenceIssues,
+} from './learnings-staleness.js'
 
 import type {
   LearningIssue,
@@ -169,6 +178,8 @@ export function validateLearnings(
         message: `${entries[index - 1]?.title} is older than the following ${entries[index]?.title}.`,
       })
   }
+  // FID-2026-1016-016 (LF-006): one catalog read feeds both freshness checks.
+  const catalogRules = readCanonicalRuleCatalog(root).rules
   return {
     entries,
     issues: [
@@ -178,6 +189,8 @@ export function validateLearnings(
       ...validateStableReferences(root, entries),
       ...validateReproductionReferences(root, entries),
       ...validateCanonicalRuleCatalog(root, entries),
+      ...staleRuleReferenceIssues(root, catalogRules),
+      ...ruleTierLessonIssues(catalogRules, entries),
       ...validateLearningRepairOrder(root, entries),
     ],
   }

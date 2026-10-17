@@ -57,6 +57,15 @@ export function reviewCandidates(params: AdmissionParams): AdmissionResult {
       .filter((entry) => !entry.archived)
       .map((entry) => entry.candidate.id),
   )
+  // FID-2026-1016-016 (LF-006, acceptance 3): a fresh candidate that re-proposes
+  // already-implemented work under a new identity — the case an FID-ownership
+  // check cannot see, because the new id names a new FID. Titles are compared
+  // normalized, and the active candidate is told which implemented item owns the
+  // work so the outcome is a citation, not a silent second implementation.
+  const implementedTitles = new Map<string, string>()
+  for (const entry of candidates)
+    if (entry.archived)
+      implementedTitles.set(normalizedTitle(entry.candidate.title), entry.candidate.id)
   const ids = new Set<string>()
   const owners = new Set<string>()
   for (const { candidate, issues, archived } of candidates) {
@@ -75,6 +84,13 @@ export function reviewCandidates(params: AdmissionParams): AdmissionResult {
     if (new Set(candidate.lessons).size !== candidate.lessons.length) {
       issues.push('Duplicate lesson links')
     }
+    const implementedTwin = implementedTitles.get(
+      normalizedTitle(candidate.title),
+    )
+    if (!archived && implementedTwin !== undefined)
+      issues.push(
+        `Duplicates implemented work: ${implementedTwin} already owns '${candidate.title}' — cite it or narrow the gap`,
+      )
     for (const title of candidate.lessons) {
       const resolved = resolveLesson(locator, title)
       if (!resolved.ok) issues.push(resolved.issue)
@@ -149,6 +165,14 @@ export function reviewCandidates(params: AdmissionParams): AdmissionResult {
       ),
     ],
   }
+}
+
+/** Case- and punctuation-insensitive title identity for duplicate detection. */
+function normalizedTitle(title: string): string {
+  return title
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim()
 }
 
 /** Local digest helper: the pipeline's exported sha256 is not a dependency here. */

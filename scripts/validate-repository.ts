@@ -33,6 +33,7 @@ import { collectHygieneIssues } from './hygiene.js'
 import { collectInternalFollowupIssues } from './internal-followup-check.js'
 import { validateLearningArtifacts } from './learnings-artifact-check.js'
 import { collectFeaturePipelineIssues } from './lesson-feature-check.js'
+import { collectAcceptanceIssues } from './production-acceptance.js'
 import { collectQualityIssues, readQualityBaseline } from './quality-report.js'
 import { collectTaskIdLedgerIssues } from './task-id-ledger'
 import {
@@ -258,6 +259,12 @@ const issues: FidLedgerIssue[] = [
   ...validateLearningArtifacts(root).issues,
   ...collectFeaturePipelineIssues(root),
   ...collectInternalFollowupIssues(root),
+  // FID-2026-1016-016 (LF-005): a recorded run's acceptance contract is a
+  // repository invariant, not a convention.
+  ...collectAcceptanceIssues(root).map((issue) => ({
+    code: 'acceptance.record',
+    message: issue,
+  })),
   // SAVANT_CODE_SKIP_QUALITY_RATCHET: temporarily exempt ratchet for releases
   // (operator-paused FID-2026-0819-005)
   ...(process.env.SAVANT_CODE_SKIP_QUALITY_RATCHET === '1'

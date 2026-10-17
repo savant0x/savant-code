@@ -143,6 +143,28 @@ describe('lesson feature admission', () => {
     expect(issues).toContain('Duplicate feature identity')
   })
 
+  test('a proposal duplicating implemented work is refused and pointed at its owner (LF-006)', () => {
+    const { root, manifest, save } = fixture()
+    const implemented = {
+      ...manifest.features[0]!,
+      id: 'LF-900',
+      state: 'implemented' as const,
+      fid: 'FID-2026-1012-010',
+      commit: 'abcdef12',
+    }
+    fs.writeFileSync(
+      path.join(root, FEATURE_ARCHIVE),
+      JSON.stringify({ version: 1, features: [implemented] }),
+    )
+    // The same work proposed again under a NEW identity and a different case
+    // and punctuation, which the identity check alone cannot see.
+    manifest.features[0]!.title = 'preserve FETCHED evidence!'
+    save()
+    expect(reviewFeaturePipeline(root).issues).toContain(
+      "LF-001: Duplicates implemented work: LF-900 already owns 'preserve FETCHED evidence!' — cite it or narrow the gap",
+    )
+  })
+
   test('missing snapshots and outside evidence never gain admission', () => {
     const { root, manifest, save } = fixture()
     manifest.features[0]!.evidence[0]!.sha256 = undefined
