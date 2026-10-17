@@ -20,10 +20,15 @@ import {
 } from 'node:fs'
 import path from 'node:path'
 
+import { fidWorktreeRecordSchema } from '@savant-code/common/tools/params/tool/fid-worktree'
+
 import {
   FID_WORKTREE_RECORDS,
   fidWorktreeRecordPath,
-  isFidId,
+  fidWorktreePath,
+  fidWorktreeRelativePath,
+  fidBranchName,
+  pathCompareKey,
 } from './fid-worktree-git'
 
 export type FidWorktreeRecord = {
@@ -37,6 +42,8 @@ export type FidWorktreeRecord = {
   createdAt: string
   /** Main-checkout directories linked into the lane, repo-relative. */
   dependencyLinks: string[]
+  /** Stable slot: never renumber other live lanes after a disposal. */
+  worktreeIndex?: number
 }
 
 export type WorktreeFs = {
@@ -126,20 +133,19 @@ export function readFidWorktreeRecords(
     const raw = fs.read(path.join(directory, entry))
     if (raw === null) continue
     try {
-      const parsed = JSON.parse(raw) as FidWorktreeRecord
+      const result = fidWorktreeRecordSchema.safeParse(JSON.parse(raw))
+      if (!result.success) continue
+      const parsed = result.data
+      const expectedPath = fidWorktreePath(repoRoot, parsed.fidId)
       if (
-        typeof parsed.fidId === 'string' &&
-        isFidId(parsed.fidId) &&
-        typeof parsed.path === 'string' &&
-        typeof parsed.branch === 'string' &&
-        typeof parsed.baseSha === 'string'
+        expectedPath !== null &&
+        entry === `${parsed.fidId}.json` &&
+        parsed.relativePath === fidWorktreeRelativePath(parsed.fidId) &&
+        parsed.branch === fidBranchName(parsed.fidId) &&
+        pathCompareKey(path.resolve(parsed.path)) ===
+          pathCompareKey(path.resolve(expectedPath))
       ) {
-        records.push({
-          ...parsed,
-          dependencyLinks: Array.isArray(parsed.dependencyLinks)
-            ? parsed.dependencyLinks
-            : [],
-        })
+        records.push(parsed)
       }
     } catch {
       // A corrupt record is debris, never authority.

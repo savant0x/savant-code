@@ -193,12 +193,24 @@ describe('code search resolves the vendored binary (FID-2026-1016-012)', () => {
     'ripgrep',
   )
 
+  function assertPinnedVendoredResolution(resolved: string): void {
+    const target = resolvePlatformTarget()
+    const suffix = join(target.platformDir, target.binaryName)
+    // A built SDK can supply the same pinned asset through its dist export.
+    // Keep PATH binaries excluded and verify the actual bytes in both regimes.
+    expect([
+      join(vendorRoot, suffix),
+      join(vendorRoot, '..', '..', 'dist', 'vendor', 'ripgrep', suffix),
+    ]).toContain(resolved)
+    expect(sha256File(resolved)).toBe(PINNED_RIPGREP_SHA256[target.platformDir])
+  }
+
   test('the production call site resolves the pinned vendored rg', () => {
     if (!existsSync(vendorRoot)) {
       return // hermetic guard: full-checkout assertion only
     }
 
-    expect(resolveCodeSearchRipgrep().startsWith(vendorRoot)).toBe(true)
+    assertPinnedVendoredResolution(resolveCodeSearchRipgrep())
   })
 
   test('the default resolver base resolves the vendored rg, not a PATH rg', () => {
@@ -206,7 +218,7 @@ describe('code search resolves the vendored binary (FID-2026-1016-012)', () => {
       return // hermetic guard: full-checkout assertion only
     }
 
-    expect(getBundledRgPath().startsWith(vendorRoot)).toBe(true)
+    assertPinnedVendoredResolution(getBundledRgPath())
   })
 })
 

@@ -19,6 +19,12 @@ export const orchestrationToolSafetyEntries: Partial<
   Record<ToolName, ToolSafety>
 > = {
   // Agent orchestration
+  fid_worktree: {
+    effect: write,
+    permission: allow,
+    reason:
+      'Orchestrator-only FID lifecycle; derived paths, clean-merge and explicit-discard guards.',
+  },
   spawn_agents: {
     effect: mixed,
     permission: allow,

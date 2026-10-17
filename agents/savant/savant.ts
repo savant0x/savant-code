@@ -137,6 +137,7 @@ export function createSavant(
     // Code writing to source files is delegated to Forge (GREEN phase).
     toolNames: buildArray(
       'spawn_agents',
+      !analyzeOnly && !planOnly && 'fid_worktree',
       'read_files',
       'read_subtree',
       'recover_evidence',

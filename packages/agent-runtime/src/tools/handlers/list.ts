@@ -21,6 +21,7 @@ import { handleExecuteQuery } from './tool/database/execute-query'
 import { handleListTables } from './tool/database/list-tables'
 import { handleDeepResearch } from './tool/deep-research'
 import { handleEndTurn } from './tool/end-turn'
+import { handleFidWorktree } from './tool/fid-worktree'
 import { handleFindFiles } from './tool/find-files'
 import { handleGetGoal } from './tool/get-goal'
 import { handleGlob } from './tool/glob'
@@ -97,6 +98,7 @@ export const savantCodeToolHandlers: {
   end_turn: handleEndTurn,
   execute_query: handleExecuteQuery,
   find_files: handleFindFiles,
+  fid_worktree: handleFidWorktree,
   get_goal: handleGetGoal,
   glob: handleGlob,
   gravity_index: handleGravityIndex,

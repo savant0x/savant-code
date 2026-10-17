@@ -1,4 +1,6 @@
 .DS_Store
+# Operator-provided handoff export: keep original bytes local, never stage it.
+/freebuff-chat-2026-10-17T15-41-19.451Z.md
 .idea/
 .vercel
 

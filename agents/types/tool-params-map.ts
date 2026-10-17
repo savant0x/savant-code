@@ -3,6 +3,7 @@ import type * as Core from './tool-params-core'
 import type * as Database from './tool-params-database'
 import type * as Discovery from './tool-params-discovery'
 import type * as Research from './tool-params-research'
+import type { FidWorktreeInput } from '@savant-code/common/tools/params/tool/fid-worktree'
 
 export interface ToolParamsMap {
   add_message: Core.AddMessageParams
@@ -15,6 +16,7 @@ export interface ToolParamsMap {
   end_turn: Core.EndTurnParams
   execute_query: Database.ExecuteQueryParams
   find_files: Discovery.FindFilesParams
+  fid_worktree: FidWorktreeInput
   glob: Discovery.GlobParams
   gravity_index: Research.GravityIndexParams
   list_directory: Discovery.ListDirectoryParams

@@ -263,6 +263,10 @@ pass.
   Protocol: Detective finds issues, Forge implements, Verifier audits, Adversary
   refutes the audit, Recorder manages FIDs, Thinker reasons, Scout explores,
   Researcher investigates, Scribe documents.
+- **FID-bound worktrees** — explicit parallel checkouts with lane-local scope,
+  isolated command environments and refusal-only fast-forward integration.
+  The Orchestrator's `fid_worktree` tool and
+  [operator CLI](docs/design/parallel-worktrees.md) share the lifecycle.
 - **Thinker with sequential thinking** — the Thinker agent accumulates stacked
   reasoning steps via `sequentialthinking`, converges to a typed non-null
   `FinalArtifact` (status/synthesis/payload/metrics/thoughts), and never returns

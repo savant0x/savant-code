@@ -18,6 +18,7 @@ import {
 } from './params/tool/database'
 import { deepResearchParams } from './params/tool/deep-research'
 import { endTurnParams } from './params/tool/end-turn'
+import { fidWorktreeParams } from './params/tool/fid-worktree'
 import { findFilesParams } from './params/tool/find-files'
 import { getGoalParams } from './params/tool/get-goal'
 import { globParams } from './params/tool/glob'
@@ -78,6 +79,7 @@ export const toolParams = {
   end_turn: endTurnParams,
   execute_query: executeQueryParams,
   find_files: findFilesParams,
+  fid_worktree: fidWorktreeParams,
   glob: globParams,
   gravity_index: gravityIndexParams,
   list_directory: listDirectoryParams,

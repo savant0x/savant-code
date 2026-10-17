@@ -36,6 +36,7 @@
  *   carries no tier/mode branch.
  */
 
+import { resolveFidWorktreeJurisdiction } from './parallel/fid-worktree-jurisdiction'
 import { canonicalizePath } from './path-canonicalization'
 // FID-2026-1012-027: the parser moved to `./scope-targets` and is shared with
 // the surface-coverage audit, so the write gate and the audit cannot disagree
@@ -121,7 +122,13 @@ export function runLaw2Gate(params: {
   const artifact = loadScopeArtifact(params.scopePath)
   for (const raw of params.targets) {
     if (!raw) continue
-    const rel = toRepoRelative(raw)
+    const lane = resolveFidWorktreeJurisdiction(raw)
+    if (lane.managed && lane.blocked)
+      return { blocked: true, reason: lane.reason }
+    const rel = lane.managed ? lane.relative : toRepoRelative(raw)
+    const targetArtifact = lane.managed
+      ? loadScopeArtifact(lane.scopePath)
+      : artifact
     if (
       params.allowedWriteGlobs?.some(
         (layer) =>
@@ -137,9 +144,9 @@ export function runLaw2Gate(params: {
     // Jurisdiction boundary: a target outside cwd is not resolvable
     // against the register's repo-relative patterns (see module contract).
     if (rel === undefined) continue
-    if (!artifact.exists) continue
+    if (!targetArtifact.exists) continue
     if (isGovernanceExempt(rel)) continue
-    if (!artifact.patterns.some((p) => globToRegExp(p).test(rel))) {
+    if (!targetArtifact.patterns.some((p) => globToRegExp(p).test(rel))) {
       return {
         blocked: true,
         reason:

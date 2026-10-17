@@ -162,6 +162,45 @@ describe('provisionFidWorktree', () => {
     expect(fs.read(`${REPO}/.savant/worktrees/.records/${FID}.json`)).toBeNull()
   })
 
+  test('record-write failure rolls back the already-created checkout', () => {
+    const fs = memoryFs()
+    const git = memoryGit({
+      fs,
+      onCreateLane: (lane) => {
+        fs.dirs.add(lane)
+      },
+      onRemoveLane: (lane) => {
+        fs.removeDir(lane)
+      },
+    })
+    fs.write = () => {
+      throw new Error('disk full')
+    }
+    expect(
+      provisionFidWorktree({ repoRoot: REPO, fidId: FID, fs, run: git.runner }),
+    ).toMatchObject({
+      ok: false,
+      reason: 'git-failed',
+      detail: 'Lane initialization failed; checkout rolled back',
+    })
+    expect(fs.exists(LANE)).toBe(false)
+    expect(
+      git.calls.some(
+        (args) => args.join(' ') === `worktree remove --force ${LANE}`,
+      ),
+    ).toBe(true)
+  })
+
+  test('a failed dependency link is a visible warning on an otherwise usable lane', () => {
+    const { fs, options } = baseOptions()
+    fs.linkDir = () => false
+    const outcome = provisionFidWorktree(options)
+    expect(outcome.ok).toBe(true)
+    if (!outcome.ok) return
+    expect(outcome.record.dependencyLinks).toEqual([])
+    expect(outcome.warnings).toHaveLength(2)
+  })
+
   test('clears debris from a crashed run before adding the lane', () => {
     const fs = memoryFs()
     fs.dirs.add(LANE)

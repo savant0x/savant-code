@@ -225,6 +225,12 @@ export function classifyMutation(input: {
       : {}
   const toolName = input.toolName
 
+  // Host-owned integration changes tracked files just as a terminal merge
+  // does. Law 15 must reconcile it even though the merged tree is clean.
+  if (toolName === 'fid_worktree' && paramsRecord.action === 'merge') {
+    return { mutates: true, targets: [], scope: 'tree' }
+  }
+
   if (WRITE_PATH_TOOLS.has(toolName)) {
     const target = getTargetPath(paramsRecord)
     if (target !== undefined) {

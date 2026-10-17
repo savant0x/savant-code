@@ -53,6 +53,7 @@ export const toolNames = [
   'end_turn',
   'execute_query',
   'find_files',
+  'fid_worktree',
   'glob',
   'gravity_index',
   'list_directory',

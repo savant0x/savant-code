@@ -241,12 +241,19 @@ artifacts required by ECHO retain their gate-level exemptions.
   natively in both states. No live TUI session was run here (`tmux` absent).
 - FID-2026-1017-007: `packages/agent-runtime/src/echo/parallel/**`,
   `packages/agent-runtime/src/echo/pre-write-gates-law2.ts`,
+  `packages/agent-runtime/src/echo/enforcement/helpers.ts`,
   `packages/agent-runtime/src/tools/handlers/tool/fid-worktree.ts`,
   `packages/agent-runtime/src/__tests__/fid-worktree-*.test.ts`,
   `packages/agent-runtime/src/echo/__tests__/law2-worktree-jurisdiction.test.ts`,
   `common/src/tools/params/tool/fid-worktree.ts`,
   `common/src/tools/__tests__/fid-worktree-params.test.ts`,
-  `common/src/tools/list.ts`, `agents/savant/savant.ts`,
+  `common/src/tools/list.ts`, `common/src/tools/constants.ts`,
+  `common/src/tools/safety-registry-orchestration.ts`, `agents/types/tool-name.ts`,
+  `agents/types/tool-params-map.ts`,
+  `sdk/types/bun-sqlite.d.ts`, `.gitignore`, `.markdownlintignore`,
+  `sdk/examples/readme-example-2.ts`,
+  `sdk/src/__tests__/ripgrep.test.ts`,
+  `packages/agent-runtime/src/tools/handlers/list.ts`, `agents/savant/savant.ts`,
   `scripts/worktree.ts`, `scripts/probes/fid-worktrees.ts`,
   `docs/design/parallel-worktrees.md`, `SCOPE.md`, `CHANGELOG.md`, `README.md`
   (FID-bound parallel worktrees; targets release at closure.)

@@ -15,7 +15,14 @@ export class Database {
   exec(sql: string): void
   prepare(sql: string): Statement
   query(sql: string): Statement
-  close(): void
+  transaction<T extends (...params: never[]) => void>(
+    fn: T,
+  ): T & {
+    deferred: T
+    immediate: T
+    exclusive: T
+  }
+  close(throwOnError?: boolean): void
 }
 
 export interface DatabaseOptions {
@@ -23,6 +30,7 @@ export interface DatabaseOptions {
 }
 
 export interface Statement {
+  finalize(): void
   run(...params: unknown[]): RunResult
   all(...params: unknown[]): unknown[]
   get(...params: unknown[]): unknown

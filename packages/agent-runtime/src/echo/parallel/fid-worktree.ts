@@ -21,7 +21,7 @@ import {
   fidBranchName,
   fidWorktreePath,
   fidWorktreeRelativePath,
-  pathCompareKey,
+  fidWorktreeRecordPath,
   runGit,
   type GitRunner,
 } from './fid-worktree-git'
@@ -37,6 +37,8 @@ import {
 } from './fid-worktree-record'
 
 export type { FidWorktreeRecord, WorktreeFs } from './fid-worktree-record'
+export { listFidWorktrees } from './fid-worktree-list'
+export type { FidWorktreeListing } from './fid-worktree-list'
 export {
   FID_WORKTREE_RECORDS,
   FID_WORKTREE_ROOT,
@@ -51,6 +53,8 @@ export {
 const DEPENDENCY_LINK_CANDIDATES = [
   'node_modules',
   'cli/node_modules',
+  'agents/node_modules',
+  'scripts/tmux/node_modules',
   'common/node_modules',
   'sdk/node_modules',
   'evals/node_modules',
@@ -202,66 +206,52 @@ export function provisionFidWorktree(
     }
   }
 
-  const { links, warnings } = linkDependencies(repoRoot, lanePath, fs)
-  const record: FidWorktreeRecord = {
-    fidId,
-    path: lanePath,
-    relativePath: fidWorktreeRelativePath(fidId),
-    branch,
-    baseSha,
-    createdAt: new Date(now()).toISOString(),
-    dependencyLinks: links,
-  }
-  writeFidWorktreeRecord(repoRoot, record, fs)
+  try {
+    const { links, warnings } = linkDependencies(repoRoot, lanePath, fs)
+    const record: FidWorktreeRecord = {
+      fidId,
+      path: lanePath,
+      relativePath: fidWorktreeRelativePath(fidId),
+      branch,
+      baseSha,
+      createdAt: new Date(now()).toISOString(),
+      dependencyLinks: links,
+      worktreeIndex: (() => {
+        const used = new Set(
+          readFidWorktreeRecords(repoRoot, fs).map(
+            (item) => item.worktreeIndex,
+          ),
+        )
+        let index = 1
+        while (used.has(index)) index += 1
+        return index
+      })(),
+    }
+    writeFidWorktreeRecord(repoRoot, record, fs)
 
-  // Second cap read after the record write: two concurrent provisions can both
-  // pass the pre-check, so the loser rolls its lane back instead of leaving an
-  // over-cap checkout behind.
-  if (activeFidWorktreeRecords(repoRoot, fs).length > maxActive) {
-    disposeFidWorktree({ repoRoot, fidId, fs, run })
+    // Second cap read after the record write: two concurrent provisions can both
+    // pass the pre-check, so the loser rolls its lane back instead of leaving an
+    // over-cap checkout behind.
+    if (activeFidWorktreeRecords(repoRoot, fs).length > maxActive) {
+      disposeFidWorktree({ repoRoot, fidId, fs, run })
+      return {
+        ok: false,
+        reason: 'cap-exceeded',
+        detail: `active FID worktrees would exceed the cap of ${maxActive}`,
+      }
+    }
+
+    return { ok: true, record, warnings }
+  } catch {
+    const cleanup = disposeFidWorktree({ repoRoot, fidId, fs, run })
     return {
       ok: false,
-      reason: 'cap-exceeded',
-      detail: `active FID worktrees would exceed the cap of ${maxActive}`,
+      reason: 'git-failed',
+      detail: cleanup.removed
+        ? 'Lane initialization failed; checkout rolled back'
+        : 'Lane initialization failed; cleanup failed and the lane needs inspection',
     }
   }
-
-  return { ok: true, record, warnings }
-}
-
-export type FidWorktreeListing = {
-  record: FidWorktreeRecord
-  registered: boolean
-  dirty: boolean
-}
-
-export function listFidWorktrees(options: {
-  repoRoot: string
-  fs?: WorktreeFs
-  run?: GitRunner
-}): FidWorktreeListing[] {
-  const fs = options.fs ?? defaultWorktreeFs
-  const run = options.run ?? defaultGitRunner
-  const listed = runGit(
-    run,
-    ['worktree', 'list', '--porcelain'],
-    options.repoRoot,
-  )
-  const registered = new Set<string>()
-  if (listed.status === 0) {
-    for (const line of listed.stdout.split('\n')) {
-      if (line.startsWith('worktree '))
-        registered.add(pathCompareKey(line.slice(9).trim()))
-    }
-  }
-  return readFidWorktreeRecords(options.repoRoot, fs).map((record) => {
-    const status = runGit(run, ['status', '--porcelain'], record.path)
-    return {
-      record,
-      registered: registered.has(pathCompareKey(record.path)),
-      dirty: status.status === 0 && status.stdout.trim().length > 0,
-    }
-  })
 }
 
 export type DisposeOutcome = {
@@ -305,5 +295,9 @@ export function disposeFidWorktree(options: {
     warnings.push(`git worktree prune reported ${describeGitResult(pruned)}`)
   }
   deleteFidWorktreeRecord(repoRoot, fidId, fs)
+  if (fs.exists(path.join(repoRoot, fidWorktreeRecordPath(fidId))))
+    warnings.push(
+      `Checkout removed but ${fidId} record survived; inspect before retrying`,
+    )
   return { removed: !fs.exists(lanePath), warnings }
 }
