@@ -12,6 +12,22 @@
 > the v0.0.36 cut. Release notes are written here at cut time; nothing in this
 > section is a package-release claim until then.
 
+## 2026-10-17 — Workflow comparison research (FID-2026-1017-003, low; verified progress)
+
+Added equal-final-brief comparisons for consolidated investigation, independent
+fan-out and the dependent research chain. Real Apixo `gpt-6.1-sol` results:
+41.230 s / one send, 90.202 s / four, and 91.603 s / four, respectively. All
+selected evidence checks passed; the fastest draft was rejected semantically
+for proposing that stale costs be ignored. Fan-out's timing difference is
+inconclusive. Actual tool-result bytes are now required for every assigned
+source, rather than attempted read paths alone. Twenty-five controls pass.
+
+Prepared a fresh draft/review candidate and documented its host safety contract
+and implementation map in `docs/design/parallel-workflow-decision.md`. The
+60-request ceiling is exhausted; four additional sends were requested and
+remain blocked pending operator allowance. No production workflow installation,
+speedup guarantee, extra paid dispatch or FID closure is claimed.
+
 ## 2026-10-17 — Validated parallel handoffs (FID-2026-1017-002, low)
 
 The isolated research scheduler now validates a complete returned wave before

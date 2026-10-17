@@ -1,10 +1,16 @@
 import { expect, test } from 'bun:test'
 
-import { bindDraft, citationCatalog, validateEvidence } from './evidence'
+import {
+  bindDraft,
+  citationCatalog,
+  validateEvidence,
+  verifiedReadPaths,
+} from './evidence'
 import { draftSchema, handoffOf } from './types'
 import { ASSIGNMENTS } from './workload'
 
 import type { ArtifactDraft, Assignment } from './types'
+import type { Message } from '@savant-code/common/types/messages/savant-code-message'
 
 const assignment: Assignment = {
   id: 'A',
@@ -153,4 +159,64 @@ test('downstream investigation can read every transitive predecessor source', ()
       if (!predecessor) throw new Error('Unknown test predecessor')
       for (const file of predecessor.files) expect(task.files).toContain(file)
     }
+})
+
+test('only successful source-matching read receipts count as observed reads', () => {
+  const read: Message = {
+    role: 'tool',
+    toolName: 'read_files',
+    toolCallId: 'actual-read',
+    content: [
+      {
+        type: 'json',
+        value: [
+          {
+            path: 'C:\\repo\\a.ts',
+            content: sources['a.ts'].replaceAll('\r\n', '\n'),
+          },
+          { path: 'b.ts', content: 'partial' },
+          { path: 'c.ts', error: 'File unavailable' },
+        ],
+      },
+    ],
+  }
+  expect(
+    verifiedReadPaths(
+      [read],
+      { ...sources, 'b.ts': 'complete source', 'c.ts': 'source' },
+      'C:/repo',
+    ),
+  ).toEqual(['a.ts'])
+  const attempted: Message = {
+    role: 'assistant',
+    content: [
+      {
+        type: 'tool-call',
+        toolName: 'read_files',
+        toolCallId: 'attempt',
+        input: { paths: ['a.ts'] },
+      },
+    ],
+  }
+  expect(verifiedReadPaths([attempted], sources, 'C:/repo')).toEqual([])
+  expect(
+    verifiedReadPaths(
+      [{ ...read, toolName: 'other_tool' }],
+      sources,
+      'C:/repo',
+    ),
+  ).toEqual([])
+})
+
+test('uncited assigned files must also have verified read receipts', () => {
+  const bound = bindDraft(draft, assignment, [], sources, ['a.ts'])
+  expect(
+    validateEvidence(
+      bound,
+      { ...assignment, files: ['a.ts', 'b.ts'] },
+      [],
+      sources,
+      ['a.ts'],
+    ),
+  ).toContain('Missing verified source read: b.ts')
 })

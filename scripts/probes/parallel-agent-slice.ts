@@ -17,11 +17,17 @@ import { SliceStore } from './parallel-agent-slice/store'
 import { installRequestGuard } from './parallel-agent-slice/transport'
 import { handoffOf } from './parallel-agent-slice/types'
 import {
+  comparisonWorkflows,
+  FINAL_BRIEF,
+  reviewedWorkflows,
+} from './parallel-agent-slice/workflows'
+import {
   ASSIGNMENTS,
   captureSources,
   sourceDigest,
 } from './parallel-agent-slice/workload'
 
+import type { WorkflowPlan } from './parallel-agent-slice/workflows'
 import type { JSONValue } from '@savant-code/common/types/json'
 
 const MAX_REQUESTS = 60
@@ -50,6 +56,24 @@ async function main(): Promise<void> {
     }).parse(JSON.parse(line))
   if (previous.length >= MAX_REQUESTS)
     throw new Error('Experiment cumulative request budget exhausted')
+  const reviewWorkflows = process.argv.includes('--review-workflows')
+  const compareWorkflows =
+    process.argv.includes('--workflows') || reviewWorkflows
+  const plans: WorkflowPlan[] = compareWorkflows
+    ? reviewWorkflows
+      ? reviewedWorkflows()
+      : comparisonWorkflows()
+    : ['batch', 'completion'].map((mode) => ({
+        id: mode,
+        mode: mode === 'batch' ? 'batch' : 'completion',
+        assignments: ASSIGNMENTS,
+      }))
+  const minimumSends = plans.reduce(
+    (sum, plan) => sum + plan.assignments.length,
+    0,
+  )
+  if (compareWorkflows && MAX_REQUESTS - previous.length < minimumSends)
+    throw new Error('Insufficient remaining budget for workflow comparison')
   const catalog = await fetch('https://api.apixoai.online/v1/models', {
     signal: AbortSignal.timeout(15000),
   })
@@ -70,7 +94,8 @@ async function main(): Promise<void> {
   if (!contextWindow)
     throw new Error('Catalog omitted the selected context window')
   const directory = mkdtempSync(path.join(research, 'parallel-agent-slice-'))
-  const sources = captureSources(root, ASSIGNMENTS)
+  const capturedAssignments = plans.flatMap((plan) => plan.assignments)
+  const sources = captureSources(root, capturedAssignments)
   const fingerprint = sourceDigest(sources)
   const controller = new AbortController()
   const timer = setTimeout(
@@ -95,22 +120,32 @@ async function main(): Promise<void> {
     sourceDigest: string
     limits: JSONValue
     modes: JSONValue[]
+    plans: JSONValue
+    finalBrief: string | null
     error?: string
   } = {
-    profile: 'host-reference-evidence-v3',
+    profile: reviewWorkflows
+      ? 'reviewed-workflow-v5'
+      : compareWorkflows
+        ? 'workflow-comparison-v4'
+        : 'host-reference-evidence-v3',
     provider: 'apixo',
     model: 'gpt-6.1-sol',
     sourceDigest: fingerprint,
+    plans: JSON.parse(JSON.stringify(plans)),
+    finalBrief: compareWorkflows ? FINAL_BRIEF : null,
     limits: {
       cumulativeRequests: MAX_REQUESTS,
       concurrency: 2,
       maxRunMs: MAX_RUN_MS,
       outputTokens: 4000,
+      citationMaximum: compareWorkflows ? 8 : 4,
     },
     modes: [],
   }
   try {
-    for (const mode of ['batch', 'completion'] as const) {
+    for (const plan of plans) {
+      const mode = plan.id
       const histories: JSONValue[] = []
       const store = new SliceStore(
         path.join(directory, `${mode}.sqlite`),
@@ -123,10 +158,16 @@ async function main(): Promise<void> {
           `Starting ${mode}; ${MAX_REQUESTS - previous.length - guard.records.length} inference requests remain`,
         )
         const results = await runSchedule({
-          mode,
-          assignments: ASSIGNMENTS,
+          mode: plan.mode,
+          assignments: plan.assignments,
           store,
-          runBatch: createSdkBatch(root, sources, histories, contextWindow),
+          runBatch: createSdkBatch(
+            root,
+            sources,
+            histories,
+            contextWindow,
+            compareWorkflows ? 8 : 4,
+          ),
           validateResult: (result, assignment, handoffs) => {
             const failures = validateEvidence(
               result.artifact,
@@ -157,6 +198,8 @@ async function main(): Promise<void> {
         }))
         report.modes.push({
           mode,
+          schedule: plan.mode,
+          finalTaskId: plan.finalTaskId ?? 'D',
           status: 'completed',
           elapsedMs: Date.now() - startedAt,
           requestCount: guard.records.length - requestStart,
@@ -180,7 +223,7 @@ async function main(): Promise<void> {
           requestCount: guard.records.length - requestStart,
           historyDigest: historyDigest(histories),
           canonicalOwner: { ...store.owner() },
-          tasks: ASSIGNMENTS.map((task) => ({ ...store.task(task.id) })),
+          tasks: plan.assignments.map((task) => ({ ...store.task(task.id) })),
         })
         console.log(`${mode} rejected: ${message}`)
         process.exitCode = 1
@@ -192,7 +235,9 @@ async function main(): Promise<void> {
         )
         store.close()
       }
-      if (sourceDigest(captureSources(root, ASSIGNMENTS)) !== fingerprint)
+      if (
+        sourceDigest(captureSources(root, capturedAssignments)) !== fingerprint
+      )
         throw new Error('Repository source changed during comparison')
     }
   } catch (error) {

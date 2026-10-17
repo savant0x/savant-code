@@ -179,7 +179,22 @@ asynchronous contract is defined. The control suite proves early release under
 controlled ordering; representative live work with an independently slower
 branch is still needed to measure useful overlap. No synthetic delay was used.
 
-Current cumulative inference use is 51/60: 38 original, five rejected v2,
+At the end of this continuation, cumulative inference use was 51/60: 38 original, five rejected v2,
 eight successful v3. Nine remain unused; no new run is needed to establish
 this mechanical information-flow result. Monetary cost remains unmeasured.
 This is an isolated research harness, not a production readiness verdict.
+
+## Workflow comparison continuation
+
+The operator then authorized broader workflow/intra-agent investigation.
+`--live --workflows` compares fused, independent fan-out and dependent-chain
+investigation with the same final brief. Its nine sends completed the original
+60-request allowance. Fused took 41.230 s but proposed unsafe cost handling;
+flat took 90.202 s and chain 91.603 s, with no clear timing advantage.
+
+The prepared `--live --review-workflows` candidate uses two fresh draft/review
+trials and requires four additional sends. It is blocked at the existing
+ceiling pending operator allowance. Results, common semantic review, source-read
+receipt checks and the build contract are in
+[the workflow decision](parallel-workflow-decision.md). No additional send has
+been made and no production workflow is installed.

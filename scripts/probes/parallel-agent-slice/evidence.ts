@@ -1,6 +1,43 @@
 import { artifactSchema } from './types'
 
 import type { Artifact, ArtifactDraft, Assignment, Handoff } from './types'
+import type { Message } from '@savant-code/common/types/messages/savant-code-message'
+
+/** A requested read is not evidence that the tool returned the captured bytes. */
+export function verifiedReadPaths(
+  messages: Message[],
+  sources: Record<string, string>,
+  root: string,
+): string[] {
+  const paths = new Set<string>()
+  for (const message of messages) {
+    if (message.role !== 'tool' || message.toolName !== 'read_files') continue
+    for (const part of message.content) {
+      if (part.type !== 'json' || !Array.isArray(part.value)) continue
+      for (const entry of part.value) {
+        if (
+          !entry ||
+          typeof entry !== 'object' ||
+          Array.isArray(entry) ||
+          typeof entry.path !== 'string' ||
+          typeof entry.content !== 'string'
+        )
+          continue
+        const file = entry.path
+          .replaceAll('\\', '/')
+          .replace(`${root.replaceAll('\\', '/')}/`, '')
+        const expected = sources[file]
+        if (
+          expected !== undefined &&
+          entry.content.replaceAll('\r\n', '\n') ===
+            expected.replaceAll('\r\n', '\n')
+        )
+          paths.add(file)
+      }
+    }
+  }
+  return [...paths]
+}
 
 /** Explicit references avoid asking a model to reproduce evidence metadata. */
 export function citationCatalog(
@@ -71,6 +108,9 @@ export function validateEvidence(
   if (!parsed.success) return ['Invalid artifact schema']
   const failures: string[] = []
   if (artifact.taskId !== assignment.id) failures.push('Wrong task identity')
+  for (const file of assignment.files)
+    if (!readPaths.includes(file))
+      failures.push(`Missing verified source read: ${file}`)
   for (const citation of artifact.citations) {
     const source = sources[citation.path]
     if (source === undefined || !assignment.files.includes(citation.path)) {

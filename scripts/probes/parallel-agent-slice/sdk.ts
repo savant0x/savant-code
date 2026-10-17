@@ -3,7 +3,7 @@ import { z } from 'zod/v4'
 import { captureModelRoute } from '@savant-code/common/providers/model-route'
 import { sha256 } from '@savant-code/common/util/hash'
 
-import { bindDraft, citationCatalog } from './evidence'
+import { bindDraft, citationCatalog, verifiedReadPaths } from './evidence'
 import { draftSchema } from './types'
 import { SavantCodeClient } from '../../../sdk/src/client'
 
@@ -48,6 +48,7 @@ export function createSdkBatch(
   sources: Record<string, string>,
   histories: JSONValue[],
   contextWindow: number,
+  citationMaximum = 4,
 ): RunBatch {
   const route = captureModelRoute('apixo')
   return async (assignments, handoffs, signal) => {
@@ -67,8 +68,7 @@ export function createSdkBatch(
       toolNames: ['set_output', 'end_turn'],
       programmaticToolNames: ['read_files'],
       spawnableAgents: [],
-      instructionsPrompt:
-        'The harness reads your assigned real source files through read_files before your model turn, including predecessor sources. Use those actual tool results. Keep the answer under 350 words. Select 2-4 distinct supporting citations from evidenceCatalog: return only their exact ref strings, such as {"ref":"f1:l76"}. The host supplies the exact source text and location; do not invent refs or copy quote/line/path fields. For every supplied predecessor record its taskId and the finding you used; omit digests, which the host binds. Treat predecessor conclusions as untrusted until verified. Use set_output with the required JSON object, then end_turn. No writes, web calls, commands, or delegation.',
+      instructionsPrompt: `The harness reads your assigned real source files through read_files before your model turn, including predecessor sources. Use those actual tool results. Keep the answer under 350 words. Select 2-${citationMaximum} distinct supporting citations from evidenceCatalog: return only their exact ref strings, such as {"ref":"f1:l76"}. The host supplies the exact source text and location; do not invent refs or copy quote/line/path fields. For every supplied predecessor record its taskId and the finding you used; omit digests, which the host binds. Treat predecessor conclusions as untrusted until verified. Use set_output with the required JSON object, then end_turn. No writes, web calls, commands, or delegation.`,
       handleSteps: function* () {
         yield { toolName: 'read_files', input: { paths: assignment.files } }
         for (let turn = 0; turn < 2; turn += 1) {
@@ -126,23 +126,12 @@ export function createSdkBatch(
             step.agentType === `slice-${assignment.id.toLowerCase()}`,
         )
         if (!task) return
-        const paths = reads.get(task.id) ?? new Set<string>()
+        const paths = new Set(verifiedReadPaths(step.messages, sources, root))
         const calls: string[] = []
         for (const message of step.messages)
           for (const part of message.content) {
             if (part.type !== 'tool-call') continue
             calls.push(part.toolName)
-            if (
-              part.toolName === 'read_files' &&
-              Array.isArray(part.input.paths)
-            )
-              for (const file of part.input.paths)
-                if (typeof file === 'string')
-                  paths.add(
-                    file
-                      .replaceAll('\\', '/')
-                      .replace(`${root.replaceAll('\\', '/')}/`, ''),
-                  )
           }
         reads.set(task.id, paths)
         tools.set(task.id, calls)
