@@ -3,8 +3,9 @@
 **Filename:** `FID-2026-1017-007-fid-bound-parallel-worktrees.md`
 **ID:** FID-2026-1017-007
 **Severity:** high
-**Status:** converged
+**Status:** closed
 **Created:** 2026-10-17 15:10
+**Archived:** 2026-10-17
 **Automation level:** 3
 **YAGNI-Compliance:** Verified — reuses git's own worktree primitive, the
 recorded release-checkout lifecycle (`scripts/public-release/clean-checkout.ts`),
@@ -80,7 +81,7 @@ in) and **FID worktree** (a linked checkout, `git worktree add`). No existing
 - `fid_worktree create --fid <id>` provisions
   `<repoRoot>/.savant/worktrees/<fidId>` on branch `savant/<fidId>` from the
   current `HEAD`, self-heals debris from an earlier crashed run, refuses when
-  the FID already has a worktree, when the branch exists at a different base, or
+  the FID already has a worktree, when the branch has diverged from the base, or
   when the active cap is reached, and returns the absolute path plus a marker
   record. `node_modules` is linked, never installed.
 - Writes inside a managed FID worktree pass the Law 2 gate as their
@@ -94,8 +95,8 @@ in) and **FID worktree** (a linked checkout, `git worktree add`). No existing
   base; otherwise it refuses with the divergence named and leaves the worktree
   intact. Conflicts refuse; nothing is auto-resolved.
 - `fid_worktree dispose` issues `git worktree remove --force`, verifies the
-  directory is gone, falls back to a bounded filesystem removal only when git
-  reported success while files survived (the Windows lock class), then
+  directory is gone, falls back to bounded filesystem removal for surviving
+  files or unregistered debris under the derived managed root, then
   `git worktree prune`; every failure is a structured warning, never a throw
   that hides the removal state.
 - A worktree never appears in `git status` of the main checkout: the managed
@@ -175,12 +176,13 @@ real, and none of it is claimed here.
 **Worktree seam** (`packages/agent-runtime/src/echo/parallel/fid-worktree-git.ts`):
 
 ```ts
-export type GitRun = (args: readonly string[], cwd: string) => {
+export type GitResult = {
   status: number | null
   stdout: string
   stderr: string
 }
-export function runGit(run: GitRun, args: readonly string[], cwd: string): GitRun
+export type GitRunner = (args: readonly string[], cwd: string) => GitResult
+export function runGit(run: GitRunner, args: readonly string[], cwd: string): GitResult
 ```
 
 **Lifecycle** (`.../fid-worktree.ts`):
@@ -198,6 +200,7 @@ export type FidWorktreeRecord = {
   baseSha: string
   createdAt: string
   dependencyLinks: string[]
+  worktreeIndex?: number // stable positive slot; never renumber live lanes
 }
 
 export type ProvisionOutcome =
@@ -243,22 +246,22 @@ not gain jurisdiction.
    parses `git worktree list --porcelain` and joins records. — implemented
 4. **Law 2 jurisdiction** — map managed worktree targets to repo-relative
    paths and read the worktree register; pin that a hand-made directory and an
-   unlisted worktree gain nothing. — pending
+   unlisted worktree gain nothing. — implemented
 5. **Tool surface** — `fid_worktree` (create/list/dispose/merge) schema in
    `common`, handler in the runtime, registered in `common/src/tools/list.ts`
    and only the Orchestrator's `toolNames`; refusals are typed results, never
-   thrown. — pending
+   thrown. — implemented
 6. **Merge gate** — `merge-tree` dry run + fast-forward-only merge with the
-   divergence and conflict refusals above. — pending
+   divergence and conflict refusals above. — implemented
 7. **Environment isolation** — inject `SAVANT_WORKTREE_ROOT`,
-   `WORKTREE_INDEX` (sorted index), `PORT`/`DATABASE_URL`/`COMPOSE_PROJECT_NAME`
+   `WORKTREE_INDEX` (persisted lowest-free positive slot), `PORT`/`DATABASE_URL`/`COMPOSE_PROJECT_NAME`
    offsets, and copy `.savant/graph.db` into the worktree when present; re-index
-   the golden graph only after a successful merge. — pending
+   the golden graph only after a successful merge. — implemented
 8. **Operator CLI + probe + docs** — `scripts/worktree.ts` mirrors the tool for
    terminal use; `scripts/probes/fid-worktrees.ts` provisions, merges and
    disposes a throwaway FID against a temp repo; document the lifecycle in
    `docs/design/parallel-worktrees.md`; CHANGELOG and README updated at closure.
-   — pending
+   — implemented
 
 ### Verification
 
@@ -285,15 +288,41 @@ Exposure: `packages/agent-runtime/src/__tests__/fid-worktree-provision.test.ts`,
 
 ## Verification Gates
 
-- gate: typecheck agent-runtime
+- gate: typecheck packages/agent-runtime
 - gate: typecheck common
+- gate: typecheck sdk
+- gate: typecheck agents
 - gate: test packages/agent-runtime/src/__tests__/fid-worktree-provision.test.ts
 - gate: test packages/agent-runtime/src/__tests__/fid-worktree-dispose.test.ts
 - gate: test packages/agent-runtime/src/__tests__/fid-worktree-merge.test.ts
 - gate: test packages/agent-runtime/src/echo/__tests__/law2-worktree-jurisdiction.test.ts
 - gate: test common/src/tools/__tests__/fid-worktree-params.test.ts
+- gate: test sdk/src/__tests__/ripgrep.test.ts
+- gate: test packages/agent-runtime/src/__tests__/fid-worktree-environment.test.ts
+- gate: test packages/agent-runtime/src/__tests__/fid-worktree-tool.test.ts
 - gate: probe scripts/probes/fid-worktrees.ts
+- gate: probe scripts/scripts-typecheck-check.ts
 - gate: quality
+
+### Verification Receipt
+
+- fingerprint: sha256:75d0502f64e7444a746173666c0885dbf861e9938e7769442454ad24fd1183f0
+- verified: 2026-10-17T20:05:26.111Z
+- typecheck packages/agent-runtime: exit 0
+- typecheck common: exit 0
+- typecheck sdk: exit 0
+- typecheck agents: exit 0
+- test packages/agent-runtime/src/__tests__/fid-worktree-provision.test.ts: exit 0
+- test packages/agent-runtime/src/__tests__/fid-worktree-dispose.test.ts: exit 0
+- test packages/agent-runtime/src/__tests__/fid-worktree-merge.test.ts: exit 0
+- test packages/agent-runtime/src/echo/__tests__/law2-worktree-jurisdiction.test.ts: exit 0
+- test common/src/tools/__tests__/fid-worktree-params.test.ts: exit 0
+- test sdk/src/__tests__/ripgrep.test.ts: exit 0
+- test packages/agent-runtime/src/__tests__/fid-worktree-environment.test.ts: exit 0
+- test packages/agent-runtime/src/__tests__/fid-worktree-tool.test.ts: exit 0
+- probe scripts/probes/fid-worktrees.ts: exit 0
+- probe scripts/scripts-typecheck-check.ts: exit 0
+- quality: exit 0
 
 ## Perfection Loop
 
@@ -424,31 +453,93 @@ Exposure: `packages/agent-runtime/src/__tests__/fid-worktree-provision.test.ts`,
   false guarantee.
 - **CHANGE DELTA:** ~4% (cap re-check, link warning, gate list).
 
+### Loop 4 — Handoff contract reconciliation
+
+- **RED:** Steps 1–3 exist at `7618b5b4`, despite the old Resolution wording.
+  Record JSON is cast without full validation; sorted indices would move when
+  another lane disappears. Missing lane scope, symlink escapes and dirty merges
+  need explicit refusal pins before the remaining consumers can be trusted.
+- **GREEN:** Validate records against derived paths and git registration; map
+  scope from either main or lane cwd and fail closed for absent lane scope.
+  Persist lowest-free positive slots. Serialize host lifecycle mutations.
+  Expose the same service through the Orchestrator tool and CLI; explicit CLI
+  `exec` injects lane cwd/environment without changing the host environment.
+  Child file tools use absolute lane paths. No automatic spawn routing is
+  claimed. Snapshot SQLite including WAL; refresh main only after merge.
+- **AUDIT:** Gate and scope lists extended for the concrete registry, tool and
+  environment consumers. Existing scope pins cover normal cwd behavior; new
+  tests exercise managed/unmanaged lanes, refusal cases and real git/SQLite.
+- **ADVERSARIAL:** A directory is not a sandbox. Explicit cwd/environment cannot
+  prevent a shell from reaching absolute host paths. Keep this stated limit;
+  preserve refused lanes and report post-merge graph failure as a warning on a
+  successful merge, never as a fictional rollback.
+- **CHANGE DELTA:** Contract clarification only; all eight steps retained.
+
 ### Code Verification Evidence
 
-- [ ] Files referenced in Affected Components exist
-- [ ] Implementation matches the Proposed Solution
-- [ ] Typecheck/tests/lint pass with pasted tool output
-- [ ] Production call-graph evidence is present for new or repaired wiring
-- [ ] FID status reflects the actual implementation state
+- [x] Files referenced in Affected Components exist
+- [x] Implementation matches the Proposed Solution
+- [x] Typecheck/tests/lint pass with pasted tool output
+- [x] Production call-graph evidence is present for new or repaired wiring
+- [x] FID status reflects the actual implementation state
 
 ## Step Status
 
 - [x] Step 1 — Git seam + naming rule — implemented
 - [x] Step 2 — Provision — implemented
 - [x] Step 3 — Dispose + list — implemented
-- [ ] Step 4 — Law 2 worktree jurisdiction — operator-approved 2026-10-17
-- [ ] Step 5 — `fid_worktree` tool surface — operator-approved 2026-10-17
-- [ ] Step 6 — Merge gate — operator-approved 2026-10-17
-- [ ] Step 7 — Environment isolation — operator-approved 2026-10-17
-- [ ] Step 8 — Operator CLI, probe, docs — operator-approved 2026-10-17
+- [x] Step 4 — Law 2 worktree jurisdiction — implemented
+- [x] Step 5 — `fid_worktree` tool surface — implemented
+- [x] Step 6 — Merge gate — implemented
+- [x] Step 7 — Environment isolation — implemented
+- [x] Step 8 — Operator CLI, probe, docs — implemented
 
 ## Resolution
 
-Implementation not started. This record converges the contract only; the
-Resolution fields are filled when every step is implemented and every declared
-gate passes. No worktree capability, isolation guarantee or speedup is claimed
-at this status.
+Implemented and verified at `11dd667d`, completing the lifecycle foundation
+from `7618b5b4`. All eight steps are delivered. The Orchestrator tool and
+operator CLI share `runFidWorktreeAction`; explicit child paths and CLI `exec`
+select the lane. There is no automatic spawn rerouting or scheduler.
+
+Production wiring, rechecked against committed code:
+
+```text
+common/src/tools/list.ts:82                         fid_worktree: fidWorktreeParams
+agents/savant/savant.ts:140                         !analyzeOnly && !planOnly && 'fid_worktree'
+packages/agent-runtime/src/tools/handlers/list.ts:101 fid_worktree: handleFidWorktree
+packages/agent-runtime/src/tools/handlers/tool/fid-worktree.ts:22
+                                                    await runFidWorktreeAction(...)
+packages/agent-runtime/src/echo/pre-write-gates-law2.ts:125
+                                                    resolveFidWorktreeJurisdiction(raw)
+packages/agent-runtime/src/echo/enforcement/helpers.ts:230
+                                                    fid_worktree merge => tree mutation
+scripts/worktree.ts                                 runFidWorktreeAction + buildChildEnv(lane overrides)
+```
+
+All 15 declared entries in the Verification Receipt are `exit 0`: four
+workspace typechecks, eight test suites, the real-git/SQLite probe, the
+scripts-tree typecheck probe and quality. Additional repository gates completed:
+
+```text
+bun run typecheck                 exit 0 (14 workspaces + scripts)
+bun run test                      exit 0 (full root workspace chain)
+bun run ci                        exit 0 (ESM, CJS, SDK declaration bundle)
+bun x eslint . --max-warnings 0   exit 0
+bun run lint:md                   exit 0
+bun x prettier --check .          exit 0
+bun run validate:repository       validation: PASS
+```
+
+Real probe output:
+
+```text
+PASS — two isolated lanes, lane scope, WAL snapshot, CLI fast-forward, graph refresh, divergence refusal, dispose and self-heal held
+```
+
+The receipt records verification before closure; the status/archive and
+resolution edits change the document fingerprint by design. Root test logs
+and the handoff continuation are retained under `dev/session-summaries/`.
+No live multi-agent inference, throughput benchmark or sandbox claim is made.
 
 ## Known Limits
 
@@ -460,10 +551,17 @@ at this status.
   correctness and pre-audit containment.
 - The knowledge graph is copied per lane and re-indexed after merge; concurrent
   indexing of many lanes is not attempted.
+- Runtime provenance, graph queries and verification use their caller's project
+  root. Run the CLI/SDK rooted in the lane for that bookkeeping; absolute paths
+  alone do not rebind a child spawned on main. Content hashes survive merge,
+  but receipt path identity still requires the correct lane project context.
 
 ## Lessons Learned
 
-Pending implementation. The design lesson to re-check at closure: a write
-boundary that is not a filesystem boundary is an assumption, and every module
-that resolves paths (the register gate first) has to learn the new boundary or it
-silently does the wrong thing.
+A write boundary needs both a filesystem mapping and its own scope register;
+neither a JSON record nor a directory name grants authority. Persist execution
+slots instead of sorting live lanes, snapshot SQLite with committed WAL pages,
+and keep provider secrets behind the existing child-environment allowlist.
+Real git tests need an explicit process budget under full-suite load. SDK
+resolver tests must accept the source and built vendor paths while checking
+the pinned bytes; a build is not a reason to fall back to PATH.

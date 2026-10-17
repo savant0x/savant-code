@@ -25,6 +25,12 @@ Forge, Scout, Verifier and Adversary do not. The handler also checks the role.
 5. Request `merge`, inspect the result, then `dispose` after acceptance.
    Merge never disposes automatically; refused lanes survive for inspection.
 
+For the complete runtime bookkeeping, launch the CLI/SDK with its project
+root set to the lane (CLI `exec` supplies that cwd). Absolute lane paths from
+a child still rooted on main permit scoped file access, but do not rebind
+provenance, graph-query or verification contexts. Those callers must select
+the lane as their project root; this tool does not rewrite spawn contexts.
+
 `list` reports the FID, branch, recorded base SHA, creation time, dependency
 links, stable execution slot, git registration and dirty state. Disposal
 refuses uncommitted changes unless `discard_changes: true` explicitly permits
