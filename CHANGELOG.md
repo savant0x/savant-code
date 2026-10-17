@@ -12,6 +12,25 @@
 > the v0.0.36 cut. Release notes are written here at cut time; nothing in this
 > section is a package-release claim until then.
 
+## 2026-10-17 — Live parallel-agent research slice (FID-2026-1017-001, low)
+
+Added an isolated executable comparison using the actual SDK, spawn handler,
+source-read tools, Apixo `gpt-6.1-sol`, and experiment-owned SQLite. The store
+checks duplicate delivery, transactional consumption, cancellation generations,
+and interrupted attempts; transport caps actual sends and holds concurrency
+permits through stream completion. Five declared gates pass, including ten
+control tests. Implementation: `8244dc9c`.
+
+Both real four-task schedules completed: batch 233.895 s, completion 166.292 s,
+four inference sends each. B finished before A in both modes, leaving no
+early-release opportunity; the timing difference establishes no scheduling gain.
+Batch failed 13 quotation checks; completion failed seven quotation checks and
+one exact handoff digest. The report retains those failures. The runner now
+returns a failing exit status for failed evidence after preserving both modes.
+Total inference use, including earlier upstream failures: 38 of 60 permitted
+sends. No measured dollar cost or production-readiness claim is made.
+Reproduction, results, and limitations: `docs/design/parallel-agent-slice.md`.
+
 ## 2026-10-17 — The trusted skill catalog and its trigger cases are reconciled (FID-2026-1016-019, medium)
 
 Five failures in the evals lane were pre-existing but sat inside the pre-push test chain, so they refused
