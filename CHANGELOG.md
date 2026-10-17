@@ -12,6 +12,27 @@
 > the v0.0.36 cut. Release notes are written here at cut time; nothing in this
 > section is a package-release claim until then.
 
+## 2026-10-17 — Bounded research spawn contract (FID-2026-1017-004, medium)
+
+`spawn_agents` now accepts an optional typed research plan and enforces it on
+the production path. A plan pins the objective, turn identity, captured source
+bytes and snapshot digest, per-step sources and dependency edges, and an output
+ceiling. Validation is all-or-nothing against real bytes; dependency stages run
+in order behind the existing aggregate barrier; the host injects each
+predecessor artifact and accepts a step only on verified `read_files` bytes and
+that exact artifact's presence in the child history. Plan steps are read-only
+research roles, so implementation, audit and effectful roles are refused before
+dispatch, and a stale turn or an over-budget ceiling is refused too. Rejected
+and cancelled steps report an explicit error and keep the credits they spent.
+Spawns without a plan keep the previous behavior, partial filtering included.
+
+Implementation: `267be888`. Verification: `fid:verify` ran all eight declared
+gates (typecheck common and packages/agent-runtime, the three plan suites, the
+deterministic probe, the scripts-tree typecheck probe, quality) with exit 0;
+the full agent-runtime suite is 2218 pass / 0 fail. The plan's source contract
+covers local files only; web sources and nested plan descendants remain outside
+it, and no latency, reliability or monetary claim is made.
+
 ## 2026-10-17 — Bounded research workflow selection (FID-2026-1017-003, low)
 
 Added equal-final-brief comparisons for consolidated investigation, independent

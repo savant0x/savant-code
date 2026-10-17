@@ -11,30 +11,7 @@ handling or repository boundaries.
 
 ## Open items
 
-### FID-2026-1017-004 — bounded research spawn contract (converged)
-
-Authority: automation level 3. The workflow-selection research
-(`docs/design/parallel-workflow-decision.md`) selected a bounded research contract; this FID is the
-converged implementation plan that moves it into the production spawn path. It is **converged, not
-implemented**: no product runtime behavior has changed and no verification is claimed.
-
-- Plan: typed `spawn_agents` plan (objective, cancellation identity, source snapshot, per-step
-  sources and dependency edges, output ceiling), all-or-nothing validation, dependency-ordered stages
-  behind the existing aggregate barrier, host acceptance on source/read and predecessor identity, and
-  explicit rejection with retained usage.
-- Named production consumer: `handleSpawnAgents` (`spawn-agents.ts:22`), registered at
-  `handlers/list.ts:127` and `common/src/tools/list.ts:106`, reached through
-  `tool-executor/native.ts:140`.
-- Evidence boundary retained: local file sources only; two live reviewed trials; no latency,
-  reliability or monetary claim; no additional inference was dispatched.
-
-Write targets (implementation slice): `common/src/tools/params/tool/spawn-agents.ts`,
-`packages/agent-runtime/src/tools/handlers/tool/spawn-agents.ts`,
-`packages/agent-runtime/src/tools/handlers/tool/spawn-plan*.ts`,
-`packages/agent-runtime/src/tools/tool-executor/spawn-validation.ts`,
-`packages/agent-runtime/src/__tests__/spawn-plan-*.test.ts`,
-`scripts/probes/spawn-plan-contract.ts`, `docs/**`, `CHANGELOG.md`, `SCOPE.md`, `dev/fids/**`,
-`dev/session-summaries/**`.
+None.
 
 ## Internal follow-ups and current operator authority (2026-10-16)
 
@@ -132,14 +109,6 @@ Operator authorization: completion at automation level 3, renewed 2026-10-15;
 specific removal and skill metadata approvals are in answers.md. Governance
 artifacts required by ECHO retain their gate-level exemptions.
 
-- FID-2026-1017-004 (converged; implementation slice):
-  `common/src/tools/params/tool/spawn-agents.ts`,
-  `packages/agent-runtime/src/tools/handlers/tool/spawn-agents.ts`,
-  `packages/agent-runtime/src/tools/handlers/tool/spawn-plan*.ts`,
-  `packages/agent-runtime/src/tools/tool-executor/spawn-validation.ts`,
-  `packages/agent-runtime/src/__tests__/spawn-plan-*.test.ts`,
-  `scripts/probes/spawn-plan-contract.ts`, `docs/**`, `CHANGELOG.md`, `SCOPE.md`,
-  `dev/fids/**`, `dev/session-summaries/**`.
 - Release-0.0.36: `VERSION`, `package.json`, `agents/package.json`,
   `cli/package.json`, `cli/release/package.json`, `common/package.json`,
   `common/src/constants/protocol-bundle.generated.ts`, `desktop/package.json`,
