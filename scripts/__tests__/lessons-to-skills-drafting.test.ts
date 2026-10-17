@@ -4,7 +4,7 @@ import * as path from 'node:path'
 
 import { afterEach, describe, expect, test } from 'bun:test'
 
-import { draftCandidates } from '../lessons-to-skills'
+import { draftCandidates, draftDescription, findCandidates } from '../lessons-to-skills'
 
 import type { ExperienceRecord } from '@savant-code/common/types/experience'
 
@@ -75,7 +75,11 @@ const LESSON_TEMPLATE = `## Lesson: Environment-dependent guards need live probe
 - **Canonical rule:** no-environment-dependent-guards
 `
 
-function writeRuleCatalog(root: string): void {
+function writeRuleCatalog(root: string, extraClasses: string[] = []): void {
+  const classes = [
+    'v1:run_command:incomplete-arguments:unexpected',
+    ...extraClasses,
+  ]
   fs.writeFileSync(
     path.join(root, 'dev', 'LEARNING-RULES.md'),
     `# Canonical rules
@@ -86,8 +90,17 @@ function writeRuleCatalog(root: string): void {
 - **Validation:** fixture test
 - **Tier:** reference
 - **Tier reason:** fixture-only explicit class mapping
-- **Failure classes:** v1:run_command:incomplete-arguments:unexpected
+- **Failure classes:** ${classes.join(', ')}
 `,
+    'utf8',
+  )
+}
+
+function writeLesson(root: string): void {
+  fs.mkdirSync(path.join(root, 'dev'), { recursive: true })
+  fs.writeFileSync(
+    path.join(root, 'dev', 'LEARNINGS.md'),
+    `# LEARNINGS\n\n${LESSON_TEMPLATE}`,
     'utf8',
   )
 }
@@ -202,6 +215,102 @@ describe('draftCandidates', () => {
       ),
     ) as unknown[]
     expect(proposals).toHaveLength(1)
+  })
+
+  test('carries the LESSON into the draft, not the failure text (FID-2026-1016-015)', () => {
+    const root = fixtureRoot()
+    writeLedger(root, [
+      record(
+        'run_command',
+        'Incomplete arguments for tool run_command: missing guard',
+        1,
+        's1',
+      ),
+      record(
+        'run_command',
+        'Incomplete arguments for tool run_command: missing guard',
+        2,
+        's2',
+      ),
+      record(
+        'run_command',
+        'Incomplete arguments for tool run_command: missing guard',
+        3,
+        's3',
+      ),
+    ])
+    writeLesson(root)
+    writeRuleCatalog(root)
+    const drafted = draftCandidates(root, { now: NOW })
+    expect(drafted).toHaveLength(1)
+    const skillBody = fs.readFileSync(
+      path.join(root, '.agents', 'skills', '.quarantine', drafted[0], 'SKILL.md'),
+      'utf8',
+    )
+    // The description is the RULE, not the error line sliced at 60 chars —
+    // that slice is what cut the real quarantined draft mid-word
+    // ("retry the tool cal") and taught the failure message as the rule.
+    expect(skillBody).toContain(
+      'description: no environment dependent guards',
+    )
+    expect(skillBody).not.toContain('description: Incomplete arguments')
+    // The lesson's own invariant and guard are the procedure.
+    expect(skillBody).toContain(
+      '1. A guard matcher must never depend on launch-environment state.',
+    )
+    expect(skillBody).toContain(
+      '2. Path-classification helpers match intrinsic segments or suffixes; any environment-derived anchor requires an injected seam or a live probe.',
+    )
+  })
+
+  test('aggregates one candidate and one proposal per lesson rule', () => {
+    const root = fixtureRoot()
+    // Two distinct recurrence rows (different error text ⇒ different dedup
+    // key) that both map to the same rule — the shape that used to emit one
+    // candidate and one proposal per row for a single lesson.
+    const first = 'Incomplete arguments for tool run_command: missing guard'
+    const second = 'Incomplete arguments for tool run_command: missing target'
+    writeLedger(root, [
+      record('run_command', first, 1, 's1'),
+      record('run_command', first, 2, 's2'),
+      record('run_command', first, 3, 's3'),
+      record('run_command', second, 1, 's1'),
+      record('run_command', second, 2, 's2'),
+      record('run_command', second, 3, 's3'),
+    ])
+    writeLesson(root)
+    writeRuleCatalog(root)
+    const candidates = findCandidates(root, { now: NOW })
+    expect(candidates).toHaveLength(1)
+    expect(candidates[0].count).toBe(6)
+    expect(candidates[0].distinctSessions).toBe(3)
+    const drafted = draftCandidates(root, { now: NOW })
+    expect(drafted).toHaveLength(1)
+    const proposals = JSON.parse(
+      fs.readFileSync(
+        path.join(root, '.savant', 'skill-proposals.json'),
+        'utf8',
+      ),
+    ) as unknown[]
+    expect(proposals).toHaveLength(1)
+  })
+
+  test('clips the description at a word boundary, never mid-word', () => {
+    const description = draftDescription(
+      'A library-complete hand-off needs a named consumer, not a readiness note',
+      'library-complete-needs-a-named-consumer',
+    )
+    expect(description).toBe('library complete needs a named consumer')
+    expect(description.length).toBeLessThanOrEqual(60)
+    // A rule whose words cannot fit still ends on a whole word.
+    const long = draftDescription('', 'alpha-bravo-charlie-delta-echo-foxtrot-golf')
+    expect(long.endsWith(' ')).toBe(false)
+    expect(long).toBe(
+      'alpha bravo charlie delta echo foxtrot golf'.slice(
+        0,
+        long.length,
+      ),
+    )
   })
 
   test('does not draft when the lesson is below the non-obvious bar', () => {

@@ -12,6 +12,45 @@
 > the v0.0.36 cut. Release notes are written here at cut time; nothing in this
 > section is a package-release claim until then.
 
+## 2026-10-17 — Skill drafts carry the lesson, four drafts trusted, the live-comparison item retired (FID-2026-1016-015, medium)
+
+### Changed
+
+- **Auto-drafted skills now teach the lesson instead of the failure message.** Before trusting the four
+  quarantined drafts the operator ruled on, reading them showed that
+  `library-complete-needs-a-named-consumer` contained no lesson at all: its description was `read_files`'
+  error string sliced at 60 characters (`…retry the tool cal`) and its Procedure was its own name. The
+  drafter in `scripts/lessons-to-skills.ts` built every draft from the recurrence row — description and
+  "When to Use" from the error text, Procedure from the canonical rule's slug — while its own comment
+  already claimed it carried "the candidate's REAL content … the actual lesson". The lesson's `invariant`
+  and `guard` were parsed and then dropped, so they never reached the isolated drafting turn either
+  (`CandidateHandoffInput` had no fields for them). They now travel candidate → proposal payload → drafting
+  prompt → draft body, and descriptions come from the rule, clipped at a **word** boundary under the
+  60-character agent-authored cap (the cap is why the old code sliced, and slicing is what cut the word in
+  half).
+- **One lesson yields one candidate.** `findCandidates` emitted one candidate per recurrence ROW, so a
+  single lesson reached the draft path as six proposals with fragmented counts (48×, 27×, 25×, 21×, 14×,
+  11×) and six payload hashes — which is also why the store's documented one-proposal-per-session contract
+  had never been exercised there: nothing looked like a second proposal. Counts now aggregate onto the rule
+  and `distinctSessions` stays the strongest single row's figure, because summing sessions would inflate the
+  promotion gate's own number.
+- **All four quarantined drafts are trusted (operator ruling).** release-workflow 0.1.0 → **0.3.0** (no
+  baseline pin, so trusted without drift verification — stated in the result rather than implied),
+  `minisign-pubkey-vs-secret-key` v0.1.1, `fid-gates-unfenced-parser-contract` v0.1.1 and
+  `library-complete-needs-a-named-consumer` v0.1.0, each with a `trust` entry in its `VERSIONS.jsonl` and
+  its reason naming the ruling. `.agents/skills/.quarantine/` is now empty. The corrupt draft was
+  re-authored from `dev/LEARNINGS.md` first, with its invariant, its two-step guard and Law 4 verification;
+  the pipeline cannot regenerate it, because that lesson's rule is deliberately unmapped from any failure
+  class (it is about FID closures, not a tool failure), and `findCandidates` returns 0 against this tree.
+
+### Retired
+
+- **`LIVE-001` closed NOT-PLANNED (operator ruling).** Live provider comparisons are not planned: no paid
+  run happened, nothing was measured, and no comparison result is claimed — retiring the item is not
+  evidence of one. Reopening needs a future ruling that names the comparison references and numeric
+  call/spending limits. Recorded in `SCOPE.md` and in the follow-up store whose `status` vocabulary has only
+  `open`/`completed`, so the disposition is spelled out in the summary rather than left to a status word.
+
 ## 2026-10-16 — Operator-ruled follow-ups: the Step-4 surface mounted, one robot design stated (FID-2026-1016-014, low)
 
 Operator rulings on all nine open questions from the entry below, and their implementation.

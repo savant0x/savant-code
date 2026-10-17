@@ -159,6 +159,13 @@ export type CandidateHandoffInput = {
   toolName: string
   /** Normalized error first line (the trigger). */
   errorFirstLine: string
+  /**
+   * FID-2026-1016-015: the lesson's invariant and guard. They are the drafting
+   * turn's actual material — without them the proposer saw only the failure
+   * text and the rule slug, and produced skills that taught the error message.
+   */
+  invariant: string
+  guard: string
   /** In-window occurrence count. */
   count: number
   /** Distinct sessions behind the count (the promotion gate). */
@@ -192,6 +199,8 @@ export function prepareCandidateHandoff(
     rule: candidate.canonicalRule,
     tool: candidate.toolName,
     error: candidate.errorFirstLine,
+    invariant: candidate.invariant,
+    guard: candidate.guard,
     count: candidate.count,
     distinctSessions: candidate.distinctSessions,
   })
@@ -219,9 +228,11 @@ export function prepareCandidateHandoff(
       [
         `## ${candidate.lessonTitle}`,
         `Canonical rule: ${candidate.canonicalRule}`,
+        `Invariant: ${candidate.invariant}`,
+        `Guard: ${candidate.guard}`,
         `Trigger: '${candidate.toolName}' failing with '${candidate.errorFirstLine}'`,
         `Evidence: ${candidate.count} occurrences across ${candidate.distinctSessions} distinct sessions`,
-        'Draft contract: When to Use (this trigger) / Procedure (the canonical rule as numbered steps) / Pitfalls (the guard as a forbidden shortcut) / Verification (the project suite).',
+        'Draft contract: When to Use (this trigger) / Procedure (the invariant, then the guard) / Pitfalls (the guard as a forbidden shortcut) / Verification (the project suite). Never restate the failure text as the rule.',
       ].join('\n'),
     ],
     dedupedTraces: [

@@ -17,6 +17,7 @@
 import * as fs from 'node:fs'
 import * as path from 'node:path'
 
+import { AGENT_AUTHORED_DESCRIPTION_MAX_LENGTH } from '@savant-code/common/constants/skills'
 import { experienceClassIdentity } from '@savant-code/common/util/experience-classes'
 import { emitSkillMutationEvent } from '@savant-code/common/util/skill-lifecycle-events'
 import { createSkill } from '@savant-code/common/util/skill-management'
@@ -65,6 +66,15 @@ export function loadLessons(rootDir: string): LessonEntry[] {
 export type DraftCandidate = {
   lessonTitle: string
   canonicalRule: string
+  /**
+   * FID-2026-1016-015: the lesson's operative rule text. The draft used to
+   * carry no lesson content at all — its description was the tool error's
+   * first line and its single procedure step was the canonical-rule slug —
+   * so the quarantined skill taught the failure message instead of the rule.
+   */
+  invariant: string
+  guard: string
+  /** The failure class the candidate's recurrence belongs to. */
   classKey: string
   toolName: string
   errorFirstLine: string
@@ -72,6 +82,70 @@ export type DraftCandidate = {
   /** FID-2026-1005-003 Step 1: distinct sessions behind the recurrence. */
   distinctSessions: number
   reasons: string[]
+}
+
+/**
+ * FID-2026-1016-015 — one candidate per lesson rule.
+ *
+ * Iterating recurrences directly emitted one candidate per recurrence ROW, so
+ * a single lesson reached the draft path as six proposals with fragmented
+ * counts (48×, 27×, 25×, 21×, 14×, 11×) and six different payload hashes —
+ * which is also why the store's declared one-proposal-per-session contract
+ * was never exercised: every row hashed differently, so nothing looked like a
+ * second proposal. Counts now aggregate onto the rule (the skill), the
+ * trigger is the highest-count row, and `distinctSessions` stays the
+ * strongest single row's figure: two rows can share sessions, so summing them
+ * would inflate the promotion gate's own number.
+ */
+function aggregateByRule(candidates: DraftCandidate[]): DraftCandidate[] {
+  const byRule = new Map<string, DraftCandidate>()
+  const bestCount = new Map<string, number>()
+  for (const candidate of candidates) {
+    const existing = byRule.get(candidate.canonicalRule)
+    if (existing === undefined) {
+      byRule.set(candidate.canonicalRule, { ...candidate })
+      bestCount.set(candidate.canonicalRule, candidate.count)
+      continue
+    }
+    existing.count += candidate.count
+    existing.distinctSessions = Math.max(
+      existing.distinctSessions,
+      candidate.distinctSessions,
+    )
+    if (candidate.count > (bestCount.get(candidate.canonicalRule) ?? 0)) {
+      bestCount.set(candidate.canonicalRule, candidate.count)
+      existing.toolName = candidate.toolName
+      existing.errorFirstLine = candidate.errorFirstLine
+      existing.classKey = candidate.classKey
+    }
+  }
+  return [...byRule.values()]
+}
+
+/**
+ * The agent-authored description cap is 60 characters (skills-check
+ * `description-length`), which is why the old code sliced the error line at
+ * 60 — cutting a real draft mid-word ("retry the tool cal"). Clip at a WORD
+ * boundary instead, and describe the rule rather than the failure text.
+ */
+export function draftDescription(
+  lessonTitle: string,
+  canonicalRule: string,
+): string {
+  const clip = (text: string): string => {
+    let out = ''
+    for (const word of text.split(/\s+/).filter(Boolean)) {
+      const next = out === '' ? word : `${out} ${word}`
+      if (next.length > AGENT_AUTHORED_DESCRIPTION_MAX_LENGTH) break
+      out = next
+    }
+    return out === ''
+      ? text.slice(0, AGENT_AUTHORED_DESCRIPTION_MAX_LENGTH)
+      : out
+  }
+  const fromRule = clip(canonicalRule.replace(/[^a-z0-9]+/gi, ' ').trim())
+  if (fromRule !== '') return fromRule
+  return clip(lessonTitle)
 }
 
 /** Apply the S3-B extraction criteria. */
@@ -99,7 +173,7 @@ export function findCandidates(
         rules.add(rule.name)
         rulesByClass.set(classKey, rules)
       }
-  const candidates: DraftCandidate[] = []
+  const matched: DraftCandidate[] = []
 
   for (const recurrence of recurrences) {
     // Require recurrence across distinct sessions, not an in-session retry loop.
@@ -116,7 +190,27 @@ export function findCandidates(
           )
         : undefined
     if (!lesson) continue
+    matched.push({
+      lessonTitle: lesson.title,
+      canonicalRule: lesson.canonicalRule ?? lesson.title,
+      invariant: lesson.invariant,
+      guard: lesson.guard,
+      classKey: classKey ?? '',
+      toolName: recurrence.toolName,
+      errorFirstLine: recurrence.errorFirstLine,
+      count: recurrence.count,
+      distinctSessions: recurrence.distinctSessions,
+      reasons: [],
+    })
+  }
 
+  const candidates: DraftCandidate[] = []
+  for (const candidate of aggregateByRule(matched)) {
+    const lesson = lessons.find(
+      (entry) =>
+        (entry.canonicalRule ?? entry.title) === candidate.canonicalRule,
+    )
+    if (lesson === undefined) continue
     const reasons: string[] = []
     // Non-obvious: a guard spanning real synthesis (2+ words).
     if (lesson.guard.split(/\s+/).filter(Boolean).length < 4) {
@@ -125,29 +219,7 @@ export function findCandidates(
     if (lesson.evidenceCount < 2) {
       reasons.push('evidence spans fewer than 2 paths (not cross-project)')
     }
-    if (reasons.length > 0) {
-      candidates.push({
-        lessonTitle: lesson.title,
-        canonicalRule: lesson.canonicalRule ?? lesson.title,
-        classKey: classKey ?? '',
-        toolName: recurrence.toolName,
-        errorFirstLine: recurrence.errorFirstLine,
-        count: recurrence.count,
-        distinctSessions: recurrence.distinctSessions,
-        reasons,
-      })
-      continue
-    }
-    candidates.push({
-      lessonTitle: lesson.title,
-      canonicalRule: lesson.canonicalRule ?? lesson.title,
-      classKey: classKey ?? '',
-      toolName: recurrence.toolName,
-      errorFirstLine: recurrence.errorFirstLine,
-      count: recurrence.count,
-      distinctSessions: recurrence.distinctSessions,
-      reasons: [],
-    })
+    candidates.push({ ...candidate, reasons })
   }
   return candidates
 }
@@ -189,6 +261,8 @@ export function draftCandidates(
         canonicalRule: candidate.canonicalRule,
         toolName: candidate.toolName,
         errorFirstLine: candidate.errorFirstLine,
+        invariant: candidate.invariant,
+        guard: candidate.guard,
         count: candidate.count,
         distinctSessions: candidate.distinctSessions,
       },
@@ -197,25 +271,30 @@ export function draftCandidates(
     if (!reserved.ok || reserved.handoff === undefined) continue
 
     // Step 2: the draft contract — trigger, exact procedure, guard,
-    // verification — all from the candidate's evidence-backed fields.
+    // verification — all from the candidate's evidence-backed fields. The
+    // procedure is the lesson's OWN invariant and guard (FID-2026-1016-015),
+    // not a restatement of the error the recurrence recorded.
     const result = createSkill({
       rootDir,
       name,
-      description:
-        candidate.errorFirstLine.slice(0, 60) ||
-        `Handles ${candidate.toolName} failure patterns`,
+      description: draftDescription(
+        candidate.lessonTitle,
+        candidate.canonicalRule,
+      ),
       body: [
-        `# ${name.replace(/-/g, ' ')}`,
+        `# ${candidate.lessonTitle}`,
         '',
         '## When to Use',
-        `When ${candidate.toolName} fails with: \`${candidate.errorFirstLine}\`.`,
+        `When \`${candidate.toolName}\` fails with: \`${candidate.errorFirstLine}\`.`,
         '',
         '## Procedure',
-        `1. ${candidate.canonicalRule}`,
-        '2. Verify with the project test suite before proceeding.',
+        `1. ${candidate.invariant}`,
+        `2. ${candidate.guard}`,
+        '3. Re-run the focused suite for the affected area before proceeding.',
         '',
         '## Pitfalls',
         '- Do not treat this as a blanket bypass — the rule exists because the naive path fails.',
+        `- Ignoring the guard above: the promotion gate recorded this failure ${candidate.count}× across ${candidate.distinctSessions} distinct sessions.`,
         '',
         '## Verification',
         '- `bun run typecheck` (all workspaces)',

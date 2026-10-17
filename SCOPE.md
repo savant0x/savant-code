@@ -39,9 +39,12 @@ repair and no production observation is claimed.
 
 - `OBS-001` in `dev/tracking/internal-followups.json`: production exposure and
   remaining sanitized replay evidence for eight classes. No class repair is claimed.
-- `LIVE-001` in the same store: the former T175 live-comparison work, independent
-  of coordinator closure. Selected references and numeric call/spending limits
-  remain prerequisites for a live run; this instruction authorizes no spending.
+- `LIVE-001` in the same store is **closed not-planned** (operator ruling 2026-10-16,
+  the second operator round this session): live provider comparisons are not planned.
+  No paid run happened, nothing was measured, and no comparison result is claimed —
+  retiring the item is not evidence of one. Reopening requires a future ruling that
+  names the comparison references and numeric call/spending limits; this instruction
+  authorizes no spending.
 - Selected lessons features are implemented: LF-003 at `628375ff`, LF-004 at
   `d71b9065`, LF-007/008/009 at `6b847099`; fresh focused verification passes.
   Candidate states/report are reconciled. Unselected drafts remain proposals.
@@ -139,6 +142,13 @@ artifacts required by ECHO retain their gate-level exemptions.
   `packages/agent-runtime/src/find-files/**`, `scripts/eslint-rules/**`
   (this session, operator-ruled: the one tracked 400-line ceiling, the duplicate robot model,
   the orphan triage and the recurring sweep; write targets release at closure.)
+- FID-2026-1016-015: `scripts/lessons-to-skills.ts`,
+  `scripts/__tests__/lessons-to-skills-drafting.test.ts`,
+  `common/src/util/skill-proposals.ts`,
+  `.agents/skills/**` (operator ruling: trust the four quarantined drafts),
+  `dev/tracking/internal-followups.json`, `SCOPE.md`, `CHANGELOG.md`
+  (skill-draft provenance repair + the operator trust round; the corrupt
+  `library-complete-needs-a-named-consumer` draft is re-authored before the trust transitions.)
 - FID-2026-1016-014 is **closed and archived** (2026-10-16, 7/7 gates, receipt stamped, four
   commits `36c6855f`..`1502db60`). Its write targets are released: `cli/src/chat/panels.tsx`,
   `cli/src/components/skill-lifecycle-notice.tsx`,
