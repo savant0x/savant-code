@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-1017-005-fresh-free-options-boot-panel.md`
 **ID:** FID-2026-1017-005
 **Severity:** medium
-**Status:** verified
+**Status:** closed
 **Created:** 2026-10-17 12:51
 **Automation level:** 3
 **YAGNI-Compliance:** Verified — reuses the existing traffic-light panel, the
@@ -573,13 +573,39 @@ messages, like `compaction-summary`; it is never sent to a model.
 - [x] Production call-graph evidence is present for new or repaired wiring
 - [x] FID status reflects the actual implementation state
 
+## Step Status
+
+- [x] Freshness resolver with the 12 h threshold, bounded refresh and STALE fallback
+- [x] Refresh provenance (`catalogSource`) and non-swallowed export status
+- [x] Artifact header, body hash and reader-side path/`fetchedAt`/hash verification
+- [x] Shared view consumed by panel, markdown and command
+- [x] Collapsed-by-default TrafficLightPanel block with full expansion
+- [x] Transcript wiring (block dispatch, collapse, single async boot resolve)
+- [x] Resolved path parity and removal of the unsupported agent-read claim
+- [x] Six suites + durable probe; full CLI suite and root typecheck green
+
 ## Resolution
 
-- **Closed Date:** pending
-- **Fix Description:** pending
-- **Tests Added:** pending
-- **Verification Evidence:** pending
-- **Archived:** pending
+- **Closed Date:** 2026-10-17 13:10
+- **Fix Description:** The boot digest is replaced by a `TrafficLightPanel` transcript block that
+  resolves freshness before posting. A cache no older than 12 h is shown with its exact age; an
+  older or absent cache triggers one bounded refresh (6 s over the existing 5 s fetch timeout)
+  through the existing single-flight; a failed refresh serves the cache labelled `STALE`.
+  Collapsed by default, the panel expands to every wired and not-wired model id, every local lane
+  and every advertised offer. Panel, markdown export and `/provider free` derive from
+  `buildFreeOptionsView`. The artifact carries its resolved path, `generatedAt`, `fetchedAt` and a
+  body hash; the boot reader verifies path, vintage and hash. A failed export is returned and
+  rendered instead of swallowed, and the command names the resolved absolute path rather than a
+  bare filename.
+- **Tests Added:** `free-options-boot.test.ts` (11), `free-options-view.test.ts` (9),
+  `free-options-panel.test.tsx` (5), plus the free-options collapse case (1) and updated
+  `free-options.test.ts` / `free-options-offers.test.ts`; the durable probe
+  `scripts/probes/free-options-boot-artifact.ts` replaces the retired `launch-digest` pins.
+- **Verification Evidence:** implementation commit `33a58d63`; `fid:verify` ran all 10 declared
+  gates with exit 0 (typecheck cli, six suites 62 pass / 0 fail, the boot-artifact probe, the
+  scripts typecheck probe, quality); full CLI suite 4174 pass / 28 skip / 0 fail; root
+  `bun run typecheck` exit 0; `validate:repository` PASS.
+- **Archived:** 2026-10-17 13:10
 
 ## Lessons Learned
 

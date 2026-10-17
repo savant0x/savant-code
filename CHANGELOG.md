@@ -1,5 +1,35 @@
 # Changelog
 
+## 2026-10-17 — Fresh, complete free-options boot panel (FID-2026-1017-005, medium)
+
+The boot digest was reading the free-options cache synchronously before the
+provider refresh it depended on had run, so an expired boot showed expired
+values; it then printed two offer titles and pointed at `free-options.md` by
+bare filename. It is replaced by a `TrafficLightPanel` transcript block that
+resolves freshness before posting: a cache no older than 12 h is shown with its
+exact age, an older or absent cache gets one bounded refresh (6 s over the
+existing 5 s fetch timeout) through the existing single-flight, and a failed
+refresh serves the cache labelled `STALE` instead of current. The panel is
+collapsed by default and expands to every wired and not-wired model id, every
+local lane and every advertised offer.
+
+The panel, the markdown export and `/provider free` now derive from one
+`buildFreeOptionsView`, so their counts and payloads cannot diverge. The
+artifact carries its resolved path, `generatedAt`, `fetchedAt` and a body hash;
+the boot reader verifies path, catalog vintage and hash, and a copy in another
+config directory is rejected. A failed export is returned and rendered in both
+the panel and the command instead of being swallowed on the false premise that
+the command output was already complete, and the command names the resolved
+absolute path rather than a bare filename.
+
+Implementation: `33a58d63`. Verification: `fid:verify` ran all 10 declared
+gates with exit 0 (cli typecheck; the boot, view, panel, collapse and renderer
+suites, 62 pass / 0 fail; the durable boot-artifact probe; the scripts
+typecheck probe; quality); the full CLI suite is 4174 pass / 28 skip / 0 fail,
+the root typecheck is exit 0, and `validate:repository` passes. No live TUI
+smoke ran because `tmux` is not installed in this environment; the boot path is
+pinned at the resolver/handler boundary and the panel through a static render.
+
 ## 0.0.36 — 2026-10-12
 
 > **v0.0.36** — **development line, package release not yet published**.
