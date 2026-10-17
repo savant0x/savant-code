@@ -56,6 +56,13 @@ its isolated suite passed 2/2 and an unchanged full-hook retry passed. No dialog
 fix is claimed. Run focused suites from their workspace root: Bun path filters
 from the repository root can also select stale copies under ignored resources.
 
+The first handoff push was refused by the terminal-watchdog clean-exit test:
+one disarm marker remained after its cleanup deadline. An immediate isolated
+run from `cli/` passed both tests (2 pass, 0 fail). No watchdog code was changed
+and no repair is claimed. The rejected run is in `handoff-push.log` under the
+same evidence prefix; the subsequent full-hook attempt is in
+`handoff-push-retry.log`. Consult that log for the final push result.
+
 ## Boundaries and pending context
 
 Lane selection is explicit. Launch CLI/SDK rooted in the lane for provenance,
