@@ -45,8 +45,11 @@ Each FID gets an ephemeral linked git worktree under the already-ignored
 gate mapping lane-relative targets back to repo-relative ones and a
 fast-forward-only merge gate. Teardown follows the recorded release-checkout
 contract (`git worktree remove` → verified absence → bounded fallback → prune),
-never the blueprint's `rm -rf` ordering. Eight steps are declared in the FID; all
-remain `pending` until implemented and verified. No isolation, speedup or merge
+never the blueprint's `rm -rf` ordering. Eight steps are declared in the FID. Steps 1–3
+(git seam + naming, provision, dispose/list) are implemented with 13 adapter-driven
+suite pins and a real-git probe (`scripts/probes/fid-worktrees.ts`, PASS); steps 4–8
+(Law 2 jurisdiction, `fid_worktree` tool, merge gate, environment isolation,
+operator CLI/docs) remain open. No end-to-end isolation, speedup or merge
 resolution is claimed yet.
 
 ## Internal follow-ups and current operator authority (2026-10-16)

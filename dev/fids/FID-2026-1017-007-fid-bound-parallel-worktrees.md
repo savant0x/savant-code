@@ -235,12 +235,12 @@ not gain jurisdiction.
 
 1. **Git seam + naming** — add `echo/parallel/fid-worktree-git.ts` (argv only,
    injected runner) and a header stating the working-tree vs FID-worktree rule;
-   no existing module renamed. — pending
+   no existing module renamed. — implemented
 2. **Provision** — the contract above: id validation, cap, debris self-heal,
    branch creation, dependency linking, record write, rollback on partial
-   failure. — pending
+   failure. — implemented
 3. **Dispose + list** — the recorded release lifecycle applied per FID; list
-   parses `git worktree list --porcelain` and joins records. — pending
+   parses `git worktree list --porcelain` and joins records. — implemented
 4. **Law 2 jurisdiction** — map managed worktree targets to repo-relative
    paths and read the worktree register; pin that a hand-made directory and an
    unlisted worktree gain nothing. — pending
@@ -434,9 +434,9 @@ Exposure: `packages/agent-runtime/src/__tests__/fid-worktree-provision.test.ts`,
 
 ## Step Status
 
-- [ ] Step 1 — Git seam + naming rule — operator-approved 2026-10-17
-- [ ] Step 2 — Provision — operator-approved 2026-10-17
-- [ ] Step 3 — Dispose + list — operator-approved 2026-10-17
+- [x] Step 1 — Git seam + naming rule — implemented
+- [x] Step 2 — Provision — implemented
+- [x] Step 3 — Dispose + list — implemented
 - [ ] Step 4 — Law 2 worktree jurisdiction — operator-approved 2026-10-17
 - [ ] Step 5 — `fid_worktree` tool surface — operator-approved 2026-10-17
 - [ ] Step 6 — Merge gate — operator-approved 2026-10-17
