@@ -10,6 +10,7 @@ import path from 'node:path'
 
 import { z } from 'zod/v4'
 
+import { validateEvidence } from './parallel-agent-slice/evidence'
 import { runSchedule } from './parallel-agent-slice/scheduler'
 import { createSdkBatch, historyDigest } from './parallel-agent-slice/sdk'
 import { SliceStore } from './parallel-agent-slice/store'
@@ -19,7 +20,6 @@ import {
   ASSIGNMENTS,
   captureSources,
   sourceDigest,
-  validateEvidence,
 } from './parallel-agent-slice/workload'
 
 import type { JSONValue } from '@savant-code/common/types/json'
@@ -89,6 +89,7 @@ async function main(): Promise<void> {
       ),
   })
   const report: {
+    profile: string
     provider: string
     model: string
     sourceDigest: string
@@ -96,6 +97,7 @@ async function main(): Promise<void> {
     modes: JSONValue[]
     error?: string
   } = {
+    profile: 'host-reference-evidence-v3',
     provider: 'apixo',
     model: 'gpt-6.1-sol',
     sourceDigest: fingerprint,
@@ -125,6 +127,16 @@ async function main(): Promise<void> {
           assignments: ASSIGNMENTS,
           store,
           runBatch: createSdkBatch(root, sources, histories, contextWindow),
+          validateResult: (result, assignment, handoffs) => {
+            const failures = validateEvidence(
+              result.artifact,
+              assignment,
+              handoffs,
+              sources,
+              result.readPaths,
+            )
+            if (failures.length > 0) throw new Error(failures.join('; '))
+          },
           signal: controller.signal,
         })
         const evidence = results.map((result) => ({
@@ -145,6 +157,7 @@ async function main(): Promise<void> {
         }))
         report.modes.push({
           mode,
+          status: 'completed',
           elapsedMs: Date.now() - startedAt,
           requestCount: guard.records.length - requestStart,
           results: JSON.parse(JSON.stringify(results)),
@@ -157,6 +170,21 @@ async function main(): Promise<void> {
         )
         if (evidence.some((task) => task.failures.length > 0))
           process.exitCode = 1
+      } catch (error) {
+        const message = error instanceof Error ? error.message : 'Mode failed'
+        report.modes.push({
+          mode,
+          status: 'failed',
+          error: message,
+          elapsedMs: Date.now() - startedAt,
+          requestCount: guard.records.length - requestStart,
+          historyDigest: historyDigest(histories),
+          canonicalOwner: { ...store.owner() },
+          tasks: ASSIGNMENTS.map((task) => ({ ...store.task(task.id) })),
+        })
+        console.log(`${mode} rejected: ${message}`)
+        process.exitCode = 1
+        if (controller.signal.aborted) throw error
       } finally {
         writeFileSync(
           path.join(directory, `${mode}-histories.json`),

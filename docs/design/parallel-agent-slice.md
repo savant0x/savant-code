@@ -69,12 +69,24 @@ source identity, interrupted work, a killed writer process, request ceilings,
 and stream permit lifetime. They make no provider requests. Their controlled
 artifacts establish storage/control behavior, not model quality or speed.
 
-The live run verifies quoted text within a six-line window beginning at the
-reported citation line and checks observed reads and exact handoff digests.
-That automatic check does not prove the conclusion follows from the quote or
-that a downstream answer semantically used a handoff. Review the actual
-answers and traces. A source change invalidates the comparison. Any failed
-child makes that wave fail; partial successes remain visible in raw histories.
+The original profile checked model-reported lines and digests after execution.
+The intermediate `host-bound-evidence-v2` profile asked for exact quotes and
+predecessor findings. It rejected altered quotations before publication.
+The current `host-reference-evidence-v3` profile supplies an explicit catalog
+of real source lines with reference IDs. The model selects supporting IDs;
+the host binds their original path, line and text and attaches the digest of
+the actual supplied predecessor artifact. Unknown or duplicate references,
+unread/unassigned sources, and missing/foreign/duplicate predecessor IDs
+reject the result. Provider findings remain unchanged in raw histories.
+Downstream assignments include predecessor source files. These profiles are
+different evidence tasks; their timing is not pooled with the original.
+
+The scheduler requires validation before publication or dependency release,
+checking every member of a returned wave before publishing any of them.
+Rejected drafts and mode failures remain in the report and histories. These
+checks establish mechanical consistency; they do not prove that conclusions
+follow from quotations or that an answer semantically used a predecessor.
+Review the actual answers and traces. A source change invalidates comparison.
 
 An upstream failure, exhausted budget, or incomplete candidate run is an
 inconclusive comparison. Preserve those outcomes. One completed pair does not
@@ -114,5 +126,60 @@ one sequentially executed pair with variable provider latency and SDK setup.
 
 Earlier exploratory attempts used 30 sends and ended on upstream errors;
 the controlled pair used eight more, for 38 cumulative sends. The remaining
-22 are unused. There is no measured monetary cost. No further paid trial is
-needed to conclude that evidence validation must precede trusted integration.
+22 remained at the end of that profile. There is no measured monetary cost.
+The operator subsequently authorized continued testing at automation level 3;
+the v2 profile uses that same cumulative ledger and ceiling.
+
+## Validated continuation, 2026-10-17
+
+FID-2026-1017-002 moved validation before publication and dependency release.
+The intermediate v2 pair used five sends and failed on altered quotations:
+batch B joined comment lines, and completion B reworded a database comment.
+Batch published nothing; completion accepted A and began C, then stopped C
+after B failed. D never ran. Evidence remains in
+`dev/research/parallel-agent-slice-U4By14/`. This is a rejection-control result,
+not a completed timing comparison. One interrupted stream lacks a recorded
+finish time; its dispatch still counts against the ceiling.
+
+The v3 pair completed against the same source fingerprint as the original.
+Local evidence: `dev/research/parallel-agent-slice-qygYWL/report.json`, full
+histories and separate SQLite stores. Source-reference selection adds input
+catalogs and downstream source access, so compare these two modes with each
+other, not with the original profile.
+
+| Schedule | Wall time | Inference sends | Failed mechanical checks |
+| --- | ---: | ---: | ---: |
+| Batch | 96.997 s | 4 | 0 |
+| Completion | 89.762 s | 4 | 0 |
+
+All eight tasks read all their assigned files: A two, B three, C five and D
+nine. Inspection of each child's actual history found the exact predecessor
+artifact and digest: A in C; B and C in D, in both modes. Each owner contains
+four accepted artifacts; its revision advanced three times for batch frontiers
+and four times for individual completions. All eight inference streams have
+recorded completion times. C began 21 ms after A completed in completion mode,
+but B had already finished 2.981 s earlier. Batch B also finished before A.
+Thus there was no useful sibling overlap in this pair; the 7.235 s difference
+does not establish a scheduling advantage.
+
+Manual review confirms useful source-grounded distinctions: streamed lifecycle
+events versus batch-delayed reports/cost aggregation; filesystem-first restore
+versus SQLite fallback; checkpoint draining versus acknowledged durable commit;
+and genuine user steering versus synthetic compliance messages. The final
+syntheses preserve the existing batch join. They therefore do not supply a
+production asynchronous scheduler design. Some prose uses additional inline
+reference IDs beyond its selected citation list; the mechanical verdict checks
+the selected structured citations, not every prose claim or its entailment.
+
+The concrete candidate for a next implementation experiment is a parent-owned
+task service with immutable task/attempt/generation identity, validated results,
+transactional delivery and acknowledgement, and consumption at safe parent
+step boundaries. Keep existing aggregate spawn semantics until a separate
+asynchronous contract is defined. The control suite proves early release under
+controlled ordering; representative live work with an independently slower
+branch is still needed to measure useful overlap. No synthetic delay was used.
+
+Current cumulative inference use is 51/60: 38 original, five rejected v2,
+eight successful v3. Nine remain unused; no new run is needed to establish
+this mechanical information-flow result. Monetary cost remains unmeasured.
+This is an isolated research harness, not a production readiness verdict.

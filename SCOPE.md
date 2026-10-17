@@ -11,7 +11,10 @@ handling or repository boundaries.
 
 ## Open items
 
-None.
+- [ ] FID-2026-1017-002 — validate live research evidence before dependency
+  release, bind citation lines and handoff digests in the host, and repeat the
+  real Apixo comparison within the existing 22 remaining requests. Automation
+  level 3 renewed by the operator on 2026-10-17; no production migration.
 
 ## Internal follow-ups and current operator authority (2026-10-16)
 
@@ -104,6 +107,11 @@ dispositions supersede the previous register holds.
   cleared; the intake report passes Markdown lint. No artifact was deleted.
 
 ## Machine-readable scope targets
+
+- FID-2026-1017-002: `scripts/probes/parallel-agent-slice.ts`,
+  `scripts/probes/parallel-agent-slice/**`, `docs/design/parallel-agent-slice.md`,
+  `dev/fids/**`, `dev/research/**`, `dev/session-summaries/**`, `SCOPE.md`,
+  `CHANGELOG.md`.
 
 Operator authorization: completion at automation level 3, renewed 2026-10-15;
 specific removal and skill metadata approvals are in answers.md. Governance

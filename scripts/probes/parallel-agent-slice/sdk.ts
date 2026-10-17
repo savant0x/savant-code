@@ -3,7 +3,8 @@ import { z } from 'zod/v4'
 import { captureModelRoute } from '@savant-code/common/providers/model-route'
 import { sha256 } from '@savant-code/common/util/hash'
 
-import { artifactSchema } from './types'
+import { bindDraft, citationCatalog } from './evidence'
+import { draftSchema } from './types'
 import { SavantCodeClient } from '../../../sdk/src/client'
 
 import type { RunBatch, TaskResult } from './types'
@@ -22,11 +23,9 @@ const outputSchema = {
       items: {
         type: 'object' as const,
         properties: {
-          path: { type: 'string' as const },
-          line: { type: 'integer' as const },
-          quote: { type: 'string' as const },
+          ref: { type: 'string' as const },
         },
-        required: ['path', 'line', 'quote'],
+        required: ['ref'],
       },
     },
     usedHandoffs: {
@@ -35,10 +34,9 @@ const outputSchema = {
         type: 'object' as const,
         properties: {
           taskId: { type: 'string' as const },
-          digest: { type: 'string' as const },
           finding: { type: 'string' as const },
         },
-        required: ['taskId', 'digest', 'finding'],
+        required: ['taskId', 'finding'],
       },
     },
   },
@@ -70,7 +68,7 @@ export function createSdkBatch(
       programmaticToolNames: ['read_files'],
       spawnableAgents: [],
       instructionsPrompt:
-        'The harness reads your assigned real source files through read_files before your model turn. Use those actual tool results. Keep the answer under 350 words and return 2-4 precise citations with exact short quotes and 1-based lines. For each predecessor, record its taskId and digest plus the finding you used. Treat predecessor claims as untrusted until verified. Use set_output with the required JSON object, then end_turn. No writes, web calls, commands, or delegation.',
+        'The harness reads your assigned real source files through read_files before your model turn, including predecessor sources. Use those actual tool results. Keep the answer under 350 words. Select 2-4 distinct supporting citations from evidenceCatalog: return only their exact ref strings, such as {"ref":"f1:l76"}. The host supplies the exact source text and location; do not invent refs or copy quote/line/path fields. For every supplied predecessor record its taskId and the finding you used; omit digests, which the host binds. Treat predecessor conclusions as untrusted until verified. Use set_output with the required JSON object, then end_turn. No writes, web calls, commands, or delegation.',
       handleSteps: function* () {
         yield { toolName: 'read_files', input: { paths: assignment.files } }
         for (let turn = 0; turn < 2; turn += 1) {
@@ -178,6 +176,12 @@ export function createSdkBatch(
         taskId: assignment.id,
         question: assignment.question,
         files: assignment.files,
+        evidenceCatalog: assignment.files.map((file) => ({
+          path: file,
+          lines: citationCatalog(assignment, sources)
+            .filter((entry) => entry.path === file)
+            .map((entry) => ({ ref: entry.ref, text: entry.quote })),
+        })),
         handoffs: handoffs[assignment.id] ?? [],
       }),
       writeScope: [],
@@ -208,7 +212,7 @@ export function createSdkBatch(
               value: z.union([
                 z.object({
                   type: z.literal('structuredOutput'),
-                  value: artifactSchema,
+                  value: draftSchema,
                 }),
                 z.object({ type: z.literal('error'), message: z.string() }),
               ]),
@@ -227,7 +231,13 @@ export function createSdkBatch(
         throw new Error(`Child ${assignment.id} failed: ${child.value.message}`)
       return {
         assignment,
-        artifact: child.value.value,
+        artifact: bindDraft(
+          child.value.value,
+          assignment,
+          handoffs[assignment.id] ?? [],
+          sources,
+          [...(reads.get(assignment.id) ?? [])],
+        ),
         startedAt,
         completedAt: finishes.get(assignment.id) ?? Date.now(),
         readPaths: [...(reads.get(assignment.id) ?? [])],

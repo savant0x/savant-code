@@ -24,6 +24,14 @@ export const artifactSchema = z.object({
 })
 
 export type Artifact = z.infer<typeof artifactSchema>
+/** Provider-authored findings; identity metadata is attached by the host. */
+export const draftSchema = artifactSchema.extend({
+  citations: z.array(z.object({ ref: z.string() }).strict()).min(2),
+  usedHandoffs: z.array(
+    artifactSchema.shape.usedHandoffs.element.omit({ digest: true }).strict(),
+  ),
+})
+export type ArtifactDraft = z.infer<typeof draftSchema>
 export type ScheduleMode = 'batch' | 'completion'
 export interface Assignment {
   id: string

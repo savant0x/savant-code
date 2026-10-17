@@ -15,6 +15,11 @@ export async function runSchedule(options: {
   assignments: Assignment[]
   store: SliceStore
   runBatch: RunBatch
+  validateResult: (
+    result: TaskResult,
+    assignment: Assignment,
+    handoffs: Handoff[],
+  ) => void
   signal: AbortSignal
 }): Promise<TaskResult[]> {
   const { mode, assignments, store, runBatch } = options
@@ -56,6 +61,22 @@ export async function runSchedule(options: {
           wave.length
       )
         throw new Error('Incomplete wave result')
+      // Validate the whole returned wave before publishing any member.
+      for (const result of completed) {
+        const assignment = wave.find(
+          (entry) => entry.id === result.assignment.id,
+        )
+        if (
+          !assignment ||
+          JSON.stringify(assignment) !== JSON.stringify(result.assignment)
+        )
+          throw new Error('Foreign or changed assignment')
+        options.validateResult(
+          result,
+          assignment,
+          handoffs[assignment.id] ?? [],
+        )
+      }
       for (const result of completed) {
         const claim = claims.get(result.assignment.id)
         if (

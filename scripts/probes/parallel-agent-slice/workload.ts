@@ -3,13 +3,13 @@ import path from 'node:path'
 
 import { sha256 } from '@savant-code/common/util/hash'
 
-import type { Artifact, Assignment, Handoff } from './types'
+import type { Assignment } from './types'
 
 const HANDLERS = 'packages/agent-runtime/src/tools/handlers/tool/'
 const LOOP = 'packages/agent-runtime/src/run-agent-step/'
 const STORAGE = 'cli/src/utils/run-state-storage/'
 
-export const ASSIGNMENTS: Assignment[] = [
+const TASKS: Assignment[] = [
   {
     id: 'A',
     dependsOn: [],
@@ -52,6 +52,25 @@ export const ASSIGNMENTS: Assignment[] = [
   },
 ]
 
+// Downstream reviewers receive the actual predecessor sources, not only claims.
+export const ASSIGNMENTS: Assignment[] = TASKS.map((task) => ({
+  ...task,
+  files: [...new Set(inheritedFiles(task, new Set()))],
+}))
+
+function inheritedFiles(task: Assignment, visited: Set<string>): string[] {
+  if (visited.has(task.id)) return []
+  visited.add(task.id)
+  return [
+    ...task.files,
+    ...task.dependsOn.flatMap((id) => {
+      const predecessor = TASKS.find((entry) => entry.id === id)
+      if (!predecessor) throw new Error(`Unknown predecessor ${id}`)
+      return inheritedFiles(predecessor, visited)
+    }),
+  ]
+}
+
 export function captureSources(
   root: string,
   assignments: Assignment[],
@@ -65,40 +84,4 @@ export function captureSources(
 
 export function sourceDigest(sources: Record<string, string>): string {
   return sha256(JSON.stringify(sources))
-}
-
-export function validateEvidence(
-  artifact: Artifact,
-  assignment: Assignment,
-  handoffs: Handoff[],
-  sources: Record<string, string>,
-  readPaths: string[],
-): string[] {
-  const failures: string[] = []
-  if (artifact.taskId !== assignment.id) failures.push('Wrong task identity')
-  for (const citation of artifact.citations) {
-    const source = sources[citation.path]
-    if (!source || !assignment.files.includes(citation.path)) {
-      failures.push(`Unassigned citation: ${citation.path}`)
-      continue
-    }
-    if (!readPaths.includes(citation.path))
-      failures.push(`Citation without observed read: ${citation.path}`)
-    const excerpt = source
-      .split(/\r?\n/)
-      .slice(citation.line - 1, citation.line + 5)
-      .join('\n')
-    if (!excerpt.includes(citation.quote))
-      failures.push(`Unresolved quotation: ${citation.path}:${citation.line}`)
-  }
-  for (const expected of handoffs) {
-    if (
-      !artifact.usedHandoffs.some(
-        (used) =>
-          used.taskId === expected.taskId && used.digest === expected.digest,
-      )
-    )
-      failures.push(`Missing exact handoff ${expected.taskId}`)
-  }
-  return failures
 }

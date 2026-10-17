@@ -54,6 +54,7 @@ test('completion releases C before B settles; actual handoff is preserved', asyn
       assignments: tasks,
       store,
       runBatch,
+      validateResult: () => {},
       signal: new AbortController().signal,
     })
     await followup.promise
@@ -76,6 +77,7 @@ test('batch preserves sibling barrier and terminal synthesis dependencies', asyn
       mode: 'batch',
       assignments: tasks,
       store,
+      validateResult: () => {},
       signal: new AbortController().signal,
       runBatch: async (assignments) => {
         waves.push(assignments.map((task) => task.id))
@@ -98,6 +100,7 @@ test('cancel while waiting rejects late result and never starts dependent work',
       mode: 'completion',
       assignments: tasks.slice(0, 1),
       store,
+      validateResult: () => {},
       signal: controller.signal,
       runBatch: async (assignments) => {
         started.resolve()
@@ -113,6 +116,85 @@ test('cancel while waiting rejects late result and never starts dependent work',
     expect(store.owner().context).toBe('[]')
   } finally {
     release.resolve()
+    store.close()
+  }
+})
+
+test('rejected prerequisite never releases dependent work or owner context', async () => {
+  const store = new SliceStore(':memory:', 'source')
+  const started: string[] = []
+  try {
+    await expect(
+      runSchedule({
+        mode: 'completion',
+        assignments: tasks.filter((task) => task.id === 'A' || task.id === 'C'),
+        store,
+        signal: new AbortController().signal,
+        runBatch: async (assignments) => {
+          started.push(...assignments.map((task) => task.id))
+          return assignments.map(result)
+        },
+        validateResult: () => {
+          throw new Error('Evidence rejected')
+        },
+      }),
+    ).rejects.toThrow('Evidence rejected')
+    expect(started).toEqual(['A'])
+    expect(store.task('A').state).toBe('failed')
+    expect(store.task('C').state).toBe('queued')
+    expect(store.owner().context).toBe('[]')
+  } finally {
+    store.close()
+  }
+})
+
+test('a bad second result prevents publication of the entire batch wave', async () => {
+  const store = new SliceStore(':memory:', 'source')
+  try {
+    await expect(
+      runSchedule({
+        mode: 'batch',
+        assignments: tasks,
+        store,
+        signal: new AbortController().signal,
+        runBatch: async (assignments) => assignments.map(result),
+        validateResult: (entry) => {
+          if (entry.assignment.id === 'B') throw new Error('Invalid B')
+        },
+      }),
+    ).rejects.toThrow('Invalid B')
+    expect(store.task('A').state).toBe('failed')
+    expect(store.task('B').state).toBe('failed')
+    expect(store.task('C').state).toBe('queued')
+    expect(store.owner().context).toBe('[]')
+  } finally {
+    store.close()
+  }
+})
+
+test('changed assignment is rejected before calling the validator', async () => {
+  const store = new SliceStore(':memory:', 'source')
+  let validated = false
+  try {
+    await expect(
+      runSchedule({
+        mode: 'batch',
+        assignments: tasks.slice(0, 1),
+        store,
+        signal: new AbortController().signal,
+        runBatch: async (assignments) =>
+          assignments.map((assignment) => ({
+            ...result(assignment),
+            assignment: { ...assignment, files: ['foreign.ts'] },
+          })),
+        validateResult: () => {
+          validated = true
+        },
+      }),
+    ).rejects.toThrow('Foreign or changed assignment')
+    expect(validated).toBe(false)
+    expect(store.owner().context).toBe('[]')
+  } finally {
     store.close()
   }
 })
