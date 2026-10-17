@@ -32,13 +32,17 @@ Learning-pipeline register repair FID-2026-1016-009 (`dc7362b4`, 6/6 gates) is c
 and archived: the active candidate store holds open work only, implemented candidates
 retire verbatim to `dev/feature-pipeline/implemented.json`, and four repair boundaries
 are declared in `dev/experiences/fix-boundaries.json` against verified fix commits, so
-the exposure sink is armed for the first time. `OBS-001` stays open — three classes now
-report `incomplete-observation` while four classes with no provable repair commit,
-including both truthful-upstream `read_url` refusals, remain `unresolved`. No class
-repair and no production observation is claimed.
+the exposure sink is armed for the first time. `OBS-001` is cancelled by the
+operator's 2026-10-16 ruling below. Historical recurrence states remain evidence
+of the recorded failures; cancellation claims neither class repair nor completed
+production observation.
 
-- `OBS-001` in `dev/tracking/internal-followups.json`: production exposure and
-  remaining sanitized replay evidence for eight classes. No class repair is claimed.
+- OBS-001: dropped::operator-approved 2026-10-16 — "i thought we addressed that but it
+  went on a 14 day tracking i canclled. We can dig deeper into it but i don't have
+  14 days to wait for data". The observation task is cancelled. Current recovery
+  investigation uses deterministic reproduction and replay without a waiting period.
+  No completed observation or production repair is claimed. Evidence:
+  `dev/session-summaries/2026-10-16-2250-recurrence-reassessment.md`.
 - `LIVE-001` in the same store is **closed not-planned** (operator ruling 2026-10-16,
   the second operator round this session): live provider comparisons are not planned.
   No paid run happened, nothing was measured, and no comparison result is claimed —
