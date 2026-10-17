@@ -22,7 +22,8 @@ the panel and the command instead of being swallowed on the false premise that
 the command output was already complete, and the command names the resolved
 absolute path rather than a bare filename.
 
-Implementation: `33a58d63`. Verification: `fid:verify` ran all 10 declared
+Implementation: `33a58d63`, plus `7db948bd` for fail-silent boot setup.
+Verification: `fid:verify` ran all 10 declared
 gates with exit 0 (cli typecheck; the boot, view, panel, collapse and renderer
 suites, 62 pass / 0 fail; the durable boot-artifact probe; the scripts
 typecheck probe; quality); the full CLI suite is 4174 pass / 28 skip / 0 fail,

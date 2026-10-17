@@ -542,8 +542,8 @@ messages, like `compaction-summary`; it is never sent to a model.
 
 ### Implementation Evidence (REQUIRED for `closed`)
 
-- [x] **Commit SHA:** pending closure commit (implementation is in the working
-      tree at the time of this stamp)
+- [x] **Commit SHA:** `33a58d63` (feature), `7db948bd` (fail-silent boot
+      setup), `371a0e0f` (record closure)
 - [x] **File:line ranges:** `cli/src/utils/free-options-boot.ts:19-195`
       (thresholds, resolver, labels); `free-options-view.ts:1-147` (shared
       sections/counts/caveats); `free-options-artifact.ts:29-168` (body,

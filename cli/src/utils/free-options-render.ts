@@ -47,7 +47,7 @@ export function renderCommandOutput(
   }
   lines.push('')
   lines.push(
-    'Every model id and every offer is in the free-options panel above; the same reference is saved to:',
+    'Every model id and every offer is in the free-options panel posted at boot; the same reference is saved to:',
   )
   lines.push(`  ${view.header.markdownPath}`)
   const exported = report.exportStatus
