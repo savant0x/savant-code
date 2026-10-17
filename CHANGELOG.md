@@ -12,6 +12,57 @@
 > the v0.0.36 cut. Release notes are written here at cut time; nothing in this
 > section is a package-release claim until then.
 
+## 2026-10-17 — Acceptance is recorded per run, and every rule's authority reference is resolved (FID-2026-1016-016, FID-2026-1016-017, medium)
+
+The second ruling round selected both unselected lesson features. They shipped in one commit
+(`ec60a108`) but under **two** records, because the feature register admits one owning FID per
+candidate — LF-005 and LF-006 could not share an owner, and the register said so rather than letting a
+merged record imply otherwise.
+
+### Added
+
+- **Acceptance is now an artifact, not an inference from tool success (LF-005).** Every tool call in a
+  run can return while the feature is still broken for a person: the report confirms a command exited,
+  never that the terminal rendered, that resize reflowed, that the transcript folded, that an export kept
+  its last row, or that a resumed session showed what it claimed. Regression tests do not close that gap
+  either — `cli/src/components/__tests__/transcript-recovery.render.test.tsx` proves the *deliberate-error*
+  path, a different claim from "this run behaved for a human". Acceptance is therefore a run-bound record
+  at `dev/tracking/acceptance/<runId>.json`, built from a template that claims nothing
+  (`bun run acceptance:check --template <runId> <sessionId>`) and read back by `bun run acceptance:check`
+  (`scripts/production-acceptance.ts`, `scripts/acceptance-check.ts`, `docs/production-acceptance.md`).
+  Each of the five UI surfaces — `resize`, `input-responsiveness`, `folding`, `copy-export`,
+  `resumed-history` — carries exactly one outcome, so no aggregate "it works" stands in for a surface
+  nobody looked at; a claimed outcome carries its observation and resolvable evidence; `unverified`
+  carries no observation at all, which is what keeps the word honest; a record with any claimed surface
+  must contain at least one operator/native check; `automatedRegression` entries must name a test file that
+  exists; `runId` must match the file name; and `sessionId` + `callLedger` bind the record to the ledger
+  holding that run's failures and fallback steps. `validate:repository` runs the same collector, so a
+  malformed record fails the repository gate.
+
+### Changed
+
+- **The canonical rule catalog is re-resolved against the tree (LF-006).** `dev/LEARNING-RULES.md` names,
+  for each rule, the artifact that authorizes it and the check that validates it — and nothing resolved
+  those references, so a `boot` rule could keep citing a deleted file or a FID that never existed. A dead
+  artifact or FID reference is now an **error** in a current (`boot`/`reference`) rule and a **warning** in
+  a `historical` one; that asymmetry is the visible distinction between dated guidance and current
+  authority, and hiding the historical case would have thrown the information away while failing it would
+  have treated history as policy. A rule whose tier disagrees with the status of its linked lessons is
+  refused in both directions, and rules with no linked lesson are deliberately not judged (23 of the 35
+  real rules). Measured before wiring: 62 artifact and FID references across those 35 rules, 0 dead, so
+  the check fails only on real decay (`scripts/learnings-staleness.ts`, wired into `bun run learnings:check`).
+- **Admission refuses to re-implement what an implemented candidate already owns.** The register already
+  refused an identity collision and an FID shared between two candidates, but a *new* candidate with a
+  *new* identity and a *new* FID naming the same work passed every check. Titles are now compared
+  normalized against the implemented archive and the refusal names the owner
+  (`scripts/lesson-feature-admission.ts`). Stated as a boundary rather than a guarantee: a title rule is a
+  detection floor, not a proof of non-duplication — a duplicate worded differently still passes.
+
+### Notes
+
+- The LF-006 record exists separately from the LF-005/LF-006 authoring record for the reason above, and
+  carries its own stamped receipt over the same implementation commit.
+
 ## 2026-10-17 — Skill drafts carry the lesson, four drafts trusted, the live-comparison item retired (FID-2026-1016-015, medium)
 
 ### Changed

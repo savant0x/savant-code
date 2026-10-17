@@ -142,13 +142,28 @@ artifacts required by ECHO retain their gate-level exemptions.
   `packages/agent-runtime/src/find-files/**`, `scripts/eslint-rules/**`
   (this session, operator-ruled: the one tracked 400-line ceiling, the duplicate robot model,
   the orphan triage and the recurring sweep; write targets release at closure.)
-- FID-2026-1016-015: `scripts/lessons-to-skills.ts`,
-  `scripts/__tests__/lessons-to-skills-drafting.test.ts`,
-  `common/src/util/skill-proposals.ts`,
-  `.agents/skills/**` (operator ruling: trust the four quarantined drafts),
-  `dev/tracking/internal-followups.json`, `SCOPE.md`, `CHANGELOG.md`
-  (skill-draft provenance repair + the operator trust round; the corrupt
-  `library-complete-needs-a-named-consumer` draft is re-authored before the trust transitions.)
+- FID-2026-1016-016 and FID-2026-1016-017 are **closed and archived** (2026-10-17, receipts
+  stamped, both implemented on commit `ec60a108`). Their write targets are released:
+  `scripts/production-acceptance.ts`, `scripts/acceptance-check.ts`, `scripts/learnings-staleness.ts`,
+  `scripts/learnings-validation.ts`, `scripts/lesson-feature-admission.ts`,
+  `scripts/validate-repository.ts`, `scripts/__tests__/**`, `docs/production-acceptance.md`,
+  `package.json`, `dev/feature-pipeline/**`. Two records because the register admits one owning FID
+  per candidate: LF-005 (run-bound production acceptance) and LF-006 (stale lesson authority) shipped
+  in one commit but could not share one owner.
+- FID-2026-1016-018: `common/src/providers/**`, `common/src/constants/**`,
+  `cli/src/utils/openrouter-models/**`, `cli/src/utils/__tests__/**`,
+  `sdk/src/impl/__tests__/**`, `docs/**`, `README.md`, `README.zh-CN.md`,
+  `.env.example`, `cli/release/README.md`, `scripts/probes/ashna-census.ts`,
+  `common/src/constants/provider-catalog-census.json`, `SCOPE.md`,
+  `CHANGELOG.md`, `dev/fids/**`, `dev/session-summaries/**`
+  (Ashna, `ashna.ai` — built-in gateway provider: keyed live catalog, the
+  runbook's full addition contract, tests, docs and gates; the FID number is
+  next-free on the date, 016/017 being held by the LF-005/LF-006 items.)
+- FID-2026-1016-015 is **closed and archived** (2026-10-17, 6/6 gates, receipt stamped, commit
+  `bbffdc2d`). Its write targets are released: `scripts/lessons-to-skills.ts`,
+  `scripts/__tests__/lessons-to-skills-drafting.test.ts`, `common/src/util/skill-proposals.ts`,
+  `.agents/skills/**`, `dev/tracking/internal-followups.json`, `SCOPE.md`, `CHANGELOG.md`. The four
+  quarantined drafts were trusted under the operator ruling, so `.agents/skills/.quarantine/` is empty.
 - FID-2026-1016-014 is **closed and archived** (2026-10-16, 7/7 gates, receipt stamped, four
   commits `36c6855f`..`1502db60`). Its write targets are released: `cli/src/chat/panels.tsx`,
   `cli/src/components/skill-lifecycle-notice.tsx`,
