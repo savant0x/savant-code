@@ -121,4 +121,28 @@ export const PROVIDER_REGISTRY_PARTITION_5 = {
     domain: 'venice.ai',
     order: 4,
   },
+  ashna: {
+    id: 'ashna',
+    label: 'Ashna',
+    kind: 'gateway',
+    credentials: {
+      envVar: 'ASHNA_API_KEY',
+      // /provider hint is part of the canonical message.
+      missingKeyMessage:
+        'Ashna API key not set. Set ASHNA_API_KEY environment variable or run /provider ashna.',
+    },
+    // api.ashna.ai — OpenAI-compatible gateway (ashna.ai/api-docs). The only
+    // documented wire is Chat Completions at /v1/api/chat/completions. Live
+    // probes 2026-10-16 (FID-2026-1016-018): GET /v1/api/models -> 401
+    // keyless and 200 authenticated, 104 rows shaped id/object/created/
+    // owned_by with no window or name fields; the roster moves between
+    // probes, so the catalog is live.
+    baseUrl: 'https://api.ashna.ai/v1/api',
+    protocol: 'openai',
+    idTransform: 'strip',
+    catalog: { source: 'live', url: 'https://api.ashna.ai/v1/api/models' },
+    setupAvailable: true,
+    domain: 'ashna.ai',
+    order: 4,
+  },
 } as const satisfies Record<string, ProviderConfig>

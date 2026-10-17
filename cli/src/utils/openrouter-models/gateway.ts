@@ -7,6 +7,7 @@ import { logger } from '../logger'
 import { __resetAihubmixCacheForTest } from './aihubmix'
 import { __resetApinexCacheForTest } from './apinex'
 import { __resetApixoCacheForTest } from './apixo'
+import { __resetAshnaCacheForTest } from './ashna'
 import { __resetBaiCacheForTest } from './bai'
 import { __resetCleanApisCacheForTest } from './cleanapis'
 import { __resetCodecraftCacheForTest } from './codecraft'
@@ -115,6 +116,7 @@ function notifyGatewayCatalogListeners(catalog: OpenRouterModel[]): void {
  * - AIHubMix (live API, public — FID-2026-1013-004)
  * - DeepInfra (live API, public — FID-2026-1012-026)
  * - Venice AI (live API, public — FID-2026-1012-026)
+ * - Ashna (live API, authenticated — FID-2026-1016-018)
  *
  * Fetches live sources in parallel via Promise.allSettled(). If a source fails,
  * uses cached/empty list for that provider. Returns a combined, sorted list.
@@ -247,6 +249,7 @@ function resetProviderCatalogCaches(): void {
   __resetAihubmixCacheForTest()
   __resetDeepInfraCacheForTest()
   __resetVeniceCacheForTest()
+  __resetAshnaCacheForTest()
   // Step 9 remainder: lazily-built custom fetchers are cache state too.
   __resetCustomCatalogsForTest()
 }

@@ -55,6 +55,7 @@ Or select one of the supported gateway providers directly:
 | Anthropic | `/provider anthropic` or `DIRECT_PROVIDER=anthropic` | `ANTHROPIC_API_KEY` | Hosted gateway |
 | APInex | `/provider apinex` or `DIRECT_PROVIDER=apinex` | `APINEX_API_KEY` | Hosted gateway with an authenticated live model catalog |
 | Apixo | `/provider apixo` or `DIRECT_PROVIDER=apixo` | `APIXOAI_API_KEY` | [OI]-compatible gateway with a keyless live model catalog |
+| Ashna | `/provider ashna` or `DIRECT_PROVIDER=ashna` | `ASHNA_API_KEY` | Hosted gateway |
 | Atria AI | `/provider atria` or `DIRECT_PROVIDER=atria` | `ATRIA_API_KEY` | Hosted gateway |
 | B.AI | `/provider bai` or `DIRECT_PROVIDER=bai` | `BAI_API_KEY` | OpenAI-compatible gateway with an authenticated live model catalog |
 | Baseten | `/provider baseten` or `DIRECT_PROVIDER=baseten` | `BASETEN_API_KEY` | Hosted gateway |
@@ -218,6 +219,7 @@ APIXOAI_API_KEY=dummy-apixoai-api-key-replace-me
 AIHUBMIX_API_KEY=dummy-aihubmix-key-replace-me
 CHATANYWHERE_API_KEY=dummy-chatanywhere-api-key-replace-me
 TIARINA_API_KEY=dummy-tiarina-api-key-replace-me
+ASHNA_API_KEY=dummy-ashna-api-key-replace-me
 # Cloudflare needs TWO credentials (token + account id):
 CLOUDFLARE_API_TOKEN=cloudflare-dummy-replace-me
 CLOUDFLARE_ACCOUNT_ID=cloudflare-account-dummy-replace-me

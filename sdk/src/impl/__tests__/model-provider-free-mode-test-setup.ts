@@ -25,6 +25,7 @@ export const NOUS_MODEL = 'nous/anthropic/claude-sonnet-4.6'
 export const VERCEL_MODEL = 'vercel/alibaba/qwen-3-14b'
 export const MISTRAL_MODEL = 'mistral/codestral-2508'
 export const APIXO_MODEL = 'apixo/deepseek-v4.1-flash'
+export const ASHNA_MODEL = 'ashna/gpt-5.5'
 export const COMMAND_CODE_PROMPT = [
   {
     role: 'user' as const,
@@ -47,6 +48,7 @@ export function setupModelProviderTestHarness() {
   let originalVercelApiKey: string | undefined
   let originalMistralApiKey: string | undefined
   let originalApixoApiKey: string | undefined
+  let originalAshnaApiKey: string | undefined
   let originalAihubmixApiKey: string | undefined
   let originalOpenRouterApiKey: string | undefined
   let originalOrMasterKey: string | undefined
@@ -92,6 +94,10 @@ export function setupModelProviderTestHarness() {
     // so the key-missing leg only resolves when it is deleted here.
     originalApixoApiKey = process.env.APIXOAI_API_KEY
     delete process.env.APIXOAI_API_KEY
+    // FID-2026-1016-018: the repo-root .env.local carries a live Ashna key;
+    // the key-missing leg only resolves when it is deleted here.
+    originalAshnaApiKey = process.env.ASHNA_API_KEY
+    delete process.env.ASHNA_API_KEY
     originalAihubmixApiKey = process.env.AIHUBMIX_API_KEY
     delete process.env.AIHUBMIX_API_KEY
     originalOpenRouterApiKey = process.env.OPENROUTER_API_KEY
@@ -190,6 +196,11 @@ export function setupModelProviderTestHarness() {
       delete process.env.APIXOAI_API_KEY
     } else {
       process.env.APIXOAI_API_KEY = originalApixoApiKey
+    }
+    if (originalAshnaApiKey === undefined) {
+      delete process.env.ASHNA_API_KEY
+    } else {
+      process.env.ASHNA_API_KEY = originalAshnaApiKey
     }
     if (originalAihubmixApiKey === undefined) {
       delete process.env.AIHUBMIX_API_KEY

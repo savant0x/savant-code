@@ -293,5 +293,15 @@ export const WINDOW_COVERAGE_REGISTER: ReadonlyMap<
       note: 'Live catalog keyless: HTTP 200 with 869 rows and 698 LLM rows (probed 2026-10-13); positive finite context_length on 358/698 and max_output on 306/698. 642/698 LLM rows have empty endpoints; rows remain retained because endpoints metadata is sparse (FID-2026-1013-004).',
     },
   ],
+  [
+    'ashna',
+    {
+      // FID-2026-1016-018: the keyed catalog publishes NO window fields on
+      // any row (shape id/object/created/owned_by), so exact windows come
+      // from the cross-gateway consensus table and the rest keep default.
+      disposition: 'table-section',
+      note: 'Live catalog auth-gated (401 keyless, probed 2026-10-16); 104 rows authenticated, none carry window fields. 28 exact-id rows are cross-gateway consensus in the context-window-table-ashna seam; the remaining 50 retained ids are documented no-row (aliases/variants/unrowed upstreams) in the same seam.',
+    },
+  ],
   ...TIER1_WINDOW_COVERAGE_ENTRIES,
 ])

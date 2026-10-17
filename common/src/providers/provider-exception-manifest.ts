@@ -208,6 +208,19 @@ export const PROVIDER_EXCEPTION_MANIFEST: readonly ProviderExceptionManifestEntr
       ],
     },
     {
+      // FID-2026-1016-018: keyed ids-only catalog (401 keyless); windows
+      // come from the cross-gateway consensus seam because the endpoint
+      // publishes none.
+      providerId: 'ashna',
+      kinds: ['live-catalog'],
+      owner: 'cli/src/utils/openrouter-models/ashna.ts',
+      evidence: [
+        'cli/src/utils/openrouter-models/ashna.ts',
+        'cli/src/utils/openrouter-models/gateway.ts',
+        'common/src/constants/context-window-table-ashna.ts',
+      ],
+    },
+    {
       providerId: 'tokenrouter',
       kinds: ['multi-protocol'],
       owner: 'common/src/constants/model-config/provider-protocols.ts',

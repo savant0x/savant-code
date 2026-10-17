@@ -40,6 +40,7 @@ closed if this section drifts from the registry.
 | Anthropic | `anthropic` | gateway | `ANTHROPIC_API_KEY` | `https://api.anthropic.com/v1` | anthropic | static (17 models) |
 | APInex | `apinex` | gateway | `APINEX_API_KEY` | `https://api.apinex.bond/v1` | openai | live |
 | Apixo | `apixo` | gateway | `APIXOAI_API_KEY` | `https://api.apixoai.online/v1` | openai | live |
+| Ashna | `ashna` | gateway | `ASHNA_API_KEY` | `https://api.ashna.ai/v1/api` | openai | live |
 | Atria AI | `atria` | gateway | `ATRIA_API_KEY` | `https://api.atria-asi.ai/v1` | openai | static (1 model) |
 | B.AI | `bai` | gateway | `BAI_API_KEY` | `https://api.b.ai/v1` | openai | live |
 | Baseten | `baseten` | gateway | `BASETEN_API_KEY` | `https://inference.baseten.co/v1` | openai | static (24 models) |
@@ -111,6 +112,13 @@ closed if this section drifts from the registry.
   `deepseek-v4.1-flash` is a reasoning model — it returns `reasoning_content`,
   and the billed `total_tokens` exceeds prompt + completion by the reasoning
    tokens, which the vendor charges at the output price.
+- **Ashna** is a keyed live provider: `/v1/api/models` answers 401 keyless, so
+  the picker populates only once `ASHNA_API_KEY` resolves. The vendor publishes
+  no window fields (0 of 104 rows), so exact windows come from the
+  cross-gateway consensus table (`context-window-table-ashna` seam), and the
+  vendor's own retrieval/image products (`voyage-*`, `rerank-*`,
+  `ashna-diffusion-*`) are excluded from the picker — 78 of the 104 served ids
+  are coding-harness chat candidates.
 - **AIHubMix** exposes a keyless rich catalog at `/api/v1/models` and uses
   `AIHUBMIX_API_KEY` only for inference at `/v1/chat/completions`. The picker
   retains 698 LLM rows; window coverage is runtime-partial because positive
@@ -126,7 +134,8 @@ of its 35 rows publishes a `context_window` and `max_output_tokens`, so its
 windows come from the vendor rather than a fallback table. Rosters are live
 rather than pinned to a model list
 in source. Catalog requests returned 33 CodeCraft, 129 xKiro, and 33 CleanAPIs
-models on 2026-10-03, and 35 Apixo models on 2026-10-13; these are observed
+models on 2026-10-03, 35 Apixo models on 2026-10-13, and 104 Ashna rows (78
+retained chat ids) on 2026-10-16; these are observed
 counts, not fixed limits. AIHubMix's rich catalog is also public and live; its
 698 retained LLM rows and partial limit coverage are measured observations, not
 fixed roster limits.

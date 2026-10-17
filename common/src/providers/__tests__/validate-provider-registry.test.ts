@@ -96,6 +96,25 @@ describe('validateProviderRegistry (FID-2026-0809-001 Phase 5)', () => {
     expect(setup.apixo?.label).toBe('Apixo')
   })
 
+  test('the ashna entry derives its routing/setup/picker surfaces (FID-2026-1016-018)', () => {
+    // The entry's own derivation, asserted from the registry alone: nothing
+    // here is hand-maintained in a derived surface.
+    expect(PROVIDER_REGISTRY.ashna.id).toBe('ashna')
+    expect(ALLOWED_MODEL_PREFIXES).toContain('ashna')
+    expect(deriveValidProviderIds(PROVIDER_REGISTRY)).toContain('ashna')
+    expect(deriveProviderDomains(PROVIDER_REGISTRY, ORG_DOMAINS).ashna).toBe(
+      'ashna.ai',
+    )
+    expect(deriveProviderOrder(PROVIDER_REGISTRY, 'ashna')).toBe(4)
+    const setup = deriveSetupConfig(PROVIDER_REGISTRY) as Record<
+      string,
+      { label: string; envVar: string; baseUrl: string } | undefined
+    >
+    expect(setup.ashna?.envVar).toBe('ASHNA_API_KEY')
+    expect(setup.ashna?.baseUrl).toBe('https://api.ashna.ai/v1/api')
+    expect(setup.ashna?.label).toBe('Ashna')
+  })
+
   test('the aihubmix entry derives its routing/setup/picker surfaces (FID-2026-1013-004)', () => {
     expect(PROVIDER_REGISTRY.aihubmix.id).toBe('aihubmix')
     expect(ALLOWED_MODEL_PREFIXES).toContain('aihubmix')

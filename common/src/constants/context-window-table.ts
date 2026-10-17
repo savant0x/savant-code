@@ -15,6 +15,7 @@
  *   conflicting 262.1K tag — flagged in the FID).
  */
 import { APINEX_CONTEXT_WINDOW_FALLBACKS } from './context-window-table-apinex'
+import { ASHNA_CONTEXT_WINDOW_FALLBACKS } from './context-window-table-ashna'
 import { BAI_CONTEXT_WINDOW_FALLBACKS } from './context-window-table-bai'
 import { CHATANYWHERE_CONTEXT_WINDOW_FALLBACKS } from './context-window-table-chatanywhere'
 import { KIOSAPI_CONTEXT_WINDOW_FALLBACKS } from './context-window-table-kiosapi'
@@ -275,5 +276,10 @@ export const CONTEXT_WINDOW_FALLBACKS: ReadonlyMap<string, number> = new Map([
   // conservative minimum of two disagreeing >=2-row groups; the one no-row id
   // (glm-4.7-flash) is documented in the section file) ---
   ...TIARINA_CONTEXT_WINDOW_FALLBACKS,
+  // --- ashna: seam-split (FID-2026-1016-018; the keyed gateway publishes
+  // no window fields — cross-gateway consensus rows, three pinned at the
+  // conservative minimum of two disagreeing >=2-row groups, two flagged
+  // NEEDS-REVIEW single-source; no-row ids documented in the section file) ---
+  ...ASHNA_CONTEXT_WINDOW_FALLBACKS,
   ...TIER1_CONTEXT_WINDOWS,
 ])

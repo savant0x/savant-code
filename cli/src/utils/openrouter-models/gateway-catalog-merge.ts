@@ -59,6 +59,9 @@ export function assembleGatewayCatalog(
     ...live.aihubmixModels,
     ...live.deepinfraModels,
     ...live.veniceModels,
+    // FID-2026-1016-018: the newest built-in live leg, before the custom
+    // tail. Same rationale as every row above — appended, never reordered.
+    ...live.ashnaModels,
     ...fetchCommandCodeModels(),
     ...fetchHcnsecModels(),
     ...fetchTokenBomModels(),

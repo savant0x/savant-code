@@ -94,7 +94,7 @@ describe('FID-2026-1012-026: Tier 1 first-party catalogs', () => {
     expect(incompatibleRows).toEqual([])
   })
 
-  test('settled ladder keeps DeepInfra and Venice before custom catalogs', () => {
+  test('settled ladder keeps DeepInfra, Venice, and Ashna before custom catalogs', () => {
     const deepinfraRow: OpenRouterModel = {
       id: 'deepinfra/zai-org/GLM-5.3',
       name: 'GLM-5.3',
@@ -110,10 +110,18 @@ describe('FID-2026-1012-026: Tier 1 first-party catalogs', () => {
       name: 'last',
       provider: 'custom',
     }
-    const restResults = Array.from({ length: 16 }, () => fulfilled([]))
+    // FID-2026-1016-018: Ashna joins at slot 15; the custom-catalogs tail
+    // stays last (slot 16).
+    const ashnaRow: OpenRouterModel = {
+      id: 'ashna/gpt-5.5',
+      name: 'gpt-5.5',
+      provider: 'ashna',
+    }
+    const restResults = Array.from({ length: 17 }, () => fulfilled([]))
     restResults[13] = fulfilled([deepinfraRow])
     restResults[14] = fulfilled([veniceRow])
-    restResults[15] = fulfilled([customRow])
+    restResults[15] = fulfilled([ashnaRow])
+    restResults[16] = fulfilled([customRow])
     const resolved = resolveGatewayLiveCatalogs(
       fulfilled([]),
       fulfilled([]),
@@ -121,6 +129,7 @@ describe('FID-2026-1012-026: Tier 1 first-party catalogs', () => {
     )
     expect(resolved.deepinfraModels).toEqual([deepinfraRow])
     expect(resolved.veniceModels).toEqual([veniceRow])
+    expect(resolved.ashnaModels).toEqual([ashnaRow])
     expect(resolved.customModels).toEqual([customRow])
   })
 })
