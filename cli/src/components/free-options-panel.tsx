@@ -59,7 +59,9 @@ export const FreeOptionsPanel = React.memo(function FreeOptionsPanel({
 
   return (
     <box selectable={false} style={{ width: '100%' }}>
-      <TrafficLightPanel>        <CopyableBlock getCopyText={() => renderCopyText(block, view)}>
+      <TrafficLightPanel>
+        {' '}
+        <CopyableBlock getCopyText={() => renderCopyText(block, view)}>
           <box style={{ flexDirection: 'column' }}>
             <Button
               style={{ justifyContent: 'flex-start', width: '100%' }}

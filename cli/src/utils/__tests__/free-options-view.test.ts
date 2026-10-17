@@ -162,9 +162,9 @@ describe('FID-2026-1017-005: artifact identity', () => {
     expect(status.ok).toBe(true)
     expect(status.path).toBe(markdownPath)
     expect(status.generationId).toMatch(/^sha256:[0-9a-f]{64}$/)
-    expect(
-      verifyFreeOptionsArtifact({ report, path: markdownPath }).ok,
-    ).toBe(true)
+    expect(verifyFreeOptionsArtifact({ report, path: markdownPath }).ok).toBe(
+      true,
+    )
   })
 
   test('a failed write is returned, never thrown or swallowed', () => {
