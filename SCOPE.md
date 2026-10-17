@@ -38,6 +38,17 @@ presented: retain echo.md:1-15 (frontmatter, directive, mandate, canonical-sourc
 and replace echo.md:19-409 with the current canonical body, read 0-EOF. This session is
 not affected — the canonical file was read in full and governs.
 
+### FID-2026-1017-007 — FID-bound parallel worktrees (converged, implementation pending)
+
+Each FID gets an ephemeral linked git worktree under the already-ignored
+`.savant/worktrees/<fidId>`, provisioned and disposed by the host, with the Law 2
+gate mapping lane-relative targets back to repo-relative ones and a
+fast-forward-only merge gate. Teardown follows the recorded release-checkout
+contract (`git worktree remove` → verified absence → bounded fallback → prune),
+never the blueprint's `rm -rf` ordering. Eight steps are declared in the FID; all
+remain `pending` until implemented and verified. No isolation, speedup or merge
+resolution is claimed yet.
+
 ## Internal follow-ups and current operator authority (2026-10-16)
 
 Implementation-complete records FID-2026-1015-006 and FID-2026-1012-022
@@ -225,3 +236,14 @@ artifacts required by ECHO retain their gate-level exemptions.
   boundary fallback and the serialized block. The fix removes the child and adds
   native-render pins; the operator's real 146-model / 223-offer report renders
   natively in both states. No live TUI session was run here (`tmux` absent).
+- FID-2026-1017-007: `packages/agent-runtime/src/echo/parallel/**`,
+  `packages/agent-runtime/src/echo/pre-write-gates-law2.ts`,
+  `packages/agent-runtime/src/tools/handlers/tool/fid-worktree.ts`,
+  `packages/agent-runtime/src/__tests__/fid-worktree-*.test.ts`,
+  `packages/agent-runtime/src/echo/__tests__/law2-worktree-jurisdiction.test.ts`,
+  `common/src/tools/params/tool/fid-worktree.ts`,
+  `common/src/tools/__tests__/fid-worktree-params.test.ts`,
+  `common/src/tools/list.ts`, `agents/savant/savant.ts`,
+  `scripts/worktree.ts`, `scripts/probes/fid-worktrees.ts`,
+  `docs/design/parallel-worktrees.md`, `SCOPE.md`, `CHANGELOG.md`, `README.md`
+  (FID-bound parallel worktrees; targets release at closure.)
