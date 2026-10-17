@@ -11,14 +11,7 @@ handling or repository boundaries.
 
 ## Open items
 
-- [ ] FID-2026-1017-003 — compare fused, independent fan-out and dependent
-  investigation workflows on one final acceptance brief; three-way execution
-  is complete at 60 requests. The operator's 2026-10-17 "resume" authorizes
-  the four additional physical sends just proposed (cumulative ceiling 64).
-  Both trials completed (89.142 s / 63.511 s); 64/64 sends used. Selected bounded
-  research contract and retained semantic defects are documented; finish
-  verification, commit and archive. Operator authorizes
-  workflow/intra-agent redesign at automation level 3 (2026-10-17).
+None.
 
 ## Internal follow-ups and current operator authority (2026-10-16)
 
@@ -111,11 +104,6 @@ dispositions supersede the previous register holds.
   cleared; the intake report passes Markdown lint. No artifact was deleted.
 
 ## Machine-readable scope targets
-
-- FID-2026-1017-003: `scripts/probes/parallel-agent-slice.ts`,
-  `scripts/probes/parallel-agent-slice/**`, `docs/design/parallel-agent-slice.md`,
-  `docs/design/parallel-workflow-decision.md`, `dev/fids/**`, `dev/research/**`,
-  `dev/session-summaries/**`, `SCOPE.md`, `CHANGELOG.md`.
 
 Operator authorization: completion at automation level 3, renewed 2026-10-15;
 specific removal and skill metadata approvals are in answers.md. Governance

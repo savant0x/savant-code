@@ -12,7 +12,7 @@
 > the v0.0.36 cut. Release notes are written here at cut time; nothing in this
 > section is a package-release claim until then.
 
-## 2026-10-17 — Workflow comparison research (FID-2026-1017-003, low; verified progress)
+## 2026-10-17 — Bounded research workflow selection (FID-2026-1017-003, low)
 
 Added equal-final-brief comparisons for consolidated investigation, independent
 fan-out and the dependent research chain. Real Apixo `gpt-6.1-sol` results:
@@ -28,8 +28,10 @@ checks passing. Review retained cost and mandatory-review constraints, but
 residual parent-overlap and Forge-for-research proposals prevent blind semantic
 acceptance. Selected a host-enforced bounded research contract and documented
 the product integration/acceptance map in `docs/design/parallel-workflow-decision.md`.
-The cumulative 64-request ceiling is exhausted. No production installation,
-general speedup, monetary saving or FID closure is claimed by this progress entry.
+Research implementation/evidence commits: `bfcb3640`, `e0f113a5`; seven declared
+gates pass. FID closed and archived; scope released. The cumulative 64-request
+ceiling is exhausted. Closure covers research and the executable prototype;
+no production installation, general speedup or monetary saving is claimed.
 
 ## 2026-10-17 — Validated parallel handoffs (FID-2026-1017-002, low)
 
