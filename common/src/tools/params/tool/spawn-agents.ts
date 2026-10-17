@@ -10,6 +10,60 @@ import {
 
 import type { $ToolParams } from '../../constants'
 
+const sha256HexSchema = z
+  .string()
+  .regex(
+    /^[0-9a-f]{64}$/,
+    'Expected a lowercase 64-character SHA-256 hex digest',
+  )
+
+/** One captured local source in a research plan. */
+export const spawnPlanSourceSchema = z
+  .object({
+    path: z
+      .string()
+      .min(1)
+      .describe('Project-relative path of a captured source file'),
+    sha256: sha256HexSchema.describe(
+      'SHA-256 of the file content with CRLF normalized to LF',
+    ),
+  })
+  .strict()
+
+/**
+ * FID-2026-1017-004: the host-owned research contract. Strict on purpose —
+ * an undeclared field is a rejected plan, not an ignored one. There is
+ * deliberately no tool or write field: a plan can never widen authority.
+ */
+export const spawnPlanSchema = z
+  .object({
+    objective: z
+      .string()
+      .min(1)
+      .describe('The single research question this plan answers'),
+    cancellation_id: z
+      .string()
+      .min(1)
+      .describe(
+        'Turn identity this plan belongs to; a stale replay is rejected',
+      ),
+    snapshot_sha256: sha256HexSchema.describe(
+      'SHA-256 over the sorted path/hash lines of the declared sources',
+    ),
+    max_output_tokens: z
+      .number()
+      .int()
+      .positive()
+      .optional()
+      .describe('Per-child output ceiling; must not exceed the run budget'),
+    sources: z
+      .array(spawnPlanSourceSchema)
+      .min(1)
+      .max(64)
+      .describe('Captured local sources every step is validated against'),
+  })
+  .strict()
+
 export const spawnAgentsOutputSchema = z
   .object({
     agentType: z.string(),
@@ -26,6 +80,25 @@ const inputSchema = z
       z
         .object({
           agent_type: z.string().describe('Agent to spawn'),
+          id: z
+            .string()
+            .min(1)
+            .optional()
+            .describe(
+              'Plan step identity. Required (and unique) when plan is present.',
+            ),
+          sources: z
+            .array(z.string().min(1))
+            .optional()
+            .describe(
+              'Plan source paths this step must read. Required when plan is present; subset of plan.sources.',
+            ),
+          depends_on: z
+            .array(z.string().min(1))
+            .optional()
+            .describe(
+              'Earlier plan step ids whose artifacts this step receives. Required when plan is present.',
+            ),
           writeScope: z
             .array(z.string().min(1))
             .max(64)
@@ -110,9 +183,10 @@ const inputSchema = z
         })
         .array(),
     ),
+    plan: spawnPlanSchema.optional(),
   })
   .describe(
-    `Spawn multiple agents and send a prompt and/or parameters to each of them. These agents will run in parallel. Note that that means they will run independently. If you need to run agents sequentially, use spawn_agents with one agent at a time instead.`,
+    `Spawn multiple agents and send a prompt and/or parameters to each of them. These agents will run in parallel. Note that that means they will run independently. If you need to run agents sequentially, use spawn_agents with one agent at a time instead.\n\nBounded research plan (optional): for a coupled research question, add a \`plan\` object (objective, cancellation_id, snapshot_sha256, sources, optional max_output_tokens) and give each agent an \`id\`, its \`sources\` subset, and \`depends_on\` step ids. The host validates every source against the captured bytes before dispatch, runs dependency stages in order behind the normal aggregate barrier, injects each predecessor artifact itself, and accepts a step only when its assigned reads and predecessor artifacts are present in the child's history. Plan steps are read-only and restricted to research roles (detective, scout, researcher, thinker, and research tool libraries); implementation, audit, and effectful roles are rejected. A plan with any invalid step is rejected whole — it is never partially dispatched.`,
   )
 const description = `
 Use this tool to spawn agents to help you complete the user request. Each agent has specific requirements for prompt and params based on their tools schema.

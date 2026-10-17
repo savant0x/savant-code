@@ -1,7 +1,10 @@
 import { toolNames } from '@savant-code/common/tools/constants'
 import { toJSONValue } from '@savant-code/common/util/type-narrowing'
 
-import { resolveSpawnableAgent } from '../handlers/tool/spawn-agent-utils'
+// Import the resolver directly: `spawn-agent-utils` also exports the execution
+// surface, which pulls the agent loop into this pre-validation module and
+// creates an import cycle through the handler list (FID-2026-1017-004).
+import { resolveSpawnableAgent } from '../handlers/tool/spawn-agent-resolution'
 import { batchSpawnRejectionMessage } from '../handlers/tool/spawn-inline-only'
 import { isJSONObject } from '../tool-call-parse'
 
@@ -133,12 +136,19 @@ export async function validateSpawnAgentsInput(params: {
     }
 
     if (errors.length > 0) {
-      if (validAgents.length === 0) {
-        const errorMsg = `Failed to spawn agents: ${errors.join('; ')}`
+      // FID-2026-1017-004: a research plan must dispatch exactly its declared
+      // steps. Filtering one out would silently break its dependents' input
+      // identity, so a plan-carrying call is rejected whole.
+      const hasPlan = effectiveInput.plan !== undefined
+      if (hasPlan || validAgents.length === 0) {
+        const planNote = hasPlan
+          ? ' A research plan must dispatch exactly its declared steps, so the whole call was rejected instead of filtering invalid entries.'
+          : ''
+        const errorMsg = `Failed to spawn agents: ${errors.join('; ')}.${planNote}`
         onResponseChunk({ type: 'error', message: errorMsg })
         logger.debug(
-          { toolName, errors },
-          'All agents in spawn_agents are invalid, not streaming tool call',
+          { toolName, errors, hasPlan },
+          'Spawn_agents call is invalid and was rejected',
         )
         return { rejected: true, input: effectiveInput }
       }

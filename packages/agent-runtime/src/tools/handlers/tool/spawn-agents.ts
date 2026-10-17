@@ -5,6 +5,8 @@ import { safeToJSONValue } from '@savant-code/common/util/type-narrowing'
 import { checkRecorderOutcome } from './recorder-stall-check'
 import { runSingleSubagent } from './spawn-agents-child-run'
 import { batchSpawnRejectionMessage } from './spawn-inline-only'
+import { createProjectSourceReader, validateSpawnPlan } from './spawn-plan'
+import { runSpawnPlan } from './spawn-plan-dispatch'
 import { sanitizeSubagentReport } from './subagent-report-sanitizer'
 import { setActivity } from '../../../util/activity-tracking'
 
@@ -67,6 +69,119 @@ export const handleSpawnAgents = (async (
     const inlineOnlyRejection = batchSpawnRejectionMessage(agent.agent_type)
     if (inlineOnlyRejection !== null) {
       throw new Error(inlineOnlyRejection)
+    }
+  }
+
+  // FID-2026-1017-004: a plan-carrying spawn is validated and dispatched from
+  // host-verified facts. Validation is all-or-nothing — a plan is never
+  // partially dispatched, because dropping a step would silently break its
+  // dependents' input identity.
+  const planInput = toolCall.input.plan
+  const projectRoot = params.fileContext?.projectRoot
+  if (planInput !== undefined) {
+    if (projectRoot === undefined) {
+      throw new Error(
+        'Invalid spawn plan:\n- A research plan requires a project root to verify source bytes.',
+      )
+    }
+    const readSource = createProjectSourceReader(projectRoot)
+    const validated = await validateSpawnPlan({
+      plan: planInput,
+      agents,
+      deps: {
+        projectRoot,
+        userInputId,
+        maxOutputTokens: params.maxOutputTokens,
+        maxFanOut: MAX_SUBAGENT_FAN_OUT,
+        readSource,
+      },
+    })
+    if (!validated.ok) {
+      throw new Error(`Invalid spawn plan:\n- ${validated.issues.join('\n- ')}`)
+    }
+
+    const outcomes = await runSpawnPlan({
+      steps: validated.steps,
+      stages: validated.stages,
+      sources: validated.sources,
+      projectRoot,
+      readSource,
+      isAborted: () => params.signal.aborted,
+      runStep: async (step, prompt) => {
+        const result = await runSingleSubagent({
+          params,
+          parentAgentState,
+          parentAgentTemplate,
+          fingerprintId,
+          parentSystemPrompt,
+          parentTools,
+          userInputId,
+          sendSubagentChunk,
+          writeToClient,
+          isOnlyChild: validated.steps.length === 1,
+          agentTypeStr: step.agentType,
+          writeScope: undefined,
+          prompt,
+          spawnParams: step.spawnParams,
+        })
+        return { ...result, output: safeToJSONValue(result.output) }
+      },
+    })
+
+    // Accounting is separate from acceptance: a rejected or cancelled step
+    // still spent its credits, and that spend is never erased by the verdict.
+    for (const outcome of outcomes) {
+      if (outcome.creditsUsed > 0) {
+        parentAgentState.creditsUsed += outcome.creditsUsed
+      }
+    }
+
+    setActivity(
+      parentAgentState,
+      {
+        kind: 'thinking',
+        startedAt: Date.now(),
+        model: parentAgentTemplate.model,
+      },
+      writeToClient,
+    )
+
+    return {
+      output: jsonToolResult(
+        outcomes.map((outcome) => {
+          const base = {
+            agentName: outcome.agentName,
+            agentType: outcome.agentType,
+            planStep: {
+              id: outcome.step.id,
+              status: outcome.status,
+              ...(outcome.digest === undefined
+                ? {}
+                : { digest: outcome.digest }),
+            },
+          }
+          if (outcome.status !== 'accepted') {
+            return {
+              ...base,
+              value: {
+                errorMessage: `Research plan step "${outcome.step.id}" ${outcome.status}: ${outcome.reason ?? 'no reason recorded'}`,
+              },
+            }
+          }
+          const sanitized = sanitizeSubagentReport(
+            safeToJSONValue(outcome.value ?? null),
+          )
+          return {
+            ...base,
+            value: sanitized.output,
+            reportSanitization: {
+              sanitized: sanitized.sanitized,
+              detectedTags: sanitized.detectedTags,
+              detectedCategories: sanitized.detectedCategories,
+            },
+          }
+        }),
+      ),
     }
   }
 
