@@ -38,6 +38,33 @@ presented: retain echo.md:1-15 (frontmatter, directive, mandate, canonical-sourc
 and replace echo.md:19-409 with the current canonical body, read 0-EOF. This session is
 not affected — the canonical file was read in full and governs.
 
+### FID-2026-1017-008 — live parallel-worktree acceptance (active)
+
+Authority: automation level 3 (session ceiling). The task arrived as a loose
+instruction; the interpretation below was presented on 2026-10-17 and the
+operator approved it with two decisions: (1) the full live lane cycle
+(create → lane commit → fast-forward merge → graph refresh → dispose) runs in
+this repository; (2) the live phase is operator-driven — the operator executes
+an A–Z live test inside the running CLI personally ("ill drive it … Ill do
+the test manually"), with paid inference authorized under the operator's named
+provider/model (`kiosapi`, `step-5-preview`), recorded by the run itself. The
+earlier plan of an agent-run operator-CLI cycle was replaced by that election.
+The agent delivers the run instrument and closes the record on the run's
+evidence.
+
+Objective: prove the FID-bound parallel worktree system (FID-2026-1017-007,
+archived) end-to-end in the real repository through its production paths. This
+session delivers: this converged record (the lane vehicle), the register
+grant, and the A–Z live-test prompt
+(`dev/test-prompts/az-parallel-worktrees-live-test.md`) that re-runs the
+declared gate surface live and drives the full lane lifecycle with
+operator-confirmed mutations, typed refusals, Law 2 lane-jurisdiction writes,
+the merge with main-graph refresh, and dirty/discard disposal. The run's
+report (`dev/scratchpad/az-parallel-worktrees-live-test-report.md`) and the
+merged lane proof become the acceptance evidence; closure retires this record
+and releases its write targets. Any discovered defect becomes its own
+implementation FID. Claims stay within measured evidence.
+
 ## Internal follow-ups and current operator authority (2026-10-16)
 
 Implementation-complete records FID-2026-1015-006 and FID-2026-1012-022
@@ -159,7 +186,8 @@ artifacts required by ECHO retain their gate-level exemptions.
   1-second `spawnSync` PATH probe. Fix applied test-first (red → green), full sdk suite 717 pass /
   0 fail. Write targets released: `sdk/src/tools/code-search/executor.ts`,
   `sdk/src/__tests__/ripgrep.test.ts`. The sdk suite is no longer a push blocker.
-- FID-2026-1016-013: `scripts/quality-report.ts`,
+- FID-2026-1016-013 is **closed and archived** (2026-10-16) — write targets
+  released: `scripts/quality-report.ts`,
   `scripts/quality-report.test.ts`, `protocol.config.yaml`,
   `common/src/constants/protocol-bundle.generated.ts`, `common/src/constants/skills.ts`,
   `scripts/skills-check.ts`, `scripts/skills-check-content.ts`,
@@ -225,3 +253,9 @@ artifacts required by ECHO retain their gate-level exemptions.
   boundary fallback and the serialized block. The fix removes the child and adds
   native-render pins; the operator's real 146-model / 223-offer report renders
   natively in both states. No live TUI session was run here (`tmux` absent).
+- FID-2026-1017-008: `dev/fids/**`, `SCOPE.md`, `CHANGELOG.md`,
+  `dev/session-summaries/**`, `dev/test-prompts/**`,
+  `docs/design/parallel-worktrees.md`, `docs/design/parallel-worktrees-lane-proof.md`
+  (live parallel-worktree acceptance; active). No production source write is
+  authorized by this item; a discovered defect opens its own implementation
+  FID.
