@@ -17,6 +17,10 @@ The operator guide is `docs/design/parallel-worktrees.md`. The source/built
 ripgrep regression pins also check the resolved binary's SHA-256, so building
 the SDK no longer creates a false gate failure.
 
+FID closure and archive: `dc2953f0`. Session-end review completed; the final
+verification and closure record is
+`dev/session-summaries/2026-10-17-fid-worktrees-completion.md`.
+
 ## 2026-10-17 — Boot free-options panel renders natively (FID-2026-1017-006, high)
 
 Every boot replaced the free-options panel with the transcript error fallback

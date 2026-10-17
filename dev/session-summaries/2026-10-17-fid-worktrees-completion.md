@@ -1,4 +1,7 @@
-# FID worktrees — handoff continuation
+# FID worktrees — completed session
+
+**Session status:** closed, 2026-10-17. FID-2026-1017-007 is implemented,
+verified, committed and archived. This record completes the handoff.
 
 Single-agent ECHO, strict mode, automation level 3. Resume the full approved
 FID-2026-1017-007 from implementation commit `7618b5b4`. Preserve the untracked
@@ -95,3 +98,29 @@ refuses nested checkouts; provider-secret inheritance is rejected by a real
 CLI child test. The graph indexer is loaded lazily only after a successful
 merge. No automatic spawn routing, sandbox guarantee or throughput result is
 claimed. The blueprint and original transcript are byte-preserved.
+
+## Session closure
+
+FID closure commit: `dc2953f0`, following implementation `11dd667d`. Both were
+pushed to `main`; local HEAD and `origin/main` matched at closure review. The
+archived FID has all eight implementation steps checked and its 15-gate receipt;
+no active copy or corresponding SCOPE write targets remain.
+
+The first push was refused by the existing dialog-overlay timing test under
+full-suite load. Its isolated suite passed both tests, and an unchanged retry
+passed the complete pre-push chain, including credential and attribution scans,
+ESLint, Markdown lint, typecheck, tests and formatting. No hook was bypassed and
+no dialog behavior was changed. Evidence is in the adjacent
+`2026-10-17-fid-worktrees-push{,-retry}.log` files.
+
+`bun run session-end:review` completed with exit 0 and refreshed `dev/agenda.md`
+with three recurrence items. It reported 59 historical unresolved classes, an
+existing telemetry draft requiring operator review and six advisory orphan
+candidates among 4,994 tracked files. These findings do not establish new code
+defects or authorize deletion; none is claimed repaired by this FID. The review
+output is retained in `2026-10-17-fid-worktrees-session-end.log` beside this file.
+
+All approved work for this FID and session is complete. The pre-existing
+EMBED-001 external-configuration item remains outside this session's scope.
+The untracked blueprint and original transcript remain preserved. This closure
+does not tag or publish a release, run paid inference or claim live throughput.

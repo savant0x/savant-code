@@ -541,6 +541,9 @@ resolution edits change the document fingerprint by design. Root test logs
 and the handoff continuation are retained under `dev/session-summaries/`.
 No live multi-agent inference, throughput benchmark or sandbox claim is made.
 
+Final session closure and session-end review are recorded in
+`dev/session-summaries/2026-10-17-fid-worktrees-completion.md`.
+
 ## Known Limits
 
 - A lane is a directory, not a sandbox: a process that writes absolute paths
