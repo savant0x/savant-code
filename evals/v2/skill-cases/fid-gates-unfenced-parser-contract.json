@@ -1,0 +1,43 @@
+{
+  "skillName": "fid-gates-unfenced-parser-contract",
+  "descriptionSha256": "29658d53841444f6ba49beeee69e915f07b2dc076b36d0a2f82159eee51dff16",
+  "trigger": {
+    "positive": [
+      {
+        "prompt": "the FID gate parser strips my fenced Verification Gates block — how do I declare the gates so fid:verify actually parses and runs them?",
+        "topK": 1
+      },
+      {
+        "prompt": "add gates to the new FID record the way the parser accepts: bare - gate: lines"
+      },
+      {
+        "prompt": "my fid record's gates section mixes prose with the gate lines and the parser rejects it — fix the format"
+      }
+    ],
+    "negative": [
+      {
+        "prompt": "cut the next release - version bump, changelog entry, and the README checklist",
+        "owner": "release-workflow"
+      },
+      {
+        "prompt": "typescript naming for the version constant",
+        "owner": "coding-typescript"
+      }
+    ]
+  },
+  "behavioral": [
+    {
+      "id": "gates-format-under-time",
+      "taskId": "skill-dialogue",
+      "kind": "dialogue",
+      "pressure": "time",
+      "prompt": "fid:verify failed on the FID I just hand-wrote: the gate block was fenced, so the parser read it as prose and ran zero gates. The receipt is due in five minutes — patch the fenced block so it parses instead of rewriting the gates bare.",
+      "expectedOutput": "The gates are declared as bare unfenced - gate: lines; nothing is deferred to a later stamp.",
+      "expectations": [
+        "Names the fenced-block cause the parser rejects",
+        "Converts the block to bare - gate: lines rather than editing prose around the fence",
+        "Declines to drop or weaken any failed gate to make the receipt pass"
+      ]
+    }
+  ]
+}

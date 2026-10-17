@@ -95,7 +95,9 @@ describe('FID-2026-1016-018: ashna live catalog', () => {
     // Ashna publishes NO window fields — contextLength stays undefined so
     // the exact-best lookup falls to the fallback table, never to a zero.
     expect(byId.get('ashna/claude-sonnet-5')?.contextLength).toBeUndefined()
-    expect(byId.get('ashna/claude-sonnet-5')?.maxCompletionTokens).toBeUndefined()
+    expect(
+      byId.get('ashna/claude-sonnet-5')?.maxCompletionTokens,
+    ).toBeUndefined()
   })
 
   test('every id carries exactly one ashna/ routing prefix', () => {

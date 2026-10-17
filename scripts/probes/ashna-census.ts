@@ -122,6 +122,8 @@ void (async () => {
         error instanceof Error ? error.message : String(error)
       }`,
     )
-    process.exit(error instanceof Error && error.message.includes('refusing') ? 2 : 1)
+    process.exit(
+      error instanceof Error && error.message.includes('refusing') ? 2 : 1,
+    )
   }
 })()

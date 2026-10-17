@@ -1,6 +1,6 @@
 {
   "skillName": "release-workflow",
-  "descriptionSha256": "7999cef48c57e6fb63bbb15565c603d7574fbe8164ef7b1925f1c3c881963933",
+  "descriptionSha256": "3bd7255396356d82df1f24e36d0b422c9550b3dcd5a1465fb73160441511cf1b",
   "trigger": {
     "positive": [
       {

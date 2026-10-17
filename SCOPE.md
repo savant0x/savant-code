@@ -150,15 +150,21 @@ artifacts required by ECHO retain their gate-level exemptions.
   `package.json`, `dev/feature-pipeline/**`. Two records because the register admits one owning FID
   per candidate: LF-005 (run-bound production acceptance) and LF-006 (stale lesson authority) shipped
   in one commit but could not share one owner.
-- FID-2026-1016-018: `common/src/providers/**`, `common/src/constants/**`,
+- FID-2026-1016-019: `evals/v2/skill-cases/**`,
+  `evals/v2/tests/skill-trigger-routing.test.ts`, `SCOPE.md`, `CHANGELOG.md`
+  (trusted-catalog trigger-case reconciliation — three missing case files
+  authored, `release-workflow` hash re-pinned to the deliberate FID-015
+  description rewrite, quarantined-drafts premise amended to the documented
+  ruling; the lane red was pre-existing and blocked the FID-2026-1016-018
+  push through the pre-push test chain).
+- FID-2026-1016-018 is **closed and archived** (2026-10-17, 17/17 gates, receipt stamped, commit
+  `cc544ea3`). Its write targets are released: `common/src/providers/**`, `common/src/constants/**`,
   `cli/src/utils/openrouter-models/**`, `cli/src/utils/__tests__/**`,
   `sdk/src/impl/__tests__/**`, `docs/**`, `README.md`, `README.zh-CN.md`,
   `.env.example`, `cli/release/README.md`, `scripts/probes/ashna-census.ts`,
-  `common/src/constants/provider-catalog-census.json`, `SCOPE.md`,
-  `CHANGELOG.md`, `dev/fids/**`, `dev/session-summaries/**`
-  (Ashna, `ashna.ai` — built-in gateway provider: keyed live catalog, the
-  runbook's full addition contract, tests, docs and gates; the FID number is
-  next-free on the date, 016/017 being held by the LF-005/LF-006 items.)
+  `common/src/constants/provider-catalog-census.json`, `CHANGELOG.md`. The vendor-side inference
+  leg remains plan-gated (429, verbatim in the FID); it unblocks with zero code changes on a paid
+  plan. The FID number 016/017 stay held by the LF-005/LF-006 items.
 - FID-2026-1016-015 is **closed and archived** (2026-10-17, 6/6 gates, receipt stamped, commit
   `bbffdc2d`). Its write targets are released: `scripts/lessons-to-skills.ts`,
   `scripts/__tests__/lessons-to-skills-drafting.test.ts`, `common/src/util/skill-proposals.ts`,

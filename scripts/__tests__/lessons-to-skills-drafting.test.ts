@@ -4,7 +4,11 @@ import * as path from 'node:path'
 
 import { afterEach, describe, expect, test } from 'bun:test'
 
-import { draftCandidates, draftDescription, findCandidates } from '../lessons-to-skills'
+import {
+  draftCandidates,
+  draftDescription,
+  findCandidates,
+} from '../lessons-to-skills'
 
 import type { ExperienceRecord } from '@savant-code/common/types/experience'
 
@@ -244,15 +248,20 @@ describe('draftCandidates', () => {
     const drafted = draftCandidates(root, { now: NOW })
     expect(drafted).toHaveLength(1)
     const skillBody = fs.readFileSync(
-      path.join(root, '.agents', 'skills', '.quarantine', drafted[0], 'SKILL.md'),
+      path.join(
+        root,
+        '.agents',
+        'skills',
+        '.quarantine',
+        drafted[0],
+        'SKILL.md',
+      ),
       'utf8',
     )
     // The description is the RULE, not the error line sliced at 60 chars —
     // that slice is what cut the real quarantined draft mid-word
     // ("retry the tool cal") and taught the failure message as the rule.
-    expect(skillBody).toContain(
-      'description: no environment dependent guards',
-    )
+    expect(skillBody).toContain('description: no environment dependent guards')
     expect(skillBody).not.toContain('description: Incomplete arguments')
     // The lesson's own invariant and guard are the procedure.
     expect(skillBody).toContain(
@@ -303,13 +312,13 @@ describe('draftCandidates', () => {
     expect(description).toBe('library complete needs a named consumer')
     expect(description.length).toBeLessThanOrEqual(60)
     // A rule whose words cannot fit still ends on a whole word.
-    const long = draftDescription('', 'alpha-bravo-charlie-delta-echo-foxtrot-golf')
+    const long = draftDescription(
+      '',
+      'alpha-bravo-charlie-delta-echo-foxtrot-golf',
+    )
     expect(long.endsWith(' ')).toBe(false)
     expect(long).toBe(
-      'alpha bravo charlie delta echo foxtrot golf'.slice(
-        0,
-        long.length,
-      ),
+      'alpha bravo charlie delta echo foxtrot golf'.slice(0, long.length),
     )
   })
 

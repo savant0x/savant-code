@@ -236,8 +236,13 @@ describe('live catalog run (FID-2026-1005-005)', () => {
   })
 
   it('quarantined drafts are advisory coverage, never CI errors', () => {
-    expect(result.draftCount).toBeGreaterThan(0)
+    // FID-2026-1016-019: draftCount MAY be 0 — the operator ruling recorded in
+    // SCOPE.md under FID-2026-1016-015 deliberately emptied .quarantine/ by
+    // trusting the four lesson drafts. A draft is never a required state; the
+    // binding contract is that WHEN a draft exists, its case coverage is
+    // advisory (inert and loader-invisible), never a CI error.
     for (const draft of result.draftCoverage) {
+      expect(result.draftCount).toBeGreaterThan(0)
       expect(result.missingCases).not.toContain(draft.name)
     }
   })

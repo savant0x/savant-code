@@ -65,7 +65,10 @@ export function reviewCandidates(params: AdmissionParams): AdmissionResult {
   const implementedTitles = new Map<string, string>()
   for (const entry of candidates)
     if (entry.archived)
-      implementedTitles.set(normalizedTitle(entry.candidate.title), entry.candidate.id)
+      implementedTitles.set(
+        normalizedTitle(entry.candidate.title),
+        entry.candidate.id,
+      )
   const ids = new Set<string>()
   const owners = new Set<string>()
   for (const { candidate, issues, archived } of candidates) {

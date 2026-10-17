@@ -1,0 +1,42 @@
+{
+  "skillName": "library-complete-needs-a-named-consumer",
+  "descriptionSha256": "6694f8da082808596b67071be1095e632190afb08859c2a94a86351e61953465",
+  "trigger": {
+    "positive": [
+      {
+        "prompt": "the library is complete but it needs a named consumer before this can merge — what closes the loop?",
+        "topK": 1
+      },
+      {
+        "prompt": "name the consumer before closing: my feature ships with a live surface that wires it next quarter"
+      },
+      {
+        "prompt": "the orphan sweep flags my package because no production caller references it — is library-complete enough to merge?"
+      }
+    ],
+    "negative": [
+      {
+        "prompt": "cut the next release - version bump, changelog entry, and the README checklist",
+        "owner": "release-workflow"
+      },
+      {
+        "prompt": "typescript naming for the version constant",
+        "owner": "coding-typescript"
+      }
+    ]
+  },
+  "behavioral": [
+    {
+      "id": "named-consumer-closure",
+      "taskId": "skill-dialogue",
+      "kind": "dialogue",
+      "prompt": "The limiter module is done: its own suite is green, nothing reads it in production yet, and the FID wants to close today with 'adopted by a registered item next sprint' written in the limitations section. Give the closure verdict.",
+      "expectedOutput": "Closure is refused until a live surface is named that calls the artifact, and the wiring record is created in the same pass.",
+      "expectations": [
+        "Rejects 'no production call path yet' as a stated limitation inside a closing record",
+        "Names the live consumer and the register item or active FID that owns the wiring",
+        "Requires Law 4 grep evidence of the production caller before completion"
+      ]
+    }
+  ]
+}
