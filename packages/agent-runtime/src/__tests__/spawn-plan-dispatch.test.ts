@@ -124,7 +124,11 @@ type StepBehavior = { history: Message[]; credits: number; text: string }
 let projectRoot: string
 let parentState: AgentState
 let responder: (input: { agentType: string; prompt: string }) => StepBehavior
-let executeCalls: { agentType: string; prompt: string }[]
+let executeCalls: {
+  agentType: string
+  prompt: string
+  maxOutputTokens: number | undefined
+}[]
 let outputs: Map<string, JSONValue>
 
 function makeParams(params: {
@@ -177,7 +181,11 @@ beforeEach(() => {
   spyOn(spawnAgentUtils, 'executeSubagent').mockImplementation(async (args) => {
     const agentType = String(args.agentTemplate.id)
     const prompt = args.prompt ?? ''
-    executeCalls.push({ agentType, prompt })
+    executeCalls.push({
+      agentType,
+      prompt,
+      maxOutputTokens: args.maxOutputTokens,
+    })
     const behavior = responder({ agentType, prompt })
     const output = {
       type: 'lastMessage' as const,
@@ -239,6 +247,21 @@ describe('research plan dispatch (FID-2026-1017-004)', () => {
       artifactDigest(outputs.get('detective') ?? null),
     )
     expect(parentState.creditsUsed).toBe(10)
+  })
+
+  it('forwards the plan output ceiling to every child', async () => {
+    responder = ({ agentType }) => ({
+      history: [readMessage(SOURCE, ORIGINAL)],
+      credits: 1,
+      text: agentType,
+    })
+    const plan = { ...planFor(), max_output_tokens: 1500 }
+
+    await handleSpawnAgents(makeParams({ plan, agents: steps() }))
+
+    expect(executeCalls.map((call) => call.maxOutputTokens)).toEqual([
+      1500, 1500,
+    ])
   })
 
   it('blocks the review when the draft never read its pinned source', async () => {

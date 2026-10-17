@@ -26,7 +26,9 @@ dispatch, and a stale turn or an over-budget ceiling is refused too. Rejected
 and cancelled steps report an explicit error and keep the credits they spent.
 Spawns without a plan keep the previous behavior, partial filtering included.
 
-Implementation: `267be888`. Verification: `fid:verify` ran all eight declared
+Implementation: `267be888`, plus a follow-up that forwards the plan's output
+ceiling into every child request (the tighter of the plan ceiling and the run
+budget applies). Verification: `fid:verify` ran all eight declared
 gates (typecheck common and packages/agent-runtime, the three plan suites, the
 deterministic probe, the scripts-tree typecheck probe, quality) with exit 0;
 the full agent-runtime suite is 2218 pass / 0 fail. The plan's source contract

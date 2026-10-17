@@ -79,6 +79,8 @@ export type RunSingleSubagentDeps = {
   writeScope?: string[]
   prompt: string | undefined
   spawnParams: Record<string, JSONValue> | undefined
+  /** FID-2026-1017-004: a plan ceiling, applied on top of the run budget. */
+  maxOutputTokens?: number
 }
 
 /** The raw per-child outcome as produced by executeSubagent. */

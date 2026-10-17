@@ -48,6 +48,7 @@ export async function runSingleSubagent({
   writeScope,
   prompt,
   spawnParams,
+  maxOutputTokens: planOutputCeiling,
 }: RunSingleSubagentDeps): Promise<
   ExecuteSubagentResult & { agentType: string; agentName: string }
 > {
@@ -74,11 +75,20 @@ export async function runSingleSubagent({
   // FID-2026-0909-008 Step 4: propagate the run's resolved output budget to
   // the child loop, but only when the child actually runs the model the
   // budget was resolved for (shared guard — see resolveChildOutputBudget).
-  const childOutputBudget = resolveChildOutputBudget(
+  const inheritedOutputBudget = resolveChildOutputBudget(
     agentTemplate,
     parentAgentTemplate,
     params.maxOutputTokens,
   )
+  // FID-2026-1017-004: a plan's ceiling is host-declared and must bind even
+  // when the child runs a different model than the run budget was resolved for
+  // (the inherited budget is then absent). The tighter of the two wins.
+  const childOutputBudget =
+    planOutputCeiling === undefined
+      ? inheritedOutputBudget
+      : inheritedOutputBudget === undefined
+        ? planOutputCeiling
+        : Math.min(planOutputCeiling, inheritedOutputBudget)
 
   // LF-002 (FID-2026-1012-008): the child's ContextCompactor must size its
   // thresholds from the run's resolved window (same-model guard as the budget

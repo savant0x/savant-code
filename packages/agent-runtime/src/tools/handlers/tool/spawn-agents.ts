@@ -123,6 +123,9 @@ export const handleSpawnAgents = (async (
           writeScope: undefined,
           prompt,
           spawnParams: step.spawnParams,
+          ...(validated.plan.maxOutputTokens === undefined
+            ? {}
+            : { maxOutputTokens: validated.plan.maxOutputTokens }),
         })
         return { ...result, output: safeToJSONValue(result.output) }
       },
