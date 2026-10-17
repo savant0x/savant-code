@@ -100,58 +100,66 @@ export function useChatBootstrap(args: UseChatBootstrapArgs): void {
   useEffect(() => {
     if (bootPanelShownRef.current) return
     bootPanelShownRef.current = true
-    const repoRoot = tryGetProjectRoot()
-    const discovery = repoRoot ? readDiscoveryCounts(repoRoot) : null
-    if (discovery && discovery.newHosts.length > 0)
-      observeDiscoveryCandidates(discovery)
-    // Step 7 (FID-2026-1004-007): the boot harvest is DETACHED and can
-    // publish agent-context.txt after these mount effects ran. Watch the
-    // artifact for a set-key transition and route its NEW hosts then —
-    // event-driven (no polling), dedup by key at the watcher + by fact
-    // value at the coordinator. Fail-silent; free-build exempt.
-    if (repoRoot)
-      discoveryCompletionWatcherRef.current = startDiscoveryCompletionWatcher({
-        repoRoot,
-        initialSetKey: discovery?.setKey ?? null,
-        observe: observeDiscoveryCandidates,
-      })
     let cancelled = false
-    void resolveBootFreeOptions({
-      now: () => Date.now(),
-      readCached: readCachedFreeOptionsReport,
-      refresh: refreshFreeOptions,
-      verify: (report) =>
-        verifyFreeOptionsArtifact({
-          report,
-          path: freeOptionsPaths().markdown,
-        }),
-    })
-      .then((snapshot) => {
-        if (cancelled) return
-        const hasContent =
-          snapshot.report.fetchedAt !== null ||
-          snapshot.report.localFree.length > 0 ||
-          Boolean(
-            discovery && (discovery.newCount > 0 || discovery.changedCount > 0),
-          )
-        if (!hasContent) return
-        const block: FreeOptionsContentBlock = {
-          type: 'free-options',
-          id: `free-options-${Date.now()}`,
-          snapshot,
-          discovery: discovery
-            ? {
-                newCount: discovery.newCount,
-                changedCount: discovery.changedCount,
-              }
-            : null,
-          markdownPath: freeOptionsPaths().markdown,
-        }
-        args.setMessages((prev) => [...prev, getSystemMessage([block])])
+    try {
+      const repoRoot = tryGetProjectRoot()
+      const discovery = repoRoot ? readDiscoveryCounts(repoRoot) : null
+      if (discovery && discovery.newHosts.length > 0)
+        observeDiscoveryCandidates(discovery)
+      // Step 7 (FID-2026-1004-007): the boot harvest is DETACHED and can
+      // publish agent-context.txt after these mount effects ran. Watch the
+      // artifact for a set-key transition and route its NEW hosts then —
+      // event-driven (no polling), dedup by key at the watcher + by fact
+      // value at the coordinator. Fail-silent; free-build exempt.
+      if (repoRoot)
+        discoveryCompletionWatcherRef.current = startDiscoveryCompletionWatcher(
+          {
+            repoRoot,
+            initialSetKey: discovery?.setKey ?? null,
+            observe: observeDiscoveryCandidates,
+          },
+        )
+      void resolveBootFreeOptions({
+        now: () => Date.now(),
+        readCached: readCachedFreeOptionsReport,
+        refresh: refreshFreeOptions,
+        verify: (report) =>
+          verifyFreeOptionsArtifact({
+            report,
+            path: freeOptionsPaths().markdown,
+          }),
       })
-      .catch(() => {
-        // Fail-silent: a boot panel never breaks the TUI.
-      })
+        .then((snapshot) => {
+          if (cancelled) return
+          const hasContent =
+            snapshot.report.fetchedAt !== null ||
+            snapshot.report.localFree.length > 0 ||
+            Boolean(
+              discovery &&
+              (discovery.newCount > 0 || discovery.changedCount > 0),
+            )
+          if (!hasContent) return
+          const block: FreeOptionsContentBlock = {
+            type: 'free-options',
+            id: `free-options-${Date.now()}`,
+            snapshot,
+            discovery: discovery
+              ? {
+                  newCount: discovery.newCount,
+                  changedCount: discovery.changedCount,
+                }
+              : null,
+            markdownPath: freeOptionsPaths().markdown,
+          }
+          args.setMessages((prev) => [...prev, getSystemMessage([block])])
+        })
+        .catch(() => {
+          // Fail-silent: a boot panel never breaks the TUI.
+        })
+    } catch {
+      // Fail-silent (FID-2026-1017-005): discovery or setup failures never
+      // break the TUI; the panel simply does not post.
+    }
     return () => {
       cancelled = true
     }
