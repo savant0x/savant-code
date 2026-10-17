@@ -12,6 +12,22 @@
 > the v0.0.36 cut. Release notes are written here at cut time; nothing in this
 > section is a package-release claim until then.
 
+## 2026-10-17 — Ashna joins the built-in registry as a keyed live gateway (FID-2026-1016-018, medium)
+
+`ashna.ai` is now a first-class provider end to end. Live probes measured the
+vendor contract (keyed-only catalog — 401 keyless, 200 authenticated, 104 rows
+with no window or name fields, roster moving between probes) and a plan-gated
+inference leg (429, envelope recorded verbatim in the FID; unblocks with zero
+code changes on a paid plan). The change adds the registry entry (`openai`
+protocol, `strip` transform, `order: 4`), the keyed parser wrapper with local
+retrieval/image exclusions (78 of 104 retained), the 17-slot settled-ladder
+fan-out + merge spread + reset seam, the `table-section` window registration
+with 28 cross-gateway consensus rows and 50 documented no-row ids, the
+`live-catalog` manifest owner, derivation legs, generated + hand doc surfaces,
+and the census regen (`ashna: 78`). Verification: fid:verify receipt 17/17
+PASS; full suites common 912/0, cli 4147/0, sdk 719/0; probes reconciled;
+commit `cc544ea3`.
+
 ## 2026-10-17 — Acceptance is recorded per run, and every rule's authority reference is resolved (FID-2026-1016-016, FID-2026-1016-017, medium)
 
 The second ruling round selected both unselected lesson features. They shipped in one commit
