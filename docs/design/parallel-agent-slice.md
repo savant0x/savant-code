@@ -15,12 +15,14 @@ without `--live`. It changes no saved provider selection or production schema.
 
 ## Limits and evidence
 
-The final cumulative ceiling is 60 physical inference sends, including retries
+The cumulative ceiling is 64 physical inference sends, including retries
 and correction attempts, with two requests in flight, 4,000 output tokens per
 request, and 20 minutes per invocation. Each send is recorded before dispatch
 in `dev/research/FID-2026-1017-001-request-ledger.jsonl`; subsequent invocations
 subtract that ledger from the same budget. This is a request limit, not a
 monetary guarantee. Unknown provider pricing/usage is not treated as zero cost.
+The original 60 were followed by an explicit four-request proposal accepted
+by the operator's "resume" on 2026-10-17; prior results retain their original caps.
 
 Each invocation owns a separate SQLite database and report directory under
 `dev/research/parallel-agent-slice-*`. Reports retain source fingerprints,
@@ -192,9 +194,11 @@ investigation with the same final brief. Its nine sends completed the original
 60-request allowance. Fused took 41.230 s but proposed unsafe cost handling;
 flat took 90.202 s and chain 91.603 s, with no clear timing advantage.
 
-The prepared `--live --review-workflows` candidate uses two fresh draft/review
-trials and requires four additional sends. It is blocked at the existing
-ceiling pending operator allowance. Results, common semantic review, source-read
+The `--live --review-workflows` candidate used the four additionally authorized
+sends for two fresh draft/review trials: 89.142 s and 63.511 s, two sends each.
+Both pass source-read and handoff checks; reviewers retained costs and mandatory
+reviews, but residual role/parent-overlap proposals still require host rejection.
+The cumulative 64-request ceiling is now exhausted. Results, common semantic review, source-read
 receipt checks and the build contract are in
-[the workflow decision](parallel-workflow-decision.md). No additional send has
-been made and no production workflow is installed.
+[the workflow decision](parallel-workflow-decision.md). No production workflow
+is installed and no general speedup or automatic semantic acceptance is claimed.

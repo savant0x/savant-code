@@ -30,7 +30,7 @@ import {
 import type { WorkflowPlan } from './parallel-agent-slice/workflows'
 import type { JSONValue } from '@savant-code/common/types/json'
 
-const MAX_REQUESTS = 60
+const MAX_REQUESTS = 64
 const MAX_RUN_MS = 20 * 60 * 1000
 const root = path.resolve(import.meta.dir, '..', '..')
 const research = path.join(root, 'dev', 'research')

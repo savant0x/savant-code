@@ -13,10 +13,11 @@ handling or repository boundaries.
 
 - [ ] FID-2026-1017-003 — compare fused, independent fan-out and dependent
   investigation workflows on one final acceptance brief; three-way execution
-  is complete at 60/60 requests. Reviewed-draft candidate and controls are
-  prepared; live validation is blocked pending operator allowance for four
-  additional physical sends. Continue the buildable workflow selection using
-  measured evidence and existing runtime boundaries. Operator authorizes
+  is complete at 60 requests. The operator's 2026-10-17 "resume" authorizes
+  the four additional physical sends just proposed (cumulative ceiling 64).
+  Both trials completed (89.142 s / 63.511 s); 64/64 sends used. Selected bounded
+  research contract and retained semantic defects are documented; finish
+  verification, commit and archive. Operator authorizes
   workflow/intra-agent redesign at automation level 3 (2026-10-17).
 
 ## Internal follow-ups and current operator authority (2026-10-16)

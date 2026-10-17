@@ -22,11 +22,14 @@ for proposing that stale costs be ignored. Fan-out's timing difference is
 inconclusive. Actual tool-result bytes are now required for every assigned
 source, rather than attempted read paths alone. Twenty-five controls pass.
 
-Prepared a fresh draft/review candidate and documented its host safety contract
-and implementation map in `docs/design/parallel-workflow-decision.md`. The
-60-request ceiling is exhausted; four additional sends were requested and
-remain blocked pending operator allowance. No production workflow installation,
-speedup guarantee, extra paid dispatch or FID closure is claimed.
+Executed two fresh draft/review trials after the operator authorized four
+additional sends: 89.142 s and 63.511 s, two sends each, all source-read/handoff
+checks passing. Review retained cost and mandatory-review constraints, but
+residual parent-overlap and Forge-for-research proposals prevent blind semantic
+acceptance. Selected a host-enforced bounded research contract and documented
+the product integration/acceptance map in `docs/design/parallel-workflow-decision.md`.
+The cumulative 64-request ceiling is exhausted. No production installation,
+general speedup, monetary saving or FID closure is claimed by this progress entry.
 
 ## 2026-10-17 — Validated parallel handoffs (FID-2026-1017-002, low)
 
