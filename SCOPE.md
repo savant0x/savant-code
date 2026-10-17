@@ -11,7 +11,32 @@ handling or repository boundaries.
 
 ## Open items
 
-None.
+### EMBED-001 — the harness single-agent embed is a superseded law revision (blocked)
+
+Authority: automation level 3 (session ceiling). The install step is reserved to the
+operator — the target file lies outside the project directory, and no automation level
+lifts that boundary (ECHO v0.1.2 → Automation Levels → "Invariants no level lifts").
+
+`C:\Users\spenc\.config\opencode\agent\echo.md` (409 lines, last written 2026-08-11) embeds
+a law set that predates the current `dev/echo-v0.1.2-single-agent.md` (618 lines) while
+claiming to be complete (echo.md:9) and carrying its own re-embed instruction
+(echo.md:15). Verified missing from the embed: the Law 1 scripted-edit prohibition and its
+2026-09-30 operator ruling (canonical:89-113), the no-agent-side scope-disposition rule
+(canonical:78-87), the Scope Boundary / SCOPE.md register section (canonical:325-380),
+Automation Levels (canonical:165-221), Step-Level Anti-Deferral (canonical:552-570), the
+2026-10-16 auto-archive and progress-push rulings (canonical:427-459, 580-593), the
+Double-Audit FID contract check (canonical:385-389), `converged` in the allowed status set
+(canonical:412-419), and the two anti-pattern rows for scripted edits and scope labelling
+(canonical:498, 503). The stale copy also contradicts the current rules: it requires an
+`Author` FID metadata field (echo.md:272-273) while forbidding attribution (echo.md:38;
+canonical:14-24), names `ECHO.md` as the protocol to read (echo.md:393) while
+`ECHO-single-agent.md:5-12` forbids that for single-agent sessions, and its recovery paths
+use a `PENDING` status absent from every status set (echo.md:359, 373).
+
+Blocker: writing outside the project directory is an operator-reserved action. Remedy
+presented: retain echo.md:1-15 (frontmatter, directive, mandate, canonical-source line)
+and replace echo.md:19-409 with the current canonical body, read 0-EOF. This session is
+not affected — the canonical file was read in full and governs.
 
 ## Internal follow-ups and current operator authority (2026-10-16)
 
