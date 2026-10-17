@@ -150,13 +150,17 @@ artifacts required by ECHO retain their gate-level exemptions.
   `package.json`, `dev/feature-pipeline/**`. Two records because the register admits one owning FID
   per candidate: LF-005 (run-bound production acceptance) and LF-006 (stale lesson authority) shipped
   in one commit but could not share one owner.
-- FID-2026-1016-019: `evals/v2/skill-cases/**`,
-  `evals/v2/tests/skill-trigger-routing.test.ts`, `SCOPE.md`, `CHANGELOG.md`
-  (trusted-catalog trigger-case reconciliation — three missing case files
-  authored, `release-workflow` hash re-pinned to the deliberate FID-015
-  description rewrite, quarantined-drafts premise amended to the documented
-  ruling; the lane red was pre-existing and blocked the FID-2026-1016-018
-  push through the pre-push test chain).
+- FID-2026-1016-019 is **closed and archived** (2026-10-17, 6/6 gates, receipt stamped, commit
+  `8d735d34`). Its write targets are released: `evals/v2/skill-cases/**`,
+  `evals/v2/tests/skill-trigger-routing.test.ts`, `SCOPE.md`, `CHANGELOG.md`. The trusted-catalog
+  trigger-case reconciliation authored the three missing case files, re-pinned `release-workflow`'s
+  hash to the deliberate FID-015 description rewrite and amended the quarantined-drafts premise to
+  the documented ruling; the lane red was pre-existing and blocked the FID-2026-1016-018 push through
+  the pre-push test chain. The same commit carried format-only prettier edits to four paths outside
+  this surface (`cli/src/utils/openrouter-models/__tests__/ashna-catalog.test.ts`,
+  `scripts/probes/ashna-census.ts`, `scripts/__tests__/lessons-to-skills-drafting.test.ts`,
+  `scripts/lesson-feature-admission.ts`) — disclosed here because the register did not authorise
+  them at the time, and the receipt's gate run includes them.
 - FID-2026-1016-018 is **closed and archived** (2026-10-17, 17/17 gates, receipt stamped, commit
   `cc544ea3`). Its write targets are released: `common/src/providers/**`, `common/src/constants/**`,
   `cli/src/utils/openrouter-models/**`, `cli/src/utils/__tests__/**`,

@@ -12,6 +12,17 @@
 > the v0.0.36 cut. Release notes are written here at cut time; nothing in this
 > section is a package-release claim until then.
 
+## 2026-10-17 — The trusted skill catalog and its trigger cases are reconciled (FID-2026-1016-019, medium)
+
+Five failures in the evals lane were pre-existing but sat inside the pre-push test chain, so they refused
+the FID-018 delivery. Three trusted skills had shipped (FID-2026-1016-015 lane) without a trigger case
+file; `release-workflow`'s case still pinned the pre-rewrite description hash; and the quarantined-drafts
+assertion required `draftCount > 0` although the operator ruling deliberately emptied `.quarantine/`.
+This change authors the three case files with behavioral rubric items, re-pins the intentional description
+hash, and restates the draft rule as a contract (drafts, when present, are advisory — never a CI error)
+instead of a catalog-state expectation. Verification: fid:verify receipt 6/6 PASS, evals lane 229 pass /
+0 fail, eslint and prettier clean; commit `8d735d34`. Prettier-only formatting also lands on four files.
+
 ## 2026-10-17 — Ashna joins the built-in registry as a keyed live gateway (FID-2026-1016-018, medium)
 
 `ashna.ai` is now a first-class provider end to end. Live probes measured the
