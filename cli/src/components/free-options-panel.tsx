@@ -60,7 +60,8 @@ export const FreeOptionsPanel = React.memo(function FreeOptionsPanel({
   return (
     <box selectable={false} style={{ width: '100%' }}>
       <TrafficLightPanel>
-        {' '}
+        {/* No bare string child: OpenTUI rejects text outside a <text> node
+            ("Text must be created inside of a text node"). */}
         <CopyableBlock getCopyText={() => renderCopyText(block, view)}>
           <box style={{ flexDirection: 'column' }}>
             <Button
