@@ -16,18 +16,52 @@ export const fidWorktreeRecordSchema = z.object({
 })
 
 const fidId = z.string().regex(/^FID-\d{4}-\d{4}-\d{3}$/)
-export const fidWorktreeInputSchema = z.discriminatedUnion('action', [
-  z.object({ action: z.literal('list') }).strict(),
-  z.object({ action: z.literal('create'), fid_id: fidId }).strict(),
-  z.object({ action: z.literal('merge'), fid_id: fidId }).strict(),
-  z
-    .object({
-      action: z.literal('dispose'),
-      fid_id: fidId,
-      discard_changes: z.boolean().optional(),
-    })
-    .strict(),
-])
+
+/**
+ * FID-2026-1017-014 — one flat, strict object.
+ *
+ * A `discriminatedUnion` at the root of a tool parameter schema serializes to
+ * `{ oneOf: [...] }` with no top-level `type: 'object'` and no `properties`, so
+ * a function-calling provider had no field list to advertise and the model
+ * emitted `{}` (the live session refused every call with `invalid_union`).
+ * Per-action rules therefore live in `superRefine`, which never reaches the
+ * provider schema, while `.strict()` still rejects unknown keys.
+ */
+export const fidWorktreeInputSchema = z
+  .object({
+    action: z.enum(['list', 'create', 'merge', 'dispose']),
+    fid_id: fidId.optional(),
+    discard_changes: z.boolean().optional(),
+  })
+  .strict()
+  .superRefine((input, ctx) => {
+    if (input.action === 'list') {
+      for (const key of ['fid_id', 'discard_changes'] as const) {
+        if (input[key] !== undefined) {
+          ctx.addIssue({
+            code: 'custom',
+            path: [key],
+            message: `${key} is not accepted for action "list"`,
+          })
+        }
+      }
+      return
+    }
+    if (input.fid_id === undefined) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['fid_id'],
+        message: `fid_id is required for action "${input.action}"`,
+      })
+    }
+    if (input.action !== 'dispose' && input.discard_changes !== undefined) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['discard_changes'],
+        message: 'discard_changes is only accepted for action "dispose"',
+      })
+    }
+  })
 
 export const fidWorktreeResultSchema = z.object({
   ok: z.boolean(),

@@ -4,11 +4,17 @@
 **ID:** FID-2026-1017-008
 **Severity:** low
 **Status:** converged
-> **Run state (2026-10-17):** the A–Z run executed and returned DEFECTS FOUND.
-> `converged` is retained because the lane-vehicle precondition (and the
-> re-run's `create`) requires exactly one active converged FID; the run outcome,
-> the failed row and both blockers are recorded below. This record claims no
-> acceptance until a clean re-run.
+> **Run state (2026-10-17, run 2):** the A–Z instrument was re-run and again
+> returned DEFECTS FOUND. Rows §3 and §4 passed (13 PASS, 0 FAIL); §5.1 onward
+> was unreachable because every `fid_worktree` call was refused before dispatch
+> with `the arguments failed the tool schema at: action — invalid_union`. Root
+> cause is FID-2026-1017-014: the tool's root parameter schema was a
+> `discriminatedUnion`, which serializes to `{ oneOf }` with no top-level
+> `type: 'object'` and no `properties`, so the provider advertised no fields.
+> That is now repaired and proven at the provider boundary; the lifecycle has
+> still not been exercised live. `converged` is retained because the lane
+> vehicle's `create` requires exactly one active converged FID. This record
+> claims no acceptance until a clean run.
 **Created:** 2026-10-17 17:34
 **Automation level:** 3
 **YAGNI-Compliance:** Verified - reuses the existing focused suites, the
@@ -285,13 +291,19 @@ over the instrument and the register:
 
 ## Resolution
 
-Not yet resolved. The A-Z run executed and its report and merged lane proof are
-preserved, but its verdict was DEFECTS FOUND. The graph-refresh defect is
-repaired (FID-2026-1017-011, `774eb705`); the `unsafe-root` flake remains
-unexplained. The next step is an operator re-run of
-`dev/test-prompts/az-parallel-worktrees-live-test.md` against the repaired tree;
-closure follows only a clean run, with the receipt stamped and this record
-archived.
+Not yet resolved. Two A-Z runs have executed and both returned DEFECTS FOUND;
+their reports are preserved. Repaired so far: the graph-refresh defect
+(FID-2026-1017-011, `774eb705`), the root-guard retry and instrument drift
+(FID-2026-1017-012, `4f989510`), and the unreachable `fid_worktree` tool schema
+(FID-2026-1017-014). The `unsafe-root` flake remains unexplained.
+
+Run 2's report is at
+`dev/scratchpad/az-parallel-worktrees-live-test-report.md`; its BLOCKER is the
+schema refusal, now fixed and pinned by
+`common/src/tools/__tests__/tool-schema-object-root.test.ts`. The next step is a
+third operator run of `dev/test-prompts/az-parallel-worktrees-live-test.md`
+against the repaired tree; closure follows only a clean run, with the receipt
+stamped and this record archived.
 
 ## Lessons Learned
 

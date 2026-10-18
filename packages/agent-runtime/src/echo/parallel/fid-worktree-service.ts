@@ -107,7 +107,16 @@ export async function runFidWorktreeAction(
           'Use the primary repository root with no redirected managed directories',
       }
     if (input.action === 'list') return inspectFidWorktrees({ repoRoot })
-    const lanePath = fidWorktreePath(repoRoot, input.fid_id)
+    // FID-2026-1017-014: the flat schema cannot narrow `fid_id` by action, so
+    // the required field is asserted here before any path is derived from it.
+    const fidId = input.fid_id
+    if (fidId === undefined)
+      return {
+        ok: false,
+        reason: 'invalid-input',
+        detail: 'Invalid action or FID id',
+      }
+    const lanePath = fidWorktreePath(repoRoot, fidId)
     if (
       !lanePath ||
       (existsSync(lanePath) &&
@@ -132,7 +141,7 @@ export async function runFidWorktreeAction(
       }
     }
     if (input.action === 'create') {
-      if (!isConverged(repoRoot, input.fid_id))
+      if (!isConverged(repoRoot, fidId))
         return {
           ok: false,
           reason: 'not-converged',
@@ -158,13 +167,13 @@ export async function runFidWorktreeAction(
           reason: 'wrong-branch',
           detail: 'Create lanes from main',
         }
-      const result = provisionFidWorktree({ repoRoot, fidId: input.fid_id })
+      const result = provisionFidWorktree({ repoRoot, fidId })
       if (!result.ok) return result
       try {
         buildFidWorktreeEnvironment(result.record)
         snapshotFidWorktreeGraph(repoRoot, result.record)
       } catch {
-        const cleanup = disposeFidWorktree({ repoRoot, fidId: input.fid_id })
+        const cleanup = disposeFidWorktree({ repoRoot, fidId })
         return {
           ok: false,
           reason: 'environment-failed',
@@ -177,9 +186,9 @@ export async function runFidWorktreeAction(
       return result
     }
     if (input.action === 'merge')
-      return await mergeFidWorktree({ repoRoot, fidId: input.fid_id })
+      return await mergeFidWorktree({ repoRoot, fidId })
     const lane = listFidWorktrees({ repoRoot }).find(
-      (item) => item.record.fidId === input.fid_id,
+      (item) => item.record.fidId === fidId,
     )
     if (!lane)
       return {
@@ -193,7 +202,7 @@ export async function runFidWorktreeAction(
         reason: 'dirty',
         detail: 'Commit lane changes or explicitly authorize discard_changes',
       }
-    const result = disposeFidWorktree({ repoRoot, fidId: input.fid_id })
+    const result = disposeFidWorktree({ repoRoot, fidId })
     return { ok: result.removed, ...result }
   } catch {
     return {

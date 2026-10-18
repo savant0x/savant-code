@@ -288,7 +288,14 @@ artifacts required by ECHO retain their gate-level exemptions.
   `docs/design/parallel-worktrees.md`, `docs/design/parallel-worktrees-lane-proof.md`
   (live parallel-worktree acceptance; active). No production source write is
   authorized by this item; a discovered defect opens its own implementation
-  FID.
+  FID. Run 2 (2026-10-17) returned DEFECTS FOUND: §5 was unreachable from the
+  harness session, defect tracked as FID-2026-1017-014.
+- FID-2026-1017-014: `common/src/tools/params/tool/fid-worktree.ts`,
+  `common/src/tools/__tests__/fid-worktree-params.test.ts`,
+  `common/src/tools/__tests__/tool-schema-object-root.test.ts`,
+  `packages/agent-runtime/src/echo/parallel/fid-worktree-service.ts`,
+  `dev/fids/**`, `SCOPE.md`, `CHANGELOG.md` (make the `fid_worktree` parameter
+  schema model-facing; active).
 - FID-2026-1017-012 is **closed and archived** (2026-10-17, 5/5 gates, receipt
   stamped, commit `4f989510`). Its write targets are released:
   `packages/agent-runtime/src/echo/parallel/fid-worktree-service.ts`,
