@@ -11,21 +11,6 @@ handling or repository boundaries.
 
 ## Open items
 
-### FID-2026-1018-001 — Zylo's SDK environment row (active)
-
-Authority: automation level 3. The operator asked for the one documentation gap
-found after the provider work was pushed: `docs/sdk-overview.md` annotates
-`BLAZERAIL_API_KEY` and `RIVER_AI_API_KEY` but not `ZYLO_API_KEY`, leaving out
-the only property that distinguishes it — a public, keyless catalog with a key
-used for inference.
-
-- [ ] Add the `ZYLO_API_KEY` annotation row in the established style.
-- [ ] Keep the generated artifacts untouched: the registry table, README tables
-  and `.env.example` must all report unchanged, and the doc drift check green.
-- [ ] Run the declared gates, commit, archive and push through the normal hook.
-
-Targets: `docs/sdk-overview.md`, `dev/fids/**`, `SCOPE.md`.
-
 ### EMBED-001 — the harness single-agent embed is a superseded law revision (blocked)
 
 Authority: automation level 3 (session ceiling). The install step is reserved to the
@@ -172,8 +157,6 @@ dispositions supersede the previous register holds.
 
 ## Machine-readable scope targets
 
-- FID-2026-1018-001: `docs/sdk-overview.md`, `dev/fids/**`, `SCOPE.md`
-
 Operator authorization: completion at automation level 3, renewed 2026-10-15;
 specific removal and skill metadata approvals are in answers.md. Governance
 artifacts required by ECHO retain their gate-level exemptions.
@@ -288,6 +271,12 @@ artifacts required by ECHO retain their gate-level exemptions.
   fields and every call was refused `invalid_union`. A class guard now fails
   any tool whose provider-facing root is not an object. No live acceptance is
   claimed; the third A–Z run remains the operator's.
+- FID-2026-1018-001 is **closed and archived** (2026-10-18, 3/3 gates, receipt
+  stamped, commit `00fa0959`). Its write targets are released:
+  `docs/sdk-overview.md`, `dev/fids/**`, `SCOPE.md`, `CHANGELOG.md`. It closes the
+  one documentation gap left after the provider work: the SDK environment
+  reference annotated the BlazeRail and River keys but not Zylo's, leaving out
+  that its catalog is public and keyless while the key is for inference only.
 - FID-2026-1017-016 is **closed and archived** (2026-10-17, 10/10 gates, receipt
   stamped, commit `e22c06bf`). Its write targets are released:
   `common/src/providers/**`, `common/src/constants/**`,

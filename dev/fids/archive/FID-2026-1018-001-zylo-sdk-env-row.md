@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-1018-001-zylo-sdk-env-row.md`
 **ID:** FID-2026-1018-001
 **Severity:** low
-**Status:** converged
+**Status:** closed
 **Created:** 2026-10-18 00:20
 **Automation level:** 3
 **YAGNI-Compliance:** Verified — one documentation row in an existing table. No
@@ -88,10 +88,13 @@ and the base URL, matching the wording style of its neighbours.
 
 ### Steps
 
-1. Add the `ZYLO_API_KEY` annotation row. — pending
+1. Add the `ZYLO_API_KEY` annotation row. — implemented
+   (`docs/sdk-overview.md:314`)
 2. Re-run the provider-doc drift check and the generated-doc check; both must
-   stay green and the generator must report every artifact unchanged. — pending
-3. Re-run the declared gates, then close and archive. — pending
+   stay green and the generator must report every artifact unchanged. —
+   implemented (all four artifacts `unchanged`, `--check` reports up to date)
+3. Re-run the declared gates, then close and archive. — implemented (3/3 gates,
+   receipt stamped)
 
 ### Verification
 
@@ -137,20 +140,29 @@ keyless catalog and the inference URL.
 
 ### Implementation Evidence (REQUIRED for `closed`)
 
-- [ ] **Commit SHA:**
-- [ ] **File:line ranges:**
-- [ ] **Gate output:**
-- [ ] **Reproducibility:**
-- [ ] **Step statuses:**
+- [x] **Commit SHA:** `00fa0959`
+- [x] **File:line ranges:** `docs/sdk-overview.md:314` (the row)
+- [x] **Gate output:** stamped above — provider-doc drift probe, registry setup
+      suite and quality all exit 0
+- [x] **Reproducibility:** `grep -n ZYLO_API_KEY docs/sdk-overview.md`;
+      `bun run generate:provider-docs` reports every artifact unchanged
+- [x] **Step statuses:** Steps 1–3 implemented
 
 ## Resolution
 
-- **Closed Date:** pending
-- **Fix Description:** pending
+- **Closed Date:** 2026-10-18 00:35
+- **Fix Description:** `docs/sdk-overview.md` now carries a `ZYLO_API_KEY`
+  annotation row stating that the key authenticates inference only while the
+  live catalog is public and fetched without a credential, naming
+  `https://api.zyloai.net/v1`.
 - **Tests Added:** none — documentation only; the behavior it describes is
   already pinned by `cli/src/utils/openrouter-models/__tests__/zylo-catalog.test.ts`
-- **Verification Evidence:** pending
-- **Archived:** pending
+- **Verification Evidence:** `fid:verify --write` ran 3/3 declared gates with
+  exit 0 (provider-doc count drift probe, provider registry setup suite,
+  quality). `bun run generate:provider-docs` reported all four generated
+  artifacts unchanged; `generate:provider-docs:check` reports up to date;
+  markdownlint and Prettier pass.
+- **Archived:** 2026-10-18 00:35
 
 ## Lessons Learned
 

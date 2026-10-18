@@ -1,5 +1,17 @@
 # Changelog
 
+## 2026-10-18 — Document that Zylo's catalog needs no key (FID-2026-1018-001, low)
+
+The SDK environment reference annotated the BlazeRail and River keys but not
+`ZYLO_API_KEY`, which hid the one property that distinguishes it: the live
+catalog is fetched publicly and the key authenticates inference only. The
+reference now says so beside the variable, naming
+`https://api.zyloai.net/v1`. Generated artifacts are untouched — the provider
+doc generator reports all four unchanged.
+
+Implementation: `00fa0959`. Verification: 3/3 declared gates (provider-doc drift
+probe, registry setup suite, quality), markdownlint and Prettier pass.
+
 ## 2026-10-17 — Add Zylo AI as a text-only public gateway (FID-2026-1017-016, medium)
 
 Zylo is available through `/provider zylo` with `ZYLO_API_KEY` and
