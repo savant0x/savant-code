@@ -1,7 +1,5 @@
-// model-provider free-mode — ChatGPT OAuth fallback and TokenHarbor
-// routing. Parent of the Loop 325 decomposition (CommandCode, Nous, and
-// bare-slug suites live in sibling files; shared harness in
-// model-provider-free-mode-test-setup).
+// Provider routing and OAuth fallback; shared setup and additional routing
+// suites live in sibling model-provider-free-mode files (Loop 325).
 
 import { describe, expect, test, mock } from 'bun:test'
 
@@ -129,6 +127,96 @@ describe('getModelForRequest ChatGPT OAuth fallback behavior', () => {
     } finally {
       if (originalKey === undefined) delete process.env.BLAZERAIL_API_KEY
       else process.env.BLAZERAIL_API_KEY = originalKey
+    }
+  })
+
+  test('requires the River AI API key before constructing an inference request', async () => {
+    const { getModelForRequest } = await importFresh()
+    const originalKey = process.env.RIVER_AI_API_KEY
+    delete process.env.RIVER_AI_API_KEY
+    try {
+      await expect(
+        getModelForRequest({
+          model: 'river/deepseek-ai/DeepSeek-V4.1-Flash',
+        }),
+      ).rejects.toThrow(
+        'River AI API key not set. Set RIVER_AI_API_KEY environment variable.',
+      )
+    } finally {
+      if (originalKey === undefined) delete process.env.RIVER_AI_API_KEY
+      else process.env.RIVER_AI_API_KEY = originalKey
+    }
+  })
+
+  test('routes River AI models with Bearer auth and exact upstream IDs', async () => {
+    const originalKey = process.env.RIVER_AI_API_KEY
+    process.env.RIVER_AI_API_KEY = 'river-test-key'
+    const requests: Array<{ url: string; init?: RequestInit }> = []
+    globalThis.fetch = Object.assign(
+      async (input: RequestInfo | URL, init?: RequestInit) => {
+        requests.push({ url: String(input), init })
+        return new Response('data: [DONE]\n\n', {
+          headers: { 'content-type': 'text/event-stream' },
+        })
+      },
+      { preconnect: globalThis.fetch.preconnect },
+    )
+    try {
+      const { getModelForRequest } = await importFresh()
+      const upstream = 'nvidia/NVIDIA-Nemotron-3.5-Super-VL-120B-A12B-NVFP4'
+      const result = await getModelForRequest({ model: `river/${upstream}` })
+      await (result.model as LanguageModelV2).doStream({
+        prompt: COMMAND_CODE_PROMPT,
+      })
+
+      const request = requests.at(-1)
+      expect(request?.url).toBe('https://api.river.ai/v1/chat/completions')
+      expect(new Headers(request?.init?.headers).get('authorization')).toBe(
+        'Bearer river-test-key',
+      )
+      expect(new Headers(request?.init?.headers).has('x-api-key')).toBe(false)
+      expect(JSON.parse(String(request?.init?.body)).model).toBe(upstream)
+    } finally {
+      if (originalKey === undefined) delete process.env.RIVER_AI_API_KEY
+      else process.env.RIVER_AI_API_KEY = originalKey
+    }
+  })
+
+  test('Zylo requires its key and routes exact text IDs with Bearer auth', async () => {
+    const { getModelForRequest } = await importFresh()
+    const originalKey = process.env.ZYLO_API_KEY
+    delete process.env.ZYLO_API_KEY
+    try {
+      await expect(
+        getModelForRequest({ model: 'zylo/gemma-4' }),
+      ).rejects.toThrow(
+        'Zylo AI API key not set. Set ZYLO_API_KEY environment variable.',
+      )
+      process.env.ZYLO_API_KEY = 'zylo-test-key'
+      const requests: Array<{ url: string; init?: RequestInit }> = []
+      globalThis.fetch = Object.assign(
+        async (input: RequestInfo | URL, init?: RequestInit) => {
+          requests.push({ url: String(input), init })
+          return new Response('data: [DONE]\n\n', {
+            headers: { 'content-type': 'text/event-stream' },
+          })
+        },
+        { preconnect: globalThis.fetch.preconnect },
+      )
+      const upstream = 'vendor/Exact-Text:variant'
+      const result = await getModelForRequest({ model: `zylo/${upstream}` })
+      await (result.model as LanguageModelV2).doStream({
+        prompt: COMMAND_CODE_PROMPT,
+      })
+      const request = requests[0]
+      expect(request.url).toBe('https://api.zyloai.net/v1/chat/completions')
+      expect(new Headers(request.init?.headers).get('authorization')).toBe(
+        'Bearer zylo-test-key',
+      )
+      expect(JSON.parse(String(request.init?.body)).model).toBe(upstream)
+    } finally {
+      if (originalKey === undefined) delete process.env.ZYLO_API_KEY
+      else process.env.ZYLO_API_KEY = originalKey
     }
   })
 

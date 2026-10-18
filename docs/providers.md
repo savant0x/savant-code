@@ -70,6 +70,7 @@ closed if this section drifts from the registry.
 | Ollama | `ollama` | local | — | `http://localhost:11434/v1` | openai | none |
 | OrcaRouter | `orcarouter` | gateway | `ORCAROUTER_API_KEY` | `https://api.orcarouter.ai/v1` | openai | live |
 | Perplexity | `perplexity` | gateway | `PERPLEXITY_API_KEY` | `https://api.perplexity.ai` | openai | static (3 models) |
+| River AI | `river` | gateway | `RIVER_AI_API_KEY` | `https://api.river.ai/v1` | openai | live |
 | Tiarina Cloud | `tiarina` | gateway | `TIARINA_API_KEY` | `https://ai.tiarina.cloud/v1` | openai | static (19 models; evidence: console-verified 2026-10-12) |
 | Together AI | `togetherai` | gateway | `TOGETHER_API_KEY` | `https://api.together.xyz/v1` | openai | static (29 models) |
 | TokenBom | `tokenbom` | gateway | `TOKENBOM_API_KEY` | `https://tokenbom.com/v1` | openai | static (7 models) |
@@ -80,6 +81,7 @@ closed if this section drifts from the registry.
 | xAI | `xai` | gateway | `XAI_API_KEY` | `https://api.x.ai/v1` | openai | static (7 models) |
 | xKiro | `xkiro` | gateway | `XKIRO_API_KEY` | `https://api.xkiro.com/v1` | multi (`XKIRO_PROTOCOLS`) | live |
 | Z.AI | `zai` | gateway | `ZHIPU_API_KEY` | `https://api.z.ai/api/paas/v4` | openai | static (14 models) |
+| Zylo AI | `zylo` | gateway | `ZYLO_API_KEY` | `https://api.zyloai.net/v1` | openai | live |
 <!-- GENERATED:registry-table-end -->
 
 ### Notable providers
@@ -126,6 +128,16 @@ closed if this section drifts from the registry.
   `context_length` appears on 358/698 rows and positive `max_output` on
   306/698 rows. Empty endpoint metadata does not remove an LLM row, and
   zero-valued limits remain unknown rather than receiving fabricated fallbacks.
+
+- **Zylo AI** uses `ZYLO_API_KEY` for OpenAI-compatible chat at
+  `https://api.zyloai.net/v1`. Its public live catalog retains the main `text` array
+  only, excluding separate image and submodel arrays. All 126 observed text
+  rows published positive context windows on 2026-10-17; the roster remains
+  dynamic. Keyless and authenticated catalog requests returned identical
+  payloads. Key validation passed separately, but live completion
+  acceptance remains unproven: observed Basic-plan requests returned upstream
+  failures, a credits/GO access refusal, or timed out. Catalog membership does
+  not establish account entitlement, upstream availability, or model identity.
 
 ### Live catalogs
 

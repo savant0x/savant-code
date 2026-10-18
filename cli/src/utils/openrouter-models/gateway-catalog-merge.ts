@@ -63,6 +63,8 @@ export function assembleGatewayCatalog(
     // tail. Same rationale as every row above — appended, never reordered.
     ...live.ashnaModels,
     ...live.blazerailModels,
+    ...live.riverModels,
+    ...live.zyloModels,
     ...fetchCommandCodeModels(),
     ...fetchHcnsecModels(),
     ...fetchTokenBomModels(),

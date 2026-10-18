@@ -161,4 +161,33 @@ export const PROVIDER_REGISTRY_PARTITION_5 = {
     domain: 'ashna.ai',
     order: 4,
   },
+  river: {
+    id: 'river',
+    label: 'River AI',
+    kind: 'gateway',
+    credentials: { envVar: 'RIVER_AI_API_KEY' },
+    baseUrl: 'https://api.river.ai/v1',
+    protocol: 'openai',
+    idTransform: 'strip',
+    catalog: { source: 'live', url: 'https://api.river.ai/v1/models' },
+    setupAvailable: true,
+    domain: 'river.ai',
+    order: 4,
+  },
+  zylo: {
+    id: 'zylo',
+    label: 'Zylo AI',
+    kind: 'gateway',
+    credentials: { envVar: 'ZYLO_API_KEY' },
+    // Public catalog: keyless/authenticated bodies identical, 126 text rows.
+    // Key validation HTTP 200; authenticated inference remains unproven
+    // (probed 2026-10-17, FID-2026-1017-016).
+    baseUrl: 'https://api.zyloai.net/v1',
+    protocol: 'openai',
+    idTransform: 'strip',
+    catalog: { source: 'live', url: 'https://api.zyloai.net/v1/models' },
+    setupAvailable: true,
+    domain: 'zyloai.net',
+    order: 4,
+  },
 } as const satisfies Record<string, ProviderConfig>

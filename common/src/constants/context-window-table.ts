@@ -19,6 +19,7 @@ import { ASHNA_CONTEXT_WINDOW_FALLBACKS } from './context-window-table-ashna'
 import { BAI_CONTEXT_WINDOW_FALLBACKS } from './context-window-table-bai'
 import { CHATANYWHERE_CONTEXT_WINDOW_FALLBACKS } from './context-window-table-chatanywhere'
 import { KIOSAPI_CONTEXT_WINDOW_FALLBACKS } from './context-window-table-kiosapi'
+import { RIVER_CONTEXT_WINDOW_FALLBACKS } from './context-window-table-river'
 import { TIARINA_CONTEXT_WINDOW_FALLBACKS } from './context-window-table-tiarina'
 import { TOKENHARBOR_CONTEXT_WINDOW_FALLBACKS } from './context-window-table-tokenharbor'
 import { TIER1_CONTEXT_WINDOWS } from './model-config/tier1'
@@ -281,5 +282,6 @@ export const CONTEXT_WINDOW_FALLBACKS: ReadonlyMap<string, number> = new Map([
   // conservative minimum of two disagreeing >=2-row groups, two flagged
   // NEEDS-REVIEW single-source; no-row ids documented in the section file) ---
   ...ASHNA_CONTEXT_WINDOW_FALLBACKS,
+  ...RIVER_CONTEXT_WINDOW_FALLBACKS,
   ...TIER1_CONTEXT_WINDOWS,
 ])

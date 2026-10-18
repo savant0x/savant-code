@@ -37,10 +37,12 @@ import { __resetNvidiaCacheForTest } from './nvidia'
 import { __resetOpenAiCacheForTest } from './openai'
 import { __resetOpenRouterCacheForTest } from './openrouter'
 import { __resetOrcarouterCacheForTest } from './orcarouter'
+import { __resetRiverCacheForTest } from './river'
 import { CATALOG_TTL_MS } from './types'
 import { __resetVeniceCacheForTest } from './venice'
 import { __resetVercelCacheForTest } from './vercel'
 import { __resetXkiroCacheForTest } from './xkiro'
+import { __resetZyloCacheForTest } from './zylo'
 
 import type { OpenRouterModel } from './types'
 
@@ -119,6 +121,8 @@ function notifyGatewayCatalogListeners(catalog: OpenRouterModel[]): void {
  * - Venice AI (live API, public — FID-2026-1012-026)
  * - Ashna (live API, authenticated — FID-2026-1016-018)
  * - BlazeRail (live API, public — FID-2026-1017-013)
+ * - River AI (live API, authenticated — FID-2026-1017-015)
+ * - Zylo AI (live text catalog, public — FID-2026-1017-016)
  *
  * Fetches live sources in parallel via Promise.allSettled(). If a source fails,
  * uses cached/empty list for that provider. Returns a combined, sorted list.
@@ -253,6 +257,8 @@ function resetProviderCatalogCaches(): void {
   __resetVeniceCacheForTest()
   __resetAshnaCacheForTest()
   __resetBlazerailCacheForTest()
+  __resetRiverCacheForTest()
+  __resetZyloCacheForTest()
   // Step 9 remainder: lazily-built custom fetchers are cache state too.
   __resetCustomCatalogsForTest()
 }

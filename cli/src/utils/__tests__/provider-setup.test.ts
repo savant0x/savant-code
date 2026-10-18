@@ -221,6 +221,39 @@ describe('provider setup', () => {
     )
   })
 
+  test('saves and activates River AI with the registered key and API root', () => {
+    saveProviderApiKey('river', '  test-river-key  ')
+
+    expect(process.env.RIVER_AI_API_KEY).toBe('test-river-key')
+    expect(process.env.DIRECT_PROVIDER).toBe('river')
+    expect(process.env.INFERENCE_BASE_URL).toBe('https://api.river.ai/v1')
+    expect(getConfiguredProviderNames()).toContain('river')
+    const settings = JSON.parse(
+      fs.readFileSync(path.join(tempDir, 'settings.json'), 'utf8'),
+    )
+    expect(settings.activeProvider).toBe('river')
+    const credentials = JSON.parse(
+      fs.readFileSync(path.join(tempDir, 'credentials.json'), 'utf8'),
+    )
+    expect(credentials.providerApiKeys.RIVER_AI_API_KEY).toBe('test-river-key')
+  })
+
+  test('saves Zylo credentials and persists the active provider', () => {
+    saveProviderApiKey('zylo', '  test-zylo-key  ')
+    expect(process.env.ZYLO_API_KEY).toBe('test-zylo-key')
+    expect(process.env.DIRECT_PROVIDER).toBe('zylo')
+    expect(process.env.INFERENCE_BASE_URL).toBe('https://api.zyloai.net/v1')
+    expect(getConfiguredProviderNames()).toContain('zylo')
+    const settings = JSON.parse(
+      fs.readFileSync(path.join(tempDir, 'settings.json'), 'utf8'),
+    )
+    expect(settings.activeProvider).toBe('zylo')
+    const credentials = JSON.parse(
+      fs.readFileSync(path.join(tempDir, 'credentials.json'), 'utf8'),
+    )
+    expect(credentials.providerApiKeys.ZYLO_API_KEY).toBe('test-zylo-key')
+  })
+
   test('persists the selection as activeProvider without legacy direct fields (Phase 4)', () => {
     saveProviderApiKey('tokenharbor', 'test-tokenharbor-key')
 

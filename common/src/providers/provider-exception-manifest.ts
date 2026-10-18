@@ -29,6 +29,16 @@ export type ProviderExceptionManifestEntry = {
 export const PROVIDER_EXCEPTION_MANIFEST: readonly ProviderExceptionManifestEntry[] =
   [
     {
+      providerId: 'zylo',
+      kinds: ['live-catalog'],
+      owner: 'cli/src/utils/openrouter-models/zylo.ts',
+      evidence: [
+        'cli/src/utils/openrouter-models/zylo.ts',
+        'cli/src/utils/openrouter-models/gateway-live-results.ts',
+        'cli/src/utils/openrouter-models/gateway-catalog-merge.ts',
+      ],
+    },
+    {
       providerId: 'blazerail',
       kinds: ['live-catalog'],
       owner: 'cli/src/utils/openrouter-models/blazerail.ts',
@@ -36,6 +46,18 @@ export const PROVIDER_EXCEPTION_MANIFEST: readonly ProviderExceptionManifestEntr
         'cli/src/utils/openrouter-models/blazerail.ts',
         'cli/src/utils/openrouter-models/gateway-live-results.ts',
         'cli/src/utils/openrouter-models/gateway-catalog-merge.ts',
+      ],
+    },
+    {
+      // FID-2026-1017-015: authenticated River catalog publishes ids but
+      // no context-window fields.
+      providerId: 'river',
+      kinds: ['live-catalog'],
+      owner: 'cli/src/utils/openrouter-models/river.ts',
+      evidence: [
+        'cli/src/utils/openrouter-models/river.ts',
+        'cli/src/utils/openrouter-models/gateway.ts',
+        'common/src/constants/context-window-table-river.ts',
       ],
     },
     {

@@ -72,6 +72,13 @@ export const WINDOW_COVERAGE_REGISTER: ReadonlyMap<
   WindowCoverageEntry
 > = new Map([
   [
+    'zylo',
+    {
+      disposition: 'runtime-published',
+      note: 'Public GET /v1/models HTTP 200: keyless/authenticated bodies identical; 126/126 text rows publish positive finite context_window (probed 2026-10-17, FID-2026-1017-016). Separate image and submodel catalogs are excluded by operator instruction.',
+    },
+  ],
+  [
     'openrouter',
     {
       disposition: 'runtime-published',
@@ -309,6 +316,13 @@ export const WINDOW_COVERAGE_REGISTER: ReadonlyMap<
     {
       disposition: 'runtime-partial',
       note: 'Public catalog HTTP 200 on 2026-10-18: 302 raw rows; 183 chat/coding rows retained after media and coding-policy filtering. 179/183 publish positive context_length; four exact IDs remain unknown. Published top_provider limits are parsed. No account key or inference probe (operator instruction, FID-2026-1017-013).',
+    },
+  ],
+  [
+    'river',
+    {
+      disposition: 'table-section',
+      note: 'Authenticated /v1/models returned 3 ids and no window fields (probed 2026-10-17); River documents 1,048,576 context windows for all 3 observed models, pinned in context-window-table-river.ts.',
     },
   ],
 ])

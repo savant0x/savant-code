@@ -110,6 +110,7 @@ history. The supported hosted providers are:
 | Ollama | Automatic detection | `OLLAMA_HOST` (optional) | Local inference; no API key required |
 | OrcaRouter | `/provider orcarouter` or `DIRECT_PROVIDER=orcarouter` | `ORCAROUTER_API_KEY` | Multi-provider gateway with a live model catalog (free tier currently gated vendor-side on GitHub account linkage) |
 | Perplexity | `/provider perplexity` or `DIRECT_PROVIDER=perplexity` | `PERPLEXITY_API_KEY` | Hosted gateway |
+| River AI | `/provider river` or `DIRECT_PROVIDER=river` | `RIVER_AI_API_KEY` | Hosted gateway |
 | Tiarina Cloud | `/provider tiarina` or `DIRECT_PROVIDER=tiarina` | `TIARINA_API_KEY` | Hosted gateway |
 | Together AI | `/provider togetherai` or `DIRECT_PROVIDER=togetherai` | `TOGETHER_API_KEY` | Hosted gateway |
 | TokenBom | `/provider tokenbom` or `DIRECT_PROVIDER=tokenbom` | `TOKENBOM_API_KEY` | OpenAI-compatible gateway on an audited static 7-model allowlist |
@@ -120,6 +121,7 @@ history. The supported hosted providers are:
 | xAI | `/provider xai` or `DIRECT_PROVIDER=xai` | `XAI_API_KEY` | Hosted gateway |
 | xKiro | `/provider xkiro` or `DIRECT_PROVIDER=xkiro` | `XKIRO_API_KEY` | Hosted gateway |
 | Z.AI | `/provider zai` or `DIRECT_PROVIDER=zai` | `ZHIPU_API_KEY` | Hosted gateway |
+| Zylo AI | `/provider zylo` or `DIRECT_PROVIDER=zylo` | `ZYLO_API_KEY` | Hosted gateway |
 | Custom endpoint | Environment configuration | `INFERENCE_BASE_URL`, `INFERENCE_API_KEY` | Advanced OpenAI-compatible endpoint; authorized by `INFERENCE_API_KEY` alone |
 <!-- GENERATED:provider-table-end -->
 
@@ -472,7 +474,7 @@ code 2 blocks a tool.
   UnoRouter,
   BazaarLink, Atria AI,
   OpenAI, Vercel AI Gateway, Clean APIs, CodeCraft API, Mistral AI, Apixo,
-  Ashna, AIHubMix, BlazeRail, xKiro, and Cloudflare Workers AI via
+  Ashna, AIHubMix, BlazeRail, River AI, Zylo AI, xKiro, and Cloudflare Workers AI via
   `@savant-code/llm-providers`. First-party routes include Alibaba Cloud, Anthropic, Baseten,
   Cerebras, Cohere, DeepInfra, DeepSeek, Fireworks AI, Google AI, Groq, Meta Llama API,
   MiniMax, Moonshot AI, Perplexity, Together AI, Venice AI, xAI, and Z.AI. Nous
@@ -990,6 +992,8 @@ picker or choose one directly:
 /provider aihubmix
 /provider ashna
 /provider blazerail
+/provider river
+/provider zylo
 /provider alibaba
 /provider anthropic
 /provider baseten
@@ -1032,6 +1036,7 @@ The supported environment variables are `OPENAI_API_KEY`, `OPENROUTER_API_KEY`,
 `TIARINA_API_KEY`,
 `ASHNA_API_KEY`,
 `BLAZERAIL_API_KEY`,
+`RIVER_AI_API_KEY`, `ZYLO_API_KEY`,
 `CLOUDFLARE_API_TOKEN`. The key
 prompt is masked and stores the key globally in the Savant-Code config
 `credentials.json`; it is not added to chat history. Shell environment variables

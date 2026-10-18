@@ -135,11 +135,13 @@ describe('BlazeRail catalog contract', () => {
   test('settled ladder and assembler keep BlazeRail between Ashna and custom', () => {
     const [blazerail] = parseBlazerailModels(response)
     const ashna = { id: 'ashna/test', name: 'Ashna', provider: 'ashna' }
+    const river = { id: 'river/test', name: 'River', provider: 'river' }
     const custom = { id: 'custom/test', name: 'Custom', provider: 'custom' }
-    const rest = Array.from({ length: 18 }, () => fulfilled([]))
+    const rest = Array.from({ length: 20 }, () => fulfilled([]))
     rest[15] = fulfilled([ashna])
     rest[16] = fulfilled([blazerail])
-    rest[17] = fulfilled([custom])
+    rest[17] = fulfilled([river])
+    rest[19] = fulfilled([custom])
     const resolved = resolveGatewayLiveCatalogs(
       fulfilled([]),
       fulfilled([]),
@@ -147,8 +149,10 @@ describe('BlazeRail catalog contract', () => {
     )
     expect(resolved.ashnaModels).toEqual([ashna])
     expect(resolved.blazerailModels).toEqual([blazerail])
+    expect(resolved.riverModels).toEqual([river])
     expect(resolved.customModels).toEqual([custom])
     expect(assembleGatewayCatalog(resolved)).toContainEqual(blazerail)
+    expect(assembleGatewayCatalog(resolved)).toContainEqual(river)
     expect(PROVIDER_REGISTRY.blazerail.protocol).toBe('openai')
   })
 })

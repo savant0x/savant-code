@@ -4,7 +4,7 @@ import { deriveSetupConfig } from '../derive'
 import { PROVIDER_REGISTRY } from '../registry'
 
 describe('provider setup derivation', () => {
-  test('setup config derives exactly the forty-eight current setup providers', () => {
+  test('setup config derives exactly the fifty current setup providers', () => {
     const setup = deriveSetupConfig(PROVIDER_REGISTRY)
     expect(Object.keys(setup).sort()).toEqual([
       'aihubmix',
@@ -44,6 +44,7 @@ describe('provider setup derivation', () => {
       'openrouter',
       'orcarouter',
       'perplexity',
+      'river',
       'tiarina',
       'togetherai',
       'tokenbom',
@@ -55,6 +56,7 @@ describe('provider setup derivation', () => {
       'xai',
       'xkiro',
       'zai',
+      'zylo',
     ])
     expect(setup.openai).toEqual({
       label: 'OpenAI',
@@ -95,6 +97,16 @@ describe('provider setup derivation', () => {
       label: 'ChatAnywhere',
       envVar: 'CHATANYWHERE_API_KEY',
       baseUrl: 'https://api.chatanywhere.tech/v1',
+    })
+    expect(setup.river).toEqual({
+      label: 'River AI',
+      envVar: 'RIVER_AI_API_KEY',
+      baseUrl: 'https://api.river.ai/v1',
+    })
+    expect(setup.zylo).toEqual({
+      label: 'Zylo AI',
+      envVar: 'ZYLO_API_KEY',
+      baseUrl: 'https://api.zyloai.net/v1',
     })
   })
 })
