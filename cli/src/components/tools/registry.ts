@@ -106,6 +106,8 @@ const toolComponentRegistry = new Map<ToolName, ToolComponent>([
   ['run_file_change_hooks', OutputResultComponent],
   ['get_goal', OutputResultComponent],
   ['browser_logs', OutputResultComponent],
+  // Worktree lifecycle JSON shares the structured panel's loading/folding path.
+  ['fid_worktree', McpResultComponent],
 ])
 
 /** The built-in entries, captured before any runtime registration. */
