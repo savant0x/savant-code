@@ -225,8 +225,8 @@ repository validator.
 
 ### Implementation Evidence (REQUIRED for `closed`)
 
-- [x] **Commit SHA:** the commit that contains this record (`fix(runtime): credit
-      a windowed boot read that reached EOF (FID-2026-1018-009)`).
+- [x] **Commit SHA:** `59d6226f` — `fix(runtime): credit a windowed boot read
+      that reached EOF (FID-2026-1018-009)`.
 - [x] **File:line ranges:** `grounding-read.ts:17-60` (line counting, window
       predicate, window parsing), `grounding-read.ts:83` (per-entry rejection),
       `result-lifecycle.ts:4,134` (call site),

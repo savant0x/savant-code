@@ -9,7 +9,7 @@ completion gate blocked three times, disarmed, and the turn ended with no tool
 call. Credit now follows the window's effect — an `offset` past line 1 is
 always partial, and a `limit` is partial only when the response used it up.
 Three suites pass (27 tests), typecheck, ESLint, Prettier, Markdown lint and
-`validate:repository` are clean.
+`validate:repository` are clean. Implementation: `59d6226f`.
 
 ## 2026-10-18 — Clarify worktree busy-lock recovery (FID-2026-1018-006, low)
 
