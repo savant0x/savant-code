@@ -296,6 +296,53 @@ basher-completion correlation — it must not be counted as a fourth data point
 for or against it. The reproduction still needs a run that actually spawns the
 three bashers.
 
+**Updated 2026-10-18 19:52 — it is not a process death. It is a dead renderer.**
+Run `473b4f3f` (pid 4048, booted 19:43:25) was followed up while the operator
+reported a completely black, unresponsive screen. The process was **alive and
+healthy**: `Responding: True`, RSS ~1044 MB, CPU flat at 23.42 s, and the
+agent turn ran to completion after the screen died —
+
+```text
+23:43:41  transition_phase → green
+23:43:42  read_files [all four harness boot files]      ← one steering message total
+23:43:45  transition_phase → green
+23:43:48  spawn_agents ............................... tool_finished 23:44:35 (47 s)
+23:44:37  write_todos → transition_phase ×3 → suggest_followups
+23:44:46.830  terminal step=10, cleanup_finished
+23:44:46.835  [finish-logic] UI reset to idle (reason: finish)
+```
+
+The screen went black between `model-picker-open-begin` (23:43:52.852) and
+`model-picker-open-returned` (23:43:53.562), while the JS loop kept working for
+another 53 s. No `process-exit` line was ever written, and nothing appears at
+ERROR level. **Every earlier "hard kill" in this record is now suspect for the
+same reason**: a dead renderer looks exactly like a dead process from the
+operator's chair, and the process ends only when the terminal window is closed.
+
+Why it was invisible — both OpenTUI failure shapes are silent here:
+
+- a JS render throw is emitted as `render:error`; with **no listener** it falls
+  to the renderer's `handleError`, which `console.error`s into a console the
+  renderer captures and never displays (`@opentui/core` renderer.js:9863,
+  :7168);
+- a native render status of `failed` merely stops scheduling the next frame
+  (renderer.js:9848-9851) — no event, no log, no exit.
+
+**Instrumentation added (same commit as this record):**
+`cli/src/utils/renderer-health.ts` listens for `render:error` (records message,
+bounded stack, uptime, RSS, then asks for one repaint) and probes liveness every
+10 s by requesting a render and checking that a `frame` event arrived. Three
+consecutive misses record one `render-stall` breadcrumb and request a repaint —
+which restarts a stopped loop, because `requestRender()` reschedules when
+`_isRunning` and no timer is armed. It never exits: a stalled frame is evidence,
+not proof. 7 tests cover the probe verdict, the record fields and the install
+wiring.
+
+**Also observed, unproven:** streamed assistant deltas are persisted as one
+message each (step 17 of the 23:21 run produced 14 assistant messages for one
+sentence; the 23:43 turn ended at `messageCount: 170`). Not attributed to this
+defect, not yet filed — recorded here so it is not lost.
+
 ### Notes
 
 The cleared screen is expected behaviour after death, so no change should be

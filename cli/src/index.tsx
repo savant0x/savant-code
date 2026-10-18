@@ -59,6 +59,7 @@ import {
   createEarlyFatalHandler,
   installProcessCleanupHandlers,
 } from './utils/renderer-cleanup'
+import { installRendererHealth } from './utils/renderer-health'
 import { setApiClientAuthToken } from './utils/savant-code-api'
 import { initializeSkillRegistry } from './utils/skill-registry'
 import { startTerminalWatchdog } from './utils/terminal-watchdog'
@@ -264,6 +265,9 @@ async function main(): Promise<void> {
   process.removeListener('uncaughtException', earlyFatalHandler)
   process.removeListener('unhandledRejection', earlyFatalHandler)
   installProcessCleanupHandlers(renderer)
+  // FID-2026-1018-008: a render throw or a stopped render loop leaves a black
+  // screen with a healthy process and no log line. Record it, and probe for it.
+  installRendererHealth(renderer)
 
   createRoot(renderer).render(
     <QueryClientProvider client={queryClient}>
