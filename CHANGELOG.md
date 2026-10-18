@@ -1,5 +1,20 @@
 # Changelog
 
+## 2026-10-17 — Coding-focused free options (FID-2026-1017-010, high)
+
+Boot and `/provider free` now share purpose, expiry and duplicate filtering.
+Specialist model tasks, unrelated offer categories, expired/unresolved deadlines
+and unsafe offer links stay in the broad discovery report. Structured text/tool
+metadata survives cache round trips; missing metadata remains explicitly
+unverified. Correct the existing VL-name boundary for whitespace and `:free`.
+
+Expanded boot output and Copy share a preview capped at five models per provider
+and five offers, while header counts retain the complete selected totals and
+filtered reasons. The artifact retains the full discovery evidence and hash
+contract. Implementation: `cc0c2913`; ten declared gates pass, with native-render
+coverage, 78 focused tests, CLI typecheck and SDK build. No live capability,
+quality-ranking or account-quota verification is claimed.
+
 ## 2026-10-17 — Preserve dependencies during lane disposal (FID-2026-1017-009, critical)
 
 Windows Git follows dependency junctions during worktree removal and can delete

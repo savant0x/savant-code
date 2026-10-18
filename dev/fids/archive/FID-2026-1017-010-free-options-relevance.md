@@ -3,7 +3,8 @@
 **Filename:** `FID-2026-1017-010-free-options-relevance.md`
 **ID:** FID-2026-1017-010
 **Severity:** high
-**Status:** verified
+**Status:** closed
+**Archived:** 2026-10-17
 **Created:** 2026-10-17
 **Automation level:** 3
 **YAGNI-Compliance:** Verified — reuse the catalog, report, view and artifact.
@@ -87,7 +88,7 @@ view remains broad. Command and boot use the same coding selection.
 1. Preserve metadata and implement shared selection with exclusion accounting — implemented.
 2. Wire focused command/boot, bounded preview and copy, broad artifact retained — implemented.
 3. Test realistic mixed feeds, native rendering, artifact preservation and gates — implemented.
-4. Commit verified implementation, archive and update CHANGELOG — follows the final receipt.
+4. Commit verified implementation, archive and update CHANGELOG — implemented at `cc0c2913`.
 
 ### Verification
 
@@ -162,7 +163,8 @@ contracts. No fetched provider catalog or inference call is required by tests.
 - **GREEN:** Share one preview transformation and render Copy from that view.
 - **AUDIT:** Native and static rendering tests assert filtered rows and bounds;
   raw artifact tests still retain every source row and generation hash.
-- **ADVERSARIAL:** No network, secret access, paid calls or new integrations.
+- **ADVERSARIAL:** No additional network probes, credential mutations, paid calls
+  or new integrations.
 
 ### Implementation Evidence
 
@@ -170,7 +172,7 @@ Contract converged before source edits. `assessCodingModel` is called by the
 model/offer selector; `buildFreeOptionsView` invokes selection only for the
 explicit coding audience. Production command and boot callers pass that option
 and a clock. Boot and Copy share `previewFreeOptionsView`. Default artifact view
-retains source rows and the existing hash contract. Commit recorded at closure.
+retains source rows and the existing hash contract. Implementation: `cc0c2913`.
 
 ### Code Verification Evidence
 
@@ -188,8 +190,10 @@ Session logs use `dev/session-summaries/2026-10-17-free-options-*.log`.
 
 ## Resolution
 
-Implementation is verified locally; the final receipt, commit and archive finish
-the delivery. Mandatory root push gates remain active.
+Implemented at `cc0c2913`, verified through all ten declared gates and archived.
+Receipt records verification before these closure edits; its fingerprint changes
+by design. CHANGELOG and the session summary record closure. Mandatory root
+push gates remain active; no release or live inference result is claimed.
 
 ## Lessons Learned
 
