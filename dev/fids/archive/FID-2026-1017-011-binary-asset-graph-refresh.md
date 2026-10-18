@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-1017-011-binary-asset-graph-refresh.md`
 **ID:** FID-2026-1017-011
 **Severity:** high
-**Status:** verified
+**Status:** closed
 **Created:** 2026-10-17 21:10
 **Automation level:** 3
 **YAGNI-Compliance:** Verified — removes one redundant condition from an existing
@@ -251,7 +251,7 @@ merged lane-proof row.
 
 ### Implementation Evidence (REQUIRED for `closed`)
 
-- [ ] **Commit SHA:** filled at closure
+- [x] **Commit SHA:** `774eb705`
 - [x] **File:line ranges:** `packages/knowledge-graph/src/update-scan.ts:205-221`
       (decoded-length clause removed, stat checks retained);
       `packages/knowledge-graph/src/extract.ts:82-101` (extends parents deduped);
@@ -298,8 +298,19 @@ merged lane-proof row.
 
 ## Resolution
 
-Not yet resolved. Fix implemented and gate-verified this session; closure
-records the commit and archives this record.
+- **Closed Date:** 2026-10-17 21:40
+- **Fix Description:** The scan's byte cap was applied to the UTF-8-decoded
+  string; it now governs only on-disk bytes, with the pre/post stat checks
+  unchanged. `extractExtendsRelations` now returns one relation per distinct
+  parent, matching the `file_extends (file_id, parent)` key.
+- **Tests Added:** Yes — `refresh-safety.test.ts` gains a 600,000-byte
+  invalid-UTF-8 fixture and a two-declaration extends fixture.
+- **Verification Evidence:** `fid:verify --write` ran 7/7 gates with exit 0
+  (two workspace typechecks, three suites, the real-git lane probe, quality).
+  The live reproduction completed in 8,894 ms and
+  `docs/design/parallel-worktrees-lane-proof.md` is present in
+  `.savant/graph.db`.
+- **Archived:** 2026-10-17 21:40
 
 ## Lessons Learned
 
