@@ -1,5 +1,25 @@
 # Changelog
 
+## 2026-10-17 — Post-merge graph refresh survives real assets (FID-2026-1017-011, high)
+
+The parallel-worktree merge landed but its main-graph refresh threw, so the
+merged file stayed out of `.savant/graph.db` until an operator ran
+`/graph refresh`. Two defects were reproduced in sequence. First, the index
+scan applied the 1 MB cap to the UTF-8-decoded string: invalid bytes decode to
+U+FFFD (three bytes each), so four tracked assets under 900 KB on disk expanded
+past the cap and aborted the scan. Second, the write phase collided on
+`file_extends (file_id, parent)` because one file may declare several children
+extending the same parent; six tracked files do exactly that. The cap now
+governs on-disk bytes only, and extends relations dedupe by parent to match the
+persisted key. Two regression fixtures were added; the live refresh completes
+in 8,894 ms and the merged lane proof is present in the graph.
+
+Implementation: `774eb705`. Verification: `fid:verify` ran 7/7 declared gates
+with exit 0 (knowledge-graph and agent-runtime typechecks, `refresh-safety`,
+`edges-from-tokens`, `fid-worktree-environment`, the real-git lane probe, and
+quality). The open BLOCKER-2 from the FID-2026-1017-008 live acceptance run is
+repaired; that run's own record still awaits the operator re-run.
+
 ## 2026-10-17 — Coding-focused free options (FID-2026-1017-010, high)
 
 Boot and `/provider free` now share purpose, expiry and duplicate filtering.

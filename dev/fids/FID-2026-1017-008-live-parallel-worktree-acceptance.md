@@ -4,6 +4,11 @@
 **ID:** FID-2026-1017-008
 **Severity:** low
 **Status:** converged
+> **Run state (2026-10-17):** the A–Z run executed and returned DEFECTS FOUND.
+> `converged` is retained because the lane-vehicle precondition (and the
+> re-run's `create`) requires exactly one active converged FID; the run outcome,
+> the failed row and both blockers are recorded below. This record claims no
+> acceptance until a clean re-run.
 **Created:** 2026-10-17 17:34
 **Automation level:** 3
 **YAGNI-Compliance:** Verified - reuses the existing focused suites, the
@@ -78,6 +83,16 @@ lock and fail-closed gates that were only exercised at unit/probe level.
 FID-2026-1017-007 (archive) Resolution: "No live multi-agent inference,
 throughput benchmark or sandbox claim is made."
 
+2026-10-17 live run (report archived at
+`dev/test-prompts/archive/2026-10-17-parallel-worktrees-live-test-report.md`):
+41 PASS, 1 FAIL (§5.15 — the merged file was absent from main's graph), 1
+OPERATOR-CONFIRMED, 1 SKIP (busy-lock row declined by the operator), 0
+NEEDS-REVIEW. BLOCKER-1: intermittent `unsafe-root` refused 3 of the 18 live
+lifecycle calls that reached the service; not reproducible out-of-process and
+still unexplained. BLOCKER-2: post-merge graph refresh failed; root-caused and
+repaired by FID-2026-1017-011 (`774eb705`), which completed the live refresh in
+8,894 ms and indexed the merged lane proof.
+
 This session (pre-run): the register's machine-readable surface was audited
 with the gate's own parser module (packages/agent-runtime/src/echo/scope-targets.ts)
 after FID-2026-1001-003's grammar: the previous FID-2026-1017-008 line was
@@ -122,20 +137,31 @@ the real repository.
    `main`. — implemented in this session.
 2. Operator executes the A-Z run inside the running CLI from `main` at that
    commit; the run writes its report to `dev/scratchpad/` and leaves the lane
-   proof merged onto `main`. — blocked (specific blocker: the operator-driven
-   live session; this is the agreed method, scheduled, not at risk).
+   proof merged onto `main`. — implemented: the run executed on 2026-10-17
+   (19:03–19:31 EDT) from `5768aff6`, merged the lane proof as `3d24daf9`
+   (fast-forward), disposed the lane and retained the branch. Its report is
+   preserved at
+   `dev/test-prompts/archive/2026-10-17-parallel-worktrees-live-test-report.md`;
+   its overall call was **DEFECTS FOUND** (one FAIL row, §5.15).
 3. Closure: promote the report to a durable path, stamp the receipt below,
    close and archive this record, add the CHANGELOG entry, and release the
-   register grant. — blocked (specific blocker: awaits step 2's evidence).
+   register grant. — blocked (specific blocker: the acceptance verdict is not
+   clean. §5.15 failed because the post-merge graph refresh threw; that defect
+   is repaired and archived as FID-2026-1017-011, commit `774eb705`. The
+   unsafe-root flake (BLOCKER-1) remains unexplained, and a re-run of the live
+   A–Z cycle is required before this record can claim acceptance.)
 
 ### Verification
 
-The run's report (`dev/scratchpad/az-parallel-worktrees-live-test-report.md`)
+The run's report
+(`dev/test-prompts/archive/2026-10-17-parallel-worktrees-live-test-report.md`)
 plus the merged lane proof (`docs/design/parallel-worktrees-lane-proof.md`)
 and the stamp-time gate re-run are the acceptance evidence. No new `*.test.ts`
 artifact is promised by this record: the eight existing suites and the probe
 are re-executed live by the run (§4 rows) and re-run again by the receipt
-stamp at closure.
+stamp at closure. Acceptance is not claimed at this status: the first run's
+§5.15 failed, its BLOCKER-2 repair (FID-2026-1017-011) landed after the run,
+and the re-run that exercises the repaired merge path has not happened.
 
 ## Verification Gates
 
@@ -207,8 +233,9 @@ then close and archive.
 - [ ] **File:line ranges:** filled at closure
 - [ ] **Gate output:** stamped at closure
 - [ ] **Reproducibility:** filled at closure
-- [ ] **Step statuses:** Step 1 implemented; Steps 2-3 blocked (see Proposed
-  Solution; specific blockers stated)
+- [x] **Step statuses:** Step 1 implemented; Step 2 implemented (run executed,
+  report preserved, lane proof merged as `3d24daf9`); Step 3 blocked on the
+  operator re-run and the unexplained BLOCKER-1 (see Proposed Solution)
 
 ### Code Verification Evidence
 
@@ -258,9 +285,13 @@ over the instrument and the register:
 
 ## Resolution
 
-Not yet resolved. This record is the lane vehicle and the acceptance umbrella;
-it resolves at closure, when the A-Z run's report and the merged lane proof are
-promoted as evidence and the receipt above is stamped.
+Not yet resolved. The A-Z run executed and its report and merged lane proof are
+preserved, but its verdict was DEFECTS FOUND. The graph-refresh defect is
+repaired (FID-2026-1017-011, `774eb705`); the `unsafe-root` flake remains
+unexplained. The next step is an operator re-run of
+`dev/test-prompts/az-parallel-worktrees-live-test.md` against the repaired tree;
+closure follows only a clean run, with the receipt stamped and this record
+archived.
 
 ## Lessons Learned
 

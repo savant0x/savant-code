@@ -65,19 +65,6 @@ merged lane proof become the acceptance evidence; closure retires this record
 and releases its write targets. Any discovered defect becomes its own
 implementation FID. Claims stay within measured evidence.
 
-### FID-2026-1017-011 — post-merge graph refresh aborts on binary assets (active)
-
-Authority: automation level 3 (session ceiling). Operator instruction: "ok so
-fix it, i need to get this fully built and working as designed." This is the
-open BLOCKER-2 from the FID-2026-1017-008 live run: the merge lands but its
-main-graph refresh throws, leaving the merged file absent from `.savant/graph.db`.
-Root cause reproduced deterministically in this session: the index scan rejects
-files whose UTF-8-decoded length exceeds the 1 MB cap even when the on-disk size
-is under it, and four tracked assets (two PNGs, a JPG and the emblem PNG)
-expand past it through U+FFFD replacement. Fix removes the redundant decoded-length
-clause, pins it with an invalid-UTF-8 fixture, and re-runs the live refresh.
-Any further discovered defect becomes its own implementation FID.
-
 ## Internal follow-ups and current operator authority (2026-10-16)
 
 Implementation-complete records FID-2026-1015-006 and FID-2026-1012-022
@@ -272,7 +259,12 @@ artifacts required by ECHO retain their gate-level exemptions.
   (live parallel-worktree acceptance; active). No production source write is
   authorized by this item; a discovered defect opens its own implementation
   FID.
-- FID-2026-1017-011: `packages/knowledge-graph/src/update-scan.ts`,
-  `packages/knowledge-graph/src/__tests__/refresh-safety.test.ts`,
-  `dev/fids/**`, `SCOPE.md`, `CHANGELOG.md`, `dev/session-summaries/**`
-  (post-merge graph refresh on binary assets; active).
+- FID-2026-1017-011 is **closed and archived** (2026-10-17, 7/7 gates, receipt
+  stamped, commit `774eb705`). Its write targets are released:
+  `packages/knowledge-graph/src/update-scan.ts`,
+  `packages/knowledge-graph/src/extract.ts`,
+  `packages/knowledge-graph/src/__tests__/refresh-safety.test.ts`, `dev/fids/**`,
+  `SCOPE.md`, `CHANGELOG.md`. It repairs the open BLOCKER-2 from the
+  FID-2026-1017-008 live run: the merge's graph refresh now completes live and
+  the merged lane proof is indexed. The unsafe-root flake (BLOCKER-1) is not
+  addressed here and the live A–Z cycle still awaits the operator re-run.
