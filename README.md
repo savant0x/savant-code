@@ -921,6 +921,9 @@ no-attribution scan and configured verification gates.
 
 ### 4. Use the SDK
 
+Configure the SDK's provider environment first; it does not load the CLI's
+interactive credentials automatically. See [SDK prerequisites](sdk/README.md#prerequisites).
+
 ```ts
 import { SavantCodeClient, type AgentDefinition } from '@savant-code/sdk'
 

@@ -683,6 +683,9 @@ bun run --cwd=cli build:binary
 
 ### 4. 使用 SDK
 
+先配置 SDK 所需的提供商环境变量；它不会自动加载 CLI 交互式保存的密钥。
+详见 [SDK 前提条件](sdk/README.md#prerequisites)。
+
 ```ts
 import { SavantCodeClient, type AgentDefinition } from '@savant-code/sdk'
 

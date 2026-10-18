@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-1018-007-repository-hygiene-parity-audit.md`
 **ID:** FID-2026-1018-007
 **Severity:** medium
-**Status:** verified
+**Status:** closed
 **Created:** 2026-10-18
 **Automation level:** 3
 **YAGNI-Compliance:** Verified — existing audit tools and targeted repairs.
@@ -150,20 +150,38 @@ by this audit. Reversible source/doc repairs proceed under level 3 authority.
 
 ### Implementation Evidence
 
-Repairs implemented. Nine initial declared gates passed; the final gate set
-adds common typecheck for its provider comment correction. Three SDK basic
-examples typecheck in memory against current declarations. Version and design
-drift checks now exit 0. Detailed inventory and retention limits live in
+Implementation commit `463d8096`. All three steps implemented, with normal
+progress push subject to mandatory hooks. Final receipt: 11/11 declared gates
+exit 0, including common and CLI coverage. Three SDK basic examples typecheck
+in memory against current declarations. Version and design drift checks now
+exit 0. Detailed inventory and retention limits live in
 `docs/reports/repository-hygiene-audit-2026-10-18.md`.
 
 ### Code Verification Evidence
 
 Generator is invoked by root `design-systems:check`; Sigma generator creates
 the temporary bundle then reads it into shipped source. Existing consumers stay.
+The latter's index entry is removed, but disk existence is true and ignore check
+names the expected path. Current docs link scan: 146 files / 315 relative links,
+zero missing/malformed targets; raw HTML targets also pass. SDK build and scoped
+Prettier pass. Initial Markdown lint found a 123-column banner line; wrapped it
+and scoped lint passed. No runtime API behavior changed.
 
 ## Resolution
 
-Implementation verified through focused checks; final receipt and commit follow.
+- **Closed Date:** 2026-10-18
+- **Commit SHA:** 463d8096
+- **Fix Description:** Corrected current guidance/generator drift, untracked a
+  regenerable intermediate, preserved scope history and published bounded audit.
+- **Tests Added:** None; existing suites and parity/domain checks prove the changes.
+- **Verification Evidence:** 11/11 declared gates exit 0; SDK build, domain data
+  validation, current-document links, version/design checks and scoped lint pass.
+- **Archived:** 2026-10-18
+
+The verified-status surface guard refused an incomplete gate set for `cli/.tmp/**`;
+added the required CLI typecheck and restamped normally. External HOME-SKILLS-001
+and EMBED-001 stay operator-blocked. Large local references and historical
+evidence remain; no disk-reclamation or universal prose-certification claim.
 
 ## Lessons Learned
 

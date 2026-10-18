@@ -27,17 +27,6 @@ Exact evidence and the operator-only replacement procedure are retained in
 the history snapshot. No external write or fresh external repair is claimed.
 This session uses the canonical repository protocol.
 
-### FID-2026-1018-007 — repository hygiene and parity audit (active)
-
-- [ ] Authority: automation level 3; user requested bloat, stale data and
-  documentation/data alignment audit. Inventory and existing parity checks
-  completed; inspect consumers before treating files as removable.
-- [ ] Repair confirmed README/SDK/testing guidance and Markdown links, generator
-  metadata, tracked intermediate and obsolete active-register history.
-- [ ] Publish durable findings, verify, commit, archive and push through gates.
-  No package release, reference-farm deletion, Git-history rewrite or external
-  skill/config edit. Retained worktree branch and prep stash stay preserved.
-
 ### Release-0.0.36 — development line (publication operator-gated)
 
 - [ ] Version 0.0.36 is an unpublished development line. Preserve the existing
@@ -55,11 +44,6 @@ This session uses the canonical repository protocol.
 
 ## Machine-readable scope targets
 
-- FID-2026-1018-007: `README.md`, `README.zh-CN.md`, `.gitignore`,
-  `scripts/generate-design-systems.ts`, `cli/.tmp/**`, `docs/**`,
-  `cli/src/__tests__/README.md`, `sdk/README.md`, `sdk/src/client.ts`,
-  `scripts/tmux/README.md`, `common/src/providers/org.ts`, `SCOPE.md`, `CHANGELOG.md`,
-  `dev/fids/**`, `dev/tracking/**`, `dev/session-summaries/**`
 - Release-0.0.36: `VERSION`, `package.json`, `agents/package.json`,
   `cli/package.json`, `cli/release/package.json`, `common/package.json`,
   `common/src/constants/protocol-bundle.generated.ts`, `desktop/package.json`,

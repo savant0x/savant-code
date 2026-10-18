@@ -292,6 +292,20 @@ pinned at the resolver/handler boundary and the panel through a static render.
 > the v0.0.36 cut. Release notes are written here at cut time; nothing in this
 > section is a package-release claim until then.
 
+### Repository hygiene and docs/data parity (closed 2026-10-18)
+
+- **FID-2026-1018-007 — medium — Audit storage and reconcile current guidance.**
+  Corrected README development callouts, SDK/local-agent examples and API docs,
+  testing guidance, malformed/dead links and design-generator version metadata.
+  Preserved old scope history outside the active register and untracked a
+  174,027-byte regenerable Sigma intermediate while keeping its local copy.
+  Audit: `docs/reports/repository-hygiene-audit-2026-10-18.md`.
+  Implementation: `463d8096`; 11/11 declared gates and SDK build pass; all 166
+  JSON-family files validate with their domain parsers, all 74 design resources
+  pass production integrity checks, and current-doc link checks pass. Large
+  ignored reference/dependency trees stay; external-home diagnostics remain
+  operator-owned. This is source progress, not a release or publication claim.
+
 ## 2026-10-17 — Bounded research spawn contract (FID-2026-1017-004, medium)
 
 `spawn_agents` now accepts an optional typed research plan and enforces it on

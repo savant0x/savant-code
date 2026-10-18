@@ -41,3 +41,10 @@ scope; added it and restamped normally. No guard bypass.
 External home-skill diagnostics: zero repository errors / 22 home warnings;
 HOME-SKILLS-001 records the operator boundary. EMBED-001 and unpublished release
 authority remain intact. Audit report is under `docs/reports/`.
+
+## Closure
+
+Implementation `463d8096`; FID-2026-1018-007 closed/archived with its 11-gate
+receipt. Changelog entry is inside the existing unpublished 0.0.36 development
+section, without a version bump. Active scope grant removed. Normal progress
+push runs the mandatory full checks; no release/tag or local data purge.
