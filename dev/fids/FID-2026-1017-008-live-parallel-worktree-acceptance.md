@@ -306,6 +306,12 @@ third operator run of `dev/test-prompts/az-parallel-worktrees-live-test.md`
 against the repaired tree; closure follows only a clean run, with the receipt
 stamped and this record archived.
 
+Run 2's two instrument-level divergences are corrected in the instrument: §2
+now requires the tool's advertised parameter schema (and names the
+`analyzeOnly`/`planOnly` exclusion), so a session that cannot call the tool
+fails before any mutation; §5.6 attributes `fid-in-use` to
+`provisionFidWorktree` rather than to the service's reason list.
+
 ## Lessons Learned
 
 Acceptance instruments must encode refusal strings and expected JSON from a

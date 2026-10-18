@@ -92,7 +92,11 @@ evidence becomes FID-2026-1017-008's acceptance record.
   ignored).
 - `bun --version` recorded.
 - The `fid_worktree` tool is present in your tool set (it will be exercised in
-  §5).
+  §5). Record the tool's advertised parameters: its provider-facing schema must
+  be an object naming `action`, `fid_id` and `discard_changes`. The tool is
+  exposed only on the effectful Orchestrator variants (`agents/savant/savant.ts`
+  gates it on `!analyzeOnly && !planOnly`), so a PLAN or ANALYZE session can
+  never satisfy this row — stop before §5 if the schema is missing or empty.
 
 ## 3. Phase 0 — exposure and identity
 
@@ -140,7 +144,7 @@ All `fid_worktree` calls are JSON arguments to the harness tool, e.g.
 | 5.5c  | Dependency links are junctions                    | EXECUTABLE | For each entry in `dependencyLinks`, confirm the lane copy is a directory link to the main checkout (Windows: `Get-Item "<lane>\<entry>" \| Format-List LinkType,Target` shows `Junction`; use the shell's equivalent on other platforms). Record the full link list.                                                   |
 | 5.5d  | Graph snapshot in the lane                        | EXECUTABLE | Main `.savant/graph.db` exists, so the lane snapshot is expected: `<lane>\.savant\graph.db` exists (record size). If absent, record and classify in §7.                                                                                                                                                                  |
 | 5.5e  | Main checkout stays clean around provisioning     | EXECUTABLE | `git status --short` matches the §2 baseline (the lane is invisible to main status).                                                                                                                                                                                                                                    |
-| 5.6   | Duplicate create refusal                          | LIVE       | `create` again for FID-2026-1017-008 → refusal `fid-in-use` ("FID-2026-1017-008 already has a managed FID worktree"). Nothing mutated.                                                                                                                                                                                  |
+| 5.6   | Duplicate create refusal                          | LIVE       | `create` again for FID-2026-1017-008 → refusal `fid-in-use` ("FID-2026-1017-008 already has a managed FID worktree"), raised by `provisionFidWorktree` rather than by the service's own reason list. Nothing mutated.                                                                                                       |
 | 5.7   | `list` with a live lane                           | LIVE       | One lane row: `registered` = true, `dirty` = false; record JSON.                                                                                                                                                                                                                                                        |
 | 5.8a  | CLI mirror parity                                 | EXECUTABLE | repo root: `bun scripts/worktree.ts list` → exit 0; JSON matches the §5.7 tool result (same record fields, registered/dirty). Record both.                                                                                                                                                                              |
 | 5.8b  | `exec` environment isolation                      | EXECUTABLE | repo root: `bun scripts/worktree.ts exec --fid FID-2026-1017-008 -- bun -e "console.log(JSON.stringify({root:process.env.SAVANT_WORKTREE_ROOT,index:process.env.WORKTREE_INDEX,port:process.env.PORT,compose:process.env.COMPOSE_PROJECT_NAME,graph:process.env.SAVANT_CODE_GRAPH_DB_PATH,secretVars:Object.keys(process.env).filter(k=>/KEY\|TOKEN\|SECRET/i.test(k)).length}))"` — expect: `root` = absolute lane path; `index` = `1`; `port` = `3100` (stride: parent PORT or 3000, plus 100×index — record the actual); `compose` = `savant_wt1`; `graph` = `<lane>\.savant\graph.db`; `secretVars` = `0`. Record the exact command that ran. |
