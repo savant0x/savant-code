@@ -29,3 +29,10 @@ with its stamped six-gate receipt and CHANGELOG entry. Its scope targets are
 released. Mandatory full push gates run before delivery; evidence is retained
 in `2026-10-17-junction-recovery-push.log` beside this record. No live TUI or
 paid model call was used; CLI help verifies startup, not interactive behavior.
+
+Repository validation found the acceptance report in the prohibited scratchpad
+root. Preserved it in the existing durable test archive at
+`dev/test-prompts/archive/2026-10-17-parallel-worktrees-live-test-report.md`,
+with a relocation note and original findings intact. The first push was
+stopped while correcting this validation failure; the final attempt is in
+`2026-10-17-junction-recovery-push-final.log`.
