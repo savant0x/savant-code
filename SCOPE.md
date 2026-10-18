@@ -34,6 +34,19 @@ This session uses the canonical repository protocol.
   require explicit operator approval. Normal verified main pushes proceed
   through mandatory gates. No publication is authorized by this audit.
 
+### LIVE-003 — model picker live observation (open)
+
+- [ ] Authority: automation level 3. Retry `/model` against the repaired
+  picker on the real catalog, and capture process state, timestamps and
+  terminal output if blankness recurs. The three-concurrent-basher condition
+  needs a tool-capable model; no paid inference is authorized, so a run that
+  cannot reconstruct it records that limit instead of claiming the condition.
+
+A durable probe in `scripts/probes/` drives the real TUI through a PTY so the
+observation is repeatable rather than a one-off manual look. Its result is an
+observation of the repaired path, never proof of the original incident's
+cause.
+
 ### HOME-SKILLS-001 — external skill diagnostics (blocked)
 
 - [ ] `skills:check` reports 22 home-skill warnings and zero repository errors.
@@ -44,6 +57,7 @@ This session uses the canonical repository protocol.
 
 ## Machine-readable scope targets
 
+- LIVE-003: `scripts/probes/live-003-picker-pty.ts`, `dev/scratchpad/**`
 - Release-0.0.36: `VERSION`, `package.json`, `agents/package.json`,
   `cli/package.json`, `cli/release/package.json`, `common/package.json`,
   `common/src/constants/protocol-bundle.generated.ts`, `desktop/package.json`,
