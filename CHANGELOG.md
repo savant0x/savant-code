@@ -1,5 +1,31 @@
 # Changelog
 
+## 2026-10-18 — Clarify worktree busy-lock recovery (FID-2026-1018-006, low)
+
+Busy advice now requires confirming no live lifecycle writer remains before
+removing a confirmed abandoned, empty lock. An empty directory does not prove
+abandonment. Lock behavior stays fail-closed; the existing suite checks advice
+and preservation of empty/populated locks. Implementation: `a9413a69`;
+3/3 declared gates, scoped Prettier and SDK build pass.
+
+## 2026-10-18 — Validate worktree acceptance artifacts (FID-2026-1018-005, medium)
+
+The instrument now wraps its proof, lints before commit and after merge,
+uses a covered tracked-file change for discard, names shells for lock steps,
+and reconciles unique-row counts. Run-4 report and qualified assessment are
+preserved durably. Implementation: `72aefe15`; 2/2 declared gates and Markdown
+lint pass. Future runs require a new authorized active converged vehicle.
+
+## 2026-10-18 — Accept the demonstrated live lane lifecycle (FID-2026-1017-008, low)
+
+Run 4 demonstrated create, isolation, scoped writes/refusals, fast-forward merge,
+first-attempt graph refresh, dirty refusal, explicit discard and busy refusal.
+Proof merged as `a99db5b8`; MD013 repaired as `e0d29fb0`. All 15 acceptance
+gates pass. The report's 34-PASS headline conflicts with 43 PASS table labels
+and one substituted SKIP. The covered-file substitution and extra repair commit
+remain explicit deviations; closure does not certify unchanged-instrument
+conformance or the declared untested live paths. Retained branch/stash preserved.
+
 ## 2026-10-18 — Repeatable parallel-worktree acceptance preconditions (FID-2026-1018-004, medium)
 
 Run 3 reached the live tool but used an already tracked proof, so the lane

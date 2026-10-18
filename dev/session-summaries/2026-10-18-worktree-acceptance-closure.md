@@ -26,3 +26,19 @@ does not imply throughput, isolation security or the older flake's root cause.
 Markdown is excluded from Prettier by policy, so the instrument uses actual
 Markdown lint rather than claiming format coverage from an ignored check.
 Normal commits and progress push follow mandatory gates. No tag or release.
+
+## Verification and closure
+
+- FID-006 implemented at `a9413a69`: 3/3 declared gates pass; both production
+  callers found; scoped Prettier and SDK build pass.
+- FID-005 implemented at `72aefe15`: 2/2 declared gates and Markdown lint pass.
+- FID-008: 15/15 declared gates pass, including all eight focused suites and
+  real Git/SQLite probe. Main graph exact proof row independently verified.
+- All three records archived with receipts and changelog entries; their active
+  scope grants removed. EMBED-001 remains operator-blocked outside this project.
+- Initial stamp prose was rejected as malformed gate declarations; corrected
+  the receipt subsection and reran successfully, without a parser bypass.
+- Prep stash `d5846b96bf2ab8ec2f0fdc8ffa06d7063acbfe2b` and retained branch at
+  `a99db5b8` preserved. No new live cycle, paid inference or external deletion.
+
+Normal progress push will execute the unmodified mandatory pre-push gates.

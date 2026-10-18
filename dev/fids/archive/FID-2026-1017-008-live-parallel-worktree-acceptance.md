@@ -3,9 +3,9 @@
 **Filename:** `FID-2026-1017-008-live-parallel-worktree-acceptance.md`
 **ID:** FID-2026-1017-008
 **Severity:** low
-**Status:** verified
+**Status:** closed
 > **Current state (2026-10-18, run 4):** lifecycle demonstrated end-to-end;
-> closure gates follow. Durable report:
+> all 15 closure gates passed. Durable report:
 > `dev/test-prompts/archive/2026-10-18-parallel-worktrees-live-test-report-run4.md`.
 > Qualified acceptance and corrected accounting:
 > `dev/test-prompts/archive/2026-10-18-parallel-worktrees-run4-closure-assessment.md`.
@@ -204,7 +204,7 @@ the real repository.
 3. Closure: promote the report to a durable path, stamp the receipt below,
    close and archive this record, add the CHANGELOG entry, and release the
    register grant. — implementation complete on run-4 evidence, with fresh
-   receipt and archive ceremony following. Graph refresh passed on the first
+   receipt stamped and archive ceremony complete. Graph refresh passed on the first
    attempt; covered tracked-file substitution and repaired MD013 failure are
    recorded in the closure assessment. Historical unsafe-root root cause is
    unconfirmed; it did not recur here.
@@ -301,11 +301,11 @@ become live evidence by association.
 
 - [x] **Commit SHA:** lane/merge `a99db5b8`, proof-format repair `e0d29fb0`.
 - [x] **File:line ranges:** run-unique proof lines 1–7; durable report §5–§9.
-- [ ] **Gate output:** fresh declared receipt follows.
+- [x] **Gate output:** 15/15 declared gates passed; stamped receipt above.
 - [x] **Reproducibility:** exact proof and graph row exist; commit diffs each
   name only that proof. Graph query returned its exact path at closure.
 - [x] **Step statuses:** delivery and live execution implemented; durable
-  evidence promoted and closure ceremony proceeds after fresh gates.
+  evidence committed in `72aefe15`; all three steps implemented and archived.
 
 ### Code Verification Evidence
 
@@ -314,7 +314,7 @@ over the instrument and the register:
 
 - [x] Files referenced in Affected Components exist (closure)
 - [x] Instrument output checks and covered discard setup repaired by FID-005
-- [ ] Typecheck/tests/lint pass with pasted tool output (stamp)
+- [x] Typecheck/tests/probes/quality pass (15/15 stamped receipt); Markdown lint exit 0
 - [x] Production call-graph evidence: not applicable (no new wiring)
 - [x] FID status reflects implemented acceptance artifacts awaiting stamp
 
@@ -359,7 +359,7 @@ over the instrument and the register:
 
 Operational lifecycle accepted with the documented tracked-file substitution,
 repaired MD013 artifact and second-commit deviation. Report promoted durably;
-fresh receipt, archive and register release follow. No fifth live run or new
+fresh receipt stamped, record archived and scope grant released. No fifth live run or new
 paid inference is required for this closure. The original report's 43 PASS
 labels / one substituted SKIP are reconciled separately; its headline counts
 and §5.19 label are not endorsed as unchanged-instrument conformance.
@@ -369,6 +369,15 @@ Retained branch remains at `a99db5b8`; no lane is registered. Main graph has
 exactly the run-unique proof path. No external path was mutated here.
 Instrument findings belong to FID-2026-1018-005; lock advisory to FID-006.
 Live coverage limits and historical unknowns remain in the assessment.
+
+- **Closed Date:** 2026-10-18
+- **Commit SHA:** a99db5b8, e0d29fb0; durable evidence and instrument `72aefe15`.
+- **Fix Description:** Qualified live operational acceptance, not a claim that
+  every original instrument constraint passed unchanged.
+- **Tests Added:** None by this acceptance record; existing eight suites rerun.
+- **Verification Evidence:** All 15 declared gates exit 0; actual proof and
+  exact graph row verified; original failures and substitutions preserved.
+- **Archived:** 2026-10-18
 
 ### Historical resolution notes (runs 1–3)
 

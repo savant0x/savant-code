@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-1018-005-worktree-run4-instrument-closure.md`
 **ID:** FID-2026-1018-005
 **Severity:** medium
-**Status:** verified
+**Status:** closed
 **Created:** 2026-10-18
 **Automation level:** 3
 **YAGNI-Compliance:** Verified — documentation repair on existing paths.
@@ -124,7 +124,8 @@ Companion `2026-10-18-parallel-worktrees-run4-closure-assessment.md` preserves
 the MD013 failure, second-commit deviation and actual row accounting.
 The report's additional MSYS conversion observation is addressed with a named
 Git Bash `MSYS_NO_PATHCONV=1` prefix; PowerShell keeps the original command.
-Step 1 implemented; verification and closure steps proceed through gates.
+Implementation commit `72aefe15`. All three steps implemented; 2/2 declared
+gates passed and receipt stamped, scoped Markdown lint exit 0.
 
 ### Code Verification Evidence
 
@@ -132,7 +133,17 @@ No new production wiring. Manual document audit plus existing gates apply.
 
 ## Resolution
 
-Implementation exists; declared receipt follows. Commit recorded at closure.
+- **Closed Date:** 2026-10-18
+- **Commit SHA:** 72aefe15
+- **Fix Description:** Output gates, wrapped proof, covered discard setup,
+  named-shell lock procedure, MSYS probe note and qualified durable evidence.
+- **Tests Added:** None; existing scope/quality gates and document lint apply.
+- **Verification Evidence:** 2/2 declared gates exit 0; Markdown lint exit 0.
+- **Archived:** 2026-10-18
+
+Initial stamp attempts rejected prose inside the receipt subsection as malformed
+gate declarations. Removing that prose allowed the normal stamp; no parser or
+gate bypass was used. No new live run occurred.
 
 ## Lessons Learned
 

@@ -11,22 +11,6 @@ handling or repository boundaries.
 
 ## Open items
 
-### FID-2026-1018-005 — run-4 instrument repair and evidence reconciliation (active)
-
-Authority: automation level 3; continuation of the supplied run-4 handoff.
-Complete the wrapped proof template, pre-commit and post-merge document gates,
-shell-specific lock instructions, covered-file discard setup and accurate row
-accounting. Preserve the original report durably and record its deviations.
-Close FID-2026-1017-008 on the demonstrated lifecycle evidence, with explicit
-coverage limits. Do not run another live cycle or change the retained branch/stash.
-
-### FID-2026-1018-006 — busy-lock recovery advice (active)
-
-Authority: automation level 3; the supplied handoff identifies this advisory.
-Require confirming no live lifecycle writer remains before removing an abandoned
-empty lock. Emptiness does not establish abandonment. Preserve lock behavior and
-verify the advice and preservation of occupied locks in the existing suite.
-
 ### EMBED-001 — the harness single-agent embed is a superseded law revision (blocked)
 
 Authority: automation level 3 (session ceiling). The install step is reserved to the
@@ -53,33 +37,6 @@ Blocker: writing outside the project directory is an operator-reserved action. R
 presented: retain echo.md:1-15 (frontmatter, directive, mandate, canonical-source line)
 and replace echo.md:19-409 with the current canonical body, read 0-EOF. This session is
 not affected — the canonical file was read in full and governs.
-
-### FID-2026-1017-008 — live parallel-worktree acceptance (active)
-
-Authority: automation level 3 (session ceiling). The task arrived as a loose
-instruction; the interpretation below was presented on 2026-10-17 and the
-operator approved it with two decisions: (1) the full live lane cycle
-(create → lane commit → fast-forward merge → graph refresh → dispose) runs in
-this repository; (2) the live phase is operator-driven — the operator executes
-an A–Z live test inside the running CLI personally ("ill drive it … Ill do
-the test manually"), with paid inference authorized under the operator's named
-provider/model (`kiosapi`, `step-5-preview`), recorded by the run itself. The
-earlier plan of an agent-run operator-CLI cycle was replaced by that election.
-The agent delivers the run instrument and closes the record on the run's
-evidence.
-
-Objective: prove the FID-bound parallel worktree system (FID-2026-1017-007,
-archived) end-to-end in the real repository through its production paths. This
-session delivers: this converged record (the lane vehicle), the register
-grant, and the A–Z live-test prompt
-(`dev/test-prompts/az-parallel-worktrees-live-test.md`) that re-runs the
-declared gate surface live and drives the full lane lifecycle with
-operator-confirmed mutations, typed refusals, Law 2 lane-jurisdiction writes,
-the merge with main-graph refresh, and dirty/discard disposal. The run's
-report (`dev/scratchpad/active/FID-2026-1017-008-<run-stamp>-live-test-report.md`) and the
-merged lane proof become the acceptance evidence; closure retires this record
-and releases its write targets. Any discovered defect becomes its own
-implementation FID. Claims stay within measured evidence.
 
 ## Internal follow-ups and current operator authority (2026-10-16)
 
@@ -172,12 +129,6 @@ dispositions supersede the previous register holds.
   cleared; the intake report passes Markdown lint. No artifact was deleted.
 
 ## Machine-readable scope targets
-
-- FID-2026-1018-005: `dev/test-prompts/**`, `dev/fids/**`,
-  `dev/session-summaries/**`, `SCOPE.md`, `CHANGELOG.md`
-- FID-2026-1018-006: `packages/agent-runtime/src/echo/parallel/fid-worktree-service.ts`,
-  `packages/agent-runtime/src/__tests__/fid-worktree-tool.test.ts`,
-  `dev/fids/**`, `dev/session-summaries/**`, `SCOPE.md`, `CHANGELOG.md`
 
 Operator authorization: completion at automation level 3, renewed 2026-10-15;
 specific removal and skill metadata approvals are in answers.md. Governance
@@ -275,15 +226,6 @@ artifacts required by ECHO retain their gate-level exemptions.
   boundary fallback and the serialized block. The fix removes the child and adds
   native-render pins; the operator's real 146-model / 223-offer report renders
   natively in both states. No live TUI session was run here (`tmux` absent).
-- FID-2026-1017-008: `dev/fids/**`, `SCOPE.md`, `CHANGELOG.md`,
-  `dev/session-summaries/**`, `dev/test-prompts/**`,
-  `docs/design/parallel-worktrees.md`, `docs/design/parallel-worktrees-lane-proof.md`,
-  `docs/design/parallel-worktrees-lane-proof-*.md`
-  (live parallel-worktree acceptance; active). No production source write is
-  authorized by this item; a discovered defect opens its own implementation
-  FID. Run 3 cleared the tool-schema blocker but returned DEFECTS FOUND from
-  instrument preconditions and concurrent main writes. The next run uses a
-  unique proof path and exclusive main access; acceptance remains unclaimed.
 - FID-2026-1017-014 is **closed and archived** (2026-10-17, 6/6 gates, receipt
   stamped, commit `0dad50e5`). Its write targets are released:
   `common/src/tools/params/tool/fid-worktree.ts`,

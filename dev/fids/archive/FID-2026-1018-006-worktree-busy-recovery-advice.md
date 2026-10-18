@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-1018-006-worktree-busy-recovery-advice.md`
 **ID:** FID-2026-1018-006
 **Severity:** low
-**Status:** verified
+**Status:** closed
 **Created:** 2026-10-18
 **Automation level:** 3
 **YAGNI-Compliance:** Verified — advisory wording, no new behavior or API.
@@ -111,7 +111,9 @@ case; preserve typed busy output and existing lifecycle coverage.
 
 Busy detail now requires writer confirmation and abandonment before removal.
 Existing suite asserts both safe-advice phrases, retained empty lock and an
-unchanged occupant after a second refusal. Step 1 implemented; gates follow.
+unchanged occupant after a second refusal. Implementation commit `a9413a69`;
+3/3 declared gates exit 0. All three implementation/closure steps complete;
+normal progress push remains subject to mandatory hooks.
 
 ### Code Verification Evidence
 
@@ -121,7 +123,15 @@ Scoped Prettier reports all matched files use code style.
 
 ## Resolution
 
-Implementation exists; declared receipt follows. Commit recorded at closure.
+- **Closed Date:** 2026-10-18
+- **Commit SHA:** a9413a69
+- **Fix Description:** Require live-writer confirmation and abandonment before
+  lock removal; no filesystem behavior or lock contents changed.
+- **Tests Added:** Existing service suite extended for safe advice and retained
+  empty/populated locks.
+- **Verification Evidence:** 3/3 declared gates exit 0; scoped Prettier and SDK
+  build `bun run ci` pass. Production handler and CLI callers verified by grep.
+- **Archived:** 2026-10-18
 
 ## Lessons Learned
 
