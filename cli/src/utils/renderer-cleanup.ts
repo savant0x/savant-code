@@ -27,11 +27,13 @@ let terminalStateReset = false
 export function writeExitBreadcrumb(
   code: number,
   debugDir: string = path.join(getProjectRoot(), 'debug'),
+  reason: string = 'exit',
 ): void {
   try {
     const line = JSON.stringify({
       timestamp: new Date().toISOString(),
       event: 'process-exit',
+      reason,
       code,
       pid: process.pid,
       uptimeSeconds: Math.round(process.uptime()),
@@ -137,8 +139,14 @@ export function installProcessCleanupHandlers(cliRenderer: CliRenderer): void {
     cleanupAndExit(0)
   })
 
-  // SIGINT - Ctrl+C
+  // SIGINT - Ctrl+C. Recorded before the exit line so a spontaneous signal
+  // (the operator pressed no key) is distinguishable from a chosen exit.
   process.on('SIGINT', () => {
+    try {
+      writeExitBreadcrumb(-1, undefined, 'sigint')
+    } catch {
+      // Diagnostics only
+    }
     cleanupAndExit(0)
   })
 

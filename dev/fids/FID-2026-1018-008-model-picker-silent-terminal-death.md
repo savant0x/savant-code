@@ -167,11 +167,13 @@ Candidate mechanisms are ranked, not concluded.
 ### Code Verification Evidence
 
 Diagnostics step implemented (`cli/src/utils/renderer-cleanup.ts`): the `exit`
-handler now appends one JSON line to `debug/cli.exit.log` with the exit code,
-pid, uptime and RSS before `cleanup()`. Absence of that line is the signal that
+handler now appends one JSON line to `debug/cli.exit.log` with a `reason`
+(`exit` or `sigint`), the exit code, pid, uptime and RSS before `cleanup()`. Absence of that line is the signal that
 the process was killed rather than exited. Exercised live through the PTY
 harness: a normal Ctrl+C quit wrote
-`{"event":"process-exit","code":0,"pid":10620,"uptimeSeconds":5,"rssMb":429}`.
+`{"event":"process-exit","reason":"exit","code":0,"pid":51648,"uptimeSeconds":5,"rssMb":424}`
+for a Ctrl+C quit, so a spontaneous signal would read `reason: sigint` and a
+killed process would leave no line at all.
 Gates: `cd cli && bun run typecheck` exit 0; the new suite
 `cli/src/utils/__tests__/exit-breadcrumb.test.ts` 2 pass / 0 fail; ESLint and
 Prettier clean on both files.
