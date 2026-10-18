@@ -2,10 +2,14 @@
 
 # A–Z Parallel-Worktrees Harness Live Test — execute inside the running CLI
 
-**Version:** run-4-ready instrument for FID-2026-1017-008.
+**Version:** run-4 instrument with post-run corrections (FID-2026-1018-005).
+**Historical vehicle:** run 4 completed. After FID-2026-1017-008 is archived,
+this prompt MUST NOT run unchanged. A future run needs separate authorization,
+a new active converged FID and matching scope grant, with every vehicle id/path
+below updated before execution. Existing branch and prep stash remain preserved.
 **Date:** 2026-10-18 (record the actual run date; adjust wording if executed later).
 **Target:** the FID-bound parallel worktree system (FID-2026-1017-007, archived)
-in this repository, awaiting live acceptance under FID-2026-1017-008. The delta under test
+in this repository, demonstrated by run 4 under FID-2026-1017-008. The delta under test
 is the whole lane lifecycle: `fid_worktree` tool + operator CLI, lane
 provisioning (linked checkout, dependency junctions, graph snapshot, isolated
 environment), the Law 2 lane jurisdiction mapping, refusal paths, the
@@ -42,7 +46,8 @@ evidence becomes FID-2026-1017-008's acceptance record.
    - the `fid_worktree` lifecycle actions for FID-2026-1017-008 (§5), each
      after operator confirmation;
    - the single lane-proof file inside the lane (§5.9a);
-   - the operator-created lane stray (§5.17a), discarded only after confirmation;
+   - a covered modification of that same lane proof (§5.17a), discarded only
+     after confirmation;
    - the single lane commit (§5.12) and the merge to main (§5.13), each after
      operator confirmation;
    - the two probe write ATTEMPTS in §5.9b/§5.9c — these are expected to be
@@ -197,28 +202,91 @@ All `fid_worktree` calls are JSON arguments to the harness tool, e.g.
 | 5.8a  | CLI mirror parity                                 | EXECUTABLE | repo root: `bun scripts/worktree.ts list` → exit 0; JSON matches the §5.7 tool result (same record fields, registered/dirty). Record both.                                                                                                                                                                              |
 | 5.8b  | `exec` environment isolation                      | EXECUTABLE | repo root: `bun scripts/worktree.ts exec --fid FID-2026-1017-008 -- bun -e "console.log(JSON.stringify({root:process.env.SAVANT_WORKTREE_ROOT,index:process.env.WORKTREE_INDEX,port:process.env.PORT,compose:process.env.COMPOSE_PROJECT_NAME,graph:process.env.SAVANT_CODE_GRAPH_DB_PATH,secretVars:Object.keys(process.env).filter(k=>new RegExp('KEY\|TOKEN\|SECRET','i').test(k)).length}))"` — expect: `root` = absolute lane path; `index` = `1`; `port` = `3100` (stride: parent PORT or 3000, plus 100×index — record the actual); `compose` = `savant_wt1`; `graph` = `<lane>\.savant\graph.db`; `secretVars` = `0`. The RegExp constructor avoids Git Bash converting a slash-delimited regex into a Windows path. Record the exact command that ran. |
 | 5.8c  | `exec` exit-code propagation                      | EXECUTABLE | `bun scripts/worktree.ts exec --fid FID-2026-1017-008 -- bun -e "process.exit(7)"` → the command's exit code is 7. Record the reported exit code.                                                                                                                                                                       |
-| 5.9a  | Covered lane write (register leg)                 | LIVE       | Confirm `<record.path>/<proof-relative-path>` is absent and untracked in the lane. Use `write_file` at that absolute path with heading `# Lane proof — FID-2026-1017-008 — <run-stamp>` and paragraph `Run stamp: <run-stamp>. Start HEAD: <start-HEAD>. This file was created inside the managed FID worktree for this acceptance run. Commit and merge outcomes are recorded separately in the run report.` Substitute the actual recorded values. EXPECTED: write succeeds via the lane's FID-2026-1017-008 grant. If blocked, record the refusal, mark FAIL and STOP before any disposal. Verify the exact content and new file exist. |
+| 5.9a  | Covered lane write (register leg)                 | LIVE       | Confirm `<record.path>/<proof-relative-path>` is absent and untracked in the lane. Use `write_file` at that absolute path with the wrapped template below, substituting actual recorded values. Keep every prose line at most 100 columns AFTER substitution (MD013 enforces 120). EXPECTED: write succeeds via the lane's FID-2026-1017-008 grant. If blocked, record the refusal, mark FAIL and STOP before any disposal. Verify the exact content and new file exist. |
 | 5.9b  | Uncovered main write is blocked                   | LIVE       | `write_file` path `az-out-of-scope-probe.txt` (repo root, relative) with any short content. EXPECTED: BLOCKED by the Law 2 write-scope gate; record the refusal verbatim (expected wording: no approved scope item covers the target). Verify the file was NOT created. If it lands: FAIL — note it, delete it immediately, re-run `git status --short` to prove restoration (if the delete is itself gated, ask the operator to remove it), and classify in §7. |
 | 5.9c  | Unregistered lane-shaped path is blocked          | LIVE       | `write_file` path `.savant/worktrees/AZ-NOT-A-LANE/probe.txt`. EXPECTED: BLOCKED because the target is not inside a registered FID worktree (refusal wording: target is not inside a registered FID worktree with its own SCOPE.md). Nothing created. Record verbatim.                                                      |
 | 5.10  | Observe the genuine uncommitted proof              | EXECUTABLE | `git -C <record.path> status --porcelain --untracked-files=normal -- <proof-relative-path>` must show exactly `?? <proof-relative-path>`; `fid_worktree list` must report this lane `dirty: true`. Paste both observations. If either is missing, mark FAIL and STOP before §5.11; a clean lane must never be disposed as a refusal test. |
 | ⌘ 5.11 | Dirty disposal is refused                          | LIVE       | Recheck the §5.10 dirty status immediately before calling `dispose` (no flag). With that observed precondition, expect refusal `dirty` ("Commit lane changes or explicitly authorize discard_changes"). Verify lane and proof survive. If not dirty, STOP without calling dispose; if disposal succeeds despite proven dirty state, FAIL and STOP the lifecycle. |
-| ⌘ 5.12 | Commit only this run's proof in the lane            | EXECUTABLE | `git -C <record.path> add -- <proof-relative-path>` then `git -C <record.path> commit -m "docs(echo): record lane acceptance proof (FID-2026-1017-008)"`. Record lane SHA, verify `git -C <record.path> diff-tree --no-commit-id --name-only -r HEAD` names only this proof, and confirm lane status is empty. If the terminal refuses these, use the operator fallback. |
+| ⌘ 5.12 | Validate and commit only this run's proof in the lane | EXECUTABLE | From the LANE cwd, first run `bun x markdownlint <proof-relative-path>`; require exit 0. On failure, mark the failed attempt and repair only this covered proof, then repeat the check before staging. Main must remain clean. Then `git -C <record.path> add -- <proof-relative-path>` and `git -C <record.path> commit -m "docs(echo): record lane acceptance proof (FID-2026-1017-008)"`. Record lane SHA, verify `git -C <record.path> diff-tree --no-commit-id --name-only -r HEAD` names only this proof, and confirm lane status is empty. If refused, use the operator fallback. |
 | ⌘ 5.13 | Merge with immediate state/ref checkpoint          | LIVE       | AFTER operator confirmation and immediately before `merge`, record `git status --porcelain --untracked-files=normal` on main and `git -C <record.path> status --porcelain --untracked-files=normal`; BOTH must be empty. Main `rev-parse HEAD` must equal start HEAD, lane HEAD must equal §5.12 SHA, and operator confirms exclusivity still holds. If any check fails, STOP without merge and preserve the lane. Otherwise call `merge`: expect OK, `head` = lane SHA, `warnings: []`; record any warning verbatim for §7. |
 | 5.14  | Merge verification                                 | EXECUTABLE | Main HEAD equals §5.13 head; `git log --oneline -1`; exact `<proof-relative-path>` exists on main with this run stamp/start HEAD. Main and lane status remain clean; lane still exists. |
 | 5.15  | Main graph contains this run's exact proof          | EXECUTABLE | repo root: `bun -e "import {Database} from 'bun:sqlite';const d=new Database('.savant/graph.db',{readonly:true});const rows=d.query('SELECT path FROM files').all();console.log(JSON.stringify(rows.filter(r=>String(r.path).split(String.fromCharCode(92)).join('/')===process.argv[1])))" <proof-relative-path>` — expect exactly one row equal to this run's recorded proof path. Old proofs do not count. If empty and §5.13 carried no warning: wait 5 s, retry once; if still empty, FAIL. Record the exact command and result. |
+| 5.15a | Post-merge document gate                           | EXECUTABLE | From repo root, run `bun run lint:md` → exit 0. If it fails, mark FAIL and STOP before §5.16, preserve the lane and request an explicit operator repair/revert decision. The mutation contract does not authorize an automatic second commit on main. Keep the failing output even after repair. Markdown is excluded by `.prettierignore`, so Prettier is not evidence of proof formatting. |
 | 5.16a | Re-create refusal after merge                      | LIVE       | `create` again → `fid-in-use` (lane still managed). Record.                                                                                                                                                                                                                                                             |
 | 5.16b | Re-merge refusal (diverged)                        | LIVE       | `merge` again → refusal `diverged`: detail names `main HEAD <sha> differs from recorded base <baseSha>`. Record verbatim.                                                                                                                                                                                               |
-| 5.17a | (OPERATOR) Plant and observe a stray in the lane    | OPERATOR   | Operator: `Set-Content .savant\worktrees\FID-2026-1017-008\az-stray.tmp 'stray (operator-created for the discard-path test)'`. Verify that exact file is untracked and `fid_worktree list` reports `dirty: true`. Otherwise STOP before any disposal. |
-| ⌘ 5.17b | Dirty disposal refused again                       | LIVE       | Immediately recheck the stray and `dirty: true`, then `dispose` → `dirty` refusal. Confirm lane and stray survive. If not dirty, STOP without dispose. |
-| ⌘ 5.17c | Explicit-discard disposal                          | LIVE       | `dispose` with `{ "discard_changes": true }` → OK, `removed` = true. Record warnings verbatim: a `git worktree remove … Directory not empty` warning is the bounded filesystem fallback recovering, not a failed dispose — PASS when `removed` is true and §5.18 proves the directory is gone. The stray is discarded with the lane.                                                                                                                                                                               |
+| 5.17a | Modify and observe the covered tracked proof       | LIVE       | Read the lane proof 0-EOF, then use `write_file` on its absolute path to preserve its contents and append a blank line plus `Disposal probe: <run-stamp>.` This uses the existing grant; never plant an uncovered stray. Verify lane porcelain reports ` M <proof-relative-path>` and `fid_worktree list` reports `dirty: true`. Main proof must remain unchanged and main status clean. Otherwise STOP before disposal. |
+| ⌘ 5.17b | Dirty disposal refused again                       | LIVE       | Immediately recheck the tracked proof modification and `dirty: true`, then `dispose` → `dirty` refusal. Confirm lane and modified proof survive. If not dirty, STOP without dispose. |
+| ⌘ 5.17c | Explicit-discard disposal                          | LIVE       | `dispose` with `{ "discard_changes": true }` → OK, `removed` = true. Record warnings verbatim: a `git worktree remove … Directory not empty` warning is the bounded filesystem fallback recovering, not a failed dispose — PASS when `removed` is true and §5.18 proves the directory is gone. The lane's uncommitted proof modification is discarded; main's committed proof is unchanged. |
 | 5.18  | Post-disposal state                                | EXECUTABLE | Lane directory gone; `git worktree list` shows only main; `.records/FID-2026-1017-008.json` gone; branch `savant/FID-2026-1017-008` RETAINED (by design) — record `git branch --list savant/FID-2026-1017-008`; `.savant/fid-worktree.lock` absent; `list` → empty lanes.                                                       |
 | 5.19  | Final checkout state                               | EXECUTABLE | `git status --short` must be empty before any blueprint restoration. Record end HEAD; exactly one new lane-proof commit must descend from start HEAD, containing only this run's proof-relative-path. Any unrelated change means FAIL and an interference report, never automatic staging or stashing. |
+
+### Shell note for the environment probe (§5.8b)
+
+For §5.8b in **Git Bash**, prefix the command with `MSYS_NO_PATHCONV=1`.
+Run 4 still needed that prefix with the RegExp constructor; removing slash
+delimiters alone did not prevent MSYS conversion. In **PowerShell**, use the
+command without that shell-specific prefix. Record the actual shell and command.
+
+### Wrapped proof template (§5.9a)
+
+Substitute the recorded values and keep the explicit line breaks. Wrap again
+if any substituted line exceeds 100 columns.
+
+```markdown
+# Lane proof — FID-2026-1017-008 — <run-stamp>
+
+Run stamp: <run-stamp>.
+Start HEAD: <start-HEAD>.
+This file was created inside the managed FID worktree for this acceptance run.
+Commit and merge outcomes are recorded separately in the run report.
+```
 
 ## 6. Phase 3 — recovery surfaces and residuals
 
 | #   | Test                               | Type     | Expected / trigger path                                                                                                                                                                                                                                    |
 | --- | ---------------------------------- | -------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 6.1 | Busy-lock refusal (OPERATOR step)  | OPERATOR | Operator: `New-Item -ItemType Directory .savant\fid-worktree.lock` (empty directory), confirm with agent. Agent: attempt any lifecycle mutation, e.g. `create` → refusal `busy` whose detail names the `.savant/fid-worktree.lock` recovery. Operator: `Remove-Item .savant\fid-worktree.lock`. Record all three steps. If the operator declines this row, mark `SKIP` ("operator-declined") and continue. |
+| 6.1 | Busy-lock refusal (OPERATOR step)  | OPERATOR | Follow the named-shell procedure below, from the verified repository root. Record synthetic lock creation, `create` → `busy` with the named lock recovery, and removal of only this run's confirmed synthetic empty lock. If the operator declines this row, mark `SKIP` ("operator-declined") and continue. |
+
+### Named-shell synthetic lock procedure (§6.1)
+
+The operator confirms no lifecycle writer is running. Verify current directory
+equals `git rev-parse --show-toplevel` and the repo-relative lock is absent.
+If it exists, STOP: an empty lock can belong to a live writer. Never reuse it.
+Use ONLY the commands for the current shell, all from the repository root:
+
+**PowerShell:**
+
+```powershell
+Get-Location
+git rev-parse --show-toplevel
+Test-Path -LiteralPath .savant/fid-worktree.lock
+New-Item -ItemType Directory -Path .savant/fid-worktree.lock
+Get-Item -LiteralPath .savant/fid-worktree.lock | Select-Object FullName
+Get-ChildItem -Force -LiteralPath .savant/fid-worktree.lock
+```
+
+**Git Bash:**
+
+```bash
+pwd
+git rev-parse --show-toplevel
+test -e .savant/fid-worktree.lock
+mkdir .savant/fid-worktree.lock
+ls -ld .savant/fid-worktree.lock
+ls -la .savant/fid-worktree.lock
+```
+
+Run one command at a time; require absence (`False` / exit 1) before creation,
+and require creation success. Do not use `-Force` or `mkdir -p`. Confirm the
+resolved path is under this repository before calling the live tool.
+MSYS `/c/...` paths are Git Bash syntax; never paste them into PowerShell.
+
+After capturing the busy refusal, verify no writer started and the synthetic
+directory is still empty. Remove ONLY the lock this run created, nonrecursively:
+PowerShell `[System.IO.Directory]::Delete((Join-Path (Get-Location).Path '.savant/fid-worktree.lock'))`;
+Git Bash `rmdir .savant/fid-worktree.lock`. Both refuse a nonempty directory.
+Verify absence afterward. Unexpected contents or ownership means STOP and ask
+the operator; never recursively remove a lock.
 
 ## 7. Agent View (mandatory)
 
@@ -251,8 +319,11 @@ Keep the scratch root free of report files. Structure:
 1. Header: title; run date; provider/model actually used; start HEAD; end
    HEAD; `bun --version`; baseline `git status --short`; run stamp, exact proof
    and report paths, prep stash SHA, and exclusivity confirmation.
-2. Verdict summary table (counts per verdict; list any FAIL with its row
-   number).
+2. Verdict summary table derived from unique row ids in the actual row tables;
+   the counts must sum to the number of measured rows. Record operator
+   confirmations separately from verdicts, without double-counting. List every
+   FAIL by row number, including a repaired failure with its repair evidence;
+   do not overwrite the failing attempt or label an unmet constraint PASS.
 3. One section per phase (§3–§6) containing a row table: `Row | Verdict |
    Evidence` — commands exact, outputs trimmed to the verdict-bearing lines,
    durations for §4 rows.

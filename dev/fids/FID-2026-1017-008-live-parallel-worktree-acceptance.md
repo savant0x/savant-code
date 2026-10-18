@@ -3,7 +3,18 @@
 **Filename:** `FID-2026-1017-008-live-parallel-worktree-acceptance.md`
 **ID:** FID-2026-1017-008
 **Severity:** low
-**Status:** converged
+**Status:** verified
+> **Current state (2026-10-18, run 4):** lifecycle demonstrated end-to-end;
+> closure gates follow. Durable report:
+> `dev/test-prompts/archive/2026-10-18-parallel-worktrees-live-test-report-run4.md`.
+> Qualified acceptance and corrected accounting:
+> `dev/test-prompts/archive/2026-10-18-parallel-worktrees-run4-closure-assessment.md`.
+> Original report labels 43 PASS / one substituted SKIP, not its 34-PASS headline.
+> The tracked-file dirty-state substitution was operator-elected; MD013 required
+> repair commit `e0d29fb0` after merge `a99db5b8`, so the original one-commit
+> constraint was unmet. This record accepts the demonstrated lifecycle with
+> these deviations, not an unchanged-instrument perfect run. Historical notes
+> below describe their original observation times and are superseded here.
 > **Run state (2026-10-18, run 3):** the A–Z instrument was re-run a third time
 > and again returned DEFECTS FOUND. Rows §3 and §4 passed (20 PASS, 0 FAIL);
 > the live lifecycle ran through §5.11, where the **dirty-disposal refusal
@@ -192,23 +203,21 @@ the real repository.
    its overall call was **DEFECTS FOUND** (one FAIL row, §5.15).
 3. Closure: promote the report to a durable path, stamp the receipt below,
    close and archive this record, add the CHANGELOG entry, and release the
-   register grant. — blocked (specific blocker: the acceptance verdict is not
-   clean. §5.15 failed because the post-merge graph refresh threw; that defect
-   is repaired and archived as FID-2026-1017-011, commit `774eb705`. The
-   unsafe-root flake (BLOCKER-1) remains unexplained, and a re-run of the live
-   A–Z cycle is required before this record can claim acceptance.)
+   register grant. — implementation complete on run-4 evidence, with fresh
+   receipt and archive ceremony following. Graph refresh passed on the first
+   attempt; covered tracked-file substitution and repaired MD013 failure are
+   recorded in the closure assessment. Historical unsafe-root root cause is
+   unconfirmed; it did not recur here.
 
 ### Verification
 
-The run's report
-(`dev/test-prompts/archive/2026-10-17-parallel-worktrees-live-test-report.md`)
-plus the merged lane proof (`docs/design/parallel-worktrees-lane-proof.md`)
-and the stamp-time gate re-run are the acceptance evidence. No new `*.test.ts`
-artifact is promised by this record: the eight existing suites and the probe
-are re-executed live by the run (§4 rows) and re-run again by the receipt
-stamp at closure. Acceptance is not claimed at this status: the first run's
-§5.15 failed, its BLOCKER-2 repair (FID-2026-1017-011) landed after the run,
-and the re-run that exercises the repaired merge path has not happened.
+The durable run-4 report and companion closure assessment above, merged proof
+`docs/design/parallel-worktrees-lane-proof-mve8j1nl-fa0f6aaf.md`, commits
+`a99db5b8` / `e0d29fb0` and stamp-time gates are the current acceptance evidence.
+Earlier reports remain historical failures. No new test artifact is promised
+by this record; the eight declared existing suites and probe are rerun at
+closure. Live limits remain explicit in the assessment; unit tests do not
+become live evidence by association.
 
 ## Verification Gates
 
@@ -230,9 +239,23 @@ and the re-run that exercises the repaired merge path has not happened.
 
 ### Verification Receipt
 
-Not yet stamped. Closure procedure: set status to `verified`, run
-`bun run fid:verify dev/fids/FID-2026-1017-008-live-parallel-worktree-acceptance.md --write`,
-then close and archive.
+- fingerprint: sha256:4a9c8862f9e2ca1470fbde9d080bf87c6f9b96c489087edc9b06ad7a8d585d62
+- verified: 2026-10-18T20:33:09.666Z
+- typecheck packages/agent-runtime: exit 0
+- typecheck common: exit 0
+- typecheck sdk: exit 0
+- typecheck agents: exit 0
+- test packages/agent-runtime/src/__tests__/fid-worktree-provision.test.ts: exit 0
+- test packages/agent-runtime/src/__tests__/fid-worktree-dispose.test.ts: exit 0
+- test packages/agent-runtime/src/__tests__/fid-worktree-merge.test.ts: exit 0
+- test packages/agent-runtime/src/echo/__tests__/law2-worktree-jurisdiction.test.ts: exit 0
+- test common/src/tools/__tests__/fid-worktree-params.test.ts: exit 0
+- test sdk/src/__tests__/ripgrep.test.ts: exit 0
+- test packages/agent-runtime/src/__tests__/fid-worktree-environment.test.ts: exit 0
+- test packages/agent-runtime/src/__tests__/fid-worktree-tool.test.ts: exit 0
+- probe scripts/probes/fid-worktrees.ts: exit 0
+- probe scripts/scripts-typecheck-check.ts: exit 0
+- quality: exit 0
 
 ## Perfection Loop
 
@@ -276,24 +299,24 @@ then close and archive.
 
 ### Implementation Evidence (REQUIRED for `closed`)
 
-- [ ] **Commit SHA:** filled at closure
-- [ ] **File:line ranges:** filled at closure
-- [ ] **Gate output:** stamped at closure
-- [ ] **Reproducibility:** filled at closure
-- [x] **Step statuses:** Step 1 implemented; Step 2 implemented (run executed,
-  report preserved, lane proof merged as `3d24daf9`); Step 3 blocked on the
-  operator re-run and the unexplained BLOCKER-1 (see Proposed Solution)
+- [x] **Commit SHA:** lane/merge `a99db5b8`, proof-format repair `e0d29fb0`.
+- [x] **File:line ranges:** run-unique proof lines 1–7; durable report §5–§9.
+- [ ] **Gate output:** fresh declared receipt follows.
+- [x] **Reproducibility:** exact proof and graph row exist; commit diffs each
+  name only that proof. Graph query returned its exact path at closure.
+- [x] **Step statuses:** delivery and live execution implemented; durable
+  evidence promoted and closure ceremony proceeds after fresh gates.
 
 ### Code Verification Evidence
 
 No production code is changed by this record; the checks below run at closure
 over the instrument and the register:
 
-- [ ] Files referenced in Affected Components exist (closure)
-- [ ] Instrument matches the production semantics it encodes (Loop 2 audit)
+- [x] Files referenced in Affected Components exist (closure)
+- [x] Instrument output checks and covered discard setup repaired by FID-005
 - [ ] Typecheck/tests/lint pass with pasted tool output (stamp)
-- [ ] Production call-graph evidence: not applicable (no new wiring)
-- [ ] FID status reflects the actual implementation state (closure)
+- [x] Production call-graph evidence: not applicable (no new wiring)
+- [x] FID status reflects implemented acceptance artifacts awaiting stamp
 
 ### Loop 2 — Independent audit and self-correction
 
@@ -331,6 +354,23 @@ over the instrument and the register:
 - **CHANGE DELTA:** Converged; no further edits before the run.
 
 ## Resolution
+
+### Current run-4 disposition
+
+Operational lifecycle accepted with the documented tracked-file substitution,
+repaired MD013 artifact and second-commit deviation. Report promoted durably;
+fresh receipt, archive and register release follow. No fifth live run or new
+paid inference is required for this closure. The original report's 43 PASS
+labels / one substituted SKIP are reconciled separately; its headline counts
+and §5.19 label are not endorsed as unchanged-instrument conformance.
+
+Prep stash SHA `d5846b96bf2ab8ec2f0fdc8ffa06d7063acbfe2b` remains present.
+Retained branch remains at `a99db5b8`; no lane is registered. Main graph has
+exactly the run-unique proof path. No external path was mutated here.
+Instrument findings belong to FID-2026-1018-005; lock advisory to FID-006.
+Live coverage limits and historical unknowns remain in the assessment.
+
+### Historical resolution notes (runs 1–3)
 
 Not yet resolved. Three A-Z runs have executed and all returned DEFECTS FOUND;
 their reports are preserved. Repaired so far: the graph-refresh defect
@@ -397,7 +437,8 @@ The retained branch and prep stash are preserved. Because main advanced after
 run 3, run 4 preflight must check the retained branch tip equals start HEAD;
 an operator may first approve a normal fast-forward when ancestry proves it
 safe. No branch/stash mutation is performed by the instrument-repair session.
-Original run-3 findings and verdict remain unchanged; a fourth run has not run.
+Original run-3 findings and verdict remain unchanged. At that preparation
+point a fourth run had not run; the current run-4 disposition supersedes it.
 
 Acceptance instruments must encode refusal strings and expected JSON from a
 read of the production sources, not from memory; and a register's

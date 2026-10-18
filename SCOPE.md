@@ -11,6 +11,22 @@ handling or repository boundaries.
 
 ## Open items
 
+### FID-2026-1018-005 — run-4 instrument repair and evidence reconciliation (active)
+
+Authority: automation level 3; continuation of the supplied run-4 handoff.
+Complete the wrapped proof template, pre-commit and post-merge document gates,
+shell-specific lock instructions, covered-file discard setup and accurate row
+accounting. Preserve the original report durably and record its deviations.
+Close FID-2026-1017-008 on the demonstrated lifecycle evidence, with explicit
+coverage limits. Do not run another live cycle or change the retained branch/stash.
+
+### FID-2026-1018-006 — busy-lock recovery advice (active)
+
+Authority: automation level 3; the supplied handoff identifies this advisory.
+Require confirming no live lifecycle writer remains before removing an abandoned
+empty lock. Emptiness does not establish abandonment. Preserve lock behavior and
+verify the advice and preservation of occupied locks in the existing suite.
+
 ### EMBED-001 — the harness single-agent embed is a superseded law revision (blocked)
 
 Authority: automation level 3 (session ceiling). The install step is reserved to the
@@ -156,6 +172,12 @@ dispositions supersede the previous register holds.
   cleared; the intake report passes Markdown lint. No artifact was deleted.
 
 ## Machine-readable scope targets
+
+- FID-2026-1018-005: `dev/test-prompts/**`, `dev/fids/**`,
+  `dev/session-summaries/**`, `SCOPE.md`, `CHANGELOG.md`
+- FID-2026-1018-006: `packages/agent-runtime/src/echo/parallel/fid-worktree-service.ts`,
+  `packages/agent-runtime/src/__tests__/fid-worktree-tool.test.ts`,
+  `dev/fids/**`, `dev/session-summaries/**`, `SCOPE.md`, `CHANGELOG.md`
 
 Operator authorization: completion at automation level 3, renewed 2026-10-15;
 specific removal and skill metadata approvals are in answers.md. Governance
