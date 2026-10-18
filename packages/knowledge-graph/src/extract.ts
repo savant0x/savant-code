@@ -81,16 +81,21 @@ export function resolveRelativeImport(
 
 /**
  * Extract `class X extends Y` / `interface X extends Y` parent names.
- * Returns { child, parent } pairs.
+ * Returns { child, parent } pairs, one per distinct parent: the persisted
+ * `file_extends` row is keyed by (file_id, parent), and several declarations in
+ * one file may extend the same parent (FID-2026-1017-011).
  */
 export function extractExtendsRelations(
   source: string,
 ): Array<{ child: string; parent: string }> {
   const relations: Array<{ child: string; parent: string }> = []
+  const parents = new Set<string>()
   const re =
     /\b(class|interface)\s+([A-Za-z_$][\w$]*)\s+extends\s+([A-Za-z_$][\w$]*)/g
   let m: RegExpExecArray | null
   while ((m = re.exec(source)) !== null) {
+    if (parents.has(m[3])) continue
+    parents.add(m[3])
     relations.push({ child: m[2], parent: m[3] })
   }
   return relations

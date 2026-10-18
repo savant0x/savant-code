@@ -275,6 +275,32 @@ describe('FID-2026-1011-006 refresh safety', () => {
     }
   })
 
+  test('binary asset under the size cap does not abort the refresh (FID-2026-1017-011)', async () => {
+    const params = project()
+    // 600,000 invalid UTF-8 bytes decode to ~1.8 MB of U+FFFD. The stat size is
+    // under the 1 MB cap; the decoded length is not. The cap governs disk bytes.
+    fs.writeFileSync(path.join(root, 'blob.bin'), Buffer.alloc(600_000, 0x80))
+    const stats = await updateKnowledgeGraph(params)
+    expect(stats.filesAdded).toBeGreaterThanOrEqual(3)
+    expect(
+      params.db.query("SELECT path FROM files WHERE path = 'a.ts'").all(),
+    ).toEqual([{ path: 'a.ts' }])
+  })
+
+  test('duplicate extends parents keep one file_extends row (FID-2026-1017-011)', async () => {
+    const params = project()
+    fs.writeFileSync(
+      path.join(root, 'shapes.ts'),
+      'export interface A extends Base {}\nexport interface B extends Base {}\n',
+    )
+    await updateKnowledgeGraph(params)
+    expect(
+      params.db
+        .query("SELECT COUNT(*) AS c FROM file_extends WHERE parent = 'Base'")
+        .get(),
+    ).toEqual({ c: 1 })
+  })
+
   test('failed source read cannot certify a new baseline', async () => {
     const params = project()
     await updateKnowledgeGraph(params)

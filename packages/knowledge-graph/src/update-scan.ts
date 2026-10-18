@@ -206,13 +206,16 @@ export async function scanIndexState(params: {
       const source = await fsImpl.readFile(fullPath, 'utf8')
       const after = await fsImpl.stat(fullPath)
       const baseline = statByPath.get(filePath)
+      // FID-2026-1017-011: the byte cap governs bytes on disk (checked above and
+      // re-checked by `after`). It must NOT be applied to the decoded string:
+      // invalid UTF-8 decodes to U+FFFD, which can expand <1 MB binary assets
+      // past the cap and abort the whole refresh.
       if (
         !baseline ||
         st.size !== baseline.size ||
         st.mtimeMs !== baseline.mtimeMs ||
         after.size !== st.size ||
-        after.mtimeMs !== st.mtimeMs ||
-        Buffer.byteLength(source, 'utf8') > maxFileBytes
+        after.mtimeMs !== st.mtimeMs
       ) {
         throw new Error('Graph source changed while being read')
       }
