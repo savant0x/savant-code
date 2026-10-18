@@ -1,5 +1,19 @@
 # Changelog
 
+## 2026-10-18 — Add BlazeRail as a built-in gateway (FID-2026-1017-013, medium)
+
+BlazeRail is available through `/provider blazerail` with the registry-managed
+`BLAZERAIL_API_KEY` and OpenAI-compatible chat at `https://api.blazerail.com/v1`.
+The public catalog supplies 183 filtered chat/coding rows; media rows are
+excluded, published windows/output limits/pricing are retained, and unknown
+windows stay unknown. Tests confirm exact upstream namespaces and `:free` /
+`:nitro` suffixes remain intact. No key or inference request was used, so account
+authentication and live model acceptance remain unverified.
+
+Implementation: `8741613e`. Verification: all 10 declared FID gates pass; full
+repository typecheck and test chains pass, along with ESLint, markdownlint,
+Prettier, repository validation, provider-doc drift and quality checks.
+
 ## 2026-10-17 — Parallel acceptance run is repeatable (FID-2026-1017-012, high)
 
 The `unsafe-root` guard could not tell "git never ran" from "git reports another

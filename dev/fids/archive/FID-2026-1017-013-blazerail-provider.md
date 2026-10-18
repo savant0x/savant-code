@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-1017-013-blazerail-provider.md`
 **ID:** FID-2026-1017-013
 **Severity:** medium
-**Status:** verified
+**Status:** closed
 **Created:** 2026-10-17
 **Automation level:** 3
 **YAGNI-Compliance:** Verified
@@ -137,14 +137,14 @@ request factory, protocol map, quota endpoint or inference body option is needed
   or sent and no inference request was made.
 - Mocked SDK request: `Bearer` auth, `https://api.blazerail.com/v1/chat/completions`,
   exact vendor namespaces and suffixes preserved; missing key fails before request.
-- Commit and archive evidence will follow the implementation commit.
+- Implementation commit: `8741613e`.
 
 ## Resolution
 
-Implementation is verified locally. The keyless catalog census observed 183 retained
-chat/coding rows and four missing windows. Authentication and inference remain
-unverified by operator instruction. The implementation commit and closure record
-will be added after the path-scoped commit.
+Implementation is committed as `8741613e`, all declared gates pass, and this FID
+is archived. The keyless catalog census observed 183 retained chat/coding rows
+and four missing windows. Authentication and inference remain unverified by
+operator instruction.
 
 ## Lessons Learned
 
