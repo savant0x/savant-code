@@ -153,6 +153,13 @@ mid-turn with no fatal record; no OS-level crash or exhaustion event exists;
 no surviving process; screen cleared by the designed reset/watchdog paths.
 Candidate mechanisms are ranked, not concluded.
 
+### Loop 2 — narrowing (2026-10-18 19:09)
+
+The picker open completed. The death follows subagent completion, three times
+out of three hard kills, so the FID's title premise (`/model` kills the CLI) is
+now the operator's context rather than the cause. Next instrumentation moves to
+the subagent-result delivery path, not the picker.
+
 ### Missed Questions
 
 1. Did the bashers remain alive after the CLI died, or did they die with it?
@@ -215,6 +222,42 @@ of records suggested. The remaining fork is one line in the next run: the
 `exit-provenance` wrapper reports `process.exit@<file:line>` for a call site
 and `drain` when no call happened, verified live against the known Ctrl+C path
 (`process.exit@cli\src\hooks\use-exit-handler.ts:49`).
+
+**Updated 2026-10-18 19:09 — the picker opened, then a basher completing killed it.**
+
+The bracketed run recorded a complete picker open and a death 14 s later on a
+basher tick:
+
+```text
+23:09:16.025Z  model-picker-open-begin     model=river/deepseek-v4.1-flash
+23:09:16.917Z  model-picker-open-returned  opened=true          (892 ms)
+...           (no picker close, no exit breadcrumb)
+23:09:30.965Z  cli.jsonl  basher step 5
+23:09:30.969Z  trace      cleanup_finished (basher UUaZeg_3eVg)
+23:09:33Z      probe read the log: process gone
+```
+
+The picker opened in 892 ms and stayed open. The death landed on the same tick
+as a basher `cleanup_finished` — the third such coincidence:
+
+```text
+21:51:26.204Z  cleanup_finished → hard kill
+22:54:16.759Z  cleanup_finished → hard kill
+23:09:30.969Z  cleanup_finished → hard kill
+```
+
+So `/model` is incidental: it is what the operator is doing while bashers run,
+and the death arrives when the first subagent completes. The earlier
+`23:07:26.800Z` record is a different event — `reason:
+process.exit@cli\\src\\utils\\renderer-cleanup.ts:130`, code 0, 866 s uptime,
+1022 MB RSS — which is the SIGTERM/SIGHUP `cleanupAndExit` path, i.e. an
+ordinary session teardown, not this defect.
+
+**Leading hypothesis (unproven):** the first subagent result delivered to the
+main agent is a large `bun test` output; rendering it while the 4,075-row
+picker is mounted pushes the native renderer past what the process survives.
+The confirmed fact is the tick, not the mechanism — RSS was already 1022 MB in
+the long session.
 
 **Updated 2026-10-18 18:54 — the second instrumented crash left no record at
 all.** `debug/cli.exit.log` still ended at the previous session's line, so the
