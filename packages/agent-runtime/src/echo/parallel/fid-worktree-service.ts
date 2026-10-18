@@ -137,7 +137,7 @@ export async function runFidWorktreeAction(
         ok: false,
         reason: 'busy',
         detail:
-          'FID lifecycle lock held. Retry; after a crashed host, inspect and remove only the empty .savant/fid-worktree.lock directory.',
+          'FID lifecycle lock unavailable. A lifecycle writer may still be active; retry after it finishes. After a host crash, confirm no lifecycle writer remains before inspecting .savant/fid-worktree.lock. Remove only a confirmed abandoned, empty directory.',
       }
     }
     if (input.action === 'create') {

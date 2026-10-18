@@ -1,4 +1,11 @@
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs'
+import {
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  readFileSync,
+  rmSync,
+  writeFileSync,
+} from 'node:fs'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
 
@@ -201,11 +208,23 @@ test(
       await runFidWorktreeAction(root, { action: 'create', fid_id: REAL_FID }),
     ).toMatchObject({ ok: false, reason: 'not-converged' })
     writeFileSync(fidPath, '**Status:** converged\n')
-    mkdirSync(path.join(root, '.savant/fid-worktree.lock'))
+    const lock = path.join(root, '.savant/fid-worktree.lock')
+    mkdirSync(lock)
+    const busy = await runFidWorktreeAction(root, {
+      action: 'create',
+      fid_id: REAL_FID,
+    })
+    expect(busy).toMatchObject({ ok: false, reason: 'busy' })
+    expect(busy.detail).toContain('confirm no lifecycle writer remains')
+    expect(busy.detail).toContain('confirmed abandoned, empty directory')
+    expect(existsSync(lock)).toBe(true)
+    const occupant = path.join(lock, 'occupant')
+    writeFileSync(occupant, 'preserve\n')
     expect(
       await runFidWorktreeAction(root, { action: 'create', fid_id: REAL_FID }),
     ).toMatchObject({ ok: false, reason: 'busy' })
-    rmSync(path.join(root, '.savant/fid-worktree.lock'), { recursive: true })
+    expect(readFileSync(occupant, 'utf8')).toBe('preserve\n')
+    rmSync(lock, { recursive: true })
     const created = await runFidWorktreeAction(root, {
       action: 'create',
       fid_id: REAL_FID,
