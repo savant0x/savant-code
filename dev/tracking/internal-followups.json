@@ -1,0 +1,38 @@
+{
+  "version": 1,
+  "followups": [
+    {
+      "id": "LIVE-001",
+      "kind": "live-comparison",
+      "status": "completed",
+      "owner": "Operator",
+      "summary": "CLOSED NOT-PLANNED (operator ruling 2026-10-16): live provider comparisons are not planned. No paid run happened, no provider quality was measured, and no comparison result is claimed — this closure retires the item, it does not evidence a comparison.",
+      "nextAction": "Reopen only if a future operator ruling selects comparison references and numeric call/spending limits; a reopened item is a new record with those inputs, never an inference from this closure.",
+      "evidence": ["docs/provider-gauntlets.md"],
+      "completionEvidence": ["CHANGELOG.md", "SCOPE.md"],
+      "sourceFids": ["FID-2026-1012-022"]
+    },
+    {
+      "id": "LIVE-002",
+      "kind": "live-comparison",
+      "status": "open",
+      "owner": "Operator",
+      "summary": "Zylo authentication and the 126-row text catalog pass, but no successful text completion has been observed: measured routes returned upstream failures, a BASIC-plan restriction, or bounded request failures. Implementation closure does not certify live inference or model identity.",
+      "nextAction": "Retry a selected text route when Zylo upstream availability or account entitlement changes, recording HTTP status and completion evidence. No plan upgrade or paid comparison has been authorized.",
+      "evidence": ["docs/reports/zylo-provider-live-check.md"],
+      "completionEvidence": [],
+      "sourceFids": ["FID-2026-1017-016"]
+    },
+    {
+      "id": "LIVE-003",
+      "kind": "live-comparison",
+      "status": "open",
+      "owner": "Operator",
+      "summary": "The /model blank-screen incident during three active bashers has not been reproduced. FID-2026-1018-003 removes confirmed redundant full-catalog renders, but neither a process crash nor its cause has been established. Initial full-catalog mount still allocates all rows.",
+      "nextAction": "Clarify whether the CLI exited or remained running and blank. Compare /model during active bashers after restarting onto the repaired code; preserve terminal output, process state and the exact time if it recurs. No paid inference is authorized by this tracking record.",
+      "evidence": ["dev/session-summaries/2026-10-18-picker-worktree-ui.md"],
+      "completionEvidence": [],
+      "sourceFids": ["FID-2026-1018-003"]
+    }
+  ]
+}

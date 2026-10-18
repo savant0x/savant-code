@@ -1,5 +1,27 @@
 # Changelog
 
+## 2026-10-18 — Keep the model picker stable during agent updates (FID-2026-1018-003, high)
+
+The model picker revisited the entire catalog on unchanged parent updates.
+React memo now skips that work while changed queries, catalogs, selection and
+store subscriptions remain live. The native regression failed before repair
+and passes afterwards; existing keyboard, mouse, resize and open tests pass.
+Implementation: `dd57660c`. Verification: 5/5 declared gates exit 0.
+
+The reported blank screen with three active bashers was not reproduced. This
+repair reduces confirmed render load; it does not establish the incident's
+cause or certify live recovery. Initial mount still allocates the full catalog.
+Original incident acceptance remains tracked as LIVE-003.
+
+## 2026-10-18 — Worktree results use traffic-light chrome (FID-2026-1018-002, low)
+
+`fid_worktree` was absent from the CLI renderer registry and fell through to
+the generic tool block. It now reuses the existing structured traffic-light
+panel through loading, results, refusals, folding and empty output. Native
+ToolBranch coverage exercises all four actions and narrow width without
+performing lifecycle mutations. Implementation: `50f5877f`. Verification:
+4/4 declared gates exit 0; the related MCP native fixture also passes.
+
 ## 2026-10-18 — Document that Zylo's catalog needs no key (FID-2026-1018-001, low)
 
 The SDK environment reference annotated the BlazeRail and River keys but not
