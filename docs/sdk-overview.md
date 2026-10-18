@@ -311,6 +311,7 @@ an explicit `resetOpenRouterApiKeyCache()` hook.
 | `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID` | Cloudflare Workers AI |
 | `BLAZERAIL_API_KEY` | BlazeRail gateway; OpenAI-compatible chat at `https://api.blazerail.com/v1` |
 | `RIVER_AI_API_KEY` | River AI gateway; authenticated live catalog and OpenAI-compatible chat at `https://api.river.ai/v1` |
+| `ZYLO_API_KEY` | Zylo AI gateway; inference credential only — its live catalog is public and fetched without a key. OpenAI-compatible chat at `https://api.zyloai.net/v1` |
 | `SAVANT_CODE_BYOK_OPENROUTER` | BYOK OpenRouter header override (`x-openrouter-api-key`) |
 | `SAVANT_CODE_RG_PATH`, `SAVANT_CODE_WASM_DIR` | Native asset paths |
 | `SAVANT_CODE_CONFIG_DIR` | Config dir override (non-prod) |

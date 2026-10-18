@@ -11,6 +11,21 @@ handling or repository boundaries.
 
 ## Open items
 
+### FID-2026-1018-001 — Zylo's SDK environment row (active)
+
+Authority: automation level 3. The operator asked for the one documentation gap
+found after the provider work was pushed: `docs/sdk-overview.md` annotates
+`BLAZERAIL_API_KEY` and `RIVER_AI_API_KEY` but not `ZYLO_API_KEY`, leaving out
+the only property that distinguishes it — a public, keyless catalog with a key
+used for inference.
+
+- [ ] Add the `ZYLO_API_KEY` annotation row in the established style.
+- [ ] Keep the generated artifacts untouched: the registry table, README tables
+  and `.env.example` must all report unchanged, and the doc drift check green.
+- [ ] Run the declared gates, commit, archive and push through the normal hook.
+
+Targets: `docs/sdk-overview.md`, `dev/fids/**`, `SCOPE.md`.
+
 ### EMBED-001 — the harness single-agent embed is a superseded law revision (blocked)
 
 Authority: automation level 3 (session ceiling). The install step is reserved to the
@@ -156,6 +171,8 @@ dispositions supersede the previous register holds.
   cleared; the intake report passes Markdown lint. No artifact was deleted.
 
 ## Machine-readable scope targets
+
+- FID-2026-1018-001: `docs/sdk-overview.md`, `dev/fids/**`, `SCOPE.md`
 
 Operator authorization: completion at automation level 3, renewed 2026-10-15;
 specific removal and skill metadata approvals are in answers.md. Governance
