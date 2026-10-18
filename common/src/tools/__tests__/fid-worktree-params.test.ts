@@ -41,7 +41,10 @@ test('fid_worktree is registered and validates action-specific parameters', () =
 // encode must survive the move to one flat strict object.
 test('fid_worktree keeps its per-action refusals', () => {
   const cases: { input: unknown; why: string }[] = [
-    { input: { action: 'list', fid_id: 'FID-2026-1017-007' }, why: 'list + id' },
+    {
+      input: { action: 'list', fid_id: 'FID-2026-1017-007' },
+      why: 'list + id',
+    },
     { input: { action: 'list', discard_changes: true }, why: 'list + flag' },
     {
       input: {
@@ -53,12 +56,16 @@ test('fid_worktree keeps its per-action refusals', () => {
     },
     { input: { action: 'inspect' }, why: 'unknown action' },
     { input: {}, why: 'missing action' },
-    { input: { action: 'dispose', fid_id: 'FID-2026-1017-007', extra: 1 }, why: 'unknown key' },
+    {
+      input: { action: 'dispose', fid_id: 'FID-2026-1017-007', extra: 1 },
+      why: 'unknown key',
+    },
   ]
   for (const { input, why } of cases) {
-    expect({ why, ok: fidWorktreeInputSchema.safeParse(input).success }).toEqual(
-      { why, ok: false },
-    )
+    expect({
+      why,
+      ok: fidWorktreeInputSchema.safeParse(input).success,
+    }).toEqual({ why, ok: false })
   }
 })
 
