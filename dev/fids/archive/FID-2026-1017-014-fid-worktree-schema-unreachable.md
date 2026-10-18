@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-1017-014-fid-worktree-schema-unreachable.md`
 **ID:** FID-2026-1017-014
 **Severity:** high
-**Status:** converged
+**Status:** closed
 **Created:** 2026-10-17 22:40
 **Automation level:** 3
 **YAGNI-Compliance:** Verified — one schema declaration in an existing
@@ -108,6 +108,9 @@ has properties: true
 - `common/src/tools/params/tool/fid-worktree.ts`
 - `common/src/tools/__tests__/fid-worktree-params.test.ts`
 - `common/src/tools/__tests__/tool-schema-object-root.test.ts` (new class guard)
+- `packages/agent-runtime/src/echo/parallel/fid-worktree-service.ts`
+- `scripts/probes/tool-schema-root.ts` (durable view of the same fact,
+  promoted from the closure session's diagnostic probe)
 
 ### Risk Level
 
@@ -203,12 +206,59 @@ The lane suites and the real-git probe must stay green.
    union, so it was never parameter-less; the failing path was the native tool
    schema. Both paths improve or stay neutral.
 
+### Implementation Evidence (REQUIRED for `closed`)
+
+- [x] **Commit SHA:** `0dad50e5`
+- [x] **File:line ranges:** `common/src/tools/params/tool/fid-worktree.ts:30-63`
+      (flat strict object + `superRefine`);
+      `packages/agent-runtime/src/echo/parallel/fid-worktree-service.ts:110-117`
+      (required-field assertion after the flat parse);
+      `common/src/tools/__tests__/fid-worktree-params.test.ts:42,67`;
+      `common/src/tools/__tests__/tool-schema-object-root.test.ts:28`
+- [x] **Gate output:** stamped above — six declared gates exit 0
+- [x] **Reproducibility:** `bun scripts/probes/tool-schema-root.ts` prints the
+      provider-facing root of every tool and `PASS — every model-facing tool
+      schema root is an object`; before the fix `fid_worktree` reported
+      `root type: undefined, has properties: false`. The probe was promoted from
+      the closure session's scratch diagnostic so the evidence outlives it.
+- [x] **Step statuses:** Steps 1–5 implemented
+
+### Code Verification Evidence
+
+- [x] Files referenced in Affected Components exist
+- [x] Implementation matches the Proposed Solution
+- [x] Typecheck/tests/lint pass with pasted tool output
+- [x] Production call-graph evidence: `getToolSet`
+      (`packages/agent-runtime/src/tools/prompts.ts:213`) hands the raw schema
+      to the provider; `prepareTools`
+      (`packages/llm-providers/src/openai-compatible/chat/openai-compatible-prepare-tools.ts:63`)
+      forwards it unchanged, so the zod root is the wire root
+- [x] FID status reflects the actual implementation state
+
 ## Resolution
 
-- **Closed Date:** pending
-- **Fix Description:** pending
-- **Tests Added:** pending
-- **Archived:** pending
+- **Closed Date:** 2026-10-17 23:10
+- **Fix Description:** `fidWorktreeInputSchema` is one flat, strict object
+  (`action` enum plus optional `fid_id` / `discard_changes`) whose per-action
+  rules live in `superRefine`. The provider now receives
+  `{ type: 'object', properties: { action, fid_id, discard_changes } }` instead
+  of `{ oneOf: [...] }`, so the model can shape the call. Unknown keys,
+  misplaced `fid_id`/`discard_changes` and malformed ids are still refused; the
+  service asserts the required `fid_id` before deriving a path.
+- **Tests Added:** Yes — per-action refusal cases and the provider-facing root
+  shape in `fid-worktree-params.test.ts`; a class guard in
+  `tool-schema-object-root.test.ts` that fails any tool whose root is not an
+  object, with an exact ledger for the one deliberately unrepresentable schema
+  (`set_messages`).
+- **Verification Evidence:** `fid:verify --write` ran 6/6 declared gates with
+  exit 0 (params suite, object-root guard, agent-runtime tool and provision
+  suites, real-git lane probe, quality). Also green: dispose/merge/environment
+  suites (5/5, 5/5, 3/3), Law 2 jurisdiction 5/5, root `bun run typecheck`
+  exit 0, ESLint `--max-warnings 0` exit 0, `bun run lint:md` exit 0.
+- **Live boundary:** the repair is proven at the provider boundary, not in a
+  live session — the third A–Z run is the acceptance step and remains the
+  operator's.
+- **Archived:** 2026-10-17 23:10
 
 ## Lessons Learned
 

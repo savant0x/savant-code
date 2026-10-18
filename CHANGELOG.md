@@ -1,5 +1,25 @@
 # Changelog
 
+## 2026-10-17 — `fid_worktree` is callable again (FID-2026-1017-014, high)
+
+The second parallel-worktree acceptance run could not invoke the tool: every
+call was refused before dispatch with `invalid_union`. `fid_worktree` was the
+only tool whose parameter schema had a discriminated union at the root, and the
+AI SDK serializes that as `{ oneOf: [...] }` — no top-level `type: 'object'`,
+no `properties`. The provider therefore advertised no fields, the model emitted
+`{}`, and the runtime correctly rejected it. The schema is now one flat strict
+object (`action` enum, optional `fid_id` / `discard_changes`) with the
+per-action rules in `superRefine`, which never reaches the wire schema. Every
+refusal the union encoded is preserved: unknown keys, missing `fid_id`,
+`discard_changes` outside `dispose`, malformed ids. A new class guard fails any
+tool whose provider-facing root is not an object, so this shape cannot return.
+
+Implementation: `0dad50e5`. Verification: 6/6 declared gates (params suite,
+object-root guard, agent-runtime tool and provision suites, real-git probe,
+quality), dispose/merge/environment suites, root typecheck, ESLint and
+markdownlint all pass. The live lane lifecycle is still unexercised — the third
+A–Z run is the acceptance step.
+
 ## 2026-10-18 — Add BlazeRail as a built-in gateway (FID-2026-1017-013, medium)
 
 BlazeRail is available through `/provider blazerail` with the registry-managed

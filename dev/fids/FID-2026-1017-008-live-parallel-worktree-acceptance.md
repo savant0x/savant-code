@@ -297,8 +297,9 @@ their reports are preserved. Repaired so far: the graph-refresh defect
 (FID-2026-1017-012, `4f989510`), and the unreachable `fid_worktree` tool schema
 (FID-2026-1017-014). The `unsafe-root` flake remains unexplained.
 
-Run 2's report is at
-`dev/scratchpad/az-parallel-worktrees-live-test-report.md`; its BLOCKER is the
+Run 2's report is preserved at
+`dev/test-prompts/archive/2026-10-17-parallel-worktrees-live-test-report-run2.md`;
+its BLOCKER is the
 schema refusal, now fixed and pinned by
 `common/src/tools/__tests__/tool-schema-object-root.test.ts`. The next step is a
 third operator run of `dev/test-prompts/az-parallel-worktrees-live-test.md`

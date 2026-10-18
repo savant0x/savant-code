@@ -290,12 +290,17 @@ artifacts required by ECHO retain their gate-level exemptions.
   authorized by this item; a discovered defect opens its own implementation
   FID. Run 2 (2026-10-17) returned DEFECTS FOUND: §5 was unreachable from the
   harness session, defect tracked as FID-2026-1017-014.
-- FID-2026-1017-014: `common/src/tools/params/tool/fid-worktree.ts`,
+- FID-2026-1017-014 is **closed and archived** (2026-10-17, 6/6 gates, receipt
+  stamped, commit `0dad50e5`). Its write targets are released:
+  `common/src/tools/params/tool/fid-worktree.ts`,
   `common/src/tools/__tests__/fid-worktree-params.test.ts`,
   `common/src/tools/__tests__/tool-schema-object-root.test.ts`,
   `packages/agent-runtime/src/echo/parallel/fid-worktree-service.ts`,
-  `dev/fids/**`, `SCOPE.md`, `CHANGELOG.md` (make the `fid_worktree` parameter
-  schema model-facing; active).
+  `dev/fids/**`, `SCOPE.md`, `CHANGELOG.md`. It repairs run 2's BLOCKER: the
+  tool's root schema was a discriminated union, so the provider advertised no
+  fields and every call was refused `invalid_union`. A class guard now fails
+  any tool whose provider-facing root is not an object. No live acceptance is
+  claimed; the third A–Z run remains the operator's.
 - FID-2026-1017-012 is **closed and archived** (2026-10-17, 5/5 gates, receipt
   stamped, commit `4f989510`). Its write targets are released:
   `packages/agent-runtime/src/echo/parallel/fid-worktree-service.ts`,
