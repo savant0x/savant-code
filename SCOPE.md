@@ -11,15 +11,6 @@ handling or repository boundaries.
 
 ## Open items
 
-### FID-2026-1018-004 — repeatable run-4 acceptance instrument
-
-- [ ] Automation level 3. Operator handoff authorizes all four run-3
-  precondition repairs: unique proof target, observed dirty state before
-  disposal, clean/ref checks immediately before merge, exclusive main writer.
-  Preserve run-3 evidence, retained branch and prep stash. Prepare the run-4
-  instrument and register, commit/push verified documents; the operator drives
-  the next live run. No lifecycle code or acceptance claim is authorized here.
-
 ### EMBED-001 — the harness single-agent embed is a superseded law revision (blocked)
 
 Authority: automation level 3 (session ceiling). The install step is reserved to the
@@ -165,9 +156,6 @@ dispositions supersede the previous register holds.
   cleared; the intake report passes Markdown lint. No artifact was deleted.
 
 ## Machine-readable scope targets
-
-- FID-2026-1018-004: `dev/test-prompts/**`, `dev/fids/**`,
-  `dev/session-summaries/**`, `SCOPE.md`, `CHANGELOG.md`
 
 Operator authorization: completion at automation level 3, renewed 2026-10-15;
 specific removal and skill metadata approvals are in answers.md. Governance

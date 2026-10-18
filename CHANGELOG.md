@@ -1,5 +1,19 @@
 # Changelog
 
+## 2026-10-18 — Repeatable parallel-worktree acceptance preconditions (FID-2026-1018-004, medium)
+
+Run 3 reached the live tool but used an already tracked proof, so the lane
+stayed clean and disposal correctly succeeded. The next instrument uses a
+run-unique proof with a matching scope grant and exact graph lookup, requires
+observed dirtiness before refusal tests, checks both checkout states and refs
+immediately before merge, and requires exclusive main access. Reports go under
+scratch active. Retained branch/stash stay intact; preparation documents a
+separately approved normal branch fast-forward when ancestry permits it.
+
+Implementation: `59a0c0e5`; 2/2 declared gates and scoped markdownlint pass,
+with positive/negative read-only graph controls. Run 3's report/FID handoff is
+preserved. Run 4 has not run; FID-2026-1017-008 remains converged and unaccepted.
+
 ## 2026-10-18 — Keep the model picker stable during agent updates (FID-2026-1018-003, high)
 
 The model picker revisited the entire catalog on unchanged parent updates.

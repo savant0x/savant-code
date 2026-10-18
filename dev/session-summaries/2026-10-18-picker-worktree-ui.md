@@ -88,3 +88,15 @@ Preserve the run-3 report and existing acceptance record; acceptance remains
 converged. Prepare unique proof paths, state/ref checkpoints and exclusive-main
 requirements. Report under scratch active. Existing branch and stash stay in
 place; any branch fast-forward is operator-confirmed pre-run preparation.
+
+Instrument implementation committed at `59a0c0e5`; FID-2026-1018-004 closed
+and archived after 2/2 declared gates, scoped markdownlint, scope parser and
+exact positive/negative read-only graph controls. Its register grant is
+released; acceptance FID-2026-1017-008 keeps the run-unique proof grant. The
+retained branch is an ancestor of main (observed behind, never modified).
+No branch deletion, reset, stash mutation or fourth live run occurred.
+
+The first normal push delivered UI source and closure through `ee416360` after
+the complete mandatory hook chain passed (all workspace tests/typechecks,
+lint, format, credential, attribution, protocol and governance checks). The
+ownership and instrument document commits follow in a second normal push.
