@@ -12,6 +12,11 @@ import path from 'node:path'
 
 import { describe, expect, test } from 'bun:test'
 
+import {
+  getExitReason,
+  installExitProvenance,
+  resetExitProvenanceState,
+} from '../exit-provenance'
 import { writeExitBreadcrumb } from '../renderer-cleanup'
 
 describe('exit breadcrumb', () => {
@@ -39,6 +44,16 @@ describe('exit breadcrumb', () => {
     expect(first.rssMb).toBeGreaterThan(0)
     expect(Number.isNaN(Date.parse(first.timestamp))).toBe(false)
     expect((JSON.parse(lines[1]!) as { code: number }).code).toBe(0)
+  })
+
+  test('reports a drained loop until an exit call site is recorded', () => {
+    resetExitProvenanceState()
+    expect(getExitReason()).toBe('drain')
+    installExitProvenance()
+    expect(getExitReason()).toBe('drain')
+    installExitProvenance() // idempotent: a second install must not wrap twice
+    expect(getExitReason()).toBe('drain')
+    resetExitProvenanceState()
   })
 
   test('never throws when the target directory cannot be created', () => {

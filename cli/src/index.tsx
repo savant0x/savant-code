@@ -40,6 +40,7 @@ import { trackEvent } from './utils/analytics'
 import { getAuthToken } from './utils/auth'
 import { trimOversizedChatLogs } from './utils/chat-history'
 import { shouldSuppressExplicitWidthQuery } from './utils/env'
+import { installExitProvenance } from './utils/exit-provenance'
 import { initializeAgentRegistry } from './utils/local-agent-registry'
 import { clearLogFile, logger, trimOversizedDebugLogs } from './utils/logger'
 import {
@@ -230,6 +231,10 @@ async function main(): Promise<void> {
   const earlyFatalHandler = createEarlyFatalHandler()
   process.on('uncaughtException', earlyFatalHandler)
   process.on('unhandledRejection', earlyFatalHandler)
+
+  // Record which call site (or a drained event loop) ends the process, so a
+  // silent clean exit names its own origin (FID-2026-1018-008).
+  installExitProvenance()
 
   // Last line of defense for uncatchable deaths (SIGKILL, native crashes,
   // kill sweeps that also take out the npm wrapper): a detached process

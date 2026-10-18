@@ -166,6 +166,13 @@ Candidate mechanisms are ranked, not concluded.
 
 ### Code Verification Evidence
 
+Exit provenance implemented (`cli/src/utils/exit-provenance.ts`, installed at
+CLI startup): the first `process.exit` call site is captured and reported in
+the breadcrumb as `process.exit@<file:line>`, or `drain` when the loop simply
+emptied. Exercised live through the PTY harness: a normal quit reported
+`process.exit@cli\src\hooks\use-exit-handler.ts:49`, and a synthetic
+`code:0` line was produced for the operator crash above.
+
 Diagnostics step implemented (`cli/src/utils/renderer-cleanup.ts`): the `exit`
 handler now appends one JSON line to `debug/cli.exit.log` with a `reason`
 (`exit` or `sigint`), the exit code, pid, uptime and RSS before `cleanup()`. Absence of that line is the signal that
@@ -186,6 +193,21 @@ class is identified and the cause is repaired.
 Pending. The defect is reproduced and the cause is not established; the
 resolution records the captured cause, the fix, and the live operator run once
 they exist.
+
+**Updated 2026-10-18 18:39** — the instrumented reproduction named the class:
+
+```text
+{"timestamp":"2026-10-18T22:39:13.104Z","event":"process-exit","reason":"exit","code":0,"pid":25744,"uptimeSeconds":66,"rssMb":580}
+```
+
+Exit **code 0**, no `sigint` record, empty stderr, 66 s into the session at
+580 MB RSS. The process therefore ended on a normal exit path — either an
+explicit `process.exit(0)` or an event loop that drained while the UI was
+still mounted — and not by a native abort or OOM kill as the earlier absence
+of records suggested. The remaining fork is one line in the next run: the
+`exit-provenance` wrapper reports `process.exit@<file:line>` for a call site
+and `drain` when no call happened, verified live against the known Ctrl+C path
+(`process.exit@cli\src\hooks\use-exit-handler.ts:49`).
 
 Diagnostics landed first on purpose: the two observed deaths produced no fatal
 log entry, no stderr text and no OS crash record, so a fix written now would be

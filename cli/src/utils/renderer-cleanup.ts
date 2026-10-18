@@ -2,6 +2,7 @@ import { appendFileSync, mkdirSync } from 'node:fs'
 import path from 'node:path'
 
 import { getProjectRoot } from '../project-files'
+import { getExitReason } from './exit-provenance'
 import { logger } from './logger'
 import { flushLiveChatState } from './run-state-storage'
 import { TERMINAL_RESET_SEQUENCES } from './terminal-reset-sequences'
@@ -157,7 +158,7 @@ export function installProcessCleanupHandlers(cliRenderer: CliRenderer): void {
 
   // exit - Last chance to run synchronous cleanup code
   process.on('exit', (code) => {
-    writeExitBreadcrumb(code)
+    writeExitBreadcrumb(code, undefined, getExitReason())
     cleanup()
   })
 
