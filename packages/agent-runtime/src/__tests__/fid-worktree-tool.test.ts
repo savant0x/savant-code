@@ -18,7 +18,10 @@ import { createSavant } from '../../../../agents/savant/savant'
 import scout from '../../../../agents/scout/scout'
 import verifier from '../../../../agents/verifier/verifier'
 import { classifyMutation } from '../echo/enforcement/helpers'
-import { safeHostRoot, runFidWorktreeAction } from '../echo/parallel/fid-worktree-service'
+import {
+  safeHostRoot,
+  runFidWorktreeAction,
+} from '../echo/parallel/fid-worktree-service'
 import { savantCodeToolHandlers } from '../tools/handlers/list'
 import { handleFidWorktree } from '../tools/handlers/tool/fid-worktree'
 
