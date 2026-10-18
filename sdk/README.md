@@ -6,7 +6,7 @@ runtime" width="650" />
 
 Official TypeScript SDK for the Savant-Code multi-agent runtime.
 
-[![npm](https://img.shields.io/badge/npm-@savant-code/sdk-%23cb3837?style=flat-square&logo=npm)](https://www.npmjs.com/package/@savant-code/sdk)[![TypeScript](https://img.shields.io/badge/TypeScript-5.5-%23000000?style=flat-square&logo=typescript&logoColor=%2300fbff)](https://www.typescriptlang.org/)[![Bun](https://img.shields.io/badge/Bun-tested-%23000000?style=flat-square&logo=bun&logoColor=%2300fbff)](https://bun.sh/)[![License](https://img.shields.io/badge/License-Apache_2.0-%23000000?style=flat-square&logo=apache&logoColor=%2300fbff)](LICENSE)[![ECHO](https://img.shields.io/badge/ECHO-v0.2.0-%23000000?style=flat-square&logo=github&logoColor=%2300fbff)](../ECHO.md)
+[![npm](https://img.shields.io/badge/npm-@savant-code/sdk-%23cb3837?style=flat-square&logo=npm)](https://www.npmjs.com/package/@savant-code/sdk)[![TypeScript](https://img.shields.io/badge/TypeScript-5.5-%23000000?style=flat-square&logo=typescript&logoColor=%2300fbff)](https://www.typescriptlang.org/)[![Bun](https://img.shields.io/badge/Bun-tested-%23000000?style=flat-square&logo=bun&logoColor=%2300fbff)](https://bun.sh/)[![License](https://img.shields.io/badge/License-Apache_2.0-%23000000?style=flat-square&logo=apache&logoColor=%2300fbff)](../LICENSE)[![ECHO](https://img.shields.io/badge/ECHO-v0.2.0-%23000000?style=flat-square&logo=github&logoColor=%2300fbff)](../ECHO.md)
 
 ## Installation
 
@@ -26,7 +26,7 @@ is required and is that endpoint's only credential — the provider key chain is
 never sent to a custom endpoint.
 
 For direct provider routing, configure the provider-specific environment variables documented by the runtime, including
-`OPENCODE_API_KEY` (shared by OpenCode Go and OpenCode Zen), `TOKENROUTER_API_KEY`, `TOKENHARBOR_API_KEY`,
+`TOKENROUTER_API_KEY`, `TOKENHARBOR_API_KEY`,
 `NVIDIA_API_KEY`, `COMMAND_CODE_API_KEY`, and `NOUS_API_KEY`. Nous Research uses
 its direct OpenAI-compatible API; Nous Portal OAuth is a separate integration and
 is not implicitly implemented by this SDK.
@@ -39,14 +39,23 @@ map sends `xkiro/anthropic/*` to Messages and other `xkiro/*` models to chat.
 Account access is checked by the service when inference runs.
 
 The CLI's interactive `/provider` credentials are a separate local CLI onboarding flow and are not implicitly loaded by
-SDK clients.
+SDK clients. OpenCode Go/Zen were removed from the built-in registry; the old
+`OPENCODE_API_KEY` example does not configure a current built-in provider.
 
 ## Usage
 
 ### Basic Example
 
 ```typescript
-import { SavantCodeClient } from '@savant-code/sdk'
+import { SavantCodeClient, type AgentDefinition } from '@savant-code/sdk'
+
+const agent: AgentDefinition = {
+  id: 'coding-assistant',
+  displayName: 'Coding Assistant',
+  model: 'openrouter/free',
+  toolNames: ['read_files', 'write_file', 'str_replace'],
+  instructionsPrompt: 'Read before editing. Make only requested changes.',
+}
 
 async function main() {
   const client = new SavantCodeClient({
@@ -55,8 +64,8 @@ async function main() {
 
   // First run
   const runState1 = await client.run({
-    // The agent id. Any agent on the store (https://savant-code.com/store)
-    agent: 'savant-code/base@latest',
+    // Inline definitions are registered locally for this run.
+    agent,
     prompt: 'Create a simple calculator class',
     handleEvent: (event) => {
       // All events that happen during the run: agent start/finish, tool calls/results, text responses, errors.
@@ -66,7 +75,7 @@ async function main() {
 
   // Continue the same session with a follow-up
   const runOrError2 = await client.run({
-    agent: 'savant-code/base@latest',
+    agent,
     prompt: 'Add unit tests for the calculator',
     previousRun: runState1, // <-- this is where your next run differs from the previous run
     handleEvent: (event) => {
@@ -181,7 +190,7 @@ Override with `knowledgeFiles` (replaces project files) or `userKnowledgeFiles` 
 
 ```typescript
 await client.run({
-  agent: 'savant-code/base@latest',
+  agent, // The inline definition from the basic example above.
   prompt: 'Help me refactor',
   knowledgeFiles: { 'knowledge.md': '# Guidelines\n- Use TypeScript' },
   userKnowledgeFiles: { '~/.knowledge.md': '# Preferences\n- Be concise' },
@@ -257,7 +266,7 @@ for (const agent of Object.values(agents)) {
 }
 
 // Use the loaded agents with client.run()
-const client = new SavantCodeClient()
+const client = new SavantCodeClient({ cwd: process.cwd() })
 const result = await client.run({
   agent: 'my-custom-agent',
   agentDefinitions: Object.values(agents),
@@ -294,8 +303,9 @@ Runs a SavantCode agent with the specified options.
 
 #### Parameters
 
-- **`agent`** (string, required): The agent to run. Use `'base'` for the default agent, or specify a custom agent
-  ID if you made your own agent definition (passed with the `agentDefinitions` param).
+- **`agent`** (`string | AgentDefinition`, required): An inline definition,
+  or the id of a definition supplied through `agentDefinitions`. Lookup is
+  local; there is no implicit default agent or hosted-store fetch.
 
 - **`prompt`** (string, required): The user prompt describing what you want the agent to do.
 
@@ -303,8 +313,8 @@ Runs a SavantCode agent with the specified options.
   agents can take a JSON object as input in addition to the user prompt string.
 
 - **`handleEvent`** (function, optional): Callback function that receives every event during execution (assistant
-  messages, tool calls, etc.). This allows you to stream the agent's progress in real-time. We will likely add a
-  token-by-token streaming callback in the future.
+  messages, tool calls, etc.). Use `handleStreamChunk` for incremental text,
+  reasoning and subagent chunks.
 
 - **`previousRun`** (object, optional): JSON state returned from a previous `run()` call. Use this to continue a
   conversation or session with the agent, maintaining context from previous interactions.
@@ -330,11 +340,10 @@ Runs a SavantCode agent with the specified options.
 
 #### Returns
 
-Returns a Promise that resolves to either a "success" or a "failure" object.
-
-- The "success" object contains a `RunState` object which can be passed into subsequent runs via the `previousRun`
-  parameter to resume the conversation.
-- The "failure" object contains an `Error` object with a `name`, `message`, and `stack` properties.
+Returns `Promise<RunState>`. Pass that state as `previousRun` to continue a
+session. Inspect `result.output`; handled run failures have
+`output.type === 'error'`. Exceptional configuration or callback failures can still reject the
+promise, so hosts should handle rejection.
 
 The `RunState` object contains:
 

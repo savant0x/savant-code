@@ -14,13 +14,15 @@ local-first use with Ollama.
 
 </div>
 
-> **v0.0.36** — **local development line, not yet published** (npm `latest` is
-> still v0.0.35). This bump opens the dated heading so post-release work
+> **v0.0.36** — **development line, package release not yet published**.
+> Verified source progress is committed and pushed to `main` automatically;
+> package publication and release tags remain separate operator actions.
+> This bump opens the dated heading so post-release work
 > accumulates in one place, per the no-unreleased-accumulators ruling: the
 > researcher-acceptance and lesson-feature-pipeline closures, the managed
 > scratchpad and provider-inventory passes, and everything else that lands before
 > the v0.0.36 cut. Release notes are written here at cut time; nothing in this
-> section ships until then.
+> section is a package-release claim until then.
 
 ---
 
@@ -250,7 +252,7 @@ pass.
 | TUI             | OpenTUI + React 19                | `@opentui/core` 0.5.3, `react` ^19.0.0            |
 | State           | Zustand + Immer                   | zustand ^5.0.8, immer ^10.1.3                     |
 | Validation      | Zod                               | ^4.2.1                                            |
-| LLM SDK         | Vercel AI SDK                     | `ai` ^5.0.52 + `@ai-sdk/anthropic` 2.0.50         |
+| LLM SDK         | Vercel AI SDK                     | `ai` 5.0.122 (root override), `@ai-sdk/anthropic` 2.0.50 |
 | MCP             | Model Context Protocol            | `@modelcontextprotocol/sdk` ^1.18.2               |
 | Code parsing    | tree-sitter (WASM)                | `@vscode/tree-sitter-wasm` 0.1.4                  |
 | HTTP / WS       | ws, node-fetch, custom SDK client | ws ^8.18.0                                        |
@@ -341,7 +343,7 @@ sidebar shows live goal + budget consumption.
   autonomous execution that decomposes the plan into a FID backlog, runs it in
   dependency order, and certifies completion. Aliases `/auto`, `/drive`,
   `/autodrive`; subcommands `status | pause | resume | stop`; headless via
-  `--auto "<goal>"`. See the [Auto Drive blueprint](docs/design/Auto Drive Architecture Blueprint.md)
+  `--auto "<goal>"`. See the [Auto Drive blueprint](<docs/design/Auto Drive Architecture Blueprint.md>)
   and the [FAQ](docs/faq.md).
 - **Goal loop** — `/loop <cadence>` schedules recurring prompt execution (e.g.,
   `/loop 5m check build status`). The loop scheduler manages cadence, run
@@ -387,9 +389,10 @@ code 2 blocks a tool.
   for the architecture, authoring lifecycle, security model, persistence contract,
   enforcement behavior, and packaging evidence. For live usability, agent-feedback,
   and latency validation, run the [design-system live test prompt](dev/test-prompts/design-system-live-ux-performance.md).
-  For a complete regression across the current feature domains, run the
-  [v0.0.25 harness A–Z live-test prompt](dev/test-prompts/az-v0.0.25-harness-live-test.md), which writes an
-  evidence report to `dev/scratchpad/az-v0.0.25-harness-live-test-report.md`.
+  The [v0.0.25 harness A–Z prompt](dev/test-prompts/az-v0.0.25-harness-live-test.md)
+  is a historical version-specific instrument, not a complete regression for
+  the current tree. New reports belong under `dev/scratchpad/active/` and must
+  be promoted to durable paths before use as acceptance evidence.
 - **MCP tools** — Model Context Protocol servers discovered at startup, schemas
   published to the LLM API.
 - **`deep_research` tool** — the Researcher role's mechanical multi-query web
@@ -429,7 +432,7 @@ code 2 blocks a tool.
   10, 12, 14, 15). Law 4 call-graph reachability at turn end. FID completeness
   validator with mandatory Unanswered Questions. Mode-driven: **Hybrid** =
   Laws 1-4 blocking + Laws 5-15 advisory; **Strict** = all 15 blocking.
-  Only 2 agents have write tools (Orchestrator + Recorder). Emergency bypass:
+  Write-tool access is role-specific; see [the roster](ARCHITECTURE.md). Emergency bypass:
   agent requests, user confirms (FID-2026-0805-007).
 - **Harness ECHO compliance layer** — deterministic Law 1 (read-before-write),
   Law 3 (verify-after-write), and mechanical Verifier-criteria enforcement
@@ -705,8 +708,8 @@ for detailed usage, troubleshooting, and the offline architecture.
   Node.js / Bun / browser app.
 - **Streaming events** — `handleEvent` callback receives `RunState` updates,
   tool calls, file diffs, and final output.
-- **Custom agents** — pass `agentDefinitions: AgentDefinition[]` to override
-  defaults.
+- **Custom agents** — supply local definitions through
+  `agentDefinitions: AgentDefinition[]`, or pass an inline definition to `run`.
 - **Custom tools** — pass `customToolDefinitions` to extend the tool registry.
 - **Cancellation** — `AbortSignal` propagates through subagent streams.
 - **Checkpoint API** — the persistent checkpoint store (`openTurn`,
@@ -762,8 +765,8 @@ mode's one-line contract.
 escalate to the full loop (and the harness *warns* when the criteria are met),
 `STRICT` *requires* it for every code change. Enforcement is the STRICT prompt
 contract itself — the harness compliance layer watches alongside it and emits
-`warn`-level receipts when a criterion is missed (hard blocking is deferred
-future work). In STRICT, the prompt contract mandates, for each change:
+`warn`-level receipts when a ceremony criterion is missed. Those receipts do
+not replace the blocking pre-write gates. In STRICT, the prompt contract mandates, for each change:
 
 1. **Recorder creates a FID** for the change
    (`dev/fids/FID-YYYY-MMDD-NNN-{title}.md`), tracked automatically in the
@@ -785,7 +788,7 @@ writes) stays ceremony-free even in STRICT.
 | Consideration | `HYBRID` | `STRICT` |
 | --- | --- | --- |
 | Speed | Fastest — write freely; the full loop auto-engages past 100 lines | Slower — every change pays the full loop |
-| Friction | Minimal — the harness warns + steers, never blocks | Maximal — ceremony is required, not optional |
+| Friction | Ceremony receipts warn and steer; pre-write guards still block violations | Full ceremony is required |
 | Audit trail | FIDs only for escalated changes | A FID per change, archived with a CHANGELOG entry |
 | Verification | Harness receipts at `warn` + self-escalation past 100 lines | Verifier + Law-4 greps on every change |
 | Best for | Day-to-day building, exploration, prototypes, quick iterations | Security-sensitive or long-lived code, paid-API surfaces, team review, anything needing a durable audit trail |
@@ -903,7 +906,7 @@ docker run --rm --interactive --tty --env-file .env.local savant-code:local
 
 The container runs the terminal CLI as the unprivileged `bun` user. The image
 also includes digest-pinned Node `22.20.0` and npm for release-wrapper tests.
-does not build the optional Tauri desktop application. For Ollama running on
+It does not build the optional Tauri desktop application. For Ollama running on
 the Linux host, add `--network host` and set `OLLAMA_HOST` in `.env.local`.
 Keep only the credentials for your chosen provider in that local file; remove
 unused dummy keys, especially `OR_MASTER_KEY`, which takes precedence over
@@ -919,15 +922,22 @@ no-attribution scan and configured verification gates.
 ### 4. Use the SDK
 
 ```ts
-import { SavantCodeClient } from '@savant-code/sdk'
+import { SavantCodeClient, type AgentDefinition } from '@savant-code/sdk'
+
+const agent: AgentDefinition = {
+  id: 'coding-assistant',
+  displayName: 'Coding Assistant',
+  model: 'openrouter/free',
+  toolNames: ['read_files', 'write_file', 'str_replace'],
+  instructionsPrompt: 'Read before editing. Make only requested changes.',
+}
 
 const client = new SavantCodeClient({
   cwd: '/path/to/your/project',
-  onError: (err) => console.error('Savant-Code error:', err.message),
 })
 
 const result = await client.run({
-  agent: 'savant',
+  agent,
   prompt: 'Add error handling to all API endpoints',
   handleEvent: (event) => console.log('Progress', event),
 })
@@ -1228,9 +1238,9 @@ events.
   `/presence`, and headless `--auto`
 - [`desktop/README.md`](desktop/README.md) — the Tauri v2 desktop shell:
   sidecar lifecycle, renderer, 3D command deck, build/run commands
-- [`docs/design/Auto Drive Architecture Blueprint.md`](docs/design/Auto Drive Architecture Blueprint.md) — the Auto Drive
+- [`docs/design/Auto Drive Architecture Blueprint.md`](<docs/design/Auto Drive Architecture Blueprint.md>) — the Auto Drive
   architecture
-- [`docs/design/Discord Presence For Savant-Code.md`](docs/design/Discord Presence For Savant-Code.md) — the Discord
+- [`docs/design/Discord Presence For Savant-Code.md`](<docs/design/Discord Presence For Savant-Code.md>) — the Discord
   Rich Presence blueprint
 - [`dev/test-prompts/design-system-live-ux-performance.md`](dev/test-prompts/design-system-live-ux-performance.md) —
   live CLI usability, agent-feedback, and performance test prompt

@@ -33,10 +33,10 @@ export class SavantCodeClient {
   /**
    * Run a SavantCode agent with the specified options.
    *
-   * @param agent - The agent to run. Use 'base' for the default agent, or specify a custom agent ID if you made your own agent config.
+   * @param agent - An inline AgentDefinition, or the id of an agent supplied in agentDefinitions. Agents are resolved locally; there is no implicit default or hosted-store lookup.
    * @param prompt - The user prompt describing what you want the agent to do.
    * @param params - (Optional) Additional parameters for the agent. Most agents don't use this, but some custom agents can take a JSON object as input in addition to the user prompt string.
-   * @param handleEvent - (Optional) Callback function that receives every event during execution (assistant messages, tool calls, etc.). This allows you to stream the agent's progress in real-time. We will likely add a token-by-token streaming callback in the future.
+   * @param handleEvent - (Optional) Callback for structured execution events. Use handleStreamChunk for incremental text, reasoning, and subagent chunks.
    * @param previousRun - (Optional) JSON state returned from a previous run() call. Use this to continue a conversation or session with the agent, maintaining context from previous interactions.
    * @param projectFiles - (Optional) All the files in your project as a plain JavaScript object. Keys should be the full path from your current directory to each file, and values are the string contents of the file. Example: { "src/index.ts": "console.log('hi')" }. This helps SavantCode pick good source files for context.
    * @param knowledgeFiles - (Optional) Knowledge files to inject into every run() call. Uses the same schema as projectFiles - keys are file paths and values are file contents. These files are added directly to the agent's context.

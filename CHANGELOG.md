@@ -9890,7 +9890,7 @@ operator actions.
 
 ## Comprehensive v0.0.23 live regression prompt (2026-08-11)
 
-- Added an agent-executable comprehensive live test for v0.0.23 whose coverage index is the current changelog rather than only the design-system feature (the prompt file no longer exists in `dev/test-prompts/`; the surviving artifact is the [comprehensive live-test report](dev/scratchpad/archive/benchmarks/v0.0.23-comprehensive-live-test-report.md)).
+- Added an agent-executable comprehensive live test for v0.0.23 whose coverage index was the changelog rather than only the design-system feature. Retention correction (2026-10-18 audit): neither the original prompt nor the scratch report at `dev/scratchpad/archive/benchmarks/v0.0.23-comprehensive-live-test-report.md` is retained in the current tree. The historical result cannot be reverified from that expired path.
 - The prompt covers release/audit safety, metadata and FID/LEARNINGS validation, protocol boot and grounding, ECHO enforcement, design-system workflows, provider/configuration parity, Code Universe, SDK/headless behavior, packaging wrappers, CLI modes, performance baselines, user/agent feedback, and cleanup.
 - It writes `dev/scratchpad/archive/benchmarks/v0.0.23-comprehensive-live-test-report.md`, separates static checks from live evidence, classifies environment/timeouts as `NEEDS-REVIEW`, and forbids publish/push/commit/tag/deploy/credential use. No live result or clean-release certification is claimed by this documentation change.
 

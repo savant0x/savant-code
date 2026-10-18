@@ -12,7 +12,14 @@
 
 </div>
 
-> **v0.0.36** —— **OpenAI 平台直连成为一等提供商**：平台 `sk-` 密钥
+> **v0.0.36** —— **本地开发版本，尚未正式发布**。
+> 已验证的源码进展会提交并推送到 `main`；版本标签、软件包发布与部署仍需操作员批准。
+> 当前开发进展见 [CHANGELOG.md](CHANGELOG.md)，不能据此推断软件包已经发布。
+
+<details>
+<summary>历史发布说明（不是当前开发版本的发布声明）</summary>
+
+> **v0.0.35** —— **OpenAI 平台直连成为一等提供商**：平台 `sk-` 密钥
 > （`/provider openai`、`OPENAI_API_KEY`）将 `openai/<id>`（OpenAI 激活时也包括裸 id）
 > 经 **Responses API** 路由到 api.openai.com，而 ChatGPT 订阅 OAuth 通道对其白名单模型
 > 保持优先（`skipChatGptOAuth` 仍强制走平台通道）；`/provider` 选择器现已按字母排序，
@@ -116,6 +123,8 @@
 > 同一版本还交付了新用户拆解修复（FID-2026-0806-009…015）：每个后端调用的 BYOK
 > 门禁、以 OpenRouter 为首选的启动默认值、通过 `--print` 无头模式显示失败、支持循环引用的
 > 聊天序列化、品牌清理、需同意的自动更新以及遥测披露。全部 FID 积压已关闭并归档。
+
+</details>
 
 ---
 
@@ -271,12 +280,12 @@ MCP 工具发现、模式切换（`HYBRID` / `SCAFFOLD` / `STRICT` / `ANALYZE`�
 
 | 层            | 技术                             | 版本                                             |
 | ------------- | -------------------------------- | ------------------------------------------------ |
-| 运行时        | Bun                              | 1.3.14 (engines `>=1.3.11`)                      |
+| 运行时        | Bun                              | 1.3.14（运行时与包管理器固定版本） |
 | 语言          | TypeScript                       | 5.5.4 (`strict: true`, `noImplicitReturns: true`) |
 | TUI           | OpenTUI + React 19               | `@opentui/core` 0.5.3, `react` ^19.0.0           |
 | 状态管理      | Zustand + Immer                  | zustand ^5.0.8, immer ^10.1.3                    |
 | 校验          | Zod                              | ^4.2.1                                           |
-| LLM SDK       | Vercel AI SDK                    | `ai` ^5.0.52 + `@ai-sdk/anthropic` 2.0.50        |
+| LLM SDK       | Vercel AI SDK                    | `ai` 5.0.122（根覆盖），`@ai-sdk/anthropic` 2.0.50 |
 | MCP           | Model Context Protocol           | `@modelcontextprotocol/sdk` ^1.18.2              |
 | 代码解析      | tree-sitter (WASM)               | `@vscode/tree-sitter-wasm` 0.1.4                 |
 | HTTP / WS     | ws, node-fetch, 自定义 SDK 客户端 | ws ^8.18.0                                       |
@@ -306,7 +315,9 @@ MCP 工具发现、模式切换（`HYBRID` / `SCAFFOLD` / `STRICT` / `ANALYZE`�
   agent 上下文；自定义系统经过校验、版本化保存，并在 EHEL 写入边界进行检查。详细架构、交互式创建/编辑、
   安全边界、持久化、强制检查与打包证据见
   [设计系统库指南](docs/design/design-system-library.md)。如需实时验证 CLI 可用性、智能体反馈与延迟，请运行
-  [设计系统实时测试提示](dev/test-prompts/design-system-live-ux-performance.md)。对于覆盖当前更新全部变更域的完整回归，请运行[v0.0.25 全自动 A–Z 实时测试提示](dev/test-prompts/az-v0.0.25-harness-live-test.md)，结果写入`dev/scratchpad/az-v0.0.25-harness-live-test-report.md`。这些提示及其实时结果均有独立的签核边界。实现已在工作树中关闭；独立的最终文档/实现审查仍在等待中。
+  [设计系统实时测试提示](dev/test-prompts/design-system-live-ux-performance.md)。
+  [v0.0.25 A–Z 提示](dev/test-prompts/az-v0.0.25-harness-live-test.md) 是历史版本专用工具，
+  不能代表当前版本的完整回归。新报告应写入 `dev/scratchpad/active/`，作为验收证据前应迁移到持久路径。
 - **提供商设置** —— `/provider` 打开交互式下拉选择器，显示所有提供商及其 ✓/✗ 配置状态。选择提供商后可
   输入其 API 密钥（遮罩输入）。密钥存储在本地 `credentials.json`。
 - **调研（默认免密钥）** —— `web_search`、`read_docs` 与 `deep_research` 零密钥即可工作：网络搜索回退到
@@ -346,7 +357,7 @@ MCP 工具发现、模式切换（`HYBRID` / `SCAFFOLD` / `STRICT` / `ANALYZE`�
 - **Auto Drive（`/auto-drive`）** —— 澄清 → 计划 → 批准 → 运行至完成的自主执行：将计划分解为 FID 待办、
   按依赖顺序运行并认证完成（别名 `/auto`、`/drive`、`/autodrive`；无头入口 `savant-code --auto "<goal>"`
   需 `--plan-file` 或 `--approve` 才能 fail-closed 地执行）。详见
-  [Auto Drive 蓝图](docs/design/Auto Drive Architecture Blueprint.md)。
+  [Auto Drive 蓝图](<docs/design/Auto Drive Architecture Blueprint.md>)。
 - **Discord Rich Presence（`/presence`）** —— 默认启用；将当前智能体、ECHO 阶段、项目名与模型外化到
   Discord Rich Presence，带机械式隐私边界（路径、参数、FID 标题与搜索查询全部脱敏；fail-closed Zod 回退）。
   `/presence status | enable | disable`（别名 `/discord`；客户端 ID 硬编码为 Savant Discord 应用）。
@@ -375,7 +386,7 @@ MCP 工具发现、模式切换（`HYBRID` / `SCAFFOLD` / `STRICT` / `ANALYZE`�
   发生前拦截（Law 1：先读后写、Law 3：先验证后继续、Law 7：先搜索后创建、Law 8：意图日志、100 行阈值的 FID
   Recorder 门禁）。轮次结束批量运行写入后扫描器（Law 5、6、9、10、12、14、15）。轮次结束检查 Law 4 调用图可达性。
   FID 完整性校验器带强制性的未解答问题。模式驱动：**Hybrid** = Law 1-4 拦截 + Law 5-15 建议；**Strict** =
-  全部 15 条拦截。只有 2 个智能体拥有写工具（Orchestrator + Recorder）。紧急绕过：智能体请求、用户确认
+  全部 15 条拦截。写工具权限按角色分配，详见 [ARCHITECTURE.md](ARCHITECTURE.md)。紧急绕过：智能体请求、用户确认
   （FID-2026-0805-007）。
 - **Harness ECHO 合规层** —— 以每次运行的运行时追踪器实现确定性的 Law 1（先读后写）、Law 3（写后验证）
   与机械式 Verifier 判据（10+ 行 / 2+ 文件 / 新 API / 安全敏感 / Forge）：非阻塞 `compliance_warning`
@@ -541,7 +552,7 @@ SAVANT_GRAPH_EXPORT_TOTAL_MEDIA_BYTES=<正整数>
 
 - **`SavantCodeClient` 类** —— 从任何 Node.js / Bun / 浏览器应用运行 agent 的单一入口。
 - **流式事件** —— `handleEvent` 回调接收 `RunState` 更新、工具调用、文件 diff 与最终输出。
-- **自定义 agent** —— 传入 `agentDefinitions: AgentDefinition[]` 覆盖默认配置。
+- **自定义 agent** —— 通过 `agentDefinitions: AgentDefinition[]` 提供本地定义，或向 `run` 传入内联定义。
 - **自定义工具** —— 传入 `customToolDefinitions` 扩展工具注册表。
 - **取消** —— `AbortSignal` 通过子智能体流传播。
 - **检查点 API** —— 持久化检查点存储（`openTurn`、`captureSnapshot`、`closeTurn`、`listTurns`、
@@ -586,7 +597,8 @@ SAVANT_GRAPH_EXPORT_TOTAL_MEDIA_BYTES=<正整数>
 
 `STRICT` 是保证仪式的模式。`HYBRID` *允许*智能体升级到完整循环（并且 harness 在判据满足时*警告*），而
 `STRICT` 对每一次代码改动都*要求*它。强制手段是 STRICT 提示词契约本身——harness 合规层会在一旁监视，并在
-漏掉某个判据时发出 `warn` 级收据（硬性拦截属于后续工作）。在 STRICT 中，提示词契约对每次改动规定：
+漏掉某个仪式判据时发出 `warn` 级收据；这些收据不会取代具有拦截能力的写入前门禁。在 STRICT 中，
+提示词契约对每次改动规定：
 
 1. **Recorder 为改动创建 FID**（`dev/fids/FID-YYYY-MMDD-NNN-{title}.md`），由侧栏的「活动 FID」面板自动跟踪。
 2. **RED（Detective）** 分析代码库并收敛改动方案。
@@ -603,7 +615,7 @@ STRICT 下也保持无仪式。
 | 考量 | `HYBRID` | `STRICT` |
 | --- | --- | --- |
 | 速度 | 最快——自由编写；超过 100 行时完整循环自动介入 | 较慢——每次改动都要付出完整循环的代价 |
-| 摩擦 | 最小——harness 只警告与引导，从不阻塞 | 最大——仪式是强制的，而非可选 |
+| 摩擦 | 仪式收据警告与引导；写入前门禁仍会拦截违规 | 完整仪式是强制的 |
 | 审计轨迹 | 仅升级的改动有 FID | 每次改动一个 FID，附带 CHANGELOG 条目归档 |
 | 验证 | `warn` 级 harness 收据 + 超过 100 行时自我升级 | 每次改动都有 Verifier + Law-4 grep |
 | 最适合 | 日常构建、探索、原型、快速迭代 | 安全敏感或长期维护的代码、付费 API 面、团队审查、任何需要持久审计轨迹的场景 |
@@ -672,15 +684,22 @@ bun run --cwd=cli build:binary
 ### 4. 使用 SDK
 
 ```ts
-import { SavantCodeClient } from '@savant-code/sdk'
+import { SavantCodeClient, type AgentDefinition } from '@savant-code/sdk'
+
+const agent: AgentDefinition = {
+  id: 'coding-assistant',
+  displayName: 'Coding Assistant',
+  model: 'openrouter/free',
+  toolNames: ['read_files', 'write_file', 'str_replace'],
+  instructionsPrompt: 'Read before editing. Make only requested changes.',
+}
 
 const client = new SavantCodeClient({
   cwd: '/path/to/your/project',
-  onError: (err) => console.error('Savant-Code error:', err.message),
 })
 
 const result = await client.run({
-  agent: 'savant',
+  agent,
   prompt: 'Add error handling to all API endpoints',
   handleEvent: (event) => console.log('Progress', event),
 })

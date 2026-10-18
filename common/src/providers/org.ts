@@ -5,7 +5,7 @@
  * bare model ids (anthropic/…, openai/…) and logo lookups.
  *
  * Registry provider ids (openrouter, tokenrouter, tokenharbor, nvidia,
- * opencode-go, commandcode, cloudflare, ollama) live in PROVIDER_REGISTRY;
+ * commandcode, cloudflare, ollama) live in PROVIDER_REGISTRY;
  * every other prefix/domain lives here, exactly once.
  */
 

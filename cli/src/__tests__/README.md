@@ -1,22 +1,23 @@
 # CLI Testing
 
-Comprehensive testing suite for the SavantCode CLI using tmux for interactive terminal emulation.
+CLI unit, native-render and integration tests. Interactive terminal tests use tmux.
 
 ## Test Naming Convention
 
-**IMPORTANT:** Follow these patterns for automatic tmux detection:
+Use descriptive suite names:
 
 - **Unit tests:** `*.test.ts` (e.g., `cli-args.test.ts`)
 - **E2E tests:** `e2e-*.test.ts` (e.g., `e2e-cli.test.ts`)
 - **Integration tests:** `integration-*.test.ts` (e.g., `integration-tmux.test.ts`)
 
-Files matching `*integration*.test.ts` or `*e2e*.test.ts` trigger automatic tmux availability checking in `.bin/bun`.
+Names do not activate a wrapper. Suites explicitly check their prerequisites
+through `test-utils.ts` and use `describe.skipIf` where appropriate.
 
 ## Quick Start
 
 ```bash
 cd cli
-bun test
+bun run test
 ```
 
 ## Prerequisites
@@ -74,21 +75,16 @@ bun test integration-tmux.test.ts
 bun run test:tmux-poc
 ```
 
-## Automatic tmux Detection
+## Prerequisite Detection
 
-The `.bin/bun` wrapper automatically checks for tmux when running integration/E2E tests:
+`test-utils.ts` checks native tmux, then the WSL fallback, and verifies a
+temporary session can start. It reports unavailable on CI. The tmux integration
+suite skips when tmux or the SDK is unavailable; the E2E CLI suite checks SDK
+artifacts separately. There is no project-wide `.bin/bun` wrapper.
 
-- **Detects** test files matching `*integration*.test.ts` or `*e2e*.test.ts`
-- **Checks** if tmux is installed
-- **Shows** installation instructions if missing
-- **Skips** tests gracefully if tmux unavailable
-
-**Benefits:**
-
-- ✅ Project-wide (works in any package)
-- ✅ No hardcoded paths
-- ✅ Clear test categorization
-- ✅ Automatic dependency validation
+`bun run test` applies the CLI package's `NODE_ENV=production` script. Run a
+focused `bun test` filter from the CLI workspace; Bun filters are substrings,
+so a repository-root filter can accidentally include local reference copies.
 
 ## Test Structure
 
@@ -165,7 +161,7 @@ await sleep(1000)
 
 ## tmux Testing
 
-**See [`../../tmux.knowledge.md`](../../tmux.knowledge.md) for comprehensive tmux documentation**, including:
+See the [tmux scripts guide](../../../scripts/tmux/README.md) for:
 
 - Why standard `send-keys` doesn't work (must use bracketed paste mode)
 - Helper functions for Bash and TypeScript
@@ -233,24 +229,19 @@ When adding new tests:
 - Use unique session names (e.g., timestamp suffix)
 - Clean up sessions in `beforeEach`/`afterEach`
 
-## Performance
+## Timing
 
-- **Unit tests:** ~100ms total
-- **Integration tests:** ~2-5s per test (tmux overhead)
-- **E2E tests:** ~3-10s per test (full CLI startup)
+Use the actual Bun summary for timings. Native rendering, subprocess and tmux
+tests have different costs; old whole-suite timing estimates are not a budget.
 
 ## CI/CD
 
-For CI environments:
+The ordinary CI suite runs unit and native-render tests. The current tmux helper
+returns unavailable on CI, so installing tmux alone does not enable interactive
+integration tests there. Run live terminal checks in an interactive environment.
 
 ```yaml
-# Install tmux in CI
-- name: Install tmux
-  run: |
-    sudo apt-get update
-    sudo apt-get install -y tmux
-
 # Run tests
 - name: Run tests
-  run: bun test
+  run: bun run --cwd=cli test
 ```

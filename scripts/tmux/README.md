@@ -1,5 +1,6 @@
 <!-- markdownlint-disable MD041 -->
-<img src="../assets/banner.png" alt="tmux Test Scripts — Interact with TUIs reliably via bracketed paste" width="650" />
+<img src="../../assets/banner.png"
+  alt="tmux Test Scripts — Interact with TUIs reliably via bracketed paste" width="650" />
 
 # tmux TUI Testing Scripts
 
@@ -78,7 +79,7 @@ echo "Started session: $SESSION"
 
 ```bash
 # Build the binary first (SavantCode example)
-cd cli && bun run build:binary
+bun run --cwd=cli build:binary
 
 # Test with binary at default location (./cli/bin/savant-code)
 SESSION=$(./scripts/tmux/tmux-cli.sh start --binary)
@@ -87,7 +88,7 @@ SESSION=$(./scripts/tmux/tmux-cli.sh start --binary)
 SESSION=$(./scripts/tmux/tmux-cli.sh start --binary /path/to/binary)
 
 # Or use environment variable
-CODEBUFF_BINARY=./cli/bin/savant-code ./scripts/tmux/tmux-cli.sh start
+SAVANT_CODE_BINARY=./cli/bin/savant-code ./scripts/tmux/tmux-cli.sh start
 ```
 
 The session-info.yaml will record which mode was used (`cli_mode: custom`, `cli_mode: binary`, or `cli_mode: dynamic`).
@@ -342,13 +343,9 @@ tmux has-session -t SESSION_NAME && echo "exists" || echo "not found"
 
 ## Used By
 
-These scripts are used by TUI testing agents:
-
-- `@savant-code-tester` - Tests the SavantCode CLI
-- `@claude-code-tester` - Tests Claude Code CLI
-- `@codex-tester` - Tests OpenAI Codex CLI
-- `@gemini-tester` - Tests Google Gemini CLI
-- Custom agents for other TUI apps can easily be created following the same pattern
+The runtime's `tmux-cli` helper and operator shells use these scripts for TUI
+testing. The `--command` option also supports other terminal applications;
+this guide does not imply separate tester roles in the canonical agent roster.
 
 ---
 

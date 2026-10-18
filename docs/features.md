@@ -61,7 +61,7 @@ one-sentence goal into an approved, fully-specified plan and then runs it to
 completion autonomously — clarify → pre-build plan → one-time operator
 confirmation (Law 2) → autonomous execution. See the
 [FAQ](faq.md) for operator guidance and the `/goal` vs `/auto-drive`
-distinction. The linked [architecture proposal](design/Auto Drive Architecture Blueprint.md)
+distinction. The linked [architecture proposal](<design/Auto Drive Architecture Blueprint.md>)
 is historical and is not the implementation contract.
 
 - **Clarity** — if the goal is already a detailed spec it skips straight to
@@ -213,7 +213,7 @@ Works with multiple inference providers:
 - **BlazeRail** — Public live catalog filtered to chat/coding models and OpenAI-compatible chat (`BLAZERAIL_API_KEY`; `https://api.blazerail.com/v1`; account access and free-tier eligibility are not verified)
 - **River AI** — Authenticated live catalog retaining all models published for the key and OpenAI-compatible chat (`RIVER_AI_API_KEY`; `https://api.river.ai/v1`)
 - **Zylo AI** — Public live text-only catalog with vendor-published context windows and key-authenticated OpenAI-compatible chat (`ZYLO_API_KEY`; `https://api.zyloai.net/v1`); catalog membership does not verify account access or upstream availability
-- **AIHubMix** — Keyless rich live model catalog and OpenAI chat (`AIHUBMIX_API_KEY`; `https://aihubmix.com/v1`; the catalog retains 698 LLM rows and publishes positive limits only on a subset)
+- **AIHubMix** — Keyless rich live model catalog and OpenAI chat (`AIHUBMIX_API_KEY`; `https://aihubmix.com/v1`; retains live LLM rows and publishes positive limits only on a subset; row counts vary with the catalog)
 - **xKiro** — Public live chat catalog (`XKIRO_API_KEY`; `https://api.xkiro.com/v1`). Anthropic model IDs use Messages; other IDs use OpenAI chat. Vendor namespaces remain intact. Catalog tiers describe requirements; paid-model access depends on the account.
 - **ChatAnywhere** — OpenAI-compatible hosted gateway on a static 27-model chat roster (`CHATANYWHERE_API_KEY`; `https://api.chatanywhere.tech/v1`; free-key tier: 10,000 points/day per the vendor's GPT_API_free docs)
 - **Tiarina Cloud** — OpenAI-compatible hosted gateway on a static 19-model chat roster (`TIARINA_API_KEY`; `https://ai.tiarina.cloud/v1`; free-key tier)
@@ -459,8 +459,8 @@ A deterministic, incremental, SQLite-backed codebase knowledge graph:
 
 - **In-process indexing** — no daemon. Built on `packages/code-map` (tree-sitter)
   with sha256 hash-compare so unchanged files are skipped.
-- **Structural metadata only** — paths, symbols, edge types, hashes. No file
-  contents, so no secrets can leak.
+- **Structural metadata only** — paths, symbols, edge types and hashes, rather
+  than file bodies. Treat paths and symbol names as potentially sensitive too.
 - **Three edge types** — `IMPORTS`, `CALLS`, and `EXTENDS` with deterministic
   weights.
 - **Deterministic domain clustering** — graphology Louvain with seeded RNG, so
@@ -562,7 +562,7 @@ overlay's tooltip; the model label is provider-trimmed
 `nous/meituan/longcat-2.0:free` → `longcat-2.0`) and the `openrouter/free`
 boot default renders as "OpenRouter Free". The model and the mode are
 distinct axes — never conflated. See the
-[Discord Presence blueprint](design/Discord Presence For Savant-Code.md)
+[Discord Presence blueprint](<design/Discord Presence For Savant-Code.md>)
 for the full design.
 
 - **Zero-config, on by default** — presence is booted from persisted settings
@@ -777,7 +777,7 @@ evaluation, and responsive layout (see `docs/design/ui-overhaul-plan.md`).
 
 - [ECHO Protocol](echo-protocol.md) — The governance system
 - [Agent Roster](agents.md) — The 10 agents and their roles
-- [Execution Modes](savant-code-modes.md) — HYBRID / STRICT / ANALYZE / SCAFFOLD / PLAN contracts
+- [Execution Modes](savant-code-modes.md) — HYBRID / STRICT / ANALYZE / SCAFFOLD contracts
 - [Design System Library](design/design-system-library.md) — The full `/design` specification
 - [Agent-Steering Teacher](design/agent-steering-teacher-overview.md) — The complete `/learn` overview
 - [Zero-Trust Agentic Provenance](design/zero-trust-agentic-provenance.md) — The `/attest` trust-receipt system

@@ -9,7 +9,7 @@ mechanical evidence, and review deliberately flawed output.
 
 This guide explains how the system works, how to use it, and how to author new
 exercises. The authoritative design lives in
-[`Agent-Steering Teacher Homegrown Architecture.md`](../archive/design/Agent-Steering Teacher Homegrown Architecture.md) (archived);
+[`Agent-Steering Teacher Homegrown Architecture.md`](<../archive/design/Agent-Steering Teacher Homegrown Architecture.md>) (archived);
 the complete overview lives in
 [`agent-steering-teacher-overview.md`](agent-steering-teacher-overview.md);
 the build order and FID set live under `dev/build-orders/` and `dev/fids/`.

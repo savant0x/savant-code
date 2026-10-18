@@ -15,7 +15,7 @@ the product surface, the command reference, the module map, the trust model, the
 progression model, and the verification status. Companion documents:
 
 - [`agent-steering-teacher-guide.md`](agent-steering-teacher-guide.md) — how to use and author exercises
-- [`Agent-Steering Teacher Homegrown Architecture.md`](../archive/design/Agent-Steering Teacher Homegrown Architecture.md) — authoritative design (archived)
+- [`Agent-Steering Teacher Homegrown Architecture.md`](<../archive/design/Agent-Steering Teacher Homegrown Architecture.md>) — authoritative design (archived)
 - `dev/build-orders/2026-08-13-agent-steering-teacher-build-order.md` — build order and phase gates
 - `dev/fids/archive/FID-2026-0813-011`…`020` — the FID set (closed and archived)
 
