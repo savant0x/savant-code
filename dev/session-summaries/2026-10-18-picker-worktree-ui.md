@@ -79,3 +79,12 @@ Ownership association implemented: class-owners.json now names FID-2026-1017-014
 for the argument-failure class. The scratch report was promoted by its owning
 run, not this session. Repository validation re-run: `validation: PASS`.
 The temporary RECURRENCE-WORKTREE register item is completed and removed.
+
+## Run-3 handoff intake
+
+Operator supplies the complete handoff and authorizes correction of its four
+instrument preconditions. FID-2026-1018-004 converged before instrument edits.
+Preserve the run-3 report and existing acceptance record; acceptance remains
+converged. Prepare unique proof paths, state/ref checkpoints and exclusive-main
+requirements. Report under scratch active. Existing branch and stash stay in
+place; any branch fast-forward is operator-confirmed pre-run preparation.

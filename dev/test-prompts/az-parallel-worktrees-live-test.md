@@ -2,10 +2,10 @@
 
 # A–Z Parallel-Worktrees Harness Live Test — execute inside the running CLI
 
-**Version:** acceptance run for FID-2026-1017-008.
-**Date:** 2026-10-17 (record the actual run date; adjust wording if executed later).
+**Version:** run-4-ready instrument for FID-2026-1017-008.
+**Date:** 2026-10-18 (record the actual run date; adjust wording if executed later).
 **Target:** the FID-bound parallel worktree system (FID-2026-1017-007, archived)
-in this repository, live-accepted under FID-2026-1017-008. The delta under test
+in this repository, awaiting live acceptance under FID-2026-1017-008. The delta under test
 is the whole lane lifecycle: `fid_worktree` tool + operator CLI, lane
 provisioning (linked checkout, dependency junctions, graph snapshot, isolated
 environment), the Law 2 lane jurisdiction mapping, refusal paths, the
@@ -42,11 +42,12 @@ evidence becomes FID-2026-1017-008's acceptance record.
    - the `fid_worktree` lifecycle actions for FID-2026-1017-008 (§5), each
      after operator confirmation;
    - the single lane-proof file inside the lane (§5.9a);
+   - the operator-created lane stray (§5.17a), discarded only after confirmation;
    - the single lane commit (§5.12) and the merge to main (§5.13), each after
      operator confirmation;
    - the two probe write ATTEMPTS in §5.9b/§5.9c — these are expected to be
      BLOCKED; if one somehow lands, follow the cleanup instruction in its row;
-   - the report file in `dev/scratchpad/` (§8) and nothing else.
+   - the report file in `dev/scratchpad/active/` (§8) and nothing else.
    Do NOT modify source files, do NOT commit on main yourself, do NOT push or
    tag, do NOT close FID-2026-1017-008, do NOT edit `CHANGELOG.md` or
    `SCOPE.md`, do NOT create new FIDs.
@@ -67,17 +68,64 @@ evidence becomes FID-2026-1017-008's acceptance record.
    harness demands a verification step, continue.
 9. In the report, do not introduce `Task NN` / `TNN-X` references; reference
    FIDs by id only.
+10. **Exclusive main checkout:** before starting, the operator confirms no other
+    session will edit, stage, commit, switch refs, restore a stash or refresh
+    generated tracked files in this checkout until §9 finishes. Other sessions
+    must pause mutations here or use another checkout. Repeat main status/HEAD
+    checks before every lifecycle mutation. Before the merge, main HEAD must
+    still equal start HEAD; afterwards it must equal the recorded merge SHA.
+    Any unexpected change means STOP before the next mutation and preserve the
+    lane for inspection. Do not commit or stash another session's changes.
+
+### Pre-run preparation — separate from the measured run
+
+Keep `savant/FID-2026-1017-008` and the named prep stash. Do not delete the
+branch or force-reset it. Provisioning records the current main base and refuses
+an old retained branch behind it (`branch-exists`). If preflight finds that
+case, stop and ask the operator to prepare it before restarting §2. When the
+branch tip is provably an ancestor of main, the operator may explicitly approve
+this normal fast-forward in their shell:
+
+```text
+git merge-base --is-ancestor refs/heads/savant/FID-2026-1017-008 refs/heads/main
+git fetch . refs/heads/main:refs/heads/savant/FID-2026-1017-008
+git rev-parse refs/heads/main refs/heads/savant/FID-2026-1017-008
+```
+
+Run the fetch only if the ancestry command exits 0; the final SHAs must match.
+There is no force flag and no branch deletion. A divergent branch requires an
+operator ruling, not an improvised repair. This preparation happens before
+start HEAD is captured. Do not apply/pop the prep stash during the run; record
+its SHA and restore only after the operator explicitly chooses to do so.
 
 ## 2. Preconditions (verify first; any failure = STOP and report)
 
 - `git branch --show-current` prints `main`.
+- Record the operator's confirmation of exclusive main-checkout access (§1.10).
+- Locate the existing prep stash by description
+  `parallel blueprint - restore with git stash pop (A-Z re-run prep)` and record
+  its SHA. Preserve it. If absent, record that fact and ask the operator before
+  any proposed restoration; do not manufacture a replacement or pop another stash.
 - Record the baseline `git status --short`. It MUST be empty. The merge gate
   runs `git status --porcelain --untracked-files=normal` on BOTH checkouts, so
   any entry — tracked or untracked — makes §5.13 impossible. Stash or commit
-  everything before starting (the prep step stashes the untracked blueprint;
-  restore it after the run with `git stash pop`).
+  approved work before starting, outside the measured run. Preserve the existing
+  prep stash; do not restore the blueprint until after the final clean check.
 - Record `git rev-parse HEAD` (this is the "start HEAD" for the whole run and
   the expected lane `baseSha`).
+- If `refs/heads/savant/FID-2026-1017-008` exists, its SHA MUST equal start HEAD.
+  If not, STOP before create and use the separately confirmed preparation above.
+- Generate and record one **run stamp** using
+  `bun -e "console.log(Date.now().toString(36)+'-'+crypto.randomUUID().slice(0,8))"`.
+  Derive **proof-relative-path** as
+  `docs/design/parallel-worktrees-lane-proof-<run-stamp>.md` and **report-path** as
+  `dev/scratchpad/active/FID-2026-1017-008-<run-stamp>-live-test-report.md`.
+  Substitute these exact recorded strings throughout this run; do not regenerate
+  the stamp. Verify the proof is absent on disk and
+  `git ls-files --error-unmatch -- <proof-relative-path>` is nonzero. If either
+  exists, STOP and allocate a fresh stamp before restarting preflight. Verify
+  the committed SCOPE.md grant for FID-2026-1017-008 includes
+  `docs/design/parallel-worktrees-lane-proof-*.md`.
 - `dev/fids/FID-2026-1017-008-live-parallel-worktree-acceptance.md` exists,
   contains a line `**Status:** converged`, and is TRACKED:
   `git ls-files --error-unmatch dev/fids/FID-2026-1017-008-live-parallel-worktree-acceptance.md`
@@ -141,30 +189,30 @@ All `fid_worktree` calls are JSON arguments to the harness tool, e.g.
 | ⌘ 5.4 | Create the lane for FID-2026-1017-008             | LIVE       | OK result with a `record`: `fidId` = FID-2026-1017-008; `relativePath` = `.savant/worktrees/FID-2026-1017-008`; `branch` = `savant/FID-2026-1017-008`; `baseSha` == start HEAD (§2); `worktreeIndex` = 1; `dependencyLinks` = record actual list; `createdAt` an ISO timestamp. Record the full record JSON. The `path` may mix separators (`...\savant-code/.savant/worktrees/...`); compare the record fields, never raw path strings.        |
 | 5.5a  | Lane exists on disk + record file                 | EXECUTABLE | `<repo-root>\.savant\worktrees\FID-2026-1017-008` exists; print `.savant/worktrees/.records/FID-2026-1017-008.json` and check it matches the tool's `record` fields.                                                                                                                                                    |
 | 5.5b  | Git registration + branch                         | EXECUTABLE | `git worktree list --porcelain` includes main AND the lane path; `git -C .savant/worktrees/FID-2026-1017-008 rev-parse --abbrev-ref HEAD` = `savant/FID-2026-1017-008`.                                                                                                                                                 |
-| 5.5c  | Dependency links are junctions                    | EXECUTABLE | For each entry in `dependencyLinks`, confirm the lane copy is a directory link to the main checkout (Windows: `Get-Item "<lane>\<entry>" \| Format-List LinkType,Target` shows `Junction`; use the shell's equivalent on other platforms). Record the full link list.                                                   |
+| 5.5c  | Dependency directory links                        | EXECUTABLE | For each entry in `dependencyLinks`, confirm the lane copy is a directory link to the corresponding main-checkout directory. Windows: record `Get-Item "<lane>\<entry>" \| Format-List LinkType,Target`; Junction or directory SymbolicLink is valid when its resolved target is correct. Record actual link type and full link list. |
 | 5.5d  | Graph snapshot in the lane                        | EXECUTABLE | Main `.savant/graph.db` exists, so the lane snapshot is expected: `<lane>\.savant\graph.db` exists (record size). If absent, record and classify in §7.                                                                                                                                                                  |
 | 5.5e  | Main checkout stays clean around provisioning     | EXECUTABLE | `git status --short` matches the §2 baseline (the lane is invisible to main status).                                                                                                                                                                                                                                    |
 | 5.6   | Duplicate create refusal                          | LIVE       | `create` again for FID-2026-1017-008 → refusal `fid-in-use` ("FID-2026-1017-008 already has a managed FID worktree"), raised by `provisionFidWorktree` rather than by the service's own reason list. Nothing mutated.                                                                                                       |
 | 5.7   | `list` with a live lane                           | LIVE       | One lane row: `registered` = true, `dirty` = false; record JSON.                                                                                                                                                                                                                                                        |
 | 5.8a  | CLI mirror parity                                 | EXECUTABLE | repo root: `bun scripts/worktree.ts list` → exit 0; JSON matches the §5.7 tool result (same record fields, registered/dirty). Record both.                                                                                                                                                                              |
-| 5.8b  | `exec` environment isolation                      | EXECUTABLE | repo root: `bun scripts/worktree.ts exec --fid FID-2026-1017-008 -- bun -e "console.log(JSON.stringify({root:process.env.SAVANT_WORKTREE_ROOT,index:process.env.WORKTREE_INDEX,port:process.env.PORT,compose:process.env.COMPOSE_PROJECT_NAME,graph:process.env.SAVANT_CODE_GRAPH_DB_PATH,secretVars:Object.keys(process.env).filter(k=>/KEY\|TOKEN\|SECRET/i.test(k)).length}))"` — expect: `root` = absolute lane path; `index` = `1`; `port` = `3100` (stride: parent PORT or 3000, plus 100×index — record the actual); `compose` = `savant_wt1`; `graph` = `<lane>\.savant\graph.db`; `secretVars` = `0`. Record the exact command that ran. |
+| 5.8b  | `exec` environment isolation                      | EXECUTABLE | repo root: `bun scripts/worktree.ts exec --fid FID-2026-1017-008 -- bun -e "console.log(JSON.stringify({root:process.env.SAVANT_WORKTREE_ROOT,index:process.env.WORKTREE_INDEX,port:process.env.PORT,compose:process.env.COMPOSE_PROJECT_NAME,graph:process.env.SAVANT_CODE_GRAPH_DB_PATH,secretVars:Object.keys(process.env).filter(k=>new RegExp('KEY\|TOKEN\|SECRET','i').test(k)).length}))"` — expect: `root` = absolute lane path; `index` = `1`; `port` = `3100` (stride: parent PORT or 3000, plus 100×index — record the actual); `compose` = `savant_wt1`; `graph` = `<lane>\.savant\graph.db`; `secretVars` = `0`. The RegExp constructor avoids Git Bash converting a slash-delimited regex into a Windows path. Record the exact command that ran. |
 | 5.8c  | `exec` exit-code propagation                      | EXECUTABLE | `bun scripts/worktree.ts exec --fid FID-2026-1017-008 -- bun -e "process.exit(7)"` → the command's exit code is 7. Record the reported exit code.                                                                                                                                                                       |
-| 5.9a  | Covered lane write (register leg)                 | LIVE       | Write file `write_file` with path `<record.path>\docs\design\parallel-worktrees-lane-proof.md` (absolute) and EXACTLY this content: a heading `# Lane proof — FID-2026-1017-008`, then one paragraph: "This file was written inside the managed FID worktree `.savant/worktrees/FID-2026-1017-008` (branch `savant/FID-2026-1017-008`) during the A–Z live acceptance run of the FID-bound parallel worktree system, then committed in the lane and merged to main through the mechanism under test (fast-forward only). It is acceptance evidence for FID-2026-1017-008." EXPECTED: write succeeds — the lane's own register covers this repo-relative target via FID-2026-1017-008. If BLOCKED with a governance refusal: record it verbatim, mark FAIL, STOP the write rows, and ask the operator. Verify the file exists afterwards. |
+| 5.9a  | Covered lane write (register leg)                 | LIVE       | Confirm `<record.path>/<proof-relative-path>` is absent and untracked in the lane. Use `write_file` at that absolute path with heading `# Lane proof — FID-2026-1017-008 — <run-stamp>` and paragraph `Run stamp: <run-stamp>. Start HEAD: <start-HEAD>. This file was created inside the managed FID worktree for this acceptance run. Commit and merge outcomes are recorded separately in the run report.` Substitute the actual recorded values. EXPECTED: write succeeds via the lane's FID-2026-1017-008 grant. If blocked, record the refusal, mark FAIL and STOP before any disposal. Verify the exact content and new file exist. |
 | 5.9b  | Uncovered main write is blocked                   | LIVE       | `write_file` path `az-out-of-scope-probe.txt` (repo root, relative) with any short content. EXPECTED: BLOCKED by the Law 2 write-scope gate; record the refusal verbatim (expected wording: no approved scope item covers the target). Verify the file was NOT created. If it lands: FAIL — note it, delete it immediately, re-run `git status --short` to prove restoration (if the delete is itself gated, ask the operator to remove it), and classify in §7. |
 | 5.9c  | Unregistered lane-shaped path is blocked          | LIVE       | `write_file` path `.savant/worktrees/AZ-NOT-A-LANE/probe.txt`. EXPECTED: BLOCKED because the target is not inside a registered FID worktree (refusal wording: target is not inside a registered FID worktree with its own SCOPE.md). Nothing created. Record verbatim.                                                      |
-| 5.10  | Lane is dirty after the write                     | EXECUTABLE | `git -C .savant/worktrees/FID-2026-1017-008 status --porcelain` shows the new proof file as untracked (`?? docs/design/parallel-worktrees-lane-proof.md`).                                                                                                                                                              |
-| ⌘ 5.11 | Dirty disposal is refused                          | LIVE       | `dispose` (no flag) → refusal `dirty` ("Commit lane changes or explicitly authorize discard_changes"). Lane survives.                                                                                                                                                                                                    |
-| ⌘ 5.12 | Commit the lane proof inside the lane              | EXECUTABLE | `git -C .savant/worktrees/FID-2026-1017-008 add docs/design/parallel-worktrees-lane-proof.md` then `git -C .savant/worktrees/FID-2026-1017-008 commit -m "docs(echo): lane proof for parallel-worktree acceptance (FID-2026-1017-008)"`. Record the commit SHA (`git -C <lane> rev-parse HEAD`) and confirm the lane is clean (`status --porcelain` empty). If the terminal refuses these, use the operator fallback.                             |
-| ⌘ 5.13 | Merge (fast-forward only)                          | LIVE       | `merge` for FID-2026-1017-008 → OK with `head` = the §5.12 lane SHA and `warnings: []`. If `warnings` is non-empty (e.g. graph refresh failure), record it verbatim and continue; classify in §7.                                                                                                                         |
-| 5.14  | Merge verification                                 | EXECUTABLE | Main `git rev-parse HEAD` == the `head` from §5.13 (fast-forward equality); `git log --oneline -1`; the proof file exists on main (`docs/design/parallel-worktrees-lane-proof.md`); main `git status --short` is clean; the lane is still clean and still exists.                                                        |
-| 5.15  | Main graph refreshed with the merged file          | EXECUTABLE | repo root: `bun -e "import {Database} from 'bun:sqlite';const d=new Database('.savant/graph.db',{readonly:true});const rows=d.query('SELECT path FROM files').all();console.log(JSON.stringify(rows.filter(r=>String(r.path).includes('parallel-worktrees-lane-proof'))))"` — expect one row naming `docs/design/parallel-worktrees-lane-proof.md`. If empty and §5.13 carried no warning: wait 5 s, retry once; if still empty, mark FAIL and classify in §7. If the shell mangles quoting, adapt while keeping the query semantics and record the exact command used. |
+| 5.10  | Observe the genuine uncommitted proof              | EXECUTABLE | `git -C <record.path> status --porcelain --untracked-files=normal -- <proof-relative-path>` must show exactly `?? <proof-relative-path>`; `fid_worktree list` must report this lane `dirty: true`. Paste both observations. If either is missing, mark FAIL and STOP before §5.11; a clean lane must never be disposed as a refusal test. |
+| ⌘ 5.11 | Dirty disposal is refused                          | LIVE       | Recheck the §5.10 dirty status immediately before calling `dispose` (no flag). With that observed precondition, expect refusal `dirty` ("Commit lane changes or explicitly authorize discard_changes"). Verify lane and proof survive. If not dirty, STOP without calling dispose; if disposal succeeds despite proven dirty state, FAIL and STOP the lifecycle. |
+| ⌘ 5.12 | Commit only this run's proof in the lane            | EXECUTABLE | `git -C <record.path> add -- <proof-relative-path>` then `git -C <record.path> commit -m "docs(echo): record lane acceptance proof (FID-2026-1017-008)"`. Record lane SHA, verify `git -C <record.path> diff-tree --no-commit-id --name-only -r HEAD` names only this proof, and confirm lane status is empty. If the terminal refuses these, use the operator fallback. |
+| ⌘ 5.13 | Merge with immediate state/ref checkpoint          | LIVE       | AFTER operator confirmation and immediately before `merge`, record `git status --porcelain --untracked-files=normal` on main and `git -C <record.path> status --porcelain --untracked-files=normal`; BOTH must be empty. Main `rev-parse HEAD` must equal start HEAD, lane HEAD must equal §5.12 SHA, and operator confirms exclusivity still holds. If any check fails, STOP without merge and preserve the lane. Otherwise call `merge`: expect OK, `head` = lane SHA, `warnings: []`; record any warning verbatim for §7. |
+| 5.14  | Merge verification                                 | EXECUTABLE | Main HEAD equals §5.13 head; `git log --oneline -1`; exact `<proof-relative-path>` exists on main with this run stamp/start HEAD. Main and lane status remain clean; lane still exists. |
+| 5.15  | Main graph contains this run's exact proof          | EXECUTABLE | repo root: `bun -e "import {Database} from 'bun:sqlite';const d=new Database('.savant/graph.db',{readonly:true});const rows=d.query('SELECT path FROM files').all();console.log(JSON.stringify(rows.filter(r=>String(r.path).split(String.fromCharCode(92)).join('/')===process.argv[1])))" <proof-relative-path>` — expect exactly one row equal to this run's recorded proof path. Old proofs do not count. If empty and §5.13 carried no warning: wait 5 s, retry once; if still empty, FAIL. Record the exact command and result. |
 | 5.16a | Re-create refusal after merge                      | LIVE       | `create` again → `fid-in-use` (lane still managed). Record.                                                                                                                                                                                                                                                             |
 | 5.16b | Re-merge refusal (diverged)                        | LIVE       | `merge` again → refusal `diverged`: detail names `main HEAD <sha> differs from recorded base <baseSha>`. Record verbatim.                                                                                                                                                                                               |
-| 5.17a | (OPERATOR) Plant a stray in the lane               | OPERATOR   | Operator, in their own shell: `Set-Content .savant\worktrees\FID-2026-1017-008\az-stray.tmp 'stray (operator-created for the discard-path test)'`. Agent confirms the file exists.                                                                                                                                      |
-| ⌘ 5.17b | Dirty disposal refused again                       | LIVE       | `dispose` → `dirty` refusal. Record.                                                                                                                                                                                                                                                                                    |
+| 5.17a | (OPERATOR) Plant and observe a stray in the lane    | OPERATOR   | Operator: `Set-Content .savant\worktrees\FID-2026-1017-008\az-stray.tmp 'stray (operator-created for the discard-path test)'`. Verify that exact file is untracked and `fid_worktree list` reports `dirty: true`. Otherwise STOP before any disposal. |
+| ⌘ 5.17b | Dirty disposal refused again                       | LIVE       | Immediately recheck the stray and `dirty: true`, then `dispose` → `dirty` refusal. Confirm lane and stray survive. If not dirty, STOP without dispose. |
 | ⌘ 5.17c | Explicit-discard disposal                          | LIVE       | `dispose` with `{ "discard_changes": true }` → OK, `removed` = true. Record warnings verbatim: a `git worktree remove … Directory not empty` warning is the bounded filesystem fallback recovering, not a failed dispose — PASS when `removed` is true and §5.18 proves the directory is gone. The stray is discarded with the lane.                                                                                                                                                                               |
 | 5.18  | Post-disposal state                                | EXECUTABLE | Lane directory gone; `git worktree list` shows only main; `.records/FID-2026-1017-008.json` gone; branch `savant/FID-2026-1017-008` RETAINED (by design) — record `git branch --list savant/FID-2026-1017-008`; `.savant/fid-worktree.lock` absent; `list` → empty lanes.                                                       |
-| 5.19  | Final checkout state                               | EXECUTABLE | `git status --short` (expect clean; note the untracked blueprint); record end HEAD and state the by-design delta from start HEAD: exactly the lane-proof merge commit.                                                                                                                                                   |
+| 5.19  | Final checkout state                               | EXECUTABLE | `git status --short` must be empty before any blueprint restoration. Record end HEAD; exactly one new lane-proof commit must descend from start HEAD, containing only this run's proof-relative-path. Any unrelated change means FAIL and an interference report, never automatic staging or stashing. |
 
 ## 6. Phase 3 — recovery surfaces and residuals
 
@@ -196,11 +244,13 @@ After the last phase, write a findings section with each item classified
 
 ## 8. Report contract
 
-Write the report to `dev/scratchpad/az-parallel-worktrees-live-test-report.md`
-(untracked scratch; the closure session promotes it). Structure:
+Write the report to the exact **report-path** recorded in §2, under
+`dev/scratchpad/active/` (untracked scratch; the closure session promotes it).
+Keep the scratch root free of report files. Structure:
 
 1. Header: title; run date; provider/model actually used; start HEAD; end
-   HEAD; `bun --version`; baseline `git status --short`.
+   HEAD; `bun --version`; baseline `git status --short`; run stamp, exact proof
+   and report paths, prep stash SHA, and exclusivity confirmation.
 2. Verdict summary table (counts per verdict; list any FAIL with its row
    number).
 3. One section per phase (§3–§6) containing a row table: `Row | Verdict |
@@ -217,8 +267,8 @@ Write the report to `dev/scratchpad/az-parallel-worktrees-live-test-report.md`
 - [ ] Branch `savant/FID-2026-1017-008` retained (by design) — note it; do not delete.
 - [ ] `.savant/fid-worktree.lock` absent.
 - [ ] No probe files landed (`az-out-of-scope-probe.txt` absent; nothing under `.savant/worktrees/AZ-NOT-A-LANE`).
-- [ ] `git status --short` matches §5.19 (clean); restore the stashed blueprint afterwards with `git stash pop`.
-- [ ] Report written to `dev/scratchpad/az-parallel-worktrees-live-test-report.md`.
+- [ ] `git status --short` matches §5.19 (clean). Keep the prep stash; restore only after a separate explicit operator choice, after recording this clean endpoint.
+- [ ] Report written to the §2 report-path under `dev/scratchpad/active/`.
 - [ ] Start HEAD / merge commit SHA / end HEAD recorded in the report.
 
 ---

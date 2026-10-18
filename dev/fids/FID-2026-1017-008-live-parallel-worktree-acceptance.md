@@ -4,6 +4,27 @@
 **ID:** FID-2026-1017-008
 **Severity:** low
 **Status:** converged
+> **Run state (2026-10-18, run 3):** the A–Z instrument was re-run a third time
+> and again returned DEFECTS FOUND. Rows §3 and §4 passed (20 PASS, 0 FAIL);
+> the live lifecycle ran through §5.11, where the **dirty-disposal refusal
+> failed to fire** — the lane was clean because
+> `docs/design/parallel-worktrees-lane-proof.md` is already tracked on `main`
+> (commits `3d24daf9`, `01763f17`), so `dispose` legitimately succeeded. Two
+> rows (§5.9a, §5.10) are **NEEDS-REVIEW** for the same reason: the covered
+> write and the dirty-lane state cannot be observed when the target is already
+> committed. Nine rows (§5.12–§5.17, §6.1) are NOT-RUN: the operator stopped
+> the mutation sequence after the §5.11 disposal removed the lane. A further
+> **BLOCKER-1** was a *concurrent* operator session mutating the shared main
+> checkout mid-run (new FIDs `FID-2026-1018-002`/`FID-2026-1018-003`, `SCOPE.md`
+> register additions, CLI render changes), which alone makes §5.13's
+> both-checkouts-clean merge gate unreachable. The lane system behaved
+> correctly for everything it was allowed to do; the defects are in the
+> **instrument's preconditions**, not the lifecycle. Run 3's report is
+> preserved at
+> `dev/test-prompts/archive/2026-10-18-parallel-worktrees-live-test-report-run3.md`.
+> `converged` is retained because the lane vehicle's `create` requires exactly
+> one active converged FID. This record claims no acceptance until a clean run.
+>
 > **Run state (2026-10-17, run 2):** the A–Z instrument was re-run and again
 > returned DEFECTS FOUND. Rows §3 and §4 passed (13 PASS, 0 FAIL); §5.1 onward
 > was unreachable because every `fid_worktree` call was refused before dispatch
@@ -98,6 +119,26 @@ lifecycle calls that reached the service; not reproducible out-of-process and
 still unexplained. BLOCKER-2: post-merge graph refresh failed; root-caused and
 repaired by FID-2026-1017-011 (`774eb705`), which completed the live refresh in
 8,894 ms and indexed the merged lane proof.
+
+2026-10-18 live run 3 (report archived at
+`dev/test-prompts/archive/2026-10-18-parallel-worktrees-live-test-report-run3.md`):
+20 PASS, 1 FAIL (§5.11 — the dirty-disposal refusal did not fire because the
+lane was clean), 4 OPERATOR-CONFIRMED, 2 NEEDS-REVIEW (§5.9a, §5.10 — the
+lane-proof target is already tracked on `main`, so the covered write and the
+dirty-lane state are unobservable), 0 SKIP, 9 NOT-RUN (§5.12–§5.17, §6.1 —
+operator stopped after §5.11 disposed the lane). Instrument-level defects
+recorded: (a) §5.9a/§5.10 assume the proof file is untracked; (b) §5.11
+assumes a dirty lane; (c) §2's clean-tree precondition is checked only at
+start. BLOCKER-1 is *live interference*, not a code defect: a concurrent
+operator session mutated the shared main checkout mid-run (new FIDs
+`FID-2026-1018-002`/`FID-2026-1018-003` and CLI render changes appeared at
+15:16, two minutes after the lane was created at 15:14), which makes §5.13's
+both-checkouts-clean merge gate impossible and §5.19's clean-final-checkout
+unverifiable. §5.8b needed a retry under `MSYS_NO_PATHCONV=1` because Git Bash
+rewrote the probe's `/KEY|TOKEN|SECRET/i` regex into a `C:/Program Files/Git/...`
+path. §5.5c observed the managed dependency links as Git Bash symlinks rather
+than NTFS junctions (targets correct). The §4 gate matrix passed unchanged
+(53 tests + 2 root gates, all exit 0).
 
 This session (pre-run): the register's machine-readable surface was audited
 with the gate's own parser module (packages/agent-runtime/src/echo/scope-targets.ts)
@@ -291,7 +332,7 @@ over the instrument and the register:
 
 ## Resolution
 
-Not yet resolved. Two A-Z runs have executed and both returned DEFECTS FOUND;
+Not yet resolved. Three A-Z runs have executed and all returned DEFECTS FOUND;
 their reports are preserved. Repaired so far: the graph-refresh defect
 (FID-2026-1017-011, `774eb705`), the root-guard retry and instrument drift
 (FID-2026-1017-012, `4f989510`), and the unreachable `fid_worktree` tool schema
@@ -302,7 +343,7 @@ Run 2's report is preserved at
 its BLOCKER is the
 schema refusal, now fixed and pinned by
 `common/src/tools/__tests__/tool-schema-object-root.test.ts`. The next step is a
-third operator run of `dev/test-prompts/az-parallel-worktrees-live-test.md`
+fourth operator run of the corrected `dev/test-prompts/az-parallel-worktrees-live-test.md`
 against the repaired tree; closure follows only a clean run, with the receipt
 stamped and this record archived.
 
@@ -312,7 +353,51 @@ now requires the tool's advertised parameter schema (and names the
 fails before any mutation; §5.6 attributes `fid-in-use` to
 `provisionFidWorktree` rather than to the service's reason list.
 
+**Run 3 (2026-10-18)** exercised the repaired tree live and cleared the run-2
+blocker: every `fid_worktree` call reached the service and returned the
+expected shape — `list`/\(create\)/`not-converged`/`fid-in-use`/schema-refusal
+all matched their declared strings, lane provisioning recorded the correct
+base, branch, index, six dependency links and graph snapshot, `exec` reported
+`index 1` / `port 3100` / `compose savant_wt1` / `secretVars 0`, and the Law 2
+gate blocked both uncovered writes with the expected wording. It did not reach
+a clean verdict, for three **instrument** reasons and one **environment**
+reason now on record:
+
+1. **§5.9a/§5.10 unfalsifiable.** `docs/design/parallel-worktrees-lane-proof.md`
+   is already tracked on `main` (from runs 1–2), so the lane starts with the
+   file present and clean; a fresh covered write is indistinguishable and the
+   `?? …` dirty state cannot appear. Fix: use a run-unique proof filename.
+2. **§5.11 assumed dirtiness.** With a clean lane, `dispose` correctly
+   removed it (no `dirty` refusal). The refusal path needs a genuine
+   uncommitted change first.
+3. **§2 is a start-only check.** The instrument validates a clean tree once and
+   never re-checks it before §5.13. It should re-assert cleanliness on both
+   checkouts immediately before the merge row.
+4. **BLOCKER-1 (environment).** A concurrent operator session mutated the
+   shared main checkout during the run, which is fatal to §5.13/§5.19 by
+   construction. The instrument should require a quiescent checkout.
+
+Consequently §5.12–§5.17 and §6.1 remain unproven and this record still claims
+no acceptance. The next step is a fourth run of
+`dev/test-prompts/az-parallel-worktrees-live-test.md` with the four instrument
+preconditions above corrected and no concurrent writer in the checkout.
+
 ## Lessons Learned
+
+### Run-4 preparation (FID-2026-1018-004)
+
+The repaired instrument records a run stamp and an absent run-unique proof
+path, whose register glob is `docs/design/parallel-worktrees-lane-proof-*.md`.
+It requires exact untracked/dirty:true evidence before either refusal test,
+both checkout statuses and refs immediately before merge, and operator-confirmed
+exclusive main access throughout. Graph lookup matches the new proof exactly.
+New scratch reports live under `dev/scratchpad/active/` rather than its root.
+
+The retained branch and prep stash are preserved. Because main advanced after
+run 3, run 4 preflight must check the retained branch tip equals start HEAD;
+an operator may first approve a normal fast-forward when ancestry proves it
+safe. No branch/stash mutation is performed by the instrument-repair session.
+Original run-3 findings and verdict remain unchanged; a fourth run has not run.
 
 Acceptance instruments must encode refusal strings and expected JSON from a
 read of the production sources, not from memory; and a register's
