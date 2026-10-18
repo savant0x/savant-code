@@ -37,6 +37,10 @@ export function renderFreeOptionsMarkdownBody(view: FreeOptionsView): string {
   const delta = catalogDeltaLine(view.newModelIds)
   if (delta) lines.push(delta)
   lines.push('')
+  lines.push(
+    '_Broad discovery evidence: this report includes non-coding, conditional and expired listings; it does not certify account access or tool support._',
+  )
+  lines.push('')
   lines.push(`## Wired — ${view.wiredCaveat}; account access unverified`)
   lines.push('')
   if (view.wired.length === 0) {

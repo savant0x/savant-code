@@ -11,6 +11,15 @@ handling or repository boundaries.
 
 ## Open items
 
+### FID-2026-1017-010 — free-options relevance and bounded boot output
+
+Authority: automation level 3. Refine filtering after the operator supplied the
+unfiltered boot copy and requested pipeline refinement. Preserve broad discovery
+evidence in the existing report; derive a shared coding-focused selection for
+boot and `/provider free`. Exclude expired, duplicate and clearly non-chat rows,
+filter offers by relevance and expiry, bound boot previews and copy output, and
+report exclusions and evidence limits. No live inference or new provider setup.
+
 ### EMBED-001 — the harness single-agent embed is a superseded law revision (blocked)
 
 Authority: automation level 3 (session ceiling). The install step is reserved to the
@@ -156,6 +165,15 @@ dispositions supersede the previous register holds.
   cleared; the intake report passes Markdown lint. No artifact was deleted.
 
 ## Machine-readable scope targets
+
+- FID-2026-1017-010: `cli/src/utils/free-options*.ts`,
+  `cli/src/utils/provider-offers.ts`,
+  `cli/src/utils/openrouter-models/catalog-filter.ts`,
+  `cli/src/utils/__tests__/free-options*.ts`,
+  `cli/src/components/free-options-panel.tsx`,
+  `cli/src/components/__tests__/free-options-panel*.tsx`,
+  `docs/design/free-options-filtering.md`, `SCOPE.md`, `CHANGELOG.md`,
+  `dev/fids/**`, `dev/session-summaries/**`
 
 Operator authorization: completion at automation level 3, renewed 2026-10-15;
 specific removal and skill metadata approvals are in answers.md. Governance

@@ -33,7 +33,7 @@ export function offerRow(
     category: 'API providers',
     deadlineLabel: 'no advertised deadline',
     providerLabels: [],
-    url: 'https://freetokens.custats.info/offers/x.html',
+    url: `https://freetokens.custats.info/offers/${encodeURIComponent(over.title)}.html`,
     ...over,
   }
 }

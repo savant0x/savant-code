@@ -7,7 +7,13 @@ import { CollapseButton } from './collapse-button'
 import { TrafficLightPanel } from './traffic-light-panel'
 import { useTheme } from '../hooks/use-theme'
 import { bootFreshnessLabel } from '../utils/free-options-boot'
-import { buildFreeOptionsView } from '../utils/free-options-view'
+import { renderFreeOptionsCopy } from '../utils/free-options-render'
+import {
+  buildFreeOptionsView,
+  freeOptionsPreviewLine,
+  freeOptionsSelectionLine,
+  previewFreeOptionsView,
+} from '../utils/free-options-view'
 
 import type { FreeOptionsContentBlock } from '../types/chat'
 import type { ChatTheme } from '../types/theme-system'
@@ -16,30 +22,36 @@ import type { ChatTheme } from '../types/theme-system'
  * FID-2026-1017-005 — the boot free-options surface.
  *
  * Collapsed by default for the same reason as the compaction summary: boot
- * must not fill the window. The complete payload stays in the block — every
- * wired model id, every not-wired lane, every offer — and expanding mounts it
- * all. The header always carries the freshness verdict and the resolved
+ * must not fill the window. The complete payload stays in the block; the
+ * expanded panel and Copy share a bounded coding-focused preview. The broad
+ * artifact preserves discovery evidence. The header carries freshness and the resolved
  * artifact path, so the file is reachable without a second command.
  */
 export const FreeOptionsPanel = React.memo(function FreeOptionsPanel({
   block,
   onToggleCollapsed,
+  nowMs = Date.now(),
 }: {
   block: FreeOptionsContentBlock
   onToggleCollapsed?: (id: string) => void
+  nowMs?: number
 }) {
   const theme = useTheme()
   const view = useMemo(
     () =>
-      buildFreeOptionsView(block.snapshot.report, {
-        markdownPath: block.markdownPath,
-        generatedAt:
-          block.snapshot.report.exportStatus?.generatedAt ??
-          block.snapshot.artifact.generatedAt ??
-          '',
-        freshness: bootFreshnessLabel(block.snapshot),
-      }),
-    [block.snapshot, block.markdownPath],
+      previewFreeOptionsView(
+        buildFreeOptionsView(block.snapshot.report, {
+          markdownPath: block.markdownPath,
+          generatedAt:
+            block.snapshot.report.exportStatus?.generatedAt ??
+            block.snapshot.artifact.generatedAt ??
+            '',
+          freshness: bootFreshnessLabel(block.snapshot),
+          audience: 'coding',
+          nowMs,
+        }),
+      ),
+    [block.snapshot, block.markdownPath, nowMs],
   )
   const { counts } = view.header
   const isCollapsed = block.isCollapsed ?? true
@@ -62,7 +74,11 @@ export const FreeOptionsPanel = React.memo(function FreeOptionsPanel({
       <TrafficLightPanel>
         {/* No bare string child: OpenTUI rejects text outside a <text> node
             ("Text must be created inside of a text node"). */}
-        <CopyableBlock getCopyText={() => renderCopyText(block, view)}>
+        <CopyableBlock
+          getCopyText={() =>
+            renderFreeOptionsCopy(view, block.snapshot.refreshError)
+          }
+        >
           <box style={{ flexDirection: 'column' }}>
             <Button
               style={{ justifyContent: 'flex-start', width: '100%' }}
@@ -73,8 +89,9 @@ export const FreeOptionsPanel = React.memo(function FreeOptionsPanel({
               </text>
             </Button>
             <text fg={theme.muted}>
-              {`${counts.wiredModels} free model(s) on ${counts.wiredProviders} wired · ${counts.notWiredProviders} tier(s) not wired · ${counts.local} local · ${counts.offers} offer(s)${counts.offersEndingSoon > 0 ? ` (${counts.offersEndingSoon} end within 72h)` : ''}`}
+              {`${counts.wiredModels} text candidate(s) on ${counts.wiredProviders} wired · ${counts.notWiredProviders} tier(s) not wired · ${counts.local} local · ${counts.offers} relevant offer(s)${counts.offersEndingSoon > 0 ? ` (${counts.offersEndingSoon} end within 72h)` : ''}`}
             </text>
+            <text fg={theme.muted}>{freeOptionsSelectionLine(view)}</text>
             <text fg={theme.muted}>{exportLine}</text>
             {discoveryLine ? (
               <text fg={theme.info}>{discoveryLine}</text>
@@ -89,12 +106,12 @@ export const FreeOptionsPanel = React.memo(function FreeOptionsPanel({
 
                 <SectionTitle
                   theme={theme}
-                  label={`Wired — ${counts.wiredModels} model(s) on ${counts.wiredProviders} provider(s)`}
+                  label={`Advertised free text candidates — ${counts.wiredModels} on ${counts.wiredProviders} configured provider(s)`}
                 />
                 {view.wired.length === 0 ? (
                   <text fg={theme.muted}>
                     {
-                      '_No configured provider exposes models in the free catalog._'
+                      '_No configured provider has a model matching the coding selection._'
                     }
                   </text>
                 ) : (
@@ -104,7 +121,7 @@ export const FreeOptionsPanel = React.memo(function FreeOptionsPanel({
                       style={{ flexDirection: 'column' }}
                     >
                       <text fg={theme.foreground}>
-                        {`${lane.label} (${lane.providerId}) — ${lane.models.length}`}
+                        {`${lane.label} (${lane.providerId}) — ${lane.models.length} shown`}
                       </text>
                       {lane.models.map((model) => (
                         <text
@@ -125,7 +142,7 @@ export const FreeOptionsPanel = React.memo(function FreeOptionsPanel({
                 {view.notWired.length === 0 ? (
                   <text fg={theme.muted}>
                     {
-                      '_Every supported free-catalog provider has credentials configured._'
+                      '_No unconfigured provider has a model matching the coding selection._'
                     }
                   </text>
                 ) : (
@@ -184,11 +201,11 @@ export const FreeOptionsPanel = React.memo(function FreeOptionsPanel({
 
                 <SectionTitle
                   theme={theme}
-                  label={`Advertised offers — ${counts.offers}${counts.offersEndingSoon > 0 ? `, ${counts.offersEndingSoon} end within 72h` : ''}`}
+                  label={`Relevant advertised offers — ${counts.offers}${counts.offersEndingSoon > 0 ? `, ${counts.offersEndingSoon} end within 72h` : ''}`}
                 />
                 {view.offers.length === 0 ? (
                   <text fg={theme.muted}>
-                    {'_No advertised offer in the feed._'}
+                    {'_No advertised offer matches the coding selection._'}
                   </text>
                 ) : (
                   view.offers.map((group) => (
@@ -218,6 +235,7 @@ export const FreeOptionsPanel = React.memo(function FreeOptionsPanel({
                   ))
                 )}
 
+                <text fg={theme.muted}>{freeOptionsPreviewLine(view)}</text>
                 <text fg={theme.muted}>{view.quotaFootnote}</text>
                 <text fg={theme.muted}>
                   {`generatedAt ${view.header.generatedAt || 'not exported'}${view.header.fetchedAt ? ` · fetchedAt ${view.header.fetchedAt}` : ''}`}
@@ -247,35 +265,4 @@ function SectionTitle({ theme, label }: { theme: ChatTheme; label: string }) {
       {label}
     </text>
   )
-}
-
-/** Copy captures the whole payload, not the folded viewport. */
-function renderCopyText(
-  block: FreeOptionsContentBlock,
-  view: ReturnType<typeof buildFreeOptionsView>,
-): string {
-  const lines = [
-    `Free options — ${view.header.freshness}`,
-    `${view.header.counts.wiredModels} free model(s) on ${view.header.counts.wiredProviders} wired · ${view.header.counts.notWiredProviders} tier(s) not wired · ${view.header.counts.local} local · ${view.header.counts.offers} offer(s)`,
-    view.header.markdownPath,
-  ]
-  for (const lane of view.wired) {
-    lines.push(`${lane.label} (${lane.providerId})`)
-    for (const model of lane.models) lines.push(`  ${model}`)
-  }
-  for (const lane of view.notWired) {
-    lines.push(`${lane.label} — ${lane.setupCommand}`)
-    for (const model of lane.models) lines.push(`  ${model}`)
-  }
-  for (const lane of view.local)
-    lines.push(`${lane.label} (no key) → ${lane.setupCommand}`)
-  for (const group of view.offers) {
-    lines.push(`[${group.category}]`)
-    for (const row of group.rows)
-      lines.push(`  ${row.title} — ${row.deadlineLabel} — ${row.url}`)
-  }
-  lines.push(view.quotaFootnote)
-  if (block.snapshot.refreshError)
-    lines.push(`Refresh note: ${block.snapshot.refreshError}`)
-  return lines.join('\n')
 }

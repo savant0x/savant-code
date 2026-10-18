@@ -3,8 +3,7 @@
  *
  * Collapsed by default: one header with freshness, counts and the resolved
  * path, and none of the 146 model ids / 223 offer rows mounted. Expanded:
- * every model id and every offer, because the panel is the complete
- * in-product surface, not a preview of the file.
+ * a coding-focused preview; the artifact retains the complete discovery set.
  */
 import { describe, expect, test } from 'bun:test'
 import React from 'react'
@@ -25,6 +24,7 @@ const { SingleBlock } = await import('../blocks/single-block')
 const { defaultPalette } = await import('../../utils/markdown-palette')
 
 const MARKDOWN_PATH = 'C:/Users/test/.savant-code/free-options.md'
+const NOW_MS = Date.parse('2026-10-17T12:00:00Z')
 
 const OFFERS = [
   {
@@ -105,11 +105,14 @@ const BLOCK: FreeOptionsContentBlock = {
 
 describe('FreeOptionsPanel (FID-2026-1017-005)', () => {
   test('renders collapsed by default with freshness, counts and the absolute path', () => {
-    const markup = renderToStaticMarkup(<FreeOptionsPanel block={BLOCK} />)
+    const markup = renderToStaticMarkup(
+      <FreeOptionsPanel block={BLOCK} nowMs={NOW_MS} />,
+    )
     expect(markup).toContain('Free options — fresh · cached 3h ago')
     expect(markup).toContain('▾ expand')
-    expect(markup).toContain('2 free model(s) on 1 wired')
-    expect(markup).toContain('3 offer(s)')
+    expect(markup).toContain('2 text candidate(s) on 1 wired')
+    expect(markup).toContain('1 relevant offer(s)')
+    expect(markup).toContain('2 offer row(s) filtered')
     expect(markup).toContain(MARKDOWN_PATH)
     expect(markup).toContain('export ok')
     expect(markup).toContain('Discovery: 2 new / 1 changed')
@@ -119,9 +122,12 @@ describe('FreeOptionsPanel (FID-2026-1017-005)', () => {
     expect(markup).not.toContain('Vercel tokens')
   })
 
-  test('expanded renders every wired id, every not-wired id and every offer', () => {
+  test('expanded renders coding candidates and excludes unrelated offers', () => {
     const markup = renderToStaticMarkup(
-      <FreeOptionsPanel block={{ ...BLOCK, isCollapsed: false }} />,
+      <FreeOptionsPanel
+        block={{ ...BLOCK, isCollapsed: false }}
+        nowMs={NOW_MS}
+      />,
     )
     expect(markup).toContain('▴ collapse')
     expect(markup).toContain('z-ai/glm-5.3-flash')
@@ -130,10 +136,9 @@ describe('FreeOptionsPanel (FID-2026-1017-005)', () => {
     expect(markup).toContain('qwen-3-coder')
     expect(markup).toContain('/provider groq')
     expect(markup).toContain('Ollama')
-    for (const offer of OFFERS) {
-      expect(markup).toContain(offer.title)
-      expect(markup).toContain(offer.url)
-    }
+    expect(markup).toContain('Vercel tokens')
+    expect(markup).not.toContain('Student pack')
+    expect(markup).not.toContain('Startup credits')
     expect(markup).toContain('advertised deadline 2026-10-31')
     expect(markup).toContain('known: Vercel AI Gateway')
   })

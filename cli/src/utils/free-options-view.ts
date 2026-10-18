@@ -8,7 +8,9 @@
  * freshness resolution and artifact identity live elsewhere.
  */
 import { offerCategoryGroups } from './free-options-offers'
+import { selectCodingFreeOptions } from './free-options-selection'
 
+import type { FreeOptionsSelection } from './free-options-selection'
 import type { FreeOfferRow, FreeOptionsReport } from './free-options-types'
 
 export type FreeOptionsViewMeta = {
@@ -18,6 +20,9 @@ export type FreeOptionsViewMeta = {
   generatedAt: string
   /** Optional boot label; the export uses its own data-age wording. */
   freshness?: string
+  audience?: 'all' | 'coding'
+  /** Required for coding selection; the pure view never reads the clock. */
+  nowMs?: number
 }
 
 export type FreeOptionsViewCounts = {
@@ -33,6 +38,8 @@ export type FreeOptionsViewCounts = {
 }
 
 export type FreeOptionsView = {
+  selection?: FreeOptionsSelection
+  preview?: { hiddenModels: number; hiddenOffers: number }
   header: {
     freshness: string
     fetchedAt: string | null
@@ -92,6 +99,23 @@ export function buildFreeOptionsView(
   report: FreeOptionsReport,
   meta: FreeOptionsViewMeta,
 ): FreeOptionsView {
+  if (meta.audience === 'coding') {
+    if (meta.nowMs === undefined || !Number.isFinite(meta.nowMs))
+      throw new Error(
+        'Coding free-options selection requires an explicit clock',
+      )
+    const selected = selectCodingFreeOptions(report, meta.nowMs)
+    const view = buildFreeOptionsView(selected.report, {
+      ...meta,
+      audience: 'all',
+    })
+    return {
+      ...view,
+      selection: selected.selection,
+      wiredCaveat: `${freeClaimCaveat(report)} — text candidates; coding suitability unverified`,
+      quotaFootnote: `${selected.selection.unverifiedModels} candidate(s) lack verified text/tool metadata. ${view.quotaFootnote}`,
+    }
+  }
   const wired = report.wiredFree.map((lane) => ({
     providerId: lane.providerId,
     label: lane.label,
@@ -144,4 +168,54 @@ export function buildFreeOptionsView(
     wiredCaveat: freeClaimCaveat(report),
     quotaFootnote: `${quotaFootnote(report)}. Local registration does not verify a running server.`,
   }
+}
+
+/** Both the expanded boot panel and Copy consume this same bounded view. */
+export function previewFreeOptionsView(view: FreeOptionsView): FreeOptionsView {
+  const modelLimit = 5
+  const offerLimit = 5
+  let hiddenModels = 0
+  const trimLane = <T extends { models: string[] }>(lane: T): T => {
+    hiddenModels += Math.max(0, lane.models.length - modelLimit)
+    return { ...lane, models: lane.models.slice(0, modelLimit) }
+  }
+  let remaining = offerLimit
+  const offers = view.offers
+    .map((group) => {
+      const rows = group.rows.slice(0, remaining)
+      remaining -= rows.length
+      return { ...group, rows }
+    })
+    .filter((group) => group.rows.length > 0)
+  return {
+    ...view,
+    wired: view.wired.map(trimLane),
+    notWired: view.notWired.map(trimLane),
+    // Unsupported integrations are provider summaries, with no model rows mounted.
+    discoveryOnly: view.discoveryOnly,
+    offers,
+    preview: {
+      hiddenModels,
+      hiddenOffers: Math.max(0, view.header.counts.offers - offerLimit),
+    },
+  }
+}
+
+export function freeOptionsSelectionLine(view: FreeOptionsView): string {
+  const selection = view.selection
+  if (!selection) return ''
+  const reasons = Object.entries(selection.reasons)
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([reason, count]) => `${reason.replaceAll('-', ' ')} ${count}`)
+    .join(', ')
+  return `Coding focus: ${selection.excludedModels} model row(s) and ${selection.excludedOffers} offer row(s) filtered${reasons ? ` (${reasons})` : ''} · ${selection.unverifiedModels} candidate(s) unverified · full discovery: ${view.header.markdownPath}`
+}
+
+export function freeOptionsPreviewLine(view: FreeOptionsView): string {
+  if (
+    !view.preview ||
+    (!view.preview.hiddenModels && !view.preview.hiddenOffers)
+  )
+    return ''
+  return `Preview: ${view.preview.hiddenModels} more model(s), ${view.preview.hiddenOffers} more offer(s) · full discovery: ${view.header.markdownPath}`
 }

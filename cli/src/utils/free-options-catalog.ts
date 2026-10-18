@@ -8,6 +8,11 @@
  */
 import { parseCustatsModels } from '@savant-code/common/providers/custats-models'
 
+import {
+  catalogObject,
+  catalogStrings,
+} from './openrouter-models/catalog-values'
+
 import type {
   FreeCatalogEnvelope,
   FreeCatalogModel,
@@ -46,6 +51,14 @@ export function liftCatalog(raw: unknown): FreeCatalogEnvelope | null {
       id,
       providerId,
       context_length: contextLength,
+      outputModalities: catalogStrings(
+        e['outputModalities'] ??
+          e['output_modalities'] ??
+          catalogObject(e['architecture'])['output_modalities'],
+      ),
+      supportedParameters: catalogStrings(
+        e['supportedParameters'] ?? e['supported_parameters'],
+      ),
       expirationDate:
         parsed.models.find((m) => m.id === id && m.providerId === providerId)
           ?.expirationDate ??

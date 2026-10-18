@@ -11,7 +11,12 @@ import {
   catalogDeltaLine,
   renderOffersCommandBlock,
 } from './free-options-offers'
-import { buildFreeOptionsView, dataFreshnessLabel } from './free-options-view'
+import {
+  buildFreeOptionsView,
+  dataFreshnessLabel,
+  freeOptionsPreviewLine,
+  freeOptionsSelectionLine,
+} from './free-options-view'
 
 import type { FreeOptionsReport } from './free-options-types'
 import type { FreeOptionsView } from './free-options-view'
@@ -21,15 +26,18 @@ export function renderFreeOptionsMarkdown(view: FreeOptionsView): string {
   return renderFreeOptionsArtifact(view).text
 }
 
-/** The compact `/provider free` view. The panel carries the complete list. */
+/** The compact coding selection; the artifact carries the broad discovery list. */
 export function renderCommandOutput(
   report: FreeOptionsReport,
   markdownPath: string,
+  nowMs: number = Date.now(),
 ): string[] {
   const view = buildFreeOptionsView(report, {
     markdownPath,
     generatedAt: report.exportStatus?.generatedAt ?? '',
     freshness: dataFreshnessLabel(report),
+    audience: 'coding',
+    nowMs,
   })
   const lines: string[] = []
   // Truthy guard: `liftCatalog` rejects a non-string `fetchedAt`, but `''`
@@ -47,13 +55,13 @@ export function renderCommandOutput(
   }
   lines.push('')
   lines.push(
-    'Every model id and every offer is in the free-options panel posted at boot; the same reference is saved to:',
+    'Coding-focused candidates are shown here. The complete discovery report is saved to:',
   )
   lines.push(`  ${view.header.markdownPath}`)
   const exported = report.exportStatus
   if (exported && !exported.ok) {
     lines.push(
-      `⚠ Export failed: ${exported.error ?? 'unknown error'}. The panel above is complete; the file may be missing.`,
+      `⚠ Export failed: ${exported.error ?? 'unknown error'}; the file may be missing.`,
     )
   } else if (exported) {
     lines.push(
@@ -62,9 +70,11 @@ export function renderCommandOutput(
   }
   if (view.wired.length > 0) {
     lines.push('')
-    lines.push('**Free models on providers you already wired:**')
+    lines.push(
+      '**Advertised free models — text candidates on configured providers:**',
+    )
     for (const lane of view.wired) {
-      lines.push(`- ${lane.label}: ${lane.models.length} free model(s)`)
+      lines.push(`- ${lane.label}: ${lane.models.length} text candidate(s)`)
     }
   }
   if (view.notWired.length > 0) {
@@ -85,10 +95,39 @@ export function renderCommandOutput(
   }
   lines.push(
     ...renderOffersCommandBlock(
-      report.discoveryOffers ?? [],
+      view.offers.flatMap((group) => group.rows),
       view.header.markdownPath,
     ),
   )
-  lines.push(view.quotaFootnote)
+  lines.push(freeOptionsSelectionLine(view), view.quotaFootnote)
   return lines
+}
+
+/** Copy mirrors the selected preview; the report link reaches broad evidence. */
+export function renderFreeOptionsCopy(
+  view: FreeOptionsView,
+  refreshError?: string,
+): string {
+  const { counts } = view.header
+  const lines = [
+    `Free options — ${view.header.freshness}`,
+    `${counts.wiredModels} text candidate(s) on ${counts.wiredProviders} configured provider(s) · ${counts.offers} relevant offer(s)`,
+    view.header.markdownPath,
+    freeOptionsSelectionLine(view),
+  ]
+  for (const lane of [...view.wired, ...view.notWired]) {
+    lines.push(`${lane.label} (${lane.providerId})`)
+    for (const model of lane.models) lines.push(`  ${model}`)
+    if ('setupCommand' in lane) lines.push(`  ${lane.setupCommand}`)
+  }
+  for (const lane of view.local)
+    lines.push(`${lane.label} (no key) → ${lane.setupCommand}`)
+  for (const group of view.offers) {
+    lines.push(`[${group.category}]`)
+    for (const row of group.rows)
+      lines.push(`  ${row.title} — ${row.deadlineLabel} — ${row.url}`)
+  }
+  lines.push(freeOptionsPreviewLine(view), view.quotaFootnote)
+  if (refreshError) lines.push(`Refresh note: ${refreshError}`)
+  return lines.filter(Boolean).join('\n')
 }

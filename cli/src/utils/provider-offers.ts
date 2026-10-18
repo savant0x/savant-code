@@ -260,6 +260,7 @@ export function readProviderOfferDiscovery(now = Date.now()): FreeOfferRow[] {
     title: offer.title,
     category: offer.category,
     deadlineLabel: offerDeadlineLabel(offer),
+    deadlineMs: resolveOfferDeadlineMs(offer),
     providerLabels: labels.get(offer) ?? [],
     url: offer.url,
   }))

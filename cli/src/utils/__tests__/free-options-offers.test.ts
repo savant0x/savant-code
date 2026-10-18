@@ -50,9 +50,11 @@ describe('FID-2026-1016-010: offer rows are bounded, grouped and attributed', ()
   }
 
   test('the command view bounds the attributed list and counts the remainder', () => {
-    const joined = renderCommandOutput(report, MARKDOWN_PATH).join('\n')
+    const joined = renderCommandOutput(report, MARKDOWN_PATH, CTX.nowMs).join(
+      '\n',
+    )
     expect(joined).toContain(
-      'Advertised offers naming a provider in your registry (12 of 14):',
+      'Advertised offers naming a provider in your registry (11 of 11):',
     )
     expect(joined).toContain(
       '- Known 01 — advertised deadline 2026-10-31 · known: Vercel AI Gateway',
@@ -60,11 +62,11 @@ describe('FID-2026-1016-010: offer rows are bounded, grouped and attributed', ()
     expect(joined).toContain('- Known 10 —')
     expect(joined).not.toContain('- Known 11 —')
     expect(joined).toContain(
-      `… and 2 more — the full list is in ${MARKDOWN_PATH}`,
+      `… and 1 more — the full list is in ${MARKDOWN_PATH}`,
     )
-    expect(joined).toContain(
-      'Categories: Coding 11 · Startup programs 2 · Student 1',
-    )
+    expect(joined).toContain('Categories: Coding 11')
+    expect(joined).not.toContain('Known 12')
+    expect(joined).not.toContain('Unattributed A')
   })
 
   test('the markdown reference keeps every offer, grouped, with marks', () => {

@@ -135,6 +135,7 @@ export function buildFreeOptionsReport(
 
   return {
     fetchedAt: catalog?.fetchedAt ?? null,
+    catalogModels: catalog?.models.map((model) => ({ ...model })) ?? [],
     stale: catalog !== null && !isCacheFresh(catalog.fetchedAt, context.nowMs),
     ...(catalog
       ? {

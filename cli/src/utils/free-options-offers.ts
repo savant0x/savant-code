@@ -79,8 +79,8 @@ export function renderOffersMarkdownSection(
 
 /**
  * The bounded command block: attributed offers (capped, remainder counted)
- * followed by the per-category counts. The full list is the boot panel and
- * the artifact at `markdownPath` — resolved by the caller, never a bare name.
+ * followed by the per-category counts. The full discovery list is the artifact at
+ * `markdownPath` — resolved by the caller, never a bare name.
  */
 export function renderOffersCommandBlock(
   rows: readonly FreeOfferRow[],

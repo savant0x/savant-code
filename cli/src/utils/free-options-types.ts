@@ -12,6 +12,8 @@ export type FreeCatalogModel = {
   providerId: string
   context_length: number | null
   expirationDate?: string | null
+  outputModalities?: string[]
+  supportedParameters?: string[]
 }
 
 /** The catalog envelope shape we rely on (defensive lift at the boundary). */
@@ -69,6 +71,8 @@ export type FreeOfferRow = {
    * (a claim we hold but could not resolve).
    */
   deadlineLabel: string
+  /** Resolved advertised deadline, not account-credit expiry. */
+  deadlineMs?: number | null
   /** Registry labels the offer's prose attributes to; [] when unattributed. */
   providerLabels: string[]
   url: string
@@ -106,6 +110,8 @@ export type FreeOptionsArtifactCheck = {
 export type FreeOptionsReport = {
   fetchedAt: string | null
   stale: boolean
+  /** Raw model evidence retained for suitability decisions and cache round trips. */
+  catalogModels?: FreeCatalogModel[]
   /** Provenance added by the refresher/cache reader (FID-2026-1017-005). */
   catalogSource?: FreeOptionsCatalogSource
   /** Write outcome for the markdown export (FID-2026-1017-005). */
