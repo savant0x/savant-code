@@ -1,5 +1,5 @@
 import { useKeyboard } from '@opentui/react'
-import { useCallback, useEffect, useMemo, useRef } from 'react'
+import { memo, useCallback, useEffect, useMemo, useRef } from 'react'
 
 import { buildGroupedItems, type ListItem } from './model-picker-grouping'
 import { ModelPickerHeaderRow, ModelPickerModelRow } from './model-picker-rows'
@@ -37,7 +37,7 @@ interface ModelPickerProps {
  * onSelect. Mirrors the keyboard/focus pattern of SavantFreeModelSelector and
  * ask-user so behavior is consistent across overlays.
  */
-export const ModelPicker: React.FC<ModelPickerProps> = ({
+export const ModelPicker = memo(function ModelPicker({
   models,
   query,
   selectedIndex,
@@ -46,7 +46,7 @@ export const ModelPicker: React.FC<ModelPickerProps> = ({
   onSelect,
   onClose,
   terminalHeight,
-}) => {
+}: ModelPickerProps) {
   const theme = useTheme()
   const { terminalWidth } = useTerminalDimensions()
   const unavailableProviders = useModelPickerStore(
@@ -266,4 +266,4 @@ export const ModelPicker: React.FC<ModelPickerProps> = ({
       </scrollbox>
     </box>
   )
-}
+})
