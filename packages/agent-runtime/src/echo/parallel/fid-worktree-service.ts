@@ -29,13 +29,33 @@ import {
 import { inspectFidWorktrees } from './fid-worktree-list'
 import { mergeFidWorktree } from './fid-worktree-merge'
 
+import type { GitRunner } from './fid-worktree-git'
 import type {
   FidWorktreeInput,
   FidWorktreeResult,
 } from '@savant-code/common/tools/params/tool/fid-worktree'
 
+/**
+ * Bounded retry ONLY for a git process that could not run (`status: null` from
+ * a spawn failure or the timeout). A non-null status is a real answer — git ran
+ * and either refused or reported a root — so retrying it cannot change the
+ * verdict. FID-2026-1017-012: without this split a transient spawn failure and
+ * a genuinely different root produced the same `unsafe-root` refusal.
+ */
+function resolveGitTopLevel(repoRoot: string, run: GitRunner): string | null {
+  for (let attempt = 0; attempt < 2; attempt++) {
+    const root = run(['rev-parse', '--show-toplevel'], repoRoot)
+    if (root.status === 0) return root.stdout.trim()
+    if (root.status !== null) return null
+  }
+  return null
+}
+
 /** Fail closed on redirected managed roots before any recursive lifecycle IO. */
-function safeHostRoot(repoRoot: string): boolean {
+export function safeHostRoot(
+  repoRoot: string,
+  run: GitRunner = defaultGitRunner,
+): boolean {
   const gitRoot = path.join(repoRoot, '.git')
   if (!existsSync(gitRoot) || !statSync(gitRoot).isDirectory()) return false
   for (const suffix of ['', '.savant', '.savant/worktrees']) {
@@ -46,11 +66,8 @@ function safeHostRoot(repoRoot: string): boolean {
     )
       return false
   }
-  const root = defaultGitRunner(['rev-parse', '--show-toplevel'], repoRoot)
-  return (
-    root.status === 0 &&
-    pathCompareKey(root.stdout.trim()) === pathCompareKey(repoRoot)
-  )
+  const root = resolveGitTopLevel(repoRoot, run)
+  return root !== null && pathCompareKey(root) === pathCompareKey(repoRoot)
 }
 
 function isConverged(repoRoot: string, fidId: string): boolean {

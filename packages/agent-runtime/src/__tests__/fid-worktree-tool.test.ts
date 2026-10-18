@@ -1,4 +1,5 @@
-import { mkdirSync, rmSync, writeFileSync } from 'node:fs'
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs'
+import { tmpdir } from 'node:os'
 import path from 'node:path'
 
 import { fidWorktreeParams } from '@savant-code/common/tools/params/tool/fid-worktree'
@@ -17,7 +18,7 @@ import { createSavant } from '../../../../agents/savant/savant'
 import scout from '../../../../agents/scout/scout'
 import verifier from '../../../../agents/verifier/verifier'
 import { classifyMutation } from '../echo/enforcement/helpers'
-import { runFidWorktreeAction } from '../echo/parallel/fid-worktree-service'
+import { safeHostRoot, runFidWorktreeAction } from '../echo/parallel/fid-worktree-service'
 import { savantCodeToolHandlers } from '../tools/handlers/list'
 import { handleFidWorktree } from '../tools/handlers/tool/fid-worktree'
 
@@ -33,6 +34,50 @@ function fixture() {
   roots.push(root)
   return root
 }
+
+test('root guard retries only a git process that could not run', () => {
+  const root = mkdtempSync(path.join(tmpdir(), 'fid-root-guard-'))
+  roots.push(root)
+  mkdirSync(path.join(root, '.git'))
+
+  expect(
+    safeHostRoot(root, () => ({ status: 0, stdout: root, stderr: '' })),
+  ).toBe(true)
+
+  // A spawn that never ran is retried once; the matching second answer wins.
+  let calls = 0
+  expect(
+    safeHostRoot(root, () => {
+      calls += 1
+      return calls === 1
+        ? { status: null, stdout: '', stderr: 'spawn failed' }
+        : { status: 0, stdout: root, stderr: '' }
+    }),
+  ).toBe(true)
+  expect(calls).toBe(2)
+
+  // Two spawn failures stay refused, and the retry is bounded.
+  let deadCalls = 0
+  expect(
+    safeHostRoot(root, () => {
+      deadCalls += 1
+      return { status: null, stdout: '', stderr: '' }
+    }),
+  ).toBe(false)
+  expect(deadCalls).toBe(2)
+
+  // A real answer is never retried: different root or non-zero status refuses.
+  expect(
+    safeHostRoot(root, () => ({ status: 0, stdout: `${root}x`, stderr: '' })),
+  ).toBe(false)
+  expect(
+    safeHostRoot(root, () => ({
+      status: 1,
+      stdout: '',
+      stderr: 'not a repository',
+    })),
+  ).toBe(false)
+})
 
 test('tool is registered and exposed only on effectful Orchestrator variants', () => {
   expect(savantCodeToolHandlers.fid_worktree).toBe(handleFidWorktree)

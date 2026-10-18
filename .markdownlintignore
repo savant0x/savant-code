@@ -137,3 +137,9 @@ dev/exports/**
 # meaningless. Same exemption precedent as dev/test-prompts/*-deep-research-prompt.md
 # and docs/trash/**. The draft lives at dev/operator/ (untracked, never shipped).
 dev/operator/**
+
+# Paste-ready video script (2026-10-17) — a recording draft kept in the
+# test-prompts tree, untracked and never shipped; long spoken lines make MD013
+# meaningless. Same exemption precedent as dev/test-prompts/*-deep-research-prompt.md
+# and dev/operator/**.
+dev/test-prompts/*-yt-script.md

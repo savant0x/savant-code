@@ -71,15 +71,19 @@ evidence becomes FID-2026-1017-008's acceptance record.
 ## 2. Preconditions (verify first; any failure = STOP and report)
 
 - `git branch --show-current` prints `main`.
-- Record the baseline `git status --short`. Allowed at baseline: the untracked
-  file `docs/design/Savant-Code Parallel Architecture Blueprint.md`. Anything
-  else: note it and ask the operator before continuing.
+- Record the baseline `git status --short`. It MUST be empty. The merge gate
+  runs `git status --porcelain --untracked-files=normal` on BOTH checkouts, so
+  any entry — tracked or untracked — makes §5.13 impossible. Stash or commit
+  everything before starting (the prep step stashes the untracked blueprint;
+  restore it after the run with `git stash pop`).
 - Record `git rev-parse HEAD` (this is the "start HEAD" for the whole run and
   the expected lane `baseSha`).
 - `dev/fids/FID-2026-1017-008-live-parallel-worktree-acceptance.md` exists,
-  contains a line `**Status:** converged`, and is committed:
-  `git log --oneline -1 -- dev/fids/FID-2026-1017-008-live-parallel-worktree-acceptance.md`
-  returns a commit.
+  contains a line `**Status:** converged`, and is TRACKED:
+  `git ls-files --error-unmatch dev/fids/FID-2026-1017-008-live-parallel-worktree-acceptance.md`
+  exits 0 and `git log --oneline -1 -- <that path>` returns a commit. `/dev` is
+  gitignored, so a path-scoped `git add` silently skips the record: it must be
+  force-added (`git add -f`) in a commit before the run.
 - `git worktree list` shows exactly one entry (this checkout, on `main`).
 - `.savant/worktrees` contains no lane directories (it may be absent; a
   `.records` directory may exist).
@@ -128,9 +132,9 @@ All `fid_worktree` calls are JSON arguments to the harness tool, e.g.
 | #     | Test                                              | Type       | Expected / trigger path                                                                                                                                                                                                                                                                                                 |
 | ----- | ------------------------------------------------- | ---------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | 5.1   | `list` on the clean slate                         | LIVE       | OK result with an empty lane list (`lanes: []`), no error. Record the JSON.                                                                                                                                                                                                                                             |
-| 5.2   | Invalid FID id refusal                            | LIVE       | `create` with `fid_id: "FID-9999"` → refusal `invalid-input` ("Invalid action or FID id"). No side effects.                                                                                                                                                                                                             |
+| 5.2   | Invalid FID id refusal                            | LIVE       | `create` with `fid_id: "FID-9999"` → the harness tool schema refuses BEFORE dispatch: `the arguments failed the tool schema at: fid_id — invalid_format`. That schema refusal is the expected first boundary; the service's `invalid-input` string is covered by the unit suite and is not reachable through the live tool. No side effects.                                                                                                                                                                                                             |
 | 5.3   | Not-converged refusal                             | LIVE       | `create` with `fid_id: "FID-2026-1017-999"` (well-formed, absent) → refusal `not-converged` ("Create requires exactly one active converged FID"). Verify no branch `savant/FID-2026-1017-999` and no lane directory were created.                                                                                        |
-| ⌘ 5.4 | Create the lane for FID-2026-1017-008             | LIVE       | OK result with a `record`: `fidId` = FID-2026-1017-008; `relativePath` = `.savant/worktrees/FID-2026-1017-008`; `branch` = `savant/FID-2026-1017-008`; `baseSha` == start HEAD (§2); `worktreeIndex` = 1; `dependencyLinks` = record actual list; `createdAt` an ISO timestamp. Record the full record JSON.        |
+| ⌘ 5.4 | Create the lane for FID-2026-1017-008             | LIVE       | OK result with a `record`: `fidId` = FID-2026-1017-008; `relativePath` = `.savant/worktrees/FID-2026-1017-008`; `branch` = `savant/FID-2026-1017-008`; `baseSha` == start HEAD (§2); `worktreeIndex` = 1; `dependencyLinks` = record actual list; `createdAt` an ISO timestamp. Record the full record JSON. The `path` may mix separators (`...\savant-code/.savant/worktrees/...`); compare the record fields, never raw path strings.        |
 | 5.5a  | Lane exists on disk + record file                 | EXECUTABLE | `<repo-root>\.savant\worktrees\FID-2026-1017-008` exists; print `.savant/worktrees/.records/FID-2026-1017-008.json` and check it matches the tool's `record` fields.                                                                                                                                                    |
 | 5.5b  | Git registration + branch                         | EXECUTABLE | `git worktree list --porcelain` includes main AND the lane path; `git -C .savant/worktrees/FID-2026-1017-008 rev-parse --abbrev-ref HEAD` = `savant/FID-2026-1017-008`.                                                                                                                                                 |
 | 5.5c  | Dependency links are junctions                    | EXECUTABLE | For each entry in `dependencyLinks`, confirm the lane copy is a directory link to the main checkout (Windows: `Get-Item "<lane>\<entry>" \| Format-List LinkType,Target` shows `Junction`; use the shell's equivalent on other platforms). Record the full link list.                                                   |
@@ -154,7 +158,7 @@ All `fid_worktree` calls are JSON arguments to the harness tool, e.g.
 | 5.16b | Re-merge refusal (diverged)                        | LIVE       | `merge` again → refusal `diverged`: detail names `main HEAD <sha> differs from recorded base <baseSha>`. Record verbatim.                                                                                                                                                                                               |
 | 5.17a | (OPERATOR) Plant a stray in the lane               | OPERATOR   | Operator, in their own shell: `Set-Content .savant\worktrees\FID-2026-1017-008\az-stray.tmp 'stray (operator-created for the discard-path test)'`. Agent confirms the file exists.                                                                                                                                      |
 | ⌘ 5.17b | Dirty disposal refused again                       | LIVE       | `dispose` → `dirty` refusal. Record.                                                                                                                                                                                                                                                                                    |
-| ⌘ 5.17c | Explicit-discard disposal                          | LIVE       | `dispose` with `{ "discard_changes": true }` → OK, `removed` = true; record warnings (expect none). The stray is discarded with the lane.                                                                                                                                                                               |
+| ⌘ 5.17c | Explicit-discard disposal                          | LIVE       | `dispose` with `{ "discard_changes": true }` → OK, `removed` = true. Record warnings verbatim: a `git worktree remove … Directory not empty` warning is the bounded filesystem fallback recovering, not a failed dispose — PASS when `removed` is true and §5.18 proves the directory is gone. The stray is discarded with the lane.                                                                                                                                                                               |
 | 5.18  | Post-disposal state                                | EXECUTABLE | Lane directory gone; `git worktree list` shows only main; `.records/FID-2026-1017-008.json` gone; branch `savant/FID-2026-1017-008` RETAINED (by design) — record `git branch --list savant/FID-2026-1017-008`; `.savant/fid-worktree.lock` absent; `list` → empty lanes.                                                       |
 | 5.19  | Final checkout state                               | EXECUTABLE | `git status --short` (expect clean; note the untracked blueprint); record end HEAD and state the by-design delta from start HEAD: exactly the lane-proof merge commit.                                                                                                                                                   |
 
@@ -209,7 +213,7 @@ Write the report to `dev/scratchpad/az-parallel-worktrees-live-test-report.md`
 - [ ] Branch `savant/FID-2026-1017-008` retained (by design) — note it; do not delete.
 - [ ] `.savant/fid-worktree.lock` absent.
 - [ ] No probe files landed (`az-out-of-scope-probe.txt` absent; nothing under `.savant/worktrees/AZ-NOT-A-LANE`).
-- [ ] `git status --short` matches §5.19; untracked blueprint still present.
+- [ ] `git status --short` matches §5.19 (clean); restore the stashed blueprint afterwards with `git stash pop`.
 - [ ] Report written to `dev/scratchpad/az-parallel-worktrees-live-test-report.md`.
 - [ ] Start HEAD / merge commit SHA / end HEAD recorded in the report.
 
