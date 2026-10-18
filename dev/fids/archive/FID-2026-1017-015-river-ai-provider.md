@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-1017-015-river-ai-provider.md`
 **ID:** FID-2026-1017-015
 **Severity:** medium
-**Status:** converged
+**Status:** closed
 **Created:** 2026-10-17 22:50
 **Automation level:** 3
 **YAGNI-Compliance:** Verified
@@ -208,19 +208,33 @@ fallback window until documented evidence is added.
 
 ### Implementation Evidence (REQUIRED for `closed`)
 
-- [ ] **Commit SHA:** implementation and closure commit hashes
-- [ ] **File:line ranges:** registry entry, catalog wrapper, context table, and routing/test anchors
-- [ ] **Gate output:** pasted output from declared verification gates
-- [ ] **Reproducibility:** production reachability grep and catalog/SDK test matches
-- [ ] **Step statuses:** Proposed Solution steps 1–7 accounted for
+- [x] **Commit SHA:** `e22c06bf` (implementation; recorded with the FID-2026-1017-016
+      slice because the shared registry, ladder and docs files carry both providers)
+- [x] **File:line ranges:** registry entry `common/src/providers/registry-partitioned-5.ts:164`;
+      catalog wrapper `cli/src/utils/openrouter-models/river.ts:43-50`;
+      window table `common/src/constants/context-window-table-river.ts`;
+      coverage `common/src/constants/window-coverage-register.ts:322`;
+      exception ownership `common/src/providers/provider-exception-manifest.ts:54`;
+      ladder `cli/src/utils/openrouter-models/gateway-live-results.ts:36,67,135,219`;
+      reset `cli/src/utils/openrouter-models/gateway.ts:257`
+- [x] **Gate output:** stamped above — 12/12 declared gates exit 0 (common/cli/sdk
+      typecheck, registry validate + setup, river catalog, window coverage,
+      provider setup, SDK free-mode, blazerail + tier1 ladder fixtures, quality)
+- [x] **Reproducibility:** `grep -n river common/src/providers/registry-partitioned-5.ts`;
+      `bun test src/utils/openrouter-models/__tests__/river-catalog.test.ts` from `cli`
+- [x] **Step statuses:** Steps 1–7 implemented; docs generated rather than hand-edited;
+      the identity gauntlet remains inconclusive by design (recorded, not upgraded)
 
 ### Code Verification Evidence
 
-- [ ] Files referenced in Affected Components exist
-- [ ] Implementation matches the Proposed Solution
-- [ ] Typecheck/tests/lint pass with pasted tool output
-- [ ] Production call-graph evidence is present for the new provider
-- [ ] FID status reflects the actual implementation state
+- [x] Files referenced in Affected Components exist
+- [x] Implementation matches the Proposed Solution
+- [x] Typecheck/tests/lint pass with pasted tool output (12/12 gates, full
+      `bun run test` green, ESLint 0, markdownlint 0, Prettier clean)
+- [x] Production call-graph evidence is present for the new provider:
+      `fetchGatewayLiveCatalogs` → `fetchRiverModels` →
+      `resolveGatewayLiveCatalogs.riverModels` → `assembleGatewayCatalog`
+- [x] FID status reflects the actual implementation state
 
 ### Loop 2 — Independent audit and self-correction
 
@@ -257,10 +271,25 @@ fallback window until documented evidence is added.
 
 ## Resolution
 
-- **Closed Date:** pending implementation
-- **Fix Description:** pending implementation
-- **Tests Added:** pending implementation
-- **Verification Evidence:** pending implementation
+- **Closed Date:** 2026-10-17 23:55
+- **Fix Description:** River is registered as an OpenAI-compatible gateway
+  (`https://api.river.ai/v1`) with an authenticated live catalog that preserves
+  every model the account returns and its exact upstream IDs. The three
+  documented 1,048,576-token windows are pinned in
+  `context-window-table-river.ts`; windows River does not publish stay unknown
+  rather than being invented. Exception ownership, coverage registration, the
+  fan-out ladder slot (17) and the cache reset are wired in the same change.
+- **Tests Added:** Yes — `river-catalog.test.ts` (parser boundaries, exact IDs,
+  malformed responses, cache/reset, ladder slot) plus the shared provider-setup,
+  registry, window-coverage and SDK free-mode extensions.
+- **Verification Evidence:** `fid:verify --write` ran 12/12 declared gates with
+  exit 0. Full `bun run test` green, root typecheck exit 0, ESLint
+  `--max-warnings 0` exit 0, markdownlint exit 0, Prettier clean,
+  `validate:repository` PASS.
+- **External boundary:** the authenticated catalog and the one-token inference
+  check are account observations, and the identity gauntlet stayed
+  inconclusive; this closure certifies the implementation, not model identity.
+- **Archived:** 2026-10-17 23:55
 
 ## Lessons Learned
 

@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-1017-016-zylo-provider.md`
 **ID:** FID-2026-1017-016
 **Severity:** medium
-**Status:** converged
+**Status:** closed
 **Created:** 2026-10-17 23:50
 **Automation level:** 3
 **YAGNI-Compliance:** Verified
@@ -179,19 +179,33 @@ as ordinary completion gates; recursive repository validation is not a declared 
 
 ### Implementation Evidence (REQUIRED for `closed`)
 
-- [ ] **Commit SHA:** Implementation and closure hashes will be recorded after verification.
-- [ ] **File:line ranges:** Registry, parser, routing, setup, SDK, and coverage anchors.
-- [ ] **Gate output:** Declared receipt and ordinary completion gate results.
-- [ ] **Reproducibility:** Production caller grep and durable census/test evidence.
-- [ ] **Step statuses:** Steps 1–7 will be accounted for at closure.
+- [x] **Commit SHA:** `e22c06bf` (implementation; shared registry, ladder and docs
+      files carry this provider with FID-2026-1017-015)
+- [x] **File:line ranges:** registry entry
+      `common/src/providers/registry-partitioned-5.ts:177`;
+      catalog wrapper `cli/src/utils/openrouter-models/zylo.ts:51-55`;
+      coverage `common/src/constants/window-coverage-register.ts:75`;
+      exception ownership `common/src/providers/provider-exception-manifest.ts:32`;
+      ladder `cli/src/utils/openrouter-models/gateway-live-results.ts:40,68,136,223`;
+      merge slot `cli/src/utils/openrouter-models/gateway-catalog-merge.ts:67`
+- [x] **Gate output:** stamped above — 10/10 declared gates exit 0 (common/cli/sdk
+      typecheck, registry setup + validate, zylo catalog, provider setup, SDK
+      free-mode, window coverage, quality)
+- [x] **Reproducibility:** `bun test src/utils/openrouter-models/__tests__/zylo-catalog.test.ts`
+      from `cli`; catalog census preserved in `docs/reports/zylo-provider-live-check.md`
+- [x] **Step statuses:** Steps 1–7 implemented; the public fetch is keyless and
+      sends no Authorization header, and no provider-specific SDK factory was added
 
 ### Code Verification Evidence
 
-- [ ] Files referenced in Affected Components exist
-- [ ] Implementation matches the Proposed Solution
-- [ ] Typecheck/tests/lint pass with direct command evidence
-- [ ] Production call-graph evidence is present for the new wiring
-- [x] FID status reflects a converged pre-implementation plan
+- [x] Files referenced in Affected Components exist
+- [x] Implementation matches the Proposed Solution
+- [x] Typecheck/tests/lint pass with direct command evidence (10/10 gates, full
+      `bun run test` green, ESLint 0, markdownlint 0, Prettier clean)
+- [x] Production call-graph evidence is present for the new wiring:
+      `fetchGatewayLiveCatalogs` → `fetchZyloModels` →
+      `resolveGatewayLiveCatalogs.zyloModels` → `assembleGatewayCatalog`
+- [x] FID status reflects the actual implementation state
 
 ### Loop 2 — Independent audit and self-correction
 
@@ -215,10 +229,26 @@ as ordinary completion gates; recursive repository validation is not a declared 
 
 ## Resolution
 
-- **Closed Date:** Not closed; implementation and verification remain.
-- **Fix Description:** Converged registry-driven text catalog plan above.
-- **Tests Added:** Planned durable tests are declared in Verification Gates.
-- **Verification Evidence:** Authentication/catalog measurements above; no implementation PASS yet.
+- **Closed Date:** 2026-10-17 23:55
+- **Fix Description:** Zylo is registered as a text-only, keyless public catalog
+  (`https://api.zyloai.net/v1/models`). The wrapper keeps all 126 published text
+  rows — sparse capability metadata included — and excludes the image and custom
+  sub-model arrays. The public fetch omits credentials entirely, degrades to its
+  own cache, and the provider occupies ladder slot 18 ahead of the custom tail
+  (custom moves to 19). Registry, exception ownership, window coverage, setup
+  metadata and generated docs move in the same change.
+- **Tests Added:** Yes — `zylo-catalog.test.ts` (row filtering, malformed rows,
+  keyless fetch with no Authorization header, cache/reset, registry and slot
+  contract) plus the shared provider-setup, registry, coverage and SDK
+  free-mode extensions.
+- **Verification Evidence:** `fid:verify --write` ran 10/10 declared gates with
+  exit 0. Full `bun run test` green, root typecheck exit 0, ESLint
+  `--max-warnings 0` exit 0, markdownlint exit 0, Prettier clean,
+  `validate:repository` PASS.
+- **External boundary:** plan entitlement and live inference were not obtained;
+  the follow-up stays in `dev/tracking/internal-followups.json` and no upgrade
+  or spend was authorized. Catalog presence does not prove plan access.
+- **Archived:** 2026-10-17 23:55
 
 ## Lessons Learned
 

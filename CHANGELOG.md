@@ -1,5 +1,36 @@
 # Changelog
 
+## 2026-10-17 — Add Zylo AI as a text-only public gateway (FID-2026-1017-016, medium)
+
+Zylo is available through `/provider zylo` with `ZYLO_API_KEY` and
+OpenAI-compatible chat at `https://api.zyloai.net/v1`. Its catalog is
+keyless: the public `/models` roster supplies all 126 text rows, including
+sparse capability metadata, while image and custom sub-model arrays are
+excluded. Every published row keeps a positive finite window, the fetch sends no
+Authorization header, and the provider takes ladder slot 18 ahead of the custom
+tail. The census is preserved in `docs/reports/zylo-provider-live-check.md`.
+Plan entitlement and live inference were not obtained and are tracked as an
+internal follow-up, so no access claim is made.
+
+Implementation: `e22c06bf`. Verification: 10/10 declared gates pass; full
+repository test chain, typecheck, ESLint, markdownlint, Prettier and repository
+validation pass.
+
+## 2026-10-17 — Add River AI as an authenticated gateway (FID-2026-1017-015, medium)
+
+River is available through `/provider river` with `RIVER_AI_API_KEY` and
+OpenAI-compatible chat at `https://api.river.ai/v1`. Its live catalog is the
+account's own model list, kept with exact upstream IDs under the `river/`
+routing prefix; the three documented 1,048,576-token windows are pinned and
+undocumented windows stay unknown rather than invented. Exception ownership,
+window coverage, fan-out, cache reset, setup/SDK contracts and generated docs
+ship in the same change, at ladder slot 17. The identity gauntlet remained
+inconclusive, so route reachability is reported without an identity claim.
+
+Implementation: `e22c06bf`. Verification: 12/12 declared gates pass; full
+repository test chain, typecheck, ESLint, markdownlint, Prettier and repository
+validation pass.
+
 ## 2026-10-17 — `fid_worktree` is callable again (FID-2026-1017-014, high)
 
 The second parallel-worktree acceptance run could not invoke the tool: every

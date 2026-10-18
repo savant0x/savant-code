@@ -11,70 +11,6 @@ handling or repository boundaries.
 
 ## Open items
 
-### FID-2026-1017-016 — Zylo AI text provider (active)
-
-Authority: automation level 3 (session ceiling). The operator requested official
-Zylo support following `docs/adding-a-provider.md`, expressly limited it to text,
-corrected the variable to `ZYLO_API_KEY`, and authorized retrying the updated key.
-Never print or copy the credential value into tracked files or evidence.
-
-- [ ] Register `zylo` / Zylo AI with the shared OpenAI-compatible gateway path,
-  corrected inference environment key, and public live text roster from `/models`.
-  Preserve all 126 main text entries including sparse capability metadata; exclude
-  image and custom submodel arrays. Catalog presence does not prove plan access.
-- [ ] Add parser, cache/fan-out/result/merge wiring, runtime window coverage,
-  exception ownership, setup/SDK/catalog/registry tests, generated provider docs,
-  and human-facing references. All 126 text rows publish positive finite windows.
-- [ ] Verify the implementation, retain durable census evidence, track unsuccessful
-  live acceptance independently, commit, archive, update changelog, and push through
-  normal gates. No plan upgrade or further spending is authorized.
-
-Targets: `common/src/providers/**`, `common/src/constants/**`,
-`cli/src/utils/openrouter-models/**`, `cli/src/utils/__tests__/provider-setup.test.ts`,
-`sdk/src/impl/__tests__/model-provider-free-mode.test.ts`, `.env.example`,
-`README.md`, `README.zh-CN.md`, `cli/release/README.md`, `docs/**`,
-`scripts/probes/zylo-census.ts`, `dev/tracking/internal-followups.json`,
-`dev/fids/**`, `dev/session-summaries/**`, `SCOPE.md`, `CHANGELOG.md`.
-
-### FID-2026-1017-015 — River AI built-in provider (active)
-
-Authority: automation level 3 (session ceiling). The operator requested an
-official provider with all River-served models, authorized an authenticated
-catalog check, a one-token inference check, and the provider identity gauntlet.
-The key is stored locally as `RIVER_AI_API_KEY` and must never be printed,
-copied into tracked files, or written to a report.
-
-- [ ] Add River as a registry-driven OpenAI-compatible gateway with an
-  authenticated live catalog that exposes every model returned for the
-  configured account key, preserving exact upstream IDs under the `river/`
-  routing prefix. Declare published context windows for the currently
-  documented models; leave future undocumented windows unknown.
-- [ ] Add live-catalog exception ownership, window-coverage registration,
-  cache/fan-out wiring, registry/setup/SDK/catalog tests, generated provider
-  documentation, and the human-facing provider reference.
-- [ ] Preserve the authenticated catalog and identity-gauntlet evidence,
-  including the inconclusive-control limitation; run the required local gates,
-  commit, archive, update the changelog, and push through the normal hook.
-
-Targets: `common/src/providers/registry-partitioned-5.ts`,
-`common/src/providers/provider-exception-manifest.ts`,
-`common/src/constants/window-coverage-register.ts`,
-`common/src/constants/context-window-table-river.ts`,
-`cli/src/utils/openrouter-models/river.ts`,
-`cli/src/utils/openrouter-models/gateway.ts`,
-`cli/src/utils/openrouter-models/gateway-live-results.ts`,
-`cli/src/utils/openrouter-models/__tests__/river-catalog.test.ts`,
-`cli/src/utils/openrouter-models/__tests__/blazerail-catalog.test.ts`,
-`cli/src/utils/openrouter-models/__tests__/tier1-provider-catalog.test.ts`,
-`cli/src/utils/openrouter-models/__tests__/window-coverage-register.test.ts`,
-`cli/src/utils/__tests__/provider-setup.test.ts`,
-`sdk/src/impl/__tests__/model-provider-free-mode.test.ts`,
-`common/src/providers/__tests__/**`, `.env.example`, `README.md`,
-`README.zh-CN.md`, `cli/release/README.md`, `docs/providers.md`,
-`docs/index.md`, `docs/features.md`, `docs/installation.md`,
-`docs/sdk-overview.md`, `dev/provider-identity/**`,
-`dev/fids/**`, `dev/session-summaries/**`, `SCOPE.md`, `CHANGELOG.md`.
-
 ### EMBED-001 — the harness single-agent embed is a superseded law revision (blocked)
 
 Authority: automation level 3 (session ceiling). The install step is reserved to the
@@ -221,32 +157,6 @@ dispositions supersede the previous register holds.
 
 ## Machine-readable scope targets
 
-- FID-2026-1017-016: `common/src/providers/**`, `common/src/constants/**`,
-  `cli/src/utils/openrouter-models/**`, `cli/src/utils/__tests__/provider-setup.test.ts`,
-  `sdk/src/impl/__tests__/model-provider-free-mode.test.ts`, `.env.example`,
-  `README.md`, `README.zh-CN.md`, `cli/release/README.md`, `docs/**`,
-  `scripts/probes/zylo-census.ts`, `dev/tracking/internal-followups.json`,
-  `dev/fids/**`, `dev/session-summaries/**`, `SCOPE.md`, `CHANGELOG.md`
-
-- FID-2026-1017-015: `common/src/providers/registry-partitioned-5.ts`,
-  `common/src/providers/provider-exception-manifest.ts`,
-  `common/src/constants/window-coverage-register.ts`,
-  `common/src/constants/context-window-table-river.ts`,
-  `cli/src/utils/openrouter-models/river.ts`,
-  `cli/src/utils/openrouter-models/gateway.ts`,
-  `cli/src/utils/openrouter-models/gateway-live-results.ts`,
-  `cli/src/utils/openrouter-models/__tests__/river-catalog.test.ts`,
-  `cli/src/utils/openrouter-models/__tests__/blazerail-catalog.test.ts`,
-  `cli/src/utils/openrouter-models/__tests__/tier1-provider-catalog.test.ts`,
-  `cli/src/utils/openrouter-models/__tests__/window-coverage-register.test.ts`,
-  `cli/src/utils/__tests__/provider-setup.test.ts`,
-  `sdk/src/impl/__tests__/model-provider-free-mode.test.ts`,
-  `common/src/providers/__tests__/**`, `.env.example`, `README.md`,
-  `README.zh-CN.md`, `cli/release/README.md`, `docs/providers.md`,
-  `docs/index.md`, `docs/features.md`, `docs/installation.md`,
-  `docs/sdk-overview.md`, `dev/provider-identity/**`,
-  `dev/fids/**`, `dev/session-summaries/**`, `SCOPE.md`, `CHANGELOG.md`
-
 Operator authorization: completion at automation level 3, renewed 2026-10-15;
 specific removal and skill metadata approvals are in answers.md. Governance
 artifacts required by ECHO retain their gate-level exemptions.
@@ -361,6 +271,43 @@ artifacts required by ECHO retain their gate-level exemptions.
   fields and every call was refused `invalid_union`. A class guard now fails
   any tool whose provider-facing root is not an object. No live acceptance is
   claimed; the third A–Z run remains the operator's.
+- FID-2026-1017-016 is **closed and archived** (2026-10-17, 10/10 gates, receipt
+  stamped, commit `e22c06bf`). Its write targets are released:
+  `common/src/providers/**`, `common/src/constants/**`,
+  `cli/src/utils/openrouter-models/**`,
+  `cli/src/utils/__tests__/provider-setup.test.ts`,
+  `sdk/src/impl/__tests__/model-provider-free-mode.test.ts`, `.env.example`,
+  `README.md`, `README.zh-CN.md`, `cli/release/README.md`, `docs/**`,
+  `dev/fids/**`, `dev/session-summaries/**`, `SCOPE.md`, `CHANGELOG.md`. Zylo is a
+  keyless text-only catalog: all 126 published text rows are kept (sparse
+  capability metadata included) while image and custom sub-model arrays are
+  excluded, the public fetch sends no Authorization header, and the provider
+  sits at slot 18 ahead of the custom tail. The live census is preserved in
+  `docs/reports/zylo-provider-live-check.md`; account entitlement, upstream
+  availability and inference remain separately observed, never claimed here.
+- FID-2026-1017-015 is **closed and archived** (2026-10-17, 12/12 gates, receipt
+  stamped, commit `e22c06bf`). Its write targets are released:
+  `common/src/providers/registry-partitioned-5.ts`,
+  `common/src/providers/provider-exception-manifest.ts`,
+  `common/src/constants/window-coverage-register.ts`,
+  `common/src/constants/context-window-table-river.ts`,
+  `cli/src/utils/openrouter-models/river.ts`,
+  `cli/src/utils/openrouter-models/gateway.ts`,
+  `cli/src/utils/openrouter-models/gateway-live-results.ts`,
+  `cli/src/utils/openrouter-models/__tests__/river-catalog.test.ts`,
+  `cli/src/utils/openrouter-models/__tests__/blazerail-catalog.test.ts`,
+  `cli/src/utils/openrouter-models/__tests__/tier1-provider-catalog.test.ts`,
+  `cli/src/utils/openrouter-models/__tests__/window-coverage-register.test.ts`,
+  `cli/src/utils/__tests__/provider-setup.test.ts`,
+  `sdk/src/impl/__tests__/model-provider-free-mode.test.ts`,
+  `common/src/providers/__tests__/**`, `.env.example`, `README.md`,
+  `README.zh-CN.md`, `cli/release/README.md`, `docs/**`, `dev/provider-identity/**`,
+  `dev/fids/**`, `dev/session-summaries/**`, `SCOPE.md`, `CHANGELOG.md`. River is a
+  registry-driven OpenAI-compatible gateway whose catalog is the account's own
+  model list; the three documented 1,048,576-token windows are pinned and
+  undocumented windows stay unknown. It takes ladder slot 17, before Zylo and
+  the custom tail. The identity gauntlet stayed inconclusive; route
+  reachability is not an identity verdict.
 - FID-2026-1017-012 is **closed and archived** (2026-10-17, 5/5 gates, receipt
   stamped, commit `4f989510`). Its write targets are released:
   `packages/agent-runtime/src/echo/parallel/fid-worktree-service.ts`,
