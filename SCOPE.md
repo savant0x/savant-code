@@ -34,18 +34,23 @@ This session uses the canonical repository protocol.
   require explicit operator approval. Normal verified main pushes proceed
   through mandatory gates. No publication is authorized by this audit.
 
-### LIVE-003 — model picker live observation (open)
+### LIVE-003 — model picker live observation (completed 2026-10-18)
 
-- [ ] Authority: automation level 3. Retry `/model` against the repaired
-  picker on the real catalog, and capture process state, timestamps and
-  terminal output if blankness recurs. The three-concurrent-basher condition
-  needs a tool-capable model; no paid inference is authorized, so a run that
-  cannot reconstruct it records that limit instead of claiming the condition.
+- [x] Reproduced. `/model` with three bashers active kills the CLI instantly
+  and clears the terminal; no process survived and no fatal record was
+  written. This answers the item's open question: the CLI exits, it does not
+  stay alive on a blank screen. The probe in `scripts/probes/` remains as the
+  repeatable PTY observation harness.
 
-A durable probe in `scripts/probes/` drives the real TUI through a PTY so the
-observation is repeatable rather than a one-off manual look. Its result is an
-observation of the repaired path, never proof of the original incident's
-cause.
+The defect is tracked as FID-2026-1018-008. That record, not this observation,
+now owns the cause and the repair.
+
+### FID-2026-1018-008 — silent `/model` death (open)
+
+- [ ] Authority: automation level 3. Capture the evidence outside the
+  alternate screen, make silent deaths durable, narrow the trigger, then fix
+  the cause. No change to the terminal reset or watchdog paths until the death
+  itself is explained.
 
 ### HOME-SKILLS-001 — external skill diagnostics (blocked)
 
@@ -58,6 +63,11 @@ cause.
 ## Machine-readable scope targets
 
 - LIVE-003: `scripts/probes/live-003-picker-pty.ts`, `dev/scratchpad/**`
+- FID-2026-1018-008: `cli/src/components/model-picker.tsx`,
+  `cli/src/components/model-picker-rows.tsx`,
+  `cli/src/utils/model-picker-open.ts`, `cli/src/utils/renderer-cleanup.ts`,
+  `cli/src/utils/terminal-watchdog.ts`, `cli/src/index.tsx`,
+  `cli/src/components/__tests__/**`, `debug/**`, `dev/**`
 - Release-0.0.36: `VERSION`, `package.json`, `agents/package.json`,
   `cli/package.json`, `cli/release/package.json`, `common/package.json`,
   `common/src/constants/protocol-bundle.generated.ts`, `desktop/package.json`,

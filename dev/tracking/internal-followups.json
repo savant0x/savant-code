@@ -26,16 +26,20 @@
     {
       "id": "LIVE-003",
       "kind": "live-comparison",
-      "status": "open",
+      "status": "completed",
       "owner": "Operator",
-      "summary": "The /model blank-screen incident during three active bashers has not been reproduced. FID-2026-1018-003 removes confirmed redundant full-catalog renders, but neither a process crash nor its cause has been established. Initial full-catalog mount still allocates all rows. A durable PTY probe (scripts/probes/live-003-picker-pty.ts) now boots the real CLI on the 4,075-row dev catalog: the main surface renders (19 KB, 5.8 K printable chars, 4.3 s) and the process stays alive at roughly 842-845 MB RSS. In that PTY path Enter does not dispatch /model: the typed command stays in the input while the slash palette re-renders, so no live picker surface was observed, while /help dispatched normally in the same harness. Whether that dispatch asymmetry is a product defect or a PTY-only artifact is unresolved, and no blank screen was seen.",
-      "nextAction": "Open /model manually in a real terminal and confirm the picker renders, filters and navigates while at least three agents are active; preserve terminal output, process state and the exact time if blankness recurs. That manual step is what the PTY path cannot currently reproduce. Re-run bun scripts/probes/live-003-picker-pty.ts after the slash-palette dispatch path is understood, and only then rebuild the three-basher condition, which needs an authorized tool-capable model. No paid inference is authorized by this tracking record.",
+      "summary": "REPRODUCED 2026-10-18 17:51 local: /model with three bashers active killed the CLI, cleared the terminal and left no fatal log entry, no OS crash event and no surviving process, so the CLI exits rather than staying alive on a blank screen. Earlier state: the /model blank-screen incident during three active bashers had not been reproduced. FID-2026-1018-003 removes confirmed redundant full-catalog renders, but neither a process crash nor its cause has been established. Initial full-catalog mount still allocates all rows. A durable PTY probe (scripts/probes/live-003-picker-pty.ts) now boots the real CLI on the 4,075-row dev catalog: the main surface renders (19 KB, 5.8 K printable chars, 4.3 s) and the process stays alive at roughly 842-845 MB RSS. In that PTY path Enter does not dispatch /model: the typed command stays in the input while the slash palette re-renders, so no live picker surface was observed, while /help dispatched normally in the same harness. Whether that dispatch asymmetry is a product defect or a PTY-only artifact is unresolved, and no blank screen was seen.",
+      "nextAction": "None for this observation. The cause, the evidence capture and the repair now belong to FID-2026-1018-008; re-open this item only if a future live run shows a different outcome than process exit.",
       "evidence": [
         "dev/session-summaries/2026-10-18-picker-worktree-ui.md",
         "dev/session-summaries/2026-10-18-live-003-picker-retry.md",
-        "scripts/probes/live-003-picker-pty.ts"
+        "scripts/probes/live-003-picker-pty.ts",
+        "dev/fids/FID-2026-1018-008-model-picker-silent-terminal-death.md"
       ],
-      "completionEvidence": [],
+      "completionEvidence": [
+        "dev/fids/FID-2026-1018-008-model-picker-silent-terminal-death.md",
+        "dev/session-summaries/2026-10-18-live-003-picker-retry.md"
+      ],
       "sourceFids": ["FID-2026-1018-003"]
     }
   ]
