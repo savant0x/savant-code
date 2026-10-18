@@ -3,6 +3,7 @@ import { useChatStore } from '../../state/chat-store'
 import { useModelPickerStore } from '../../state/model-picker-store'
 import { useProviderPickerStore } from '../../state/provider-picker-store'
 import { useSavantFreeModelStore } from '../../state/savant-free-model-store'
+import { writeProcessBreadcrumb } from '../../utils/exit-provenance'
 import { getSystemMessage, getUserMessage } from '../../utils/message-history'
 import { openModelPicker } from '../../utils/model-picker-open'
 import {
@@ -70,6 +71,10 @@ export const MODEL_PROVIDER_COMMANDS = [
       // selects the model. Degrades to free-text if the catalog can't load.
       // FID-2026-1008-005: cache-first open with a background refresh; the
       // cold path still waits for the first load.
+      // FID-2026-1018-008: the picker open precedes a silent clean death, so
+      // the pair of breadcrumbs separates "died inside this path" (begin with
+      // no return) from "died elsewhere while the picker was opening".
+      writeProcessBreadcrumb('model-picker-open-begin', { model: currentModel })
       const opened = await openModelPicker({
         readCached: getCachedGatewayModels,
         refresh: () => fetchGatewayModels(),
@@ -83,6 +88,7 @@ export const MODEL_PROVIDER_COMMANDS = [
           useModelPickerStore.getState().setModels(models, unavailable),
         isOpen: () => useModelPickerStore.getState().isOpen,
       })
+      writeProcessBreadcrumb('model-picker-open-returned', { opened })
       if (!opened) {
         const message = currentModel
           ? `Current model: ${currentModel}\n\nCouldn't load the live OpenRouter model list. Type an exact model id to switch, e.g. /model anthropic/claude-sonnet-4`

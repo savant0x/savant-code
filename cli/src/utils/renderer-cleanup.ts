@@ -1,8 +1,4 @@
-import { appendFileSync, mkdirSync } from 'node:fs'
-import path from 'node:path'
-
-import { getProjectRoot } from '../project-files'
-import { getExitReason } from './exit-provenance'
+import { getExitReason, writeProcessBreadcrumb } from './exit-provenance'
 import { logger } from './logger'
 import { flushLiveChatState } from './run-state-storage'
 import { TERMINAL_RESET_SEQUENCES } from './terminal-reset-sequences'
@@ -27,24 +23,20 @@ let terminalStateReset = false
  */
 export function writeExitBreadcrumb(
   code: number,
-  debugDir: string = path.join(getProjectRoot(), 'debug'),
+  debugDir?: string,
   reason: string = 'exit',
 ): void {
-  try {
-    const line = JSON.stringify({
-      timestamp: new Date().toISOString(),
-      event: 'process-exit',
+  writeProcessBreadcrumb(
+    'process-exit',
+    {
       reason,
       code,
       pid: process.pid,
       uptimeSeconds: Math.round(process.uptime()),
       rssMb: Math.round(process.memoryUsage.rss() / 1024 / 1024),
-    })
-    mkdirSync(debugDir, { recursive: true })
-    appendFileSync(path.join(debugDir, 'cli.exit.log'), `${line}\n`)
-  } catch {
-    // Diagnostics only: never let the breadcrumb interfere with exit.
-  }
+    },
+    debugDir,
+  )
 }
 
 /**

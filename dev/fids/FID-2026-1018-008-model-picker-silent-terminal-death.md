@@ -166,6 +166,13 @@ Candidate mechanisms are ranked, not concluded.
 
 ### Code Verification Evidence
 
+Picker-open breadcrumbs added (`cli/src/commands/defs/model-provider-commands.ts`)
+around `openModelPicker`, and the shared writer moved to
+`cli/src/utils/exit-provenance.ts` so the exit line and these markers cannot
+diverge. Verified: cli typecheck 0, breadcrumb suite 3 pass / 0 fail, ESLint and
+Prettier clean, and a PTY quit still wrote
+`reason: process.exit@cli\src\hooks\use-exit-handler.ts:49`.
+
 Exit provenance implemented (`cli/src/utils/exit-provenance.ts`, installed at
 CLI startup): the first `process.exit` call site is captured and reported in
 the breadcrumb as `process.exit@<file:line>`, or `drain` when the loop simply
@@ -208,6 +215,26 @@ of records suggested. The remaining fork is one line in the next run: the
 `exit-provenance` wrapper reports `process.exit@<file:line>` for a call site
 and `drain` when no call happened, verified live against the known Ctrl+C path
 (`process.exit@cli\src\hooks\use-exit-handler.ts:49`).
+
+**Updated 2026-10-18 18:54 — the second instrumented crash left no record at
+all.** `debug/cli.exit.log` still ended at the previous session's line, so the
+`exit` handler never ran: this death was a hard kill, not a chosen exit, which
+is the opposite of the 18:39 crash. Both hard-kill deaths land on the same
+tick as a basher's `cleanup_finished`:
+
+```text
+21:51:26.204Z  cleanup_finished (basher)   → no further log line  (crash 1)
+22:54:16.759Z  cleanup_finished (basher)   → no exit breadcrumb   (crash 3)
+```
+
+No OS application-error event, no resource-exhaustion event and no WER dump
+exists for either. The two signatures together say the process is sometimes
+exited deliberately and sometimes terminated natively, so the remaining
+question is which operation the process was inside — not which mechanism
+killed it. `model-picker-open-begin` / `model-picker-open-returned`
+breadcrumbs now bracket the picker open, so the next run reports whether the
+death happens inside that path (begin without returned) or elsewhere (both
+present, or neither).
 
 Diagnostics landed first on purpose: the two observed deaths produced no fatal
 log entry, no stderr text and no OS crash record, so a fix written now would be

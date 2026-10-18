@@ -13,7 +13,10 @@
  * not. The wrapper is fail-open — a diagnostic failure must never change what
  * the program does.
  */
+import { appendFileSync, mkdirSync } from 'node:fs'
 import path from 'node:path'
+
+import { getProjectRoot } from '../project-files'
 
 let installed = false
 let exitCaller: string | null = null
@@ -33,6 +36,29 @@ function captureCaller(): string | null {
     return `${relative}:${match[2]}`
   }
   return null
+}
+
+/**
+ * Append one durable breadcrumb line. Synchronous and fail-open on purpose:
+ * it must survive a process death that runs no other handler, and a
+ * diagnostics failure must never change behaviour.
+ */
+export function writeProcessBreadcrumb(
+  event: string,
+  fields: Record<string, unknown> = {},
+  debugDir: string = path.join(getProjectRoot(), 'debug'),
+): void {
+  try {
+    const line = JSON.stringify({
+      timestamp: new Date().toISOString(),
+      event,
+      ...fields,
+    })
+    mkdirSync(debugDir, { recursive: true })
+    appendFileSync(path.join(debugDir, 'cli.exit.log'), `${line}\n`)
+  } catch {
+    // Diagnostics only.
+  }
 }
 
 /** `process.exit@file:line` when an explicit exit happened, else `drain`. */
