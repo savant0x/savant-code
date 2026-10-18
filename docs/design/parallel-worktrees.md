@@ -113,7 +113,14 @@ lane SHA. It never auto-resolves or rebases. A moved main refuses even when
 changes are disjoint: reconcile the lane from the new base and reverify before
 trying again. Host merge calls enter Law 15 mutation reconciliation.
 
-Disposal runs `git worktree remove --force`, verifies absence, uses bounded
+Disposal first unlinks junctions and symbolic links inside the lane without
+following their targets. This is required on Windows: Git's recursive worktree
+removal can otherwise delete shared dependency contents through a junction.
+If link inspection or unlinking fails, cleanup refuses and retains the lane
+and record for inspection. The same protection applies to initialization
+rollback and crashed-lane cleanup, even without a persisted record.
+
+After detachment, disposal runs `git worktree remove --force`, verifies absence, uses bounded
 filesystem cleanup for survivors and then prunes git metadata. Cleanup warnings
 remain visible; a surviving checkout keeps its record. Git branches are retained.
 

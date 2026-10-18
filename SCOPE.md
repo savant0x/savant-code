@@ -11,6 +11,16 @@ handling or repository boundaries.
 
 ## Open items
 
+### FID-2026-1017-009 — preserve dependency junction targets during disposal
+
+Authority: automation level 3. Diagnose and repair the reported broken project.
+CLI startup failed resolving `@ai-sdk/openai`; `bun install --frozen-lockfile`
+restored startup without changing tracked dependencies. A disposable real-git
+Windows probe proves that worktree removal follows junctions and deletes the
+main dependency sentinel. Detach links without following them before either
+git or filesystem teardown, fail closed on detachment error, and verify real
+main dependency bytes survive disposal and initialization rollback.
+
 ### EMBED-001 — the harness single-agent embed is a superseded law revision (blocked)
 
 Authority: automation level 3 (session ceiling). The install step is reserved to the
@@ -156,6 +166,11 @@ dispositions supersede the previous register holds.
   cleared; the intake report passes Markdown lint. No artifact was deleted.
 
 ## Machine-readable scope targets
+
+- FID-2026-1017-009: `packages/agent-runtime/src/echo/parallel/fid-worktree*.ts`,
+  `packages/agent-runtime/src/__tests__/fid-worktree*.ts`,
+  `docs/design/parallel-worktrees.md`, `SCOPE.md`, `CHANGELOG.md`,
+  `dev/fids/**`, `dev/session-summaries/**`
 
 Operator authorization: completion at automation level 3, renewed 2026-10-15;
 specific removal and skill metadata approvals are in answers.md. Governance

@@ -28,6 +28,13 @@ export function memoryFs(initialDirs: string[] = []): MemoryFs {
     files,
     dirs,
     links,
+    detachLinks: (target) => {
+      const key = normalize(target)
+      for (const link of links.keys()) {
+        if (link === key || link.startsWith(`${key}/`)) links.delete(link)
+      }
+      return true
+    },
     exists: (target) => {
       const key = normalize(target)
       return files.has(key) || dirs.has(key) || links.has(key)

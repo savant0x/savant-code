@@ -3,7 +3,8 @@
  *
  * One converged FID gets one linked checkout under `.savant/worktrees/<fidId>`
  * on branch `savant/<fidId>`, provisioned and disposed by the host. The
- * teardown order is the recorded release-checkout contract: `git worktree
+ * teardown first detaches links without touching their targets, then follows
+ * the recorded release-checkout contract: `git worktree
  * remove --force`, verify absence, fall back to a bounded filesystem removal
  * only for survivors, then `git worktree prune`. It is never `rm -rf` first —
  * that ordering produced the orphaned-Temp-worktree incident (git loses the
@@ -272,6 +273,15 @@ export function disposeFidWorktree(options: {
   const lanePath = fidWorktreePath(repoRoot, fidId)
   if (!lanePath)
     return { removed: false, warnings: [`invalid FID id "${fidId}"`] }
+
+  if (!fs.detachLinks(lanePath)) {
+    return {
+      removed: false,
+      warnings: [
+        `Could not detach worktree links at ${lanePath}; cleanup refused`,
+      ],
+    }
+  }
 
   const remove = runGit(
     run,

@@ -22,6 +22,7 @@ import path from 'node:path'
 
 import { fidWorktreeRecordSchema } from '@savant-code/common/tools/params/tool/fid-worktree'
 
+import { detachWorktreeLinks } from './fid-worktree-detach'
 import {
   FID_WORKTREE_RECORDS,
   fidWorktreeRecordPath,
@@ -54,6 +55,8 @@ export type WorktreeFs = {
   write(target: string, content: string): void
   removeFile(target: string): void
   removeDir(target: string): boolean
+  /** Unlink junctions/symlinks without following targets before recursive removal. */
+  detachLinks(target: string): boolean
   /** Directory link (junction on Windows); false when it could not be made. */
   linkDir(target: string, link: string): boolean
 }
@@ -64,6 +67,7 @@ function toPosix(value: string): string {
 
 /** Production seam: node:fs with bounded retries on the Windows lock class. */
 export const defaultWorktreeFs: WorktreeFs = {
+  detachLinks: detachWorktreeLinks,
   exists: (target) => existsSync(target),
   mkdirp: (target) => {
     mkdirSync(target, { recursive: true })
