@@ -23,3 +23,9 @@ Repository Markdown lint exposed the pre-existing lane-proof paragraph's
 354-character line. Wrapped without changing words and committed separately
 as `01763f17` (FID-008). The acceptance report's graph-refresh and transient
 unsafe-root findings remain recorded under FID-008; this repair claims neither.
+
+Implementation committed at `ab021ebf`; FID-2026-1017-009 is closed and archived
+with its stamped six-gate receipt and CHANGELOG entry. Its scope targets are
+released. Mandatory full push gates run before delivery; evidence is retained
+in `2026-10-17-junction-recovery-push.log` beside this record. No live TUI or
+paid model call was used; CLI help verifies startup, not interactive behavior.

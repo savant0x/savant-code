@@ -3,7 +3,8 @@
 **Filename:** `FID-2026-1017-009-worktree-junction-disposal.md`
 **ID:** FID-2026-1017-009
 **Severity:** critical
-**Status:** verified
+**Status:** closed
+**Archived:** 2026-10-17
 **Created:** 2026-10-17
 **Automation level:** 3
 **YAGNI-Compliance:** Verified — repairs existing lifecycle teardown.
@@ -78,7 +79,7 @@ trusting a record, covering rollback before record persistence and crash debris.
 
 1. Restore dependencies and reproduce target deletion — completed.
 2. Add real-git regression and fail-closed coverage, then repair teardown — implemented.
-3. Verify workspace and root gates — implemented; commit and archive follow verification.
+3. Verify workspace and root gates; commit and archive — implemented at `ab021ebf`.
 
 ### Verification
 
@@ -146,7 +147,7 @@ Existing disposal/provisioning suites must retain their lifecycle behavior.
 Implementation: `fid-worktree.ts` invokes `fs.detachLinks(lanePath)` before
 either recursive removal path; `fid-worktree-record.ts` wires production to
 `detachWorktreeLinks` in `fid-worktree-detach.ts`. The shared test seam models
-detachment. The implementation commit is recorded at closure.
+detachment. Implementation commit: `ab021ebf`.
 
 ### Code Verification Evidence
 
@@ -161,8 +162,9 @@ run before delivery. Logs: `dev/session-summaries/2026-10-17-junction-recovery-*
 ## Resolution
 
 Installation and executable shims restored with the frozen lockfile, without
-dependency-version edits. Permanent teardown repair is implemented and verified;
-commit and archive follow the receipt stamp.
+dependency-version edits. Permanent teardown repair is implemented and verified
+at `ab021ebf`, with all six declared gates passing and the receipt stamped
+before archive. The earlier receipt fingerprint records pre-closure verification.
 
 ## Lessons Learned
 

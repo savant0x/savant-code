@@ -1,5 +1,17 @@
 # Changelog
 
+## 2026-10-17 — Preserve dependencies during lane disposal (FID-2026-1017-009, critical)
+
+Windows Git follows dependency junctions during worktree removal and can delete
+main-checkout package files. Detach symbolic links and junctions without following
+their targets before recursive lane teardown; refuse cleanup if detachment fails.
+The protection also covers recordless cleanup and initialization rollback.
+
+Implementation: `ab021ebf`. Four new regressions reproduce the original failure
+and pass after repair; the combined lifecycle suites pass 19 tests. All six FID
+gates, full root typecheck and SDK build pass. Restored the local installation
+from the unchanged frozen lockfile and verified CLI help starts successfully.
+
 ## 2026-10-17 — FID-bound parallel worktrees (FID-2026-1017-007, high)
 
 Complete the eight-step worktree feature: lane-local Law 2 scope with validated
