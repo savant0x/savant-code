@@ -49,6 +49,7 @@ export function setupModelProviderTestHarness() {
   let originalMistralApiKey: string | undefined
   let originalApixoApiKey: string | undefined
   let originalAshnaApiKey: string | undefined
+  let originalBlazerailApiKey: string | undefined
   let originalAihubmixApiKey: string | undefined
   let originalOpenRouterApiKey: string | undefined
   let originalOrMasterKey: string | undefined
@@ -98,6 +99,9 @@ export function setupModelProviderTestHarness() {
     // the key-missing leg only resolves when it is deleted here.
     originalAshnaApiKey = process.env.ASHNA_API_KEY
     delete process.env.ASHNA_API_KEY
+    // FID-2026-1017-013: isolate key-missing routing tests from local env files.
+    originalBlazerailApiKey = process.env.BLAZERAIL_API_KEY
+    delete process.env.BLAZERAIL_API_KEY
     originalAihubmixApiKey = process.env.AIHUBMIX_API_KEY
     delete process.env.AIHUBMIX_API_KEY
     originalOpenRouterApiKey = process.env.OPENROUTER_API_KEY
@@ -201,6 +205,11 @@ export function setupModelProviderTestHarness() {
       delete process.env.ASHNA_API_KEY
     } else {
       process.env.ASHNA_API_KEY = originalAshnaApiKey
+    }
+    if (originalBlazerailApiKey === undefined) {
+      delete process.env.BLAZERAIL_API_KEY
+    } else {
+      process.env.BLAZERAIL_API_KEY = originalBlazerailApiKey
     }
     if (originalAihubmixApiKey === undefined) {
       delete process.env.AIHUBMIX_API_KEY

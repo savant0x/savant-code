@@ -45,6 +45,7 @@ closed if this section drifts from the registry.
 | B.AI | `bai` | gateway | `BAI_API_KEY` | `https://api.b.ai/v1` | openai | live |
 | Baseten | `baseten` | gateway | `BASETEN_API_KEY` | `https://inference.baseten.co/v1` | openai | static (24 models) |
 | BazaarLink | `bazaarlink` | gateway | `BAZAARLINK_API_KEY` | `https://api.bazaarlink.ai/v1` | openai | static (12 models) |
+| BlazeRail | `blazerail` | gateway | `BLAZERAIL_API_KEY` | `https://api.blazerail.com/v1` | openai | live |
 | Cerebras | `cerebras` | gateway | `CEREBRAS_API_KEY` | `https://api.cerebras.ai/v1` | openai | static (2 models) |
 | ChatAnywhere | `chatanywhere` | gateway | `CHATANYWHERE_API_KEY` | `https://api.chatanywhere.tech/v1` | openai | static (27 models; evidence: console-verified 2026-10-05) |
 | Clean APIs | `cleanapis` | gateway | `CLEANAPIS_API_KEY` | `https://cleanapis.com/v1` | openai | live |

@@ -75,6 +75,63 @@ describe('getModelForRequest ChatGPT OAuth fallback behavior', () => {
     )
   })
 
+  test('requires a BlazeRail key before constructing an inference request', async () => {
+    const { getModelForRequest } = await importFresh()
+    const originalKey = process.env.BLAZERAIL_API_KEY
+    delete process.env.BLAZERAIL_API_KEY
+    try {
+      await expect(
+        getModelForRequest({ model: 'blazerail/openai/gpt-6-astra:free' }),
+      ).rejects.toThrow(
+        'BlazeRail API key not set. Set BLAZERAIL_API_KEY environment variable.',
+      )
+    } finally {
+      if (originalKey === undefined) delete process.env.BLAZERAIL_API_KEY
+      else process.env.BLAZERAIL_API_KEY = originalKey
+    }
+  })
+
+  test('BlazeRail sends Bearer auth and preserves namespaces and routing suffixes', async () => {
+    const originalKey = process.env.BLAZERAIL_API_KEY
+    process.env.BLAZERAIL_API_KEY = 'blazerail-test-key'
+    const requests: Array<{ url: string; init?: RequestInit }> = []
+    globalThis.fetch = Object.assign(
+      async (input: RequestInfo | URL, init?: RequestInit) => {
+        requests.push({ url: String(input), init })
+        return new Response('data: [DONE]\n\n', {
+          headers: { 'content-type': 'text/event-stream' },
+        })
+      },
+      { preconnect: globalThis.fetch.preconnect },
+    )
+    try {
+      const { getModelForRequest } = await importFresh()
+      for (const upstream of [
+        'openai/gpt-6-astra',
+        'anthropic/claude-sonnet-4.6:free:nitro',
+      ]) {
+        const result = await getModelForRequest({
+          model: `blazerail/${upstream}`,
+        })
+        await (result.model as LanguageModelV2).doStream({
+          prompt: COMMAND_CODE_PROMPT,
+        })
+        const request = requests.at(-1)
+        expect(request?.url).toBe(
+          'https://api.blazerail.com/v1/chat/completions',
+        )
+        expect(new Headers(request?.init?.headers).get('authorization')).toBe(
+          'Bearer blazerail-test-key',
+        )
+        expect(new Headers(request?.init?.headers).has('x-api-key')).toBe(false)
+        expect(JSON.parse(String(request?.init?.body)).model).toBe(upstream)
+      }
+    } finally {
+      if (originalKey === undefined) delete process.env.BLAZERAIL_API_KEY
+      else process.env.BLAZERAIL_API_KEY = originalKey
+    }
+  })
+
   test('routes TokenHarbor models with one-prefix normalization', async () => {
     process.env.TOKENHARBOR_API_KEY = 'tokenharbor-test-key'
     const fetchMock = mock(() =>

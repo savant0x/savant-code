@@ -9,6 +9,7 @@ import { __resetApinexCacheForTest } from './apinex'
 import { __resetApixoCacheForTest } from './apixo'
 import { __resetAshnaCacheForTest } from './ashna'
 import { __resetBaiCacheForTest } from './bai'
+import { __resetBlazerailCacheForTest } from './blazerail'
 import { __resetCleanApisCacheForTest } from './cleanapis'
 import { __resetCodecraftCacheForTest } from './codecraft'
 import { __resetCustomCatalogsForTest } from './custom-catalog'
@@ -117,6 +118,7 @@ function notifyGatewayCatalogListeners(catalog: OpenRouterModel[]): void {
  * - DeepInfra (live API, public — FID-2026-1012-026)
  * - Venice AI (live API, public — FID-2026-1012-026)
  * - Ashna (live API, authenticated — FID-2026-1016-018)
+ * - BlazeRail (live API, public — FID-2026-1017-013)
  *
  * Fetches live sources in parallel via Promise.allSettled(). If a source fails,
  * uses cached/empty list for that provider. Returns a combined, sorted list.
@@ -250,6 +252,7 @@ function resetProviderCatalogCaches(): void {
   __resetDeepInfraCacheForTest()
   __resetVeniceCacheForTest()
   __resetAshnaCacheForTest()
+  __resetBlazerailCacheForTest()
   // Step 9 remainder: lazily-built custom fetchers are cache state too.
   __resetCustomCatalogsForTest()
 }

@@ -203,6 +203,24 @@ describe('provider setup', () => {
     expect(getConfiguredProviderNames()).toContain('openrouter')
   })
 
+  test('saves and activates BlazeRail with the registered key and API root', () => {
+    saveProviderApiKey('blazerail', '  test-blazerail-key  ')
+    expect(process.env.BLAZERAIL_API_KEY).toBe('test-blazerail-key')
+    expect(process.env.DIRECT_PROVIDER).toBe('blazerail')
+    expect(process.env.INFERENCE_BASE_URL).toBe('https://api.blazerail.com/v1')
+    expect(getConfiguredProviderNames()).toContain('blazerail')
+    const settings = JSON.parse(
+      fs.readFileSync(path.join(tempDir, 'settings.json'), 'utf8'),
+    )
+    expect(settings.activeProvider).toBe('blazerail')
+    const credentials = JSON.parse(
+      fs.readFileSync(path.join(tempDir, 'credentials.json'), 'utf8'),
+    )
+    expect(credentials.providerApiKeys.BLAZERAIL_API_KEY).toBe(
+      'test-blazerail-key',
+    )
+  })
+
   test('persists the selection as activeProvider without legacy direct fields (Phase 4)', () => {
     saveProviderApiKey('tokenharbor', 'test-tokenharbor-key')
 

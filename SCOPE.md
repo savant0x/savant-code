@@ -11,6 +11,26 @@ handling or repository boundaries.
 
 ## Open items
 
+### FID-2026-1017-013 — BlazeRail built-in provider (active)
+
+Authority: automation level 3. Operator requested the complete provider runbook
+and adding BlazeRail, then explicitly excluded API-key probes and live inference.
+
+- [ ] Add the registry-driven OpenAI chat provider, public live catalog with
+  media filtering, window coverage, setup and SDK contract tests, and all provider
+  documentation. Preserve upstream namespaces and free/profile suffixes.
+- [ ] Verify locally, commit, archive and push through mandatory gates. Account
+  authentication and inference remain unverified by the operator's instruction.
+
+Targets: `common/src/providers/**`,
+`common/src/constants/window-coverage-register.ts`,
+`cli/src/utils/openrouter-models/**`, `cli/src/utils/__tests__/provider-setup.test.ts`,
+`sdk/src/impl/__tests__/model-provider-free-mode.test.ts`, `README.md`,
+`README.zh-CN.md`, `.env.example`, `cli/release/README.md`, `docs/providers.md`,
+`docs/index.md`, `docs/features.md`, `docs/installation.md`, `docs/sdk-overview.md`,
+`scripts/probes/blazerail-catalog.ts`, `dev/fids/**`, `dev/session-summaries/**`,
+`SCOPE.md`, `CHANGELOG.md`.
+
 ### EMBED-001 — the harness single-agent embed is a superseded law revision (blocked)
 
 Authority: automation level 3 (session ceiling). The install step is reserved to the
@@ -156,6 +176,16 @@ dispositions supersede the previous register holds.
   cleared; the intake report passes Markdown lint. No artifact was deleted.
 
 ## Machine-readable scope targets
+
+- FID-2026-1017-013: `common/src/providers/**`,
+  `common/src/constants/window-coverage-register.ts`,
+  `cli/src/utils/openrouter-models/**`,
+  `cli/src/utils/__tests__/provider-setup.test.ts`,
+  `sdk/src/impl/__tests__/model-provider-free-mode.test.ts`, `README.md`,
+  `README.zh-CN.md`, `.env.example`, `cli/release/README.md`, `docs/providers.md`,
+  `docs/index.md`, `docs/features.md`, `docs/installation.md`, `docs/sdk-overview.md`,
+  `scripts/probes/blazerail-catalog.ts`, `dev/fids/**`, `dev/session-summaries/**`,
+  `SCOPE.md`, `CHANGELOG.md`
 
 Operator authorization: completion at automation level 3, renewed 2026-10-15;
 specific removal and skill metadata approvals are in answers.md. Governance

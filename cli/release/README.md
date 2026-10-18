@@ -60,6 +60,7 @@ Or select one of the supported gateway providers directly:
 | B.AI | `/provider bai` or `DIRECT_PROVIDER=bai` | `BAI_API_KEY` | OpenAI-compatible gateway with an authenticated live model catalog |
 | Baseten | `/provider baseten` or `DIRECT_PROVIDER=baseten` | `BASETEN_API_KEY` | Hosted gateway |
 | BazaarLink | `/provider bazaarlink` or `DIRECT_PROVIDER=bazaarlink` | `BAZAARLINK_API_KEY` | Hosted gateway |
+| BlazeRail | `/provider blazerail` or `DIRECT_PROVIDER=blazerail` | `BLAZERAIL_API_KEY` | Hosted gateway |
 | Cerebras | `/provider cerebras` or `DIRECT_PROVIDER=cerebras` | `CEREBRAS_API_KEY` | Hosted gateway |
 | ChatAnywhere | `/provider chatanywhere` or `DIRECT_PROVIDER=chatanywhere` | `CHATANYWHERE_API_KEY` | Hosted gateway |
 | Clean APIs | `/provider cleanapis` or `DIRECT_PROVIDER=cleanapis` | `CLEANAPIS_API_KEY` | Hosted gateway |
@@ -220,6 +221,8 @@ AIHUBMIX_API_KEY=dummy-aihubmix-key-replace-me
 CHATANYWHERE_API_KEY=dummy-chatanywhere-api-key-replace-me
 TIARINA_API_KEY=dummy-tiarina-api-key-replace-me
 ASHNA_API_KEY=dummy-ashna-api-key-replace-me
+BLAZERAIL_API_KEY=dummy-blazerail-api-key-replace-me
+BLAZERAIL_API_KEY=dummy-blazerail-api-key-replace-me
 # Cloudflare needs TWO credentials (token + account id):
 CLOUDFLARE_API_TOKEN=cloudflare-dummy-replace-me
 CLOUDFLARE_ACCOUNT_ID=cloudflare-account-dummy-replace-me

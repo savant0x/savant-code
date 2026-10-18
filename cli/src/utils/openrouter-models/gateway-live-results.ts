@@ -6,7 +6,7 @@
  * POSITIONAL CONTRACT: `restResults` is the tail of the Promise.allSettled()
  * array after [openrouter, nvidia], in exactly this order: Nous, KiosAPI,
  * APInex, OpenAI, OrcaRouter, B.AI, Vercel, CleanApis, CodeCraft, Mistral,
- * xKiro, Apixo, AIHubMix, DeepInfra, Venice, Ashna, custom catalogs. Fulfilled values
+ * xKiro, Apixo, AIHubMix, DeepInfra, Venice, Ashna, BlazeRail, custom catalogs. Fulfilled values
  * win; rejected sources degrade to their per-provider cache — custom catalogs
  * degrade to [] (lazily-built custom fetchers have no cache, FID-2026-0910-004
  * D10).
@@ -20,6 +20,7 @@ import { fetchApinexModels, getCachedApinexModels } from './apinex'
 import { fetchApixoModels, getCachedApixoModels } from './apixo'
 import { fetchAshnaModels, getCachedAshnaModels } from './ashna'
 import { fetchBaiModels, getCachedBaiModels } from './bai'
+import { fetchBlazerailModels, getCachedBlazerailModels } from './blazerail'
 import { fetchCleanApisModels, getCachedCleanApisModels } from './cleanapis'
 import { fetchCodecraftModels, getCachedCodecraftModels } from './codecraft'
 import { fetchAllCustomModels } from './custom-catalog'
@@ -59,6 +60,7 @@ export interface GatewayLiveCatalogs {
   deepinfraModels: OpenRouterModel[]
   veniceModels: OpenRouterModel[]
   ashnaModels: OpenRouterModel[]
+  blazerailModels: OpenRouterModel[]
   customModels: OpenRouterModel[]
 }
 
@@ -90,9 +92,9 @@ export async function fetchGatewayLiveCatalogs(forceRefresh: boolean): Promise<{
     fetchAihubmixModels(forceRefresh),
     fetchDeepInfraModels(forceRefresh),
     fetchVeniceModels(forceRefresh),
-    // FID-2026-1016-018: Ashna is the last BUILT-IN live leg; the
-    // custom-catalogs tail below must stay last (see the positional contract).
     fetchAshnaModels(forceRefresh),
+    // Keep new built-ins immediately before the custom-catalogs tail.
+    fetchBlazerailModels(forceRefresh),
     // FID-2026-0910-004 Step 9 remainder: custom catalogs (live + inline)
     // merge here; per-provider failures degrade to [] (D10 ladder).
     fetchAllCustomModels(forceRefresh),
@@ -122,6 +124,7 @@ export function resolveGatewayLiveCatalogs(
     deepinfraResult,
     veniceResult,
     ashnaResult,
+    blazerailResult,
     customResult,
   ] = restResults
 
@@ -200,5 +203,9 @@ export function resolveGatewayLiveCatalogs(
       ashnaResult?.status === 'fulfilled'
         ? ashnaResult.value
         : getCachedAshnaModels(),
+    blazerailModels:
+      blazerailResult?.status === 'fulfilled'
+        ? blazerailResult.value
+        : getCachedBlazerailModels(),
   }
 }

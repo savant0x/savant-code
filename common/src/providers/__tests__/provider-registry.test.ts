@@ -23,7 +23,7 @@ import type { ProviderConfig } from '../types'
  * as its first argument so tests inject a fixture instead of the singleton).
  */
 describe('PROVIDER_REGISTRY (FID-2026-0809-001 Phase 1)', () => {
-  test('covers all forty-eight current providers', () => {
+  test('covers all forty-nine current providers', () => {
     expect(Object.keys(PROVIDER_REGISTRY).sort()).toEqual([
       'aihubmix',
       'alibaba',
@@ -35,6 +35,7 @@ describe('PROVIDER_REGISTRY (FID-2026-0809-001 Phase 1)', () => {
       'bai',
       'baseten',
       'bazaarlink',
+      'blazerail',
       'cerebras',
       'chatanywhere',
       'cleanapis',

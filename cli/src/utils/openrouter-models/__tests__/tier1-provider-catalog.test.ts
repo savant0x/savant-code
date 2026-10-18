@@ -111,17 +111,17 @@ describe('FID-2026-1012-026: Tier 1 first-party catalogs', () => {
       provider: 'custom',
     }
     // FID-2026-1016-018: Ashna joins at slot 15; the custom-catalogs tail
-    // stays last (slot 16).
+    // stays last (slot 17 after BlazeRail, FID-2026-1017-013).
     const ashnaRow: OpenRouterModel = {
       id: 'ashna/gpt-5.5',
       name: 'gpt-5.5',
       provider: 'ashna',
     }
-    const restResults = Array.from({ length: 17 }, () => fulfilled([]))
+    const restResults = Array.from({ length: 18 }, () => fulfilled([]))
     restResults[13] = fulfilled([deepinfraRow])
     restResults[14] = fulfilled([veniceRow])
     restResults[15] = fulfilled([ashnaRow])
-    restResults[16] = fulfilled([customRow])
+    restResults[17] = fulfilled([customRow])
     const resolved = resolveGatewayLiveCatalogs(
       fulfilled([]),
       fulfilled([]),

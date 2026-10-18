@@ -1,4 +1,4 @@
-/** Measured shared CodeCraft/CleanAPIs catalog shape (2026-10-03). */
+/** Measured shared CodeCraft/CleanAPIs/BlazeRail catalog shape. */
 import {
   catalogCreated,
   catalogLimit,
@@ -12,7 +12,7 @@ import { asOptionalString } from './wire-guards'
 import type { OpenRouterModel } from './types'
 
 function parseChatModel(
-  provider: 'codecraft' | 'cleanapis',
+  provider: 'codecraft' | 'cleanapis' | 'blazerail',
   value: unknown,
 ): OpenRouterModel | undefined {
   const row = catalogObject(value)
@@ -54,7 +54,7 @@ function parseChatModel(
 }
 
 export function parseChatCatalog(
-  provider: 'codecraft' | 'cleanapis',
+  provider: 'codecraft' | 'cleanapis' | 'blazerail',
   json: unknown,
 ): OpenRouterModel[] {
   const parsed: OpenRouterModel[] = []

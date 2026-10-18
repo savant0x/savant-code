@@ -29,6 +29,16 @@ export type ProviderExceptionManifestEntry = {
 export const PROVIDER_EXCEPTION_MANIFEST: readonly ProviderExceptionManifestEntry[] =
   [
     {
+      providerId: 'blazerail',
+      kinds: ['live-catalog'],
+      owner: 'cli/src/utils/openrouter-models/blazerail.ts',
+      evidence: [
+        'cli/src/utils/openrouter-models/blazerail.ts',
+        'cli/src/utils/openrouter-models/gateway-live-results.ts',
+        'cli/src/utils/openrouter-models/gateway-catalog-merge.ts',
+      ],
+    },
+    {
       providerId: 'codecraft',
       kinds: ['live-catalog'],
       owner: 'cli/src/utils/openrouter-models/codecraft.ts',

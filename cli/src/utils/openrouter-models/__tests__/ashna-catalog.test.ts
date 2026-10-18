@@ -213,6 +213,7 @@ describe('FID-2026-1016-018: ashna live catalog', () => {
       fulfilled([]),
       fulfilled([ashnaRow]),
       fulfilled([]),
+      fulfilled([]),
     ]
     const resolved = resolveGatewayLiveCatalogs(
       fulfilled([]),

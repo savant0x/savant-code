@@ -4,6 +4,22 @@
 import type { ProviderConfig } from './types'
 
 export const PROVIDER_REGISTRY_PARTITION_5 = {
+  blazerail: {
+    id: 'blazerail',
+    label: 'BlazeRail',
+    kind: 'gateway',
+    credentials: { envVar: 'BLAZERAIL_API_KEY' },
+    // Vendor OpenAPI: BearerAuth + Chat Completions for all text models.
+    // Public catalog measured HTTP 200 on 2026-10-17; inference untested
+    // by operator instruction (FID-2026-1017-013).
+    baseUrl: 'https://api.blazerail.com/v1',
+    protocol: 'openai',
+    idTransform: 'strip',
+    catalog: { source: 'live', url: 'https://api.blazerail.com/v1/models' },
+    setupAvailable: true,
+    domain: 'blazerail.com',
+    order: 4,
+  },
   perplexity: {
     id: 'perplexity',
     label: 'Perplexity',

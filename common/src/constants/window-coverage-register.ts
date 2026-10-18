@@ -304,4 +304,11 @@ export const WINDOW_COVERAGE_REGISTER: ReadonlyMap<
     },
   ],
   ...TIER1_WINDOW_COVERAGE_ENTRIES,
+  [
+    'blazerail',
+    {
+      disposition: 'runtime-partial',
+      note: 'Public catalog HTTP 200 on 2026-10-18: 302 raw rows; 183 chat/coding rows retained after media and coding-policy filtering. 179/183 publish positive context_length; four exact IDs remain unknown. Published top_provider limits are parsed. No account key or inference probe (operator instruction, FID-2026-1017-013).',
+    },
+  ],
 ])

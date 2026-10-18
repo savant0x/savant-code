@@ -147,6 +147,20 @@ describe('validateProviderRegistry (FID-2026-0809-001 Phase 5)', () => {
     }
   })
 
+  test('BlazeRail derives setup, routing, logo and ordering from its entry', () => {
+    expect(deriveValidProviderIds(PROVIDER_REGISTRY)).toContain('blazerail')
+    expect(ALLOWED_MODEL_PREFIXES).toContain('blazerail')
+    expect(
+      deriveProviderDomains(PROVIDER_REGISTRY, ORG_DOMAINS).blazerail,
+    ).toBe('blazerail.com')
+    expect(deriveProviderOrder(PROVIDER_REGISTRY, 'blazerail')).toBe(4)
+    expect(deriveSetupConfig(PROVIDER_REGISTRY).blazerail).toEqual({
+      label: 'BlazeRail',
+      envVar: 'BLAZERAIL_API_KEY',
+      baseUrl: 'https://api.blazerail.com/v1',
+    })
+  })
+
   describe('negative fixture cases (each check fires)', () => {
     const base = (overrides: Partial<ProviderConfig>): ProviderConfig => ({
       id: 'fixture',
