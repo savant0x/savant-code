@@ -1,7 +1,7 @@
 import { BOOT_LEARNINGS_PATH } from '@savant-code/common/constants/learnings-boot'
 
 import { captureToolResultEvidence } from './evidence-capture'
-import { completeGroundingReads } from './grounding-read'
+import { completeGroundingReads, readLineWindow } from './grounding-read'
 import { emitToolResultHook } from './result-hook'
 import {
   isRedispatchable,
@@ -131,7 +131,7 @@ export async function runSuccessLifecycle<T extends ToolName>(
   if (toolName === 'read_files' && !hasToolResultError(toolResult.content)) {
     const reads = completeGroundingReads({
       output: toolResult.content,
-      hasWindow: 'offset' in toolCall.input || 'limit' in toolCall.input,
+      lineWindow: readLineWindow(toolCall.input),
     })
     enforcement.recordSuccessfulGroundingRead(reads.map((read) => read.path))
     for (const read of reads)

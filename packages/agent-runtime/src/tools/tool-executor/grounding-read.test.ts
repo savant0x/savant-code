@@ -9,7 +9,7 @@ import {
 import { HIDDEN_FILE_READ_STATUS } from '@savant-code/common/old-constants'
 import { describe, expect, test } from 'bun:test'
 
-import { completeGroundingReads } from './grounding-read'
+import { completeGroundingReads, readLineWindow } from './grounding-read'
 import { getFiles } from '../../../../../sdk/src/tools/read-files'
 import {
   createMockAgentState,
@@ -58,7 +58,7 @@ describe('complete grounding reads', () => {
           }),
       })
       expect(
-        completeGroundingReads({ output: result.output, hasWindow: false }),
+        completeGroundingReads({ output: result.output, lineWindow: {} }),
       ).toEqual([])
       expect(JSON.stringify(result.output)).toContain('FILE_TOO_LARGE:')
       expect(JSON.stringify(result.output)).toContain('FILE_DOES_NOT_EXIST')
@@ -68,18 +68,18 @@ describe('complete grounding reads', () => {
   })
   test('credits complete content and reports character and UTF-8 byte counts', () => {
     expect(
-      completeGroundingReads({ output: output('évidence'), hasWindow: false }),
+      completeGroundingReads({ output: output('évidence'), lineWindow: {} }),
     ).toEqual([{ path: BOOT_LEARNINGS_PATH, characters: 8, bytes: 9 }])
   })
   test('window, truncation, omitted content, empty and overbudget responses cannot complete boot', () => {
     for (const status of HIDDEN_FILE_READ_STATUS)
       expect(
-        completeGroundingReads({ output: output(status), hasWindow: false }),
+        completeGroundingReads({ output: output(status), lineWindow: {} }),
       ).toEqual([])
     expect(
       completeGroundingReads({
         output: output('complete-looking window'),
-        hasWindow: true,
+        lineWindow: { offset: 2 },
       }),
     ).toEqual([])
     for (const content of [
@@ -89,7 +89,7 @@ describe('complete grounding reads', () => {
       'x'.repeat(BOOT_LEARNINGS_MAX_CHARACTERS + 1),
     ])
       expect(
-        completeGroundingReads({ output: output(content), hasWindow: false }),
+        completeGroundingReads({ output: output(content), lineWindow: {} }),
       ).toEqual([])
     expect(
       completeGroundingReads({
@@ -101,8 +101,61 @@ describe('complete grounding reads', () => {
             ],
           },
         ],
-        hasWindow: false,
+        lineWindow: {},
       }),
     ).toEqual([])
+  })
+  // FID-2026-1018-009: a limit the response never used up is not a window.
+  // The model reads ECHO.md with `limit: 2000` on a 923-line file and got the
+  // whole file; the old key-presence test withheld credit, so the required
+  // grounding set could never complete and the turn ended ungrounded.
+  test('a limit the response did not use up still credits the complete file', () => {
+    const whole = `${'# line\n'.repeat(923)}`
+    expect(
+      completeGroundingReads({
+        output: output(whole),
+        lineWindow: { limit: 2000 },
+      }),
+    ).toEqual([
+      {
+        path: BOOT_LEARNINGS_PATH,
+        characters: whole.length,
+        bytes: Buffer.byteLength(whole, 'utf8'),
+      },
+    ])
+    expect(
+      completeGroundingReads({
+        output: output(whole),
+        lineWindow: { offset: 1, limit: 2000 },
+      }).length,
+    ).toBe(1)
+  })
+  test('a limit the response used up stays a partial read', () => {
+    expect(
+      completeGroundingReads({
+        output: output('a\nb\nc\n'),
+        lineWindow: { limit: 3 },
+      }),
+    ).toEqual([])
+    expect(
+      completeGroundingReads({
+        output: output('a\nb\nc'),
+        lineWindow: { limit: 2 },
+      }),
+    ).toEqual([])
+  })
+  test('the requested window is read from the call input, junk ignored', () => {
+    expect(readLineWindow({ offset: 500, limit: 60 })).toEqual({
+      offset: 500,
+      limit: 60,
+    })
+    expect(readLineWindow({ offset: '3', limit: null })).toEqual({
+      offset: undefined,
+      limit: undefined,
+    })
+    expect(readLineWindow(undefined)).toEqual({
+      offset: undefined,
+      limit: undefined,
+    })
   })
 })

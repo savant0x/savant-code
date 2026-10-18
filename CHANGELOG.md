@@ -1,5 +1,16 @@
 # Changelog
 
+## 2026-10-18 — Credit a windowed boot read that reached EOF (FID-2026-1018-009, high)
+
+A `read_files` call that carried `limit` earned no grounding credit even when
+the whole file came back: `limit: 2000` on the 923-line `ECHO.md` was read as a
+partial window, so the required harness grounding set never completed, the
+completion gate blocked three times, disarmed, and the turn ended with no tool
+call. Credit now follows the window's effect — an `offset` past line 1 is
+always partial, and a `limit` is partial only when the response used it up.
+Three suites pass (27 tests), typecheck, ESLint, Prettier, Markdown lint and
+`validate:repository` are clean.
+
 ## 2026-10-18 — Clarify worktree busy-lock recovery (FID-2026-1018-006, low)
 
 Busy advice now requires confirming no live lifecycle writer remains before

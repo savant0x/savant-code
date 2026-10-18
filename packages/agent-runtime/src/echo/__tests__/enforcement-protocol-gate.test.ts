@@ -3,7 +3,14 @@
 // decomposition (parent: enforcement.test.ts).
 import { describe, expect, it } from 'bun:test'
 
+import { createMockAgentState } from '../../templates/__tests__/strings-test-harness'
+import {
+  completeGroundingReads,
+  readLineWindow,
+} from '../../tools/tool-executor/grounding-read'
 import { EchoEnforcement } from '../enforcement'
+
+import type { AgentState } from '@savant-code/common/types/session-state'
 
 describe('EchoEnforcement — session-init protocol gate (FID-2026-0806-005)', () => {
   it('blocks non-read tools before the protocol file is read (strict)', () => {
@@ -188,5 +195,60 @@ describe('EchoEnforcement — session-init completion gate', () => {
   it('completion gate is a no-op when gateArmed is false (legacy)', () => {
     const enforcement = new EchoEnforcement('hybrid', { gateArmed: false })
     expect(enforcement.evaluateUngroundedTurnEnd()).toEqual({ blocked: false })
+  })
+
+  // FID-2026-1018-009: the live 2026-10-18 23:21 run read all four harness
+  // boot files, passed `limit: 2000` on the 923-line ECHO.md, was credited
+  // for only three of them, and the gate therefore blocked three times,
+  // disarmed, and ended the turn with no tool call. This exercises the same
+  // seam the tool executor uses (completeGroundingReads → the enforcement
+  // checkpoint), not the helper alone.
+  const harnessState = (): AgentState => ({
+    ...createMockAgentState('savant'),
+    protocolFile: 'ECHO.md',
+    protocolVariant: 'harness',
+  })
+
+  const recordRead = (
+    enforcement: EchoEnforcement,
+    path: string,
+    content: string,
+    input: Record<string, unknown>,
+  ): void => {
+    const reads = completeGroundingReads({
+      output: [{ type: 'json', value: [{ path, content }] }],
+      lineWindow: readLineWindow(input),
+    })
+    enforcement.recordSuccessfulGroundingRead(reads.map((read) => read.path))
+  }
+
+  it('a generous limit on the protocol file still completes harness grounding', () => {
+    const enforcement = new EchoEnforcement('hybrid', {
+      agentState: harnessState(),
+    })
+    recordRead(enforcement, 'ECHO.md', '# ECHO\n'.repeat(923), {
+      paths: ['ECHO.md'],
+      limit: 2000,
+    })
+    for (const path of [
+      'ARCHITECTURE.md',
+      'protocol.config.yaml',
+      'docs/embedded-learnings.md',
+    ])
+      recordRead(enforcement, path, '# brief\n', { paths: [path] })
+    expect(enforcement.evaluateUngroundedTurnEnd()).toEqual({ blocked: false })
+  })
+
+  it('a limit that actually truncated the protocol file still blocks', () => {
+    const enforcement = new EchoEnforcement('hybrid', {
+      agentState: harnessState(),
+    })
+    recordRead(enforcement, 'ECHO.md', `${'# ECHO\n'.repeat(50)}\n`, {
+      paths: ['ECHO.md'],
+      limit: 50,
+    })
+    const result = enforcement.evaluateUngroundedTurnEnd()
+    expect(result.blocked).toBe(true)
+    expect(result.steering).toContain('Session-init grounding required')
   })
 })

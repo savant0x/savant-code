@@ -286,6 +286,16 @@ means the CLI exited deliberately and the exit code names the path; no line
 means the runtime was killed and the search moves to native allocation and the
 job object.
 
+**Updated 2026-10-18 19:22 — the next reproduction never reached the bashers.**
+Run `09d02e45` (prompt: three 45-second bashers) ended at 23:21:58 without any
+`spawn_agents` call: the turn was consumed by the session-init grounding gate
+reading the boot set, and died on a separate, now-fixed defect recorded as
+FID-2026-1018-009. `debug/cli.exit.log` has no exit record for it and the
+process stayed alive and idle, so this run says **nothing** about the
+basher-completion correlation — it must not be counted as a fourth data point
+for or against it. The reproduction still needs a run that actually spawns the
+three bashers.
+
 ### Notes
 
 The cleared screen is expected behaviour after death, so no change should be
