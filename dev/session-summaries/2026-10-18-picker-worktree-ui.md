@@ -58,3 +58,24 @@ and the four changed source files rechecked with zero warnings.
 
 Mandatory push hooks will rerun full repository typecheck, tests, lint,
 format, protocol drift, credential and attribution gates. No release is cut.
+
+## Validation findings and ownership presentation
+
+Repository validation observed the live acceptance run's report temporarily at
+the scratchpad root and a newly recurring unowned fid_worktree argument class.
+The run itself promoted its report while validation was running, so no report
+or acceptance artifact is moved or edited by this session. The four immutable
+class records comprise two invalid_union failures from run 2 and two deliberate
+invalid_format refusal tests. Associate the class with existing schema-repair
+owner FID-2026-1017-014; this records accountability, not repair of every refusal
+or completed exposure. No raw trace is changed and no new code is needed.
+
+Run 3's report also confirms this session's concurrent main-checkout edits
+interfered with its clean-main precondition. That is an execution mistake:
+future acceptance runs require an exclusive main checkout or an isolated UI
+repair checkout. The run's own findings and FID remain untouched.
+
+Ownership association implemented: class-owners.json now names FID-2026-1017-014
+for the argument-failure class. The scratch report was promoted by its owning
+run, not this session. Repository validation re-run: `validation: PASS`.
+The temporary RECURRENCE-WORKTREE register item is completed and removed.
