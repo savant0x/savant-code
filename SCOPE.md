@@ -65,17 +65,6 @@ merged lane proof become the acceptance evidence; closure retires this record
 and releases its write targets. Any discovered defect becomes its own
 implementation FID. Claims stay within measured evidence.
 
-### FID-2026-1017-012 — parallel acceptance readiness (active)
-
-Authority: automation level 3 (session ceiling). Operator instruction: "do all
-of it w/echo compliance" after the repair of FID-2026-1017-011. Scope: harden
-the `unsafe-root` guard so a spawn failure (`status: null`) is retried once while
-a real refusal or a different root still fails; correct the four divergences
-FID-2026-1017-008's report recorded in the A–Z instrument; exempt the paste-ready
-YouTube script from MD013 so the mandatory lint gate can run; delete the
-contained stale lane branch and stash the blueprint for the re-run; then run the
-declared gates, commit and push. No new capability, scheduling or sandbox claim.
-
 ## Internal follow-ups and current operator authority (2026-10-16)
 
 Implementation-complete records FID-2026-1015-006 and FID-2026-1012-022
@@ -270,11 +259,15 @@ artifacts required by ECHO retain their gate-level exemptions.
   (live parallel-worktree acceptance; active). No production source write is
   authorized by this item; a discovered defect opens its own implementation
   FID.
-- FID-2026-1017-012: `packages/agent-runtime/src/echo/parallel/fid-worktree-service.ts`,
+- FID-2026-1017-012 is **closed and archived** (2026-10-17, 5/5 gates, receipt
+  stamped, commit `4f989510`). Its write targets are released:
+  `packages/agent-runtime/src/echo/parallel/fid-worktree-service.ts`,
   `packages/agent-runtime/src/__tests__/fid-worktree-tool.test.ts`,
   `dev/test-prompts/az-parallel-worktrees-live-test.md`, `.markdownlintignore`,
-  `dev/fids/**`, `SCOPE.md`, `CHANGELOG.md`, `dev/session-summaries/**`
-  (parallel acceptance readiness; active).
+  `dev/fids/**`, `SCOPE.md`, `CHANGELOG.md`. The root guard now retries only a
+  git process that could not run; the A–Z instrument matches the code and the
+  gates. The lane is prepped for the operator re-run: stale branch deleted,
+  blueprint stashed. No acceptance is claimed by this record.
 - FID-2026-1017-011 is **closed and archived** (2026-10-17, 7/7 gates, receipt
   stamped, commit `774eb705`). Its write targets are released:
   `packages/knowledge-graph/src/update-scan.ts`,

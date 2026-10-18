@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-1017-012-parallel-acceptance-readiness.md`
 **ID:** FID-2026-1017-012
 **Severity:** high
-**Status:** verified
+**Status:** closed
 **Created:** 2026-10-17 22:05
 **Automation level:** 3
 **YAGNI-Compliance:** Verified — one bounded retry in an existing guard, one
@@ -190,7 +190,7 @@ contradiction between §2 and §5.13. `bun run lint:md` must exit 0 and
 
 ### Implementation Evidence (REQUIRED for `closed`)
 
-- [ ] **Commit SHA:** filled at closure
+- [x] **Commit SHA:** `4f989510`
 - [x] **File:line ranges:**
       `packages/agent-runtime/src/echo/parallel/fid-worktree-service.ts:38-70`
       (retry + exported guard);
@@ -234,8 +234,26 @@ contradiction between §2 and §5.13. `bun run lint:md` must exit 0 and
 
 ## Resolution
 
-Not yet resolved at authoring time. Closure records the commit, gate output and
-archive location.
+- **Closed Date:** 2026-10-17 22:25
+- **Fix Description:** `resolveGitTopLevel` retries once only for `status: null`
+  (the process could not run) and immediately returns null for any non-zero
+  status; `safeHostRoot` is exported with an injected runner so the five cases
+  are pinned. The A–Z instrument now requires an empty baseline, documents the
+  force-add for the gitignored FID record, expects the schema refusal at §5.2,
+  accepts the dispose recovery warning, and notes the mixed-separator path. A
+  narrow `.markdownlintignore` entry exempts the paste-ready video draft.
+- **Tests Added:** Yes — five-case root-guard test in
+  `fid-worktree-tool.test.ts` (matching root, transient retry, bounded retry,
+  different root, non-zero status).
+- **Verification Evidence:** `fid:verify --write` ran 5/5 declared gates with
+  exit 0 (agent-runtime typecheck, tool suite 7/7, provision suite 5/5, lane
+  probe, quality). ESLint `--max-warnings 0` exit 0; `bun run lint:md` exit 0;
+  `bun run validate:repository` PASS.
+- **Lane prep:** `savant/FID-2026-1017-008` deleted (was `3d24daf9`, contained
+  in main); blueprint stashed at SHA-256
+  `bf6075224adee1f51f82d601e0145082dd3ae2f8057f8f081f370b35ac9a91a9`, restore
+  with `git stash pop`.
+- **Archived:** 2026-10-17 22:25
 
 ## Lessons Learned
 

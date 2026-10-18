@@ -1,5 +1,22 @@
 # Changelog
 
+## 2026-10-17 — Parallel acceptance run is repeatable (FID-2026-1017-012, high)
+
+The `unsafe-root` guard could not tell "git never ran" from "git reports another
+root": both refused with the same message, and 3 of 18 live lifecycle calls were
+refused in the acceptance run. The guard now retries once only when the process
+could not run (`status: null`); a reported root must still match, and a non-zero
+status still fails closed. The A–Z instrument is corrected for the four
+divergences its own run recorded (empty baseline, force-added FID record,
+schema-first invalid-id refusal, dispose recovery warning), and a paste-ready
+video draft is exempted from MD013 so the mandatory lint gate runs again.
+
+Implementation: `4f989510`. Verification: 5/5 declared gates (agent-runtime
+typecheck, tool suite 7/7, provision suite 5/5, real-git probe, quality), ESLint
+0 warnings, markdownlint exit 0, repository validation PASS. Lane prep: the
+contained stale branch was deleted and the blueprint stashed for restoration
+after the run.
+
 ## 2026-10-17 — Post-merge graph refresh survives real assets (FID-2026-1017-011, high)
 
 The parallel-worktree merge landed but its main-graph refresh threw, so the
