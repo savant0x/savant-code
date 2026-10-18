@@ -67,7 +67,8 @@ now owns the cause and the repair.
   `cli/src/components/model-picker-rows.tsx`,
   `cli/src/utils/model-picker-open.ts`, `cli/src/utils/renderer-cleanup.ts`,
   `cli/src/utils/terminal-watchdog.ts`, `cli/src/index.tsx`,
-  `cli/src/components/__tests__/**`, `debug/**`, `dev/**`
+  `cli/src/components/__tests__/**`, `cli/src/utils/__tests__/**`,
+  `debug/**`, `dev/**`
 - Release-0.0.36: `VERSION`, `package.json`, `agents/package.json`,
   `cli/package.json`, `cli/release/package.json`, `common/package.json`,
   `common/src/constants/protocol-bundle.generated.ts`, `desktop/package.json`,

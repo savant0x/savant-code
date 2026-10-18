@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-1018-008-model-picker-silent-terminal-death.md`
 **ID:** FID-2026-1018-008
 **Severity:** critical
-**Status:** created
+**Status:** analyzed
 **Created:** 2026-10-18 17:58
 **Automation level:** 3
 **YAGNI-Compliance:** Pending
@@ -166,15 +166,31 @@ Candidate mechanisms are ranked, not concluded.
 
 ### Code Verification Evidence
 
-No implementation exists yet, so there is nothing to verify. This FID is at
-`created`; the implementation evidence section is filled during GREEN and
-AUDIT, with the commit SHA, the gate output and the live reproduction result.
+Diagnostics step implemented (`cli/src/utils/renderer-cleanup.ts`): the `exit`
+handler now appends one JSON line to `debug/cli.exit.log` with the exit code,
+pid, uptime and RSS before `cleanup()`. Absence of that line is the signal that
+the process was killed rather than exited. Exercised live through the PTY
+harness: a normal Ctrl+C quit wrote
+`{"event":"process-exit","code":0,"pid":10620,"uptimeSeconds":5,"rssMb":429}`.
+Gates: `cd cli && bun run typecheck` exit 0; the new suite
+`cli/src/utils/__tests__/exit-breadcrumb.test.ts` 2 pass / 0 fail; ESLint and
+Prettier clean on both files.
+
+The defect itself is **not fixed**. This FID stays `analyzed` until the crash
+class is identified and the cause is repaired.
 
 ## Resolution
 
 Pending. The defect is reproduced and the cause is not established; the
 resolution records the captured cause, the fix, and the live operator run once
 they exist.
+
+Diagnostics landed first on purpose: the two observed deaths produced no fatal
+log entry, no stderr text and no OS crash record, so a fix written now would be
+a guess. The next reproduction splits the space in one run — a breadcrumb line
+means the CLI exited deliberately and the exit code names the path; no line
+means the runtime was killed and the search moves to native allocation and the
+job object.
 
 ### Notes
 

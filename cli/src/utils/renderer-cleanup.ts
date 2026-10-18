@@ -1,3 +1,7 @@
+import { appendFileSync, mkdirSync } from 'node:fs'
+import path from 'node:path'
+
+import { getProjectRoot } from '../project-files'
 import { logger } from './logger'
 import { flushLiveChatState } from './run-state-storage'
 import { TERMINAL_RESET_SEQUENCES } from './terminal-reset-sequences'
@@ -9,6 +13,36 @@ import type { CliRenderer } from '@opentui/core'
 let renderer: CliRenderer | null = null
 let handlersInstalled = false
 let terminalStateReset = false
+
+/**
+ * Append one line describing how this process ended (FID-2026-1018-008).
+ *
+ * A death that never reaches this handler — native abort, OOM kill, job-object
+ * termination — leaves no line at all, which is itself the diagnostic: the
+ * absence distinguishes "the CLI chose to exit" from "the runtime was killed".
+ * The terminal reset erases the screen, and stderr was empty in the observed
+ * crash, so this file is the only local record that survives. Fail-open: a
+ * diagnostics write must never affect shutdown.
+ */
+export function writeExitBreadcrumb(
+  code: number,
+  debugDir: string = path.join(getProjectRoot(), 'debug'),
+): void {
+  try {
+    const line = JSON.stringify({
+      timestamp: new Date().toISOString(),
+      event: 'process-exit',
+      code,
+      pid: process.pid,
+      uptimeSeconds: Math.round(process.uptime()),
+      rssMb: Math.round(process.memoryUsage.rss() / 1024 / 1024),
+    })
+    mkdirSync(debugDir, { recursive: true })
+    appendFileSync(path.join(debugDir, 'cli.exit.log'), `${line}\n`)
+  } catch {
+    // Diagnostics only: never let the breadcrumb interfere with exit.
+  }
+}
 
 /**
  * Reset terminal state by writing escape sequences directly to stdout.
@@ -114,7 +148,8 @@ export function installProcessCleanupHandlers(cliRenderer: CliRenderer): void {
   })
 
   // exit - Last chance to run synchronous cleanup code
-  process.on('exit', () => {
+  process.on('exit', (code) => {
+    writeExitBreadcrumb(code)
     cleanup()
   })
 
