@@ -19,14 +19,30 @@ verification, releases or repository boundaries.
   release/build gates, dependency and dead-code candidates, current documentation,
   generated artifacts, and active governance records. Fix confirmed defects with
   converged FIDs and verification; preserve historical evidence and operator files.
-- [ ] Resolve the LIVE-004 keystroke-evidence gap through FID-2026-1018-012's
+- [x] Resolve the LIVE-004 keystroke-evidence gap through FID-2026-1018-012's
   render-level picker keyboard test. The listener-warning, CommandPalette key,
   audit-tooling and dependency residuals closed on 2026-10-19 with
-  FID-2026-1018-011, -010, -013 and -014 — all archived with commit hashes and
-  CHANGELOG entries. FID-2026-1018-012 also owns release-audit documentation
-  and record reconciliation.
-- [ ] Run the complete local gate battery and release preview/diagnostics; record
-  exact results and any external prerequisite that cannot be verified locally.
+  FID-2026-1018-011, -010, -013 and -014, and FID-2026-1018-012 closed last —
+  all five archived with commit hashes, CHANGELOG entries and the batch index
+  `dev/fids/archive/2026-10-19-release-audit-closures.md`.
+- [x] Run the complete local gate battery and release preview; record exact
+  results. Gates on the committed tree: typecheck exit 0, CLI 4,233 pass /
+  18 skip / 0 fail, scripts 1,122 pass / 0 fail, ESLint 0 warnings, Markdown
+  lint exit 0, `validate:repository` PASS, `release:preaudit:check`
+  `PASS — release preconditions clear`, `release:public:preview` exit 0 with the
+  0.0.36 changelog section resolving correctly.
+- [ ] Resolve the `release:public:diagnose` rehearsal failure before any release
+  run. On the committed tree it aborted with `Diagnostic gates changed HEAD;
+  evidence was discarded.` (receipt
+  `%TEMP%/savant-public-release-0.0.36-diagnostic.json`, `gateAttempts: []`)
+  after the lockfile, undeclared-imports, cli-bundle-resolution, typecheck, test,
+  eslint, repository-validation and provider-reference gates had produced
+  transcripts. HEAD did not move (`ff6cd6fe` before and after, clean worktree, no
+  extra reflog entry), so the guard fired on a non-zero `git rev-parse` rather
+  than a real commit change; the discarded attempt list is itself an
+  evidence-retention gap. Reproduce on a frozen tracked tree and fix the guard or
+  its evidence retention before relying on diagnostic receipts. Publication
+  remains operator-gated.
 
 Release publication follows the completed audit and the canonical release pipeline.
 This audit does not authorize paid provider comparisons or external skill edits.
@@ -65,14 +81,9 @@ This session uses the canonical repository protocol.
 
 Operator pause, 2026-10-18: requested a handoff with 9% session credits remaining.
 Resumed 2026-10-19: the CHANGELOG read completed, the 0.0.36 heading moved above
-its recent entries, and the audit slices committed. Release publication is not
-claimed.
+its recent entries, all five audit FIDs committed, closed and archived, and the
+`dev/` record tree reorganized. Release publication is not claimed.
 Resume checklist: `dev/session-summaries/2026-10-18-release-audit-handoff.md`.
-
-- FID-2026-1018-012: `.gitignore`, `.markdownlintignore`, `README.md`, `README.zh-CN.md`, `SCOPE.md`,
-  `docs/**`, `sdk/README.md`, `sdk/PUBLISHING.md`, `common/src/templates/initial-agents-dir/**`,
-  `cli/src/components/__tests__/model-picker-scroll.test.tsx`, `dev/**`, `CHANGELOG.md`
-  `scripts/public-release/catalog.ts`, `scripts/public-release/backup-stage.ts`
 
 - AUDIT-2026-1018: `SCOPE.md`, `CHANGELOG.md`, `README.md`, `README.zh-CN.md`,
   `ARCHITECTURE.md`, `AGENTS.md`, `CONTRIBUTING.md`, `ECHO.md`,
