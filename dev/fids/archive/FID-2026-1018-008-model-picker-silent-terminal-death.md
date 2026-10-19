@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-1018-008-model-picker-silent-terminal-death.md`
 **ID:** FID-2026-1018-008
 **Severity:** critical
-**Status:** verified
+**Status:** closed
 **Created:** 2026-10-18 17:58
 **Automation level:** 3
 **YAGNI-Compliance:** Compliant — the repair slices the existing list to the

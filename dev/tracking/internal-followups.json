@@ -34,10 +34,10 @@
         "dev/session-summaries/2026-10-18-picker-worktree-ui.md",
         "dev/session-summaries/2026-10-18-live-003-picker-retry.md",
         "scripts/probes/live-003-picker-pty.ts",
-        "dev/fids/FID-2026-1018-008-model-picker-silent-terminal-death.md"
+        "dev/fids/archive/FID-2026-1018-008-model-picker-silent-terminal-death.md"
       ],
       "completionEvidence": [
-        "dev/fids/FID-2026-1018-008-model-picker-silent-terminal-death.md",
+        "dev/fids/archive/FID-2026-1018-008-model-picker-silent-terminal-death.md",
         "dev/session-summaries/2026-10-18-live-003-picker-retry.md"
       ],
       "sourceFids": ["FID-2026-1018-003"]
@@ -45,15 +45,19 @@
     {
       "id": "LIVE-004",
       "kind": "live-comparison",
-      "status": "open",
+      "status": "completed",
       "owner": "Operator",
-      "summary": "FID-2026-1018-008 is implementation-complete and verified in a PTY run: with the picker windowed to 12 rows, /model opened on the 4,075-row dev catalog, no render-tree-empty was recorded across a 26 s dwell, RSS stayed at 408 MB, and the session quit through its normal exit path. No operator session has opened /model since the fix shipped, and the original three-basher reproduction has not been rerun.",
-      "nextAction": "On the next operator run, open /model on the full catalog (optionally with bashers active) and confirm the picker paints, stays open and that debug/cli.exit.log records no render-tree-empty for that session. Record the observed outcome here; do not treat the PTY run as operator acceptance.",
+      "summary": "ACCEPTED 2026-10-19 01:34-01:40 UTC: operator session opened /model five times on the 4,075-row dev catalog with three bashers running and no blank occurred — every open returned opened=true (01:34:42, 01:34:49, 01:36:02, 01:37:41, 01:37:49) and debug/cli.exit.log holds no render-tree-empty after 01:04:47Z, the timestamp of the last pre-fix capture. debug/cli.jsonl holds exactly one real 'Error: Failed to create TextBuffer', at 01:04:41.808Z — the pre-fix reproduction — and none in the accepted session, whose only ERROR lines are the CommandPalette->Button key warning (01:32:51.702Z, 01:39:35.113Z). Residuals observed and NOT closed here: (1) five EventTarget max-listener WARNs in that run (11 resize listeners on CliRenderer at 01:34:18Z, 11 change listeners on ScrollBarRenderable at 01:34:38Z and 01:34:45Z, 11 focus and 11 blur listeners on CliRenderer at 01:34:45Z); the resize warning precedes the first picker open, so it is not established as picker-driven; (2) the keystroke-level 'arrow keys and filter letter responded' verdict has no durable log evidence — no breadcrumb records key name plus filtered count; (3) the CommandPalette key warning predates this fix. Earlier state: implementation-verified in a PTY run (picker opened, 26 s dwell without render-tree-empty, 408 MB, clean exit reason process.exit@cli\\src\\hooks\\use-exit-handler.ts:49) but not accepted by an operator session.",
+      "nextAction": "None for this acceptance. The three residuals need their own dispositions (medium FID for the listener accumulation on the /model path, low FID for keystroke-observability breadcrumbs, and the CommandPalette key warning); do not fold them into this closure.",
       "evidence": [
         "dev/fids/archive/FID-2026-1018-008-model-picker-silent-terminal-death.md",
-        "scripts/probes/live-008-model-picker-dwell.ts"
+        "scripts/probes/live-008-model-picker-dwell.ts",
+        "dev/nova/outbox/2026-10-19-live-004-operator-acceptance-handoff.md"
       ],
-      "completionEvidence": [],
+      "completionEvidence": [
+        "dev/nova/outbox/2026-10-19-live-004-operator-acceptance-handoff.md",
+        "dev/fids/archive/FID-2026-1018-008-model-picker-silent-terminal-death.md"
+      ],
       "sourceFids": ["FID-2026-1018-008"]
     }
   ]

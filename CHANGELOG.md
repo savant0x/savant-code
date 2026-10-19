@@ -12,7 +12,10 @@ and React unmounted the root. The picker now mounts only the window
 `getPickerViewport` already computes. Measured with a new dwell probe on the
 real catalog: before, the picker never appeared and `render-tree-empty` fired at
 8 s; after, it opens, survives a 26 s dwell, and the session quits through its
-normal exit path at 408 MB. Implementation: `24cf1bae`.
+normal exit path at 408 MB. Implementation: `24cf1bae`. Operator acceptance
+(LIVE-004): five `/model` opens on the same catalog during a live session with
+three bashers running, none blanked, no `render-tree-empty` and no
+`TextBuffer` failure recorded.
 
 ## 2026-10-18 — Credit a windowed boot read that reached EOF (FID-2026-1018-009, high)
 
