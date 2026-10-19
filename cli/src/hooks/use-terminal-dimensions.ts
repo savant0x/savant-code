@@ -1,12 +1,21 @@
-import {
-  useRenderer,
-  useTerminalDimensions as useOpenTuiDimensions,
-} from '@opentui/react'
-import { useMemo } from 'react'
+import { useRenderer } from '@opentui/react'
+import { useEffect, useMemo, useState } from 'react'
+
+import { subscribeSharedEvent } from '../utils/shared-event'
 
 export const useTerminalDimensions = () => {
   const renderer = useRenderer()
-  const { width: measuredWidth } = useOpenTuiDimensions()
+  const [dimensions, setDimensions] = useState({
+    width: renderer.width,
+    height: renderer.height,
+  })
+  useEffect(() => {
+    const update = () =>
+      setDimensions({ width: renderer.width, height: renderer.height })
+    const unsubscribe = subscribeSharedEvent(renderer, 'resize', update)
+    update()
+    return unsubscribe
+  }, [renderer])
 
   const sanitizeDimension = (
     value: number | null | undefined,
@@ -18,15 +27,15 @@ export const useTerminalDimensions = () => {
 
   const resolvedTerminalWidth = useMemo(
     () =>
-      sanitizeDimension(measuredWidth) ??
+      sanitizeDimension(dimensions.width) ??
       sanitizeDimension(renderer?.width) ??
       80,
-    [measuredWidth, renderer?.width],
+    [dimensions.width, renderer?.width],
   )
 
   const resolvedTerminalHeight = useMemo(
-    () => sanitizeDimension(renderer?.height) ?? 24,
-    [renderer?.height],
+    () => sanitizeDimension(dimensions.height) ?? 24,
+    [dimensions.height],
   )
 
   const terminalWidth = resolvedTerminalWidth

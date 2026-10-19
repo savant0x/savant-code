@@ -1,11 +1,9 @@
 import { LayoutEvents, ScrollBoxRenderable } from '@opentui/core'
-import {
-  useBlur,
-  useFocus,
-  useRenderer,
-  useTerminalDimensions,
-} from '@opentui/react'
+import { useRenderer } from '@opentui/react'
 import { useCallback, useEffect, useState } from 'react'
+
+import { useTerminalDimensions } from './use-terminal-dimensions'
+import { subscribeSharedEvent } from '../utils/shared-event'
 
 import type { Renderable } from '@opentui/core'
 import type { RefObject } from 'react'
@@ -96,11 +94,21 @@ export function useAnimationBudget(
   ref?: RefObject<Renderable | null>,
 ): AnimationBudget {
   const [isFocused, setIsFocused] = useState(true)
-  useFocus(() => setIsFocused(true))
-  useBlur(() => setIsFocused(false))
-
   const renderer = useRenderer()
-  const { width, height } = useTerminalDimensions()
+  useEffect(() => {
+    const focus = subscribeSharedEvent(renderer, 'focus', () =>
+      setIsFocused(true),
+    )
+    const blur = subscribeSharedEvent(renderer, 'blur', () =>
+      setIsFocused(false),
+    )
+    return () => {
+      focus()
+      blur()
+    }
+  }, [renderer])
+  const { terminalWidth: width, terminalHeight: height } =
+    useTerminalDimensions()
   const [isSuspended, setIsSuspended] = useState(false)
 
   const recomputeSuspension = useCallback(() => {
@@ -123,12 +131,17 @@ export function useAnimationBudget(
     node.on(LayoutEvents.RESIZED, recomputeSuspension)
 
     // Re-evaluate when any ancestor ScrollBox scrolls (its scissor moves).
-    const scrollAncestors: ScrollBoxRenderable[] = []
+    const unsubscribeScroll: (() => void)[] = []
     for (let ancestor = node.parent; ancestor; ancestor = ancestor.parent) {
       if (ancestor instanceof ScrollBoxRenderable) {
-        ancestor.verticalScrollBar.on('change', recomputeSuspension)
-        ancestor.horizontalScrollBar.on('change', recomputeSuspension)
-        scrollAncestors.push(ancestor)
+        for (const bar of [
+          ancestor.verticalScrollBar,
+          ancestor.horizontalScrollBar,
+        ]) {
+          unsubscribeScroll.push(
+            subscribeSharedEvent(bar, 'change', recomputeSuspension),
+          )
+        }
       }
     }
 
@@ -138,10 +151,7 @@ export function useAnimationBudget(
       clearTimeout(timeoutId)
       node.off(LayoutEvents.LAYOUT_CHANGED, recomputeSuspension)
       node.off(LayoutEvents.RESIZED, recomputeSuspension)
-      for (const box of scrollAncestors) {
-        box.verticalScrollBar.off('change', recomputeSuspension)
-        box.horizontalScrollBar.off('change', recomputeSuspension)
-      }
+      for (const unsubscribe of unsubscribeScroll) unsubscribe()
     }
   }, [ref, recomputeSuspension])
 
