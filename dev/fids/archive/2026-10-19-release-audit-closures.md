@@ -21,6 +21,18 @@ the CHANGELOG entry under `## 0.0.36` and the commit names below.
 - `validate:repository` PASS.
 - `release:preaudit:check`: `pre-audit: PASS — release preconditions clear`.
 
+## Push readiness on this tree
+
+The pre-push hook's stages were run directly: credential scan over the pushed
+range (`origin/main..HEAD`, 68 files), attribution guard on governed documents,
+protocol-bundle check, `fid:verify --check`, Tier-1 governance smoke, ESLint,
+Markdown lint and Prettier. The release diagnostic already re-ran the lockfile,
+undeclared-imports, cli-bundle-resolution, typecheck, full test suite,
+repository-validation, provider-reference, hygiene, provider-docs, markdownlint
+and `npm-pack` gates on this same commit series, and
+`release:preaudit:check` reports `PASS — release preconditions clear` with the
+backup marker level with HEAD.
+
 ## Boundaries carried, not closed here
 
 - The raw registry audit still reports one patched `braces@3.0.3` advisory with
