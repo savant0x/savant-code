@@ -17,10 +17,18 @@
 import { logger } from './logger'
 
 export interface ConsoleCaptureHandlers {
-  error: (message: string) => void
-  warn: (message: string) => void
+  /** Omitted → the durable logger is used. */
+  error?: (message: string) => void
+  warn?: (message: string) => void
   /** Original console methods, kept for diagnostics and tests. */
   passthrough?: boolean
+  /**
+   * Wrap whatever `console.error`/`console.warn` currently are, even when a
+   * capture is already installed. OpenTUI's renderer calls its own
+   * `overrideConsoleMethods()` during activation, replacing our wrapper — so
+   * the caller re-installs after the renderer exists to sit on top of it.
+   */
+  rewrap?: boolean
 }
 
 let installed = false
@@ -57,7 +65,7 @@ export function formatConsoleArguments(args: readonly unknown[]): string {
 export function installConsoleCapture(
   handlers?: ConsoleCaptureHandlers,
 ): () => void {
-  if (installed) return () => {}
+  if (installed && handlers?.rewrap !== true) return () => {}
   installed = true
 
   const originalError = console.error
@@ -66,8 +74,9 @@ export function installConsoleCapture(
 
   console.error = (...args: unknown[]) => {
     try {
-      if (handlers) handlers.error(formatConsoleArguments(args))
-      else logger.error({ source: 'console' }, formatConsoleArguments(args))
+      const text = formatConsoleArguments(args)
+      if (handlers?.error) handlers.error(text)
+      else logger.error({ source: 'console' }, text)
     } catch {
       // Diagnostics only.
     }
@@ -76,8 +85,9 @@ export function installConsoleCapture(
 
   console.warn = (...args: unknown[]) => {
     try {
-      if (handlers) handlers.warn(formatConsoleArguments(args))
-      else logger.warn({ source: 'console' }, formatConsoleArguments(args))
+      const text = formatConsoleArguments(args)
+      if (handlers?.warn) handlers.warn(text)
+      else logger.warn({ source: 'console' }, text)
     } catch {
       // Diagnostics only.
     }

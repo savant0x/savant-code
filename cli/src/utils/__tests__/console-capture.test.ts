@@ -41,6 +41,37 @@ describe('console capture — installation', () => {
     expect(warns).toEqual(['deprecated path'])
   })
 
+  // OpenTUI's renderer activation replaces console.error with its own capture,
+  // which is why the first wrapper never saw a React failure. A rewrap must
+  // sit on top of the replacement and still call through to it.
+  test('a rewrap captures after another layer replaced the console', () => {
+    const errors: string[] = []
+    dispose = installConsoleCapture({
+      error: (message) => errors.push(message),
+      warn: () => {},
+      passthrough: false,
+    })
+    const overlays: string[] = []
+    const originalError = console.error
+    console.error = (...args: unknown[]) => {
+      overlays.push(String(args[0]))
+    }
+    try {
+      expect(
+        installConsoleCapture({
+          error: (message) => errors.push(message),
+          warn: () => {},
+          rewrap: true,
+        }),
+      ).toBeInstanceOf(Function)
+      console.error('react commit failed')
+      expect(errors).toEqual(['react commit failed'])
+      expect(overlays).toEqual(['react commit failed'])
+    } finally {
+      console.error = originalError
+    }
+  })
+
   test('installing twice is a no-op and disposal restores the originals', () => {
     const errors: string[] = []
     dispose = installConsoleCapture({

@@ -272,6 +272,10 @@ async function main(): Promise<void> {
   // FID-2026-1018-008: a render throw or a stopped render loop leaves a black
   // screen with a healthy process and no log line. Record it, and probe for it.
   installRendererHealth(renderer)
+  // OpenTUI's renderer activation replaces console.error/warn with its own
+  // capture, discarding the wrapper installed at startup. Re-wrap on top of it
+  // so React's reported failures still reach the durable log (FID-2026-1018-008).
+  installConsoleCapture({ rewrap: true })
 
   createRoot(renderer).render(
     <QueryClientProvider client={queryClient}>

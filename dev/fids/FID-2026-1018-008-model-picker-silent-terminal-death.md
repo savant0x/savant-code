@@ -388,6 +388,33 @@ than asserted in-suite.
   episode when the renderer root has no children, which is the exact shape
   measured above — it fires even while frames tick.
 
+**Updated 2026-10-19 00:50 — the probe caught it, the console channel was
+blocked by OpenTUI.** Run at 00:46 recorded the first mechanical confirmation:
+
+```text
+00:46:24.957  model-picker-open-begin
+00:46:25.638  model-picker-open-returned  opened=true
+00:46:33.673  render-tree-empty  renderables=1  uptimeSeconds=82  rssMb=1055
+```
+
+The renderer root held exactly one renderable (itself) **8 s after the picker
+opened**, with the process alive at ~1 GB — the empty-tree shape, now stamped
+by the probe instead of inferred from a console readback.
+
+No `source: "console"` line appeared in `debug/cli.jsonl`, and the cause is not
+in our wrapper: OpenTUI's renderer calls `overrideConsoleMethods()` from
+`activate()` (`@opentui/core` renderer.js:4529 → :4547) **after** our startup
+install, replacing `console.error`/`console.warn` with its own capture. The
+wrapper was therefore never reached. `installConsoleCapture({ rewrap: true })`
+now runs immediately after renderer creation (`cli/src/index.tsx:278`), sitting
+on top of OpenTUI's methods, so a React failure is logged while still reaching
+the renderer's own console.
+
+One more local candidate eliminated: growing a mounted picker from 30 rows to
+the full 4,075-row catalog (the shape of the background refresh that lands a
+few seconds after `/model`) still paints — 865 non-space cells on every one of
+four frames. The transition alone is not the trigger.
+
 ### Notes
 
 The cleared screen is expected behaviour after death, so no change should be
