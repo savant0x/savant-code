@@ -57,7 +57,9 @@ describe('summaryMonth', () => {
 
   test('groups non-markdown artifacts by the same date prefix', () => {
     expect(monthOf('2026-10-17-fid-worktrees-tests.log')).toBe('2026-10')
-    expect(monthOf('2026-10-03-free-provider-desktop-smoke.png')).toBe('2026-10')
+    expect(monthOf('2026-10-03-free-provider-desktop-smoke.png')).toBe(
+      '2026-10',
+    )
   })
 
   test('reads the pre-convention YYYY-MMDD shape', () => {
@@ -109,7 +111,10 @@ describe('planSessionSummaryOrganization', () => {
     const root = scratch()
     write(root, '2026-10-19-busy.md')
     fs.mkdirSync(path.join(root, '2026-10'))
-    fs.writeFileSync(path.join(root, '2026-10', '2026-10-19-busy.md'), 'keep me\n')
+    fs.writeFileSync(
+      path.join(root, '2026-10', '2026-10-19-busy.md'),
+      'keep me\n',
+    )
 
     const report = organizeSessionSummaries(root)
 
@@ -117,10 +122,12 @@ describe('planSessionSummaryOrganization', () => {
       { file: '2026-10-19-busy.md', target: '2026-10/2026-10-19-busy.md' },
     ])
     expect(report.applied).toBe(0)
-    expect(fs.readFileSync(path.join(root, '2026-10-19-busy.md'), 'utf8')).toContain('busy')
-    expect(fs.readFileSync(path.join(root, '2026-10', '2026-10-19-busy.md'), 'utf8')).toBe(
-      'keep me\n',
-    )
+    expect(
+      fs.readFileSync(path.join(root, '2026-10-19-busy.md'), 'utf8'),
+    ).toContain('busy')
+    expect(
+      fs.readFileSync(path.join(root, '2026-10', '2026-10-19-busy.md'), 'utf8'),
+    ).toBe('keep me\n')
   })
 })
 
@@ -131,18 +138,29 @@ describe('sessionSummaryReference', () => {
       recursive: true,
     })
     fs.writeFileSync(
-      path.join(root, 'dev', 'session-summaries', '2026-10', '2026-10-18-picker.md'),
+      path.join(
+        root,
+        'dev',
+        'session-summaries',
+        '2026-10',
+        '2026-10-18-picker.md',
+      ),
       '# picker\n',
     )
 
     expect(
-      sessionSummaryReference(root, 'dev/session-summaries/2026-10-18-picker.md'),
+      sessionSummaryReference(
+        root,
+        'dev/session-summaries/2026-10-18-picker.md',
+      ),
     ).toBe('dev/session-summaries/2026-10/2026-10-18-picker.md')
   })
 
   test('leaves a path alone when the flat file still exists or the name is unplaceable', () => {
     const root = scratch()
-    fs.mkdirSync(path.join(root, 'dev', 'session-summaries'), { recursive: true })
+    fs.mkdirSync(path.join(root, 'dev', 'session-summaries'), {
+      recursive: true,
+    })
     fs.writeFileSync(
       path.join(root, 'dev', 'session-summaries', '2026-10-18-flat.md'),
       '# flat\n',
@@ -151,12 +169,12 @@ describe('sessionSummaryReference', () => {
     expect(
       sessionSummaryReference(root, 'dev/session-summaries/2026-10-18-flat.md'),
     ).toBe('dev/session-summaries/2026-10-18-flat.md')
-    expect(sessionSummaryReference(root, 'dev/session-summaries/notes.md')).toBe(
-      'dev/session-summaries/notes.md',
-    )
-    expect(sessionSummaryReference(root, 'dev/session-summaries/../secret.md')).toBe(
-      'dev/session-summaries/../secret.md',
-    )
+    expect(
+      sessionSummaryReference(root, 'dev/session-summaries/notes.md'),
+    ).toBe('dev/session-summaries/notes.md')
+    expect(
+      sessionSummaryReference(root, 'dev/session-summaries/../secret.md'),
+    ).toBe('dev/session-summaries/../secret.md')
     expect(sessionSummaryReference(root, 'docs/2026-10-18-other.md')).toBe(
       'docs/2026-10-18-other.md',
     )
@@ -176,10 +194,22 @@ describe('organizeSessionSummaries', () => {
 
     expect(report.applied).toBe(3)
     expect(report.moves).toHaveLength(3)
-    expect(fs.readdirSync(path.join(root, '2026-10'))).toEqual(['2026-10-01-open.md'])
-    expect(fs.readdirSync(path.join(root, '2026-09'))).toEqual(['2026-09-30-closeout.md'])
-    expect(fs.readdirSync(path.join(root, '2026-08'))).toEqual(['2026-0823-2328-handoff.md'])
-    expect(fs.readdirSync(root).sort()).toEqual(['.gitkeep', '2026-08', '2026-09', '2026-10', 'README.md'])
+    expect(fs.readdirSync(path.join(root, '2026-10'))).toEqual([
+      '2026-10-01-open.md',
+    ])
+    expect(fs.readdirSync(path.join(root, '2026-09'))).toEqual([
+      '2026-09-30-closeout.md',
+    ])
+    expect(fs.readdirSync(path.join(root, '2026-08'))).toEqual([
+      '2026-0823-2328-handoff.md',
+    ])
+    expect(fs.readdirSync(root).sort()).toEqual([
+      '.gitkeep',
+      '2026-08',
+      '2026-09',
+      '2026-10',
+      'README.md',
+    ])
     expect(sessionSummaryOrganizationLine(report)).toBe(
       'session-summaries: 3 summary file(s) grouped into 3 month bucket(s).',
     )

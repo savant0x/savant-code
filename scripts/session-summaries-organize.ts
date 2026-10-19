@@ -36,8 +36,7 @@ const COMPACT_NAME = /^(\d{4})-(\d{2})(\d{2})(?:[ -].*)?$/i
 const PRESERVED_NAMES = new Set(['readme.md', '.gitkeep'])
 
 export type SummaryMonth =
-  | { ok: true; month: string; day: string; legacy: boolean }
-  | { ok: false }
+  { ok: true; month: string; day: string; legacy: boolean } | { ok: false }
 
 export type SummaryMove = {
   /** File name at the root, e.g. `2026-10-19-audit.md`. */
@@ -118,7 +117,10 @@ function countMonthFiles(directory: string): number {
  * traversing name and any undated name is returned unchanged, so each caller's
  * own containment check still sees what it saw before.
  */
-export function sessionSummaryReference(root: string, reference: string): string {
+export function sessionSummaryReference(
+  root: string,
+  reference: string,
+): string {
   const normalized = reference.replace(/\\/g, '/')
   const prefix = `${SESSION_SUMMARY_DIR.replace(/\\/g, '/')}/`
   if (!normalized.startsWith(prefix)) return reference
@@ -153,7 +155,9 @@ export function planSessionSummaryOrganization(root: string): SummaryPlan {
   for (const entry of entries) {
     if (entry.isDirectory()) {
       if (/^\d{4}-\d{2}$/.test(entry.name)) {
-        plan.months[entry.name] = countMonthFiles(path.join(directory, entry.name))
+        plan.months[entry.name] = countMonthFiles(
+          path.join(directory, entry.name),
+        )
       }
       continue
     }
@@ -199,7 +203,10 @@ export function organizeSessionSummaries(
     for (const move of plan.moves) {
       const monthDir = path.join(plan.root, move.month)
       fs.mkdirSync(monthDir, { recursive: true })
-      fs.renameSync(path.join(plan.root, move.file), path.join(plan.root, move.target))
+      fs.renameSync(
+        path.join(plan.root, move.file),
+        path.join(plan.root, move.target),
+      )
       applied += 1
       plan.months[move.month] = (plan.months[move.month] ?? 0) + 1
     }
@@ -261,13 +268,19 @@ function parseArgs(argv: string[]): {
 
 if (import.meta.main) {
   const args = parseArgs(Bun.argv.slice(2))
-  const report = organizeSessionSummaries(args.root, { dryRun: args.dryRun || args.check })
+  const report = organizeSessionSummaries(args.root, {
+    dryRun: args.dryRun || args.check,
+  })
   const pending = report.moves.length + report.conflicts.length
   for (const move of report.moves) {
-    process.stdout.write(`${args.check || args.dryRun ? 'would group' : 'grouped'}: ${move.file} -> ${move.target}\n`)
+    process.stdout.write(
+      `${args.check || args.dryRun ? 'would group' : 'grouped'}: ${move.file} -> ${move.target}\n`,
+    )
   }
   for (const conflict of report.conflicts) {
-    process.stderr.write(`collision: ${conflict.file} -> ${conflict.target} (left in place)\n`)
+    process.stderr.write(
+      `collision: ${conflict.file} -> ${conflict.target} (left in place)\n`,
+    )
   }
   for (const undated of report.undated) {
     process.stdout.write(`undated: ${undated} (left in place)\n`)
@@ -279,7 +292,9 @@ if (import.meta.main) {
       )
       process.exitCode = 1
     } else {
-      process.stdout.write(`session-summaries: grouped by month (${args.root})\n`)
+      process.stdout.write(
+        `session-summaries: grouped by month (${args.root})\n`,
+      )
     }
   } else {
     const line = sessionSummaryOrganizationLine(report)
