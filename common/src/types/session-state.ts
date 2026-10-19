@@ -92,10 +92,9 @@ type UnderscoreToDash<S extends string> = S extends `${infer L}_${infer R}`
 export const AgentTemplateTypes = Object.fromEntries(
   AgentTemplateTypeList.map((name) => [name, name.replaceAll('_', '-')]),
 ) as { [K in (typeof AgentTemplateTypeList)[number]]: UnderscoreToDash<K> }
-const agentTemplateTypeSchema = z.enum(AgentTemplateTypeList)
 // Allow dynamic agent types by extending the base enum with string
 export type AgentTemplateType =
-  z.infer<typeof agentTemplateTypeSchema> | (string & {})
+  (typeof AgentTemplateTypeList)[number] | (string & {})
 
 export type SessionState = {
   fileContext: ProjectFileContext

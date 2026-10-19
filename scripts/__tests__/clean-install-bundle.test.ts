@@ -161,9 +161,12 @@ describe('the release build shape', () => {
   test('the prebundle steps run the SDK before the generated agents', () => {
     // Order is load-bearing: the CLI resolves `@savant-code/sdk` through
     // `sdk/dist`, which does not exist in a pristine tree until it is built.
-    expect(PREBUNDLE_STEPS.map((step) => step.cwd)).toEqual(['sdk', 'cli'])
-    expect(PREBUNDLE_STEPS[0]?.argv).toEqual(['run', 'scripts/build.ts'])
-    expect(PREBUNDLE_STEPS[1]?.argv).toEqual([
+    expect(PREBUNDLE_STEPS.map((step) => step.cwd)).toEqual(['.', 'sdk', 'cli'])
+    expect(PREBUNDLE_STEPS[0]?.argv).toEqual([
+      'scripts/probes/dependency-security.ts',
+    ])
+    expect(PREBUNDLE_STEPS[1]?.argv).toEqual(['run', 'scripts/build.ts'])
+    expect(PREBUNDLE_STEPS[2]?.argv).toEqual([
       'run',
       'scripts/prebuild-agents.ts',
     ])

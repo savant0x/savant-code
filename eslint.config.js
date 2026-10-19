@@ -194,6 +194,8 @@ export default tseslint.config(
           argsIgnorePattern: '^_',
           varsIgnorePattern: '^_',
           args: 'none',
+          // Retain the v7 catch-binding policy with the ESLint-9-compatible v8 plugin.
+          caughtErrors: 'none',
           ignoreRestSiblings: true,
         },
       ],

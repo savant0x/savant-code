@@ -47,12 +47,13 @@ export const METAFILE_NAME = '.resolution-metafile.json'
 export type BuildStep = { cwd: string; argv: readonly string[] }
 
 /**
- * The release build's prebundle steps, in the order `build-binary-main.ts` runs
- * them: the SDK first (the CLI resolves `@savant-code/sdk` through its `dist`
+ * Validate the installed security patches before the release build's prebundle
+ * steps: the SDK first (the CLI resolves `@savant-code/sdk` through its `dist`
  * exports) and the generated agent modules second (gitignored build output, so
  * a pristine tree starts without them).
  */
 export const PREBUNDLE_STEPS: readonly BuildStep[] = [
+  { cwd: '.', argv: ['scripts/probes/dependency-security.ts'] },
   { cwd: 'sdk', argv: ['run', 'scripts/build.ts'] },
   { cwd: 'cli', argv: ['run', 'scripts/prebuild-agents.ts'] },
 ]

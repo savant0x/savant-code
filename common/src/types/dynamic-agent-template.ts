@@ -60,12 +60,8 @@ const InputSchemaObjectSchema = z
   })
   .optional()
 
-// Schema for prompt fields that can be either a string or a path reference
-const PromptFieldSchema = z.union([
-  z.string(), // Direct string content
-  z.object({ path: z.string() }), // Path reference to external file
-])
-export type PromptField = z.infer<typeof PromptFieldSchema>
+// Prompt fields are resolved before runtime template validation.
+export type PromptField = string | { path: string }
 
 // Schema for validating handleSteps function signature. We use a plain
 // `z.custom` with a function check because the exact runtime signature is
@@ -211,42 +207,6 @@ export const DynamicAgentTemplateSchema = DynamicAgentDefinitionSchema.extend({
       path: ['outputMode'],
     },
   )
-  // Note(James): Disabled so that handleSteps could use set_output while the llm does not see or have access to the set_output tool.
-  // .refine(
-  //   (data) => {
-  //     // If outputMode is 'structured_output', 'set_output' tool must be included
-  //     if (
-  //       data.outputMode === 'structured_output' &&
-  //       !data.toolNames.includes('set_output')
-  //     ) {
-  //       return false
-  //     }
-  //     return true
-  //   },
-  //   {
-  //     message:
-  //       "outputMode 'structured_output' requires the 'set_output' tool. Add 'set_output' to toolNames.",
-  //     path: ['toolNames'],
-  //   },
-  // )
-  // Note(James): Disabled so that a parent agent can have set_output tool and 'last_message' outputMode while its subagents use 'structured_output'. (The set_output tool must be included in parent to preserver prompt caching.)
-  // .refine(
-  //   (data) => {
-  //     // If 'set_output' tool is included, outputMode must be 'structured_output'
-  //     if (
-  //       data.toolNames.includes('set_output') &&
-  //       data.outputMode !== 'structured_output'
-  //     ) {
-  //       return false
-  //     }
-  //     return true
-  //   },
-  //   {
-  //     message:
-  //       "'set_output' tool requires outputMode to be 'structured_output'. Change outputMode to 'structured_output' or remove 'set_output' from toolNames.",
-  //     path: ['outputMode'],
-  //   },
-  // )
   .refine(
     (data) => {
       // A non-empty spawnableAgents array requires some way to spawn them:
