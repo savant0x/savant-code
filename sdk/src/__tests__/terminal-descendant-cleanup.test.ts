@@ -20,11 +20,12 @@ for (const mode of ['abort', 'timeout'] as const) {
     const root = mkdtempSync(path.join(os.tmpdir(), 'started-descendant-'))
     const marker = path.join(root, 'pid.txt')
     const script = `let n=0;const beat=()=>require('fs').writeFileSync(${JSON.stringify(marker.replaceAll('\\', '/'))},process.pid+':'+n++);beat();setInterval(beat,50)`
+    const executable = `'${process.execPath.replaceAll('\\', '/').replaceAll("'", "'\\''")}'`
     const controller = new AbortController()
     let descendant: number | undefined
     try {
       const settled = runTerminalCommand({
-        command: `bun -e '${script.replaceAll("'", "'\\''")}' | bun -e 'process.stdin.resume()'`,
+        command: `${executable} -e '${script.replaceAll("'", "'\\''")}' | ${executable} -e 'process.stdin.resume()'`,
         process_type: 'SYNC',
         cwd: process.cwd(),
         signal: controller.signal,
