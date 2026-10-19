@@ -1,4 +1,20 @@
 node_modules/
+
+# Operator ruling 2026-10-19: docs/ is a documentation COLLECTION, not a set of
+# governed records, and must not be markdown-linted at all. Markdown lint
+# governs what the protocol writes — AGENTS.md, ECHO.md, ARCHITECTURE.md,
+# CONTRIBUTING.md, SCOPE.md, CHANGELOG.md, templates/, coding-standards/,
+# dev/** — where heading structure and line length carry meaning. Inside
+# docs/ they do not: research reports are pasted with citation URLs and
+# reference tables whose lines cannot be reflowed without damaging the record,
+# and the directory's job is to hold documents, not to satisfy a formatter.
+# This supersedes the per-file docs/ exemptions below; those entries stay as
+# the precedent record for this ruling, not as active exemptions.
+#
+# Scope is unchanged everywhere else: an untracked or drafted file under dev/**
+# still fails the gate, which is the property the pre-push hook relies on.
+docs/**
+
 # Operator-provided raw handoff transcript, byte-preserved reference input.
 freebuff-chat-2026-10-17T15-41-19.451Z.md
 dev/fids/archive/**
