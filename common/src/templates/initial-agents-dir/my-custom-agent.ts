@@ -6,9 +6,7 @@
  *  Inside savant-code:
  *  > @my-custom-agent please review my recent changes
  *
- *  Finally, you can publish your agent with:
- *  > savant-code publish my-custom-agent
- *  Then users from around the world can run it!
+ *  Share the definition as a source file; local use needs no hosted store.
  */
 
 import type { AgentDefinition } from './types/agent-definition'
@@ -17,8 +15,8 @@ const definition: AgentDefinition = {
   id: 'my-custom-agent',
   displayName: 'My Custom Agent',
 
-  model: 'x-ai/grok-4-fast',
-  spawnableAgents: ['savant-code/file-explorer@0.0.6'],
+  model: 'openrouter/free',
+  spawnableAgents: ['savant-code/scout@0.0.1'],
 
   // Check out .agents/types/tools.ts for more information on the tools you can include.
   toolNames: ['run_terminal_command', 'read_files', 'spawn_agents'],
@@ -28,7 +26,7 @@ const definition: AgentDefinition = {
   instructionsPrompt: `Review the code changes and suggest improvements.
 Execute the following steps:
 1. Run git diff
-2. Spawn a file explorer to find all relevant files
+2. Spawn the scout to find all relevant files
 3. Read any relevant files
 4. Review the changes and suggest improvements`,
 

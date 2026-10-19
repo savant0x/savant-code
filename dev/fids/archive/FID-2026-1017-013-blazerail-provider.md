@@ -16,6 +16,8 @@ means verified implementation, without a claim of successful account inference.
 
 ## Environment
 
+- **Commit/State:** `8741613e` (implementation), `26bbc577` (closure).
+
 Windows, TypeScript, Bun 1.3.14; starting commit `6d4e3cff`.
 
 ## Detailed Description

@@ -1,55 +1,42 @@
-# Publishing the SavantCode SDK
+# SDK packaging and publication
 
-## Quick Start
+The SDK is an unpublished workspace package. The normal public release
+publishes the `savant-code` CLI only. SDK publication requires an explicit
+operator decision and uses the repository's canonical release pipeline.
 
-To publish the SDK to npm:
+## Local verification
+
+From the repository root:
 
 ```bash
-# Publish to npm
-bun run release
+bun install --frozen-lockfile
+bun run build:sdk
+bun run --cwd=sdk verify:skip-build
 ```
 
-## What the Publishing Script Does
+From `sdk/`, inspect a package without publishing:
 
-1. **Builds** the SDK with verification (includes smoke tests)
-2. **Verifies** package contents with `npm pack --dry-run`
-3. **Publishes** to npm (if not dry run)
+```bash
+npm pack --dry-run
+```
 
-## Build Process
+`prepack` builds the SDK and verifies vendored ripgrep. The package includes
+dual ESM/CJS bundles, declarations, WASM/query assets and native search binaries
+under `dist/`, plus its manifest and documentation. The manifest's `files`
+list and the dry-run output are authoritative for the exact contents.
 
-The SDK now uses Bun's bundler to create dual ESM/CJS outputs:
+## Explicit SDK release scope
 
-1. **Dynamic externals** - Reads dependencies from package.json automatically
-2. **Bundles ESM** format with external dependencies marked
-3. **Bundles CJS** format with external dependencies marked
-4. **Generates TypeScript declarations** using `tsc`
-5. **Copies tree-sitter query files** using Bun's file APIs
-6. **Runs smoke tests** to verify both ESM and CJS builds work
+After version parity, changelog, clean-tree and all release gates pass, the
+operator may select both packages through `SAVANT_CODE_RELEASE_PACKAGES`:
 
-This replaces the previous `tsup` + manual package.json manipulation approach.
+```bash
+SAVANT_CODE_RELEASE_PACKAGES=@savant-code/sdk,savant-code bun run release:public:preview
+SAVANT_CODE_RELEASE_PACKAGES=@savant-code/sdk,savant-code bun run release:public:diagnose
+```
 
-## Available Scripts
-
-- `bun run build` - Build TypeScript only
-- `bun run verify` - Build + run smoke tests
-- `bun run smoke-test` - Run smoke tests on existing build
-- `bun run clean` - Remove dist directory
-- `bun run release` - Remote build + publish to npm
-- `bun run typecheck` - Type checking only
-
-## Before Publishing
-
-1. Update version in `package.json`
-2. Update `CHANGELOG.md` with new changes
-3. Run `bun run release` to publish
-
-## Package Contents
-
-The published package includes:
-
-- All compiled `.js` files
-- All TypeScript declaration `.d.ts` files
-- Source maps `.d.ts.map` files
-- README.md
-- CHANGELOG.md
-- Modified package.json with correct paths
+Actual publication uses `bun run release:public` from the root with the same
+scope and explicit release authority. The SDK publishes before the CLI when
+both are selected. Do not use a nonexistent workspace `release` script or
+publish directly around the pipeline. See [public-release.md](../docs/public-release.md)
+for authentication, confirmation, receipts, recovery and post-publication checks.

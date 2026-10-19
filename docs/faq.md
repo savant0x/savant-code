@@ -208,14 +208,15 @@ edits can change them.
 
 No. Raw traces live unloaded in `dev/experiences/` (append-only, deduped,
 context-hashed inputs — never raw arguments). Only promoted, curated rules
-reach the boot-read `dev/LEARNINGS.md`, and the session-end agenda
+reach the generated boot digest `docs/embedded-learnings.md`, and the session-end agenda
 (`dev/agenda.md`) is capped at 50 lines. Skill listings show only name +
 description; bulk reference data loads on demand via `references/`.
 
 ### Is this shipped?
 
-The code is implemented, all repository gates pass, and the FID is `fixed`
-with a stamped verification receipt. Live smoke boundaries remain
+The feature is implemented. Historical implementation and verification records
+are retained in the local-only `dev/` governance workspace; they do not prove
+that every current live acceptance boundary passed. Live smoke boundaries remain
 NEEDS-REVIEW: the fail-open hooks in a live session, the `/skills trust`
 release path in the real TUI, and a real session-end Scribe review producing
 an agenda + a lesson-derived draft skill.
@@ -230,5 +231,6 @@ The Auto Drive program and Discord Rich Presence FIDs (`001`–`010`) are closed
 their implementation, repository gates, and required review are recorded in
 the archived FIDs. Closure records the scope and evidence of that work. For
 feature details, see the sections above; for the exact resolution evidence,
-see the [Auto Drive master FID](../dev/fids/archive/FID-2026-0818-001-auto-drive-master.md)
-and the [documentation FID](../dev/fids/archive/FID-2026-0818-010-auto-drive-discord-docs-and-faq.md).
+consult the local-only records `FID-2026-0818-001` and `FID-2026-0818-010`.
+Public usage and architecture are described in [features](features.md) and the
+[Auto Drive blueprint](<design/Auto Drive Architecture Blueprint.md>).

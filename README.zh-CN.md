@@ -265,8 +265,8 @@ Cloudflare Workers AI 集成使用 `CLOUDFLARE_API_TOKEN` 与 `CLOUDFLARE_ACCOUN
 
 ## 概述
 
-Savant-Code 是一个 TypeScript monorepo，用于构建并发布终端原生的 AI 编程助手 **Savant Code** 以及公开的
-[`@savant-code/sdk`](https://www.npmjs.com/package/@savant-code/sdk)。CLI 提供多智能体编排、自定义技能、
+Savant-Code 是一个 TypeScript monorepo，用于构建终端原生的 AI 编程助手 **Savant Code** 以及源码开放的
+[`@savant-code/sdk`](sdk/README.md)。SDK 尚未发布到 npm；默认公开发布只包含 CLI。CLI 提供多智能体编排、自定义技能、
 MCP 工具发现、模式切换（`HYBRID` / `SCAFFOLD` / `STRICT` / `ANALYZE`）以及本地优先的 Ollama 支持。SDK、agent
 运行时、多智能体编排引擎、工具层与 LLM 提供商适配层共享，因此两个产品面从同一套代码发布。
 
@@ -314,10 +314,8 @@ MCP 工具发现、模式切换（`HYBRID` / `SCAFFOLD` / `STRICT` / `ANALYZE`�
   `/design use`、`/design create`、`/design edit`、`/design import`、草稿恢复与重置。只有当前设计契约会进入
   agent 上下文；自定义系统经过校验、版本化保存，并在 EHEL 写入边界进行检查。详细架构、交互式创建/编辑、
   安全边界、持久化、强制检查与打包证据见
-  [设计系统库指南](docs/design/design-system-library.md)。如需实时验证 CLI 可用性、智能体反馈与延迟，请运行
-  [设计系统实时测试提示](dev/test-prompts/design-system-live-ux-performance.md)。
-  [v0.0.25 A–Z 提示](dev/test-prompts/az-v0.0.25-harness-live-test.md) 是历史版本专用工具，
-  不能代表当前版本的完整回归。新报告应写入 `dev/scratchpad/active/`，作为验收证据前应迁移到持久路径。
+  [设计系统库指南](docs/design/design-system-library.md)。操作员测试提示与验收记录保存在本地 `dev/`
+  工作区，不包含在公开克隆中。
 - **提供商设置** —— `/provider` 打开交互式下拉选择器，显示所有提供商及其 ✓/✗ 配置状态。选择提供商后可
   输入其 API 密钥（遮罩输入）。密钥存储在本地 `credentials.json`。
 - **调研（默认免密钥）** —— `web_search`、`read_docs` 与 `deep_research` 零密钥即可工作：网络搜索回退到
@@ -924,8 +922,8 @@ OpenRouter 可使用 `OPENROUTER_API_KEY` 或 `SAVANT_CODE_BYOK_OPENROUTER`。
 ## 验证
 
 ```bash
-# 构建
-bun run build:sdk && bun run ci
+# 构建 SDK
+bun run ci
 
 # 测试
 bun run test
@@ -936,8 +934,11 @@ bun run typecheck
 # Lint
 bun x eslint . --max-warnings 0
 
-# 格式化
-bun x prettier --write .
+# Markdown 检查（docs/ 文档集合除外）
+bun run lint:md
+
+# 格式检查
+bun x prettier --check .
 ```
 
 ---
@@ -963,8 +964,8 @@ CLI 默认**开启远程分析与错误报告**（FID-2026-0806-015）。CLI 会
 - [`CHANGELOG.md`](CHANGELOG.md) — 发布历史
 - [`docs/code-universe-export.md`](docs/code-universe-export.md) — `/export` 对话报告与 `/graph-export` Code Universe 指南
 - [`docs/archive/launch/index.html`](docs/archive/launch/index.html) — 公开落地页（归档的发布产物）
-- [`dev/LEARNINGS.md`](dev/LEARNINGS.md) — 跨会话经验
-- [`dev/session-summaries/`](dev/session-summaries/) — 会话审计轨迹
+- `dev/LEARNINGS.md` 与 `dev/session-summaries/` — 仅保存在本地的工程记录；公开运行时指南见
+  [embedded-learnings.md](docs/embedded-learnings.md)。
 
 ---
 

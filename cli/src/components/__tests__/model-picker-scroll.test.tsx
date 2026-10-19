@@ -120,6 +120,26 @@ function cleanup(setup: PickerSetup): void {
 }
 
 describe('model picker physical scroll geometry', () => {
+  test('typed filter and arrow keys update the frame and committed model', async () => {
+    const setup = await mountPicker(90, 24, overlappingModels)
+    try {
+      await flush(setup)
+      setup.mockInput.typeText('gpt-5')
+      await flush(setup)
+      expect(setup.captureCharFrame()).toContain('2 matches')
+      expect(setup.captureCharFrame()).not.toContain('gpt-4.1')
+      const first = setup.getSelectedIndex()
+      setup.mockInput.pressArrow('down')
+      await flush(setup)
+      expect(setup.getSelectedIndex()).not.toBe(first)
+      setup.mockInput.pressEnter()
+      await flush(setup)
+      expect(setup.getSelectedModel()).toEqual(overlappingModels[2])
+    } finally {
+      cleanup(setup)
+    }
+  })
+
   test('search removes unrelated rows when providers share model IDs', async () => {
     const setup = await mountPicker(90, 24, overlappingModels)
     try {

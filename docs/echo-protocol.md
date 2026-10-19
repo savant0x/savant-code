@@ -3,7 +3,9 @@
 
 ECHO governs how Savant handles engineering work. The canonical harness contract
 is [`ECHO.md`](../ECHO.md); single-agent sessions use the separate
-[`single-agent adaptation`](../dev/echo-v0.1.2-single-agent.md). This page is a
+[`single-agent marker`](../ECHO-single-agent.md), which names the local
+canonical adaptation. The `dev/` governance workspace is local-only and is not
+included in public clones. This page is a
 short orientation, not a replacement for either protocol.
 
 ## The 15 Laws

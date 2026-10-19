@@ -174,7 +174,9 @@ override, while its production route remains chat.
 ## Model picker and catalog failures
 
 `/model` groups models by provider and supports typing a filter, arrow/Tab
-navigation, Enter to select, Escape to cancel, wheel scrolling, and a scrollbar.
+navigation, Enter or a visible-row click to select, and Escape to cancel.
+Only the visible window is mounted; its range appears in the header. Keyboard
+navigation moves this window through the full filtered catalog.
 Headers and models occupy one terminal line even after resize. Long text clips
 visually; the full ID remains in the selected model and routing callback.
 `/model <exact-id>` also works when catalog discovery is unavailable.

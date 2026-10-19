@@ -1,346 +1,95 @@
-# Custom Agents
+# Custom agents
 
-Create specialized agent workflows that coordinate multiple AI agents to tackle complex engineering tasks. Instead of a
-single agent trying to handle everything, you can orchestrate teams of focused specialists that work together.
+Define local agents as TypeScript files under your project's `.agents/`
+directory. Each file exports an `AgentDefinition` as its default export.
+Run `/init` to create `knowledge.md` and the current `.agents/types/` files.
+`/init --force` refreshes shipped type files while preserving user agents and
+knowledge. The template's `examples/` directory contains basic review,
+programmatic commit, and delegated exploration examples for reference.
 
-## Getting Started
+## A local agent
 
-1. **Edit an existing agent**: Start with `my-custom-agent.ts` and modify it for your needs
-2. **Test your agent**: Run `savant-code` without `--agent` so local `.agents` load, then invoke your agent from a prompt
-3. **Publish your agent**: Run `savant-code publish your-agent-name`
-
-## Need Help?
-
-- For examples, check the `examples/` directory.
-- Join our [Discord community](https://savant-code.com/discord) and ask your questions!
-- Check our [documentation](https://savant-code.com/docs) for more details
-
-# What is SavantCode?
-
-SavantCode is an **open-source AI coding assistant** that edits your codebase through natural language instructions.
-Instead of using one model for everything, it coordinates specialized agents that work together to understand your
-project and make precise changes.
-
-SavantCode beats Claude Code at 61% vs 53% on [our evals](https://github.com/savant0x/savant-code/tree/main/evals)
-across 175+ coding tasks over multiple open-source repos that simulate real-world tasks.
-
-## How SavantCode Works
-
-When you ask SavantCode to "add authentication to my API," it might invoke:
-
-1. A **File Explorer Agent** to scan your codebase to understand the architecture and find relevant files
-2. A **Planner Agent** to plan which files need changes and in what order
-3. An **Editor Agent** to make precise edits
-4. A **Reviewer Agent** to validate changes
-
-This multi-agent approach gives you better context understanding, more accurate edits, and fewer errors compared to
-single-model tools.
-
-## Context Window Management
-
-### Why Agent Workflows?
-
-Modern software projects are complex ecosystems with thousands of files, multiple frameworks, intricate dependencies,
-and domain-specific requirements. A single AI agent trying to understand and modify such systems faces fundamental
-limitations—not just in knowledge, but in the sheer volume of information it can process at once.
-
-### The Solution: Focused Context Windows
-
-Agent workflows elegantly solve this by breaking large tasks into focused sub-problems. When working with large
-codebases (100k+ lines), each specialist agent receives only the narrow context it needs—a security agent sees only auth
-code, not UI components—keeping the context for each agent manageable while ensuring comprehensive coverage.
-
-### Why Not Just Mimic Human Roles?
-
-This is about efficient AI context management, not recreating a human department. Simply creating a "frontend-developer"
-agent misses the point. AI agents don't have human constraints like context-switching or meetings. Their power comes
-from hyper-specialization, allowing them to process a narrow domain more deeply than a human could, then coordinating
-seamlessly with other specialists.
-
-## Agent workflows in action
-
-Here's an example of a `git-committer` agent that creates good commit messages:
+Create `.agents/my-reviewer.ts`:
 
 ```typescript
-export default {
-  id: 'git-committer',
-  displayName: 'Git Committer',
-  model: 'openai/gpt-5-nano',
-  toolNames: ['read_files', 'run_terminal_command', 'end_turn'],
+import type { AgentDefinition } from './types/agent-definition'
 
+const definition: AgentDefinition = {
+  id: 'my-reviewer',
+  displayName: 'My Reviewer',
+  model: 'openrouter/free',
+  toolNames: ['read_files', 'code_search', 'run_readonly_command'],
+  spawnerPrompt: 'Review changes without modifying files.',
   instructionsPrompt:
-    'You create meaningful git commits by analyzing changes, reading relevant files for context, and crafting clear commit messages that explain the "why" behind changes.',
+    'Read the relevant files, inspect the diff, and report findings with source evidence. Do not edit files.',
+}
 
-  async *handleSteps() {
-    // Analyze what changed
-    yield { tool: 'run_terminal_command', command: 'git diff' }
-    yield { tool: 'run_terminal_command', command: 'git log --oneline -5' }
+export default definition
+```
 
-    // Stage files and create commit with good message
+Start `savant-code` in that project and ask the main agent to use your local
+reviewer. Local definitions load without a hosted agent store. The active
+CLI model governs runs; a template's model string is not a promise that the
+CLI will silently switch providers or use another account.
+
+## Definition fields
+
+| Field | Purpose |
+| --- | --- |
+| `id` | Unique lowercase identifier with digits and hyphens |
+| `displayName` | Name displayed in the UI |
+| `model` | Model identifier for hosts using the definition directly |
+| `toolNames` | Declared model-visible tools; runtime permissions still apply |
+| `programmaticToolNames` | Tools callable only from `handleSteps` |
+| `instructionsPrompt` | Instructions supplied during the agent run |
+| `spawnerPrompt` | When a parent should select this agent |
+| `spawnableAgents` | Explicit allowed child definitions |
+| `inputSchema` | Prompt and parameter schemas |
+| `outputMode`, `outputSchema` | Text/history or structured-result contract |
+| `handleSteps` | Generator combining deterministic tool calls and model steps |
+
+See `types/agent-definition.ts` and `types/tools.ts` for the complete contract.
+Use the generated type files rather than copying tool parameter declarations.
+
+## Programmatic steps
+
+Tool calls use `toolName` and `input`. `STEP` requests one model step;
+`STEP_ALL` runs until the model finishes. Declare every tool the generator
+uses in the definition's tool lists.
+
+```typescript
+import type { AgentDefinition, ToolCall } from './types/agent-definition'
+
+const definition: AgentDefinition = {
+  id: 'diff-reviewer',
+  displayName: 'Diff Reviewer',
+  model: 'openrouter/free',
+  toolNames: ['read_files', 'run_readonly_command'],
+  instructionsPrompt: 'Review the diff using the actual source files.',
+  handleSteps: function* () {
+    yield {
+      toolName: 'run_readonly_command',
+      input: {
+        command: 'git diff',
+        process_type: 'SYNC',
+        timeout_seconds: 30,
+      },
+    } satisfies ToolCall
     yield 'STEP_ALL'
   },
 }
+
+export default definition
 ```
 
-This agent systematically analyzes changes, reads relevant files for context, then creates commits with clear,
-meaningful messages that explain the "why" behind changes.
-
-# Agent Development Guide
-
-This guide covers everything you need to know about building custom SavantCode agents.
-
-## Agent Structure
-
-Each agent is a TypeScript file that exports an `AgentDefinition` object:
-
-```typescript
-export default {
-  id: 'my-agent', // Unique identifier (lowercase, hyphens only)
-  displayName: 'My Agent', // Human-readable name
-  model: 'claude-3-5-sonnet', // AI model to use
-  toolNames: ['read_files', 'write_file'], // Available tools
-  instructionsPrompt: 'You are...', // Agent behavior instructions
-  spawnerPrompt: 'Use this agent when...', // When others should spawn this
-  spawnableAgents: ['helper-agent'], // Agents this can spawn
-
-  // Optional: Programmatic control
-  async *handleSteps() {
-    yield { tool: 'read_files', paths: ['src/config.ts'] }
-    yield 'STEP' // Let AI process and respond
-  },
-}
-```
-
-## Core Properties
-
-### Required Fields
-
-- **`id`**: Unique identifier using lowercase letters and hyphens only
-- **`displayName`**: Human-readable name shown in UI
-- **`model`**: AI model from OpenRouter (see [available models](https://openrouter.ai/models))
-- **`instructionsPrompt`**: Detailed instructions defining the agent's role and behavior
-
-### Optional Fields
-
-- **`toolNames`**: Array of tools the agent can use (defaults to common tools)
-- **`spawnerPrompt`**: Instructions for when other agents should spawn this one
-- **`spawnableAgents`**: Array of agent names this agent can spawn
-- **`handleSteps`**: Generator function for programmatic control
-
-## Available Tools
-
-Custom agents can use any of the published tools below. See `types/tools.ts`
-for full parameter details and `common/src/tools/params/tool/` for the
-canonical descriptions.
-
-### File Operations
-
-- **`read_files`** — read file contents; use `offset`/`limit` to read a line range of a large file
-- **`read_subtree`** — read a whole directory subtree
-- **`write_file`** — create or replace an entire file
-- **`str_replace`** — make targeted string replacements
-- **`apply_patch`** — apply a multi-hunk patch
-- **`propose_write_file`** / **`propose_str_replace`** — propose (not apply) an edit
-- **`run_file_change_hooks`** — run post-edit hooks
-- **`list_directory`** / **`glob`** — discover files by name or pattern
-- **`find_files`** — locate files by path
-- **`code_search`** — search file contents with ripgrep
-
-### Execution
-
-- **`run_readonly_command`** — read-only shell commands (git status/diff/log,
-  grep, ls, typecheck, tests) available in **every** ECHO phase including idle/red
-- **`run_terminal_command`** — full shell (phase-gated to green/audit/self_correct)
-- **`spawn_agents`** — delegate to sub-agents
-- **`transition_phase`** — move through the Perfection Loop FSM
-- **`end_turn`** — finish the response
-
-### Web & Research
-
-- **`web_search`** — search the web
-- **`read_url`** — fetch a URL's readable text
-- **`read_docs`** — read technical documentation
-- **`deep_research`** — multi-source research
-- **`browser_logs`** — navigate and inspect pages
-
-### Planning, state & output
-
-- **`write_todos`** — track a step-by-step plan
-- **`create_plan`** — formulate a plan
-- **`task_completed`** — signal completion
-- **`suggest_followups`** — suggest next steps
-- **`ask_user`** — ask the user a question
-- **`set_output`** / **`set_messages`** / **`add_message`** — write output/messages
-- **`set_scaffold_complete`** — mark scaffolding done
-- **`update_goal`** / **`get_goal`** — manage the current goal
-
-### Knowledge graph, skills & utilities
-
-- **`query_blast_radius`** / **`query_domain_clusters`** / **`query_node_edges`** — codebase graph queries
-- **`skill`** — load a reusable skill
-- **`gravity_index`** — discover third-party service integrations
-- **`render_ui`** — render a small interactive widget
-- **`lookup_agent_info`** — look up agent metadata
-- **`think_deeply`** / **`sequentialthinking`** — structured reasoning
-
-## Programmatic Control
-
-Use the `handleSteps` generator function to mix AI reasoning with programmatic logic:
-
-```typescript
-async *handleSteps() {
-  // Execute a tool
-  yield { tool: 'read_files', paths: ['package.json'] }
-
-  // Let AI process results and respond
-  yield 'STEP'
-
-  // Conditional logic
-  if (needsMoreAnalysis) {
-    yield { tool: 'spawn_agents', agents: ['deep-analyzer'] }
-    yield 'STEP_ALL' // Wait for spawned agents to complete
-  }
-
-  // Final AI response
-  yield 'STEP'
-}
-```
-
-### Control Commands
-
-- **`'STEP'`**: Let AI process and respond once
-- **`'STEP_ALL'`**: Let AI continue until completion
-- **Tool calls**: `{ tool: 'tool_name', ...params }`
-
-## Model Selection
-
-Choose models based on your agent's needs:
-
-- **`anthropic/claude-opus-4.7`**: Best general-purpose capabilities and code generation
-- **`openai/gpt-5.2`**: Best at complex reasoning and planning
-- **`google/gemini-3.1-flash-lite`**: Fast and cost-effective for simple or medium-complexity tasks
-
-**Any model on OpenRouter**: Unlike Claude Code which locks you into Anthropic's models, SavantCode supports any model
-available on [OpenRouter](https://openrouter.ai/models) - from Claude and GPT to specialized models like Qwen, DeepSeek,
-and others. Switch models for different tasks or use the latest releases without waiting for platform updates.
-
-See [OpenRouter](https://openrouter.ai/models) for all available models and pricing.
-
-## Agent Coordination
-
-Agents can spawn other agents to create sophisticated workflows:
-
-```typescript
-// Parent agent spawns specialists
-async *handleSteps() {
-  yield { tool: 'spawn_agents', agents: [
-    'security-scanner',
-    'performance-analyzer',
-    'code-reviewer'
-  ]}
-  yield 'STEP_ALL' // Wait for all to complete
-
-  // Synthesize results
-  yield 'STEP'
-}
-```
-
-**Reuse any published agent**: Compose existing [published agents](https://www.savant-code.com/store) to get a leg up.
-SavantCode agents are the new MCP!
-
-## Best Practices
-
-### Instructions
-
-- Be specific about the agent's role and expertise
-- Include examples of good outputs
-- Specify when the agent should ask for clarification
-- Define the agent's limitations
-
-### Tool Usage
-
-- Start with file exploration tools (`read_files`, `code_search`)
-- Use `str_replace` for targeted edits, `write_file` for major changes
-- Always use `end_turn` to finish responses cleanly
-
-### Error Handling
-
-- Include error checking in programmatic flows
-- Provide fallback strategies for failed operations
-- Log important decisions for debugging
-
-### Performance
-
-- Choose appropriate models for the task complexity
-- Minimize unnecessary tool calls
-- Use spawnable agents for parallel processing
-
-## Testing Your Agent
-
-1. **Local Testing**: Run `savant-code` without `--agent` so local `.agents` load, then invoke your agent from a prompt
-2. **Debug Mode**: Add logging to your `handleSteps` function
-3. **Unit Testing**: Test individual functions in isolation
-4. **Integration Testing**: Test agent coordination workflows
-
-## Publishing & Sharing
-
-1. **Validate**: Ensure your agent works across different codebases
-2. **Document**: Include clear usage instructions
-3. **Publish**: `savant-code publish your-agent-name`
-4. **Maintain**: Update as models and tools evolve
-
-## Advanced Patterns
-
-### Conditional Workflows
-
-```typescript
-async *handleSteps() {
-  const config = yield { tool: 'read_files', paths: ['config.json'] }
-  yield 'STEP'
-
-  if (config.includes('typescript')) {
-    yield { tool: 'spawn_agents', agents: ['typescript-expert'] }
-  } else {
-    yield { tool: 'spawn_agents', agents: ['javascript-expert'] }
-  }
-  yield 'STEP_ALL'
-}
-```
-
-### Iterative Refinement
-
-```typescript
-async *handleSteps() {
-  for (let attempt = 0; attempt < 3; attempt++) {
-    yield { tool: 'run_terminal_command', command: 'npm test' }
-    yield 'STEP'
-
-    if (allTestsPass) break
-
-    yield { tool: 'spawn_agents', agents: ['test-fixer'] }
-    yield 'STEP_ALL'
-  }
-}
-```
-
-## Why Choose SavantCode for Custom Agents
-
-**Deep customizability**: Create sophisticated agent workflows with TypeScript generators that mix AI generation with
-programmatic control. Define custom agents that spawn subagents, implement conditional logic, and orchestrate complex
-multi-step processes that adapt to your specific use cases.
-
-**Fully customizable SDK**: Build SavantCode's capabilities directly into your applications with a complete TypeScript
-SDK. Create custom tools, integrate with your CI/CD pipeline, build AI-powered development environments, or embed
-intelligent coding assistance into your products.
-
-Learn more about the SDK [here](https://www.npmjs.com/package/@savant-code/sdk).
-
-## Community & Support
-
-- **Discord**: [Join our community](https://savant-code.com/discord) for help and inspiration
-- **Examples**: Study the `examples/` directory for patterns
-- **Documentation**: [savant-code.com/docs](https://savant-code.com/docs) and check `types/` for detailed type information
-- **Issues**: [Report bugs and request features on GitHub](https://github.com/savant0x/savant-code/issues)
-- **Support**: [support@savant-code.com](mailto:support@savant-code.com)
-
-Happy agent building! 🤖
+## Verification and sharing
+
+Test definitions in an isolated project with a configured provider. Check
+tool authorization, cancellation, failure handling and the resulting evidence.
+Keep read-only investigation separate from implementation and verification
+when the governing ECHO contract requires those roles.
+
+Share the definition and its instructions as source files. The retired hosted
+publishing flow is not required for local use. SDK hosts can register these
+definitions through `agentDefinitions` or pass an inline definition to `run`;
+see the repository's `sdk/README.md` for its source-build workflow.

@@ -1,7 +1,7 @@
 // FID-2026-0905-009 — release pipeline backup stage.
 //
 // BACKUP_BUNDLE stage: writes the verified incremental bundle
-// (`last-backup..main`) to the OneDrive-synced destination via
+// (`last-backup..main`) to the configured local or external destination via
 // runBundleBackup (FID-2026-0905-008) BEFORE the GitHub release and npm
 // publishes run — the pipeline owns the last durable copy of the release
 // commit, so a backup failure aborts the release (fail-closed). The

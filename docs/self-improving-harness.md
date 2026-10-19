@@ -21,9 +21,9 @@ ladder, AceForge's observation pipeline) only partially solves:
 | Prior-art pain point | Savant's answer |
 |---|---|
 | Logging depends on the LLM *remembering* to log (fails under context exhaustion) | **Mechanical capture** at the hooks engine — the harness cannot forget |
-| Raw logs bloat the context window | **Hybrid store** — raw traces live unloaded in `dev/experiences/`; only promoted rules reach the boot-read `dev/LEARNINGS.md` |
+| Raw logs bloat the context window | **Hybrid store** — raw traces live unloaded in `dev/experiences/`; promoted boot rules reach the generated `docs/embedded-learnings.md` digest |
 | Agents silently rewrite their own skills (negative transfer, prompt injection) | **Quarantine + operator-only trust** — nothing the agent authors is loadable until a human runs `/skills trust` |
-| Skill history is lost or entangled with git history | **On-disk versioning** — per-skill snapshots + `VERSIONS.jsonl` ledger that survives the release-only-commits convention |
+| Skill history is lost or entangled with git history | **On-disk versioning** — per-skill snapshots + `VERSIONS.jsonl` ledger independent of source commit cadence |
 | Self-improvement pipelines need a second LLM (DSPy/GEPA) | **Usage-evidence evolution** — the loop runs on real traces through the ECHO Perfection Loop; no secondary model, no per-run token cost |
 
 ## 2. The improvement loop
@@ -86,7 +86,7 @@ At session end, the **Scribe session-end review** runs:
 an active status, ≥ 2 evidence refs, and a non-trivial guard becomes a
 candidate `SKILL.md` **draft in quarantine** — via the same validation path
 as the `skill_manage` tool, with `provenanceRef: lesson:<rule>` in the
-ledger. Rejected drafts (never trusted within 30 days) are purged; nothing
+ledger. Rejected drafts (never trusted within 30 days) are archived without deletion; nothing
 auto-promotes.
 
 **LEARNINGS retirement** (`bun run learnings:retire --dry-run`): at the
@@ -98,7 +98,7 @@ archive).
 
 `bun run skills:evolve` is an **operator-run ritual**: it aggregates ledger
 evidence into candidate `SKILL.md` + FID proposals under
-`dev/scratchpad/evolve-output/`, applies the semantic-preservation diff gate
+`dev/scratchpad/active/evolve-output/`, applies the semantic-preservation diff gate
 (> 10% rewrite of an existing skill = HIGH risk), and **never commits or
 mutates** — human review is the hard boundary.
 
@@ -123,7 +123,7 @@ Every mutation **snapshots the prior state first**
 `VERSIONS.jsonl` entry:
 `{seq, version, action, ts, sessionId, reason, prevSha, nextSha,
 provenanceRef, semanticPreservation}`. Git is **not** the ledger
-(release-only-commits convention) — the on-disk ledger is authoritative.
+— the on-disk ledger is authoritative regardless of Git commit cadence.
 
 ### 3.2 The trust boundary
 
@@ -167,8 +167,8 @@ Nothing auto-promotes; trust remains operator-only.
 
 Every skill-learning transition — proposal presented, draft
 created/updated, draft failed — also writes one **metadata-only event** to
-`.savant/skill-lifecycle-events.jsonl` (`.savant/skill-lifecycle-events.ts`
-module in `common`). The event log is the durable traffic-light source: it
+`.savant/skill-lifecycle-events.jsonl` (`common/src/util/skill-lifecycle-events.ts`).
+The event log is the durable traffic-light source: it
 survives headless and closed-TUI sessions, and both the CLI and the desktop
 consume it with **per-surface acknowledgements**
 (`.savant/skill-lifecycle-cursors.json`) — an event is acknowledged only
@@ -280,7 +280,7 @@ a lesson-derived draft skill have not yet been operator-confirmed.
 
 | Symptom | Cause / fix |
 |---|---|
-| `/skills trust` fails with "no quarantined draft" | The draft was never created, or was purged after 30 days unreviewed. |
+| `/skills trust` fails with "no quarantined draft" | The draft was never created, or was archived after 30 days unreviewed. |
 | A skill the agent just wrote isn't loadable | Correct — it is quarantined. Run `/skills trust <name>`. |
 | `skills:check` prints errors | Only project-scoped errors fail the gate; home-dir skills are advisory (`(home)`). |
 | `raw-traces.jsonl` grows | Expected — it is unloaded and deduped; `bun run experiences:dedup --purge` compacts. |
@@ -289,5 +289,6 @@ a lesson-derived draft skill have not yet been operator-confirmed.
 
 ---
 
-*Architecture decisions and the full Perfection Loop record:
-[`dev/fids/archive/FID-2026-0824-012-self-improving-harness-and-agent-created-skills.md`](../dev/fids/archive/FID-2026-0824-012-self-improving-harness-and-agent-created-skills.md).*
+Architecture decisions and the full Perfection Loop record are retained locally
+as `dev/fids/archive/FID-2026-0824-012-self-improving-harness-and-agent-created-skills.md`.
+The `dev/` tree is not included in public clones.

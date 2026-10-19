@@ -1,6 +1,9 @@
 .DS_Store
 # Operator-provided handoff export: keep original bytes local, never stage it.
 /freebuff-chat-2026-10-17T15-41-19.451Z.md
+# Local audit inputs; preserve bytes without including them in release staging.
+/freebuff-chat-2026-10-18T21-13-51.779Z.md
+/docs/Savant Architecture Retrofit Analysis.md
 .idea/
 .vercel
 

@@ -10,9 +10,20 @@ Official TypeScript SDK for the Savant-Code multi-agent runtime.
 
 ## Installation
 
+The SDK is currently an **unpublished workspace package**. The default public
+release publishes the `savant-code` CLI only; it does not publish this npm scope.
+Build and use the SDK from this monorepo:
+
 ```bash
-npm install @savant-code/sdk
+git clone https://github.com/savant0x/savant-code.git
+cd savant-code
+bun install --frozen-lockfile
+bun run build:sdk
 ```
+
+Workspace applications import `@savant-code/sdk`. For an external application,
+package the built workspace with `npm pack` from `sdk/` and install the resulting
+local tarball. Publishing the SDK requires a separately selected release scope.
 
 ## Prerequisites
 
@@ -358,7 +369,7 @@ Apache-2.0 — see [LICENSE](../LICENSE) for full text.
 
 <div align="center">
 
-_This SDK ships from the [savant-code/savant-code monorepo](https://github.com/savant0x/savant-code). It runs on
+_This SDK ships from the [savant0x/savant-code monorepo](https://github.com/savant0x/savant-code). It runs on
 the [ECHO Protocol v0.2.0](../ECHO.md) engineering governance system — 15 laws, Perfection Loop FSM, separation of
 duties._
 

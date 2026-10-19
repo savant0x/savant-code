@@ -17,6 +17,8 @@ docs/**
 
 # Operator-provided raw handoff transcript, byte-preserved reference input.
 freebuff-chat-2026-10-17T15-41-19.451Z.md
+# Operator-provided last-session export: byte-preserved audit input, not docs.
+freebuff-chat-2026-10-18T21-13-51.779Z.md
 dev/fids/archive/**
 CHANGELOG.md
 research/

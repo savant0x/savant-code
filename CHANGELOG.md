@@ -1,5 +1,74 @@
 # Changelog
 
+## 0.0.36 — 2026-10-12
+
+> **v0.0.36** — **development line, package release not yet published**.
+> Verified source progress is committed and pushed to `main` automatically;
+> package publication and release tags remain separate operator actions.
+> This bump opens the dated heading so post-release work
+> accumulates in one place, per the no-unreleased-accumulators ruling: the
+> researcher-acceptance and lesson-feature-pipeline closures, the managed
+> scratchpad and provider-inventory passes, and everything else that lands before
+> the v0.0.36 cut. Release notes are written here at cut time; nothing in this
+> section is a package-release claim until then.
+
+### Release-audit closures (closed 2026-10-19)
+
+- **FID-2026-1018-010 — low — Preserve clickable child identity.** The shared
+  clickable normalizer scopes React child identity with `React.Children.toArray`
+  before flattening, so static `Button`/`CommandPalette` and `FollowupLine`
+  siblings stop reporting missing unique keys while explicit keys inside nested
+  arrays stay distinct. Host children stay non-selectable and no fragment is
+  introduced. Implementation: `0c50fa8e`; focused suite 5 pass / 0 fail, CLI
+  typecheck and scoped ESLint clean.
+- **FID-2026-1018-011 — medium — Bound shared UI event subscriptions.** Renderer
+  resize/focus/blur and ancestor scrollbar change now share one native
+  subscription per emitter and event, with independent consumer tokens; dispatch
+  snapshots its initial subscribers, skips removals and postpones additions, and
+  the native listener is released with its last subscriber. Thirty real animation
+  consumers keep their resize/focus behavior and return to baseline listener
+  counts across three mount/unmount cycles. Implementation: `106ee6f8`; 5 pass /
+  0 fail, 41 assertions. No operator-terminal observation is claimed by the
+  native render tests; LIVE-004's warning residuals stay tracked separately.
+- **FID-2026-1018-013 — medium — Audit lifecycle and tooling hygiene.** Standalone
+  probes execute only at their entrypoints, the console-capture and
+  exit-provenance diagnostic resets are wired into the CLI preload, and
+  object/native-FFI state carries exact self-validating lifetime exemptions
+  instead of a global audit suppression. Skill-evolution output moved under the
+  managed scratchpad active tree, audit-evidence tests run from their own
+  workspace, and two stale exact ledger-size pins became the audited minimums
+  they already described. Implementation: `20b2f55c`; scripts suite 1,122 pass /
+  0 fail.
+- **FID-2026-1018-014 — high — Dependency advisories and unused packages.**
+  Removed seven unused backend/native packages, upgraded vulnerable direct and
+  transitive pins, kept the compatible Zod 4.4.3 pin, adopted the
+  ESLint-9-supported typescript-eslint line while preserving the prior
+  catch-binding policy, and replaced two type-only runtime schemas with static
+  types. Persisted Bun patches bound the braces parser depth at 128 and map
+  gray-matter's YAML-4 engine names; a durable hostile-input probe now runs first
+  in the pristine-install bundle gate. The registry audit fell from 25 affected
+  names to one patched `braces@3.0.3` finding with no upstream fix — mitigation,
+  not a zero-advisory claim — and the SDK distribution stays unpublished.
+  Implementation: `60c50a67`.
+
+Committed slices re-ran the hard gates: 14-workspace plus scripts typecheck exit
+0, CLI 4,233 pass / 18 skip / 0 fail, scripts 1,122 pass / 0 fail, ESLint 0
+warnings, Markdown lint exit 0, `validate:repository` PASS.
+
+### Repository hygiene and docs/data parity (closed 2026-10-18)
+
+- **FID-2026-1018-007 — medium — Audit storage and reconcile current guidance.**
+  Corrected README development callouts, SDK/local-agent examples and API docs,
+  testing guidance, malformed/dead links and design-generator version metadata.
+  Preserved old scope history outside the active register and untracked a
+  174,027-byte regenerable Sigma intermediate while keeping its local copy.
+  Audit: `docs/reports/repository-hygiene-audit-2026-10-18.md`.
+  Implementation: `463d8096`; 11/11 declared gates and SDK build pass; all 166
+  JSON-family files validate with their domain parsers, all 74 design resources
+  pass production integrity checks, and current-doc link checks pass. Large
+  ignored reference/dependency trees stay; external-home diagnostics remain
+  operator-owned. This is source progress, not a release or publication claim.
+
 ## 2026-10-19 — Stop `/model` from blanking the CLI (FID-2026-1018-008, critical)
 
 Opening the model picker emptied the screen while the process kept running and
@@ -307,32 +376,6 @@ typecheck probe; quality); the full CLI suite is 4174 pass / 28 skip / 0 fail,
 the root typecheck is exit 0, and `validate:repository` passes. No live TUI
 smoke ran because `tmux` is not installed in this environment; the boot path is
 pinned at the resolver/handler boundary and the panel through a static render.
-
-## 0.0.36 — 2026-10-12
-
-> **v0.0.36** — **development line, package release not yet published**.
-> Verified source progress is committed and pushed to `main` automatically;
-> package publication and release tags remain separate operator actions.
-> This bump opens the dated heading so post-release work
-> accumulates in one place, per the no-unreleased-accumulators ruling: the
-> researcher-acceptance and lesson-feature-pipeline closures, the managed
-> scratchpad and provider-inventory passes, and everything else that lands before
-> the v0.0.36 cut. Release notes are written here at cut time; nothing in this
-> section is a package-release claim until then.
-
-### Repository hygiene and docs/data parity (closed 2026-10-18)
-
-- **FID-2026-1018-007 — medium — Audit storage and reconcile current guidance.**
-  Corrected README development callouts, SDK/local-agent examples and API docs,
-  testing guidance, malformed/dead links and design-generator version metadata.
-  Preserved old scope history outside the active register and untracked a
-  174,027-byte regenerable Sigma intermediate while keeping its local copy.
-  Audit: `docs/reports/repository-hygiene-audit-2026-10-18.md`.
-  Implementation: `463d8096`; 11/11 declared gates and SDK build pass; all 166
-  JSON-family files validate with their domain parsers, all 74 design resources
-  pass production integrity checks, and current-doc link checks pass. Large
-  ignored reference/dependency trees stay; external-home diagnostics remain
-  operator-owned. This is source progress, not a release or publication claim.
 
 ## 2026-10-17 — Bounded research spawn contract (FID-2026-1017-004, medium)
 

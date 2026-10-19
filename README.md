@@ -130,8 +130,9 @@ history. The supported hosted providers are:
 CodeCraft and CleanAPIs use authenticated live catalogs. xKiro publishes a
 live chat catalog; its Anthropic-prefixed IDs use Messages and other IDs use
 chat. Select the full prefixed ID from `/model` so vendor namespaces survive
-routing. The picker supports filtering, keyboard, wheel, and scrollbar
-navigation; clipped display text does not alter the selected ID.
+routing. Type to filter, use arrows or Tab to move through the bounded visible
+window, and press Enter or click a visible row to select. The header reports
+the visible range; clipped display text does not alter the selected ID.
 
 Agent model information includes reported limits, USD prices, capabilities,
 catalog tiers, and reasoning efforts. Missing values stay unknown. Catalog
@@ -227,8 +228,9 @@ file or edit `credentials.json` manually.
 ## Overview
 
 Savant-Code is a TypeScript monorepo that builds and ships the terminal-native
-AI coding assistant **Savant Code** and the public
-[`@savant-code/sdk`](https://www.npmjs.com/package/@savant-code/sdk). The CLI
+AI coding assistant **Savant Code** and the source-available
+[`@savant-code/sdk`](sdk/README.md). The SDK is an unpublished workspace package;
+the default public release publishes the CLI only. The CLI
 provides multi-agent orchestration, custom skills, MCP tool discovery, mode
 switching (`HYBRID` / `SCAFFOLD` / `STRICT` / `ANALYZE`), and local-first Ollama
 support. The
@@ -387,12 +389,9 @@ code 2 blocks a tool.
   and scanned at the EHEL write boundary. Headless authoring accepts
   `--design-input <path|->`. See the [design-system library guide](docs/design/design-system-library.md)
   for the architecture, authoring lifecycle, security model, persistence contract,
-  enforcement behavior, and packaging evidence. For live usability, agent-feedback,
-  and latency validation, run the [design-system live test prompt](dev/test-prompts/design-system-live-ux-performance.md).
-  The [v0.0.25 harness A–Z prompt](dev/test-prompts/az-v0.0.25-harness-live-test.md)
-  is a historical version-specific instrument, not a complete regression for
-  the current tree. New reports belong under `dev/scratchpad/active/` and must
-  be promoted to durable paths before use as acceptance evidence.
+  enforcement behavior, and packaging evidence. Operator test prompts and captured
+  acceptance records live in the local-only `dev/` workspace; they are not
+  included in public clones.
 - **MCP tools** — Model Context Protocol servers discovered at startup, schemas
   published to the LLM API.
 - **`deep_research` tool** — the Researcher role's mechanical multi-query web
@@ -1179,8 +1178,8 @@ Call-Graph Reachability) + 11 extended code laws. `strict: true` in TypeScript.
 ## Validation
 
 ```bash
-# Build
-bun run build:sdk && bun run ci
+# Build the SDK
+bun run ci
 
 # Test
 bun run test
@@ -1191,8 +1190,11 @@ bun run typecheck
 # Lint
 bun x eslint . --max-warnings 0
 
-# Format
-bun x prettier --write .
+# Markdown lint (docs/ is a document collection and is excluded)
+bun run lint:md
+
+# Check formatting
+bun x prettier --check .
 ```
 
 ---
@@ -1245,14 +1247,10 @@ events.
   architecture
 - [`docs/design/Discord Presence For Savant-Code.md`](<docs/design/Discord Presence For Savant-Code.md>) — the Discord
   Rich Presence blueprint
-- [`dev/test-prompts/design-system-live-ux-performance.md`](dev/test-prompts/design-system-live-ux-performance.md) —
-  live CLI usability, agent-feedback, and performance test prompt
-- `dev/nova/outbox/archive/2026-08-11-fid-2026-0811-030-design-system-live-test-signoff-request.md` —
-  [independent review request for the live test design and captured result](dev/nova/outbox/archive/2026-08-11-fid-2026-0811-030-design-system-live-test-signoff-request.md)
 - [`docs/archive/launch/index.html`](docs/archive/launch/index.html) — Public
   landing page (archived launch artifact)
-- [`dev/LEARNINGS.md`](dev/LEARNINGS.md) — Cross-session lessons
-- [`dev/session-summaries/`](dev/session-summaries/) — Session audit trail
+- `dev/LEARNINGS.md` and `dev/session-summaries/` — local-only engineering
+  records; public runtime guidance is [embedded-learnings.md](docs/embedded-learnings.md).
 
 ---
 

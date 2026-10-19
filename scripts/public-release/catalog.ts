@@ -200,7 +200,7 @@ export function buildPublicReleasePlan(
     'Run public CLI bundle, repository typecheck, test, lint, format, and package gates',
     `Create annotated tag v${version}`,
     `git push origin main and v${version}`,
-    'Write the verified incremental backup bundle (OneDrive-synced)',
+    'Write and verify the incremental backup bundle at the configured destination',
     // FID-2026-0906-002: the desktop decision is ALWAYS in the plan — the
     // v0.0.29 cut completed green with the desktop stages silently skipped
     // because the plan omitted them when the flag was unset.

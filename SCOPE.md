@@ -12,6 +12,25 @@ verification, releases or repository boundaries.
 
 ## Open items
 
+### AUDIT-2026-1018 — project-wide release readiness
+
+- [ ] Authority: automation level 3, operator-approved 2026-10-18: full project-wide
+  audit and loose-end cleanup before an official release. Inspect every workspace,
+  release/build gates, dependency and dead-code candidates, current documentation,
+  generated artifacts, and active governance records. Fix confirmed defects with
+  converged FIDs and verification; preserve historical evidence and operator files.
+- [ ] Resolve the LIVE-004 keystroke-evidence gap through FID-2026-1018-012's
+  render-level picker keyboard test. The listener-warning, CommandPalette key,
+  audit-tooling and dependency residuals closed on 2026-10-19 with
+  FID-2026-1018-011, -010, -013 and -014 — all archived with commit hashes and
+  CHANGELOG entries. FID-2026-1018-012 also owns release-audit documentation
+  and record reconciliation.
+- [ ] Run the complete local gate battery and release preview/diagnostics; record
+  exact results and any external prerequisite that cannot be verified locally.
+
+Release publication follows the completed audit and the canonical release pipeline.
+This audit does not authorize paid provider comparisons or external skill edits.
+
 ### EMBED-001 — superseded external single-agent embed (blocked)
 
 - [ ] Authority: automation level 3. Updating the external target is reserved
@@ -34,24 +53,6 @@ This session uses the canonical repository protocol.
   require explicit operator approval. Normal verified main pushes proceed
   through mandatory gates. No publication is authorized by this audit.
 
-### LIVE-003 — model picker live observation (completed 2026-10-18)
-
-- [x] Reproduced. `/model` with three bashers active kills the CLI instantly
-  and clears the terminal; no process survived and no fatal record was
-  written. This answers the item's open question: the CLI exits, it does not
-  stay alive on a blank screen. The probe in `scripts/probes/` remains as the
-  repeatable PTY observation harness.
-
-The defect is tracked as FID-2026-1018-008. That record, not this observation,
-now owns the cause and the repair.
-
-### FID-2026-1018-008 — silent `/model` death (open)
-
-- [ ] Authority: automation level 3. Capture the evidence outside the
-  alternate screen, make silent deaths durable, narrow the trigger, then fix
-  the cause. No change to the terminal reset or watchdog paths until the death
-  itself is explained.
-
 ### HOME-SKILLS-001 — external skill diagnostics (blocked)
 
 - [ ] `skills:check` reports 22 home-skill warnings and zero repository errors.
@@ -62,13 +63,24 @@ now owns the cause and the repair.
 
 ## Machine-readable scope targets
 
-- LIVE-003: `scripts/probes/live-003-picker-pty.ts`, `dev/scratchpad/**`
-- FID-2026-1018-008: `cli/src/components/model-picker.tsx`,
-  `cli/src/components/model-picker-rows.tsx`,
-  `cli/src/utils/model-picker-open.ts`, `cli/src/utils/renderer-cleanup.ts`,
-  `cli/src/utils/terminal-watchdog.ts`, `cli/src/index.tsx`,
-  `cli/src/components/__tests__/**`, `cli/src/utils/__tests__/**`,
-  `debug/**`, `dev/**`
+Operator pause, 2026-10-18: requested a handoff with 9% session credits remaining.
+Resumed 2026-10-19: the CHANGELOG read completed, the 0.0.36 heading moved above
+its recent entries, and the audit slices committed. Release publication is not
+claimed.
+Resume checklist: `dev/session-summaries/2026-10-18-release-audit-handoff.md`.
+
+- FID-2026-1018-012: `.gitignore`, `.markdownlintignore`, `README.md`, `README.zh-CN.md`, `SCOPE.md`,
+  `docs/**`, `sdk/README.md`, `sdk/PUBLISHING.md`, `common/src/templates/initial-agents-dir/**`,
+  `cli/src/components/__tests__/model-picker-scroll.test.tsx`, `dev/**`, `CHANGELOG.md`
+  `scripts/public-release/catalog.ts`, `scripts/public-release/backup-stage.ts`
+
+- AUDIT-2026-1018: `SCOPE.md`, `CHANGELOG.md`, `README.md`, `README.zh-CN.md`,
+  `ARCHITECTURE.md`, `AGENTS.md`, `CONTRIBUTING.md`, `ECHO.md`,
+  `protocol.config.yaml`, `package.json`, `bun.lock`, `eslint.config.js`, `.gitignore`,
+  `.markdownlintignore`, `.prettierignore`, `patches/**`, `agents/**`, `cli/**`, `common/**`,
+  `desktop/**`, `evals/**`, `packages/**`, `sdk/**`, `scripts/**`, `docs/**`,
+  `coding-standards/**`, `templates/**`, `.github/**`, `.githooks/**`, `dev/**`
+
 - Release-0.0.36: `VERSION`, `package.json`, `agents/package.json`,
   `cli/package.json`, `cli/release/package.json`, `common/package.json`,
   `common/src/constants/protocol-bundle.generated.ts`, `desktop/package.json`,
