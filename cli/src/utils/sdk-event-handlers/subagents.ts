@@ -45,6 +45,7 @@ export const handleSubagentStart = (
   const spawnAgentMatch = findMatchingSpawnAgent(
     state.streaming.streamRefs.state.spawnAgentsMap,
     event.agentType || '',
+    event.spawnOrigin,
   )
   if (spawnAgentMatch) {
     state.message.updater.updateAiMessageBlocks((blocks) =>

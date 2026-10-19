@@ -7,7 +7,10 @@ import type {
   ParamsExcluding,
   OptionalFields,
 } from '@savant-code/common/types/function-params'
-import type { PrintModeEvent } from '@savant-code/common/types/print-mode'
+import type {
+  PrintModeEvent,
+  PrintModeSubagentStart,
+} from '@savant-code/common/types/print-mode'
 import type { AgentState } from '@savant-code/common/types/session-state'
 import type { ToolSet } from 'ai'
 
@@ -47,6 +50,7 @@ export async function executeSubagent(
       parentTools?: ToolSet
       onResponseChunk: (chunk: string | PrintModeEvent) => void
       isOnlyChild?: boolean
+      spawnOrigin?: PrintModeSubagentStart['spawnOrigin']
       ancestorRunIds: string[]
     } & ParamsExcluding<typeof loopAgentSteps, 'agentType' | 'ancestorRunIds'>,
     'isOnlyChild' | 'clearUserPromptMessagesAfterResponse'
@@ -137,6 +141,7 @@ export async function executeSubagent(
     parentAgentId: parentAgentState.agentId,
     prompt,
     params: spawnParams,
+    spawnOrigin: withDefaults.spawnOrigin,
   }
   onResponseChunk(startEvent)
 
@@ -213,6 +218,7 @@ export async function executeSubagent(
     parentAgentId: parentAgentState.agentId,
     prompt,
     params: spawnParams,
+    spawnOrigin: withDefaults.spawnOrigin,
   })
 
   if (result.agentState.runId) {

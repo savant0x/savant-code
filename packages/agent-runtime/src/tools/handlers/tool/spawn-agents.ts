@@ -119,6 +119,10 @@ export const handleSpawnAgents = (async (
           sendSubagentChunk,
           writeToClient,
           isOnlyChild: validated.steps.length === 1,
+          spawnOrigin: {
+            toolCallId: toolCall.toolCallId,
+            index: step.declaredIndex,
+          },
           agentTypeStr: step.agentType,
           writeScope: undefined,
           prompt,
@@ -193,7 +197,10 @@ export const handleSpawnAgents = (async (
 
   const results = await Promise.allSettled(
     agents.map(
-      ({ agent_type: agentTypeStr, prompt, params: spawnParams, writeScope }) =>
+      (
+        { agent_type: agentTypeStr, prompt, params: spawnParams, writeScope },
+        index,
+      ) =>
         runSingleSubagent({
           params,
           parentAgentState,
@@ -205,6 +212,7 @@ export const handleSpawnAgents = (async (
           sendSubagentChunk,
           writeToClient,
           isOnlyChild: agents.length === 1,
+          spawnOrigin: { toolCallId: toolCall.toolCallId, index },
           agentTypeStr,
           writeScope,
           prompt,

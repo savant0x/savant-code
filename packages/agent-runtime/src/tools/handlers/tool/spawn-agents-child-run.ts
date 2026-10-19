@@ -44,6 +44,7 @@ export async function runSingleSubagent({
   sendSubagentChunk,
   writeToClient,
   isOnlyChild,
+  spawnOrigin,
   agentTypeStr,
   writeScope,
   prompt,
@@ -165,6 +166,7 @@ export async function runSingleSubagent({
       maxOutputTokens: childOutputBudget,
       contextWindow: childContextWindow,
       isOnlyChild,
+      spawnOrigin,
       excludeToolFromMessageHistory: false,
       parentSystemPrompt,
       // FID-2026-0802-005 L12: filterToolSet only when the child actually

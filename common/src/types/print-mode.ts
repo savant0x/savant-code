@@ -90,6 +90,11 @@ export const printModeFinishSchema = z.object({
 })
 export type PrintModeFinish = z.infer<typeof printModeFinishSchema>
 
+const spawnOriginSchema = z.object({
+  toolCallId: z.string(),
+  index: z.number().int().nonnegative(),
+})
+
 export const printModeSubagentStartSchema = z.object({
   type: z.literal('subagent_start'),
   agentId: z.string(),
@@ -99,6 +104,7 @@ export const printModeSubagentStartSchema = z.object({
   parentAgentId: z.string().optional(),
   params: z.record(z.string(), jsonValueSchema).optional(),
   prompt: z.string().optional(),
+  spawnOrigin: spawnOriginSchema.optional(),
 })
 export type PrintModeSubagentStart = z.infer<
   typeof printModeSubagentStartSchema
@@ -113,6 +119,7 @@ export const printModeSubagentFinishSchema = z.object({
   parentAgentId: z.string().optional(),
   params: z.record(z.string(), jsonValueSchema).optional(),
   prompt: z.string().optional(),
+  spawnOrigin: spawnOriginSchema.optional(),
 })
 export type PrintModeSubagentFinish = z.infer<
   typeof printModeSubagentFinishSchema

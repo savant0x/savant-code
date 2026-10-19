@@ -75,6 +75,7 @@ export type RunSingleSubagentDeps = {
   sendSubagentChunk: SendSubagentChunk
   writeToClient: (chunk: string | PrintModeEvent) => void
   isOnlyChild: boolean
+  spawnOrigin?: Parameters<typeof executeSubagent>[0]['spawnOrigin']
   agentTypeStr: string
   writeScope?: string[]
   prompt: string | undefined
