@@ -20,15 +20,18 @@ export async function glob(params: {
     const flattenedNodes = flattenTree(fileTree)
     let allFilePaths = flattenedNodes
       .filter((node) => node.type === 'file')
-      .map((node) => node.filePath)
+      .map((node) => node.filePath.replaceAll('\\', '/'))
 
     if (cwd) {
-      const cwdPrefix = cwd.endsWith('/') ? cwd : `${cwd}/`
+      const normalizedCwd = cwd.replaceAll('\\', '/')
+      const cwdPrefix = normalizedCwd.endsWith('/')
+        ? normalizedCwd
+        : `${normalizedCwd}/`
       allFilePaths = allFilePaths.filter(
         (filePath) =>
-          filePath === cwd ||
+          filePath === normalizedCwd ||
           filePath.startsWith(cwdPrefix) ||
-          filePath === cwd.replace(/\/$/, ''),
+          filePath === normalizedCwd.replace(/\/$/, ''),
       )
     }
 
