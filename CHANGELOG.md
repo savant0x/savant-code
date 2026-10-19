@@ -50,6 +50,18 @@
   names to one patched `braces@3.0.3` finding with no upstream fix — mitigation,
   not a zero-advisory claim — and the SDK distribution stays unpublished.
   Implementation: `60c50a67`.
+- **FID-2026-1018-012 — medium — Release-audit reconciliation.** Current docs now
+  match shipped behavior: the wheel/scrollbar picker claims that the allocator
+  repair removed are corrected, SDK installation is described as source-pinned
+  while its distribution stays unpublished, the scaffold examples are named with
+  their real consumer, and the ignored local dev links were replaced with
+  reachable sources. Archived records gained machine-readable commit evidence,
+  the configured recovery destination is reported instead of an unobserved
+  "OneDrive-synced" claim, and `SCOPE.md` was reconciled with the closed children.
+  The 0.0.36 heading moved above its own recent entries as a byte-identical
+  relocation, so `extractChangelogSection` no longer drops the newest picker,
+  worktree and provider notes from generated release text. Implementation:
+  `789ec02c`.
 
 Committed slices re-ran the hard gates: 14-workspace plus scripts typecheck exit
 0, CLI 4,233 pass / 18 skip / 0 fail, scripts 1,122 pass / 0 fail, ESLint 0
