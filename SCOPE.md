@@ -31,18 +31,15 @@ verification, releases or repository boundaries.
   lint exit 0, `validate:repository` PASS, `release:preaudit:check`
   `PASS — release preconditions clear`, `release:public:preview` exit 0 with the
   0.0.36 changelog section resolving correctly.
-- [ ] Resolve the `release:public:diagnose` rehearsal failure before any release
-  run. On the committed tree it aborted with `Diagnostic gates changed HEAD;
-  evidence was discarded.` (receipt
-  `%TEMP%/savant-public-release-0.0.36-diagnostic.json`, `gateAttempts: []`)
-  after the lockfile, undeclared-imports, cli-bundle-resolution, typecheck, test,
-  eslint, repository-validation and provider-reference gates had produced
-  transcripts. HEAD did not move (`ff6cd6fe` before and after, clean worktree, no
-  extra reflog entry), so the guard fired on a non-zero `git rev-parse` rather
-  than a real commit change; the discarded attempt list is itself an
-  evidence-retention gap. Reproduce on a frozen tracked tree and fix the guard or
-  its evidence retention before relying on diagnostic receipts. Publication
-  remains operator-gated.
+- [x] `release:public:diagnose` rehearsal passes on a frozen clean tree: the
+  full gate manifest ran through `npm-pack:savant-code` and exited 0
+  (`Diagnostic gates passed`). A first attempt bounded at 420 s was killed
+  mid-manifest and reported `Diagnostic gates changed HEAD; evidence was
+  discarded.` with `gateAttempts: []`; HEAD was `3d8096a6` before and after with
+  a clean worktree, so the message misattributes an interrupted run. Unbounded
+  re-run passed. Observation for later: an interrupted rehearsal discards its
+  attempt evidence, so a guard message like that one is not proof of a commit
+  change. Publication remains operator-gated.
 
 Release publication follows the completed audit and the canonical release pipeline.
 This audit does not authorize paid provider comparisons or external skill edits.
