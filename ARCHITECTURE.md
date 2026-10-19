@@ -12,7 +12,7 @@ This monorepo ships **Savant-Code** (CLI, SDK and desktop shell), sharing one
 runtime and one set of engineering laws (ECHO). The separate Savant-Free
 product was retired on 2026-10-15.
 
-**Hybrid Mode exception:** the overview rule below applies to complex tasks.
+**Hybrid Mode exception:** the convergence rule above applies to complex tasks.
 For simple tasks the Orchestrator writes code directly without a FID (ECHO.md
 Hybrid Mode; runtime path `idle → green`), then verifies immediately.
 FID-2026-0803-001 ECHO-4.
@@ -23,23 +23,36 @@ FID-2026-0803-001 ECHO-4.
 
 | # | Agent | Phase | Responsibility | Tools |
 |---|-------|-------|----------------|-------|
-| 1 | **Orchestrator** | ALL | Routes work through Perfection Loop, enforces protocol compliance, spawns all agents | spawn_agents, read_files, read_subtree, run_readonly_command, write_todos, suggest_followups, ask_user, read_url, skill, set_output, list_directory, glob, render_ui, gravity_index, update_goal, get_goal (durable goal mode, FID-2026-0814-002), transition_phase, write_file, str_replace, apply_patch (phase-gated), set_scaffold_complete (scaffold mode) |
-| 2 | **Detective** | RED | Codebase analysis, grep call-graphs, find issues, catalog evidence with file paths | code_search, set_output, list_directory, glob, read_files, read_subtree, query_blast_radius, query_node_edges, query_domain_clusters |
+| 1 | **Orchestrator** | ALL | Routes work through Perfection Loop, enforces protocol compliance, spawns agents | spawn_agents, fid_worktree, read_files, read_subtree, recover_evidence, run_readonly_command, write_todos, suggest_followups, ask_user, read_url, skill, skill_manage, set_output, list_directory, glob, render_ui, gravity_index, update_goal, get_goal, transition_phase, write_file, str_replace, apply_patch (phase-gated), set_scaffold_complete (scaffold mode) |
+| 2 | **Detective** | RED | Codebase analysis, grep call-graphs, find issues, catalog source evidence | code_search, set_output, list_directory, glob, read_files, read_subtree, recover_evidence, query_blast_radius, query_node_edges, query_domain_clusters |
 | 3 | **Forge** | GREEN | Implementation only. Writes code following the converged FID spec. Cannot self-verify. | read_files, write_file, str_replace, set_output (FID-2026-0824-031) |
-| 4 | **Verifier** | AUDIT | Double-audit, run tests, check call-graph reachability, reject hallucinated claims | *(no tools — reads only via message history)* |
+| 4 | **Verifier** | AUDIT | Audit supplied source bytes, test output and call-graph evidence; return cited PASS, FAIL or NEEDS-REVIEW | *(no tools — receives message history and injected raw evidence)* |
 | 5 | **Recorder** | FID | Create, track, archive FIDs. Update CHANGELOG. Ensure no FID closes without AUDIT evidence | write_file, read_files, glob, code_search, set_output |
 | 6 | **Thinker** | Planning | Deep reasoning via sequential thinking engine. Critiques specs, plans, implementations | sequentialthinking, end_turn |
-| 7 | **Scout** | Explore | File/code search, glob, read subtrees, context gathering | glob, list_directory, read_files, read_subtree, set_output, query_blast_radius, query_node_edges, query_domain_clusters |
-| 8 | **Researcher** | Research | Web search, documentation lookup, external API research | web_search, read_url (web); read_docs (docs); deep_research (FID-2026-0804-002) |
-| 9 | **Scribe** | Docs | Session summaries, LESSONS.md, knowledge files, end-of-session capture | read_files, write_file, glob, code_search, set_output |
+| 7 | **Scout** | Explore | Find/rank files, read subtrees and gather context; return a structured discovery artifact | glob, list_directory, read_files, read_subtree, recover_evidence, set_output, query_blast_radius, query_node_edges, query_domain_clusters |
+| 8 | **Researcher** | Research | Web search, documentation lookup, external API research | web_search, read_url, deep_research, recover_evidence (web); read_docs (docs) |
+| 9 | **Scribe** | Docs | Session summaries, LEARNINGS.md, knowledge files, quarantined skill drafts and end-of-session capture | read_files, write_file, glob, code_search, set_output, skill_manage |
 | 10 | **Adversary** | ADVERSARIAL | Meta-verification: refutes every Verifier FAIL, re-audits every unevidenced PASS, resolves citations, re-rates severities; verdicts override the Verifier's (FID-2026-0805-004) | read_files, code_search, glob, list_directory, set_output |
 
-> **Note on Orchestrator write tools:** Per FID-2026-0718-008, the Orchestrator has `write_file` + `str_replace` in its
-  toolName list, but they are GATED to exempt paths only (`dev/fids/`, `dev/scratchpad/`, `dev/nova/`) by
-  `tool-executor.ts`. For all non-exempt paths, these tools are blocked unless FSM phase is `green` or `self_correct`
-  (see Tool Gating). This satisfies ECHO separation-of-duties for production code while allowing FIDs/scratchpad without
-  ceremony. FID-2026-0803-001 ECHO-5 reconciled this table with `agents/savant/savant.ts` (`run_readonly_command`,
-  `gravity_index`, `apply_patch`, `set_scaffold_complete` are model-visible for the Orchestrator).
+The tool inventory follows the definitions under `agents/`. Orchestrator tools
+are conditional on mode/options in `agents/savant/savant.ts`: for example,
+plan/analyze modes omit `fid_worktree`, analyze mode omits writes/transitions,
+and scaffold mode substitutes `set_scaffold_complete` for `apply_patch`.
+Runtime capability, containment, sandbox and protocol gates still apply.
+
+> **Orchestrator writes:** `write_file`, `str_replace` and `apply_patch` pass
+> through `packages/agent-runtime/src/tools/tool-executor/write-gate.ts`.
+> Contained `dev/fids/`, `dev/nova/` and `dev/scratchpad/` paths are exempt from
+> its FSM phase requirement. Source writes normally require `green` or
+> `self_correct`; scaffold mode relaxes that phase check. Tool availability
+> does not by itself authorize a write or bypass EHEL. Hybrid Mode permits
+> direct simple-task implementation; complex implementation belongs to Forge.
+
+> **Verification execution:** command-capable helpers such as `basher` run
+> builds, tests, lint and reachability commands. Verifier audits the supplied
+> results and raw evidence; it cannot execute commands or read the filesystem.
+> Adversary can resolve citations through its own read-only tools. Both require
+> raw evidence (`requiresRawEvidence` in their definitions).
 
 > **Note on Recorder archive ownership:** the Recorder has no filesystem move/archive tool; the CLI/orchestrator
   executes the `dev/fids/ → dev/fids/archive/` move while the Recorder authors the FID + CHANGELOG content and evidence.
@@ -98,17 +111,60 @@ Code implementation begins only after the FID converges to COMPLETE.
 | **AUDIT** | Verifier + Recorder | Verification output pasted into FID, call-graph grep results, double-audit evidence, per-finding `file:line` citations (FID-2026-0805-004) |
 | **ADVERSARIAL** | Adversary | Meta-verification: refuted/evaluated Verifier findings (CONFIRMED/REFUTED/ADJUSTED), resolved citations, re-rated severities; verdicts override (FID-2026-0805-004) |
 | **SELF-CORRECT** | Thinker + Recorder | Revised fix, updated FID sections |
-| **COMPLETE** | Recorder | FID closed, archived to `dev/fids/archive/`, CHANGELOG.md updated |
+| **COMPLETE** | Recorder | FID plan marked `converged`; implementation may begin |
 | *Post-FID: Forge* | Forge | Code implementation matching the FID spec |
-| *Post-FID: Verify* | Verifier | Code verified: typecheck, tests, lint, call-graph check |
+| *Post-FID: Verify* | Command-capable helpers + Verifier + Adversary | Executed checks and source evidence, cited review and meta-review |
+| *Post-implementation: Close* | Recorder + Orchestrator | After committed implementation and passing gates, mark `closed`, archive and update CHANGELOG |
+
+The diagram's COMPLETE node denotes **plan convergence**, not FID closure.
+The status definitions in `ECHO.md` distinguish `converged` (pre-implementation)
+from `closed` (implemented, committed and verified). Observation windows and
+external acceptance remain separate in `dev/tracking/internal-followups.json`;
+implementation closure does not certify an unobserved production outcome.
+
+## Concurrent agent execution and result delivery
+
+The orchestrator can place repeated roles or mixed independent roles in one
+`spawn_agents` call. Ordinary batches dispatch through `Promise.allSettled`
+in `packages/agent-runtime/src/tools/handlers/tool/spawn-agents.ts`:
+
+```text
+Orchestrator → spawn_agents → child A ─┐
+                          → child B ─┼→ all settled → reports → Orchestrator
+                          → child C ─┘
+```
+
+- Children run concurrently; the parent resumes after the entire batch settles.
+  Background parent work and consumption of individual early completions are
+  not part of this dispatch contract.
+- `MAX_SUBAGENT_FAN_OUT = 32` and `MAX_SUBAGENT_DEPTH = 8` live in
+  `common/src/constants/agents.ts`. The model selects the batch composition
+  under existing prompts; no automatic two- or three-Verifier quorum exists.
+- An optional research `plan` validates local source bytes, dependency stages
+  and returned artifacts before accepting steps. Its role allowlist excludes
+  audit and effectful roles; ordinary batches support multiple Verifiers.
+- Each child passes through `spawn-agents-child-run.ts` and
+  `execute-subagent.ts`. Host-issued `spawnOrigin` (spawning tool-call ID and
+  declared index) accompanies start/finish events. CLI matching uses that
+  identity, preserving same-role result ownership despite reordered starts;
+  legacy events without it retain the role-based fallback.
+- Scout and Detective return structured artifacts and preserve authored
+  `set_output` after STEP. Their fallback retains actual discovery evidence.
+  Verifier returns last-message review text. Parent reports preserve batch
+  order; the CLI headless answer joins the complete final assistant turn.
+
+Source acceptance and limitations are recorded in
+`docs/reports/source-fanout-verification-2026-10-19.md`. Independent work can
+overlap; a review depending on implementation or another report must receive
+that evidence before it can meaningfully evaluate it.
 
 ---
 
 ## Thinker — Sequential Thinking Engine
 
 The Thinker agent uses the `sequentialthinking` tool for all non-trivial reasoning.
-This is a direct copy+integration of the `SequentialThinkingServer` class from
-the MCP reference implementation, stripped of MCP transport.
+Its typed `ThoughtSession` core in `common/src/tools/sequential-thinking.ts`
+supports branching, revision and convergence without an MCP transport.
 
 ### How It Works
 
@@ -129,12 +185,17 @@ thought N:  "Final recommendation. nextThoughtNeeded: false"
 
 ### State Tracking
 
-The `SequentialThinkingServer` instance lives in the Thinker agent's state,
-persisting across steps within a single think session:
+`packages/agent-runtime/src/tools/thought-session-store.ts` owns a registry
+keyed by `runId`. Each Thinker run receives an isolated `ThoughtSession`;
+accepted calls append immutable thought snapshots and update branch state.
+Snapshots expose ordered thoughts, branches and convergence. Terminal paths
+clean up the session and remove its registry entry.
 
-- `thoughtHistory[]` — every thought step, in order
-- `branches{}` — branching thoughts keyed by branchId
-- Each call returns: current thought number, total thoughts, branch list, thought history length
+The runtime convergence gate requires at least one accepted thought and a
+final `nextThoughtNeeded: false` call. It builds a structured final artifact
+with terminal status, synthesis, metrics and thoughts; success requires a
+non-null payload. Premature completion produces retry guidance, and failure,
+exhaustion or cancellation is reported explicitly.
 
 ### Tool Schema
 
@@ -154,9 +215,13 @@ persisting across steps within a single think session:
 
 ### Integration Points
 
-- `agents/thinker/thinker.ts` — gets `useSequentialThinkingTool: true`
-- `common/src/tools/constants.ts` — new tool name `sequentialthinking`
-- Tool handler in `packages/agent-runtime/src/tools/` — wraps `SequentialThinkingServer`
+- `agents/thinker/thinker.ts` — declares `sequentialthinking` and `end_turn`,
+  structured output and the final-thought contract.
+- `common/src/tools/constants.ts` — registered tool name `sequentialthinking`.
+- `packages/agent-runtime/src/tools/handlers/tool/sequential-thinking.ts` —
+  routes accepted thoughts into the current run's session.
+- `packages/agent-runtime/src/tools/thinker-convergence-gate.ts` — enforces
+  convergence and constructs the final artifact consumed by the parent.
 
 ---
 
@@ -167,7 +232,7 @@ persisting across steps within a single think session:
 The Orchestrator tracks current Perfection Loop phase in AgentState:
 
 ```typescript
-type PerfectionLoopPhase =
+type FsmPhase =
   | 'idle'
   | 'red'
   | 'green'
@@ -180,33 +245,42 @@ type PerfectionLoopPhase =
 - Phase transitions are explicit via the `transition_phase` tool
 - The runtime validates that transitions follow the FSM legal paths
 - Invalid transitions (e.g., idle → audit) are rejected
+- `green → complete` requires verification credit after the last dirtying
+  write. Loop-phase entry to `green` requires an active FID file; this is a
+  presence check, not proof that its plan converged. `idle → green` is the
+  Hybrid Mode path. See `tools/handlers/tool/transition-phase.ts` in the runtime.
 
 ### Circuit Breakers (per-session)
 
-Tracked in AgentState:
-
-```typescript
-{
-  charChangeTotal: number,       // Running total for 10% cap
-  iterationCount: number,        // Current loop iteration
-  oscillationDetections: number, // Same issue reappearing
-  lastIssueIds: string[],        // Last 3 issues for oscillation detection
-}
-```
+The FSM handler tracks `iterationCount` on AgentState. It increments on
+`self_correct → green`, resets on `complete` or `idle`, and blocks entry to
+`green` at the configured maximum (`perfection_loop.max_iterations`, default
+10). See `packages/agent-runtime/src/tools/handlers/tool/transition-phase.ts`.
+Change-size and oscillation requirements belong to the protocol's process
+rules; the FSM iteration counter measures loop repetitions.
 
 ### Tool Gating (active)
 
-Tools are gated by FSM phase in `tool-executor.ts`:
+Tool execution composes capability checks, containment/FSM gates, sandbox
+policy, lifecycle hooks and EHEL. Runtime entrypoints are under
+`packages/agent-runtime/src/tools/tool-executor/`; the table lists boundaries,
+not blanket grants of permission.
 
 | Tool | Allowed Phases | Status |
 |------|---------------|--------|
 | write_file, str_replace, apply_patch | GREEN + SELF_CORRECT (exempt paths: dev/fids/, dev/nova/, dev/scratchpad/) | ✅ Active |
 | run_terminal_command (bash) | AUDIT + GREEN + SELF_CORRECT | ✅ Active (FID-2026-0806-016 F4) |
-| sequentialthinking | Thinker only (id starts with `thinker`) | ✅ Active |
-| code_search, read_files, glob, list_directory | ALL | ✅ Active (no gating needed) |
-| spawn_agents | ALL | ✅ Active (template-level only) |
-| bash (destructive) | Never | ⏭️ Future phase (command classification not yet implemented) |
-| create_fid, update_fid, archive_fid | Recorder only | ⏭️ Future phase (these are conceptual roles, not registered tools) |
+| sequentialthinking | Declared by the Thinker template | ✅ Capability allowlist + runtime convergence gate |
+| code_search, read_files, glob, list_directory | ALL | ✅ No FSM phase restriction; capability/protocol checks still apply |
+| spawn_agents | ALL, subject to declared spawnable agents and child limits | ✅ Active; optional plan validation imposes additional research constraints |
+| Known destructive shell patterns | Denied before sandbox policy/dev override | ✅ Active denylist floor in `sandbox-gate.ts` and `sandbox/shell-denylist.ts` |
+| create_fid, update_fid, archive_fid | Conceptual workflow operations | Not registered tool names; Recorder uses its actual file tools |
+
+`run_readonly_command` validates its commands in its own handler. EHEL also
+classifies command mutations for write accounting and worktree reconciliation;
+mutation classification is not a universal destructive-command detector.
+`execution-policy.ts` limits development overrides to explicitly non-strict
+harness sessions; the destructive-pattern floor and EHEL remain authoritative.
 
 ### Lifecycle hooks (FID-2026-0814-003)
 
@@ -263,55 +337,64 @@ contains no clock read and no I/O access.
 
 ### Zero-Trust provenance (FID-2026-0813-001..010)
 
-Every write records a per-role Ed25519-signed receipt into an append-only
-hash-only session ledger (`provenance.mode`: `off | record | enforce`). See
+When provenance recording/enforcement is enabled, writes record per-role
+Ed25519-signed receipts into an append-only hash-only session ledger
+(`provenance.mode`: `off | record | enforce`). See
 `docs/design/zero-trust-agentic-provenance.md`.
 
 ---
 
 ## Boot Sequence
 
-1. Load ECHO.md — establish identity
-2. Load `protocol.config.yaml` — get project commands
+The harness grounding set comprises `ECHO.md`, `ARCHITECTURE.md`,
+`protocol.config.yaml`, `docs/embedded-learnings.md` and
+`templates/FID-TEMPLATE.md`. The protocol generator embeds their full content
+in `common/src/constants/protocol-bundle.generated.ts`. In embedded mode,
+`common/src/util/embedded-protocol.ts` serves grounding reads from that bundle;
+in local mode, project files supply them. Embedded delivery does not pre-credit
+the grounding gate: the agent still has to read the documents.
+
+The project workflow is:
+
+1. Read the grounding documents — establish identity, architecture and laws
+2. Use `protocol.config.yaml` — resolve project commands and configuration
 3. Review `dev/fids/` — flag open FIDs
-4. Create session summary at `dev/session-summaries/`
+4. Record session documentation under `dev/session-summaries/YYYY-MM/`
+   (the session-end organizer also groups dated files written at the root)
 5. Enter IDLE phase — wait for user input
 
 ---
 
 ---
 
-## Helper Tool Libraries (Filesystem-Only) — Added 2026-07-19
+## Helper Tool Libraries, Infrastructure Agents and Source Directories
 
-The 10-agent roster above represents **ECHO runtime roles** — the conversational agents that the Orchestrator spawns
-through the Perfection Loop.
+The roster defines **ten canonical ECHO roles**. Directory count and spawnable
+template count measure different things: Researcher has web/docs definitions,
+canonical roles have variants, and infrastructure helpers can themselves run
+as independent child agents. For example, the orchestrator explicitly permits
+`browser-use`, `database`, `github`, `basher`, `tmux-cli`, `context-pruner` and
+`scribe-proposer` in `agents/savant/savant.ts`.
 
-The filesystem under `agents/` may also contain **helper tool libraries** which are consumed by the canonical 10 roles
-but do NOT constitute independent conversational agents:
+The source inventory checked on 2026-10-19 contains 21 immediate directories:
 
-| Helper Dir | Consumed By | Notes |
-|------------|-------------|-------|
-| `browser-use/` | `agents/savant/savant.ts:132`, `agents/context-pruner.ts`, `common/src/constants/free-agents.ts`, `common/src/__tests__/free-agents.test.ts` | Browser automation helper used by Orchestrator + context-pruner |
-| `database/` | `agents/savant/savant.ts`, `common/src/constants/free-agents.ts`, `common/src/__tests__/free-agents.test.ts` | SQLite schema inspection + safe queries (FID-2026-0804-004) — native handlers with adapter-enforced read-only/write-approval guardrails |
-| *(package)* `knowledge-graph/` | `agents/detective/detective.ts`, `agents/scout/scout.ts`, `packages/agent-runtime/src/tools/handlers/tool/graph/*`, `packages/agent-runtime/src/util/graph-injection.ts` | Deterministic codebase knowledge graph (FID-2026-0806-002) — `query_blast_radius`/`query_node_edges`/`query_domain_clusters` read-only native tools; Verifier/Thinker reachability evidence injected via message history (zero-tool contracts unchanged) |
-| `github/` | `agents/savant/savant.ts`, `common/src/constants/free-agents.ts`, `common/src/__tests__/free-agents.test.ts`, `agents/github/github.test.ts` | GitHub PR/issue/CI/code-search via the official MCP server (FID-2026-0804-003) — remote HTTP route, read-only default |
-| `editor/` | `cli/src/utils/implementor-helpers.ts`, `agents/editor/best-of-n/*` | Editor scaffolding/best-of-N helper agents used by the CLI implementor flow |
-| `file-explorer/` | `common/src/constants/agents.ts`, `agents/file-explorer/*` | File listing helpers (`directory-lister`, `glob-matcher`) |
-| `librarian/` | `agents/context-pruner.ts` | Knowledge/context helper used by context-pruner |
-| `types/` | `agents/base-chat.ts`, `agents/savant/savant.ts`, `agents/basher.ts`, `agents/browser-use/browser-use.ts` | Type-only shared imports across all agents + basher |
-| `debug/` | *(none — transient output)* | Browser-agent trace output dir (`agents/debug/browser-agent-traces/`); not a helper library |
+| Group | Directories | Purpose |
+| --- | --- | --- |
+| Canonical role definitions (10) | `savant`, `detective`, `forge`, `verifier`, `recorder`, `thinker`, `scout`, `researcher`, `scribe`, `adversary` | Ten logical roles with mode/model variants |
+| Infrastructure/support (7) | `browser-use`, `context-pruner`, `database`, `github`, `librarian`, `scribe-proposer`, `tmux-cli` | Child-agent definitions and supporting modules; root `context-pruner.ts` and `tmux-cli.ts` use their corresponding directories |
+| Additional helper definitions (2) | `editor`, `file-explorer` | Editor/best-of-N and directory/glob helper definitions |
+| Shared types and tests (2) | `types`, `__tests__` | Definition contracts and workspace regressions |
 
-**Hierarchy:**
+Standalone source files such as `agents/basher.ts` add no directory. Generated
+trace output such as `agents/debug/` may appear locally and is not a role or a
+source-library invariant. Reconcile inventories against the checkout rather
+than deriving role counts from filesystem arithmetic.
 
-- 10 canonical ECHO runtime roles (Orchestrator + 9 specialists)
-- + 8 helper tool libraries (above; `debug/` is a transient trace-output dir;
-  `database/` + `github/` added per FID-2026-0804-006)
-- = 19 directories in `agents/` (FID-2026-0803-001 ECHO-9 reconciled the count
-  after the `savant-deep`/`e2e`/`__tests__` removals; FID-2026-0804-006 added
-  `database/` + `github/`; FID-2026-0805-004 added `adversary/`)
-
-These two counts are NOT in conflict: the 10-agent roster represents runtime conversation entities; the 19-dir count
-represents filesystem entries. Future checklists/audits should not confuse them.
+`packages/knowledge-graph/` is a separate workspace, not an `agents/` directory.
+Detective and Scout call its native `query_blast_radius`, `query_node_edges`
+and `query_domain_clusters` tools through runtime graph handlers. Verifier and
+Thinker receive relevant graph evidence by injection without receiving graph
+tools; Thinker retains its sequential-thinking tools and Verifier stays zero-tool.
 
 **Current state:** The repository uses the `@savant-code/*` workspace names and import paths at version `0.0.36`.
 Historical rebrand and checkpoint decisions remain in the archived session records and release history; this architecture

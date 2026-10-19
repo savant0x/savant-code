@@ -12,12 +12,14 @@
 
 </div>
 
-> **v0.0.36** —— **本地开发版本，尚未正式发布**。
-> 已验证的源码进展会提交并推送到 `main`；版本标签、软件包发布与部署仍需操作员批准。
-> 当前开发进展见 [CHANGELOG.md](CHANGELOG.md)，不能据此推断软件包已经发布。
+> **v0.0.36 已正式发布** —— 现已提供
+> [npm 软件包](https://www.npmjs.com/package/savant-code/v/0.0.36) 与
+> [GitHub 发布产物](https://github.com/savant0x/savant-code/releases/tag/v0.0.36)。
+> 使用 `npm install -g savant-code@0.0.36` 安装。
+> [CHANGELOG.md](CHANGELOG.md) 区分本次发布与此后 `main` 上的源码改动。
 
 <details>
-<summary>历史发布说明（不是当前开发版本的发布声明）</summary>
+<summary>历史版本发布说明</summary>
 
 > **v0.0.35** —— **OpenAI 平台直连成为一等提供商**：平台 `sk-` 密钥
 > （`/provider openai`、`OPENAI_API_KEY`）将 `openai/<id>`（OpenAI 激活时也包括裸 id）
@@ -562,7 +564,7 @@ SAVANT_GRAPH_EXPORT_TOTAL_MEDIA_BYTES=<正整数>
 - **LLM 无关** —— 调用任何注册到 `@savant-code/llm-providers` 的提供商（OpenAI 兼容聊天、Anthropic 等）。
 - **多步循环** —— 模型决定工具 → 工具执行 → 结果反馈 → 重复，直到 `end_turn` 或预算耗尽。
 - **工具注册表** —— 内置（`read_files`、`write_file`、`run_terminal_command`、`code_search`、
-  `web_search`、`spawn_agents_inline` 等）+ 自定义 + MCP。
+  `web_search`、`spawn_agent_inline` 等）+ 自定义 + MCP。
 - **成本聚合** —— 每次调用的 token 计数与 USD 成本估算在 `RunState` 中呈现。
 - **轮次检查点** —— `executeToolCall` 中的写闸门在 `write_file`/`str_replace`/`apply_patch` 分发前捕获
   编辑前内容；子智能体写入通过 spawn 上下文继承父轮次。
@@ -601,8 +603,8 @@ SAVANT_GRAPH_EXPORT_TOTAL_MEDIA_BYTES=<正整数>
 1. **Recorder 为改动创建 FID**（`dev/fids/FID-YYYY-MMDD-NNN-{title}.md`），由侧栏的「活动 FID」面板自动跟踪。
 2. **RED（Detective）** 分析代码库并收敛改动方案。
 3. **GREEN（Forge）** 编写代码——仪式流程中唯一允许写入的智能体。
-4. **AUDIT（Verifier）** 双重审计结果：运行测试、检查调用图，并执行 Law-4 可达性 grep（grep 生产入口点，
-   证明新接线确实被调用）。
+4. **AUDIT** —— 具备命令工具的辅助智能体运行测试与 Law-4 可达性 grep；零工具的 **Verifier** 审计提供的结果与源码
+   证据，**Adversary** 解析引用并质疑审计结论。
 5. **Recorder 归档** FID 并追加 CHANGELOG 条目。
 
 不允许自我验证、不允许跳过阶段：编写代码的智能体不能验证它。纯只读问答（提问、解释、不写文件的分析）即使在

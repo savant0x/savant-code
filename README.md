@@ -14,15 +14,12 @@ local-first use with Ollama.
 
 </div>
 
-> **v0.0.36** — **development line, package release not yet published**.
-> Verified source progress is committed and pushed to `main` automatically;
-> package publication and release tags remain separate operator actions.
-> This bump opens the dated heading so post-release work
-> accumulates in one place, per the no-unreleased-accumulators ruling: the
-> researcher-acceptance and lesson-feature-pipeline closures, the managed
-> scratchpad and provider-inventory passes, and everything else that lands before
-> the v0.0.36 cut. Release notes are written here at cut time; nothing in this
-> section is a package-release claim until then.
+> **v0.0.36 is released** — available on
+> [npm](https://www.npmjs.com/package/savant-code/v/0.0.36) and
+> [GitHub Releases](https://github.com/savant0x/savant-code/releases/tag/v0.0.36).
+> Install with `npm install -g savant-code@0.0.36`.
+> [CHANGELOG.md](CHANGELOG.md) distinguishes this release from subsequent
+> source changes on `main`.
 
 ---
 
@@ -724,7 +721,7 @@ for detailed usage, troubleshooting, and the offline architecture.
 - **Multi-step loop** — model decides tool → tool executes → result fed back →
   repeat until `end_turn` or budget exhausted.
 - **Tool registry** — built-in (`read_files`, `write_file`,
-  `run_terminal_command`, `code_search`, `web_search`, `spawn_agents_inline`,
+  `run_terminal_command`, `code_search`, `web_search`, `spawn_agent_inline`,
   …) + custom + MCP.
 - **Cost aggregation** — per-call token counts and USD cost estimates surfaced
   in `RunState`.
@@ -773,9 +770,9 @@ not replace the blocking pre-write gates. In STRICT, the prompt contract mandate
 2. **RED (Detective)** analyzes the codebase and converges the change plan.
 3. **GREEN (Forge)** writes the code — the only agent allowed to write during a
    ceremony pass.
-4. **AUDIT (Verifier)** double-audits the result: run the tests, check the call
-   graph, and Law-4 reachability greps (grep the production entry points to
-   prove the new wiring is actually called).
+4. **AUDIT** — command-capable helpers execute tests and Law-4 reachability
+   greps. The zero-tool **Verifier** audits the supplied results and source
+   evidence; **Adversary** resolves and challenges its findings.
 5. **Recorder archives** the FID and appends the CHANGELOG entry.
 
 No self-verification and no phase-skipping: the agent that writes code cannot
