@@ -1,16 +1,45 @@
 # Changelog
 
+## 2026-10-19 — Source fan-out verification and repairs
+
+The source CLI ran three Verifiers concurrently and returned their reports to
+the orchestrator, which resumed after the whole batch completed. Mixed-role
+Scout/Detective/Verifier execution also returned usable artifacts. Batching is
+model-selected; no automatic multi-Verifier quorum or background parent
+continuation is introduced. Evidence and limits:
+`docs/reports/source-fanout-verification-2026-10-19.md`.
+
+- **FID-2026-1019-002 — medium — Preserve fan-out identity and final answers.**
+  Lifecycle events carry the spawning call/index so reversed same-role starts
+  cannot cross-bind CLI result rows. Headless output retains the complete
+  assistant turn instead of its final streamed fragment. Implementation:
+  `6b5039c5`; seven declared gates pass.
+- **FID-2026-1019-003 — medium — Preserve discovery child artifacts.** Scout
+  uses structured output; Scout default/max and Detective preserve authored
+  results after STEP and retain real discovery evidence as fallback.
+  Implementation: `f6f7b530`; three declared gates pass.
+- **FID-2026-1019-004 — medium — Normalize Windows discovery paths.** SDK
+  glob normalizes native separators and cwd before scope/match checks. A real
+  filesystem regression preserves sibling exclusion; source Scout finds the
+  expected files. Implementation: `ff4d1b58`; three declared gates pass.
+- **FID-2026-1019-005 — low — Pin cancellation fixture executables.** Both
+  pipeline children use quoted process.execPath rather than a PATH shim; real
+  cancellation assertions and timeouts remain intact. Implementation:
+  `592257be`; three declared gates and the full SDK suite pass.
+
+All four FIDs closed and archived on 2026-10-19. Full root tests: 9,420 pass /
+23 skip / 0 fail; root typecheck, SDK build, ESLint, Markdown lint, formatting
+and repository validation pass. Interactive visual acceptance is unclaimed.
+These source repairs follow the published npm 0.0.36 cut and are not included
+in that already published artifact. No new package release was performed.
+
 ## 0.0.36 — 2026-10-12
 
-> **v0.0.36** — **development line, package release not yet published**.
-> Verified source progress is committed and pushed to `main` automatically;
-> package publication and release tags remain separate operator actions.
-> This bump opens the dated heading so post-release work
-> accumulates in one place, per the no-unreleased-accumulators ruling: the
-> researcher-acceptance and lesson-feature-pipeline closures, the managed
-> scratchpad and provider-inventory passes, and everything else that lands before
-> the v0.0.36 cut. Release notes are written here at cut time; nothing in this
-> section is a package-release claim until then.
+> **v0.0.36** — **published**. The canonical release pipeline resumed and
+> completed npm publication and post-release verification on 2026-10-19.
+> The registry's latest tag resolves to 0.0.36; the operator confirmed the
+> npm website updated. Subsequent source repairs are recorded above and
+> require a future package release.
 
 ### Release-audit closures (closed 2026-10-19)
 

@@ -59,13 +59,6 @@ Exact evidence and the operator-only replacement procedure are retained in
 the history snapshot. No external write or fresh external repair is claimed.
 This session uses the canonical repository protocol.
 
-### Release-0.0.36 — development line (publication operator-gated)
-
-- [ ] Version 0.0.36 is an unpublished development line. Preserve the existing
-  release authority; version cuts, tags, publishing and deployment still
-  require explicit operator approval. Normal verified main pushes proceed
-  through mandatory gates. No publication is authorized by this audit.
-
 ### HOME-SKILLS-001 — external skill diagnostics (blocked)
 
 - [ ] `skills:check` reports 22 home-skill warnings and zero repository errors.
@@ -79,7 +72,8 @@ This session uses the canonical repository protocol.
 Operator pause, 2026-10-18: requested a handoff with 9% session credits remaining.
 Resumed 2026-10-19: the CHANGELOG read completed, the 0.0.36 heading moved above
 its recent entries, all five audit FIDs committed, closed and archived, and the
-`dev/` record tree reorganized. Release publication is not claimed.
+`dev/` record tree reorganized. The operator subsequently authorized release
+resume; npm publication and post-release verification completed on 2026-10-19.
 Resume checklist: `dev/session-summaries/2026-10/2026-10-18-release-audit-handoff.md`.
 
 - AUDIT-2026-1018: `SCOPE.md`, `CHANGELOG.md`, `README.md`, `README.zh-CN.md`,
@@ -88,15 +82,3 @@ Resume checklist: `dev/session-summaries/2026-10/2026-10-18-release-audit-handof
   `.markdownlintignore`, `.prettierignore`, `patches/**`, `agents/**`, `cli/**`, `common/**`,
   `desktop/**`, `evals/**`, `packages/**`, `sdk/**`, `scripts/**`, `docs/**`,
   `coding-standards/**`, `templates/**`, `.github/**`, `.githooks/**`, `dev/**`
-
-- Release-0.0.36: `VERSION`, `package.json`, `agents/package.json`,
-  `cli/package.json`, `cli/release/package.json`, `common/package.json`,
-  `common/src/constants/protocol-bundle.generated.ts`, `desktop/package.json`,
-  `desktop/src-tauri/tauri.conf.json`, `desktop/src-tauri/Cargo.toml`,
-  `desktop/src-tauri/Cargo.lock`, `evals/package.json`,
-  `scripts/tmux/package.json`, `sdk/package.json`, `packages/**/package.json`,
-  `bun.lock`, `protocol.config.yaml`, `README.md`, `README.zh-CN.md`,
-  `ARCHITECTURE.md`, `CHANGELOG.md`, `docs/**`, `SCOPE.md`, `dev/agenda.md`,
-  `dev/operator-decisions.md`, `dev/fids/**`, `dev/feature-pipeline/**`,
-  `dev/session-summaries/**`, `scripts/version-docs.ts`,
-  `scripts/version-docs-drift.test.ts`, `.agents/skills/**/SKILL.md`
