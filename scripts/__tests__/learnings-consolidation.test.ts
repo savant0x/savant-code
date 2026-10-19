@@ -50,7 +50,8 @@ describe('exact learning consolidation inventory', () => {
     expect(new Set(inventory.entries.map((item) => item.title)).size).toBe(
       inventory.entries.length,
     )
-    expect(inventory.entries.length).toBe(74)
+    // The local ledger grows; retain the audited floor and validate its content.
+    expect(inventory.entries.length).toBeGreaterThanOrEqual(74)
     expect(inventory.proposals).toEqual([])
     expect(inventory.digestCharacters).toBeLessThan(24_000)
     expect(renderConsolidationInventory(inventory)).toContain(

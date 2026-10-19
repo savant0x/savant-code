@@ -100,7 +100,7 @@ function resolveHead(root: string, runner?: CommandRunner): string {
 const HELP_TEXT = `Usage: bun scripts/verify-clean.ts [--sha <ref>]
 
 Proves the COMMITTED tree compiles: detached temp worktree at the target
-commit → bun install --frozen-lockfile → the canonical 12-workspace
+commit → bun install --frozen-lockfile → all 14 registered workspaces plus scripts
 typecheck chain → the SDK declaration build (build:sdk, the plain-TS dts
 surface — FID-2026-0909-003) → worktree removed on every path.
 

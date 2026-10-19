@@ -5,6 +5,7 @@ import * as path from 'node:path'
 import { afterEach, describe, expect, test } from 'bun:test'
 
 import { buildCandidates, emitCandidates } from '../evolve-skills'
+import { collectScratchpadIssues } from '../hygiene'
 
 import type { ExperienceRecord } from '@savant-code/common/types/experience'
 
@@ -68,7 +69,7 @@ describe('buildCandidates (S4-A)', () => {
 })
 
 describe('emitCandidates', () => {
-  test('writes only under dev/scratchpad/evolve-output/', () => {
+  test('writes only under the managed scratchpad active tree', () => {
     const root = fixtureRoot()
     writeLedger(root, [
       record('run_command', 'boom'),
@@ -79,11 +80,14 @@ describe('emitCandidates', () => {
     expect(emitted.length).toBeGreaterThan(0)
     for (const file of emitted) {
       expect(
-        file.startsWith(path.join(root, 'dev', 'scratchpad', 'evolve-output')),
+        file.startsWith(
+          path.join(root, 'dev', 'scratchpad', 'active', 'evolve-output'),
+        ),
       ).toBe(true)
       expect(fs.existsSync(file)).toBe(true)
     }
     // Live skill dir untouched.
     expect(fs.existsSync(path.join(root, '.agents', 'skills'))).toBe(false)
+    expect(collectScratchpadIssues(root)).toEqual([])
   })
 })

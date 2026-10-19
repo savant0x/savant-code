@@ -192,4 +192,4 @@ async function main(): Promise<void> {
   console.log('\nPASS — boot freshness, one view and artifact identity held')
 }
 
-await main()
+if (import.meta.main) await main()

@@ -39,18 +39,29 @@ const auditCommands: readonly AuditCommand[] = [
   },
   { label: 'current-hygiene', command: 'bun', args: ['run', 'hygiene:check'] },
   {
-    label: 'targeted-tests',
+    label: 'targeted-tests:scripts',
     command: 'bun',
+    cwd: 'scripts',
     args: [
       'test',
-      'scripts/pre-push-scan.test.ts',
-      'scripts/public-release.test.ts',
-      'scripts/validation-manifest.test.ts',
-      'scripts/fid-ledger.test.ts',
-      'scripts/quality-report.test.ts',
-      'common/src/__tests__/env-boundary.test.ts',
-      'packages/agent-runtime/src/echo/__tests__/enforcement.test.ts',
+      './pre-push-scan.test.ts',
+      './public-release.test.ts',
+      './validation-manifest.test.ts',
+      './fid-ledger.test.ts',
+      './quality-report.test.ts',
     ],
+  },
+  {
+    label: 'targeted-tests:common',
+    command: 'bun',
+    cwd: 'common',
+    args: ['test', './src/__tests__/env-boundary.test.ts'],
+  },
+  {
+    label: 'targeted-tests:runtime',
+    command: 'bun',
+    cwd: 'packages/agent-runtime',
+    args: ['test', './src/echo/__tests__/enforcement.test.ts'],
   },
 ]
 
@@ -97,6 +108,7 @@ export function classifyGitDelta(status: string): AuditDelta {
 function run(
   command: string,
   args: string[],
+  cwd: string = root,
 ): {
   exitCode: number
   output: string
@@ -112,7 +124,7 @@ function run(
   let result: ReturnType<typeof spawnSync>
   try {
     result = spawnSync(command, args, {
-      cwd: root,
+      cwd,
       encoding: 'utf8',
       stdio: 'pipe',
       windowsHide: true,
@@ -216,11 +228,13 @@ export function runAudit(mode: AuditMode = 'working-tree'): AuditManifest {
   delta.ignored = classifyGitDelta(ignored.output).ignored
   const transcripts: AuditTranscript[] = []
   for (const spec of auditCommands) {
-    const result = run(spec.command, spec.args)
+    const cwd = path.join(root, spec.cwd ?? '')
+    const result = run(spec.command, spec.args, cwd)
     transcripts.push({
       label: spec.label,
       command: spec.command,
       args: spec.args,
+      cwd,
       exitCode: result.exitCode,
       failureClass: result.failureClass,
       durationMs: result.durationMs,

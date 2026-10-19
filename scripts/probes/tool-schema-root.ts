@@ -25,46 +25,52 @@ import { toolParams } from '@savant-code/common/tools/list'
  */
 const KNOWN_NON_SERIALIZABLE = new Set(['set_messages'])
 
-const failures: string[] = []
-const unexpected: string[] = []
+async function main(): Promise<void> {
+  const failures: string[] = []
+  const unexpected: string[] = []
 
-for (const [toolName, params] of Object.entries(toolParams)) {
-  const schema = params.inputSchema
-  if (schema == null) continue
+  for (const [toolName, params] of Object.entries(toolParams)) {
+    const schema = params.inputSchema
+    if (schema == null) continue
 
-  let root: Record<string, unknown>
-  try {
-    root = (await zodSchema(schema as never).jsonSchema) as Record<
-      string,
-      unknown
-    >
-  } catch (error) {
-    if (!KNOWN_NON_SERIALIZABLE.has(toolName)) {
-      unexpected.push(`${toolName}: not serializable (${String(error)})`)
+    let root: Record<string, unknown>
+    try {
+      root = (await zodSchema(schema as never).jsonSchema) as Record<
+        string,
+        unknown
+      >
+    } catch (error) {
+      if (!KNOWN_NON_SERIALIZABLE.has(toolName)) {
+        unexpected.push(`${toolName}: not serializable (${String(error)})`)
+      }
+      continue
     }
-    continue
+
+    const type = JSON.stringify(root.type ?? null)
+    const hasProperties = root.properties != null
+    console.log(
+      `${type === '"object"' && hasProperties ? 'ok  ' : 'FAIL'} ${toolName}: type=${type} properties=${hasProperties}`,
+    )
+    if (type !== '"object"' || !hasProperties) {
+      failures.push(`${toolName} (type=${type}, properties=${hasProperties})`)
+    }
   }
 
-  const type = JSON.stringify(root.type ?? null)
-  const hasProperties = root.properties != null
-  console.log(
-    `${type === '"object"' && hasProperties ? 'ok  ' : 'FAIL'} ${toolName}: type=${type} properties=${hasProperties}`,
-  )
-  if (type !== '"object"' || !hasProperties) {
-    failures.push(`${toolName} (type=${type}, properties=${hasProperties})`)
+  if (unexpected.length > 0) {
+    console.log(
+      `unexpected non-serializable schemas:\n${unexpected.join('\n')}`,
+    )
+  }
+  if (failures.length > 0) {
+    console.error(
+      `FAIL — ${failures.length} tool schema root(s) are not objects: ${failures.join(', ')}`,
+    )
+    process.exitCode = 1
+  } else if (unexpected.length > 0) {
+    process.exitCode = 1
+  } else {
+    console.log('PASS — every model-facing tool schema root is an object')
   }
 }
 
-if (unexpected.length > 0) {
-  console.log(`unexpected non-serializable schemas:\n${unexpected.join('\n')}`)
-}
-if (failures.length > 0) {
-  console.error(
-    `FAIL — ${failures.length} tool schema root(s) are not objects: ${failures.join(', ')}`,
-  )
-  process.exitCode = 1
-} else if (unexpected.length > 0) {
-  process.exitCode = 1
-} else {
-  console.log('PASS — every model-facing tool schema root is an object')
-}
+if (import.meta.main) await main()

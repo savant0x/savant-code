@@ -33,9 +33,11 @@ import { resetThinkingIdCounter } from './utils/block-operations/thinking-id'
 import { resetChatgptOauthState } from './utils/chatgpt-oauth'
 import { resetClipboardState } from './utils/clipboard'
 import { resetRegisteredRenderer } from './utils/clipboard-renderer'
+import { resetConsoleCaptureState } from './utils/console-capture'
 import { resetFidPathsCache } from './utils/create-run-config'
 import { resetCachedShell } from './utils/detect-shell'
 import { resetEngagementState } from './utils/engagement'
+import { resetExitProvenanceState } from './utils/exit-provenance'
 import { resetFingerprintState } from './utils/fingerprint'
 import { resetRefreshInFlight as resetFreeOptionsRefresh } from './utils/free-options'
 import { resetTimestampFormatter } from './utils/helpers'
@@ -138,6 +140,8 @@ beforeEach(() => {
   resetChatgptOauthState()
   resetRegisteredRenderer()
   resetClipboardState()
+  resetConsoleCaptureState()
+  resetExitProvenanceState()
   resetFidPathsCache()
   resetCachedShell()
   resetEngagementState()

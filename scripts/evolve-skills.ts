@@ -11,7 +11,7 @@
  *      with recurring failures.
  *   2. For each candidate, emits a candidate patch (a SKILL.md draft /
  *      reference-file change) plus an accompanying FID skeleton into
- *      `dev/scratchpad/evolve-output/`.
+ *      `dev/scratchpad/active/evolve-output/`.
  *   3. Semantic-preservation gate: the candidate diff is measured against any
  *      existing skill content (Levenshtein change ratio); a candidate that
  *      would rewrite >10% of a live skill is flagged HIGH-RISK and must be
@@ -20,7 +20,7 @@
  *      dev/scratchpad/. Human pull-request review is the hard boundary — the
  *      output is a proposal, not a change.
  *
- * CLI: `bun run skills:evolve` → writes candidates under dev/scratchpad/evolve-output/.
+ * CLI: `bun run skills:evolve` → writes candidates under dev/scratchpad/active/evolve-output/.
  */
 
 import * as fs from 'node:fs'
@@ -30,7 +30,12 @@ import { patchChangeRatio } from '@savant-code/common/util/skill-management'
 
 import { readExperienceLedger, groupByDedupKey } from './experiences-dedup.js'
 
-export const EVOLVE_OUTPUT_DIR = path.join('dev', 'scratchpad', 'evolve-output')
+export const EVOLVE_OUTPUT_DIR = path.join(
+  'dev',
+  'scratchpad',
+  'active',
+  'evolve-output',
+)
 export const EVOLVE_RISK_RATIO = 0.1
 
 export type EvolveCandidate = {
@@ -204,7 +209,7 @@ export function buildCandidates(
 }
 
 /**
- * Emit candidates to dev/scratchpad/evolve-output/ — the ONLY directory this
+ * Emit candidates to dev/scratchpad/active/evolve-output/ — the ONLY directory this
  * script writes to. Returns the emitted file paths. Never mutates skills.
  */
 export function emitCandidates(

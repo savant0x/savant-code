@@ -48,6 +48,30 @@ export const UNWIRED_MODULE_REASONS: readonly UnwiredModuleReason[] = [
 
 export const MODULE_STATE_EXEMPTIONS: readonly ModuleStateExemption[] = [
   {
+    file: 'cli/src/utils/shared-event.ts',
+    name: 'sources',
+    reason:
+      'WeakMap keyed by actual emitter identity. Resetting it while consumers ' +
+      'are mounted loses shared subscription ownership and creates duplicate ' +
+      'listeners. Final unsubscribe deletes each association; tests own fresh emitters.',
+  },
+  {
+    file: 'sdk/src/tools/child-process-registry.ts',
+    name: 'commandJobs',
+    reason:
+      'WeakMap keyed by actual ChildProcess identity. Resetting active job ' +
+      'associations loses native containment ownership; unregisterLiveChild ' +
+      'closes and deletes each association. Tests own fresh child objects.',
+  },
+  {
+    file: 'sdk/src/tools/windows-command-job.ts',
+    name: 'kernel',
+    reason:
+      'Cached process-lifetime kernel32 FFI library. Live job closures retain ' +
+      'its symbols; unloading or resetting it while jobs exist invalidates ' +
+      'native operations. Individual job handles close independently.',
+  },
+  {
     file: 'cli/src/utils/openrouter-models/gateway.ts',
     name: 'gatewayCatalogListeners',
     reason:

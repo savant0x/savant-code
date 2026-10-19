@@ -4,6 +4,7 @@ export type AuditCommand = {
   label: string
   command: string
   args: string[]
+  cwd?: string
 }
 
 export type AuditDelta = {
@@ -19,6 +20,7 @@ export type AuditTranscript = {
   label: string
   command: string
   args: string[]
+  cwd?: string
   exitCode: number
   failureClass:
     'success' | 'exit' | 'signal' | 'spawn-error' | 'timeout' | 'evidence-error'
