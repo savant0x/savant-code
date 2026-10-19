@@ -1,5 +1,19 @@
 # Changelog
 
+## 2026-10-19 — Architecture and publication documentation reconciled
+
+- **FID-2026-1019-006 — medium — Align architecture with current source.**
+  Corrected convergence versus committed/verified closure, zero-tool Verifier
+  review versus command execution, current tool inventories, concurrent batch
+  delivery and limits, ThoughtSession isolation, real FSM/sandbox boundaries,
+  grounding delivery and the classified 21-directory inventory. Regenerated the
+  embedded architecture and confirmed byte-for-byte agreement. English and
+  Chinese README banners now identify 0.0.36 as published, link to npm/GitHub
+  and distinguish subsequent source progress; their audit wording and inline
+  tool name also match source. Implementation: `de7ed427`; four declared gates,
+  full root typecheck, SDK build, Markdown lint, formatting and repository
+  validation pass. Closed and archived 2026-10-19; no package republish.
+
 ## 2026-10-19 — Source fan-out verification and repairs
 
 The source CLI ran three Verifiers concurrently and returned their reports to
