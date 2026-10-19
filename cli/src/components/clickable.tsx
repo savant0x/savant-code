@@ -39,9 +39,14 @@ export function makeTextUnselectable(node: ReactNode): ReactNode {
     // Preserve array children without injecting fragments. Flatten nested
     // arrays/fragments because neither shape is a valid child for an OpenTUI
     // <text> host during reconciliation.
-    return node.flatMap((child) => {
+    return React.Children.toArray(node).flatMap((child) => {
       const normalized = makeTextUnselectable(child)
-      return Array.isArray(normalized) ? normalized : [normalized]
+      if (!Array.isArray(normalized)) return [normalized]
+      return normalized.map((entry) =>
+        isValidElement(entry) && isValidElement(child)
+          ? cloneElement(entry, { key: `${child.key}/${entry.key}` })
+          : entry,
+      )
     })
   }
 
