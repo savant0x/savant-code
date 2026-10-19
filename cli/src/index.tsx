@@ -39,6 +39,7 @@ import { createQueryClient } from './query-client-setup'
 import { trackEvent } from './utils/analytics'
 import { getAuthToken } from './utils/auth'
 import { trimOversizedChatLogs } from './utils/chat-history'
+import { installConsoleCapture } from './utils/console-capture'
 import { shouldSuppressExplicitWidthQuery } from './utils/env'
 import { installExitProvenance } from './utils/exit-provenance'
 import { initializeAgentRegistry } from './utils/local-agent-registry'
@@ -236,6 +237,9 @@ async function main(): Promise<void> {
   // Record which call site (or a drained event loop) ends the process, so a
   // silent clean exit names its own origin (FID-2026-1018-008).
   installExitProvenance()
+  // FID-2026-1018-008: OpenTUI captures console output into an overlay the app
+  // never opens, so a React commit failure leaves no record anywhere.
+  installConsoleCapture()
 
   // Last line of defense for uncatchable deaths (SIGKILL, native crashes,
   // kill sweeps that also take out the npm wrapper): a detached process

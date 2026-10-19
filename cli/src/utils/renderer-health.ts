@@ -23,11 +23,18 @@ import { isRecord } from '@savant-code/common/util/object'
 import { writeProcessBreadcrumb } from './exit-provenance'
 import { logger } from './logger'
 
+/** A renderable node, as far as liveness counting needs to know. */
+export interface RenderableNode {
+  getChildren(): readonly RenderableNode[]
+}
+
 /** The slice of `CliRenderer` this module needs; keeps the seam testable. */
 export interface RendererHealthTarget {
   on(event: string, handler: (payload: unknown) => void): void
   requestRender(): void
   readonly isDestroyed: boolean
+  /** Root renderable; when present the probe reports how much is on screen. */
+  readonly root?: RenderableNode
 }
 
 export interface RendererHealthOptions {
@@ -48,6 +55,32 @@ const MAX_RECORDED_STACK_CHARS = 4_000
 export interface FrameProbeResult {
   missedProbes: number
   stalled: boolean
+}
+
+/** Cap the walk so a pathological tree can never stall the probe itself. */
+const MAX_COUNTED_RENDERABLES = 100_000
+
+/**
+ * Count renderables under a node. A blank screen with a full tree is a paint
+ * bug; a blank screen with an empty tree means React unmounted everything —
+ * the shape the 2026-10-19 00:01 run showed (123x76 of spaces, default
+ * attribute, frames still ticking).
+ */
+export function countRenderables(
+  node: RenderableNode | undefined,
+  limit: number = MAX_COUNTED_RENDERABLES,
+): number {
+  if (!node) return 0
+  let total = 0
+  const stack: RenderableNode[] = [node]
+  while (stack.length > 0 && total < limit) {
+    const current = stack.pop()
+    if (!current) break
+    const children = current.getChildren()
+    total += 1
+    for (const child of children) stack.push(child)
+  }
+  return total
 }
 
 /**
@@ -116,6 +149,7 @@ export function installRendererHealth(
   let frames = 0
   let missedProbes = 0
   let stalled = false
+  let emptyTreeRecorded = false
   const pending = new Set<ReturnType<typeof setTimeout>>()
 
   renderer.on(FRAME_EVENT, () => {
@@ -132,6 +166,25 @@ export function installRendererHealth(
 
   const interval = setInterval(() => {
     if (renderer.isDestroyed) return
+    // A live loop can still paint nothing: record the empty tree once per
+    // episode, independently of the frame probe.
+    // Only a known root can be judged: an absent root means "cannot tell".
+    // An empty CHILD LIST is the unmounted-tree shape; the root itself never
+    // paints, so "root alone" is not a UI.
+    const childCount = renderer.root ? renderer.root.getChildren().length : -1
+    if (childCount === 0) {
+      if (!emptyTreeRecorded) {
+        emptyTreeRecorded = true
+        record('render-tree-empty', {
+          renderables: renderer.root ? countRenderables(renderer.root) : 0,
+          uptimeSeconds: Math.round(process.uptime()),
+          rssMb: Math.round(process.memoryUsage.rss() / 1024 / 1024),
+        })
+        logger.error('[renderer] root has no children; screen is blank')
+      }
+    } else {
+      emptyTreeRecorded = false
+    }
     const framesBefore = frames
     renderer.requestRender()
     const timer = setTimeout(() => {

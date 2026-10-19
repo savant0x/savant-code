@@ -343,6 +343,46 @@ message each (step 17 of the 23:21 run produced 14 assistant messages for one
 sentence; the 23:43 turn ended at `messageCount: 170`). Not attributed to this
 defect, not yet filed — recorded here so it is not lost.
 
+**Updated 2026-10-19 00:05 — the screen is blank because the tree is empty.**
+Run `46880` (started 00:00:35, `/model` opened 00:01:10.674, returned
+`opened=true` at 00:01:11.393) reproduced the operator's black screen. Reading
+the live console back from outside the process (`AttachConsole` +
+`ReadConsoleOutputCharacterW`/`ReadConsoleOutputAttribute`) gave:
+
+```text
+size=123x76 window=123x76
+read=9348  nonSpace=0            (earlier sample: nonSpace=1, a stray wide glyph)
+attribute histogram: 0x0F = 9348 cells   (every cell, the default attribute)
+```
+
+So the terminal is healthy and the renderer **paints** — the buffer changed
+between two samples — but every cell is a space with the default attribute.
+`AppShell` paints a full-viewport box with `theme.background`; a single cell
+carrying a background attribute would prove it had rendered. None does. An
+injected `ESC` (`WriteConsoleInputW`) produced no repaint and no state change.
+
+Frames were still arriving during the blank period (`render-stall` never
+fired — probes at :20, :30, :40 and :50 all saw a frame), so this is *not* a
+stopped render loop: React reconciled the root down to nothing while the loop
+kept ticking, and nothing reached the logger (`ERROR` count for the run: 0;
+`Render error caught` count: 0).
+
+Local reproduction attempt, at the operator's exact 123x76 size with the dev
+catalog: `cli/src/components/__tests__/model-picker-full-catalog.render.test.tsx`
+mounts the real picker at 30/500/1500/3000/4075 rows, and then the production
+`DialogOverlay` + picker. **All paint** — so the picker mount alone does not
+empty the tree, and the trigger needs the live app's surroundings.
+
+**Instrumentation added (same commit):**
+
+- `cli/src/utils/console-capture.ts` — `console.error`/`console.warn` are now
+  forwarded to `debug/cli.jsonl` before OpenTUI captures them. A React commit
+  failure reports itself this way, and until now that text went into an overlay
+  the app never opens.
+- `renderer-health`'s probe now also records `render-tree-empty` once per
+  episode when the renderer root has no children, which is the exact shape
+  measured above — it fires even while frames tick.
+
 ### Notes
 
 The cleared screen is expected behaviour after death, so no change should be

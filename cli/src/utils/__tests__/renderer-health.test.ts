@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'bun:test'
 
 import {
+  countRenderables,
   describeRenderError,
   evaluateFrameProbe,
   installRendererHealth,
@@ -51,6 +52,48 @@ describe('renderer health — render error fields', () => {
   test('a non-Error payload still records something nameable', () => {
     expect(describeRenderError('boom').message).toBe('boom')
     expect(describeRenderError(undefined).message).toBe('undefined')
+  })
+})
+
+describe('renderer health — empty tree', () => {
+  const leaf = { getChildren: () => [] }
+  test('counts the whole tree and tolerates a missing root', () => {
+    const tree = {
+      getChildren: () => [leaf, { getChildren: () => [leaf, leaf] }],
+    }
+    // root + 2 children + the inner node's 2 leaves = 5 nodes
+    expect(countRenderables(tree)).toBe(5)
+    expect(countRenderables(undefined)).toBe(0)
+  })
+
+  test('a live loop painting an empty tree is recorded once', async () => {
+    const records: string[] = []
+    const handlers = new Map<string, (payload: unknown) => void>()
+    const dispose = installRendererHealth(
+      {
+        on(event, handler) {
+          handlers.set(event, handler)
+        },
+        requestRender() {
+          // A healthy loop: every repaint produces a frame.
+          handlers.get('frame')?.({ frameId: 1 })
+        },
+        isDestroyed: false,
+        root: { getChildren: () => [] },
+      },
+      {
+        record: (event) => records.push(event),
+        probeIntervalMs: 5,
+        probeGraceMs: 5,
+        maxMissedProbes: 2,
+      },
+    )
+    try {
+      await new Promise((resolve) => setTimeout(resolve, 60))
+      expect(records).toEqual(['render-tree-empty'])
+    } finally {
+      dispose()
+    }
   })
 })
 
