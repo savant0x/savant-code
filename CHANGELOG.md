@@ -67,6 +67,26 @@ Committed slices re-ran the hard gates: 14-workspace plus scripts typecheck exit
 0, CLI 4,233 pass / 18 skip / 0 fail, scripts 1,122 pass / 0 fail, ESLint 0
 warnings, Markdown lint exit 0, `validate:repository` PASS.
 
+### Session-summary month organization (closed 2026-10-19)
+
+- **FID-2026-1019-001 — low — Group session summaries by month automatically.**
+  `dev/session-summaries/` held 367 dated artifacts (22 in 2026-07, 93 in
+  2026-08, 78 in 2026-09, 174 in 2026-10) in one flat directory. The SessionEnd
+  review now moves every dated root-level file into its `YYYY-MM/` bucket —
+  canonical `YYYY-MM-DD-*` names and the pre-convention `YYYY-MMDD-*` shape
+  alike, and dated logs/screenshots with them — without renaming or rewriting
+  one byte. Planning is pure, so `--check` and `--dry-run` report exactly what
+  the apply path does; an existing destination is reported and never
+  overwritten; a second run is a no-op; the step fails open so organization can
+  never break the review. Records that cite a summary by its old flat path
+  (LIVE-003 evidence, the canonical learning rules, LF-005, live docs) still
+  resolve through a directory-scoped fallback, so historical citations were not
+  rewritten. The 12 summaries tracked in git moved as 100% renames. Gates: 13
+  unit tests pass, scripts suite 1,135 pass / 0 fail, scripts typecheck and
+  ESLint clean, `validate:repository` PASS (six pre-fix reference failures
+  gone), and a probe summary was grouped by a real SessionEnd run.
+  Implementation: `53c270da`.
+
 ### Repository hygiene and docs/data parity (closed 2026-10-18)
 
 - **FID-2026-1018-007 — medium — Audit storage and reconcile current guidance.**
