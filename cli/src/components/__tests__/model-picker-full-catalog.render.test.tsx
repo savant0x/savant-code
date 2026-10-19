@@ -1,3 +1,4 @@
+import { ScrollBoxRenderable } from '@opentui/core'
 import { createTestRenderer } from '@opentui/core/testing'
 import { createRoot } from '@opentui/react'
 import { describe, expect, test } from 'bun:test'
@@ -7,6 +8,7 @@ import { DialogOverlay } from '../dialog-overlay'
 import { ModelPicker } from '../model-picker'
 
 import type { OpenRouterModel } from '../../utils/openrouter-models'
+import type { Renderable } from '@opentui/core'
 
 initializeThemeStore()
 
@@ -16,17 +18,15 @@ initializeThemeStore()
  * the dev console back showed 123x76 of spaces with the default attribute,
  * i.e. an empty render tree rather than a lost terminal.
  *
- * These mounts check that a catalog far larger than the 12-row viewport still
- * produces a frame, both bare and inside the production DialogOverlay wrapper.
- *
- * Sizes are deliberately bounded: the same assertion at the full 4,075-row
- * dev catalog was measured ad hoc (it painted — non-space cells present) but
- * could not stay in this suite, because a 4,075-node mount leaves the shared
- * OpenTUI render state disturbed and fails dozens of later render tests in
- * the same `bun test` process.
+ * These mounts use the dev catalog's real size (4,075 rows), both bare and
+ * inside the production DialogOverlay wrapper, and assert that the picker
+ * mounts only its viewport window instead of one row per model. Before the fix
+ * this exact mount exhausted the native allocator mid-commit, the error
+ * boundary's own `<text>` fallback failed the same way, and React unmounted
+ * the root — the blank screen this FID tracks.
  */
 const PROVIDERS = ['openai', 'anthropic', 'google', 'meta', 'mistral', 'qwen']
-const CATALOG_SIZE = 500
+const CATALOG_SIZE = 4_075
 
 function catalog(size: number): OpenRouterModel[] {
   return Array.from({ length: size }, (_, index) => {
@@ -43,6 +43,22 @@ function nonSpaceCells(frame: string): number {
   let nonSpace = 0
   for (const char of frame) if (char !== ' ' && char !== '\n') nonSpace += 1
   return nonSpace
+}
+
+/** Rows the picker actually mounted under its scrollbox. */
+function mountedRows(root: Renderable): number {
+  const scroll = findScrollbox(root)
+  if (!scroll) throw new Error('model picker scrollbox did not render')
+  return scroll.getChildren().length
+}
+
+function findScrollbox(node: Renderable): ScrollBoxRenderable | undefined {
+  if (node instanceof ScrollBoxRenderable) return node
+  for (const child of node.getChildren()) {
+    const found = findScrollbox(child)
+    if (found) return found
+  }
+  return undefined
 }
 
 describe('model picker — oversized catalog frame', () => {
@@ -70,6 +86,7 @@ describe('model picker — oversized catalog frame', () => {
       await Bun.sleep(50)
       await setup.renderOnce()
       expect(nonSpaceCells(setup.captureCharFrame())).toBeGreaterThan(0)
+      expect(mountedRows(setup.renderer.root)).toBeLessThanOrEqual(12)
     } finally {
       root.unmount()
       setup.renderer.destroy()
@@ -107,6 +124,7 @@ describe('model picker — oversized catalog frame', () => {
       await Bun.sleep(400)
       await setup.renderOnce()
       expect(nonSpaceCells(setup.captureCharFrame())).toBeGreaterThan(0)
+      expect(mountedRows(setup.renderer.root)).toBeLessThanOrEqual(12)
     } finally {
       root.unmount()
       setup.renderer.destroy()

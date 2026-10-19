@@ -3,10 +3,12 @@
 **Filename:** `FID-2026-1018-008-model-picker-silent-terminal-death.md`
 **ID:** FID-2026-1018-008
 **Severity:** critical
-**Status:** analyzed
+**Status:** verified
 **Created:** 2026-10-18 17:58
 **Automation level:** 3
-**YAGNI-Compliance:** Pending
+**YAGNI-Compliance:** Compliant — the repair slices the existing list to the
+viewport the picker already computes; no new dependency, component or config
+knob was introduced.
 
 ---
 
@@ -46,23 +48,37 @@ operator does not lose the session and the defect is diagnosable afterwards.
 
 ### Root Cause
 
-Not established. The death left no JS-level fatal record and no OS crash record,
-so the evidence is currently consistent with several mechanisms, in order of
-what the log shape suggests:
+Established 2026-10-19 01:05 UTC by the durable console channel, and fixed in
+`cli/src/components/model-picker.tsx`.
 
-1. A **native abort** in the picker render path (4,075 rows are materialised as
-   native nodes on mount) while three test suites compete for the machine. A
-   native abort never reaches `uncaughtException`, and anything it printed to
-   stderr lived in the alternate screen that was then reset.
-2. An **OOM kill**. 31.1 GB total memory makes a system-level kill less likely,
-   but the pre-repair measurement of this path was over 1 GB RSS and native
-   allocation failure is not the same as a managed OOM.
-3. An **unhandled exit** from the picker's async open path
-   (`openModelPicker` awaits a catalog refresh) racing agent updates.
+The picker mounted a native row for **every** model in the catalog — 4,075 rows
+of `Button` + 2 boxes + 3 `text` + `Badge`, each `text` backed by a native
+`TextBuffer`. On the first commit after `/model` the native allocator returned
+null and `createTextBuffer` threw:
 
-The terminal clearing itself is explained and is not the defect: either
-`cleanup()` writes `TERMINAL_RESET_SEQUENCES`, or — for a death that runs no
-handler — the sacrificial terminal watchdog writes them after the process dies.
+```text
+Error: Failed to create TextBuffer
+  at createTextBuffer (@opentui src/zig.ts)
+  at new TextBufferRenderable
+  at new TextRenderable
+  at createInstance ← completeWork (react-reconciler)
+  componentStack: at text → at box → at ErrorBoundary
+```
+
+React reported it through the error boundary, whose fallback is itself a
+`<text>`; that allocation failed the same way, so the boundary could not render
+and React unmounted the root. Result: `renderer.root` with one renderable (no
+children) — a blank screen on a live process that keeps ticking frames, which
+is exactly the shape every earlier "hard kill" in this record described.
+
+Why the picker's mount alone was benign in the earlier ad-hoc tests: those
+mounted into a fresh test renderer with a near-empty heap. The live CLI is
+already around 850 MB, so the same mount is the allocation that finally fails.
+
+Consequences for the record: the "process exited" reading of the original
+incident was wrong — the process stays alive and the renderer tree is emptied.
+The terminal clearing is `renderer-cleanup`/watchdog on window close, not the
+defect.
 
 ### Evidence
 
@@ -202,11 +218,50 @@ Prettier clean on both files.
 The defect itself is **not fixed**. This FID stays `analyzed` until the crash
 class is identified and the cause is repaired.
 
+## Verification Gates
+
+- gate: typecheck cli
+- gate: test cli/src/components/__tests__/model-picker-scroll.test.tsx
+- gate: test cli/src/components/__tests__/model-picker-full-catalog.render.test.tsx
+- gate: test cli/src/chat/__tests__/styles.test.ts
+- gate: quality
+
+### Verification Receipt
+
+- fingerprint: sha256:fa60c0a0e291dc2d70beea911781c8af261d11f61286fb6268cb15322f6cc54b
+- verified: 2026-10-19T01:13:15.873Z
+- typecheck cli: exit 0
+- test cli/src/components/__tests__/model-picker-scroll.test.tsx: exit 0
+- test cli/src/components/__tests__/model-picker-full-catalog.render.test.tsx: exit 0
+- test cli/src/chat/__tests__/styles.test.ts: exit 0
+- quality: exit 0
+
 ## Resolution
 
-Pending. The defect is reproduced and the cause is not established; the
-resolution records the captured cause, the fix, and the live operator run once
-they exist.
+Fixed. The picker now mounts only the window `getPickerViewport` already
+computes (12 rows), with `viewport.start` as the absolute offset for selection
+and commit, so search, grouping, keyboard navigation and the `showing X-Y`
+header are unchanged while the native mount is bounded. The scrollbar stays
+hidden rather than showing a thumb with no scroll range.
+
+Measured before and after, same probe (`scripts/probes/live-008-model-picker-dwell.ts`),
+same 4,075-row dev catalog, picker open for 26 s:
+
+```text
+before   pickerOpened=false   render-tree-empty @8s   rss 867 MB
+         Error: Failed to create TextBuffer (componentStack text → box → ErrorBoundary)
+after    pickerOpened=true    render-tree-empty none   rss 408 MB
+         exit process.exit@cli\\src\\hooks\\use-exit-handler.ts:49 (clean quit)
+```
+
+The in-suite mount at the real catalog size went from a 4,075-node render that
+disturbed shared render state (why the previous cycle bounded it to 500 rows) to
+a bounded 12-row mount in 68 ms, so the full size is now asserted rather than
+measured ad hoc.
+
+Operator acceptance — their own session opening `/model` on the full catalog
+with bashers active — is tracked as LIVE-004 in
+`dev/tracking/internal-followups.json`; it is not claimed here.
 
 **Updated 2026-10-18 18:39** — the instrumented reproduction named the class:
 

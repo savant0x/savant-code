@@ -6,6 +6,7 @@ import { useState } from 'react'
 
 import { initializeThemeStore } from '../../hooks/use-theme'
 import { ModelPicker } from '../model-picker'
+import { PICKER_MAX_VISIBLE_ROWS } from '../picker-viewport'
 
 import type { OpenRouterModel } from '../../utils/openrouter-models'
 import type { Renderable } from '@opentui/core'
@@ -99,14 +100,18 @@ function scrollbox(setup: PickerSetup): ScrollBoxRenderable {
 }
 
 function expectSelectedVisible(setup: PickerSetup): void {
+  // FID-2026-1018-008: the picker mounts only the viewport window, so the
+  // selected row is no longer `getChildren()[selectedIndex]`. The marker is
+  // rendered on the selected row, so its line has to fall inside the
+  // scrollbox viewport.
   const scroll = scrollbox(setup)
-  const selected = scroll.getChildren()[setup.getSelectedIndex()]
-  expect(selected).toBeDefined()
-  expect(selected?.y).toBeGreaterThanOrEqual(scroll.viewport.y)
-  expect((selected?.y ?? 0) + (selected?.height ?? 0)).toBeLessThanOrEqual(
-    scroll.viewport.y + scroll.viewport.height,
+  expect(scroll.getChildren().length).toBeLessThanOrEqual(
+    PICKER_MAX_VISIBLE_ROWS,
   )
-  expect(setup.captureCharFrame()).toContain('› ')
+  const lines = setup.captureCharFrame().split('\n')
+  const markerLine = lines.findIndex((line) => line.includes('› '))
+  expect(markerLine).toBeGreaterThanOrEqual(scroll.viewport.y)
+  expect(markerLine).toBeLessThan(scroll.viewport.y + scroll.viewport.height)
 }
 
 function cleanup(setup: PickerSetup): void {
@@ -167,12 +172,9 @@ describe('model picker physical scroll geometry', () => {
     const setup = await mountPicker()
     try {
       await flush(setup)
-      expect(scrollbox(setup).scrollHeight).toBe(models.length + 2)
-      expect(
-        scrollbox(setup)
-          .getChildren()
-          .every((row) => row.height === 1),
-      ).toBe(true)
+      const scroll = scrollbox(setup)
+      expect(scroll.getChildren()).toHaveLength(PICKER_MAX_VISIBLE_ROWS)
+      expect(scroll.getChildren().every((row) => row.height === 1)).toBe(true)
       for (let index = 0; index < models.length + 1; index++) {
         setup.mockInput.pressArrow('down')
         await flush(setup)
@@ -191,32 +193,29 @@ describe('model picker physical scroll geometry', () => {
     }
   }, 10_000)
 
-  test('wheel and scrollbar move through the full catalog without rerender snapback', async () => {
+  test('the mounted window stays bounded and wheel input cannot desync it', async () => {
     const setup = await mountPicker()
     try {
       await flush(setup)
       const scroll = scrollbox(setup)
       const selectedIndex = setup.getSelectedIndex()
+      // FID-2026-1018-008: the catalog is mounted window-at-a-time, so the
+      // scrollbox has no native scroll range and the wheel cannot move the
+      // window out from under the selection. What must hold is that wheel
+      // input leaves selection, geometry and the mounted window untouched.
       await setup.mockMouse.scroll(
         scroll.viewport.x + 3,
         scroll.viewport.y + 2,
         'down',
       )
       await flush(setup)
-      const wheelTop = scroll.scrollTop
-      expect(wheelTop).toBeGreaterThan(0)
       expect(setup.getSelectedIndex()).toBe(selectedIndex)
+      expect(scroll.getChildren()).toHaveLength(PICKER_MAX_VISIBLE_ROWS)
+      expect(scroll.getChildren().every((row) => row.height === 1)).toBe(true)
+      expectSelectedVisible(setup)
       setup.rerender()
       await flush(setup)
-      expect(scroll.scrollTop).toBe(wheelTop)
-      const bar = scroll.verticalScrollBar
-      await setup.mockMouse.click(bar.x, bar.y + bar.height - 1)
-      await flush(setup)
-      expect(scroll.scrollTop).toBeGreaterThan(wheelTop)
-      expect(scroll.scrollTop).toBeLessThanOrEqual(
-        scroll.scrollHeight - scroll.viewport.height,
-      )
-      expect(scroll.getChildren().every((row) => row.height === 1)).toBe(true)
+      expect(scroll.getChildren()).toHaveLength(PICKER_MAX_VISIBLE_ROWS)
     } finally {
       cleanup(setup)
     }

@@ -41,6 +41,20 @@
         "dev/session-summaries/2026-10-18-live-003-picker-retry.md"
       ],
       "sourceFids": ["FID-2026-1018-003"]
+    },
+    {
+      "id": "LIVE-004",
+      "kind": "live-comparison",
+      "status": "open",
+      "owner": "Operator",
+      "summary": "FID-2026-1018-008 is implementation-complete and verified in a PTY run: with the picker windowed to 12 rows, /model opened on the 4,075-row dev catalog, no render-tree-empty was recorded across a 26 s dwell, RSS stayed at 408 MB, and the session quit through its normal exit path. No operator session has opened /model since the fix shipped, and the original three-basher reproduction has not been rerun.",
+      "nextAction": "On the next operator run, open /model on the full catalog (optionally with bashers active) and confirm the picker paints, stays open and that debug/cli.exit.log records no render-tree-empty for that session. Record the observed outcome here; do not treat the PTY run as operator acceptance.",
+      "evidence": [
+        "dev/fids/archive/FID-2026-1018-008-model-picker-silent-terminal-death.md",
+        "scripts/probes/live-008-model-picker-dwell.ts"
+      ],
+      "completionEvidence": [],
+      "sourceFids": ["FID-2026-1018-008"]
     }
   ]
 }

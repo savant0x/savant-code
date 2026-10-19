@@ -1,5 +1,5 @@
 import { useKeyboard } from '@opentui/react'
-import { memo, useCallback, useEffect, useMemo, useRef } from 'react'
+import { memo, useCallback, useEffect, useMemo } from 'react'
 
 import { buildGroupedItems, type ListItem } from './model-picker-grouping'
 import { ModelPickerHeaderRow, ModelPickerModelRow } from './model-picker-rows'
@@ -10,7 +10,7 @@ import { useTheme } from '../hooks/use-theme'
 import { useModelPickerStore } from '../state/model-picker-store'
 
 import type { OpenRouterModel } from '../utils/openrouter-models'
-import type { KeyEvent, ScrollBoxRenderable } from '@opentui/core'
+import type { KeyEvent } from '@opentui/core'
 
 interface ModelPickerProps {
   models: OpenRouterModel[]
@@ -84,17 +84,32 @@ export const ModelPicker = memo(function ModelPicker({
     }
   }, [effectiveSelectedIndex, onSelectIndex, selectedIndex])
 
-  const scrollRef = useRef<ScrollBoxRenderable | null>(null)
   const viewport = useMemo(
     () =>
       getPickerViewport(terminalHeight, items.length, effectiveSelectedIndex),
     [terminalHeight, items.length, effectiveSelectedIndex],
   )
-  useEffect(() => {
-    const sb = scrollRef.current
-    if (!sb) return
-    sb.scrollTop = viewport.start
-  }, [viewport.start])
+
+  /**
+   * Only the visible window is mounted (FID-2026-1018-008).
+   *
+   * The dev catalog holds 4,075 models and the picker used to mount a row
+   * renderable for every one of them — roughly ten native renderables and
+   * several `TextBuffer`s per row. On the first commit after `/model` the
+   * native allocator returned null for a `TextBuffer`, React threw during
+   * `completeWork`, and the error boundary's own fallback `<text>` failed the
+   * same way, so React unmounted the root: a blank screen on a healthy
+   * process that was still painting frames and logging nothing.
+   *
+   * `getPickerViewport` already bounds the window to 12 rows; slicing to it is
+   * what keeps the mount bounded. The list is no longer natively scrollable,
+   * which is why the scrollbar is hidden and the header reports the window
+   * (`showing 13-24`) — keyboard selection is the documented interaction.
+   */
+  const visibleItems = useMemo(
+    () => items.slice(viewport.start, viewport.end),
+    [items, viewport.start, viewport.end],
+  )
 
   const findNextModelIndex = useCallback(
     (from: number, direction: 1 | -1): number => {
@@ -205,11 +220,14 @@ export const ModelPicker = memo(function ModelPicker({
           : `Select a model (↑/↓, Enter, Esc)  ·  ${filteredModels.length} models${viewport.needsScroll ? ` · showing ${viewport.start + 1}-${viewport.end}` : ''}`}
       </text>
       <scrollbox
-        ref={scrollRef}
         scrollX={false}
         scrollbarOptions={{ visible: false }}
+        // The windowed list has no native scroll range, so the bar stays
+        // hidden (the header reports the window). The themed factory is still
+        // wired in: the app's scrollbar contract applies to every vertical
+        // scrollbox consumer, and a default bar must never appear here.
         verticalScrollbarOptions={{
-          visible: viewport.needsScroll,
+          visible: false,
           ...createChatScrollbarOptions(theme),
         }}
         style={{
@@ -241,7 +259,8 @@ export const ModelPicker = memo(function ModelPicker({
             </text>
           </box>
         )}
-        {items.map((item: ListItem, absoluteIndex: number) => {
+        {visibleItems.map((item: ListItem, offset: number) => {
+          const absoluteIndex = viewport.start + offset
           const isSelected = absoluteIndex === effectiveSelectedIndex
           if (item.type === 'header') {
             return (
