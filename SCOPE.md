@@ -80,7 +80,7 @@ Operator pause, 2026-10-18: requested a handoff with 9% session credits remainin
 Resumed 2026-10-19: the CHANGELOG read completed, the 0.0.36 heading moved above
 its recent entries, all five audit FIDs committed, closed and archived, and the
 `dev/` record tree reorganized. Release publication is not claimed.
-Resume checklist: `dev/session-summaries/2026-10-18-release-audit-handoff.md`.
+Resume checklist: `dev/session-summaries/2026-10/2026-10-18-release-audit-handoff.md`.
 
 - AUDIT-2026-1018: `SCOPE.md`, `CHANGELOG.md`, `README.md`, `README.zh-CN.md`,
   `ARCHITECTURE.md`, `AGENTS.md`, `CONTRIBUTING.md`, `ECHO.md`,

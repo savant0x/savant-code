@@ -7,6 +7,7 @@ import {
   inspectImplementedProof,
 } from './lesson-feature-archive'
 import { featureEvidencePath, inspectFeatureFid } from './lesson-feature-schema'
+import { sessionSummaryReference } from './session-summaries-organize'
 
 import type {
   ArchivedCandidate,
@@ -110,7 +111,12 @@ export function reviewCandidates(params: AdmissionParams): AdmissionResult {
     }
     for (const evidence of candidate.evidence) {
       try {
-        const file = featureEvidencePath(root, evidence.path)
+        // Evidence cited by the pre-grouping flat summary path follows the
+        // file into its month bucket; the snapshot hash is unchanged.
+        const file = featureEvidencePath(
+          root,
+          sessionSummaryReference(root, evidence.path),
+        )
         if (!archived && candidate.state === 'ready' && !evidence.sha256) {
           issues.push(`Missing evidence snapshot: ${evidence.path}`)
         } else if (

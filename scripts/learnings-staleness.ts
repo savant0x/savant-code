@@ -26,6 +26,7 @@ import fs from 'node:fs'
 import path from 'node:path'
 
 import { makeIssue } from './learnings-schema.js'
+import { sessionSummaryReference } from './session-summaries-organize'
 
 import type { CanonicalLearningRule } from './learnings-rules.js'
 import type { LearningIssue, StructuredLearning } from './learnings-types.js'
@@ -103,7 +104,9 @@ export function staleRuleReferenceIssues(
   for (const rule of rules) {
     const text = `${rule.authority} ${rule.validation}`
     for (const token of artifactTokens(text)) {
-      const resolved = path.resolve(root, token)
+      // A summary cited by its old flat path still resolves once the monthly
+      // grouping has moved it; the rule text itself is never rewritten.
+      const resolved = path.resolve(root, sessionSummaryReference(root, token))
       if (!fs.existsSync(resolved))
         issues.push(
           referenceIssues(root, rule, token, 'cites a missing artifact'),

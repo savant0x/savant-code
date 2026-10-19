@@ -69,7 +69,9 @@ docs/design/Savant Desktop App Architecture.md
 # preserve the reference payload verbatim. The executable slice's own design
 # documentation remains governed by Markdown lint.
 docs/design/Savant-Code Parallel Architecture Blueprint.md
-dev/session-summaries/2026-08-19-desktop-app-research-planning.md
+# Session summaries are grouped into `YYYY-MM/` buckets automatically (FID-2026-1019-001),
+# so an exemption for one summary names its bucket.
+dev/session-summaries/2026-08/2026-08-19-desktop-app-research-planning.md
 
 # Rust/tauri build output (FID-2026-0820-011 Loop 5 local bundling smoke,
 # 2026-09-03) — generated codegen assets under target/ are binary/ephemeral

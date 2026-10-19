@@ -78,4 +78,4 @@ and require explicit review before becoming their own candidate.
 | LF-006 | Surface stale lesson guidance against live authority | Draft: extend existing validation |
 
 The original lesson file remains unchanged. The scholarly run review is in
-`dev/session-summaries/2026-10-12-scholarly-review-and-feature-pipeline.md`.
+`dev/session-summaries/2026-10/2026-10-12-scholarly-review-and-feature-pipeline.md`.

@@ -57,6 +57,7 @@
     "telemetry:sentinel": "bun scripts/telemetry-sentinel.ts",
     "telemetry:feedback": "bun scripts/telemetry-feedback.ts",
     "session-end:review": "bun scripts/session-end-review.ts",
+    "session-summaries:organize": "bun scripts/session-summaries-organize.ts",
     "lessons:to-skills": "bun scripts/lessons-to-skills.ts",
     "lessons:features": "bun scripts/lesson-feature-pipeline.ts",
     "learnings:retire": "bun scripts/learnings-retire.ts",

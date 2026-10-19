@@ -36,6 +36,10 @@ import {
   skillLifecycleReport,
   telemetryReportLines,
 } from './session-end-notices'
+import {
+  organizeSessionSummaries,
+  sessionSummaryOrganizationLine,
+} from './session-summaries-organize'
 
 export {
   quarantineAlertNote,
@@ -305,5 +309,21 @@ if (import.meta.main) {
   const orphans = orphanSweepLine()
   if (orphans !== null) {
     fs.writeSync(process.stdout.fd, `- ${orphans}\n`)
+  }
+  // FID-2026-1019-001: keep the session audit trail navigable by grouping each
+  // summary into its `YYYY-MM/` bucket. Deliberately OUTSIDE
+  // runSessionEndReview for the same reason as the sweep — tests call the
+  // review against temp roots with no summaries tree. Fail-open: organization
+  // must never break the review, and a failed rename is retried next session.
+  try {
+    const organized = organizeSessionSummaries(
+      path.join(rootDir, 'dev', 'session-summaries'),
+    )
+    const line = sessionSummaryOrganizationLine(organized)
+    if (line !== null) {
+      fs.writeSync(process.stdout.fd, `- ${line}\n`)
+    }
+  } catch {
+    // Leave the directory untouched; the next SessionEnd retries.
   }
 }

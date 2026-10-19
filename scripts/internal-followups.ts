@@ -3,6 +3,8 @@ import path from 'node:path'
 
 import { z } from 'zod/v4'
 
+import { sessionSummaryReference } from './session-summaries-organize'
+
 export const INTERNAL_FOLLOWUPS = 'dev/tracking/internal-followups.json'
 const fid = z.string().regex(/^FID-\d{4}-\d{4}-\d{3}$/)
 const text = z.string().trim().min(1)
@@ -145,7 +147,7 @@ export function readInternalFollowups(root: string): {
       if (ids.has(item.id)) issues.push(`duplicate followup: ${item.id}`)
       ids.add(item.id)
       for (const file of [...item.evidence, ...item.completionEvidence])
-        if (!existingEvidence(root, file))
+        if (!existingEvidence(root, sessionSummaryReference(root, file)))
           issues.push(`${item.id}: missing or unsafe evidence: ${file}`)
       if (item.status === 'completed' && item.completionEvidence.length === 0)
         issues.push(`${item.id}: completed followup lacks evidence`)
