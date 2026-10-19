@@ -367,11 +367,16 @@ stopped render loop: React reconciled the root down to nothing while the loop
 kept ticking, and nothing reached the logger (`ERROR` count for the run: 0;
 `Render error caught` count: 0).
 
-Local reproduction attempt, at the operator's exact 123x76 size with the dev
-catalog: `cli/src/components/__tests__/model-picker-full-catalog.render.test.tsx`
-mounts the real picker at 30/500/1500/3000/4075 rows, and then the production
-`DialogOverlay` + picker. **All paint** — so the picker mount alone does not
-empty the tree, and the trigger needs the live app's surroundings.
+Local reproduction attempt, at the operator's exact 123x76 size: the real
+picker was mounted ad hoc with 30, 500, 1,500, 3,000 and the full 4,075 rows,
+and then the production `DialogOverlay` + picker. **Every size painted** — so
+the picker mount alone does not empty the tree, and the trigger needs the live
+app's surroundings. The shipped test
+(`cli/src/components/__tests__/model-picker-full-catalog.render.test.tsx`)
+keeps the 500-row bare and overlay cases only: at 4,075 rows the mount leaves
+the shared OpenTUI render state disturbed and fails dozens of later render
+tests in the same `bun test` process, so that size is measured ad hoc rather
+than asserted in-suite.
 
 **Instrumentation added (same commit):**
 
