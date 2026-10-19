@@ -1,5 +1,19 @@
 # Changelog
 
+## 2026-10-19 — Stop `/model` from blanking the CLI (FID-2026-1018-008, critical)
+
+Opening the model picker emptied the screen while the process kept running and
+painting frames. The console channel was blocked: OpenTUI replaces
+`console.error` during activation, so the failure text went to an overlay the
+app never opens. Re-wrapping console capture on top of OpenTUI named it —
+mounting 4,075 native rows returned null from `createTextBuffer`, React threw
+in `completeWork`, the error boundary's `<text>` fallback failed identically,
+and React unmounted the root. The picker now mounts only the window
+`getPickerViewport` already computes. Measured with a new dwell probe on the
+real catalog: before, the picker never appeared and `render-tree-empty` fired at
+8 s; after, it opens, survives a 26 s dwell, and the session quits through its
+normal exit path at 408 MB. Implementation: `24cf1bae`.
+
 ## 2026-10-18 — Credit a windowed boot read that reached EOF (FID-2026-1018-009, high)
 
 A `read_files` call that carried `limit` earned no grounding credit even when
