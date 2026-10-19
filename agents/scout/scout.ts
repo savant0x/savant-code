@@ -47,7 +47,7 @@ export const createFilePicker = (
         required: [],
       },
     },
-    outputMode: 'last_message',
+    outputMode: 'structured_output',
     includeMessageHistory: false,
     // After FID-2026-0718-007: Scout uses glob + list_directory directly
     // instead of delegating to Detective (code_search agent).
@@ -79,6 +79,7 @@ export const createFilePicker = (
       'Output format:',
       `- Return at most ${isMax ? 20 : 12} files.`,
       '- Keep the report extremely short; do not reproduce large code excerpts.',
+      '- Finish with set_output containing a concise message and a files array of ranked path/reason objects.',
       '- Do not use any further tools or spawn any further agents.',
       '- Always check exitCode and stderr in tool outputs. If a tool fails, report the failure — do NOT assume success from partial results.',
     ].join('\n'),
@@ -168,28 +169,36 @@ const handleStepsDefault: SecretAgentDefinition['handleSteps'] = function* ({
   }
 
   // 1. Programmatic glob: extract keywords, search file NAMES (not contents)
+  const discoveries: JSONValue[] = []
   if (prompt) {
     const keywords = _extractKeywords(prompt)
     for (const keyword of keywords) {
-      yield {
+      const { toolResult } = yield {
         toolName: 'glob',
         input: {
           pattern: `**/*${keyword}*`,
           ...(cwd ? { cwd } : {}),
         },
       } satisfies ToolCall
+      discoveries.push(
+        ...(toolResult ?? []).flatMap((result) =>
+          result.type === 'json' ? [result.value] : [],
+        ),
+      )
     }
   }
 
   // 2. Yield STEP — let the LLM interpret results, drive deeper exploration
   //    (LLM can call list_directory, read_files, read_subtree, glob, set_output)
-  yield 'STEP'
+  const { agentState } = yield 'STEP'
+  if (agentState.output !== undefined) return
 
   // 3. LLM calls set_output with final results
   yield {
     toolName: 'set_output',
     input: {
       message: `Scout found these files for: ${prompt}`,
+      results: discoveries,
     },
   } satisfies ToolCall
 }

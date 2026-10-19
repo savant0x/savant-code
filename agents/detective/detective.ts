@@ -123,7 +123,8 @@ const detective: SecretAgentDefinition = {
 
     // Yield STEP to give the LLM control for deeper investigation
     // (reading files, listing directories, exploring subtrees)
-    yield 'STEP'
+    const { agentState } = yield 'STEP'
+    if (agentState.output !== undefined) return
 
     yield {
       toolName: 'set_output',

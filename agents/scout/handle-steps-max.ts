@@ -81,28 +81,36 @@ export const handleStepsMax: SecretAgentDefinition['handleSteps'] = function* ({
   }
 
   // 1. Programmatic glob: extract keywords, search file NAMES
+  const discoveries: JSONValue[] = []
   if (prompt) {
     const keywords = _extractKeywords(prompt)
     for (const keyword of keywords) {
-      yield {
+      const { toolResult } = yield {
         toolName: 'glob',
         input: {
           pattern: `**/*${keyword}*`,
           ...(cwd ? { cwd } : {}),
         },
       } satisfies ToolCall
+      discoveries.push(
+        ...(toolResult ?? []).flatMap((result) =>
+          result.type === 'json' ? [result.value] : [],
+        ),
+      )
     }
   }
 
   // 2. Yield STEP — in max mode, the LLM should explore more deeply:
   //    read key files, explore directory structures, find related modules
-  yield 'STEP'
+  const { agentState } = yield 'STEP'
+  if (agentState.output !== undefined) return
 
   // 3. LLM calls set_output with final results
   yield {
     toolName: 'set_output',
     input: {
       message: `Scout found these files for: ${prompt}`,
+      results: discoveries,
     },
   } satisfies ToolCall
 }
