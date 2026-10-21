@@ -110,10 +110,20 @@ describe('FID-2026-1016-011: rotateIfOversized', () => {
     expect(fs.existsSync(`${target}.1`)).toBe(false)
   })
 
+  // 50 MiB of synchronous appends IS the pin (5× the 10 MiB cap), so this
+  // test's cost is wall-clock, not assertion. Measured 2026-10-21 on Windows:
+  // 1.83 s idle (5 runs, 1.83–1.87 s), 1.86 s inside the full 532-file suite,
+  // 2.05 s under 4-way I/O load and 2.61 s under 8-way load — a 43% swing
+  // caused by the machine, not by the code. Bun's implicit per-test budget is
+  // 5 s (proven: a 7 s test with no budget is killed at 5014 ms), so the
+  // pass/fail outcome was decided by disk speed rather than by the size
+  // invariant this test exists to prove. The budget below matches the declared
+  // `testing.test_timeout: 30`; the size assertions are unchanged and still
+  // decide the test.
   test('a file pair stays bounded however much is written', () => {
     const target = path.join(tempDir, 'debug', 'cli.jsonl')
-    // Write ~5× the cap in 512 KiB chunks: rotation must keep the pair bounded
-    // instead of letting one file grow for the life of the project.
+    // Write ~5× the cap in 512 KiB chunks: rotation must keep the pair
+    // bounded instead of letting one file grow for the life of the project.
     const chunk = 'x'.repeat(512 * 1024)
     for (let i = 0; i < 100; i++) appendBoundedSync(target, chunk)
 
@@ -130,7 +140,7 @@ describe('FID-2026-1016-011: rotateIfOversized', () => {
     )
     expect(sizes[0] + sizes[1]).toBeLessThan(3 * MAX_LOG_FILE_BYTES)
     expect(fs.existsSync(generation)).toBe(true)
-  })
+  }, 30_000)
 })
 
 describe('FID-2026-1016-011: trimOversizedDebugLogs', () => {
