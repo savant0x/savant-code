@@ -137,6 +137,18 @@ describe('teacher forge adapter', () => {
   })
 })
 
+// FID-2026-1021-003: every test below drives the REAL sandbox backend — one
+// `mkdtempSync` workspace plus a `spawn(process.execPath, …)` child per attempt —
+// and that backend allows `timeLimitMs: 200` plus a 2 s kill margin before it
+// kills the child, so a single attempt's designed worst case is 2.2 s before the
+// spawn itself is counted. The declared budget is the repository's
+// `testing.test_timeout: 30` (`protocol.config.yaml`), passed as the per-test
+// third argument because `cli/bunfig.toml` records that a `[test] timeout` key is
+// inert under Bun 1.3.14. Measured 2026-10-21: 95–135 ms per test in the
+// whole-workspace leg, with one 6,326.73 ms outlier against Bun's implicit
+// 5,000 ms ceiling, which then cascaded into a critique submitted from
+// `sandbox_running`. A test that spawns a process inherits the host's
+// scheduling; the ceiling must not be the machine's.
 describe('live exercise runtime (Forge + sandbox + graders)', () => {
   test('correct steering reaches critique-await, then a correct critique passes', async () => {
     setTeacherForgeOverride(correctForge)
@@ -180,7 +192,7 @@ describe('live exercise runtime (Forge + sandbox + graders)', () => {
         receipt!.over,
       ),
     ).toBe(true)
-  })
+  }, 30_000)
 
   test('a broken solution fails equivalence even with a correct critique', async () => {
     setTeacherForgeOverride(brokenForge)
@@ -190,7 +202,7 @@ describe('live exercise runtime (Forge + sandbox + graders)', () => {
 
     expect(result.completionState).toBe('failed')
     expect(result.equivalenceResult.passed).toBe(false)
-  })
+  }, 30_000)
 
   test('a vague critique fails detection', async () => {
     setTeacherForgeOverride(correctForge)
@@ -200,7 +212,7 @@ describe('live exercise runtime (Forge + sandbox + graders)', () => {
 
     expect(result.completionState).toBe('failed')
     expect(result.detectionResult.grade.identified).toBe(false)
-  })
+  }, 30_000)
 
   test('reset clears the session and returns to ready', async () => {
     setTeacherForgeOverride(correctForge)
@@ -212,7 +224,7 @@ describe('live exercise runtime (Forge + sandbox + graders)', () => {
     expect(state.phase).toBe('ready')
     expect(state.events).toEqual([])
     expect(state.attemptId).toBeNull()
-  })
+  }, 30_000)
 
   test('getTeacherSessionState returns an events snapshot copy, not a live alias', async () => {
     setTeacherForgeOverride(correctForge)
@@ -224,7 +236,7 @@ describe('live exercise runtime (Forge + sandbox + graders)', () => {
     // FID-2026-0813-022: the copy keeps the sidebar's memoized reducer honest —
     // a shared live array would never change identity across snapshots.
     expect(first.events).not.toBe(second.events)
-  })
+  }, 30_000)
 
   test('readTeacherProgress exposes the versioned competency record', async () => {
     setTeacherForgeOverride(correctForge)
@@ -253,7 +265,7 @@ describe('live exercise runtime (Forge + sandbox + graders)', () => {
     })
 
     store.close()
-  })
+  }, 30_000)
 
   test('a passed attempt is persisted as a versioned competency record', async () => {
     setTeacherForgeOverride(correctForge)
@@ -281,5 +293,5 @@ describe('live exercise runtime (Forge + sandbox + graders)', () => {
     expect(edge?.evidence).toContain(result.attemptId)
 
     store.close()
-  })
+  }, 30_000)
 })
