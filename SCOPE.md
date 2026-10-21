@@ -43,7 +43,7 @@ and `HOME-SKILLS-001` are blocked on external targets outside this project and
 hold no write grant. Governance artifacts the protocol itself requires keep
 their gate-level exemptions.
 
-`FID-2026-1021-001` and `FID-2026-1021-002` closed and archived on 2026-10-21
-(implementations `2ae5f3c3` and `40a52e3d`), so their write grants are
-released here; the evidence lives in the archived records, the changelog and
-the session summary.
+`FID-2026-1021-001`, `FID-2026-1021-002` and `FID-2026-1021-003` closed and
+archived on 2026-10-21 (implementations `2ae5f3c3`, `40a52e3d` and `bf5978ff`),
+so their write grants are released here; the evidence lives in the archived
+records, the changelog and the session summary.

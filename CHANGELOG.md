@@ -1,6 +1,6 @@
 # Changelog
 
-## 2026-10-21 — A recurrence names the class it counts; the CLI rotation pin declares its budget
+## 2026-10-21 — A recurrence names the class it counts; two process-bound suites declare their budgets
 
 - **FID-2026-1021-001 — medium — Name the class a recurrence counts.** A
   recurrence counts a CLASS, but every surface that printed one put the class
@@ -35,9 +35,25 @@
   through the mechanism `cli/bunfig.toml` records as honoured (the per-test
   third argument), and no assertion changed. Implementation: see the archived
   record; three declared gates and the full CLI suite pass.
+- **FID-2026-1021-003 — low — Give the teacher runtime suite explicit
+  budgets.** The seven async tests in
+  `cli/src/teacher/__tests__/runtime.test.ts` drive the REAL sandbox backend:
+  each attempt `mkdtempSync`s a workspace and `spawn`s `process.execPath`, and
+  the backend allows `timeLimitMs: 200` plus a 2 s kill margin before it kills
+  the child — so one attempt's designed worst case is 2.2 s before the spawn is
+  counted, against Bun's implicit 5 s per-test ceiling rather than the
+  repository's declared 30 s. A whole-workspace CLI run put one of them at
+  6,326.73 ms while its typical cost is 95–135 ms, failing a phase-order
+  assertion on spawn latency and cascading into
+  `cannot submit critique from phase 'sandbox_running'` — the engine correctly
+  refusing a critique mid-sandbox. The seven tests now declare the repository's
+  `testing.test_timeout: 30` through the mechanism `cli/bunfig.toml` records as
+  honoured, and the suite header records the cost model; no assertion changed.
+  Implementation: see the archived record; three declared gates, a stamped
+  receipt and the full CLI workspace leg green (4,248 pass / 18 skip / 0 fail).
 
-Both records closed and archived on 2026-10-21. These are source repairs after
-the published npm 0.0.36 cut; no new package release was performed and no
+All three records closed and archived on 2026-10-21. These are source repairs
+after the published npm 0.0.36 cut; no new package release was performed and no
 production observation is claimed.
 
 ## 2026-10-19 — Architecture and publication documentation reconciled
