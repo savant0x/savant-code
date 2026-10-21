@@ -1,5 +1,45 @@
 # Changelog
 
+## 2026-10-21 — A recurrence names the class it counts; the CLI rotation pin declares its budget
+
+- **FID-2026-1021-001 — medium — Name the class a recurrence counts.** A
+  recurrence counts a CLASS, but every surface that printed one put the class
+  total beside ONE exemplar message, so the specimen read as the tally.
+  Measured against the live ledger: the agenda and the routing note showed
+  `head: command not found` as "recurred 69×" when that exact message occurs
+  5 times in 690 rows — 69 is the total of the `command-exit` class, which
+  holds every other exit-failure message. The surfaces did not merely omit a
+  label; they stated a false recurrence for a specific command. The counted
+  unit now has one rendering authority in the classification module that
+  already owns the class identity (`countedUnitHead` / `formatCountedUnit`),
+  `cause` is carried on the dedup group and the recurrence so class and key
+  cannot disagree, and every surface renders through it: the session agenda
+  and its routing notes, the dedup report, the evolution console and its
+  candidate FID, the lesson draft and its reason, the cold-spawned drafting
+  prompt and proposal rationale, and the promoted wiki page. A rule-level
+  aggregate states its span and names its top class, so a number is never
+  read as one class's tally. The head never carries the exemplar, so a
+  column-budgeted surface can truncate the message and never the class.
+  Implementation: see the archived record; ten declared gates, the full root
+  typecheck, CLI 4,248 pass / 18 skip / 0 fail, scripts 1,139 pass / 0 fail,
+  common 921 pass / 4 skip / 0 fail, ESLint 0 warnings, Markdown lint exit 0
+  and `validate:repository` PASS.
+- **FID-2026-1021-002 — low — Give the CLI rotation pin an explicit test
+  budget.** The CLI log-rotation pin writes 50 MiB through synchronous
+  appends, so its cost is wall-clock, and it ran under Bun's implicit 5 s
+  per-test ceiling — six times tighter than the repository's declared
+  `testing.test_timeout: 30`. Measured 2026-10-21: 1.83 s idle, 2.05 s under
+  four-way I/O load, 2.61 s under eight-way load, so the verdict of a test
+  whose subject is a SIZE invariant was decided by the speed of the machine's
+  disk. The pin now declares the budget the repository already declares,
+  through the mechanism `cli/bunfig.toml` records as honoured (the per-test
+  third argument), and no assertion changed. Implementation: see the archived
+  record; three declared gates and the full CLI suite pass.
+
+Both records closed and archived on 2026-10-21. These are source repairs after
+the published npm 0.0.36 cut; no new package release was performed and no
+production observation is claimed.
+
 ## 2026-10-19 — Architecture and publication documentation reconciled
 
 - **FID-2026-1019-006 — medium — Align architecture with current source.**
