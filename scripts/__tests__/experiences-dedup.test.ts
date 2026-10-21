@@ -14,6 +14,7 @@ import {
   parseExperienceLedger,
   purgeExpiredTraces,
   readExperienceLedger,
+  recurrenceReportLine,
 } from '../experiences-dedup'
 
 import type { ExperienceRecord } from '@savant-code/common/types/experience'
@@ -294,5 +295,63 @@ describe('readExperienceLedger + round trip', () => {
     expect(experienceDedupKey('run_command', 'ENOENT: no such file')).not.toBe(
       experienceDedupKey('web_search', 'ENOENT: no such file'),
     )
+  })
+})
+
+describe('recurrence counted unit (FID-2026-1021-001)', () => {
+  test('three distinct messages in one class report the CLASS count, not the message tally', () => {
+    const rows = [
+      record(
+        'run_command',
+        'Command exited with code 127: head: command not found',
+        1,
+        's1',
+      ),
+      record(
+        'run_command',
+        'Command exited with code 127: tail: command not found',
+        2,
+        's2',
+      ),
+      record(
+        'run_command',
+        'Command exited with code 127: wc: command not found',
+        3,
+        's3',
+      ),
+    ]
+    const recurrences = computeRecurrences(rows, { now: NOW })
+    expect(recurrences).toHaveLength(1)
+    const recurrence = recurrences[0]!
+    expect(recurrence.cause).toBe('command-exit')
+    expect(recurrence.count).toBe(3)
+    // The message is ONE exemplar inside the class — the rendered count must
+    // attach to the class name, and the exemplar must be marked as an example.
+    expect(recurrenceReportLine(recurrence)).toBe(
+      '- run_command: command-exit ×3; e.g. ' +
+        'Command exited with code 127: head: command not found' +
+        ' / 3 session(s)',
+    )
+  })
+
+  test('a distinct message never inherits another message count', () => {
+    const rows = [
+      record(
+        'run_command',
+        'Command exited with code 127: head: command not found',
+        1,
+        's1',
+      ),
+      record(
+        'run_command',
+        'Command exited with code 127: tail: command not found',
+        2,
+        's2',
+      ),
+    ]
+    const recurrences = computeRecurrences(rows, { now: NOW })
+    // Two rows never clear the ≥3 bar, and neither message borrows the
+    // other's tally.
+    expect(recurrences).toHaveLength(0)
   })
 })

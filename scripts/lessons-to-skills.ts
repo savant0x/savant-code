@@ -18,7 +18,11 @@ import * as fs from 'node:fs'
 import * as path from 'node:path'
 
 import { AGENT_AUTHORED_DESCRIPTION_MAX_LENGTH } from '@savant-code/common/constants/skills'
-import { experienceClassIdentity } from '@savant-code/common/util/experience-classes'
+import {
+  COUNT_SCOPE_RULE_AGGREGATE,
+  countedUnitHead,
+  experienceClassIdentity,
+} from '@savant-code/common/util/experience-classes'
 import { emitSkillMutationEvent } from '@savant-code/common/util/skill-lifecycle-events'
 import { createSkill } from '@savant-code/common/util/skill-management'
 // FID-2026-1005-003 Steps 2–4: the mechanical script identifies candidates
@@ -78,6 +82,14 @@ export type DraftCandidate = {
   classKey: string
   toolName: string
   errorFirstLine: string
+  /**
+   * The classification class the count belongs to. `count` is a RULE-level
+   * total (it aggregates the recurrences of every class the rule matched),
+   * and `errorFirstLine` is one exemplar — so the class is carried alongside
+   * them and every rendering states which unit the number counts.
+   * FID-2026-1021-001.
+   */
+  cause: string
   count: number
   /** FID-2026-1005-003 Step 1: distinct sessions behind the recurrence. */
   distinctSessions: number
@@ -117,6 +129,7 @@ function aggregateByRule(candidates: DraftCandidate[]): DraftCandidate[] {
       existing.toolName = candidate.toolName
       existing.errorFirstLine = candidate.errorFirstLine
       existing.classKey = candidate.classKey
+      existing.cause = candidate.cause
     }
   }
   return [...byRule.values()]
@@ -198,6 +211,7 @@ export function findCandidates(
       classKey: classKey ?? '',
       toolName: recurrence.toolName,
       errorFirstLine: recurrence.errorFirstLine,
+      cause: recurrence.cause,
       count: recurrence.count,
       distinctSessions: recurrence.distinctSessions,
       reasons: [],
@@ -261,6 +275,7 @@ export function draftCandidates(
         canonicalRule: candidate.canonicalRule,
         toolName: candidate.toolName,
         errorFirstLine: candidate.errorFirstLine,
+        cause: candidate.cause,
         invariant: candidate.invariant,
         guard: candidate.guard,
         count: candidate.count,
@@ -294,17 +309,35 @@ export function draftCandidates(
         '',
         '## Pitfalls',
         '- Do not treat this as a blanket bypass — the rule exists because the naive path fails.',
-        `- Ignoring the guard above: the promotion gate recorded this failure ${candidate.count}× across ${candidate.distinctSessions} distinct sessions.`,
+        `- Ignoring the guard above: the promotion gate recorded this failure ${countedUnitHead(
+          {
+            cause: candidate.cause,
+            count: candidate.count,
+            scope: COUNT_SCOPE_RULE_AGGREGATE,
+          },
+        )} / ${candidate.distinctSessions} distinct sessions.`,
         '',
         '## Verification',
         '- `bun run typecheck` (all workspaces)',
         '- Focused test suite for the affected area',
         '',
-        `> Auto-drafted from lesson: ${candidate.lessonTitle} (${candidate.count}× across ${candidate.distinctSessions} distinct sessions)`,
+        `> Auto-drafted from lesson: ${candidate.lessonTitle} (${countedUnitHead(
+          {
+            cause: candidate.cause,
+            count: candidate.count,
+            scope: COUNT_SCOPE_RULE_AGGREGATE,
+          },
+        )} / ${candidate.distinctSessions} distinct sessions)`,
         '',
       ].join('\n'),
       sessionId: reserved.handoff.record.sessionId,
-      reason: `S3-B proposal ${reserved.handoff.proposalSha.slice(0, 12)} from recurrence (${candidate.count}× / ${candidate.distinctSessions} sessions) + canonical rule ${candidate.canonicalRule}`,
+      reason: `S3-B proposal ${reserved.handoff.proposalSha.slice(0, 12)} from recurrence (${countedUnitHead(
+        {
+          cause: candidate.cause,
+          count: candidate.count,
+          scope: COUNT_SCOPE_RULE_AGGREGATE,
+        },
+      )} / ${candidate.distinctSessions} sessions) + canonical rule ${candidate.canonicalRule}`,
       provenanceRef: `lesson:${candidate.canonicalRule} proposal:${reserved.handoff.proposalSha}`,
     })
 

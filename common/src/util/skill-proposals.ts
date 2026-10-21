@@ -16,6 +16,11 @@
 import * as fs from 'node:fs'
 import * as path from 'node:path'
 
+import {
+  COUNT_SCOPE_RULE_AGGREGATE,
+  countedUnitHead,
+  formatCountedUnit,
+} from './experience-classes'
 import { sha256Hex } from './hash'
 
 /** One proposed skill change (atomic: one skill, one action). */
@@ -160,6 +165,14 @@ export type CandidateHandoffInput = {
   /** Normalized error first line (the trigger). */
   errorFirstLine: string
   /**
+   * The classification class the count belongs to. The trigger message is ONE
+   * exemplar inside that class, and the count may span several classes (a
+   * rule-level aggregate), so the drafting prompt names the class instead of
+   * letting the count read as the message's own tally.
+   * FID-2026-1021-001.
+   */
+  cause: string
+  /**
    * FID-2026-1016-015: the lesson's invariant and guard. They are the drafting
    * turn's actual material — without them the proposer saw only the failure
    * text and the rule slug, and produced skills that taught the error message.
@@ -199,6 +212,7 @@ export function prepareCandidateHandoff(
     rule: candidate.canonicalRule,
     tool: candidate.toolName,
     error: candidate.errorFirstLine,
+    cause: candidate.cause,
     invariant: candidate.invariant,
     guard: candidate.guard,
     count: candidate.count,
@@ -212,7 +226,11 @@ export function prepareCandidateHandoff(
     patternKey: `lesson:${candidate.canonicalRule}`,
     createdAt: new Date(opts.now ?? Date.now()).toISOString(),
     sessionId,
-    rationale: `recurrence ${candidate.count}× / ${candidate.distinctSessions} distinct sessions + lesson '${candidate.lessonTitle}'`,
+    rationale: `recurrence ${countedUnitHead({
+      cause: candidate.cause,
+      count: candidate.count,
+      scope: COUNT_SCOPE_RULE_AGGREGATE,
+    })} / ${candidate.distinctSessions} distinct sessions + lesson '${candidate.lessonTitle}'`,
   }
   const recorded = recordProposal(rootDir, record)
   if (!recorded.ok) {
@@ -231,12 +249,21 @@ export function prepareCandidateHandoff(
         `Invariant: ${candidate.invariant}`,
         `Guard: ${candidate.guard}`,
         `Trigger: '${candidate.toolName}' failing with '${candidate.errorFirstLine}'`,
-        `Evidence: ${candidate.count} occurrences across ${candidate.distinctSessions} distinct sessions`,
+        `Evidence: ${countedUnitHead({
+          cause: candidate.cause,
+          count: candidate.count,
+          scope: COUNT_SCOPE_RULE_AGGREGATE,
+        })} / ${candidate.distinctSessions} distinct sessions`,
         'Draft contract: When to Use (this trigger) / Procedure (the invariant, then the guard) / Pitfalls (the guard as a forbidden shortcut) / Verification (the project suite). Never restate the failure text as the rule.',
       ].join('\n'),
     ],
     dedupedTraces: [
-      `${candidate.toolName}: ${candidate.errorFirstLine} (${candidate.count}× / ${candidate.distinctSessions} sessions)`,
+      `${candidate.toolName}: ${formatCountedUnit({
+        cause: candidate.cause,
+        count: candidate.count,
+        scope: COUNT_SCOPE_RULE_AGGREGATE,
+        exemplar: candidate.errorFirstLine,
+      })} / ${candidate.distinctSessions} sessions`,
     ],
     skillInventory: [],
   })

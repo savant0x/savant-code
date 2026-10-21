@@ -7,6 +7,7 @@ import { afterEach, describe, expect, test } from 'bun:test'
 import {
   buildDraftingPrompt,
   loadProposalRecord,
+  prepareCandidateHandoff,
   readProposalStore,
   recordProposal,
 } from '../skill-proposals'
@@ -76,5 +77,37 @@ describe('FID-2026-0912-004: proposal record', () => {
     // Isolation contract: no parent-conversation markers.
     expect(prompt.toLowerCase()).not.toContain('user said')
     expect(prompt.toLowerCase()).not.toContain('conversation history')
+  })
+})
+
+describe('proposal counted unit (FID-2026-1021-001)', () => {
+  test('the drafting prompt names the class the count belongs to', () => {
+    const root = fixtureRoot()
+    const result = prepareCandidateHandoff(root, {
+      skillName: 'exit-code-guard',
+      lessonTitle: 'Read the exit code before retrying',
+      canonicalRule: 'check-exit-code',
+      toolName: 'run_command',
+      errorFirstLine: 'head: command not found',
+      cause: 'command-exit',
+      invariant: 'The exit code carries the outcome.',
+      guard: 'Never retry on a non-zero exit without reading stderr.',
+      count: 48,
+      distinctSessions: 6,
+    })
+    expect(result.ok).toBe(true)
+    const handoff = result.handoff!
+    // The count spans the classes the rule covers, so it is stated with its
+    // span and its top class — never as the trigger message's own tally.
+    expect(handoff.prompt).toContain(
+      '48× across the classes this rule covers (top class: command-exit)',
+    )
+    expect(handoff.prompt).toContain(
+      '48× across the classes this rule covers (top class: command-exit); ' +
+        'e.g. head: command not found',
+    )
+    expect(handoff.record.rationale).toContain(
+      'recurrence 48× across the classes this rule covers (top class: command-exit)',
+    )
   })
 })

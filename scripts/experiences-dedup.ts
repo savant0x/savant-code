@@ -35,6 +35,7 @@ import {
 } from '@savant-code/common/types/experience'
 import {
   experienceClassIdentity,
+  formatCountedUnit,
   isExpectedClass,
 } from '@savant-code/common/util/experience-classes'
 
@@ -82,6 +83,13 @@ export function isExpectedFailure(
 export type DedupGroup = {
   key: string
   toolName: string
+  /**
+   * The classification cause every record in the group shares — the class the
+   * counts below belong to. Derived from the SAME identity that keys the
+   * group, so the class and the key can never disagree.
+   * FID-2026-1021-001.
+   */
+  cause: string
   errorFirstLine: string
   records: ExperienceRecord[]
 }
@@ -93,9 +101,8 @@ export function groupByDedupKey(
   const groups = new Map<string, DedupGroup>()
   for (const record of records) {
     // Existing wiki/proposal consumers require a filesystem-safe 64-hex key.
-    const key = createHash('sha256')
-      .update(experienceClassIdentity(record).key)
-      .digest('hex')
+    const identity = experienceClassIdentity(record)
+    const key = createHash('sha256').update(identity.key).digest('hex')
     const existing = groups.get(key)
     if (existing) {
       existing.records.push(record)
@@ -103,6 +110,7 @@ export function groupByDedupKey(
       groups.set(key, {
         key,
         toolName: record.toolName,
+        cause: identity.cause,
         errorFirstLine: record.errorFirstLine,
         records: [record],
       })
@@ -114,6 +122,14 @@ export function groupByDedupKey(
 export type Recurrence = {
   key: string
   toolName: string
+  /**
+   * The classification cause the count belongs to (`command-exit`, `timeout`,
+   * `unrecognised-<hash>`, …). A recurrence counts a CLASS: several distinct
+   * error messages can share one cause, so `errorFirstLine` is one exemplar
+   * inside the counted set, never the thing that recurred `count` times.
+   * FID-2026-1021-001 (the `head: command not found` 69× misreading).
+   */
+  cause: string
   errorFirstLine: string
   /** Count within the rolling window (expected failures excluded). */
   count: number
@@ -171,6 +187,7 @@ export function computeRecurrences(
     recurrences.push({
       key: group.key,
       toolName: group.toolName,
+      cause: group.cause,
       errorFirstLine: group.errorFirstLine,
       count: inWindowFiltered.length,
       totalCount: group.records.length,
@@ -200,6 +217,20 @@ export function purgeExpiredTraces(
   })
 }
 
+/**
+ * FID-2026-1021-001: the count belongs to the CLASS; the message is one
+ * exemplar inside it. Printing them side by side without that distinction
+ * made a single specimen read as the tally. Exported so the rendering is
+ * pinnable by a test rather than only observable through stdout.
+ */
+export function recurrenceReportLine(recurrence: Recurrence): string {
+  return `- ${recurrence.toolName}: ${formatCountedUnit({
+    cause: recurrence.cause,
+    count: recurrence.count,
+    exemplar: recurrence.errorFirstLine.slice(0, 120),
+  })} / ${recurrence.distinctSessions} session(s)`
+}
+
 function report(rootDir: string): void {
   const records = readExperienceLedger(rootDir)
   const recurrences = computeRecurrences(records)
@@ -208,9 +239,7 @@ function report(rootDir: string): void {
     `experiences: ${records.length} record(s), ${groups.size} unique pattern(s), ${recurrences.length} recurrence(s) ≥ ${DEFAULT_MIN_FREQUENCY} in ${DEFAULT_WINDOW_DAYS}d`,
   )
   for (const r of recurrences) {
-    console.log(
-      `- [${r.count}× / ${r.distinctSessions} session(s)] ${r.toolName}: ${r.errorFirstLine.slice(0, 120)}`,
-    )
+    console.log(recurrenceReportLine(r))
   }
 }
 

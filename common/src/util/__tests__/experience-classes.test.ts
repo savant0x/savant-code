@@ -1,8 +1,11 @@
 import { describe, expect, test } from 'bun:test'
 
 import {
+  COUNT_SCOPE_RULE_AGGREGATE,
   EXPERIENCE_CLUSTER_GAP_MS,
+  countedUnitHead,
   experienceClassIdentity,
+  formatCountedUnit,
   summarizeExperienceClasses,
 } from '../experience-classes'
 
@@ -223,5 +226,39 @@ describe('FID-2026-1012-024 stable class identity', () => {
       summarizeExperienceClasses(rows),
     )
     expect(summarizeExperienceClasses([])).toEqual([])
+  })
+})
+
+describe('counted unit rendering (FID-2026-1021-001)', () => {
+  test('a single class counts the class, and the exemplar is marked as one', () => {
+    expect(countedUnitHead({ cause: 'command-exit', count: 3 })).toBe(
+      'command-exit ×3',
+    )
+    expect(
+      formatCountedUnit({
+        cause: 'command-exit',
+        count: 3,
+        exemplar: 'head: command not found',
+      }),
+    ).toBe('command-exit ×3; e.g. head: command not found')
+  })
+
+  test('an aggregate states its span and names the top class', () => {
+    expect(
+      countedUnitHead({
+        cause: 'command-exit',
+        count: 48,
+        scope: COUNT_SCOPE_RULE_AGGREGATE,
+      }),
+    ).toBe(`48× ${COUNT_SCOPE_RULE_AGGREGATE} (top class: command-exit)`)
+  })
+
+  test('the head never carries the exemplar (a truncated class is not an identity)', () => {
+    const head = countedUnitHead({
+      cause: `unrecognised-${'a'.repeat(64)}`,
+      count: 2,
+    })
+    expect(head).not.toContain('e.g.')
+    expect(head.startsWith('unrecognised-')).toBe(true)
   })
 })

@@ -23,6 +23,15 @@ export type WikiPatternInput = {
   /** The dedup engine's key (sha256(toolName + normalized error line)). */
   key: string
   toolName: string
+  /**
+   * The classification class this page counts. The page is keyed by the CLASS
+   * identity, so `errorFirstLine` is one exemplar inside it and the counts
+   * below belong to the class — naming it keeps the page from reading as a
+   * per-message tally. Absent on a page created by a rejection, which has no
+   * live observation and therefore no class.
+   * FID-2026-1021-001.
+   */
+  cause?: string
   /** Unstripped sample line — context for the reader, never re-hashed. */
   errorFirstLine: string
   /** Recurrences within the rolling 14-day window. */
@@ -93,6 +102,9 @@ export function buildPatternPage(
     '',
     '- **Tool:** ' + pattern.toolName,
     '- **Dedup key:** `sha256:' + pattern.key + '`',
+    ...(pattern.cause === undefined
+      ? []
+      : ['- **Class:** `' + pattern.cause + '`']),
     '- **Sample line:** `' + pattern.errorFirstLine + '`',
     '- **Recurrences (14d window):** ' +
       pattern.count +

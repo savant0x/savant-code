@@ -143,6 +143,59 @@ export function classCensusLine(entry: {
   )
 }
 
+/**
+ * FID-2026-1021-001 — the canonical rendering of a COUNTED unit.
+ *
+ * A recurrence counts a CLASS; a message is one exemplar inside that class.
+ * Printing the count beside the message without marking it made one specimen
+ * read as the tally: measured 2026-10-20, `head: command not found` (5 real
+ * rows) rendered as "69×" because the count was the class total. Every
+ * surface that prints a counted unit renders it through this authority, so
+ * the counted unit is named the same way everywhere and no surface can
+ * silently reintroduce the conflation.
+ *
+ * `scope` is set when the count spans more than one class (a rule-level
+ * aggregate): the span is stated and the top class is named, so the number is
+ * never read as one class's tally.
+ */
+export type CountedUnit = {
+  /** The class the count belongs to (or the top class of an aggregate). */
+  cause: string
+  /** The count itself. */
+  count: number
+  /** What the count spans, when it is not exactly one class. */
+  scope?: string
+}
+
+/**
+ * The scope label for a RULE-level aggregate: the count spans every class
+ * the canonical rule covers, so it is not one class's tally. Shared by the
+ * lesson-draft and proposal surfaces so the span is worded identically.
+ * FID-2026-1021-001.
+ */
+export const COUNT_SCOPE_RULE_AGGREGATE = 'across the classes this rule covers'
+
+/**
+ * The counted unit's HEAD — the class and the count, never the exemplar.
+ *
+ * Split from the full form because a column-budgeted surface must be able to
+ * truncate the EXEMPLAR (one sample message) without ever truncating the
+ * class name: a cause can be a 78-character `unrecognised-<64 hex>`, and a
+ * truncated class name is not a reproducible identity.
+ */
+export function countedUnitHead(unit: CountedUnit): string {
+  return unit.scope === undefined
+    ? `${unit.cause} ×${unit.count}`
+    : `${unit.count}× ${unit.scope} (top class: ${unit.cause})`
+}
+
+/** The full counted unit: the head plus the exemplar, explicitly marked. */
+export function formatCountedUnit(
+  unit: CountedUnit & { exemplar: string },
+): string {
+  return `${countedUnitHead(unit)}; e.g. ${unit.exemplar}`
+}
+
 export interface ExperienceClassSummary extends ExperienceClassIdentity {
   toolName: string
   count: number

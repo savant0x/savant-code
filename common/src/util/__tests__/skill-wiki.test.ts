@@ -218,3 +218,24 @@ describe('FID-2026-0912-003: page content shape', () => {
     expect(page.endsWith('\n')).toBe(true)
   })
 })
+
+describe('FID-2026-1021-001: the page names the class its counts belong to', () => {
+  test('a page built from a classed recurrence states the class', () => {
+    // The page is keyed by CLASS identity, so `errorFirstLine` is one
+    // exemplar inside it and the counts below belong to the class. Without
+    // the class line, the page reads as a per-message tally — the defect
+    // FID-2026-1021-001 recorded.
+    const page = buildPatternPage(
+      pattern({ cause: 'command-exit' }),
+      UPDATED_AT,
+    )
+    expect(page).toContain('- **Class:** `command-exit`')
+  })
+
+  test('a page with no live observation carries no class line', () => {
+    // A rejection-created page has no observation and therefore no class;
+    // the line must be absent rather than empty or invented.
+    const page = buildPatternPage(pattern(), UPDATED_AT)
+    expect(page).not.toContain('**Class:**')
+  })
+})

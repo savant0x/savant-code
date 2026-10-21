@@ -9,6 +9,7 @@ import { createSkill } from '@savant-code/common/util/skill-management'
 import { computeRecurrences } from '../experiences-dedup'
 import {
   AGENDA_MAX_ITEMS,
+  AGENDA_MAX_LINE,
   AGENDA_MAX_LINES,
   buildAgenda,
   runSessionEndReview,
@@ -108,6 +109,45 @@ describe('buildAgenda (S3-A)', () => {
     const built = buildAgenda(computeRecurrences(records, { now: NOW }))
     expect(built.routing[0]).toContain('FID-route')
     expect(built.routing[0]).toContain('Orchestrator direct write')
+  })
+
+  test('a class recurrence names the class and marks the exemplar', () => {
+    // Three DIFFERENT exit-failure messages collapse into one `command-exit`
+    // class. The 2026-10-20 defect this pins: the agenda printed the first
+    // specimen beside the class total, so `head: command not found` (5 real
+    // rows) read as "recurred 69×". The counted unit must be stated.
+    const records = [
+      record(
+        'run_readonly_command',
+        'Command exited with code 127: /usr/bin/bash: line 1: head: command not found',
+        1,
+      ),
+      record(
+        'run_readonly_command',
+        'Command exited with code 2: rg: bad flag',
+        2,
+      ),
+      record(
+        'run_readonly_command',
+        'Command exited with code 1: grep: no match',
+        3,
+      ),
+    ]
+    const recurrences = computeRecurrences(records, { now: NOW })
+    expect(recurrences).toHaveLength(1)
+    expect(recurrences[0]?.cause).toBe('command-exit')
+    expect(recurrences[0]?.count).toBe(3)
+    const built = buildAgenda(recurrences)
+    expect(built.items[0]?.cause).toBe('command-exit')
+    expect(built.agenda).toContain('command-exit ×3')
+    expect(built.agenda).toContain('class recurrence (total 3)')
+    expect(built.agenda).toContain('count spans the class')
+    expect(built.agenda).toContain('e.g. Command exited with code 127')
+    expect(built.routing[0]).toContain('command-exit ×3')
+    expect(built.routing[0]).toContain('counted across the class')
+    for (const line of built.agenda.split('\n')) {
+      expect(line.length).toBeLessThanOrEqual(AGENDA_MAX_LINE)
+    }
   })
 })
 

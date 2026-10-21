@@ -4,7 +4,11 @@ import * as path from 'node:path'
 
 import { afterEach, describe, expect, test } from 'bun:test'
 
-import { buildCandidates, emitCandidates } from '../evolve-skills'
+import {
+  buildCandidates,
+  candidateReportLine,
+  emitCandidates,
+} from '../evolve-skills'
 import { collectScratchpadIssues } from '../hygiene'
 
 import type { ExperienceRecord } from '@savant-code/common/types/experience'
@@ -89,5 +93,30 @@ describe('emitCandidates', () => {
     // Live skill dir untouched.
     expect(fs.existsSync(path.join(root, '.agents', 'skills'))).toBe(false)
     expect(collectScratchpadIssues(root)).toEqual([])
+  })
+})
+
+describe('candidate counted unit (FID-2026-1021-001)', () => {
+  test('the console line names the class the count belongs to', () => {
+    const root = fixtureRoot()
+    writeLedger(root, [
+      record(
+        'run_command',
+        'Command exited with code 127: head: command not found',
+      ),
+      record(
+        'run_command',
+        'Command exited with code 127: tail: command not found',
+      ),
+    ])
+    const candidates = buildCandidates(root)
+    const candidate = candidates[0]!
+    expect(candidate.cause).toBe('command-exit')
+    expect(candidate.count).toBe(2)
+    // The count attaches to the CLASS; the message is one exemplar inside it.
+    expect(candidateReportLine(candidate)).toBe(
+      `- [${candidate.risk}] ${candidate.skillName}: run_command · ` +
+        'command-exit ×2; e.g. Command exited with code 127: head: command not found',
+    )
   })
 })

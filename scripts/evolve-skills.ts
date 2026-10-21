@@ -26,6 +26,7 @@
 import * as fs from 'node:fs'
 import * as path from 'node:path'
 
+import { formatCountedUnit } from '@savant-code/common/util/experience-classes'
 import { patchChangeRatio } from '@savant-code/common/util/skill-management'
 
 import { readExperienceLedger, groupByDedupKey } from './experiences-dedup.js'
@@ -41,6 +42,11 @@ export const EVOLVE_RISK_RATIO = 0.1
 export type EvolveCandidate = {
   toolName: string
   errorFirstLine: string
+  /**
+   * The classification class the count belongs to — `errorFirstLine` is one
+   * exemplar inside it. FID-2026-1021-001.
+   */
+  cause: string
   count: number
   /** Suggested skill name (best-effort slug of the failure pattern). */
   skillName: string
@@ -157,9 +163,10 @@ export function buildCandidates(
       '**Created:** ' + today,
       '',
       '## Summary',
-      `The tool ${group.toolName} failed with "${group.errorFirstLine}" ` +
-        `${group.records.length}× in the experience ledger — a candidate ` +
-        'capability to evolve from usage evidence (FID-2026-0824-012 S4-A).',
+      `The tool ${group.toolName} hit the \`${group.cause}\` class ` +
+        `${group.records.length}× in the experience ledger (e.g. ` +
+        `"${group.errorFirstLine}") — a candidate capability to evolve from ` +
+        'usage evidence (FID-2026-0824-012 S4-A).',
       '',
       '## Proposed Solution',
       'Review the candidate SKILL.md draft in this output directory, run the ' +
@@ -198,6 +205,7 @@ export function buildCandidates(
     return {
       toolName: group.toolName,
       errorFirstLine: group.errorFirstLine,
+      cause: group.cause,
       count: group.records.length,
       skillName,
       risk,
@@ -229,6 +237,22 @@ export function emitCandidates(
   return emitted
 }
 
+/**
+ * FID-2026-1021-001: the console line names the CLASS the count belongs to and
+ * marks the message as one exemplar. Exported so the rendering is pinnable by
+ * a test rather than only observable through stdout.
+ */
+export function candidateReportLine(candidate: EvolveCandidate): string {
+  return (
+    `- [${candidate.risk}] ${candidate.skillName}: ${candidate.toolName} · ` +
+    formatCountedUnit({
+      cause: candidate.cause,
+      count: candidate.count,
+      exemplar: candidate.errorFirstLine.slice(0, 60),
+    })
+  )
+}
+
 if (import.meta.main) {
   const rootDir = path.resolve(import.meta.dir, '..')
   const candidates = buildCandidates(rootDir)
@@ -237,10 +261,7 @@ if (import.meta.main) {
     `skills:evolve: ${candidates.length} candidate(s) emitted to ${EVOLVE_OUTPUT_DIR}`,
   )
   for (const candidate of candidates) {
-    console.log(
-      `- [${candidate.risk}] ${candidate.skillName}: ${candidate.toolName} · ` +
-        `${candidate.errorFirstLine.slice(0, 60)} (${candidate.count}×)`,
-    )
+    console.log(candidateReportLine(candidate))
   }
   console.log(
     `- files: ${emitted.length} written (never committed, never trusted)`,

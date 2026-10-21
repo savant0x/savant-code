@@ -15,7 +15,10 @@
 import * as fs from 'node:fs'
 import * as path from 'node:path'
 
-import { summarizeExperienceClasses } from '@savant-code/common/util/experience-classes'
+import {
+  countedUnitHead,
+  summarizeExperienceClasses,
+} from '@savant-code/common/util/experience-classes'
 import { proposalsForSession } from '@savant-code/common/util/skill-proposals'
 import { updateWikiPattern } from '@savant-code/common/util/skill-wiki'
 
@@ -60,6 +63,9 @@ export const AGENDA_PATH = path.join('dev', 'agenda.md')
 
 export type AgendaItem = {
   toolName: string
+  /** Classification cause the count belongs to — the counted unit. */
+  cause: string
+  /** One specimen message inside the counted class, never the counted unit. */
   errorFirstLine: string
   count: number
   totalCount: number
@@ -145,6 +151,18 @@ export function pendingOperatorDecisions(scope: string): PendingDecision[] {
   return decisions
 }
 
+/**
+ * One agenda line clamped to MD013's 120-column budget. A classification
+ * cause can be long (`unrecognised-<64 hex>`), so the budget is computed from
+ * the prefix instead of assuming a fixed slice — `dev/agenda.md` is committed
+ * markdown and `lint:md` runs repository-wide (see AGENDA_MAX_LINE).
+ */
+function agendaLine(prefix: string, body: string): string {
+  const budget = AGENDA_MAX_LINE - prefix.length
+  if (budget <= 1) return prefix.slice(0, AGENDA_MAX_LINE)
+  return `${prefix}${body.length <= budget ? body : `${body.slice(0, budget - 1)}…`}`
+}
+
 /** Build the agenda document from the current recurrences (≤ 50 lines). */
 export function buildAgenda(
   recurrences: ReturnType<typeof computeRecurrences>,
@@ -163,6 +181,7 @@ export function buildAgenda(
   const maxItems = opts.maxItems ?? AGENDA_MAX_ITEMS
   const items: AgendaItem[] = recurrences.slice(0, maxItems).map((r) => ({
     toolName: r.toolName,
+    cause: r.cause,
     errorFirstLine: r.errorFirstLine,
     count: r.count,
     totalCount: r.totalCount,
@@ -185,9 +204,24 @@ export function buildAgenda(
     lines.push('_No recurring failure patterns in the last 14 days._', '')
   } else {
     for (const item of items) {
+      // A recurrence counts a CLASS, not a message: the ledger groups every
+      // exit-127 shell failure under `command-exit`, so printing one specimen
+      // beside the class total reads as "this exact message recurred N times".
+      // Measured misreading (2026-10-20): `head: command not found` has 5 real
+      // rows while the agenda showed 69 — the class total printed beside one
+      // specimen. Name the class, mark the specimen. FID-2026-1021-001.
       lines.push(
-        `- [ ] **${item.toolName}** — ${item.errorFirstLine.slice(0, 100)}`,
-        `      recurrences: ${item.count} (total ${item.totalCount}) — check existing ownership and internal follow-ups`,
+        agendaLine(
+          `- [ ] **${item.toolName}** — ${countedUnitHead({
+            cause: item.cause,
+            count: item.count,
+          })}; e.g. `,
+          item.errorFirstLine,
+        ),
+        agendaLine(
+          `      class recurrence (total ${item.totalCount}); count spans the class — `,
+          'check ownership and internal follow-ups',
+        ),
         '',
       )
     }
@@ -214,8 +248,11 @@ export function buildAgenda(
   const routing: string[] = []
   for (const item of items) {
     routing.push(
-      `FID-route: ${item.toolName} · ${item.errorFirstLine.slice(0, 80)} — ` +
-        `recurred ${item.count}× in 14d (≥3 bar). Check ownership/internal tracking; new FID only for a demonstrated code defect. ` +
+      `FID-route: ${item.toolName} · ${countedUnitHead({
+        cause: item.cause,
+        count: item.count,
+      })} in 14d (≥3 bar) — counted across the class; e.g. ${item.errorFirstLine.slice(0, 80)}. ` +
+        `Check ownership/internal tracking; new FID only for a demonstrated code defect. ` +
         `Orchestrator direct write when <100 lines (hybrid routing rule).`,
     )
   }
