@@ -1,5 +1,32 @@
 # Changelog
 
+## 2026-10-22 — The picker records what it received, and one shared helper stops dropping keys
+
+- **FID-2026-1022-002 — low — Make the model picker's keystrokes observable.**
+  The 2026-10-19 `/model` acceptance recorded "arrow keys and filter letter
+  responded" as a human observation: the picker's keyboard callback emitted
+  nothing at any log level, so in `debug/cli.jsonl` a handled arrow key and an
+  ignored one were identical. `ModelPicker` now writes one debug record per
+  handled key (key name, action, query length, filtered row count, selected
+  index), one per filter change, and an open/close pair carrying the catalog
+  size and the close reason — never the typed text. The dwell probe reads those
+  records back and prints a verdict per acceptance claim, so the interaction
+  half of the ritual is derived from logs instead of memory. Four pins; the
+  negative leg is 0 pass / 4 fail with the implementation reverted.
+- **FID-2026-1022-003 — low — Stop dropping a Fragment's key in
+  `makeTextUnselectable`.** The React warning the CLI logged between
+  `CommandPalette` and `Button` reports an unkeyed element inside a rendered
+  list. Rendering the palette in the development reconciler reproduced no
+  warning on this tree (a raw unkeyed array in the same harness does, so the
+  harness can see one), but the shared normalization helper behind both
+  `Button` and `Clickable` provably emitted one: unwrapping a Fragment discarded
+  its key, so a Fragment holding a single child came back with `key: null` and
+  the caller's `flatMap` placed it inside the array. Unwrapping now goes
+  through `React.Children.toArray(...)`, which re-keys the children by
+  position. Measured over six shapes: two unkeyed elements before, zero after;
+  reverting the line makes 2 of the 6 pins fail. The live warning itself is not
+  claimed reproduced — the record states that limitation.
+
 ## 2026-10-21 — A recurrence names the class it counts; two process-bound suites declare their budgets
 
 - **FID-2026-1021-001 — medium — Name the class a recurrence counts.** A
