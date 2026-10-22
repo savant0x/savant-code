@@ -10,6 +10,12 @@
  *
  * It asserts nothing about the cause; it collects the evidence.
  *
+ * FID-2026-1022-002 extended it to read the product's own breadcrumbs back.
+ * `ModelPicker` now writes `model-picker.open` / `.key` / `.filter` / `.close`
+ * records to `debug/cli.jsonl`, so the interaction verdict ("arrow keys and the
+ * filter letter responded") is derived from log lines instead of a human
+ * observation. When the picker never opens, no verdict is invented.
+ *
  * Usage: `bun scripts/probes/live-008-model-picker-dwell.ts [--dwell-ms N]`
  * Exit code 0 = the observation completed (read the JSON), 1 = the CLI never
  * reached the picker at all.
@@ -48,6 +54,23 @@ async function main(): Promise<void> {
   }
 
   /** Bytes appended to `file` since `from`, read as text. */
+  /**
+   * One `model-picker.*` record from a JSONL line. The CLI's pino sink nests
+   * call arguments under `data`, so both shapes are read.
+   */
+  function breadcrumbOf(line: string): Record<string, unknown> | undefined {
+    try {
+      const record = JSON.parse(line) as Record<string, unknown>
+      const payload = (record.data ?? record) as Record<string, unknown>
+      const event = payload.event
+      return typeof event === 'string' && event.startsWith('model-picker.')
+        ? payload
+        : undefined
+    } catch {
+      return undefined
+    }
+  }
+
   function deltaSince(file: string, from: number): string {
     try {
       const buffer = fs.readFileSync(file)
@@ -136,6 +159,18 @@ async function main(): Promise<void> {
     await sleep(1000)
   }
 
+  // Interaction after the dwell: the breadcrumbs can only verdict a key the
+  // product actually received, so the harness presses the keys the acceptance
+  // claim is about rather than inferring them from the screen.
+  if (opened) {
+    write('\u001b[B')
+    await sleep(150)
+    write('\u001b[B')
+    await sleep(150)
+    write('a')
+    await sleep(500)
+  }
+
   const aliveAfterDwell = child.exitCode === null
   for (let i = 0; i < 3 && child.exitCode === null; i++) {
     write('\u001b')
@@ -159,6 +194,51 @@ async function main(): Promise<void> {
     )
     .map((line) => line.slice(0, 2_000))
 
+  const breadcrumbs = jsonlDelta
+    .split('\n')
+    .map(breadcrumbOf)
+    .filter((entry): entry is Record<string, unknown> => entry !== undefined)
+  const ofEvent = (event: string) =>
+    breadcrumbs.filter((entry) => entry.event === event)
+  const keysByAction: Record<string, number> = {}
+  for (const entry of ofEvent('model-picker.key')) {
+    const action = String(entry.action)
+    keysByAction[action] = (keysByAction[action] ?? 0) + 1
+  }
+  const filteredCounts = ofEvent('model-picker.filter').map((entry) =>
+    Number(entry.filtered),
+  )
+  const closeReasons = ofEvent('model-picker.close').map((entry) =>
+    String(entry.reason),
+  )
+  const catalogSize = Number(
+    ofEvent('model-picker.open')[0]?.catalog ?? Number.POSITIVE_INFINITY,
+  )
+  // Verdicts are derived from the product's own records only; a missing picker
+  // yields an empty verdict list rather than a pass.
+  const interactionVerdicts = opened
+    ? [
+        {
+          claim: 'the picker recorded its open',
+          pass: ofEvent('model-picker.open').length > 0,
+        },
+        {
+          claim: 'at least one navigation key was handled',
+          pass: (keysByAction.up ?? 0) + (keysByAction.down ?? 0) > 0,
+        },
+        {
+          claim: 'a filter narrowed the matched rows',
+          pass: filteredCounts.some(
+            (count) => Number.isFinite(count) && count < catalogSize,
+          ),
+        },
+        {
+          claim: 'the close recorded its reason',
+          pass: closeReasons.length > 0,
+        },
+      ]
+    : []
+
   const firstEmpty = samples.find((sample) => sample.emptyTree)
   const report = {
     probe: 'live-008-model-picker-dwell',
@@ -170,6 +250,14 @@ async function main(): Promise<void> {
     exitCode: child.exitCode,
     exitLogLines: exitDelta.trim() === '' ? [] : exitDelta.trim().split('\n'),
     errorLogLines: consoleLines,
+    breadcrumbs: {
+      opens: ofEvent('model-picker.open').length,
+      keys: ofEvent('model-picker.key').length,
+      keysByAction,
+      filteredCounts,
+      closeReasons,
+    },
+    interactionVerdicts,
     tailScreen: screenText().replace(/\s+/g, ' ').trim().slice(-600),
   }
 

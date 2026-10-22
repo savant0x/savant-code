@@ -59,7 +59,13 @@ export function makeTextUnselectable(node: ReactNode): ReactNode {
   const type = el.type
 
   if (type === React.Fragment) {
-    return makeTextUnselectable(el.props.children)
+    // A Fragment's own key cannot survive the unwrap, so its children are
+    // re-keyed by position here. Returning the raw children handed back an
+    // element with `key: null` whenever the Fragment held exactly one child,
+    // and the caller's flatMap then placed that unkeyed element inside an
+    // array — the shape React reports as "Each child in a list should have a
+    // unique key prop" (FID-2026-1022-003).
+    return makeTextUnselectable(React.Children.toArray(el.props.children))
   }
 
   // Ensure text and span nodes are not selectable

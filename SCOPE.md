@@ -96,12 +96,12 @@ records, the changelog and the session summary.
 record declares its gates but holds no receipt until it converges.
 
 - FID-2026-1022-001: `cli/src/utils/shared-event.ts`
-  `cli/src/hooks/use-terminal-dimensions.ts`
+  `cli/src/hooks/use-terminal-dimensions.ts` `cli/src/components/model-picker.tsx`
   `cli/src/components/right-sidebar.tsx` `cli/src/components/sidebar-rail.tsx`
   `cli/src/components/right-sidebar-motion.tsx` `cli/src/hooks/use-chat-ui.ts`
   `cli/src/hooks/use-scroll-management.ts` `cli/src/hooks/use-fold-collapse.ts`
   `cli/src/chat/use-chat-header-visibility.ts`
-  `scripts/probes/model-picker-listener-count.ts`
+  `cli/src/components/__tests__/model-picker-listener-baseline.render.test.tsx`
 - FID-2026-1022-002: `cli/src/components/model-picker.tsx`
   `scripts/probes/live-008-model-picker-dwell.ts`
   `cli/src/components/__tests__/**`

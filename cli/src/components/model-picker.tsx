@@ -1,5 +1,5 @@
 import { useKeyboard } from '@opentui/react'
-import { memo, useCallback, useEffect, useMemo } from 'react'
+import { memo, useCallback, useEffect, useMemo, useRef } from 'react'
 
 import { buildGroupedItems, type ListItem } from './model-picker-grouping'
 import { ModelPickerHeaderRow, ModelPickerModelRow } from './model-picker-rows'
@@ -8,6 +8,7 @@ import { createChatScrollbarOptions } from '../chat/styles'
 import { useTerminalDimensions } from '../hooks/use-terminal-dimensions'
 import { useTheme } from '../hooks/use-theme'
 import { useModelPickerStore } from '../state/model-picker-store'
+import { logger } from '../utils/logger'
 
 import type { OpenRouterModel } from '../utils/openrouter-models'
 import type { KeyEvent } from '@opentui/core'
@@ -74,6 +75,58 @@ export const ModelPicker = memo(function ModelPicker({
         (index) => items[index]?.type === 'model',
       ),
     [items, selectedIndex],
+  )
+
+  // FID-2026-1022-002: the picker's interaction verdict used to exist only in
+  // the operator's memory. These breadcrumbs make it replayable from
+  // `debug/cli.jsonl`: one record per open, per handled key, per filter change
+  // and per close, carrying lengths and counts — never what was typed.
+  const closeReasonRef = useRef<'escape' | 'select' | null>(null)
+
+  useEffect(() => {
+    logger.debug(
+      { event: 'model-picker.open', catalog: models.length },
+      'model picker open',
+    )
+    return () => {
+      logger.debug(
+        {
+          event: 'model-picker.close',
+          reason: closeReasonRef.current ?? 'unmount',
+        },
+        'model picker close',
+      )
+    }
+  }, [])
+
+  useEffect(() => {
+    logger.debug(
+      {
+        event: 'model-picker.filter',
+        queryLength: query.length,
+        filtered: filteredModels.length,
+        catalog: models.length,
+      },
+      'model picker filter',
+    )
+  }, [filteredModels.length, models.length, query.length])
+
+  /** One record per HANDLED key; unhandled keys stay silent. */
+  const traceKey = useCallback(
+    (keyName: string, action: string) => {
+      logger.debug(
+        {
+          event: 'model-picker.key',
+          key: keyName,
+          action,
+          queryLength: query.length,
+          filtered: filteredModels.length,
+          selected: effectiveSelectedIndex,
+        },
+        'model picker key',
+      )
+    },
+    [effectiveSelectedIndex, filteredModels.length, query.length],
   )
 
   // Keep selection on a real model as the filter changes; headers are display
@@ -147,26 +200,33 @@ export const ModelPicker = memo(function ModelPicker({
         }
         if (name === 'escape' || (key.ctrl && name === 'c')) {
           prevent()
+          closeReasonRef.current = 'escape'
+          traceKey(name === 'escape' ? 'escape' : 'ctrl+c', 'close')
           onClose()
           return
         }
         if (name === 'up' || (name === 'tab' && key.shift)) {
           prevent()
+          traceKey(name === 'up' ? 'up' : 'shift+tab', 'up')
           onSelectIndex(findNextModelIndex(effectiveSelectedIndex, -1))
           return
         }
         if (name === 'down' || (name === 'tab' && !key.shift)) {
           prevent()
+          traceKey(name === 'down' ? 'down' : 'tab', 'down')
           onSelectIndex(findNextModelIndex(effectiveSelectedIndex, 1))
           return
         }
         if (name === 'backspace') {
           prevent()
+          traceKey('backspace', 'filter')
           onQueryChange(query.slice(0, -1))
           return
         }
         if (name === 'return' || name === 'enter' || name === 'space') {
           prevent()
+          closeReasonRef.current = 'select'
+          traceKey(name, 'select')
           commit(effectiveSelectedIndex)
           return
         }
@@ -183,6 +243,7 @@ export const ModelPicker = memo(function ModelPicker({
           !(key as typeof key & { alt?: boolean }).alt
         ) {
           prevent()
+          traceKey(ch, 'filter')
           onQueryChange(query + ch)
         }
       },
@@ -194,6 +255,7 @@ export const ModelPicker = memo(function ModelPicker({
         onQueryChange,
         onSelectIndex,
         query,
+        traceKey,
       ],
     ),
   )
