@@ -59,6 +59,20 @@
         "dev/fids/archive/FID-2026-1018-008-model-picker-silent-terminal-death.md"
       ],
       "sourceFids": ["FID-2026-1018-008"]
+    },
+    {
+      "id": "LIVE-005",
+      "kind": "live-comparison",
+      "status": "open",
+      "owner": "Operator",
+      "summary": "MEASURED 2026-10-23 20:01Z, one live run: the LIVE-008 dwell probe opened /model once on the 4,075-row dev catalog, held it for 12 s and closed with Escape. The session logged zero 'Possible EventTarget memory leak detected' WARN lines, against five in the 2026-10-19 acceptance (11 resize listeners on CliRenderer, 11 change listeners on ScrollBarRenderable twice, 11 focus and 11 blur on CliRenderer). The shared-subscription repair in 106ee6f8 (FID-2026-1018-011) therefore held in this run. This is one run, one picker open and no active bashers; the 2026-10-19 population included a resize warning 24 s BEFORE the first picker open, so this observation neither attributes that population nor proves it absent on other paths.",
+      "nextAction": "Repeat under the original conditions (five picker opens, three active bashers) before any claim that the listener warnings are repaired. If a warning appears, capture its event name, target and listener count; do not infer the picker as the source without it.",
+      "evidence": [
+        "scripts/probes/live-008-model-picker-dwell.ts",
+        "dev/session-summaries/2026-10-23-picker-breadcrumb-and-probe-verdict.md"
+      ],
+      "completionEvidence": [],
+      "sourceFids": ["FID-2026-1018-011", "FID-2026-1018-008"]
     }
   ]
 }

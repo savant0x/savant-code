@@ -1,5 +1,29 @@
 # Changelog
 
+## 2026-10-23 — The breadcrumb stops carrying what was typed, and the probe stops passing itself
+
+- **FID-2026-1023-001 — medium — Stop the picker breadcrumb carrying the typed
+  character, and stop the dwell probe passing a failed verdict.**
+  `FID-2026-1022-002` introduced `model-picker.key` and recorded in its
+  Resolution that no typed text is logged — "lengths and counts only". The
+  printable branch passed the pressed character straight into the record's `key`
+  field, so `debug/cli.jsonl` accumulated the filter query one character at a
+  time, and the pin written for the same claim asserted `key === 'g'`,
+  enshrining the leak. The record now carries `key: 'printable'` with the query
+  length, filtered count and selection unchanged, and the pin asserts the typed
+  character appears nowhere in the record. Separately, the LIVE-008 dwell probe
+  computed four interaction verdicts and ignored them: it exited 0 whenever the
+  picker opened, so a run whose own report printed failed claims still read as
+  success to any gate consuming its exit code. The verdict-to-exit decision is
+  now one exported function — exit 0 only when the picker opened and every
+  claim held, one `FAIL — <claim>` line per failure — with its own five-case
+  pin. Negative legs: the breadcrumb pin is 3 pass / 1 fail with the leak
+  restored, the probe pin 2 pass / 3 fail with the old decision. A live run then
+  recorded `"key":"printable"` with `queryLength` 0 → 1 and `filtered` 4036 →
+  3774, so the redaction kept the acceptance verdict readable without the
+  character; that run logged no `EventTarget` max-listener warnings, recorded as
+  LIVE-005 and not claimed as a repair here.
+
 ## 2026-10-23 — The listener pin measures one container, and the picker path is flat
 
 - **FID-2026-1022-001 — medium — Pin the `/model` listener population to zero

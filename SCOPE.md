@@ -35,20 +35,7 @@ This session uses the canonical repository protocol.
   on the external targets; this repository audit does not grant that authority.
   Details are preserved in the hygiene audit report; no external fix is claimed.
 
-### FID-2026-1023-001 — picker breadcrumb and dwell-probe verdict
-
-- [ ] Authority: automation level 3. Two defects verified against `e1b09886`: the printable
-  branch of `ModelPicker` writes the typed character into the `model-picker.key` record
-  against the contract that file documents, and the LIVE-008 dwell probe computes four
-  interaction verdicts and exits without them. Evidence and the plan live in
-  `dev/fids/FID-2026-1023-001-picker-breadcrumb-and-probe-verdict.md`.
-
 ## Machine-readable scope targets
-
-- FID-2026-1023-001: `cli/src/components/model-picker.tsx`,
-  `cli/src/components/__tests__/model-picker-breadcrumbs.render.test.tsx`,
-  `scripts/probes/live-008-model-picker-dwell.ts`,
-  `scripts/probes/live-008-model-picker-dwell.test.ts`
 
 `AUDIT-2026-1018` completed on 2026-10-19 and its target list is retained in
 `dev/tracking/scope-history-2026-10-20.md`, which grants nothing; `EMBED-001`
@@ -68,3 +55,9 @@ evidence lives in the archived records, the changelog and the session summary.
 `FID-2026-1022-001` closed and archived on 2026-10-23 (implementation
 `ec6bcd68`), so its write grant is released here; the evidence lives in the
 archived record, the changelog and the session summary.
+
+`FID-2026-1023-001` closed and archived on 2026-10-23 (implementation
+`15c03a04`), so its write grant is released here; the evidence lives in the
+archived record, the changelog and the session summary. The live listener
+observation it produced is tracked as LIVE-005 in
+`dev/tracking/internal-followups.json`, independently of this closure.
