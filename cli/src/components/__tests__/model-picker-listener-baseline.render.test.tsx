@@ -1,6 +1,7 @@
 import { createTestRenderer } from '@opentui/core/testing'
 import { useAppContext, useKeyboard, createRoot } from '@opentui/react'
 import { describe, expect, test } from 'bun:test'
+import { useEffect, useState } from 'react'
 
 import { initializeThemeStore } from '../../hooks/use-theme'
 import { ModelPicker } from '../model-picker'
@@ -11,21 +12,29 @@ import type { EventEmitter } from 'node:events'
 initializeThemeStore()
 
 /**
- * FID-2026-1022-001: the 2026-10-19 `/model` acceptance logged five
- * `EventEmitter` max-listener warnings in ~27 s — 11 `resize`, `focus` and
- * `blur` listeners on `CliRenderer`, 11 `change` on `ScrollBarRenderable`.
- * A warning proves the count reached Node's threshold of 10 at those
- * instants; it cannot say whether the count GROWS.
+ * FID-2026-1022-001: the population of listeners on the `/model` path.
+ *
+ * The 2026-10-19 acceptance logged five `EventEmitter` max-listener warnings —
+ * 11 `resize`, `focus` and `blur` on `CliRenderer`, 11 `change` on
+ * `ScrollBarRenderable`. A warning proves the count reached Node's threshold of
+ * 10 at those instants; it cannot say whether the count GROWS.
  *
  * This instrument answers that question against the emitters themselves
- * (`listenerCount()`), which is exact and independent of the PTY: the picker is
- * mounted and unmounted five times on one renderer and the population is
- * sampled at the same point of every cycle.
+ * (`listenerCount()`), which is exact and independent of the PTY.
+ *
+ * The first version of this file called `root.render()` once per cycle. That
+ * measured `@opentui/react`, not the picker: `createRoot().render()` creates a
+ * NEW React container on every call (`node_modules/@opentui/react/
+ * chunk-vx8rm66p.js`, `_render` → `reconciler.createContainer`), orphaning the
+ * previous tree without unmounting it. No effect cleanup ran, so every hook in
+ * the orphaned tree leaked and the picker appeared to grow by one `keypress`
+ * and one `selection` subscriber per cycle. A single container — one
+ * `root.render()`, a host component that toggles the picker through state —
+ * shows the real population: flat.
  *
  * The population is allowed to be non-zero — those are the subscribers the
- * surface legitimately holds while mounted. What must be flat is the
- * repository-owned part of it, and the measurement records the two populations
- * that are not flat so an upstream repair is noticed.
+ * surface legitimately holds while mounted. What must be flat is the count
+ * after every mount/unmount cycle, and that is what this file pins.
  */
 const CYCLES = 5
 const CATALOG_SIZE = 4_075
@@ -42,11 +51,15 @@ function catalog(size: number): OpenRouterModel[] {
   })
 }
 
+type Mode = 'idle' | 'picker' | 'keyboard' | 'leaky'
 type Handles = { renderer?: EventEmitter; keyHandler?: EventEmitter }
 
-const handles: Handles = {}
+const MODELS = catalog(CATALOG_SIZE)
 
-/** Exposes the two emitters the surface subscribes to, for exact sampling. */
+const handles: Handles = {}
+let setMode: (mode: Mode) => void = () => {}
+
+/** Exposes the emitters the surface subscribes to, for exact sampling. */
 function HandleProbe() {
   const { keyHandler } = useAppContext()
   handles.keyHandler = keyHandler as unknown as EventEmitter
@@ -58,39 +71,89 @@ function KeyboardProbe() {
   return <text>keyboard probe</text>
 }
 
-function PlainProbe() {
-  return <text>plain probe</text>
+/**
+ * Deliberately unsubscribed on cleanup. The instrument must see this leak —
+ * a flat reading from a census that cannot detect a leak is not evidence.
+ */
+function LeakyProbe() {
+  const { keyHandler } = useAppContext()
+  useEffect(() => {
+    keyHandler?.on('keypress', () => {})
+    // No cleanup by design: this is the positive control.
+  }, [keyHandler])
+  return <text>leaky probe</text>
 }
 
-/** Keeps the emitter probe mounted across every cycle on one React root. */
-function Frame({ children }: { children?: React.ReactNode }) {
+/** The single React container: `root.render()` is called once, in this file. */
+function Host() {
+  const [mode, update] = useState<Mode>('idle')
+  setMode = update
   return (
     <>
       <HandleProbe />
-      {children}
+      {mode === 'picker' ? (
+        <ModelPicker
+          models={MODELS}
+          query=""
+          selectedIndex={0}
+          onSelectIndex={() => {}}
+          onQueryChange={() => {}}
+          onSelect={() => {}}
+          onClose={() => {}}
+          terminalHeight={76}
+        />
+      ) : null}
+      {mode === 'keyboard' ? <KeyboardProbe /> : null}
+      {mode === 'leaky' ? <LeakyProbe /> : null}
     </>
   )
 }
 
-/** `constructor:event → listenerCount` for every non-zero population. */
-function population(renderer: EventEmitter): Record<string, number> {
-  const out = new Map<string, number>()
-  const record = (emitter: EventEmitter | undefined, label: string) => {
-    if (!emitter) return
-    for (const event of emitter.eventNames()) {
-      const key = `${label}:${String(event)}`
-      out.set(key, (out.get(key) ?? 0) + emitter.listenerCount(event))
+interface EmitterNode {
+  constructor: { name: string }
+  eventNames?: () => (string | symbol)[]
+  listenerCount?: (event: string | symbol) => number
+  getChildren?: () => EmitterNode[]
+}
+
+/** `constructor:event → listenerCount` for every non-zero population in a tree. */
+function walk(node: EmitterNode | undefined, out: Map<string, number>): void {
+  if (!node) return
+  const events = typeof node.eventNames === 'function' ? node.eventNames() : []
+  for (const event of events) {
+    const count = node.listenerCount?.(event) ?? 0
+    if (count > 0) {
+      const key = `${node.constructor.name}:${String(event)}`
+      out.set(key, (out.get(key) ?? 0) + count)
     }
   }
-  record(renderer, 'CliRenderer')
-  record(handles.keyHandler, 'InternalKeyHandler')
+  for (const child of node.getChildren?.() ?? []) walk(child, out)
+}
+
+/** Every emitter in the renderer tree plus the key handler. */
+function population(renderer: EventEmitter): Record<string, number> {
+  const out = new Map<string, number>()
+  const root = (renderer as unknown as { root?: EmitterNode }).root
+  walk(renderer as unknown as EmitterNode, out)
+  walk(root, out)
+  walk(handles.keyHandler as unknown as EmitterNode, out)
   return Object.fromEntries(
     [...out.entries()].sort(([a], [b]) => a.localeCompare(b)),
   )
 }
 
+function keypressCount(snapshot: Record<string, number>): number {
+  return snapshot['InternalKeyHandler:keypress'] ?? 0
+}
+
+async function settle(setup: Awaited<ReturnType<typeof createTestRenderer>>) {
+  await setup.flush()
+  await Bun.sleep(30)
+  await setup.flush()
+}
+
 describe('model picker — listener population', () => {
-  test('attribution — a bare useKeyboard mount is the accumulating subscriber', async () => {
+  test('attribution — useKeyboard is flat and the census detects a real leak', async () => {
     const setup = await createTestRenderer({
       width: 60,
       height: 20,
@@ -98,127 +161,83 @@ describe('model picker — listener population', () => {
     })
     const root = createRoot(setup.renderer)
     try {
-      root.render(
-        <Frame>
-          <text>idle</text>
-        </Frame>,
-      )
-      await setup.flush()
-      await Bun.sleep(20)
-      const before = population(setup.renderer)
-      for (let cycle = 1; cycle <= 3; cycle += 1) {
-        root.render(
-          <Frame>
-            <PlainProbe />
-          </Frame>,
-        )
-        await setup.flush()
-        await Bun.sleep(20)
-        root.render(<Frame />)
-        await setup.flush()
-        await Bun.sleep(20)
-      }
-      const afterPlain = population(setup.renderer)
-      expect(afterPlain).toEqual(before)
+      root.render(<Host />)
+      await settle(setup)
+      const baseline = population(setup.renderer)
 
       for (let cycle = 1; cycle <= 3; cycle += 1) {
-        root.render(
-          <Frame>
-            <KeyboardProbe />
-          </Frame>,
-        )
-        await setup.flush()
-        await Bun.sleep(20)
-        root.render(<Frame />)
-        await setup.flush()
-        await Bun.sleep(20)
+        setMode('keyboard')
+        await settle(setup)
+        setMode('idle')
+        await settle(setup)
       }
       const afterKeyboard = population(setup.renderer)
-      console.log(`attribution before: ${JSON.stringify(before)}`)
-      console.log(`attribution after plain: ${JSON.stringify(afterPlain)}`)
+      expect(afterKeyboard).toEqual(baseline)
+
+      for (let cycle = 1; cycle <= 3; cycle += 1) {
+        setMode('leaky')
+        await settle(setup)
+        setMode('idle')
+        await settle(setup)
+      }
+      const afterLeaky = population(setup.renderer)
+      console.log(`attribution baseline: ${JSON.stringify(baseline)}`)
       console.log(
         `attribution after useKeyboard: ${JSON.stringify(afterKeyboard)}`,
       )
-      expect(
-        (afterKeyboard['InternalKeyHandler:keypress'] ?? 0) -
-          (before['InternalKeyHandler:keypress'] ?? 0),
-      ).toBe(3)
+      console.log(`attribution after leak: ${JSON.stringify(afterLeaky)}`)
+
+      // The positive control: three deliberate registrations, three listeners.
+      expect(keypressCount(afterLeaky) - keypressCount(baseline)).toBe(3)
+      // The library hook cleans up; it does not accumulate.
+      expect(keypressCount(afterKeyboard)).toBe(keypressCount(baseline))
     } finally {
       root.unmount()
       setup.renderer.destroy()
     }
   }, 120_000)
 
-  test('five mount/unmount cycles — measured population', async () => {
+  test('five mount/unmount cycles — the population does not grow', async () => {
     const setup = await createTestRenderer({
       width: 123,
       height: 76,
       footerHeight: 0,
     })
     const root = createRoot(setup.renderer)
-    const models = catalog(CATALOG_SIZE)
-    const snapshots: { cycle: number; population: Record<string, number> }[] =
-      []
+    const closed: Record<string, number>[] = []
+    const opened: Record<string, number>[] = []
 
     try {
+      root.render(<Host />)
+      await settle(setup)
+      const baseline = population(setup.renderer)
+
       for (let cycle = 1; cycle <= CYCLES; cycle += 1) {
-        root.render(
-          <Frame>
-            <ModelPicker
-              models={models}
-              query=""
-              selectedIndex={0}
-              onSelectIndex={() => {}}
-              onQueryChange={() => {}}
-              onSelect={() => {}}
-              onClose={() => {}}
-              terminalHeight={76}
-            />
-          </Frame>,
+        setMode('picker')
+        await settle(setup)
+        opened.push(population(setup.renderer))
+        setMode('idle')
+        await settle(setup)
+        const after = population(setup.renderer)
+        closed.push(after)
+        console.log(`cycle ${cycle} closed: ${JSON.stringify(after)}`)
+      }
+
+      // The picker is really mounted: each open adds exactly its own keypress
+      // subscriber, so a flat closed population cannot be vacuous.
+      for (const [index, snapshot] of opened.entries()) {
+        expect(keypressCount(snapshot)).toBe(keypressCount(baseline) + 1)
+        expect(snapshot['CliRenderer:selection'] ?? 0).toBe(
+          (baseline['CliRenderer:selection'] ?? 0) + 1,
         )
-        await setup.flush()
-        await Bun.sleep(30)
-        await setup.flush()
-
-        root.render(<Frame />)
-        await setup.flush()
-        await Bun.sleep(30)
-        await setup.flush()
-
-        snapshots.push({ cycle, population: population(setup.renderer) })
-        console.log(
-          `cycle ${cycle}: ${JSON.stringify(snapshots.at(-1)!.population)}`,
-        )
+        console.log(`cycle ${index + 1} open: ${JSON.stringify(snapshot)}`)
       }
 
-      const first = snapshots[0]!.population
-      const last = snapshots.at(-1)!.population
-      const driftedKeys = new Set([...Object.keys(first), ...Object.keys(last)])
-      const drift = [...driftedKeys]
-        .map((key) => ({ key, first: first[key] ?? 0, last: last[key] ?? 0 }))
-        .filter((entry) => entry.first !== entry.last)
-      if (drift.length > 0) {
-        console.log(`drift between cycle 1 and cycle ${CYCLES}:`, drift)
+      // Zero growth: every closed cycle is identical to the first.
+      for (const snapshot of closed) {
+        expect(snapshot).toEqual(closed[0])
       }
-
-      // The repository's own subscription path must be flat: every dimension
-      // consumer shares ONE native renderer listener through
-      // `subscribeSharedEvent`, so a growing `CliRenderer:resize` count is our
-      // defect.
-      expect(drift.filter((entry) => entry.key.endsWith(':resize'))).toEqual([])
-
-      // Characterisation of what the measurement found: the two OpenTUI-owned
-      // subscriptions (`selection` on the renderer, `keypress` on the internal
-      // key handler) grow by one per mount/unmount cycle. Tighten this to zero
-      // in the same change as the repair, never below it silently.
-      for (const key of [
-        'CliRenderer:selection',
-        'InternalKeyHandler:keypress',
-      ]) {
-        const growth = (last[key] ?? 0) - (first[key] ?? 0)
-        expect(growth).toBeGreaterThanOrEqual(0)
-        expect(growth).toBeLessThanOrEqual(CYCLES - 1)
-      }
+      expect(closed[0]).toEqual(baseline)
     } finally {
       root.unmount()
       setup.renderer.destroy()
