@@ -132,7 +132,11 @@ describe('model picker — breadcrumbs', () => {
       await setup.flush()
       const key = recordsOf(debugSpy, 'model-picker.key').slice(before)[0]
       expect(key?.action).toBe('filter')
-      expect(key?.key).toBe('g')
+      // FID-2026-1023-001: `key` names the kind of input. The character that was
+      // pressed must appear nowhere in the record — the contract this file's
+      // name asserts, which the earlier pin contradicted by expecting 'g'.
+      expect(key?.key).toBe('printable')
+      expect(JSON.stringify(key)).not.toContain('"g"')
       expect(String(key?.queryLength)).toBe('0')
 
       const filters = recordsOf(debugSpy, 'model-picker.filter')

@@ -17,8 +17,11 @@
  * observation. When the picker never opens, no verdict is invented.
  *
  * Usage: `bun scripts/probes/live-008-model-picker-dwell.ts [--dwell-ms N]`
- * Exit code 0 = the observation completed (read the JSON), 1 = the CLI never
- * reached the picker at all.
+ * Exit code 0 = the picker opened AND every interaction claim held; 1 = the CLI
+ * never reached the picker, or a claim failed (each failed claim is named on
+ * stderr). A completed observation that judged its own claim false is not a
+ * pass: the probe is consumed as an acceptance gate, and a gate that exits 0
+ * while printing its own FAIL lines certifies nothing (FID-2026-1023-001).
  */
 import fs from 'node:fs'
 import path from 'node:path'
@@ -31,6 +34,23 @@ const ANSI = /\u001b\[[0-9;?]*[ -/]*[@-~]|\u001b\][^\u0007]*\u0007/g
 const NON_PRINTABLE = /[^\P{C}\n\t]/gu
 const BOOT_MARKER = 'Session'
 const PICKER_MARKER = 'Select a model'
+
+/** One acceptance claim the interaction half must prove, and whether it did. */
+export type InteractionVerdict = { claim: string; pass: boolean }
+
+/**
+ * The probe's exit code (FID-2026-1023-001): `0` only when the picker opened
+ * AND every interaction claim held. An opened picker with no claim proved is a
+ * failure too — an observation that asserted nothing cannot pass an acceptance
+ * gate.
+ */
+export function exitCodeFor(
+  opened: boolean,
+  verdicts: InteractionVerdict[],
+): number {
+  if (!opened || verdicts.length === 0) return 1
+  return verdicts.every((verdict) => verdict.pass) ? 0 : 1
+}
 
 async function main(): Promise<void> {
   const args = process.argv.slice(2)
@@ -216,7 +236,7 @@ async function main(): Promise<void> {
   )
   // Verdicts are derived from the product's own records only; a missing picker
   // yields an empty verdict list rather than a pass.
-  const interactionVerdicts = opened
+  const interactionVerdicts: InteractionVerdict[] = opened
     ? [
         {
           claim: 'the picker recorded its open',
@@ -262,9 +282,12 @@ async function main(): Promise<void> {
   }
 
   console.log(JSON.stringify(report, null, 2))
+  process.exitCode = exitCodeFor(opened, interactionVerdicts)
   if (!opened) {
     console.error('FAIL — picker never appeared within 12s of Enter')
-    process.exitCode = 1
+  }
+  for (const verdict of interactionVerdicts) {
+    if (!verdict.pass) console.error(`FAIL — ${verdict.claim}`)
   }
 }
 

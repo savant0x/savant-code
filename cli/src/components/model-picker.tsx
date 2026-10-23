@@ -243,7 +243,10 @@ export const ModelPicker = memo(function ModelPicker({
           !(key as typeof key & { alt?: boolean }).alt
         ) {
           prevent()
-          traceKey(ch, 'filter')
+          // The pressed character stays out of the record: `key` names the kind
+          // of input, and the length below is what the acceptance verdict reads
+          // (FID-2026-1023-001).
+          traceKey('printable', 'filter')
           onQueryChange(query + ch)
         }
       },
