@@ -1,5 +1,28 @@
 # Changelog
 
+## 2026-10-23 — The listener pin measures one container, and the picker path is flat
+
+- **FID-2026-1022-001 — medium — Pin the `/model` listener population to zero
+  growth.** The first instrument for the 2026-10-19 max-listener warnings
+  reported one `keypress` and one `selection` subscriber leaking per picker
+  cycle. That reading measured the harness: `@opentui/react`'s
+  `createRoot().render()` creates a new React container on every call
+  (`node_modules/@opentui/react/chunk-vx8rm66p.js`, `_render` →
+  `reconciler.createContainer`), so each cycle orphaned the previous tree and no
+  effect cleanup ran. With one container and the picker toggled through host
+  state — the way the CLI mounts it — the picker adds exactly one `keypress`,
+  one `selection` and the shared `resize` while open and returns to the
+  baseline on close, flat across five cycles. The pin now censuses the renderer,
+  its renderable tree and the key handler, proves its own sensitivity with a
+  positive control (a deliberately leaked `keypress` moves the count by three),
+  asserts the open snapshot so a flat result cannot be vacuous, and requires
+  every closed snapshot to equal the baseline. Negative leg: restoring the
+  repeated `root.render()` pattern makes the file 1 pass / 1 fail; the corrected
+  file is 2 pass / 0 fail. No production code changed — the picker path was flat
+  once measured correctly — and the live `resize`/`focus`/`blur`/
+  `ScrollBarRenderable change` warnings name events the picker does not
+  subscribe to, so they remain outside this record's subject.
+
 ## 2026-10-22 — The picker records what it received, and one shared helper stops dropping keys
 
 - **FID-2026-1022-002 — low — Make the model picker's keystrokes observable.**
