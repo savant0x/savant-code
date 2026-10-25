@@ -93,8 +93,7 @@ function inspectValue<T>(
       // FID-2026-1024-001 D1: the walker authority wins; a scalar branch's own
       // classification only fills what the authority did not already decide.
       const expectedness =
-        harnessExpectednessOf(execution.commandExecution) ??
-        scalar.expectedness
+        harnessExpectednessOf(execution.commandExecution) ?? scalar.expectedness
       failures.push({
         error: scalar.line,
         ...execution,
@@ -224,7 +223,9 @@ function scalarFailure<T extends object>(
     // channels and are not classified from the exit code.
     const outcome = commandExecution?.executionOutcome
     const decisionOwned =
-      outcome === 'rejected' || outcome === 'cancelled' || outcome === 'timed-out'
+      outcome === 'rejected' ||
+      outcome === 'cancelled' ||
+      outcome === 'timed-out'
     return {
       line: `Command exited with code ${value.exitCode}${detail ? `: ${detail}` : ''}`,
       ...(decisionOwned ? {} : { expectedness: 'expected' }),

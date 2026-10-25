@@ -127,7 +127,10 @@ describe('FID-2026-1012-024 stable class identity', () => {
     // sibling. Neither rewrites the other.
     const exit = 'Command exited with code 1: bun test src/'
     const historical = record('run_terminal_command', exit)
-    const forked = { ...record('run_terminal_command', exit), expectedness: 'expected' as const }
+    const forked = {
+      ...record('run_terminal_command', exit),
+      expectedness: 'expected' as const,
+    }
     expect(experienceClassIdentity(historical).key).toBe(
       'v1:run_terminal_command:command-exit:undetermined',
     )

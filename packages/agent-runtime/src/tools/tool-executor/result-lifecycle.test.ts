@@ -229,7 +229,12 @@ describe('runSuccessLifecycle error-capture wiring', () => {
       const { ctx, trace } = readonlyBatch(root, 'timeout-rejection')
       await runRejectionLifecycle(
         { ctx, trace, hookProjectRoot: root },
-        new CommandTimeoutError(1800, 'run_terminal_command', true, 'requested'),
+        new CommandTimeoutError(
+          1800,
+          'run_terminal_command',
+          true,
+          'requested',
+        ),
       )
       const records = await readCapturedRecords(root)
       expect(records).toHaveLength(1)

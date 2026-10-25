@@ -236,7 +236,9 @@ describe('FID-2026-1012-024 producer-shaped failure coverage', () => {
     // it is NOT a guard refusal: the refusal cause stays additive, so a quoted
     // phrase never promotes a real exit into the validation channel.
     expect(inspectToolResultFailure(output).expectedness).toBe('expected')
-    expect(inspectToolOutputFailures(output)[0]?.error.startsWith('Command exited')).toBe(true)
+    expect(
+      inspectToolOutputFailures(output)[0]?.error.startsWith('Command exited'),
+    ).toBe(true)
   })
 
   test('stderr without a failing exit is not a failed command', () => {
