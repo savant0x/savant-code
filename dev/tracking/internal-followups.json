@@ -74,6 +74,36 @@
       ],
       "completionEvidence": [],
       "sourceFids": ["FID-2026-1018-011", "FID-2026-1018-008"]
+    },
+    {
+      "id": "OBS-001",
+      "kind": "observation",
+      "status": "open",
+      "owner": "Operator",
+      "summary": "Opened 2026-10-24 at the closure of FID-2026-1024-001 (commit 16a70a59): the result walker now classifies expectedness from the failing decision, so future tool failures should land on v1:<tool>:<cause>:expected sibling keys for tool-declared timeout budgets, target-answered read-incomplete statuses and program exits, and the three tracked :undetermined keys below stop collecting new rows. WORKED-AS-DESCRIBED IS NOT CLAIMED: the change was verified by test suites and the census probe, not by observing live tool failures after the switch. This association preserves the transfer provenance of classes FID-2026-1015-006's Q25 waiver held before ownership moved to this record; it certifies no repair or exposure.",
+      "nextAction": "Run `bun run experiences:recurrence --json` after real multi-session tool use and check that new rows appear on :expected sibling keys and no new :undetermined rows join the tracked keys. If the tracked keys still collect rows, the walker does not own the classification the closure claims and FID-2026-1024-001's archive entry needs a correction record.",
+      "evidence": [
+        "dev/fids/archive/FID-2026-1024-001-expectedness-domain-outcome-classification.md",
+        "dev/session-summaries/2026-10/2026-10-24-expectedness-domain-outcome-classification.md"
+      ],
+      "completionEvidence": [],
+      "classes": [
+        {
+          "classKey": "v1:run_terminal_command:timeout:undetermined",
+          "implementationFid": "FID-2026-1024-001",
+          "predecessorFid": "FID-2026-1015-006"
+        },
+        {
+          "classKey": "v1:read_files:read-incomplete:undetermined",
+          "implementationFid": "FID-2026-1024-001",
+          "predecessorFid": "FID-2026-1015-006"
+        },
+        {
+          "classKey": "v1:run_readonly_command:command-exit:undetermined",
+          "implementationFid": "FID-2026-1024-001",
+          "predecessorFid": "FID-2026-1015-006"
+        }
+      ]
     }
   ]
 }

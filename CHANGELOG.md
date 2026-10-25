@@ -1,5 +1,33 @@
 # Changelog
 
+## 2026-10-24 — Expectedness is decided where the decision was made
+
+- **FID-2026-1024-001 — medium — Classify a tool failure from its failing
+  decision, not from the way it was rendered.** The experience census showed
+  the largest stable classes are the target answering — program exits,
+  tool-declared timeout budgets, target-answered file-read statuses — but the
+  classifier derived `expectedness` from how the failure was rendered, so the
+  harness granted ownership and repair boundaries to behavior with nothing to
+  repair; three of those declared repairs had already been refuted by
+  recurrence. The result walker is now the classification authority:
+  `harnessExpectednessOf` derives `expected` from a timeout the tool itself
+  declared and enforced, preserves the `readonly-guard` rejection, classifies
+  the target-answered `read-incomplete` statuses (does-not-exist,
+  outside-project, too-large) and tags failures whose failing decision the
+  harness did not make, while everything it cannot own falls through to
+  `undetermined` as before; `resolveToolFailureExpectedness` resolves walker
+  classification before the producer's stored string, and the PostToolUse
+  hook ranks the last terminal failure and reports its resolved expectedness.
+  `incomplete-arguments` stays `unexpected` — schema refusal proves the call
+  was stopped, not that a defect is absent, and the demonstrated
+  harness-contract defect classes live there — so the hard-coded derivation in
+  `common/src/util/experience-classes.ts` is unchanged. Historical
+  `:undetermined` keys keep their rows under a closure waiver and new rows
+  land on `:expected` sibling identities (census keys already carry the
+  record's expectedness, so no classifier change is needed); no ledger row was
+  edited or deleted. Live behavior of the fork is unobserved and tracked as
+  OBS-001 in `dev/tracking/internal-followups.json`.
+
 ## 2026-10-23 — The breadcrumb stops carrying what was typed, and the probe stops passing itself
 
 - **FID-2026-1023-001 — medium — Stop the picker breadcrumb carrying the typed
