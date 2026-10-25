@@ -17,10 +17,11 @@ describe('FID-2026-1012-024 producer-shaped failure coverage', () => {
   // part of FID-2026-1012-024's contract, so the control asserts the number and
   // does not borrow the implementation's own constant.
   const DECLARED_NODE_BUDGET = 4_096
-  // `expectedness` is granted ONLY by the harness's own refusal channel; every
-  // fixture below that lacks producer metadata must stay unclassified, which is
-  // the corpus-wide invariant Loop 12 pinned and Loop 13 re-established on
-  // producer authority rather than on stderr text.
+  // FID-2026-1024-001: expectedness comes from producer-owned evidence in the
+  // walker — the harness's own refusal channel (D3), the executed program's
+  // non-zero exit (D2), the filesystem's answered read statuses (D2) and a
+  // declared, enforced timeout budget (D4). Everything the harness itself
+  // decided or failed to record stays unclassified.
   const failures: Array<{
     name: string
     value: JSONValue
@@ -36,6 +37,55 @@ describe('FID-2026-1012-024 producer-shaped failure coverage', () => {
         exitCode: 1,
       },
       error: 'Command exited with code 1: compile failed',
+      expectedness: 'expected',
+    },
+    {
+      name: 'command exit carrying producer metadata',
+      value: {
+        command: 'fixture',
+        stdout: '',
+        stderr: 'build failed',
+        exitCode: 2,
+        executionOutcome: 'completed',
+        executionStarted: true,
+        executedToolName: 'run_terminal_command',
+      },
+      error: 'Command exited with code 2: build failed',
+      expectedness: 'expected',
+    },
+    {
+      name: 'declared and enforced timeout budget',
+      value: {
+        errorMessage: 'Command timed out after 3600 seconds.',
+        executionOutcome: 'timed-out',
+        executionStarted: true,
+        executedToolName: 'run_terminal_command',
+        terminationState: 'requested',
+        timeoutSeconds: 3600,
+      },
+      error: 'Command timed out after 3600 seconds.',
+      expectedness: 'expected',
+    },
+    {
+      name: 'timeout whose termination cannot be requested',
+      value: {
+        errorMessage: 'Command timed out after 30 seconds.',
+        executionOutcome: 'timed-out',
+        executionStarted: true,
+        executedToolName: 'run_terminal_command',
+        terminationState: 'unavailable',
+        timeoutSeconds: 30,
+      },
+      error: 'Command timed out after 30 seconds.',
+    },
+    {
+      name: 'timeout without a declared budget',
+      value: {
+        errorMessage: 'Command timed out after 30 seconds.',
+        executionOutcome: 'timed-out',
+        executedToolName: 'run_terminal_command',
+      },
+      error: 'Command timed out after 30 seconds.',
     },
     {
       name: 'skill management exit',
@@ -46,6 +96,7 @@ describe('FID-2026-1012-024 producer-shaped failure coverage', () => {
         exitCode: 1,
       },
       error: 'Command exited with code 1: skill missing',
+      expectedness: 'expected',
     },
     {
       name: 'readonly batch delegated error',
@@ -56,11 +107,19 @@ describe('FID-2026-1012-024 producer-shaped failure coverage', () => {
       name: 'readonly batch nonzero exit',
       value: { results: [{ exitCode: 2, stderr: 'bad command' }] },
       error: 'Command exited with code 2: bad command',
+      expectedness: 'expected',
     },
     {
       name: 'file read status',
       value: [{ path: 'missing.ts', content: '[FILE_DOES_NOT_EXIST]' }],
       error: 'File read did not complete: [FILE_DOES_NOT_EXIST]',
+      expectedness: 'expected',
+    },
+    {
+      name: 'file read outside the project',
+      value: [{ path: 'a.ts', content: '[FILE_OUTSIDE_PROJECT]' }],
+      error: 'File read did not complete: [FILE_OUTSIDE_PROJECT]',
+      expectedness: 'expected',
     },
     {
       name: 'file read truncation',
@@ -68,6 +127,17 @@ describe('FID-2026-1012-024 producer-shaped failure coverage', () => {
         { path: 'large.ts', content: 'head\n\n[FILE_TOO_LARGE: truncated]' },
       ],
       error: 'File read did not complete: [FILE_TOO_LARGE]',
+      expectedness: 'expected',
+    },
+    {
+      name: 'the read policy refusal stays a harness decision',
+      value: [{ path: '.env', content: '[BLOCKED]' }],
+      error: 'File read did not complete: [BLOCKED]',
+    },
+    {
+      name: 'a read IO error stays a harness decision',
+      value: [{ path: 'locked.ts', content: '[FILE_READ_ERROR]' }],
+      error: 'File read did not complete: [FILE_READ_ERROR]',
     },
     // FID-2026-1012-024: the flat channels are the most common production
     // shape (str_replace, write_file, spawn_agents, web_search, read_docs all
@@ -121,6 +191,7 @@ describe('FID-2026-1012-024 producer-shaped failure coverage', () => {
       },
       error:
         'Command exited with code 1: cat: missing: No such file or directory',
+      expectedness: 'expected',
     },
   ]
 
@@ -135,8 +206,10 @@ describe('FID-2026-1012-024 producer-shaped failure coverage', () => {
       expect(extractToolResultError(output)).not.toBe(
         TOOL_RESULT_ERROR_FALLBACK,
       )
-      // Nothing is expected by default: only the harness refusal channel earns a
-      // classification, and no result value can set one for itself.
+      // Only the harness's own unrecorded decisions stay unclassified: the
+      // guard refusal, the target's non-zero exit, the filesystem's answered
+      // statuses and a declared-enforced timeout all produce evidence the
+      // walker reads.
       expect(inspectToolResultFailure(output).expectedness).toBe(
         fixture.expectedness,
       )
@@ -159,6 +232,11 @@ describe('FID-2026-1012-024 producer-shaped failure coverage', () => {
     expect(extractToolResultError(output)).toBe(
       'Command exited with code 1: ./a.ts: run_readonly_command rejected: x',
     )
+    // FID-2026-1024-001 D2: the exit is the program's answer — expected — but
+    // it is NOT a guard refusal: the refusal cause stays additive, so a quoted
+    // phrase never promotes a real exit into the validation channel.
+    expect(inspectToolResultFailure(output).expectedness).toBe('expected')
+    expect(inspectToolOutputFailures(output)[0]?.error.startsWith('Command exited')).toBe(true)
   })
 
   test('stderr without a failing exit is not a failed command', () => {
@@ -262,6 +340,9 @@ describe('FID-2026-1012-024 producer-shaped failure coverage', () => {
     expect(failures).toHaveLength(2)
     expect(failures[0]?.expectedness).toBe('expected')
     expect(failures[1]?.error).toContain('nested host failure')
-    expect(failures[1]?.expectedness).toBeUndefined()
+    // FID-2026-1024-001 D2: the nested executed program answered — expected —
+    // while the outer refusal is the harness's own decision, also expected on
+    // both rendering paths (D3). Neither outranks the other.
+    expect(failures[1]?.expectedness).toBe('expected')
   })
 })

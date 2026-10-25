@@ -120,6 +120,24 @@ describe('FID-2026-1012-024 stable class identity', () => {
     )
   })
 
+  test('FID-2026-1024-001 D5: captured rows fork once and history keeps its identity', () => {
+    // One tool, one line, two generations: the historical row carries no
+    // expectedness field and derives `undetermined`; the row captured after
+    // the producer evidence flip stores `expected` and lands on the additive
+    // sibling. Neither rewrites the other.
+    const exit = 'Command exited with code 1: bun test src/'
+    const historical = record('run_terminal_command', exit)
+    const forked = { ...record('run_terminal_command', exit), expectedness: 'expected' as const }
+    expect(experienceClassIdentity(historical).key).toBe(
+      'v1:run_terminal_command:command-exit:undetermined',
+    )
+    expect(experienceClassIdentity(forked).key).toBe(
+      'v1:run_terminal_command:command-exit:expected',
+    )
+    const summaries = summarizeExperienceClasses([historical, forked])
+    expect(summaries.map((entry) => entry.count)).toEqual([1, 1])
+  })
+
   test('unknown messages are not merged into one cause', () => {
     expect(
       experienceClassIdentity(record('fixture', 'first unknown cause')).key,

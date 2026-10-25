@@ -90,7 +90,11 @@ function inspectValue<T>(
     const scalar = scalarFailure(value, execution.commandExecution)
     const failures: ToolOutputFailure[] = []
     if (scalar) {
-      const expectedness = harnessExpectednessOf(execution.commandExecution)
+      // FID-2026-1024-001 D1: the walker authority wins; a scalar branch's own
+      // classification only fills what the authority did not already decide.
+      const expectedness =
+        harnessExpectednessOf(execution.commandExecution) ??
+        scalar.expectedness
       failures.push({
         error: scalar.line,
         ...execution,
@@ -130,10 +134,29 @@ function inspectionFromFailures(
   return first ? { ...first, failures } : { error: '', failures }
 }
 
-function harnessExpectednessOf(
+export function harnessExpectednessOf(
   metadata: CommandExecutionMetadata | undefined,
 ): ExperienceExpectedness | undefined {
-  return metadata?.executionOutcome === 'rejected' &&
+  if (!metadata) return undefined
+  // FID-2026-1024-001 D4: a timeout is correct harness behaviour only when the
+  // producer declares the budget it enforced (`timeoutSeconds`) and reports
+  // the termination it requested (`terminationState`). A budget-less or
+  // failed-termination timeout is a harness defect and stays unclassified.
+  if (metadata.executionOutcome === 'timed-out') {
+    const budget = metadata.timeoutSeconds
+    return metadata.terminationState === 'requested' &&
+      budget !== undefined &&
+      Number.isFinite(budget) &&
+      budget >= 0
+      ? 'expected'
+      : undefined
+  }
+  // FID-2026-1024-001 D3: a declared guard refusal is a harness validation
+  // decision, expected on EVERY rendering path — the refusal's own channel and
+  // the historical `Command exited with code 1:` envelope it once wore — so one
+  // decision cannot occupy two expectedness classes. The taxonomy keeps the
+  // two causes additive; only expectedness is unified.
+  return metadata.executionOutcome === 'rejected' &&
     metadata.rejectionReason === 'readonly-guard'
     ? 'expected'
     : undefined
@@ -150,7 +173,15 @@ function executionIdentityOf(value: object): {
 /** A failure line plus the classification its own branch establishes. */
 interface ScalarFailure {
   line: string
+  expectedness?: ExperienceExpectedness
 }
+
+/** D2 (FID-2026-1024-001): statuses the filesystem itself answers. */
+const TARGET_ANSWERED_READ_STATUSES: ReadonlySet<string> = new Set([
+  FILE_READ_STATUS.DOES_NOT_EXIST,
+  FILE_READ_STATUS.OUTSIDE_PROJECT,
+  FILE_READ_STATUS.TOO_LARGE,
+])
 
 function scalarFailure<T extends object>(
   value: T,
@@ -185,8 +216,18 @@ function scalarFailure<T extends object>(
       detail
     )
       return { line: detail }
+    // FID-2026-1024-001 D2: a non-zero exit is the executed program's own
+    // answer — the harness ran the tool and reports the code — so it becomes
+    // `expected`, owing no owner and no boundary (D6: still recorded, counted
+    // and clustered). Outcomes whose decision belongs to the harness — a
+    // rejection, a declared timeout or a cancellation — keep their own
+    // channels and are not classified from the exit code.
+    const outcome = commandExecution?.executionOutcome
+    const decisionOwned =
+      outcome === 'rejected' || outcome === 'cancelled' || outcome === 'timed-out'
     return {
       line: `Command exited with code ${value.exitCode}${detail ? `: ${detail}` : ''}`,
+      ...(decisionOwned ? {} : { expectedness: 'expected' }),
     }
   }
   if (
@@ -195,19 +236,35 @@ function scalarFailure<T extends object>(
     'content' in value &&
     typeof value.content === 'string'
   ) {
-    const read = readFailure(value.content)
-    return read === '' ? undefined : { line: read }
+    return readFailure(value.content)
   }
   return undefined
 }
 
-function readFailure(content: string): string {
+/**
+ * FID-2026-1024-001 D2: `[FILE_DOES_NOT_EXIST]`, `[FILE_OUTSIDE_PROJECT]` and
+ * `[FILE_TOO_LARGE]` are the filesystem's own answer — the path does not
+ * exist, lies outside the project, or carries more bytes than the read window.
+ * The tool ran correctly; the read outcome is expected behaviour. The harness
+ * decisions `[BLOCKED]` and `[FILE_READ_ERROR]` are NOT the target's answer
+ * and stay unclassified (D3).
+ */
+function readFailure(content: string): ScalarFailure | undefined {
   const status = HIDDEN_FILE_READ_STATUS.find((marker) =>
     content.startsWith(marker),
   )
-  if (status) return `File read did not complete: ${status}`
+  if (status)
+    return {
+      line: `File read did not complete: ${status}`,
+      ...(TARGET_ANSWERED_READ_STATUSES.has(status)
+        ? { expectedness: 'expected' }
+        : {}),
+    }
   if (/\n\n\[FILE_TOO_LARGE:[^\]]*\]\s*$/.test(content)) {
-    return `File read did not complete: ${FILE_READ_STATUS.TOO_LARGE}`
+    return {
+      line: `File read did not complete: ${FILE_READ_STATUS.TOO_LARGE}`,
+      expectedness: 'expected',
+    }
   }
-  return ''
+  return undefined
 }

@@ -1,11 +1,15 @@
 import * as fs from 'node:fs'
 import * as path from 'node:path'
 
-import { abortForUserCancellation } from '@savant-code/common/util/command-execution'
+import {
+  abortForUserCancellation,
+  CommandTimeoutError,
+} from '@savant-code/common/util/command-execution'
 import { describe, expect, it } from 'bun:test'
 
 import { buildLifecycleFixture, withCaptureRoot } from './lifecycle-fixture'
 import { runSuccessLifecycle } from './result-lifecycle'
+import { runRejectionLifecycle } from './result-rejection-lifecycle'
 
 import type { GateContext } from './gate-context'
 import type {
@@ -139,10 +143,13 @@ describe('runSuccessLifecycle error-capture wiring', () => {
       expect(records[0]?.errorFirstLine).toBe(
         'Command exited with code 1: fixture failed',
       )
-      // A genuine host exit is not excused: the row keeps the derived
-      // classification, so only the harness's own refusal is `expected`.
+      // FID-2026-1024-001 D2: a genuine host exit is the program's answer —
+      // expected, still counted. Its row now forks to the `:expected`
+      // sibling class while the historical `:undetermined` key keeps its old
+      // rows (D5).
+      expect(records[0]?.expectedness).toBe('expected')
       expect(records[0]?.classKey).toBe(
-        'v1:run_readonly_command:command-exit:undetermined',
+        'v1:run_readonly_command:command-exit:expected',
       )
     })
   })
@@ -202,9 +209,33 @@ describe('runSuccessLifecycle error-capture wiring', () => {
       expect(records[0]?.errorFirstLine).toBe(
         'Command exited with code 1: host failure',
       )
-      expect(records[0]?.expectedness).toBe('undetermined')
+      // FID-2026-1024-001: the refusal and the real failure are BOTH expected
+      // now; the pinned captor keeps the later (real) outcome so the
+      // historical generation is still represented in the forked class (D6),
+      // which lands at :expected per D2.
+      expect(records[0]?.expectedness).toBe('expected')
       expect(records[0]?.classKey).toBe(
-        'v1:run_readonly_command:command-exit:undetermined',
+        'v1:run_readonly_command:command-exit:expected',
+      )
+    })
+  })
+
+  it('records a declared, enforced timeout through the rejection path', async () => {
+    // FID-2026-1024-001 D4: the rejection lifecycle classifies the timeout by
+    // the producer's own evidence — the budget it declared and the termination
+    // it requested — so the row lands expected on the same authority the
+    // walker uses for batch values.
+    await withCaptureRoot(async (root) => {
+      const { ctx, trace } = readonlyBatch(root, 'timeout-rejection')
+      await runRejectionLifecycle(
+        { ctx, trace, hookProjectRoot: root },
+        new CommandTimeoutError(1800, 'run_terminal_command', true, 'requested'),
+      )
+      const records = await readCapturedRecords(root)
+      expect(records).toHaveLength(1)
+      expect(records[0]?.expectedness).toBe('expected')
+      expect(records[0]?.classKey).toBe(
+        'v1:run_readonly_command:timeout:expected',
       )
     })
   })

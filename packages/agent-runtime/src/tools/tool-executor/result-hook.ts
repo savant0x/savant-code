@@ -17,6 +17,11 @@ export function emitToolResultHook(params: {
   toolResult: JSONValue
 }): void {
   const failures = inspectToolOutputFailures(params.toolResult)
+  // A defect outranks every expected outcome; but when EVERY failure is
+  // expected (FID-2026-1024-001: a guard refusal beside the target's own
+  // non-zero exit), the pinned capture keeps the later outcome — the same
+  // exemplar the pre-fork census recorded — so the historical class does not
+  // silently lose rows to the refusal's sibling class (D6).
   const failure =
     failures.find(
       (candidate) =>
@@ -25,7 +30,7 @@ export function emitToolResultHook(params: {
           commandExecution: candidate.commandExecution,
           harnessExpectedness: candidate.expectedness,
         }) !== 'expected',
-    ) ?? failures[0]
+    ) ?? failures[failures.length - 1]
   const expectedness = failure
     ? resolveToolFailureExpectedness({
         signal: params.signal,

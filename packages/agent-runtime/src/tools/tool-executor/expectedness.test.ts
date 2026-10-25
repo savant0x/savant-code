@@ -30,7 +30,7 @@ const exitWithStderr = (stderr: string, harnessRefusal = false) => [
   },
 ]
 
-describe('producer-authoritative expectedness (FID-2026-1012-024)', () => {
+describe('producer-authoritative expectedness (FID-2026-1012-024, FID-2026-1024-001)', () => {
   it('classifies the guard refusal as expected', () => {
     const inspection = inspectToolResultFailure(
       exitWithStderr(
@@ -45,11 +45,15 @@ describe('producer-authoritative expectedness (FID-2026-1012-024)', () => {
     )
   })
 
-  it('does not classify matching command text as expected', () => {
+  it('does not classify matching command text as a guard refusal', () => {
+    // FID-2026-1024-001 D2/D3: matching TEXT cannot promote a real exit into
+    // the refusal channel (the line below keeps its command-exit rendering),
+    // but the executed program's non-zero exit is itself expected.
     const inspection = inspectToolResultFailure(
       exitWithStderr('run_readonly_command rejected: command output'),
     )
-    expect(inspection.expectedness).toBeUndefined()
+    expect(inspection.expectedness).toBe('expected')
+    expect(inspection.line.startsWith('Command exited')).toBe(true)
   })
 
   it('keeps a quoted refusal phrase as a normal host exit', () => {
@@ -59,7 +63,31 @@ describe('producer-authoritative expectedness (FID-2026-1012-024)', () => {
     expect(inspection.line).toBe(
       'Command exited with code 1: grep: run_readonly_command rejected: not found',
     )
-    expect(inspection.expectedness).toBeUndefined()
+    // D2: the program answered; the refusal CAUSE is established by producer
+    // metadata, never by the phrase alone.
+    expect(inspection.expectedness).toBe('expected')
+  })
+
+  it('classifies a declared, enforced timeout as expected (D4)', () => {
+    expect(
+      resolveToolFailureExpectedness({
+        commandExecution: {
+          executionOutcome: 'timed-out',
+          executionStarted: true,
+          executedToolName: 'run_terminal_command',
+          terminationState: 'requested',
+          timeoutSeconds: 1800,
+        },
+      }),
+    ).toBe('expected')
+  })
+
+  it('stays unclassified for a timeout without a declared budget (D4)', () => {
+    expect(
+      resolveToolFailureExpectedness({
+        commandExecution: { executionOutcome: 'timed-out' },
+      }),
+    ).toBeUndefined()
   })
 
   it('does not excuse a typed signal paired with a timeout', () => {

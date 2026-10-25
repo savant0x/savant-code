@@ -1,6 +1,7 @@
 import { isUserCancellationSignal } from '@savant-code/common/util/command-execution'
 
 import {
+  harnessExpectednessOf,
   inspectToolOutput,
   inspectToolOutputFailure,
 } from './tool-result-inspection'
@@ -61,14 +62,22 @@ export function hasCommandFailure<T>(content: T): boolean {
  * Q26: expectedness comes from the harness signal and the producer's outcome,
  * never from arbitrary tool-result data. The refusal walker classification wins
  * when it exists; a typed user cancellation is the only cancellation exception.
+ *
+ * FID-2026-1024-001 D1/D4: metadata-bearing values that reach this authority
+ * WITHOUT a walker classification (a rejection-path `CommandTimeoutError`, for
+ * example — the harness's own error object, not a traversed result) are still
+ * classified by the SAME walker authority, never re-derived here: the timeout
+ * asks about its declared, enforced budget, the refusal guard about its
+ * declared reason. One decision site, two call shapes.
  */
 export function resolveToolFailureExpectedness(params: {
   signal?: AbortSignal
   commandExecution?: CommandExecutionMetadata
   harnessExpectedness?: ExperienceExpectedness
 }): ExperienceExpectedness | undefined {
-  if (params.harnessExpectedness !== undefined)
-    return params.harnessExpectedness
+  const walkerExpectedness =
+    params.harnessExpectedness ?? harnessExpectednessOf(params.commandExecution)
+  if (walkerExpectedness !== undefined) return walkerExpectedness
   if (
     params.commandExecution?.executionOutcome === 'cancelled' &&
     params.commandExecution.cancellationReason === 'user-request' &&

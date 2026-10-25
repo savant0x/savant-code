@@ -3,11 +3,11 @@
   "owners": [
     {
       "classKey": "v1:fid_worktree:incomplete-arguments:unexpected",
-      "fid": "FID-2026-1017-014"
+      "fid": "FID-2026-1024-002"
     },
     {
       "classKey": "v1:read_files:read-incomplete:undetermined",
-      "fid": "FID-2026-1015-006"
+      "fid": "FID-2026-1024-001"
     },
     {
       "classKey": "v1:read_files:incomplete-arguments:unexpected",
@@ -187,7 +187,7 @@
     },
     {
       "classKey": "v1:run_terminal_command:timeout:undetermined",
-      "fid": "FID-2026-1015-006"
+      "fid": "FID-2026-1024-001"
     },
     {
       "classKey": "v1:run_readonly_command:cancelled:undetermined",
@@ -203,7 +203,11 @@
     },
     {
       "classKey": "v1:run_readonly_command:command-exit:undetermined",
-      "fid": "FID-2026-1015-006"
+      "fid": "FID-2026-1024-001"
+    },
+    {
+      "classKey": "v1:run_terminal_command:command-exit:undetermined",
+      "fid": "FID-2026-1024-001"
     },
     {
       "classKey": "v1:run_readonly_command:refused:undetermined",
