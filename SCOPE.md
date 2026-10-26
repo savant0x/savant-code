@@ -35,24 +35,6 @@ This session uses the canonical repository protocol.
   on the external targets; this repository audit does not grant that authority.
   Details are preserved in the hygiene audit report; no external fix is claimed.
 
-### FID-2026-1024-002 — `fid_worktree` invalid `fid_id` (converged)
-
-- [ ] Authority: automation level 3. `medium` severity, `converged` — the
-  determination is recorded in the record and implementation runs in the same
-  pass.
-- [ ] Owned class: `v1:fid_worktree:incomplete-arguments:unexpected`.
-- [ ] Write targets: `common/src/tools/params/tool/fid-worktree.ts`,
-  `common/src/tools/__tests__/fid-worktree-params.test.ts` and
-  `dev/experiences/class-owners.json`.
-
-Five rows, two after FID-2026-1017-014's verification receipt, and none of them
-is the `invalid_union` defect that record fixed — the live refusal is
-`fid_id — invalid_format`. It is an agent-side argument error made likely by a
-description gap: the field's only readable hint was a raw JSON-Schema pattern,
-the refusal text cannot carry the expected shape, and the pattern accepts all
-641 archived ids. The regex is not relaxed; the format is stated in the tool
-description and the field description.
-
 ### Q2-FID-2026-1024-002 — implicit `fid_id` for a single active lane (blocked)
 
 - [ ] Blocked pending an operator ruling: whether `fid_worktree` may accept an
@@ -61,6 +43,12 @@ description and the field description.
   the record's implementation does not depend on it. Re-attempt on a ruling.
 
 ## Machine-readable scope targets
+
+`FID-2026-1024-002` closed and archived on 2026-10-26 (implementation
+`cf144be6`), so its write grant — `params/tool/fid-worktree.ts`, its test file
+and `class-owners.json` — is released here; the evidence lives in the archived
+record, the changelog and the session summary. No current item holds a
+machine-readable target line.
 
 `AUDIT-2026-1018` completed on 2026-10-19 and its target list is retained in
 `dev/tracking/scope-history-2026-10-20.md`, which grants nothing; `EMBED-001`
@@ -96,7 +84,4 @@ released `FID-2026-1015-006`'s ownership of four classes and
 without rewriting a ledger row; the implementation's live behavior stays
 tracked as OBS-001 in `dev/tracking/internal-followups.json`.
 
-`FID-2026-1024-002` is the current grant above, opened 2026-10-24 and converged
-2026-10-26; its targets are the params module, its test file and the class
-owner ledger. `Q2-FID-2026-1024-002` holds no write grant until an operator
-ruling.
+`Q2-FID-2026-1024-002` holds no write grant until an operator ruling.

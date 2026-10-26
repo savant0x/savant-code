@@ -1,5 +1,25 @@
 # Changelog
 
+## 2026-10-26 — The FID id format is stated where the caller reads it
+
+- **FID-2026-1024-002 — medium — Make the `fid_worktree` id format discoverable
+  instead of implied by a regex.** The recurring `fid_id — invalid_format`
+  refusal was an argument error, not a schema or regex defect: the 014 schema
+  repair holds, `^FID-\d{4}-\d{4}-\d{3}$` accepts all 641 archived ids, and the
+  live refusals carry a reachable field — but the provider schema advertised
+  only a raw `pattern`, the field had no `.describe()`, and the tool description
+  never named the shape, while the refusal text keeps just the issue path and
+  code (the SDK summarizer drops the message), so a caller that wrote a dashed
+  date or the filename slug had nothing to correct against. The module now
+  defines one `FID_ID_PATTERN` (the regex was duplicated at the record schema
+  and the input field), `fid_id` is described as `FID-YYYY-MMDD-NNN` with an
+  example and the slug rule, and the tool description states the same format;
+  two tests pin the advertised contract and the accepted/rejected shapes. The
+  regex is unchanged, no stored id or ledger row was rewritten, and a
+  production repair is not claimed. Q2 (accept an omitted `fid_id` when exactly
+  one lane is active) is registered in `SCOPE.md` as blocked pending an
+  operator ruling.
+
 ## 2026-10-24 — Expectedness is decided where the decision was made
 
 - **FID-2026-1024-001 — medium — Classify a tool failure from its failing
