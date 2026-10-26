@@ -84,3 +84,47 @@ test('fid_worktree provider-facing schema is an object with named fields', () =>
   expect(jsonSchema.oneOf).toBeUndefined()
   expect(jsonSchema.anyOf).toBeUndefined()
 })
+
+// FID-2026-1024-002: the recurring refusal was a malformed `fid_id`, and the only
+// readable hint was the raw JSON-Schema pattern — the refusal text keeps the
+// issue path and code but never the expected shape. Both prose surfaces the
+// model reads must name the format, and the pattern must keep rejecting
+// plausible near-misses rather than being widened.
+test('fid_worktree advertises the FID id format', () => {
+  const jsonSchema = z.toJSONSchema(fidWorktreeInputSchema, {
+    io: 'input',
+  }) as {
+    properties: Record<string, { description?: string; pattern?: string }>
+  }
+  const field = jsonSchema.properties.fid_id
+  expect(field?.pattern).toBe('^FID-\\d{4}-\\d{4}-\\d{3}$')
+  expect(field?.description).toContain('FID-YYYY-MMDD-NNN')
+  expect(field?.description).toContain('FID-2026-1024-002')
+  expect(field?.description).toContain('slug')
+  expect(toolParams.fid_worktree.description).toContain('FID-YYYY-MMDD-NNN')
+})
+
+test('fid_worktree accepts canonical FID ids and no near-misses', () => {
+  const accepted = ['FID-2026-1024-002', 'FID-2026-1017-007']
+  for (const fid_id of accepted) {
+    expect({
+      fid_id,
+      ok: fidWorktreeInputSchema.safeParse({ action: 'dispose', fid_id })
+        .success,
+    }).toEqual({ fid_id, ok: true })
+  }
+  const rejected = [
+    'FID-2026-10-24-002',
+    'FID-2026-1024-2',
+    'fid-2026-1024-002',
+    'FID-2026-1024-002-title',
+    ' FID-2026-1024-002',
+  ]
+  for (const fid_id of rejected) {
+    expect({
+      fid_id,
+      ok: fidWorktreeInputSchema.safeParse({ action: 'dispose', fid_id })
+        .success,
+    }).toEqual({ fid_id, ok: false })
+  }
+})
