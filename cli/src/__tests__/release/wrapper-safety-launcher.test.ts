@@ -10,6 +10,7 @@ import {
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 
+import { firstPackedArtifact } from '@savant-code/common/util/npm-pack-artifacts'
 import { describe, expect, test } from 'bun:test'
 
 import { moduleRequire, repoRoot } from './wrapper-safety-fixtures'
@@ -127,20 +128,33 @@ describe('shared release launcher safety', () => {
           ['pack', '--json'],
           { cwd: packageRoot, encoding: 'utf8' },
         )
-        const [packed] = JSON.parse(output) as Array<{
-          filename: string
-          files: Array<{ path: string }>
-        }>
+        // FID-2026-1026-001: npm 12 prints a name-keyed object where npm <= 11
+        // printed an array; read both through the shared normalizer and keep
+        // failing loudly when no artifact is present.
+        const packed = firstPackedArtifact(JSON.parse(output))
+        if (packed === undefined) {
+          throw new Error('npm pack produced no artifact entry')
+        }
+        const packedFiles = Array.isArray(packed.files)
+          ? packed.files.flatMap((file) =>
+              file !== null &&
+              typeof file === 'object' &&
+              !Array.isArray(file) &&
+              'path' in file &&
+              typeof file.path === 'string'
+                ? [file.path]
+                : [],
+            )
+          : []
+        expect(packedFiles).toContain('savant-design-systems/manifest.json')
         expect(
-          packed.files.some(
-            (file) => file.path === 'savant-design-systems/manifest.json',
-          ),
-        ).toBe(true)
-        expect(
-          packed.files.filter((file) =>
-            file.path.startsWith('savant-design-systems/resources/'),
+          packedFiles.filter((file) =>
+            file.startsWith('savant-design-systems/resources/'),
           ),
         ).toHaveLength(74)
+        if (typeof packed.filename !== 'string') {
+          throw new Error('npm pack produced no artifact filename')
+        }
         mkdirSync(packedRoot, { recursive: true })
         await moduleRequire('tar').x({
           file: join(packageRoot, packed.filename),

@@ -35,6 +35,17 @@ This session uses the canonical repository protocol.
   on the external targets; this repository audit does not grant that authority.
   Details are preserved in the hygiene audit report; no external fix is claimed.
 
+### FID-2026-1026-001 — npm 12 `npm pack --json` envelope (converged)
+
+- [ ] Authority: automation level 3. `high` severity, `converged` — the post-release
+  artifact check reads arrays only, so it fails after a successful publish under
+  npm 12, and the CLI suite throws on the same envelope, which leaves the
+  fail-closed pre-push gate refusing every push.
+- [ ] Write targets: `common/src/util/npm-pack-artifacts.ts`,
+  `common/src/util/__tests__/npm-pack-artifacts.test.ts`,
+  `scripts/public-release/npm-guards.ts`,
+  `cli/src/__tests__/release/wrapper-safety-launcher.test.ts`.
+
 ### Q2-FID-2026-1024-002 — implicit `fid_id` for a single active lane (blocked)
 
 - [ ] Blocked pending an operator ruling: whether `fid_worktree` may accept an
@@ -44,11 +55,15 @@ This session uses the canonical repository protocol.
 
 ## Machine-readable scope targets
 
+- FID-2026-1026-001: `common/src/util/npm-pack-artifacts.ts`,
+  `common/src/util/__tests__/npm-pack-artifacts.test.ts`,
+  `scripts/public-release/npm-guards.ts`,
+  `cli/src/__tests__/release/wrapper-safety-launcher.test.ts`
+
 `FID-2026-1024-002` closed and archived on 2026-10-26 (implementation
 `cf144be6`), so its write grant — `params/tool/fid-worktree.ts`, its test file
 and `class-owners.json` — is released here; the evidence lives in the archived
-record, the changelog and the session summary. No current item holds a
-machine-readable target line.
+record, the changelog and the session summary.
 
 `AUDIT-2026-1018` completed on 2026-10-19 and its target list is retained in
 `dev/tracking/scope-history-2026-10-20.md`, which grants nothing; `EMBED-001`

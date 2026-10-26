@@ -12,6 +12,8 @@ import { mkdirSync, rmSync } from 'fs'
 import os from 'os'
 import path from 'path'
 
+import { firstPackedArtifact } from '@savant-code/common/util/npm-pack-artifacts'
+
 import { configuredReleasePackages } from './catalog'
 import { run } from './command-runner'
 import { positiveEnvMs } from './env-ms'
@@ -19,6 +21,7 @@ import { fail } from './fail'
 import { isNotFoundResult } from './receipts'
 
 import type { PackageTarget } from './catalog'
+import type { JSONValue } from '@savant-code/common/types/json'
 
 const DEFAULT_NPM_VERIFY_TIMEOUT_MS = 10 * 60 * 1_000
 const DEFAULT_NPM_VERIFY_POLL_INTERVAL_MS = 30 * 1_000
@@ -167,7 +170,7 @@ export async function verifyPublishedPackage(
     if (packed.status !== 0) {
       fail(`Post-release package inspection failed for ${target.name}.`)
     }
-    let entries: unknown
+    let entries: JSONValue
     try {
       entries = JSON.parse(packed.stdout)
     } catch {
@@ -175,15 +178,11 @@ export async function verifyPublishedPackage(
         `Post-release package inspection returned invalid JSON for ${target.name}.`,
       )
     }
-    const artifact = Array.isArray(entries) ? entries[0] : undefined
-    const files =
-      artifact && typeof artifact === 'object' && 'files' in artifact
-        ? artifact.files
-        : undefined
-    const packageVersion =
-      artifact && typeof artifact === 'object' && 'version' in artifact
-        ? artifact.version
-        : undefined
+    // FID-2026-1026-001: npm 12 prints a name-keyed object where npm <= 11
+    // printed an array; the shared reader accepts both and refuses the rest.
+    const artifact = firstPackedArtifact(entries)
+    const files = artifact?.files
+    const packageVersion = artifact?.version
     if (
       packageVersion !== version ||
       !Array.isArray(files) ||
