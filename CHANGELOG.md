@@ -1,5 +1,25 @@
 # Changelog
 
+## 2026-10-26 — Both npm pack envelopes are readable
+
+- **FID-2026-1026-001 — high — Read `npm pack --json` in the shape the
+  installed npm prints, not the shape one major used to print.** npm 12 emits a
+  name-keyed object (`{ "savant-code": { … } }`) where npm ≤ 11 emitted an
+  array. The post-release verifier took `entries[0]`, so a real publish under
+  npm 12 failed its own artifact check with *"Published artifact
+  metadata/content is invalid"* after the publish had already succeeded, and
+  the CLI release catalog test destructured unvalidated JSON, so
+  `shared release launcher safety > preserves the catalog across an npm-pack
+  boundary` threw `TypeError: {} is not iterable`, redding `bun run test` and
+  causing the fail-closed pre-push hook to refuse pushes. One reader
+  (`firstPackedArtifact` in `common/src/util/npm-pack-artifacts.ts`) now takes
+  the first artifact from either envelope and returns `undefined` for an empty
+  array, an empty object, a multi-key object or a non-object entry, so each
+  caller keeps its existing fail-closed message; field validation stays with
+  the callers. Both consumers use it, and the CLI case that was red is now
+  part of the declared gate set. The npm major that produced the envelope is
+  not pinned by this change.
+
 ## 2026-10-26 — The FID id format is stated where the caller reads it
 
 - **FID-2026-1024-002 — medium — Make the `fid_worktree` id format discoverable
