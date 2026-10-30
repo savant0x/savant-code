@@ -1,5 +1,54 @@
 # Changelog
 
+## 2026-10-30 — Media-mode artifacts and the video drop point, named
+
+- **FID-2026-1030-002 — low — Correct the feasibility report and capture the
+  research prompt.** The FID-2026-1030-001 audit left one `NEEDS-REVIEW` and one
+  wrong citation. The `NEEDS-REVIEW`: the report's §2 claim that
+  `savant-free-models.ts` carries "only a `multimodal: boolean` flag" came from a
+  grep, not from reading the interface, so it was restated as the verified fact —
+  `SavantFreeModel` declares one `multimodal: boolean` member and no video-valued
+  member exists in the file. The wrong citation: §4 item 3 routed the drop-point
+  question to `resolveMappedModelProtocol`, which has **zero grep hits** in this
+  repository — the name came from prose in `docs/adding-a-provider.md`, not from
+  code. The verified drop point is
+  `cli/src/utils/openrouter-models/catalog-filter.ts`: `NON_CODING_MODEL_PATTERN`
+  matches `video|veo|lyria|…|omni`, `isCodingHarnessModel` returns false on the
+  match, and `assessCodingModel` returns `'specialist'` then `'non-text'`. The
+  report now records that this is correct behavior — the filter's own comment
+  scopes its catalog to the coding harness, and no media surface exists to admit
+  the models — and §5 is scoped to a missing *media surface* rather than a single
+  queued model, with `createOpenAICompatible`'s four model kinds named. The same
+  record captures `docs/research/media-mode-dual-picker-research-prompt.md`, the
+  externally-run design research request for the proposed dual-mode picker, with
+  its repository links and attachment manifest. No source code changed; the
+  research has not run and the live capability probes were not performed, so no
+  production behavior is claimed. The stale `resolveMappedModelProtocol`
+  reference in `docs/adding-a-provider.md` is recorded as a separate, unfixed
+  finding.
+
+## 2026-10-30 — Video models are reachable; the harness has no shape for them
+
+- **FID-2026-1030-001 — low — Record the video-modality feasibility evidence.**
+  A read-only report (`docs/reports/video-modality-feasibility.md`) documents
+  the operator's finding that free video-capable models are already within
+  reach and are ignored only for lack of harness support. Three independent
+  artifacts agree: the wired free-options digest lists `lyria-3-clip-preview`,
+  `lyria-3.5` and `gemini-omni-1.1-flash` behind configured providers; the
+  launch harvest scrape records `grok-imagine-video-1.5` and `MiniMax-H3` in
+  the `console.flatkey.ai` roster (boundary-ok, 1051 ms, 100% 14-day uptime);
+  and the offers feed already classifies free video provisioning as its own
+  `Video (5)` category. The gap is located on the harness side: `savant-free-models.ts`
+  carries only a `multimodal: boolean` flag, `context-window-table-kiosapi.ts`
+  knows video only as an input modality, the OpenAI-compatible chat converter
+  branches on `image/` and errors on every other media type, and
+  `openai-compatible-image-model.ts` has no video or queued/poll-ready sibling.
+  The report also records the counter-example: `newapi.prorisehub.com`
+  advertises `veo-3.1-ref` / `veo-3.1-extend` while its probe returns
+  `modelsCount: 0`, so it is a lead and not a route. No source code changed and
+  no production behavior is claimed; the two live capability probes require
+  operator-held API keys and remain open questions in the report.
+
 ## 2026-10-26 — Both npm pack envelopes are readable
 
 - **FID-2026-1026-001 — high — Read `npm pack --json` in the shape the

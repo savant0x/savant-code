@@ -42,7 +42,50 @@ This session uses the canonical repository protocol.
   about implicit lane targeting for mutating actions, not a defect repair, and
   the record's implementation does not depend on it. Re-attempt on a ruling.
 
+### FID-2026-1030-001 — video modality feasibility report (open)
+
+- [ ] Authority: automation level 3. Operator-requested read-only evidence
+  report documenting whether video-capable models are already reachable through
+the provider pipeline, and why the harness cannot use them.
+- [ ] Write grant: `docs/reports/video-modality-feasibility.md` (new file),
+  `dev/fids/FID-2026-1030-001-video-modality-feasibility-report.md` (open FID
+  record). No source code is modified. No behavior changes.
+
+Three independent artifacts corroborate the finding: the wired free-options
+digest, the daily harvest scrape (`candidates.json` / `report.md`) and the
+offers feed, each of which lists video-capable model IDs. The report records
+the `console.flatkey.ai` boundary-ok probe, the `newapi.prorisehub.com`
+`modelsCount: 0` trap, and the open questions that still require live probes.
+
+### FID-2026-1030-002 — media-mode artifacts and report correction (open)
+
+- [ ] Authority: automation level 3. Operator-requested durable capture of the
+  Gemini Deep Research prompt, plus the capability-claim and drop-point
+  corrections the FID-2026-1030-001 audit produced.
+- [ ] Write grant: `docs/research/media-mode-dual-picker-research-prompt.md`
+  (new file), `docs/reports/video-modality-feasibility.md` (§2/§4/§5
+  corrections), `dev/fids/FID-2026-1030-002-media-mode-artifacts-and-capability-claim-correction.md`
+  (FID record). No source code is modified. No behavior changes.
+
+The prompt asks an external research service to evaluate the operator's
+proposed dual-mode model picker (text mode vs media-generation mode) against
+prior art. The same record corrects the report's §4 item 3, which cited
+`resolveMappedModelProtocol` — a symbol with zero grep hits in this repository —
+and replaces it with the verified drop point in `catalog-filter.ts`.
+
 ## Machine-readable scope targets
+
+- FID-2026-1030-001: `docs/reports/video-modality-feasibility.md`,
+  `dev/fids/FID-2026-1030-001-video-modality-feasibility-report.md`
+- FID-2026-1030-002: `docs/research/media-mode-dual-picker-research-prompt.md`,
+  `docs/reports/video-modality-feasibility.md`,
+  `dev/fids/FID-2026-1030-002-media-mode-artifacts-and-capability-claim-correction.md`
+
+`FID-2026-1030-001` holds that write grant until closure, then releases it
+here. The work is documentation only: no source code and no behavior changes.
+
+`FID-2026-1030-002` holds its write grant until closure, then releases it here.
+Documentation only: no source code and no behavior changes.
 
 `FID-2026-1026-001` closed and archived on 2026-10-26 (implementation
 `9b90bff9`), so its write grant — the npm pack reader, its unit suite, the
