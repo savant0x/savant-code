@@ -1,5 +1,29 @@
 # Changelog
 
+## 2026-10-30 — Paper Instruments (Ultramarine) becomes a built-in provider
+
+- **FID-2026-1030-005 — medium — Paper Instruments ships as a registry
+  provider.** One typed entry (gateway, `PAPERINSTRUMENTS_API_KEY`,
+  `https://api.paperinstruments.com/v1`, `openai`, `strip`, static catalog,
+  `order: 4`) derives routing, the `/provider` picker, credential readiness, the
+  logo and the generated docs. The keyed `GET /v1/models` probe returned exactly
+  one row (`ultramarine-1-flash`) carrying no window field, so the catalog is a
+  checked-in single row and the window comes from the fallback table rather than
+  a live leg, which also keeps the positional live ladder untouched. The window
+  is **262,144** tokens, the vendor's stated public-deployment total; the base
+  GLM-5.3-Flash architecture ceiling (1,048,576) and the vendor's 131,072
+  harness compaction budget were both rejected as served limits, and the 200,000
+  default would have under-served the model by 62,144 tokens. Coverage is
+  `table-section` with the provenance recorded in the register note. Catalog and
+  authentication are measured; inference is not, because the account balance is
+  zero and a chat request answers `429 insufficient_quota`
+  (`x-should-retry: false`), so acceptance stays open as OBS-003 in
+  `dev/tracking/internal-followups.json`. Gates: common provider suites 123
+  pass, CLI catalog/setup/window suites 37 pass, SDK routing suite 2 pass,
+  `generate:provider-docs:check` clean, `providers:parity` 3,987 rows with
+  `paperinstruments: 1`, `validate:repository` PASS, typecheck exit 0,
+  eslint/markdownlint/prettier clean. Implementation `42b1a2c9`.
+
 ## 2026-10-30 — Hyper (Charm) becomes a built-in provider
 
 - **FID-2026-1030-004 — low — Hyper ships as a registry provider.** One typed

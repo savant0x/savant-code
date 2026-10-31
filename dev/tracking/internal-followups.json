@@ -118,6 +118,21 @@
       ],
       "completionEvidence": [],
       "sourceFids": ["FID-2026-1030-004"]
+    },
+    {
+      "id": "OBS-003",
+      "kind": "live-comparison",
+      "status": "open",
+      "owner": "Operator",
+      "summary": "Opened 2026-10-30 at the closure of FID-2026-1030-005 (implementation 42b1a2c9): the Paper Instruments entry, static catalog, 262,144 window pin, coverage disposition and routing wiring are implementation-verified by tests and the registry/docs gates. AUTHENTICATION IS MEASURED (keyed GET /v1/models returned HTTP 200 with one row, ultramarine-1-flash, 2026-10-30) but INFERENCE IS NOT: the account balance is zero (GET /v1/usage available_nanodollars 0) and a 16-token chat request returned 429 insufficient_quota with x-should-retry: false, so no completion has ever been observed and the 262,144 window remains the vendor's stated deployment figure rather than a measured boundary.",
+      "nextAction": "After funding the prepaid balance, run /provider paperinstruments, select paperinstruments/ultramarine-1-flash and record the observed HTTP status, finish_reason, whether delta.reasoning_content arrives, and the model's behaviour under Savant's system prompt (the vendor warns prompts tuned for other models overdeliver into verbosity). Treat 429 insufficient_quota as a billing observation, not as proof the route is wrong.",
+      "evidence": [
+        "dev/fids/archive/FID-2026-1030-005-paper-instruments-provider.md",
+        "common/src/constants/context-window-table.ts",
+        "docs/providers.md"
+      ],
+      "completionEvidence": [],
+      "sourceFids": ["FID-2026-1030-005"]
     }
   ]
 }
