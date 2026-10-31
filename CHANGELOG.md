@@ -1,5 +1,26 @@
 # Changelog
 
+## 2026-10-30 — Hyper (Charm) becomes a built-in provider
+
+- **FID-2026-1030-004 — low — Hyper ships as a registry provider.** One typed
+  entry (gateway, `HYPER_API_KEY`, `https://hyper.charm.land/v1`, `openai`,
+  `strip`, public live catalog, `order: 4`) derives routing, the `/provider`
+  picker, credential readiness, the logo and the generated docs. The live
+  catalog needs its own parser: Hyper publishes `display_name`,
+  `context_window`/`max_output_tokens`, per-million `pricing` and an
+  `effort_levels` reasoning block, so an OpenRouter-shaped parser would have
+  dropped every window — the Vercel lesson applied instead of repeated. All 23
+  rows measured on 2026-10-30 publish both limits, so coverage is
+  `runtime-published` with no fallback table, and no protocol map is needed
+  because the whole roster is served by `/v1/chat/completions` (the vendor's
+  Responses and Messages endpoints are pass-throughs, not a mixed roster).
+  Catalog reachability is measured; an authenticated completion was not
+  attempted, so inference acceptance stays open as OBS-002 in
+  `dev/tracking/internal-followups.json`. Gates: common provider suites 122
+  pass, CLI catalog/setup suites 205 pass, SDK routing suites 17 pass,
+  `generate:provider-docs:check` clean, `validate:repository` PASS, typecheck
+  exit 0, eslint/markdownlint/prettier clean. Implementation `90768081`.
+
 ## 2026-10-30 — Media generation architecture: converged, then deferred on ROI
 
 - **FID-2026-1030-003 — medium — Decoupled-hybrid media architecture closed

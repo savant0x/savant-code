@@ -104,6 +104,20 @@
           "predecessorFid": "FID-2026-1015-006"
         }
       ]
+    },
+    {
+      "id": "OBS-002",
+      "kind": "live-comparison",
+      "status": "open",
+      "owner": "Operator",
+      "summary": "Opened 2026-10-30 at the closure of FID-2026-1030-004 (commit 90768081): the Hyper provider entry, live catalog wrapper, window coverage and routing wiring are implementation-verified by tests and the docs/registry gates. CATALOG REACHABILITY IS MEASURED (public GET https://hyper.charm.land/v1/models returned HTTP 200 keyless with 23 coding rows, all publishing context_window, 2026-10-30) but INFERENCE REACHABILITY IS NOT: no authenticated completion was issued, so no claim is made that hyper/<id> produces a vendor response for a real key.",
+      "nextAction": "With HYPER_API_KEY configured, run /provider hyper, select a listed hyper/ model and record the observed HTTP status plus a completion excerpt. Treat a 402 (insufficient Hypercredits) or 401 as an entitlement/credential observation, not as proof the route is wrong, and record it verbatim in this item.",
+      "evidence": [
+        "dev/fids/archive/FID-2026-1030-004-hyper-provider-registry.md",
+        "cli/src/utils/openrouter-models/hyper.ts"
+      ],
+      "completionEvidence": [],
+      "sourceFids": ["FID-2026-1030-004"]
     }
   ]
 }

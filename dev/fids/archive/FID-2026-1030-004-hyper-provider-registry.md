@@ -3,7 +3,7 @@
 **Filename:** `FID-2026-1030-004-hyper-provider-registry.md`
 **ID:** FID-2026-1030-004
 **Severity:** low
-**Status:** converged
+**Status:** closed
 **Created:** 2026-10-30 00:00
 **Automation level:** 3
 **YAGNI-Compliance:** Verified
@@ -158,6 +158,21 @@ entry, one window-coverage disposition, regenerated + hand-updated docs.
 - gate: test cli/src/utils/__tests__/provider-setup.test.ts
 - gate: quality
 
+### Verification Receipt
+
+- fingerprint: sha256:7ccf1ae5faffb6581bea7bcb43a1d3f89e79dd78984dfd5ae148a0200b874d73
+- verified: 2026-10-31T01:19:07.975Z
+- typecheck common: exit 0
+- typecheck cli: exit 0
+- typecheck sdk: exit 0
+- test common/src/providers/__tests__/provider-registry.test.ts: exit 0
+- test common/src/providers/__tests__/provider-registry-setup.test.ts: exit 0
+- test cli/src/utils/openrouter-models/__tests__/hyper-catalog.test.ts: exit 0
+- test cli/src/utils/openrouter-models/__tests__/window-coverage-register.test.ts: exit 0
+- test sdk/src/impl/__tests__/model-provider-free-mode.test.ts: exit 0
+- test cli/src/utils/__tests__/provider-setup.test.ts: exit 0
+- quality: exit 0
+
 ## Perfection Loop
 
 ### Loop 1 — RED
@@ -184,20 +199,65 @@ entry, one window-coverage disposition, regenerated + hand-updated docs.
 
 ### Implementation Evidence (REQUIRED for `closed`)
 
-- [ ] **Commit SHA:** pending
-- [ ] **File:line ranges:** pending
-- [ ] **Gate output:** pending
-- [ ] **Reproducibility:** `rg -n "hyper" common/src/providers cli/src/utils/openrouter-models common/src/constants/window-coverage-register.ts`
-- [ ] **Step statuses:** pending
+- [x] **Commit SHA:** `90768081` — `feat(providers): add Hyper as a built-in provider`
+- [x] **File:line ranges:**
+  - `common/src/providers/registry-partitioned-5.ts:193-212` — the `hyper` entry
+  - `cli/src/utils/openrouter-models/hyper.ts:1-107` — dedicated parser
+    (`parseHyperModels`, `:72`) and live fetcher (`:104`)
+  - `cli/src/utils/openrouter-models/gateway-live-results.ts:107` (fan-out),
+    `:70/:140/:231` (ladder slot 19)
+  - `cli/src/utils/openrouter-models/gateway-catalog-merge.ts:71` (merge order)
+  - `cli/src/utils/openrouter-models/gateway.ts:33/:127/:264` (reset seam,
+    provider comment)
+  - `common/src/providers/provider-exception-manifest.ts:30-45` (`live-catalog`)
+  - `common/src/constants/window-coverage-register.ts:314-323`
+    (`runtime-published`)
+- [x] **Gate output:** pasted in Code Verification Evidence below
+- [x] **Reproducibility:**
+  `rg -n "hyper" common/src/providers cli/src/utils/openrouter-models common/src/constants/window-coverage-register.ts`
+  matches the registry entry, the wrapper, the ladder slot, the manifest entry
+  and the coverage entry.
+- [x] **Step statuses:** 1 implemented; 2 implemented; 3 implemented;
+  4 implemented; 5 implemented; 6 implemented; 7 implemented.
 
 ### Code Verification Evidence
 
-- [ ] Files referenced in Affected Components exist
-- [ ] Implementation matches the Proposed Solution
-- [ ] Typecheck/tests/lint pass with pasted tool output
-- [ ] Production call-graph evidence is present for new or repaired wiring
-- [ ] FID status reflects the actual implementation state
+- [x] Files referenced in Affected Components exist
+- [x] Implementation matches the Proposed Solution
+- [x] Typecheck/tests/lint pass with pasted tool output
+- [x] Production call-graph evidence is present for new or repaired wiring
+- [x] FID status reflects the actual implementation state
+
+Gate output (2026-10-30):
+
+```text
+cd common && bun test src/providers/__tests__/      -> 122 pass, 0 fail
+cd cli && bun test src/utils/openrouter-models/__tests__/ \
+  src/utils/__tests__/provider-setup.test.ts        -> 205 pass, 0 fail
+cd sdk && bun test src/impl/__tests__/model-provider-free-mode-hyper.test.ts \
+  src/impl/__tests__/model-provider-free-mode.test.ts -> 17 pass, 0 fail
+bun run generate:provider-docs:check                -> up to date
+bun run validate:repository                         -> validation: PASS
+bun run typecheck                                   -> exit 0 (15 workspaces)
+bun run lint:md                                     -> exit 0
+bun x eslint <touched trees> --max-warnings 0       -> exit 0
+bun x prettier --check .                            -> all files formatted
+```
+
+Call-graph reachability (`refs`): `fetchHyperModels(forceRefresh)` is called by
+`fetchGatewayLiveCatalogs` (`gateway-live-results.ts:107`); its rows resolve at
+`:231` and merge at `gateway-catalog-merge.ts:71`; the reset seam is registered
+in `gateway.ts:264`. `HYPER_API_KEY` is resolved by the SDK's registry loop
+(`sdk/src/impl/model-provider.ts:116`), proven by the new SDK lane test.
 
 ## Resolution
 
-Pending implementation and gate evidence.
+Implemented in `90768081` and gate-verified. `/provider hyper` accepts
+`HYPER_API_KEY`, `/model` lists the vendor's live roster, and `hyper/<id>`
+routes to `https://hyper.charm.land/v1/chat/completions` with Bearer auth.
+
+Live inference acceptance (an authenticated completion from the vendor) is an
+observation, not a code-closure claim: no completion was issued during this
+work, so catalog reachability and inference reachability stay separate.
+
+- **Archived:** 2026-10-30

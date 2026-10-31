@@ -12,26 +12,6 @@ verification, releases or repository boundaries.
 
 ## Open items
 
-### FID-2026-1030-004 — Hyper (Charm) built-in provider (open)
-
-- [ ] Authority: automation level 3. Operator named Hyper
-  (`https://hyper.charm.land`) as the provider to ship as a built-in registry
-  entry. Additive provider work following `docs/adding-a-provider.md`.
-- [ ] Write grant: `common/src/providers/registry-partitioned-5.ts`,
-  `common/src/providers/provider-exception-manifest.ts`,
-  `common/src/constants/window-coverage-register.ts`,
-  `cli/src/utils/openrouter-models/hyper.ts` (new file),
-  `cli/src/utils/openrouter-models/gateway.ts`,
-  `cli/src/utils/openrouter-models/gateway-live-results.ts`,
-  `cli/src/utils/openrouter-models/gateway-catalog-merge.ts`,
-  its new catalog test file, the pinned provider tests it extends, the
-  generated provider-doc surfaces, and the hand-maintained doc surfaces the
-  drift gate names. No behavior changes outside provider registration.
-
-Measured 2026-10-30: `GET https://hyper.charm.land/v1/models` answers HTTP 200
-keyless with 23 rows, all publishing `context_window`, so the coverage
-disposition is `runtime-published` and no fallback table is owed.
-
 ### EMBED-001 — superseded external single-agent embed (blocked)
 
 - [ ] Authority: automation level 3. Updating the external target is reserved
@@ -100,6 +80,15 @@ and replaces it with the verified drop point in `catalog-filter.ts`.
 - FID-2026-1030-002: `docs/research/media-mode-dual-picker-research-prompt.md`,
   `docs/reports/video-modality-feasibility.md`,
   `dev/fids/FID-2026-1030-002-media-mode-artifacts-and-capability-claim-correction.md`
+
+`FID-2026-1030-004` closed and archived on 2026-10-30 (implementation
+`90768081`), so its write grant — the Hyper registry entry, its live catalog
+wrapper and parser test, the fan-out/ladder/merge wiring, the exception manifest
+and window-coverage entries, the pinned provider tests it extended, and the
+generated plus hand-maintained provider docs — is released here; the evidence
+lives in the archived record, the changelog and the session summary. The
+unobserved piece (an authenticated vendor completion) is tracked as OBS-002 in
+`dev/tracking/internal-followups.json`, independently of this closure.
 
 `FID-2026-1030-001` holds that write grant until closure, then releases it
 here. The work is documentation only: no source code and no behavior changes.
