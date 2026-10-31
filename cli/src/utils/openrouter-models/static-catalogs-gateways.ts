@@ -14,6 +14,7 @@ import {
   bazaarlinkModels,
   infronModels,
   internModels,
+  paperinstrumentsModels,
   unorouterModels,
 } from '@savant-code/common/constants/model-config'
 
@@ -216,6 +217,27 @@ export function fetchInternModels(): OpenRouterModel[] {
     id,
     name: INTERN_NAMES[id] ?? id.slice('intern/'.length),
     provider: 'intern' as const,
+    contextLength: getContextWindowFallback(id).contextWindow,
+  }))
+}
+
+/** Display names for Paper Instruments model ids (FID-2026-1030-005). */
+const PAPERINSTRUMENTS_NAMES: Record<string, string> = {
+  'paperinstruments/ultramarine-1-flash': 'Ultramarine 1 Flash',
+}
+
+/**
+ * Return the Paper Instruments catalog (FID-2026-1030-005) — the single
+ * Ultramarine model the API serves. Static by design: the keyed /v1/models
+ * probe (2026-10-30) returns that one row with no window field, so a live leg
+ * would add a request and zero information (the atria precedent). The served
+ * window is pinned in the common fallback table. Synchronous.
+ */
+export function fetchPaperInstrumentsModels(): OpenRouterModel[] {
+  return Object.values(paperinstrumentsModels).map((id) => ({
+    id,
+    name: PAPERINSTRUMENTS_NAMES[id] ?? id.slice('paperinstruments/'.length),
+    provider: 'paperinstruments' as const,
     contextLength: getContextWindowFallback(id).contextWindow,
   }))
 }

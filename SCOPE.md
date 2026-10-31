@@ -12,6 +12,50 @@ verification, releases or repository boundaries.
 
 ## Open items
 
+### FID-2026-1030-005 — Paper Instruments (Ultramarine) built-in provider (open)
+
+- [ ] Authority: automation level 3. Operator asked to evaluate and add
+  `https://docs.paperinstruments.com/docs` as a built-in provider, then named
+  `.env.local` as the key surface and corrected the window assumption (a 100k
+  row would strangle a long-context model). Additive provider work following
+  `docs/adding-a-provider.md`.
+- [ ] Write grant: `common/src/providers/registry-partitioned-5.ts`,
+  `common/src/constants/model-config/gateway-catalogs.ts`,
+  `common/src/constants/model-config.ts`,
+  `common/src/providers/model-catalogs.ts`,
+  `common/src/constants/context-windows.ts`,
+  `common/src/constants/context-window-table.ts`,
+  `common/src/constants/window-coverage-register.ts`,
+  `common/src/providers/__tests__/validate-provider-registry.test.ts`,
+  `common/src/providers/__tests__/provider-registry.test.ts`,
+  `common/src/providers/__tests__/provider-registry-setup.test.ts`,
+  `cli/src/utils/openrouter-models/static-catalogs-gateways.ts`,
+  `cli/src/utils/openrouter-models/gateway-catalog-merge.ts`,
+  new catalog + SDK routing test files, `cli/src/utils/__tests__/provider-setup.test.ts`,
+  the generated provider-doc surfaces, and the hand-maintained doc surfaces the
+  drift gate names. No behavior changes outside provider registration.
+
+Measured 2026-10-30 with the operator key: `GET /v1/models` HTTP 200 with one
+row (`ultramarine-1-flash`, fields `id`/`object`/`created`/`owned_by`, no
+window), `GET /v1/usage` HTTP 200 with a zero balance, and a 16-token chat
+request answered `429 insufficient_quota` (`x-should-retry: false`). Catalog
+coverage is therefore `table-section`; inference is unverified pending funds.
+
+### FID-2026-1030-006 — transcript streaming render hot path (open)
+
+- [ ] Authority: automation level 3. Operator asked for a review of
+  `resources/crush-main`, then for the integration ideas to be turned into a FID
+  that runs the full Perfection Loop before any code exists. Measured root cause:
+  one markdown render costs 51.97 ms at 20 000 characters against the 100 ms
+  streaming flush, and the streaming path re-renders the whole body on every
+  flush. This item's deliverable is the converged record plus the measured
+  speedup model; implementation is the record's IMPLEMENT phase and starts on
+  the operator's go-ahead.
+- [ ] Write grant: `dev/fids/FID-2026-1030-006-transcript-streaming-render-hot-path.md`
+  (record), `SCOPE.md` (register). No source code is written in the convergence
+  phase. The record's later implementation surface is declared in its Proposed
+  Solution and is re-registered here before any code is written.
+
 ### EMBED-001 — superseded external single-agent embed (blocked)
 
 - [ ] Authority: automation level 3. Updating the external target is reserved
@@ -80,6 +124,26 @@ and replaces it with the verified drop point in `catalog-filter.ts`.
 - FID-2026-1030-002: `docs/research/media-mode-dual-picker-research-prompt.md`,
   `docs/reports/video-modality-feasibility.md`,
   `dev/fids/FID-2026-1030-002-media-mode-artifacts-and-capability-claim-correction.md`
+- FID-2026-1030-006: `dev/fids/FID-2026-1030-006-transcript-streaming-render-hot-path.md`,
+  `SCOPE.md`
+- FID-2026-1030-005: `common/src/providers/registry-partitioned-5.ts`,
+  `common/src/providers/model-catalogs.ts`,
+  `common/src/providers/__tests__/*.test.ts`,
+  `common/src/constants/model-config.ts`,
+  `common/src/constants/model-config/gateway-catalogs.ts`,
+  `common/src/constants/context-windows.ts`,
+  `common/src/constants/context-window-table.ts`,
+  `common/src/constants/window-coverage-register.ts`,
+  `common/src/constants/provider-catalog-census.json`,
+  `cli/src/utils/openrouter-models/static-catalogs-gateways.ts`,
+  `cli/src/utils/openrouter-models/gateway-catalog-merge.ts`,
+  `cli/src/utils/openrouter-models/__tests__/paperinstruments-catalog.test.ts`,
+  `cli/src/utils/__tests__/provider-setup.test.ts`,
+  `sdk/src/impl/__tests__/model-provider-free-mode-paperinstruments.test.ts`,
+  `.env.example`, `README.md`, `README.zh-CN.md`, `cli/release/README.md`,
+  `docs/providers.md`, `docs/features.md`, `docs/index.md`,
+  `docs/installation.md`, `docs/sdk-overview.md`,
+  `dev/fids/FID-2026-1030-005-paper-instruments-provider.md`
 
 `FID-2026-1030-004` closed and archived on 2026-10-30 (implementation
 `90768081`), so its write grant — the Hyper registry entry, its live catalog

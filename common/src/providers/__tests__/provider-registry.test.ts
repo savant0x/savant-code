@@ -63,6 +63,7 @@ describe('PROVIDER_REGISTRY (FID-2026-0809-001 Phase 1)', () => {
       'openai',
       'openrouter',
       'orcarouter',
+      'paperinstruments',
       'perplexity',
       'river',
       'tiarina',
@@ -137,6 +138,7 @@ describe('PROVIDER_REGISTRY (FID-2026-0809-001 Phase 1)', () => {
       'apixo',
       'ashna',
       'hyper',
+      'paperinstruments',
     ]) {
       expect(deriveProviderOrder(PROVIDER_REGISTRY, id)).toBe(4)
     }

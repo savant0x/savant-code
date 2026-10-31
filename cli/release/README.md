@@ -85,6 +85,7 @@ Or select one of the supported gateway providers directly:
 | Nous Research | `/provider nous` or `DIRECT_PROVIDER=nous` | `NOUS_API_KEY` | OpenAI-compatible direct inference; Portal OAuth is separate |
 | Ollama | Automatic detection | `OLLAMA_HOST` (optional) | Local inference; no API key required |
 | OrcaRouter | `/provider orcarouter` or `DIRECT_PROVIDER=orcarouter` | `ORCAROUTER_API_KEY` | Multi-provider gateway with a live model catalog (free tier currently gated vendor-side on GitHub account linkage) |
+| Paper Instruments | `/provider paperinstruments` or `DIRECT_PROVIDER=paperinstruments` | `PAPERINSTRUMENTS_API_KEY` | Hosted gateway |
 | Perplexity | `/provider perplexity` or `DIRECT_PROVIDER=perplexity` | `PERPLEXITY_API_KEY` | Hosted gateway |
 | River AI | `/provider river` or `DIRECT_PROVIDER=river` | `RIVER_AI_API_KEY` | Hosted gateway |
 | Tiarina Cloud | `/provider tiarina` or `DIRECT_PROVIDER=tiarina` | `TIARINA_API_KEY` | Hosted gateway |
@@ -228,6 +229,7 @@ BLAZERAIL_API_KEY=dummy-blazerail-api-key-replace-me
 RIVER_AI_API_KEY=dummy-river-ai-api-key-replace-me
 ZYLO_API_KEY=dummy-zylo-api-key-replace-me
 HYPER_API_KEY=dummy-hyper-key-replace-me
+PAPERINSTRUMENTS_API_KEY=dummy-paperinstruments-key-replace-me
 # Cloudflare needs TWO credentials (token + account id):
 CLOUDFLARE_API_TOKEN=cloudflare-dummy-replace-me
 CLOUDFLARE_ACCOUNT_ID=cloudflare-account-dummy-replace-me

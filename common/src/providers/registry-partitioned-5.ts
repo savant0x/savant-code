@@ -208,4 +208,24 @@ export const PROVIDER_REGISTRY_PARTITION_5 = {
     domain: 'charm.land',
     order: 4,
   },
+  paperinstruments: {
+    id: 'paperinstruments',
+    label: 'Paper Instruments',
+    kind: 'gateway',
+    credentials: { envVar: 'PAPERINSTRUMENTS_API_KEY' },
+    // Ultramarine serves OpenAI chat at /v1/chat/completions (docs read
+    // 2026-10-30). The keyed GET /v1/models returned one row carrying only
+    // id/object/created/owned_by — no window fields — so the catalog is a
+    // checked-in constant and windows come from the fallback table. The
+    // served window is 262,144: Paper states the public deployment's total
+    // window, which is below the base model's 1,048,576 architecture ceiling
+    // and above their 131,072 harness compaction budget.
+    baseUrl: 'https://api.paperinstruments.com/v1',
+    protocol: 'openai',
+    idTransform: 'strip',
+    catalog: { source: 'static', modelsRef: 'paperinstruments' },
+    setupAvailable: true,
+    domain: 'paperinstruments.com',
+    order: 4,
+  },
 } as const satisfies Record<string, ProviderConfig>

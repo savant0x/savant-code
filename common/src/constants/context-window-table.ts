@@ -91,6 +91,14 @@ export const CONTEXT_WINDOW_FALLBACKS: ReadonlyMap<string, number> = new Map([
   // --- atria (FID-2026-0916-005: single one-model static catalog;
   // 256K window is vendor-published in api.atria-asi.ai/docs) ---
   ['atria/Atria-Dawn-Preview', 262_144],
+  // --- paperinstruments (FID-2026-1030-005: one-model static catalog). The
+  // keyed /v1/models probe (2026-10-30) published NO window field, so this row
+  // is the window source. 262,144 is the PUBLIC DEPLOYMENT's total window, per
+  // the vendor's own harness docs ("compacts earlier than the public
+  // deployment's 262,144-token total window"). It is deliberately NOT the base
+  // GLM-5.3-Flash architecture ceiling (config.json max_position_embeddings
+  // 1,048,576) and NOT their 131,072 harness compaction budget. ---
+  ['paperinstruments/ultramarine-1-flash', 262_144],
   // --- intern (FID-2026-1004-008: 10-model static catalog; windows are the
   // vendor's OWN authenticated /v1/models publication, read from
   // input_modalities[].supported_inputs.max_context_length.value on the LIVE

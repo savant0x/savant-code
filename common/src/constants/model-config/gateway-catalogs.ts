@@ -229,6 +229,23 @@ export type ChatanywhereModel =
   (typeof chatanywhereModels)[keyof typeof chatanywhereModels]
 
 /**
+ * Paper Instruments / Ultramarine catalog (FID-2026-1030-005) — the single
+ * model the API serves. The keyed `GET /v1/models` probe (2026-10-30) returned
+ * exactly one row carrying only `id/object/created/owned_by`: **0 of 1 publish
+ * a window field**, so this checked-in set is the source of truth and the
+ * exact-id window is pinned in the fallback table (262,144 — Paper states the
+ * public deployment's total window; the base GLM-5.3-Flash architecture
+ * ceiling of 1,048,576 is not the served limit). The API also fronts
+ * /v1/responses and /v1/messages for the same id; Savant routes it through
+ * chat/completions only, so no protocol map is involved.
+ */
+export const paperinstrumentsModels = {
+  ultramarine_1_flash: 'paperinstruments/ultramarine-1-flash',
+} as const
+export type PaperinstrumentsModel =
+  (typeof paperinstrumentsModels)[keyof typeof paperinstrumentsModels]
+
+/**
  * Tiarina Cloud catalog (FID-2026-1012-005) — the AI Gateway of the Indonesian
  * PaaS at ai.tiarina.cloud, on its full measured chat roster (all 19 ids the
  * keyed /v1/models probe returned 2026-10-12, `ids.txt` under

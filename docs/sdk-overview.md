@@ -82,7 +82,7 @@ The checked dispatch prefixes are `openai/`, `openrouter/`, `tokenrouter/`,
 `chatanywhere/`, `cleanapis/`, `cloudflare/`, `codecraft/`, `cohere/`,
 `commandcode/`, `deepinfra/`, `deepseek/`, `fireworks-ai/`, `google/`, `groq/`,
 `hcnsec/`, `hyper/`, `infron/`, `intern/`, `kiosapi/`, `meta/`, `minimax/`, `mistral/`,
-`moonshotai/`, `nous/`, `orcarouter/`, `perplexity/`, `river/`, `tiarina/`,
+`moonshotai/`, `nous/`, `orcarouter/`, `paperinstruments/`, `perplexity/`, `river/`, `tiarina/`,
 `togetherai/`, `tokenbom/`, `tokenharbor/`, `unorouter/`, `venice/`, `vercel/`,
 `xai/`, `xkiro/`, `zai/`, and `zylo/`.
 
@@ -96,7 +96,8 @@ Their registry credential variables are `OPENAI_API_KEY`, `OPENROUTER_API_KEY`,
 `DEEPINFRA_API_KEY`, `DEEPSEEK_API_KEY`, `FIREWORKS_API_KEY`, `GEMINI_API_KEY`,
 `GROQ_API_KEY`, `HCNSEC_API_KEY`, `HYPER_API_KEY`, `INFRON_API_KEY`, `INTERN_API_KEY`,
 `KIOSAPI_API_KEY`, `META_MODEL_API_KEY`, `MINIMAX_API_KEY`, `MISTRAL_API_KEY`,
-`MOONSHOT_API_KEY`, `NOUS_API_KEY`, `ORCAROUTER_API_KEY`, `PERPLEXITY_API_KEY`,
+`MOONSHOT_API_KEY`, `NOUS_API_KEY`, `ORCAROUTER_API_KEY`,
+`PAPERINSTRUMENTS_API_KEY`, `PERPLEXITY_API_KEY`,
 `RIVER_AI_API_KEY`, `TIARINA_API_KEY`, `TOGETHER_API_KEY`, `TOKENBOM_API_KEY`,
 `TOKENHARBOR_API_KEY`, `UNOROUTER_API_KEY`, `VENICE_API_KEY`,
 `AI_GATEWAY_API_KEY`, `XAI_API_KEY`, `XKIRO_API_KEY`, `ZHIPU_API_KEY`, and

@@ -109,6 +109,7 @@ history. The supported hosted providers are:
 | Nous Research | `/provider nous` or `DIRECT_PROVIDER=nous` | `NOUS_API_KEY` | OpenAI-compatible direct inference; Portal OAuth is separate |
 | Ollama | Automatic detection | `OLLAMA_HOST` (optional) | Local inference; no API key required |
 | OrcaRouter | `/provider orcarouter` or `DIRECT_PROVIDER=orcarouter` | `ORCAROUTER_API_KEY` | Multi-provider gateway with a live model catalog (free tier currently gated vendor-side on GitHub account linkage) |
+| Paper Instruments | `/provider paperinstruments` or `DIRECT_PROVIDER=paperinstruments` | `PAPERINSTRUMENTS_API_KEY` | Hosted gateway |
 | Perplexity | `/provider perplexity` or `DIRECT_PROVIDER=perplexity` | `PERPLEXITY_API_KEY` | Hosted gateway |
 | River AI | `/provider river` or `DIRECT_PROVIDER=river` | `RIVER_AI_API_KEY` | Hosted gateway |
 | Tiarina Cloud | `/provider tiarina` or `DIRECT_PROVIDER=tiarina` | `TIARINA_API_KEY` | Hosted gateway |
@@ -474,7 +475,7 @@ code 2 blocks a tool.
   UnoRouter,
   BazaarLink, Atria AI,
   OpenAI, Vercel AI Gateway, Clean APIs, CodeCraft API, Mistral AI, Apixo,
-  Ashna, AIHubMix, BlazeRail, River AI, Zylo AI, Hyper, xKiro, and Cloudflare Workers AI via
+  Ashna, AIHubMix, BlazeRail, River AI, Zylo AI, Hyper, Paper Instruments, xKiro, and Cloudflare Workers AI via
   `@savant-code/llm-providers`. First-party routes include Alibaba Cloud, Anthropic, Baseten,
   Cerebras, Cohere, DeepInfra, DeepSeek, Fireworks AI, Google AI, Groq, Meta Llama API,
   MiniMax, Moonshot AI, Perplexity, Together AI, Venice AI, xAI, and Z.AI. Nous
@@ -1005,6 +1006,7 @@ picker or choose one directly:
 /provider river
 /provider zylo
 /provider hyper
+/provider paperinstruments
 /provider alibaba
 /provider anthropic
 /provider baseten
@@ -1049,6 +1051,7 @@ The supported environment variables are `OPENAI_API_KEY`, `OPENROUTER_API_KEY`,
 `BLAZERAIL_API_KEY`,
 `RIVER_AI_API_KEY`, `ZYLO_API_KEY`,
 `HYPER_API_KEY`,
+`PAPERINSTRUMENTS_API_KEY`,
 `CLOUDFLARE_API_TOKEN`. The key
 prompt is masked and stores the key globally in the Savant-Code config
 `credentials.json`; it is not added to chat history. Shell environment variables

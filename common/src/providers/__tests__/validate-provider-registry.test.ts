@@ -175,6 +175,22 @@ describe('validateProviderRegistry (FID-2026-0809-001 Phase 5)', () => {
     })
   })
 
+  test('Paper Instruments derives setup, routing, logo and ordering from its entry', () => {
+    expect(deriveValidProviderIds(PROVIDER_REGISTRY)).toContain(
+      'paperinstruments',
+    )
+    expect(ALLOWED_MODEL_PREFIXES).toContain('paperinstruments')
+    expect(
+      deriveProviderDomains(PROVIDER_REGISTRY, ORG_DOMAINS).paperinstruments,
+    ).toBe('paperinstruments.com')
+    expect(deriveProviderOrder(PROVIDER_REGISTRY, 'paperinstruments')).toBe(4)
+    expect(deriveSetupConfig(PROVIDER_REGISTRY).paperinstruments).toEqual({
+      label: 'Paper Instruments',
+      envVar: 'PAPERINSTRUMENTS_API_KEY',
+      baseUrl: 'https://api.paperinstruments.com/v1',
+    })
+  })
+
   describe('negative fixture cases (each check fires)', () => {
     const base = (overrides: Partial<ProviderConfig>): ProviderConfig => ({
       id: 'fixture',

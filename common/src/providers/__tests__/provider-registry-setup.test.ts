@@ -4,7 +4,7 @@ import { deriveSetupConfig } from '../derive'
 import { PROVIDER_REGISTRY } from '../registry'
 
 describe('provider setup derivation', () => {
-  test('setup config derives exactly the fifty-one current setup providers', () => {
+  test('setup config derives exactly the fifty-two current setup providers', () => {
     const setup = deriveSetupConfig(PROVIDER_REGISTRY)
     expect(Object.keys(setup).sort()).toEqual([
       'aihubmix',
@@ -44,6 +44,7 @@ describe('provider setup derivation', () => {
       'openai',
       'openrouter',
       'orcarouter',
+      'paperinstruments',
       'perplexity',
       'river',
       'tiarina',
@@ -113,6 +114,11 @@ describe('provider setup derivation', () => {
       label: 'Hyper',
       envVar: 'HYPER_API_KEY',
       baseUrl: 'https://hyper.charm.land/v1',
+    })
+    expect(setup.paperinstruments).toEqual({
+      label: 'Paper Instruments',
+      envVar: 'PAPERINSTRUMENTS_API_KEY',
+      baseUrl: 'https://api.paperinstruments.com/v1',
     })
   })
 })

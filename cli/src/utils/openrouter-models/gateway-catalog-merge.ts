@@ -23,6 +23,7 @@ import {
   fetchBazaarlinkModels,
   fetchInfronModels,
   fetchInternModels,
+  fetchPaperInstrumentsModels,
   fetchUnorouterModels,
 } from './static-catalogs-gateways'
 import { fetchTiarinaModels } from './tiarina'
@@ -77,6 +78,10 @@ export function assembleGatewayCatalog(
     ...fetchBazaarlinkModels(),
     ...fetchAtriaModels(),
     ...fetchInternModels(),
+    // FID-2026-1030-005: Paper Instruments ships as a static builder in the
+    // same change that registers it (the FID-2026-1012-005 lesson); static rows
+    // never enter the positional live ladder.
+    ...fetchPaperInstrumentsModels(),
     // FID-2026-1007-005: the provider was registered, catalogued and window-
     // covered, and this fan-out never asked for it — the picker had no rows.
     ...fetchChatanywhereModels(),

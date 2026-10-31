@@ -335,4 +335,14 @@ export const WINDOW_COVERAGE_REGISTER: ReadonlyMap<
       note: 'Authenticated /v1/models returned 3 ids and no window fields (probed 2026-10-17); River documents 1,048,576 context windows for all 3 observed models, pinned in context-window-table-river.ts.',
     },
   ],
+  [
+    'paperinstruments',
+    {
+      // FID-2026-1030-005: the keyed catalog returns ONE row whose shape is
+      // id/object/created/owned_by — no window field on the only row — so the
+      // fallback table is the window source, not the runtime catalog.
+      disposition: 'table-section',
+      note: 'Keyed GET /v1/models HTTP 200 (probed 2026-10-30): 1 row (ultramarine-1-flash), 0/1 publish a window field. Window 262,144 is the public deployment total per the vendor harness docs, pinned in context-window-table.ts; the base GLM-5.3-Flash architecture ceiling is 1,048,576 and their harness compacts at 131,072, so both are rejected as served limits. Inference unverified: balance 0, chat request returns 429 insufficient_quota with x-should-retry: false.',
+    },
+  ],
 ])

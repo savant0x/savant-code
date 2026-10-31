@@ -32,6 +32,7 @@ import {
   hcnsecModels,
   infronModels,
   internModels,
+  paperinstrumentsModels,
   tokenbomModels,
   tokenharborModels,
   tokenrouterModels,
@@ -78,6 +79,7 @@ const NAME_CATALOG_MODEL_IDS: readonly string[] = [
   ...Object.values(bazaarlinkModels),
   ...Object.values(atriaModels),
   ...Object.values(internModels),
+  ...Object.values(paperinstrumentsModels),
 ]
 
 /**

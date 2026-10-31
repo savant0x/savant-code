@@ -228,6 +228,7 @@ Works with multiple inference providers:
 - **Google AI** — OpenAI-compatible hosted gateway with a static measured catalog (`GEMINI_API_KEY`)
 - **Groq** — OpenAI-compatible hosted gateway with a static measured catalog (`GROQ_API_KEY`)
 - **Hyper** — OpenAI-compatible hosted gateway with a public live model catalog publishing runtime windows (`HYPER_API_KEY`)
+- **Paper Instruments** — OpenAI-compatible hosted gateway serving one document-authoring model, with a keyed single-row catalog and a pinned 262,144-token window (`PAPERINSTRUMENTS_API_KEY`)
 - **Meta Llama API** — OpenAI-compatible hosted gateway with a static measured catalog (`META_MODEL_API_KEY`)
 - **MiniMax** — Anthropic-compatible hosted gateway with a static measured catalog (`MINIMAX_API_KEY`)
 - **Moonshot AI** — OpenAI-compatible hosted gateway with a static measured catalog (`MOONSHOT_API_KEY`)

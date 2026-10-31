@@ -270,6 +270,26 @@ describe('provider setup', () => {
     expect(credentials.providerApiKeys.HYPER_API_KEY).toBe('test-hyper-key')
   })
 
+  test('saves and activates Paper Instruments with the registered key and API root', () => {
+    saveProviderApiKey('paperinstruments', '  test-paper-key  ')
+    expect(process.env.PAPERINSTRUMENTS_API_KEY).toBe('test-paper-key')
+    expect(process.env.DIRECT_PROVIDER).toBe('paperinstruments')
+    expect(process.env.INFERENCE_BASE_URL).toBe(
+      'https://api.paperinstruments.com/v1',
+    )
+    expect(getConfiguredProviderNames()).toContain('paperinstruments')
+    const settings = JSON.parse(
+      fs.readFileSync(path.join(tempDir, 'settings.json'), 'utf8'),
+    )
+    expect(settings.activeProvider).toBe('paperinstruments')
+    const credentials = JSON.parse(
+      fs.readFileSync(path.join(tempDir, 'credentials.json'), 'utf8'),
+    )
+    expect(credentials.providerApiKeys.PAPERINSTRUMENTS_API_KEY).toBe(
+      'test-paper-key',
+    )
+  })
+
   test('persists the selection as activeProvider without legacy direct fields (Phase 4)', () => {
     saveProviderApiKey('tokenharbor', 'test-tokenharbor-key')
 

@@ -195,6 +195,7 @@ ollama serve
 | River AI | `/provider river` | `RIVER_AI_API_KEY` | OpenAI 兼容托管网关（密钥认证的实时模型目录；列出账户可用的模型） |
 | Zylo AI | `/provider zylo` | `ZYLO_API_KEY` | OpenAI 兼容托管网关（免密钥实时文本目录；推理需要密钥；账户权限与上游可用性另行验证） |
 | Hyper | `/provider hyper` | `HYPER_API_KEY` | Charm 的 OpenAI 兼容托管网关（免密钥实时目录，供应商在每一行发布上下文窗口；推理需要密钥） |
+| Paper Instruments | `/provider paperinstruments` | `PAPERINSTRUMENTS_API_KEY` | Ultramarine API（密钥认证的单模型目录，不返回上下文窗口字段；OpenAI 兼容聊天位于 `https://api.paperinstruments.com/v1`；上下文窗口 262,144 由默认表固定） |
 | Mistral AI | `/provider mistral` | `MISTRAL_API_KEY` | OpenAI 兼容网关（密钥认证的实时模型目录） |
 | xKiro | `/provider xkiro` | `XKIRO_API_KEY` | 实时聊天模型目录；Anthropic 模型使用 Messages，其余模型使用 OpenAI 聊天 |
 | ChatAnywhere | `/provider chatanywhere` | `CHATANYWHERE_API_KEY` | OpenAI 兼容托管网关（静态 27 模型聊天白名单；免费密钥层每日 10,000 积分；`https://api.chatanywhere.tech/v1`） |
@@ -403,7 +404,7 @@ MCP 工具发现、模式切换（`HYBRID` / `SCAFFOLD` / `STRICT` / `ANALYZE`�
   CommandCode、Nous Research、KiosAPI、APInex、OrcaRouter、B.AI、HCNSec、
  TokenBom、Infron、Intern InkStone、ChatAnywhere、Tiarina Cloud、
   UnoRouter、BazaarLink、Atria AI、OpenAI、Vercel AI Gateway、Clean APIs、CodeCraft API、
-  Mistral AI、Apixo、Ashna、AIHubMix、BlazeRail、River AI、Zylo AI、Hyper、xKiro、
+  Mistral AI、Apixo、Ashna、AIHubMix、BlazeRail、River AI、Zylo AI、Hyper、Paper Instruments、xKiro、
   Alibaba Cloud、Anthropic、Baseten、Cerebras、Cohere、DeepInfra、DeepSeek、Fireworks AI、Google AI、Groq、Meta Llama API、
   MiniMax、Moonshot AI、Perplexity、Together AI、Venice AI、xAI、Z.AI 与
   Cloudflare Workers AI。Nous Research 使用 OpenAI 兼容直连
@@ -767,6 +768,7 @@ savant-code
 /provider river
 /provider zylo
 /provider hyper
+/provider paperinstruments
 /provider alibaba
 /provider anthropic
 /provider baseten
@@ -799,7 +801,8 @@ savant-code
 `VENICE_API_KEY`、`XAI_API_KEY`、`ZHIPU_API_KEY`、`CHATANYWHERE_API_KEY`、`TIARINA_API_KEY`、`AI_GATEWAY_API_KEY`、
 `CLEANAPIS_API_KEY`、`CODECRAFT_API_KEY`、`XKIRO_API_KEY`、`MISTRAL_API_KEY`、`APIXOAI_API_KEY`、
 `AIHUBMIX_API_KEY`、`ASHNA_API_KEY`、`BLAZERAIL_API_KEY`、`RIVER_AI_API_KEY`、`ZYLO_API_KEY`、
-`HYPER_API_KEY` 与
+`HYPER_API_KEY`、
+`PAPERINSTRUMENTS_API_KEY` 与
 `CLOUDFLARE_API_TOKEN`。密钥提示为遮罩输入，并将密钥全局存储在
 Savant-Code 配置的 `credentials.json` 中；不会加入
 聊天记录。shell 环境变量优先于已存储的密钥，因此 CI 与托管环境可以不使用本地持久化来配置提供商。高级直接提供商

@@ -70,6 +70,7 @@ closed if this section drifts from the registry.
 | Nous Research | `nous` | gateway | `NOUS_API_KEY` | `https://inference-api.nousresearch.com/v1` | openai | live |
 | Ollama | `ollama` | local | — | `http://localhost:11434/v1` | openai | none |
 | OrcaRouter | `orcarouter` | gateway | `ORCAROUTER_API_KEY` | `https://api.orcarouter.ai/v1` | openai | live |
+| Paper Instruments | `paperinstruments` | gateway | `PAPERINSTRUMENTS_API_KEY` | `https://api.paperinstruments.com/v1` | openai | static (1 model) |
 | Perplexity | `perplexity` | gateway | `PERPLEXITY_API_KEY` | `https://api.perplexity.ai` | openai | static (3 models) |
 | River AI | `river` | gateway | `RIVER_AI_API_KEY` | `https://api.river.ai/v1` | openai | live |
 | Tiarina Cloud | `tiarina` | gateway | `TIARINA_API_KEY` | `https://ai.tiarina.cloud/v1` | openai | static (19 models; evidence: console-verified 2026-10-12) |
@@ -150,6 +151,25 @@ closed if this section drifts from the registry.
   serves `/v1/responses` and `/v1/messages` pass-throughs for the same roster;
   Savant routes every Hyper id through chat/completions, so no protocol map is
   involved.
+
+- **Paper Instruments** is the Ultramarine API at
+  `https://api.paperinstruments.com/v1`, authorized by
+  `PAPERINSTRUMENTS_API_KEY` (`pi_live_` for production, `pi_test_` elsewhere).
+  It serves exactly one model, `ultramarine-1-flash`, so the catalog is a
+  checked-in single row rather than a live fetch. The keyed `GET /v1/models`
+  answered HTTP 200 on 2026-10-30 with that row carrying only
+  `id`/`object`/`created`/`owned_by` — **no window field** — so the window comes
+  from the fallback table: 262,144 tokens. That number is the public
+  deployment's total window, from the vendor's own harness documentation, and
+  it is deliberately neither the base GLM-5.3-Flash architecture ceiling
+  (1,048,576, which the model supports but the deployment does not serve) nor
+  their 131,072 harness compaction budget. Inference is mandatory-reasoning:
+  `reasoning_effort` defaults to `max`, accepts only `low`/`high`/`max`, and
+  cannot be disabled, so reasoning tokens count against the output budget and
+  are billed at the output rate. The API rejects unsupported request fields with
+  `400` naming `error.param`; Savant's chat body carries only accepted fields,
+  `max_tokens` is an explicit alias of `max_completion_tokens`, and the
+  documented default output ceiling is 65,536 tokens.
 
 ### Live catalogs
 

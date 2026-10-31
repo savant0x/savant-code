@@ -97,6 +97,7 @@ Or configure one directly:
 | River AI | `/provider river` | `RIVER_AI_API_KEY` (authenticated live model catalog; OpenAI-compatible chat at `https://api.river.ai/v1`) |
 | Zylo AI | `/provider zylo` | `ZYLO_API_KEY` (public live text-only model catalog; key-authenticated OpenAI-compatible chat at `https://api.zyloai.net/v1`; account access and upstream availability are separate) |
 | Hyper | `/provider hyper` | `HYPER_API_KEY` (public live model catalog publishing context windows on every row; OpenAI-compatible chat at `https://hyper.charm.land/v1`; inference requires a key) |
+| Paper Instruments | `/provider paperinstruments` | `PAPERINSTRUMENTS_API_KEY` (keyed single-row model catalog publishing no window field; OpenAI-compatible chat at `https://api.paperinstruments.com/v1`; context window pinned at 262,144; inference requires a funded prepaid balance) |
 | AIHubMix | `/provider aihubmix` | `AIHUBMIX_API_KEY` (keyless rich live model catalog; OpenAI chat at `https://aihubmix.com/v1`) |
 | Mistral AI | `/provider mistral` | `MISTRAL_API_KEY` (authenticated live model catalog; OpenAI chat at `https://api.mistral.ai/v1`) |
 | xKiro | `/provider xkiro` | `XKIRO_API_KEY` (public live chat catalog; explicit Messages/chat routing at `https://api.xkiro.com/v1`; paid models require account entitlement) |
