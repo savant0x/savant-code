@@ -1,5 +1,26 @@
 # Changelog
 
+## 2026-10-30 — Media generation architecture: converged, then deferred on ROI
+
+- **FID-2026-1030-003 — medium — Decoupled-hybrid media architecture closed
+  as a deferred design record.** The design converged through RED → GREEN →
+  AUDIT and its analysis is durable, but the operator declined to implement it.
+  Grounds recorded in the FID: (1) the MCP-Tasks pattern a parallel media
+  worker needs (submit → `working` → deliver later) **cannot be expressed** —
+  `native.ts:257` `return await toolResultPromise.then(...)` blocks the
+  executor and `tool-outcome-state.ts` makes `'outcome_ready'` terminal; (2)
+  video latency (30s–5min) exceeds coding-turn cadence; (3) an external video
+  tool + saved file has better ergonomics than building in-harness support; (4)
+  the generation surface is unused (`OpenAICompatibleImageModel` has zero
+  production consumers) and no video provider/model kind is registered.
+  All three implementation-time unknowns were resolved before the decision:
+  the settings seam (`cli/src/utils/settings/io.ts`) is the spend-ceiling home;
+  a media job table requires DDL + writer + durable-race-catalog row +
+  write-order-conformance test; and the first media route would have to be
+  built (MiniMax H3 is the least-cost candidate). FID archived; artifacts
+  (`docs/reports/video-modality-feasibility.md`, the research prompt) stay
+  committed.
+
 ## 2026-10-30 — Media-mode artifacts and the video drop point, named
 
 - **FID-2026-1030-002 — low — Correct the feasibility report and capture the
