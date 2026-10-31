@@ -117,11 +117,13 @@ describe('FID-2026-1012-026: Tier 1 first-party catalogs', () => {
       name: 'gpt-5.5',
       provider: 'ashna',
     }
-    const restResults = Array.from({ length: 20 }, () => fulfilled([]))
+    // FID-2026-1030-004: Hyper joins at slot 19; the custom-catalogs tail
+    // stays last (slot 20).
+    const restResults = Array.from({ length: 21 }, () => fulfilled([]))
     restResults[13] = fulfilled([deepinfraRow])
     restResults[14] = fulfilled([veniceRow])
     restResults[15] = fulfilled([ashnaRow])
-    restResults[19] = fulfilled([customRow])
+    restResults[20] = fulfilled([customRow])
     const resolved = resolveGatewayLiveCatalogs(
       fulfilled([]),
       fulfilled([]),

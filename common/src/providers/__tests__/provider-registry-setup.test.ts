@@ -4,7 +4,7 @@ import { deriveSetupConfig } from '../derive'
 import { PROVIDER_REGISTRY } from '../registry'
 
 describe('provider setup derivation', () => {
-  test('setup config derives exactly the fifty current setup providers', () => {
+  test('setup config derives exactly the fifty-one current setup providers', () => {
     const setup = deriveSetupConfig(PROVIDER_REGISTRY)
     expect(Object.keys(setup).sort()).toEqual([
       'aihubmix',
@@ -31,6 +31,7 @@ describe('provider setup derivation', () => {
       'google',
       'groq',
       'hcnsec',
+      'hyper',
       'infron',
       'intern',
       'kiosapi',
@@ -107,6 +108,11 @@ describe('provider setup derivation', () => {
       label: 'Zylo AI',
       envVar: 'ZYLO_API_KEY',
       baseUrl: 'https://api.zyloai.net/v1',
+    })
+    expect(setup.hyper).toEqual({
+      label: 'Hyper',
+      envVar: 'HYPER_API_KEY',
+      baseUrl: 'https://hyper.charm.land/v1',
     })
   })
 })

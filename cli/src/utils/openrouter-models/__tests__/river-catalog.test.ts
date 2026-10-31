@@ -179,7 +179,8 @@ describe('FID-2026-1017-015: River AI provider', () => {
       name: 'model',
       provider: 'river',
     }
-    const restResults = Array.from({ length: 20 }, () => fulfilled([]))
+    // FID-2026-1030-004: Hyper now occupies slot 19, so the custom tail is 20.
+    const restResults = Array.from({ length: 21 }, () => fulfilled([]))
     restResults[17] = fulfilled([row])
     const resolved = resolveGatewayLiveCatalogs(
       fulfilled([]),

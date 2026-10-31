@@ -190,4 +190,22 @@ export const PROVIDER_REGISTRY_PARTITION_5 = {
     domain: 'zyloai.net',
     order: 4,
   },
+  hyper: {
+    id: 'hyper',
+    label: 'Hyper',
+    kind: 'gateway',
+    credentials: { envVar: 'HYPER_API_KEY' },
+    // Charm's inference gateway. Vendor docs (hyper.charm.land/docs, read
+    // 2026-10-30) serve OpenAI chat at /v1/chat/completions for the whole
+    // roster; the public GET /v1/models answered HTTP 200 keyless with 23
+    // coding rows, every one publishing context_window — the runtime catalog
+    // is the window source. Inference itself requires the key.
+    baseUrl: 'https://hyper.charm.land/v1',
+    protocol: 'openai',
+    idTransform: 'strip',
+    catalog: { source: 'live', url: 'https://hyper.charm.land/v1/models' },
+    setupAvailable: true,
+    domain: 'charm.land',
+    order: 4,
+  },
 } as const satisfies Record<string, ProviderConfig>

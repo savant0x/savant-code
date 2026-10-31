@@ -161,6 +161,20 @@ describe('validateProviderRegistry (FID-2026-0809-001 Phase 5)', () => {
     })
   })
 
+  test('Hyper derives setup, routing, logo and ordering from its entry', () => {
+    expect(deriveValidProviderIds(PROVIDER_REGISTRY)).toContain('hyper')
+    expect(ALLOWED_MODEL_PREFIXES).toContain('hyper')
+    expect(deriveProviderDomains(PROVIDER_REGISTRY, ORG_DOMAINS).hyper).toBe(
+      'charm.land',
+    )
+    expect(deriveProviderOrder(PROVIDER_REGISTRY, 'hyper')).toBe(4)
+    expect(deriveSetupConfig(PROVIDER_REGISTRY).hyper).toEqual({
+      label: 'Hyper',
+      envVar: 'HYPER_API_KEY',
+      baseUrl: 'https://hyper.charm.land/v1',
+    })
+  })
+
   describe('negative fixture cases (each check fires)', () => {
     const base = (overrides: Partial<ProviderConfig>): ProviderConfig => ({
       id: 'fixture',

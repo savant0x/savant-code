@@ -227,6 +227,7 @@ Works with multiple inference providers:
 - **Fireworks AI** — OpenAI-compatible hosted gateway with a static measured catalog (`FIREWORKS_API_KEY`)
 - **Google AI** — OpenAI-compatible hosted gateway with a static measured catalog (`GEMINI_API_KEY`)
 - **Groq** — OpenAI-compatible hosted gateway with a static measured catalog (`GROQ_API_KEY`)
+- **Hyper** — OpenAI-compatible hosted gateway with a public live model catalog publishing runtime windows (`HYPER_API_KEY`)
 - **Meta Llama API** — OpenAI-compatible hosted gateway with a static measured catalog (`META_MODEL_API_KEY`)
 - **MiniMax** — Anthropic-compatible hosted gateway with a static measured catalog (`MINIMAX_API_KEY`)
 - **Moonshot AI** — OpenAI-compatible hosted gateway with a static measured catalog (`MOONSHOT_API_KEY`)

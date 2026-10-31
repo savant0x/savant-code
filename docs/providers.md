@@ -59,6 +59,7 @@ closed if this section drifts from the registry.
 | Google AI | `google` | gateway | `GEMINI_API_KEY` | `https://generativelanguage.googleapis.com/v1beta/openai` | openai | static (18 models) |
 | Groq | `groq` | gateway | `GROQ_API_KEY` | `https://api.groq.com/openai/v1` | openai | static (9 models) |
 | HCNSec | `hcnsec` | gateway | `HCNSEC_API_KEY` | `https://api.hcnsec.cn/v1` | openai | static (7 models) |
+| Hyper | `hyper` | gateway | `HYPER_API_KEY` | `https://hyper.charm.land/v1` | openai | live |
 | Infron | `infron` | gateway | `INFRON_API_KEY` | `https://llm.onerouter.pro/v1` | openai | static (9 models) |
 | Intern InkStone | `intern` | gateway | `INTERN_API_KEY` | `https://discovery-api.intern-ai.org.cn/v1` | openai | static (10 models) |
 | KiosAPI | `kiosapi` | gateway | `KIOSAPI_API_KEY` | `https://kiosapi.com/v1` | openai | live |
@@ -139,12 +140,25 @@ closed if this section drifts from the registry.
   failures, a credits/GO access refusal, or timed out. Catalog membership does
   not establish account entitlement, upstream availability, or model identity.
 
+- **Hyper** is Charm's inference gateway at `https://hyper.charm.land/v1`,
+  authorized by `HYPER_API_KEY` for inference. Its catalog is public:
+  `GET /v1/models` answered HTTP 200 keyless with 23 hand-picked coding rows on
+  2026-10-30, and every row published its own `context_window` and
+  `max_output_tokens`, so windows come from the vendor rather than a fallback
+  table. Roster ids are bare (`deepseek-v4.1-flash`), so exactly one `hyper/`
+  routing prefix is added internally and stripped on the wire. The vendor also
+  serves `/v1/responses` and `/v1/messages` pass-throughs for the same roster;
+  Savant routes every Hyper id through chat/completions, so no protocol map is
+  involved.
+
 ### Live catalogs
 
 CodeCraft and CleanAPIs fetch authenticated `/v1/models` catalogs. xKiro's
 chat catalog is public. Apixo's catalog is public and self-describing: every one
 of its 35 rows publishes a `context_window` and `max_output_tokens`, so its
-windows come from the vendor rather than a fallback table. Rosters are live
+windows come from the vendor rather than a fallback table. Hyper's catalog is
+public too: 23 coding rows measured on 2026-10-30, all publishing both limits.
+Rosters are live
 rather than pinned to a model list
 in source. Catalog requests returned 33 CodeCraft, 129 xKiro, and 33 CleanAPIs
 models on 2026-10-03, 35 Apixo models on 2026-10-13, and 104 Ashna rows (78

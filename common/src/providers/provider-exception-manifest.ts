@@ -29,6 +29,21 @@ export type ProviderExceptionManifestEntry = {
 export const PROVIDER_EXCEPTION_MANIFEST: readonly ProviderExceptionManifestEntry[] =
   [
     {
+      // FID-2026-1030-004: KEYLESS live catalog (public GET /v1/models, HTTP
+      // 200 and 23 coding rows measured 2026-10-30) with a dedicated
+      // display_name/context_window/max_output_tokens parser. The catalog body
+      // is public; inference still resolves HYPER_API_KEY through the generic
+      // registry factory.
+      providerId: 'hyper',
+      kinds: ['live-catalog'],
+      owner: 'cli/src/utils/openrouter-models/hyper.ts',
+      evidence: [
+        'cli/src/utils/openrouter-models/hyper.ts',
+        'cli/src/utils/openrouter-models/gateway.ts',
+        'cli/src/utils/openrouter-models/gateway-catalog-merge.ts',
+      ],
+    },
+    {
       providerId: 'zylo',
       kinds: ['live-catalog'],
       owner: 'cli/src/utils/openrouter-models/zylo.ts',

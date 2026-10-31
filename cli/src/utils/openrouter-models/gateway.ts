@@ -30,6 +30,7 @@ import {
   fetchGatewayLiveCatalogs,
   resolveGatewayLiveCatalogs,
 } from './gateway-live-results'
+import { __resetHyperCacheForTest } from './hyper'
 import { __resetKiosapiCacheForTest } from './kiosapi'
 import { __resetMistralCacheForTest } from './mistral'
 import { __resetNousCacheForTest } from './nous'
@@ -123,6 +124,7 @@ function notifyGatewayCatalogListeners(catalog: OpenRouterModel[]): void {
  * - BlazeRail (live API, public — FID-2026-1017-013)
  * - River AI (live API, authenticated — FID-2026-1017-015)
  * - Zylo AI (live text catalog, public — FID-2026-1017-016)
+ * - Hyper (live API, public catalog — FID-2026-1030-004)
  *
  * Fetches live sources in parallel via Promise.allSettled(). If a source fails,
  * uses cached/empty list for that provider. Returns a combined, sorted list.
@@ -259,6 +261,7 @@ function resetProviderCatalogCaches(): void {
   __resetBlazerailCacheForTest()
   __resetRiverCacheForTest()
   __resetZyloCacheForTest()
+  __resetHyperCacheForTest()
   // Step 9 remainder: lazily-built custom fetchers are cache state too.
   __resetCustomCatalogsForTest()
 }

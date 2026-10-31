@@ -49,6 +49,7 @@ describe('PROVIDER_REGISTRY (FID-2026-0809-001 Phase 1)', () => {
       'google',
       'groq',
       'hcnsec',
+      'hyper',
       'infron',
       'intern',
       'kiosapi',
@@ -135,6 +136,7 @@ describe('PROVIDER_REGISTRY (FID-2026-0809-001 Phase 1)', () => {
       'tiarina',
       'apixo',
       'ashna',
+      'hyper',
     ]) {
       expect(deriveProviderOrder(PROVIDER_REGISTRY, id)).toBe(4)
     }

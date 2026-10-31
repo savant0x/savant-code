@@ -254,6 +254,22 @@ describe('provider setup', () => {
     expect(credentials.providerApiKeys.ZYLO_API_KEY).toBe('test-zylo-key')
   })
 
+  test('saves and activates Hyper with the registered key and API root', () => {
+    saveProviderApiKey('hyper', '  test-hyper-key  ')
+    expect(process.env.HYPER_API_KEY).toBe('test-hyper-key')
+    expect(process.env.DIRECT_PROVIDER).toBe('hyper')
+    expect(process.env.INFERENCE_BASE_URL).toBe('https://hyper.charm.land/v1')
+    expect(getConfiguredProviderNames()).toContain('hyper')
+    const settings = JSON.parse(
+      fs.readFileSync(path.join(tempDir, 'settings.json'), 'utf8'),
+    )
+    expect(settings.activeProvider).toBe('hyper')
+    const credentials = JSON.parse(
+      fs.readFileSync(path.join(tempDir, 'credentials.json'), 'utf8'),
+    )
+    expect(credentials.providerApiKeys.HYPER_API_KEY).toBe('test-hyper-key')
+  })
+
   test('persists the selection as activeProvider without legacy direct fields (Phase 4)', () => {
     saveProviderApiKey('tokenharbor', 'test-tokenharbor-key')
 

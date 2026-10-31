@@ -98,6 +98,7 @@ history. The supported hosted providers are:
 | Google AI | `/provider google` or `DIRECT_PROVIDER=google` | `GEMINI_API_KEY` | Hosted gateway |
 | Groq | `/provider groq` or `DIRECT_PROVIDER=groq` | `GROQ_API_KEY` | Hosted gateway |
 | HCNSec | `/provider hcnsec` or `DIRECT_PROVIDER=hcnsec` | `HCNSEC_API_KEY` | OpenAI-compatible gateway on an audited static 7-model allowlist |
+| Hyper | `/provider hyper` or `DIRECT_PROVIDER=hyper` | `HYPER_API_KEY` | Hosted gateway |
 | Infron | `/provider infron` or `DIRECT_PROVIDER=infron` | `INFRON_API_KEY` | Hosted gateway |
 | Intern InkStone | `/provider intern` or `DIRECT_PROVIDER=intern` | `INTERN_API_KEY` | Hosted gateway |
 | KiosAPI | `/provider kiosapi` or `DIRECT_PROVIDER=kiosapi` | `KIOSAPI_API_KEY` | OpenAI-compatible gateway (live catalog) |
@@ -473,7 +474,7 @@ code 2 blocks a tool.
   UnoRouter,
   BazaarLink, Atria AI,
   OpenAI, Vercel AI Gateway, Clean APIs, CodeCraft API, Mistral AI, Apixo,
-  Ashna, AIHubMix, BlazeRail, River AI, Zylo AI, xKiro, and Cloudflare Workers AI via
+  Ashna, AIHubMix, BlazeRail, River AI, Zylo AI, Hyper, xKiro, and Cloudflare Workers AI via
   `@savant-code/llm-providers`. First-party routes include Alibaba Cloud, Anthropic, Baseten,
   Cerebras, Cohere, DeepInfra, DeepSeek, Fireworks AI, Google AI, Groq, Meta Llama API,
   MiniMax, Moonshot AI, Perplexity, Together AI, Venice AI, xAI, and Z.AI. Nous
@@ -1003,6 +1004,7 @@ picker or choose one directly:
 /provider blazerail
 /provider river
 /provider zylo
+/provider hyper
 /provider alibaba
 /provider anthropic
 /provider baseten
@@ -1046,6 +1048,7 @@ The supported environment variables are `OPENAI_API_KEY`, `OPENROUTER_API_KEY`,
 `ASHNA_API_KEY`,
 `BLAZERAIL_API_KEY`,
 `RIVER_AI_API_KEY`, `ZYLO_API_KEY`,
+`HYPER_API_KEY`,
 `CLOUDFLARE_API_TOKEN`. The key
 prompt is masked and stores the key globally in the Savant-Code config
 `credentials.json`; it is not added to chat history. Shell environment variables

@@ -12,6 +12,26 @@ verification, releases or repository boundaries.
 
 ## Open items
 
+### FID-2026-1030-004 — Hyper (Charm) built-in provider (open)
+
+- [ ] Authority: automation level 3. Operator named Hyper
+  (`https://hyper.charm.land`) as the provider to ship as a built-in registry
+  entry. Additive provider work following `docs/adding-a-provider.md`.
+- [ ] Write grant: `common/src/providers/registry-partitioned-5.ts`,
+  `common/src/providers/provider-exception-manifest.ts`,
+  `common/src/constants/window-coverage-register.ts`,
+  `cli/src/utils/openrouter-models/hyper.ts` (new file),
+  `cli/src/utils/openrouter-models/gateway.ts`,
+  `cli/src/utils/openrouter-models/gateway-live-results.ts`,
+  `cli/src/utils/openrouter-models/gateway-catalog-merge.ts`,
+  its new catalog test file, the pinned provider tests it extends, the
+  generated provider-doc surfaces, and the hand-maintained doc surfaces the
+  drift gate names. No behavior changes outside provider registration.
+
+Measured 2026-10-30: `GET https://hyper.charm.land/v1/models` answers HTTP 200
+keyless with 23 rows, all publishing `context_window`, so the coverage
+disposition is `runtime-published` and no fallback table is owed.
+
 ### EMBED-001 — superseded external single-agent embed (blocked)
 
 - [ ] Authority: automation level 3. Updating the external target is reserved

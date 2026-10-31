@@ -312,6 +312,16 @@ export const WINDOW_COVERAGE_REGISTER: ReadonlyMap<
   ],
   ...TIER1_WINDOW_COVERAGE_ENTRIES,
   [
+    'hyper',
+    {
+      // FID-2026-1030-004: every row of the public catalog publishes its own
+      // window, so the runtime value is the source of truth and no fallback
+      // table section is owed.
+      disposition: 'runtime-published',
+      note: 'Public GET /v1/models HTTP 200 keyless (probed 2026-10-30): 23 coding rows, 23/23 publish a positive context_window and max_output_tokens. The keyed body is the same public catalog, so no account credential is needed for this coverage claim.',
+    },
+  ],
+  [
     'blazerail',
     {
       disposition: 'runtime-partial',

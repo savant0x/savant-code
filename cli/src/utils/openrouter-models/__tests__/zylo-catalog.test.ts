@@ -154,16 +154,17 @@ describe('Zylo AI text catalog contract', () => {
     )
   })
 
-  test('Zylo slot 18 merges before custom slot 19 and rejects to its own cache', async () => {
+  test('Zylo slot 18 merges before custom slot 20 and rejects to its own cache', async () => {
     process.env.ZYLO_API_KEY = 'catalog-test-key'
     globalThis.fetch = Object.assign(async () => Response.json(response), {
       preconnect: realFetch.preconnect,
     })
     const models = await fetchZyloModels()
     const custom = { id: 'custom/model', name: 'Custom', provider: 'custom' }
-    const rest = Array.from({ length: 20 }, () => fulfilled([]))
+    // FID-2026-1030-004: Hyper occupies slot 19, so the custom tail is 20.
+    const rest = Array.from({ length: 21 }, () => fulfilled([]))
     rest[18] = fulfilled(models)
-    rest[19] = fulfilled([custom])
+    rest[20] = fulfilled([custom])
     const live = resolveGatewayLiveCatalogs(fulfilled([]), fulfilled([]), rest)
     expect(live.zyloModels).toEqual(models)
     expect(live.customModels).toEqual([custom])

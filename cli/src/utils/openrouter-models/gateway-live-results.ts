@@ -7,7 +7,7 @@
  * array after [openrouter, nvidia], in exactly this order: Nous, KiosAPI,
  * APInex, OpenAI, OrcaRouter, B.AI, Vercel, CleanApis, CodeCraft, Mistral,
  * xKiro, Apixo, AIHubMix, DeepInfra, Venice, Ashna, BlazeRail, River, Zylo,
- * custom catalogs. Fulfilled values
+ * Hyper, custom catalogs. Fulfilled values
  * win; rejected sources degrade to their per-provider cache — custom catalogs
  * degrade to [] (lazily-built custom fetchers have no cache, FID-2026-0910-004
  * D10).
@@ -26,6 +26,7 @@ import { fetchCleanApisModels, getCachedCleanApisModels } from './cleanapis'
 import { fetchCodecraftModels, getCachedCodecraftModels } from './codecraft'
 import { fetchAllCustomModels } from './custom-catalog'
 import { fetchDeepInfraModels, getCachedDeepInfraModels } from './deepinfra'
+import { fetchHyperModels, getCachedHyperModels } from './hyper'
 import { fetchKiosapiModels, getCachedKiosapiModels } from './kiosapi'
 import { fetchMistralModels, getCachedMistralModels } from './mistral'
 import { fetchNousModels, getCachedNousModels } from './nous'
@@ -66,6 +67,7 @@ export interface GatewayLiveCatalogs {
   blazerailModels: OpenRouterModel[]
   riverModels: OpenRouterModel[]
   zyloModels: OpenRouterModel[]
+  hyperModels: OpenRouterModel[]
   customModels: OpenRouterModel[]
 }
 
@@ -102,6 +104,7 @@ export async function fetchGatewayLiveCatalogs(forceRefresh: boolean): Promise<{
     fetchBlazerailModels(forceRefresh),
     fetchRiverModels(forceRefresh),
     fetchZyloModels(forceRefresh),
+    fetchHyperModels(forceRefresh),
     // FID-2026-0910-004 Step 9 remainder: custom catalogs (live + inline)
     // merge here; per-provider failures degrade to [] (D10 ladder).
     fetchAllCustomModels(forceRefresh),
@@ -134,6 +137,7 @@ export function resolveGatewayLiveCatalogs(
     blazerailResult,
     riverResult,
     zyloResult,
+    hyperResult,
     customResult,
   ] = restResults
 
@@ -224,5 +228,9 @@ export function resolveGatewayLiveCatalogs(
       zyloResult?.status === 'fulfilled'
         ? zyloResult.value
         : getCachedZyloModels(),
+    hyperModels:
+      hyperResult?.status === 'fulfilled'
+        ? hyperResult.value
+        : getCachedHyperModels(),
   }
 }

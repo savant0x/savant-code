@@ -137,11 +137,13 @@ describe('BlazeRail catalog contract', () => {
     const ashna = { id: 'ashna/test', name: 'Ashna', provider: 'ashna' }
     const river = { id: 'river/test', name: 'River', provider: 'river' }
     const custom = { id: 'custom/test', name: 'Custom', provider: 'custom' }
-    const rest = Array.from({ length: 20 }, () => fulfilled([]))
+    // FID-2026-1030-004: Hyper joins at slot 19, immediately before the
+    // custom-catalogs tail, which stays last at slot 20.
+    const rest = Array.from({ length: 21 }, () => fulfilled([]))
     rest[15] = fulfilled([ashna])
     rest[16] = fulfilled([blazerail])
     rest[17] = fulfilled([river])
-    rest[19] = fulfilled([custom])
+    rest[20] = fulfilled([custom])
     const resolved = resolveGatewayLiveCatalogs(
       fulfilled([]),
       fulfilled([]),

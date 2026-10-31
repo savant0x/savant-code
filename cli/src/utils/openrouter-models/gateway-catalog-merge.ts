@@ -65,6 +65,10 @@ export function assembleGatewayCatalog(
     ...live.blazerailModels,
     ...live.riverModels,
     ...live.zyloModels,
+    // FID-2026-1030-004: Hyper is the newest built-in live leg — appended
+    // after the existing live rows and before the static builders, never
+    // reordered.
+    ...live.hyperModels,
     ...fetchCommandCodeModels(),
     ...fetchHcnsecModels(),
     ...fetchTokenBomModels(),

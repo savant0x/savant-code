@@ -74,6 +74,7 @@ Or select one of the supported gateway providers directly:
 | Google AI | `/provider google` or `DIRECT_PROVIDER=google` | `GEMINI_API_KEY` | Hosted gateway |
 | Groq | `/provider groq` or `DIRECT_PROVIDER=groq` | `GROQ_API_KEY` | Hosted gateway |
 | HCNSec | `/provider hcnsec` or `DIRECT_PROVIDER=hcnsec` | `HCNSEC_API_KEY` | OpenAI-compatible gateway on an audited static 7-model allowlist |
+| Hyper | `/provider hyper` or `DIRECT_PROVIDER=hyper` | `HYPER_API_KEY` | Hosted gateway |
 | Infron | `/provider infron` or `DIRECT_PROVIDER=infron` | `INFRON_API_KEY` | Hosted gateway |
 | Intern InkStone | `/provider intern` or `DIRECT_PROVIDER=intern` | `INTERN_API_KEY` | Hosted gateway |
 | KiosAPI | `/provider kiosapi` or `DIRECT_PROVIDER=kiosapi` | `KIOSAPI_API_KEY` | OpenAI-compatible gateway (live catalog) |
@@ -226,6 +227,7 @@ ASHNA_API_KEY=dummy-ashna-api-key-replace-me
 BLAZERAIL_API_KEY=dummy-blazerail-api-key-replace-me
 RIVER_AI_API_KEY=dummy-river-ai-api-key-replace-me
 ZYLO_API_KEY=dummy-zylo-api-key-replace-me
+HYPER_API_KEY=dummy-hyper-key-replace-me
 # Cloudflare needs TWO credentials (token + account id):
 CLOUDFLARE_API_TOKEN=cloudflare-dummy-replace-me
 CLOUDFLARE_ACCOUNT_ID=cloudflare-account-dummy-replace-me
