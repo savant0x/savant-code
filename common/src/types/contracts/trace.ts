@@ -17,6 +17,12 @@ export type RuntimeTraceEvent = {
   phase?: 'setup' | 'step' | 'model' | 'tool' | 'cleanup'
   status?: 'completed' | 'failed' | 'cancelled' | 'skipped'
   durationMs?: number
+  /** Request creation to the first parsed stream chunk (model phase). */
+  firstChunkMs?: number
+  /** Retries scheduled by the classified provider boundary (model phase). */
+  retryCount?: number
+  /** Cumulative scheduled retry delay in milliseconds (model phase). */
+  retryWaitMs?: number
   toolName?: string
   reason?: string
   messageCount?: number

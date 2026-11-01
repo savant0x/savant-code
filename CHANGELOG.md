@@ -1,5 +1,19 @@
 # Changelog
 
+## 2026-11-01 — Runtime trace records the model leg, not just the step
+
+- **FID-2026-1101-001 — medium — stream timing telemetry.** A slow turn can now
+  be attributed. `RuntimeTraceEvent` gained optional `firstChunkMs`,
+  `retryCount` and `retryWaitMs`; the classified provider boundary reports each
+  scheduled retry through an injected `onRetry` (attempt, next attempt, delay,
+  cumulative wait); `processStream` reports the first parsed chunk once; and
+  `runAgentStep` emits one `phase: 'model'` `step_finished` event on success or
+  failure. Every field and callback is optional, so existing writers and tests
+  are unchanged, and no timer runs when no trace writer is attached. Retry
+  waits are recorded as scheduled delay, not measured sleep time. Gates: focused
+  suite 2 pass / 0 fail, `common` typecheck 0, `packages/agent-runtime`
+  typecheck 0, `quality:report` PASS.
+
 ## 2026-10-30 — Paper Instruments (Ultramarine) becomes a built-in provider
 
 - **FID-2026-1030-005 — medium — Paper Instruments ships as a registry

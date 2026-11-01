@@ -28,6 +28,18 @@ import type { FailureVerdict } from './failure-class'
 import type { ProviderCircuitBreaker } from './provider-circuit-breaker'
 import type { RetryPolicy } from './retry-policy'
 
+/** One scheduled retry, reported before the boundary sleeps. */
+export type StreamRetryObservation = {
+  /** The attempt that failed (1-based). */
+  attempt: number
+  /** The attempt about to start. */
+  nextAttempt: number
+  /** Delay scheduled before the next attempt. */
+  delayMs: number
+  /** Sum of delays scheduled so far for this logical turn. */
+  totalWaitMs: number
+}
+
 export interface ClassifiedStreamRetryParams<C, R> {
   policy: RetryPolicy
   breaker?: ProviderCircuitBreaker
@@ -37,6 +49,8 @@ export interface ClassifiedStreamRetryParams<C, R> {
   onUnknownShape?: (message: string) => void
   onFailure?: (verdict: FailureVerdict, cause: unknown) => void
   onSuccess?: () => void
+  /** Optional model-leg timing sink; never required for a retry to work. */
+  onRetry?: (observation: StreamRetryObservation) => void
   /** Defaults to a process-lifetime set so the log stays bounded. */
   seenShapes?: Set<string>
 }
@@ -70,6 +84,7 @@ export async function* runWithClassifiedRetry<C, R>(
   const sleep = params.sleep ?? defaultSleep
   const seenShapes = params.seenShapes ?? DEFAULT_SEEN_SHAPES
   let attempt = 0
+  let totalWaitMs = 0
   for (;;) {
     attempt++
     let emitted = false
@@ -114,7 +129,15 @@ export async function* runWithClassifiedRetry<C, R>(
       if (!mayRetry) {
         throw new ClassifiedProviderError(verdict, error)
       }
-      await sleep(retryDelayMs(attempt, params.policy))
+      const delayMs = retryDelayMs(attempt, params.policy)
+      totalWaitMs += delayMs
+      params.onRetry?.({
+        attempt,
+        nextAttempt: attempt + 1,
+        delayMs,
+        totalWaitMs,
+      })
+      await sleep(delayMs)
     } finally {
       if (stream && !completed) {
         try {

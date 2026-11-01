@@ -30,6 +30,8 @@ export type ProcessStreamParams = {
   customToolDefinitions?: CustomToolDefinitions
 
   onCostCalculated: (credits: number) => Promise<void>
+  /** Called once, on the first parsed chunk, for model-leg timing. */
+  onFirstChunk?: () => void
   onResponseChunk: (chunk: string | PrintModeEvent) => void
 } & Omit<
   ExecuteToolCallParams<string>,

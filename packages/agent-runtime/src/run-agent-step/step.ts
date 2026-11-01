@@ -233,7 +233,12 @@ export const runAgentStep = async (
     onResponseChunk,
   )
 
-  // Raw stream from AI SDK
+  // Raw stream from AI SDK. The clock starts before request creation so the
+  // model-phase trace includes connection setup and any boundary retry.
+  const modelStartedAt = Date.now()
+  let firstChunkMs: number | undefined
+  let retryCount = 0
+  let retryWaitMs = 0
   const stream = getAgentStreamFromTemplate({
     ...params,
     agentId: agentState.parentId ? agentState.agentId : undefined,
@@ -261,7 +266,27 @@ export const runAgentStep = async (
     onCacheDebugUsageReceived,
     template: agentTemplate,
     onCostCalculated,
+    onStreamRetry: (observation) => {
+      retryCount = observation.attempt
+      retryWaitMs = observation.totalWaitMs
+    },
   })
+
+  const emitModelTrace = (status: 'completed' | 'failed') => {
+    params.traceWriter?.recordEvent?.({
+      event: 'step_finished',
+      runId: agentState.runId,
+      agentId: agentState.agentId,
+      agentType: String(agentType),
+      step: iterationNum,
+      phase: 'model',
+      status,
+      durationMs: Date.now() - modelStartedAt,
+      firstChunkMs,
+      retryCount,
+      retryWaitMs,
+    })
+  }
 
   const streamOutcome = await processStream({
     ...params,
@@ -274,7 +299,18 @@ export const runAgentStep = async (
     repoId,
     stream,
     onCostCalculated,
+    onFirstChunk: () => {
+      firstChunkMs = Date.now() - modelStartedAt
+    },
   })
+    .then((outcome) => {
+      emitModelTrace('completed')
+      return outcome
+    })
+    .catch((error: unknown) => {
+      emitModelTrace('failed')
+      throw error
+    })
 
   toolResults.push(...streamOutcome.toolResults)
 

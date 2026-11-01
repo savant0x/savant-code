@@ -3,6 +3,7 @@ import { classifyAvailabilityObservation } from '@savant-code/common/providers/a
 
 import { explicitModelRejection } from './provider-boundary/availability-observation'
 import { runWithClassifiedRetry } from './provider-boundary/classified-stream-retry'
+import type { StreamRetryObservation } from './provider-boundary/classified-stream-retry'
 import { ClassifiedProviderError } from './provider-boundary/failure-class'
 import { providerCircuitBreakerFor } from './provider-boundary/provider-circuit-breaker'
 import { resolveRetryPolicy } from './provider-boundary/retry-policy'
@@ -68,6 +69,8 @@ export const getAgentStreamFromTemplate = (params: {
   onCostCalculated?: (credits: number) => Promise<void>
   /** FID-2026-1005-006: validated at call time (throws on shape mismatch). */
   retryPolicy?: unknown
+  /** Optional timing sink for boundary retries; absent means no observation. */
+  onStreamRetry?: (observation: StreamRetryObservation) => void
   /** Per-provider breaker for retry suppression; user calls always proceed. */
   circuitBreaker?: ProviderCircuitBreaker
   promptAiSdkStream: PromptAiSdkStreamFn
@@ -208,6 +211,7 @@ export const getAgentStreamFromTemplate = (params: {
       breaker,
       ...availabilityCallbacks,
       create: () => createPhysical(aiSdkStreamParams),
+      onRetry: params.onStreamRetry,
       onUnknownShape: (message) =>
         logger.warn({ boundary: 'failure-class' }, message),
     })
@@ -224,6 +228,7 @@ export const getAgentStreamFromTemplate = (params: {
         policy: { ...policy, maxAttempts: 1 },
         breaker,
         ...availabilityCallbacks,
+        onRetry: params.onStreamRetry,
         create: () =>
           createPhysical({
             ...aiSdkStreamParams,

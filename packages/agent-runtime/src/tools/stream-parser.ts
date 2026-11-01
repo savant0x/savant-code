@@ -59,6 +59,7 @@ export async function processStream(params: ProcessStreamParams) {
   // hundred times steers the model once, not a hundred times.
   const isDuplicateNativeFailure = createNativeFailureDeduper()
   const streamDone = createStreamDoneHolder()
+  let observedFirstChunk = false
   const fileProcessingState: FileProcessingState = {
     promisesByPath: {},
     allPromises: [],
@@ -162,6 +163,11 @@ export async function processStream(params: ProcessStreamParams) {
           messageId = chunk
         }
         break
+      }
+
+      if (!observedFirstChunk) {
+        observedFirstChunk = true
+        params.onFirstChunk?.()
       }
 
       if (chunk.type === 'reasoning') {
