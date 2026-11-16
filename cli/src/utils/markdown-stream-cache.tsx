@@ -69,10 +69,7 @@ export function countFenceLines(text: string): number {
  * block. Pipes and list markers are rejected conservatively: a false negative
  * costs a full render, a false positive corrupts the transcript.
  */
-function isSafeSplitPoint(
-  previousLine: string,
-  nextLine: string,
-): boolean {
+function isSafeSplitPoint(previousLine: string, nextLine: string): boolean {
   if (nextLine.trim() === '') return false
   if (previousLine === '') return true
   if (FENCE_LINE.test(previousLine) || FENCE_LINE.test(nextLine)) return true
@@ -119,7 +116,9 @@ export function findSafeBoundary(
       if (next >= content.length) break
       const nextNewline = content.indexOf('\n', next)
       const nextLine =
-        nextNewline === -1 ? content.slice(next) : content.slice(next, nextNewline)
+        nextNewline === -1
+          ? content.slice(next)
+          : content.slice(next, nextNewline)
       const candidate: StreamBoundary = { index: next, fenceCount: fences }
       if (fences % 2 === 0) {
         if (isSafeSplitPoint(previousLine, nextLine)) best = candidate
@@ -181,7 +180,12 @@ interface FrozenPrefix {
 }
 
 const toArray = (nodes: ReactNode): ReactNode[] => {
-  if (nodes === null || nodes === undefined || nodes === false || nodes === '') {
+  if (
+    nodes === null ||
+    nodes === undefined ||
+    nodes === false ||
+    nodes === ''
+  ) {
     return []
   }
   return Array.isArray(nodes) ? nodes : [nodes]
@@ -292,12 +296,7 @@ export class MarkdownStreamCache {
     // next call pays a full render again, which is the honest cost of not
     // knowing a safe place to split.
     if (boundary.index <= 0) {
-      return this.callRender(
-        content,
-        options,
-        0,
-        `md${this.generation}w`,
-      ).nodes
+      return this.callRender(content, options, 0, `md${this.generation}w`).nodes
     }
 
     const headSource = content.slice(0, boundary.index)

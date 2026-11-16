@@ -13,10 +13,7 @@
 import { describe, expect, test } from 'bun:test'
 import React from 'react'
 
-import {
-  renderMarkdown,
-  renderMarkdownWithMeta,
-} from '../markdown-renderer'
+import { renderMarkdown, renderMarkdownWithMeta } from '../markdown-renderer'
 import {
   MarkdownStreamCache,
   STREAM_RELAX_AFTER,
@@ -73,7 +70,9 @@ const project = (node: unknown): Projected => {
         typeof node.type === 'string'
           ? node.type
           : ((node.type as { displayName?: string; name?: string })
-              .displayName ?? (node.type as { name?: string }).name ?? 'component'),
+              .displayName ??
+            (node.type as { name?: string }).name ??
+            'component'),
       props: projectProps(props),
       children: project(props.children),
     }
