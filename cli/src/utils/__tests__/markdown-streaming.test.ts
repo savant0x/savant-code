@@ -1,10 +1,8 @@
 import { describe, expect, test } from 'bun:test'
 import React from 'react'
 
-import {
-  getStreamingMarkdownBlockManifest,
-  renderMarkdown,
-} from '../markdown-renderer'
+import { renderMarkdown } from '../markdown-renderer'
+import { MarkdownStreamCache } from '../markdown-stream-cache'
 
 const collectKeys = (value: React.ReactNode, keys: string[] = []): string[] => {
   if (Array.isArray(value)) {
@@ -23,6 +21,24 @@ const collectKeys = (value: React.ReactNode, keys: string[] = []): string[] => {
   return keys
 }
 
+const topLevelKeys = (value: React.ReactNode): string[] => {
+  const keys: string[] = []
+  const visit = (node: React.ReactNode): void => {
+    if (Array.isArray(node)) {
+      node.forEach(visit)
+      return
+    }
+    if (!React.isValidElement(node)) return
+    if (node.type === React.Fragment && node.key == null) {
+      visit((node.props as { children?: React.ReactNode }).children)
+      return
+    }
+    if (node.key != null) keys.push(String(node.key))
+  }
+  visit(value)
+  return keys
+}
+
 describe('streaming markdown identity', () => {
   test('uses stable semantic keys on production rendered blocks', () => {
     const rendered = renderMarkdown('# Answer\n\nCompleted paragraph.')
@@ -32,33 +48,36 @@ describe('streaming markdown identity', () => {
   })
 
   test('keeps completed block identities stable as the pending fence grows', () => {
-    const first = getStreamingMarkdownBlockManifest(
-      '# Answer\n\nCompleted paragraph.\n```ts\nconst value =',
+    const cache = new MarkdownStreamCache()
+    const before = cache.renderContent(
+      '# Answer\n\nCompleted paragraph.\n\n```ts\nconst value =',
     )
-    const second = getStreamingMarkdownBlockManifest(
-      '# Answer\n\nCompleted paragraph.\n```ts\nconst value = 42\n// more',
+    const after = cache.renderContent(
+      '# Answer\n\nCompleted paragraph.\n\n```ts\nconst value = 42\n// more',
     )
 
-    expect(first).toEqual(second)
-    expect(first).toEqual([
-      { key: 'markdown-block-0-heading', kind: 'heading' },
-      { key: 'markdown-block-1-paragraph', kind: 'paragraph' },
+    expect(topLevelKeys(before).slice(0, 2)).toEqual([
+      'markdown-block-0-heading',
+      'markdown-block-1-paragraph',
+    ])
+    expect(topLevelKeys(after).slice(0, 2)).toEqual([
+      'markdown-block-0-heading',
+      'markdown-block-1-paragraph',
     ])
   })
 
   test('adds a completed fence as a new stable block without renumbering prior blocks', () => {
-    const before = getStreamingMarkdownBlockManifest(
-      'Intro\n\n```ts\nconst value = 42',
-    )
-    const after = getStreamingMarkdownBlockManifest(
+    const cache = new MarkdownStreamCache()
+    const before = cache.renderContent('Intro\n\n```ts\nconst value = 42')
+    const after = cache.renderContent(
       'Intro\n\n```ts\nconst value = 42\n```\n\nFollow-up',
     )
 
-    expect(after.slice(0, before.length)).toEqual(before)
-    expect(after).toEqual([
-      { key: 'markdown-block-0-paragraph', kind: 'paragraph' },
-      { key: 'markdown-block-1-code', kind: 'code' },
-      { key: 'markdown-block-2-paragraph', kind: 'paragraph' },
+    expect(topLevelKeys(before)[0]).toBe('markdown-block-0-paragraph')
+    expect(topLevelKeys(after)).toEqual([
+      'markdown-block-0-paragraph',
+      'markdown-block-1-code',
+      'markdown-block-2-paragraph',
     ])
   })
 })

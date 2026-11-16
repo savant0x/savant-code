@@ -7,7 +7,7 @@ import { AskUserBranch } from './ask-user-branch'
 import { CompactionSummaryBlock } from '../compaction-summary-block'
 import { FreeOptionsPanel } from '../free-options-panel'
 import { trimNewlines, isReasoningTextBlock } from './block-helpers'
-import { renderContentWithMarkdown } from './content-with-markdown'
+import { StreamingMarkdownNodes } from './content-with-markdown'
 import { CopyableBlock } from './copyable-block'
 import { ImageBlock } from './image-block'
 import { renderMarkdownContent } from './markdown-content'
@@ -107,19 +107,23 @@ export const SingleBlock = memo(
             getCopyText={getCopyText}
             isStreaming={isStreamingText}
           >
-            {renderMarkdownContent({
-              value: renderContentWithMarkdown({
-                content: filteredContent,
-                isStreaming: isStreamingText,
-                codeBlockWidth,
-                palette: markdownPalette,
-              }),
-              theme,
-              getAttributes: (extra = 0) =>
-                (isUser ? TextAttributes.ITALIC : 0) | extra,
-              textColor: blockTextColor,
-              keyPrefix: renderKey,
-            })}
+            <StreamingMarkdownNodes
+              content={filteredContent}
+              isStreaming={isStreamingText}
+              codeBlockWidth={codeBlockWidth}
+              palette={markdownPalette}
+            >
+              {(nodes) =>
+                renderMarkdownContent({
+                  value: nodes,
+                  theme,
+                  getAttributes: (extra = 0) =>
+                    (isUser ? TextAttributes.ITALIC : 0) | extra,
+                  textColor: blockTextColor,
+                  keyPrefix: renderKey,
+                })
+              }
+            </StreamingMarkdownNodes>
           </CopyableBlock>
         )
       }

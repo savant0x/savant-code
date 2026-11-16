@@ -77,7 +77,9 @@ export const renderNode = (
           root.children[index + 1] as MarkdownNode | undefined,
         )
         return [
-          <KeyedFragment key={`markdown-block-${index}-${child.type}`}>
+          <KeyedFragment
+            key={`markdown-block-${index + state.blockIndexOffset}-${child.type}`}
+          >
             {renderedBlock}
           </KeyedFragment>,
         ]

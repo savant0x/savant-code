@@ -76,10 +76,20 @@ const normalizeOutput = (nodes: ReactNode[]): ReactNode => {
   return compacted
 }
 
-export function renderMarkdown(
+/**
+ * A single render plus the metadata a streaming cache needs to keep one key
+ * space: `blockCount` is the number of top-level blocks this render emitted, so
+ * the next independently rendered chunk can start its block indices there.
+ */
+export interface RenderedMarkdownChunk {
+  nodes: ReactNode
+  blockCount: number
+}
+
+export function renderMarkdownWithMeta(
   markdown: string,
   options: MarkdownRenderOptions = {},
-): ReactNode {
+): RenderedMarkdownChunk {
   try {
     const basePalette = options.theme
       ? createMarkdownPalette(options.theme)
@@ -89,11 +99,17 @@ export function renderMarkdown(
     const syntaxStyle = options.theme
       ? createSyntaxStyle(options.theme)
       : undefined
-    const state = createRenderState(palette, codeBlockWidth, syntaxStyle)
+    const state = createRenderState(
+      palette,
+      codeBlockWidth,
+      syntaxStyle,
+      options.keyPrefix,
+      options.blockIndexOffset,
+    )
     const ast = processor.parse(markdown) as Root
     applyInlineFallbackFormatting(ast as unknown as MarkdownNode)
     const nodes = renderNode(ast as unknown as MarkdownNode, state, ast.type)
-    return normalizeOutput(nodes)
+    return { nodes: normalizeOutput(nodes), blockCount: ast.children.length }
   } catch (error) {
     logger.error(
       {
@@ -103,8 +119,15 @@ export function renderMarkdown(
       },
       'Failed to parse markdown — returning raw content',
     )
-    return markdown
+    return { nodes: markdown, blockCount: 0 }
   }
+}
+
+export function renderMarkdown(
+  markdown: string,
+  options: MarkdownRenderOptions = {},
+): ReactNode {
+  return renderMarkdownWithMeta(markdown, options).nodes
 }
 
 export function hasMarkdown(content: string): boolean {
@@ -118,33 +141,6 @@ export function hasIncompleteCodeFence(content: string): boolean {
     fenceCount += 1
   }
   return fenceCount % 2 === 1
-}
-
-export interface StreamingMarkdownBlock {
-  key: string
-  kind: string
-}
-
-/**
- * Returns stable semantic identities for the completed portion of a streaming
- * Markdown document. The identity is based on document order and block kind,
- * not the number of tokens received after the block.
- */
-export function getStreamingMarkdownBlockManifest(
-  content: string,
-): StreamingMarkdownBlock[] {
-  try {
-    const stableContent = hasIncompleteCodeFence(content)
-      ? content.slice(0, content.lastIndexOf('```'))
-      : content
-    const ast = processor.parse(stableContent) as Root
-    return ast.children.map((node, index) => ({
-      key: `markdown-block-${index}-${node.type}`,
-      kind: node.type,
-    }))
-  } catch {
-    return []
-  }
 }
 
 const KeyedFragment = React.Fragment as React.FC<{
