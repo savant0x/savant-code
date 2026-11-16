@@ -42,7 +42,11 @@ describe('classified retry telemetry', () => {
     }
 
     const generator = runWithClassifiedRetry<Chunk, string>({
-      policy: { ...resolveRetryPolicy(undefined), baseDelayMs: 5, maxDelayMs: 5 },
+      policy: {
+        ...resolveRetryPolicy(undefined),
+        baseDelayMs: 5,
+        maxDelayMs: 5,
+      },
       create,
       sleep: async () => {},
       onRetry: (observation) => observations.push(observation),
