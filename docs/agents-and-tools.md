@@ -208,9 +208,9 @@ The connector runtime registers a fixed four-tool interface over the in-repo
 
 ### Tool Count
 
-- **Total registered tools:** 59 (including 4 Composio and 4 connector meta-tools)
-- **Published tools (available to agents):** 38
-- **FSM-gated tools:** 3 (`write_file`, `str_replace`, `apply_patch` →
+- **Total registered tools:** 61 (including 4 Composio and 4 connector meta-tools)
+- **Published tools (available to agents):** 39
+- **FSM-gated tools:** 4 (`write_file`, `str_replace`, `apply_patch` →
   GREEN + SELF_CORRECT; `run_terminal_command` → AUDIT + GREEN + SELF_CORRECT)
 - **Agent-exclusive tools:** 1 (`sequentialthinking` → Thinker only)
 
