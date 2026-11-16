@@ -12,20 +12,38 @@ verification, releases or repository boundaries.
 
 ## Open items
 
-### FID-2026-1030-006 — transcript streaming render hot path (open)
+### AUDIT-2026-1102-002 — elephant-goldfish-model extraction review (completed)
 
-- [ ] Authority: automation level 3. Operator asked for a review of
-  `resources/crush-main`, then for the integration ideas to be turned into a FID
-  that runs the full Perfection Loop before any code exists. Measured root cause:
-  one markdown render costs 51.97 ms at 20 000 characters against the 100 ms
-  streaming flush, and the streaming path re-renders the whole body on every
-  flush. This item's deliverable is the converged record plus the measured
-  speedup model; implementation is the record's IMPLEMENT phase and starts on
-  the operator's go-ahead.
-- [ ] Write grant: `dev/fids/FID-2026-1030-006-transcript-streaming-render-hot-path.md`
-  (record), `SCOPE.md` (register). No source code is written in the convergence
-  phase. The record's later implementation surface is declared in its Proposed
-  Solution and is re-registered here before any code is written.
+- [x] Authority: automation level 3. Produce a read-only report identifying
+  EGM workflow, review, artifact, and verification ideas that may be candidates
+  for harness extraction after a Perfection Loop and retrofit review.
+- [x] Write grant: `docs/reports/elephant-goldfish-model-extraction-audit.md`.
+  No prototype or harness source code was modified by this audit. Evidence:
+  report read 0-EOF; targeted Markdownlint and Prettier checks passed.
+
+### AUDIT-2026-1102-001 — dsh-superagent prototype extraction review (completed)
+
+- [x] Authority: automation level 3. Produce a read-only report identifying
+  prototype features and design ideas that may be candidates for harness
+  extraction after a Perfection Loop and retrofit review.
+- [x] Write grant: `docs/reports/dsh-superagent-prototype-extraction-audit.md`.
+  No prototype or harness source code was modified by this audit. Evidence:
+  report read 0-EOF; `git diff --check` passed for the changed tracked file.
+
+### AUDIT-2026-1116-001 — design research artifacts intake (completed)
+
+- [x] Authority: automation level 3, operator instruction `push it all` on
+  2026-11-16. Commit three design research artifacts that existed untracked in
+  the tree with no register line: `docs/design/Dual-Mode Model Picker
+  Architecture.md` (2026-10-30), `docs/design/gem2.md` (2026-10-30) and
+  `docs/design/arch-study.md` (2026-11-02).
+- [x] Write grant: those three paths only. They are committed verbatim as
+  reference records: no source code, no behavior change, no claim adopted from
+  them. `docs/**` is Markdown-lint-exempt (`.markdownlintignore`, operator
+  ruling 2026-10-19), which is why they were never linted while untracked.
+  Evidence: `git status` showed them untracked and `grep docs/design SCOPE.md`
+  returned no grant; both facts are reproduced in the 2026-11-16 session
+  summary.
 
 ### EMBED-001 — superseded external single-agent embed (blocked)
 
@@ -95,8 +113,17 @@ and replaces it with the verified drop point in `catalog-filter.ts`.
 - FID-2026-1030-002: `docs/research/media-mode-dual-picker-research-prompt.md`,
   `docs/reports/video-modality-feasibility.md`,
   `dev/fids/FID-2026-1030-002-media-mode-artifacts-and-capability-claim-correction.md`
-- FID-2026-1030-006: `dev/fids/FID-2026-1030-006-transcript-streaming-render-hot-path.md`,
-  `SCOPE.md`
+- AUDIT-2026-1116-001: `docs/design/Dual-Mode Model Picker Architecture.md`,
+  `docs/design/gem2.md`, `docs/design/arch-study.md`
+
+`FID-2026-1030-006` closed and archived on 2026-10-30 (implementation in the
+working tree, uncommitted at the operator's no-commit instruction), so its write
+grant — the streaming markdown render cache, its renderer/types/component
+wiring and the cache suite — is released here; the evidence lives in the
+archived record, the changelog and the session summary. The operator's
+2026-11-16 instruction `push it all` lifted that hold: the implementation is
+committed and pushed, so the archived record's `file:line` evidence is now
+backed by a commit as well.
 
 `FID-2026-1030-005` closed and archived on 2026-10-30 (implementation
 `42b1a2c9`), so its write grant — the Paper Instruments registry entry, its

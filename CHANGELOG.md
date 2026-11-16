@@ -14,6 +14,28 @@
   suite 2 pass / 0 fail, `common` typecheck 0, `packages/agent-runtime`
   typecheck 0, `quality:report` PASS.
 
+## 2026-10-30 — Streaming answers stop re-rendering their whole body every flush
+
+- **FID-2026-1030-006 — high — incremental streaming markdown render cache.**
+  Streaming assistant text now renders through `MarkdownStreamCache`, which
+  freezes a proven-safe prefix (a blank line with no open fence, list, table,
+  blockquote or indented continuation) and per flush renders only the new chunk
+  plus a bounded tail, instead of re-parsing the whole message every 100 ms.
+  Chunks share one React key space via a continuing block-index offset, the
+  cache resets on width/palette/theme change or non-prefix content, and the
+  previously unwired `getStreamingMarkdownBlockManifest` was retired in favour
+  of cache-level key assertions. Measured on a 20 000-char answer grown 50 chars
+  per flush: render CPU **2 695.5 ms → 100.3 ms (26.9×)**, per-flush p95
+  **13.25 ms → 0.36 ms (36.8×)**, and 61 172 characters rendered in total
+  against the ~4.0 M the old path handed the parser (arithmetic sum of the 400
+  flush inputs). The win scales with message length and block count; short
+  answers gain little. Gates: cli
+  typecheck exit 0, root typecheck exit 0, CLI suite 4286 pass / 0 fail / 18
+  skipped, `validate:repository` PASS, eslint `--max-warnings 0` clean.
+  Implementation is in the working tree at closure (operator no-commit
+  instruction), so evidence is `file:line` plus grep in the archived record
+  rather than a SHA.
+
 ## 2026-10-30 — Paper Instruments (Ultramarine) becomes a built-in provider
 
 - **FID-2026-1030-005 — medium — Paper Instruments ships as a registry

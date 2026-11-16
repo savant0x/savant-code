@@ -133,6 +133,21 @@
       ],
       "completionEvidence": [],
       "sourceFids": ["FID-2026-1030-005"]
+    },
+    {
+      "id": "OBS-004",
+      "kind": "live-comparison",
+      "status": "open",
+      "owner": "Operator",
+      "summary": "Opened 2026-10-30 at the closure of FID-2026-1030-006 (implementation in the working tree, uncommitted): the incremental streaming render cache is verified by 22 new unit tests, the full CLI suite (4286 pass, 0 fail), typecheck, eslint and validate:repository, and its render CPU is measured at 26.9x lower over a 400-flush 20000-char stream. WHAT IS NOT OBSERVED: a real terminal session streaming a long answer. The visual contract (no duplicated, dropped or re-wrapped text at a frozen boundary; no flicker when the prefix advances) and the felt responsiveness claim rest on structural-equality tests over a fixture corpus, not on a live TUI. The per-flush cost of OpenTUI syntax highlighting inside an open fence is also unmeasured, so the share of the remaining stall it owns is unknown.",
+      "nextAction": "In a tmux session (interactive CLI tests require tmux), stream an answer longer than 10000 characters that mixes prose, lists, a table and a fenced code block, and record: any duplicated or dropped text at chunk seams, wrapping differences against a completed re-render, and whether input/scroll stays responsive. Then re-run the streaming measurement with highlighting enabled to attribute the residual per-flush cost.",
+      "evidence": [
+        "dev/fids/archive/FID-2026-1030-006-transcript-streaming-render-hot-path.md",
+        "cli/src/utils/markdown-stream-cache.tsx",
+        "cli/src/utils/__tests__/markdown-stream-cache.test.tsx"
+      ],
+      "completionEvidence": [],
+      "sourceFids": ["FID-2026-1030-006"]
     }
   ]
 }
