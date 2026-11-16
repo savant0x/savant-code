@@ -3,7 +3,6 @@ import { classifyAvailabilityObservation } from '@savant-code/common/providers/a
 
 import { explicitModelRejection } from './provider-boundary/availability-observation'
 import { runWithClassifiedRetry } from './provider-boundary/classified-stream-retry'
-import type { StreamRetryObservation } from './provider-boundary/classified-stream-retry'
 import { ClassifiedProviderError } from './provider-boundary/failure-class'
 import { providerCircuitBreakerFor } from './provider-boundary/provider-circuit-breaker'
 import { resolveRetryPolicy } from './provider-boundary/retry-policy'
@@ -11,6 +10,7 @@ import { accumulateChunk } from './stream-recovery/outcome'
 import { runTurnWithRecovery } from './stream-recovery/recovery-executor'
 import { countTokens } from './util/token-counter'
 
+import type { StreamRetryObservation } from './provider-boundary/classified-stream-retry'
 import type { ProviderCircuitBreaker } from './provider-boundary/provider-circuit-breaker'
 import type { StreamCloseKind } from './stream-recovery/outcome'
 import type { AgentTemplate } from './templates/types'
